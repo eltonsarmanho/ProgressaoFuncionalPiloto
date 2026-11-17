@@ -564,11 +564,11 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Mudar grupo, item, quantidade, horas ou pontos sem justificativa: 422 em `justificativa`; com justificativa: auditoria com anterior e novo
-- [ ] Mudar status exige justificativa e audita; `REJEITADA` para `AGUARDANDO_REVISAO` vale como nova revisão
-- [ ] Itens candidatos com justificativa gravados; só o item escolhido pontua
-- [ ] Versão antiga: 409; processo concluído: 409; sem acesso: 404
-- [ ] Gate full passa; 14+ testes
+- [x] Mudar grupo, item, quantidade, horas ou pontos sem justificativa: 422 em `justificativa`; com justificativa: auditoria com anterior e novo
+- [x] Mudar status exige justificativa e audita; `REJEITADA` para `AGUARDANDO_REVISAO` vale como nova revisão
+- [x] Itens candidatos com justificativa gravados; só o item escolhido pontua
+- [x] Versão antiga: 409; processo concluído: 409; sem acesso: 404
+- [x] Gate full passa; 14+ testes
 
 **Tests**: integration
 **Gate**: full

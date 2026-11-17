@@ -293,9 +293,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ATV-05 | P1: Atividades do processo | Design | Implementing |
 | ATV-06 | P1: Atividades do processo | Design | Implementing |
 | ATV-07 | P1: Atividades do processo | Design | Implementing |
-| ATV-08 | P1: Atividades do processo | Design | In Tasks |
-| ATV-09 | P1: Atividades do processo | Design | In Tasks |
-| ATV-10 | P1: Atividades do processo | Design | In Tasks |
+| ATV-08 | P1: Atividades do processo | Design | Implementing |
+| ATV-09 | P1: Atividades do processo | Design | Implementing |
+| ATV-10 | P1: Atividades do processo | Design | Implementing |
 | ATV-11 | P1: Atividades do processo | Design | Implementing |
 | ATV-12 | P1: Atividades do processo | Design | Implementing |
 | ATV-13 | P1: Atividades do processo | Design | Implementing |

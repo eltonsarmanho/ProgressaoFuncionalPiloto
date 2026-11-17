@@ -16,6 +16,7 @@ from app.application.services.audit_service import AuditService
 from app.domain.entities.activity import (
     Activity,
     ActivitySource,
+    ActivityStatus,
     Candidate,
     Level,
     PeriodPrecision,
@@ -346,3 +347,124 @@ class CreateActivity(_ActivityUseCase):
             )
             uow.commit()
             return uow.activities.get(activity.id)
+
+
+class _ExistingActivityUseCase(_ActivityUseCase):
+    def _load(
+        self, uow: UnitOfWork, actor: User, activity_id: UUID
+    ) -> tuple[Activity, FunctionalProcess]:
+        """404 outside access, 409 on a closed process or a stale version (ATV-11..ATV-13)."""
+        activity = uow.activities.get(activity_id)
+        if activity is None:
+            raise NotFound(ACTIVITY_NOT_FOUND)
+        process = self._readable(uow, actor, activity.process_id)
+        if process.status.is_read_only:
+            raise Conflict("Processo concluído ou arquivado não pode ser alterado")
+        return activity, process
+
+    @staticmethod
+    def _check_version(activity: Activity, expected_version: int) -> None:
+        if activity.version != expected_version:
+            raise StaleVersion("A atividade foi alterada por outro usuário; recarregue")
+
+
+def _require_justification(justification: str | None, message: str) -> str:
+    justification = (justification or "").strip()
+    if not justification:
+        raise ValidationFailed("justificativa", message)
+    return justification
+
+
+class UpdateActivity(_ExistingActivityUseCase):
+    def execute(
+        self,
+        actor: User,
+        activity_id: UUID,
+        data: ActivityData,
+        expected_version: int,
+        justification: str | None,
+    ) -> Activity:
+        with self._uow_factory() as uow:
+            current, process = self._load(uow, actor, activity_id)
+            data = normalize_activity(data, self._chosen_version(uow, process))
+            updated = replace(current, **_fields(data))
+            if any(getattr(updated, f) != getattr(current, f) for f in JUSTIFIED_FIELDS):
+                justification = _require_justification(
+                    justification,
+                    "Justificativa obrigatória ao alterar item, quantidade, horas ou pontos",
+                )
+            self._check_version(current, expected_version)
+            uow.activities.update(updated, expected_version)
+            self._audit.record(
+                uow,
+                actor.id,
+                ACTIVITY_ENTITY,
+                activity_id,
+                AuditAction.UPDATE,
+                activity_audit_view(current),
+                activity_audit_view(updated),
+                (justification or "").strip() or None,
+            )
+            uow.commit()
+            return uow.activities.get(activity_id)
+
+
+class ChangeActivityStatus(_ExistingActivityUseCase):
+    def execute(
+        self,
+        actor: User,
+        activity_id: UUID,
+        target: ActivityStatus,
+        expected_version: int,
+        justification: str | None,
+    ) -> Activity:
+        """REJEITADA back to AGUARDANDO_REVISAO is simply a new review round (ATV-09)."""
+        with self._uow_factory() as uow:
+            current, _ = self._load(uow, actor, activity_id)
+            justification = _require_justification(
+                justification, "Justificativa obrigatória para mudar o status da atividade"
+            )
+            if target is current.status:
+                raise ValidationFailed("status", "A atividade já está neste status")
+            self._check_version(current, expected_version)
+            updated = replace(current, status=target)
+            uow.activities.update(updated, expected_version)
+            self._audit.record(
+                uow,
+                actor.id,
+                ACTIVITY_ENTITY,
+                activity_id,
+                AuditAction.STATUS,
+                {"status": current.status},
+                {"status": target},
+                justification,
+            )
+            uow.commit()
+            return uow.activities.get(activity_id)
+
+
+class MarkActivitiesDistinct(_ExistingActivityUseCase):
+    def execute(
+        self, actor: User, activity_id: UUID, expected_version: int, justification: str | None
+    ) -> Activity:
+        """Registers why this activity is not a duplicate of an earlier one (VERIF-06)."""
+        with self._uow_factory() as uow:
+            current, _ = self._load(uow, actor, activity_id)
+            justification = _require_justification(
+                justification, "Justificativa obrigatória para marcar a atividade como distinta"
+            )
+            self._check_version(current, expected_version)
+            updated = replace(current, distinct_justification=justification)
+            uow.activities.update(updated, expected_version)
+            self._audit.record(
+                uow,
+                actor.id,
+                ACTIVITY_ENTITY,
+                activity_id,
+                AuditAction.UPDATE,
+                {"distinct_justification": current.distinct_justification},
+                {"distinct_justification": justification},
+                justification,
+            )
+            uow.commit()
+            return uow.activities.get(activity_id)

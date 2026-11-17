@@ -110,6 +110,9 @@ def world(uow_factory):
         suggest=scoring.SuggestScoringTable(uow_factory, audit, policy),
         choose=scoring.ChooseProcessTable(uow_factory, audit, policy),
         create=scoring.CreateActivity(uow_factory, audit, policy),
+        update=scoring.UpdateActivity(uow_factory, audit, policy),
+        change_status=scoring.ChangeActivityStatus(uow_factory, audit, policy),
+        mark_distinct=scoring.MarkActivitiesDistinct(uow_factory, audit, policy),
     )
 
 
