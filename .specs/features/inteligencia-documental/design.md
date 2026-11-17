@@ -78,7 +78,7 @@ Tipo de documento: **regra por palavras-chave** escolhe o schema; a IA devolve o
   - `ExtractionRun(id, document_id, status: ATIVA|SUBSTITUIDA, model, duration_ms, raw_json, warnings)`
   - `ExtractedActivity(taxonomy, title, role, start_date, end_date, event_date, hours, course_hours, level, academic_period, identifier, page, evidence_text, confidence)`
   - `DocumentType` (`DECLARACAO_BANCA`, `DECLARACAO_ORIENTACAO`, `DECLARACAO_DISCIPLINAS`, `ATA_DEFESA`, `CERTIFICADO`, `PORTARIA`, `ARTIGO`, `REGISTRO_SOFTWARE`, `OUTRO`)
-  - `DocAlertCode` (`TEXTO_ILEGIVEL`, `DOCENTE_DIVERGENTE`, `RESPOSTA_INVALIDA`, `NAO_ENCONTRADO_NO_TEXTO`, `TRUNCADO`, `NENHUMA_ATIVIDADE_ENCONTRADA`, `IA_CREDENCIAL_RECUSADA`, `IA_INDISPONIVEL`, `TEMPO_ESGOTADO`, `QUANTIDADE_ESTIMADA`)
+  - `DocAlertCode` (`SEM_ITEM_DE_PONTUACAO`, `TEXTO_ILEGIVEL`, `DOCENTE_DIVERGENTE`, `RESPOSTA_INVALIDA`, `NAO_ENCONTRADO_NO_TEXTO`, `TRUNCADO`, `NENHUMA_ATIVIDADE_ENCONTRADA`, `IA_CREDENCIAL_RECUSADA`, `IA_INDISPONIVEL`, `TEMPO_ESGOTADO`, `QUANTIDADE_ESTIMADA`)
 
 ### Domain — regras
 
@@ -92,7 +92,8 @@ Tipo de documento: **regra por palavras-chave** escolhe o schema; a IA devolve o
   - `ground(extracted, pages) -> GroundingResult`: confere data, horas, número/identificador, título e nome no texto da página citada; o que falha vira `null` + `NAO_ENCONTRADO_NO_TEXTO(campo)`; devolve a fração de campos verificáveis encontrados (EXT-10)
   - `final_confidence(llm_confidence, grounded_ratio) -> Decimal` = o menor dos dois; `< 0.70` pede revisão (EXT-12)
   - `same_person(extracted_name, professor_name, siape, text) -> bool` (EXT-11)
-  - `suggest_item(taxonomy, extras) -> Suggestion(principal, alternatives, source_note)` com a tabela da seção abaixo (CLS-02..05)
+  - `suggest_item(taxonomy, extras) -> Suggestion(principal | None, alternatives, source_note)` com a tabela da seção abaixo (CLS-02..05); `principal is None` significa sem item
+  - `confirm_extension_course(taxonomy, text) -> taxonomy`: rebaixa `CURSO_EXTENSAO_CONCLUIDO` para `CURSO_CONCLUIDO` se o texto não contém "extensão" (CLS-10)
   - `derive_quantity(taxonomy, extracted) -> QuantityResult` (CLS-06)
 - **Dependencies**: stdlib (`re`, `unicodedata`, `decimal`, `datetime`)
 - **Reuses**: `normalize_title`
@@ -148,7 +149,7 @@ Tipo de documento: **regra por palavras-chave** escolhe o schema; a IA devolve o
 
 ## Regras de sugestão (taxonomia → item) — para revisão do usuário
 
-A tabela vira `suggestion_rules.py`. A numeração é a do Anexo I da Res. 4.644/2015 (a mesma nas tabelas do IFCH e da FASI). O item **principal** é o gravado como escolhido; os **alternativos** entram como candidatos. As linhas marcadas com ⚠ são decisões de prática que a norma não resolve; confirme ou corrija.
+A tabela vira `suggestion_rules.py`. A numeração é a do Anexo I da Res. 4.644/2015 (a mesma nas tabelas do IFCH e da FASI). O item **principal** é o gravado como escolhido; os **alternativos** entram como candidatos. Tipo **sem item** não cria atividade: o documento fica `PROCESSADO` com o aviso `SEM_ITEM_DE_PONTUACAO`, e o usuário pode criar a atividade à mão. As quatro decisões de prática foram do usuário em 2026-11-17 (coorientação de TCC, palestra, curso concluído, treinamento).
 
 | Código da taxonomia | Principal | Alternativos | Quantidade e horas | Observação |
 | --- | --- | --- | --- | --- |
@@ -158,7 +159,7 @@ A tabela vira `suggestion_rules.py`. A numeração é a do Anexo I da Res. 4.644
 | `ORIENTACAO_MESTRADO` / `COORIENTACAO_MESTRADO` | II.3 / II.5 | — | 1 | Defendida |
 | `ORIENTACAO_ESPECIALIZACAO` | II.6 | — | 1 | Concluída |
 | `ORIENTACAO_TCC_GRADUACAO` | II.7 | — | 1 | Defendido |
-| `COORIENTACAO_TCC_GRADUACAO` ⚠ | II.7 | sem item | 1 | O Anexo I não prevê coorientação de TCC de graduação |
+| `COORIENTACAO_TCC_GRADUACAO` | sem item | — | — | Não pontua (decisão do usuário); não cria atividade |
 | `ORIENTACAO_EM_ANDAMENTO_DOUTORADO` / `MESTRADO` / `TCC` | II.14 / II.15 / II.16 | — | 1 | Em andamento |
 | `ORIENTACAO_PROJETO_INSTITUCIONAL` | II.8 | II.9 | 1 | Por aluno |
 | `ORIENTACAO_ESTAGIO` / `MONITORIA` | II.12 / II.13 | — | 1 | Por aluno/ano; por aluno |
@@ -182,9 +183,10 @@ A tabela vira `suggestion_rules.py`. A numeração é a do Anexo I da Res. 4.644
 | `COLEGIADO_MEMBRO` | VI.13 | — | anos | |
 | `CURSO_ESPECIALIZACAO_CONCLUIDO` | VII.7 | — | 1 | 360 horas |
 | `CURSO_APERFEICOAMENTO_CONCLUIDO` | VII.8 | VII.9 | 1 | 180 horas |
-| `CURSO_CONCLUIDO` ⚠ | VII.9 | VII.10 | 1 | Curso com frequência e aproveitamento |
-| `PARTICIPACAO_EVENTO` ⚠ | VII.10 | — | 1 | Congresso, seminário, curta duração |
-| `TREINAMENTO_INTERNO` ⚠ | VII.10 | sem item | 1 | Treinamentos corporativos (como os certificados PSI) |
+| `CURSO_EXTENSAO_CONCLUIDO` | VII.9 | — | 1 | Só vale se o texto do documento contém "extensão"; senão vira `CURSO_CONCLUIDO` |
+| `CURSO_CONCLUIDO` | VII.10 | — | 1 | Outro curso concluído |
+| `PARTICIPACAO_EVENTO` | VII.10 | — | 1 | Congresso, seminário, curta duração |
+| `TREINAMENTO_INTERNO` | VII.10 | — | 1 | Treinamentos corporativos (como os certificados PSI) |
 | `ESTAGIO_CAPACITACAO` | VII.11 | — | horas (bloco 30 h) | |
 | `LIVRO_COM_PARECERISTAS` / `SEM` | VIII.1 / VIII.2 | — | 1 | |
 | `CAPITULO_INTERNACIONAL` / `NACIONAL` | VIII.3 / VIII.4 | — | 1 | |
@@ -194,11 +196,11 @@ A tabela vira `suggestion_rules.py`. A numeração é a do Anexo I da Res. 4.644
 | `TRABALHO_COMPLETO_CONGRESSO` | VIII.23 | VIII.12 | 1 | |
 | `COMUNICACAO_COM_RESUMO` / `SEM_RESUMO` | VIII.24 / VIII.25 | — | 1 | |
 | `APRESENTACAO_TRABALHO_INTERNACIONAL` / `NACIONAL` | VIII.26 / VIII.27 | — | 1 | |
-| `PALESTRA` ⚠ | VIII.28 | IV.7, VII.10 | 1 | Palestra, conferência ou mesa-redonda |
+| `PALESTRA` | VIII.28 | — | 1 | Palestra, conferência ou mesa-redonda (decisão do usuário) |
 | `PATENTE_DEPOSITADA` / `CONCEDIDA` | VIII.35 / VIII.36 | — | 1 | |
 | `REGISTRO_SOFTWARE` | VIII.63 | — | 1 | INPI |
 | `CONSULTORIA_AD_HOC` | VIII.66 | — | anos | |
-| `OUTRA` | — | — | — | `SEM_ENQUADRAMENTO` |
+| `OUTRA` | sem item | — | — | Não cria atividade; `SEM_ITEM_DE_PONTUACAO` |
 
 ---
 

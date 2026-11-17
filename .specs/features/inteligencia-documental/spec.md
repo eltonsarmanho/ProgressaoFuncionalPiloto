@@ -46,7 +46,11 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Qualidade do texto e OCR | Camada de texto inutilizável com menos de 50 caracteres úteis ou mais de 30% de símbolos; OCR Tesseract `por` a 300 dpi; confiança mínima 60% | As portarias reais têm camada de texto com lixo; limiares simples e ajustáveis | n |
 | Texto enviado à IA | Somente texto das 6 primeiras páginas; sem imagens | Prompt: IA não faz OCR; artigos longos só precisam da primeira página | n |
 | Confiança mínima | 0,70; abaixo disso a atividade pede revisão | Padrão do agente; ajustável | n |
-| Taxonomia e regras de sugestão | Códigos fixos e regras versionadas como dados, com a fonte no Anexo I; o usuário revisa a tabela no Design | Evita regra institucional escondida no prompt; ambiguidades (coorientação de TCC, palestras, certificados) viram itens alternativos | n |
+| Taxonomia e regras de sugestão | Códigos fixos e regras versionadas como dados, com a fonte no Anexo I; o usuário revisa a tabela no Design | Evita regra institucional escondida no prompt; o usuário decidiu as quatro ambiguidades em 2026-11-17 (ver as linhas seguintes) | y |
+| Documentos sem item de pontuação | Muitos documentos reais não preenchem a tabela; o sistema os processa e guarda, não cria atividade e avisa `SEM_ITEM_DE_PONTUACAO`; o usuário pode criar a atividade à mão a partir do documento | Decisão do usuário em 2026-11-17: evita encher a Etapa 3 de atividades sem enquadramento | y |
+| Coorientação de TCC de graduação | Não pontua: sem item e sem atividade | Decisão do usuário em 2026-11-17 | y |
+| Palestra, conferência e mesa-redonda | VIII.28, sem alternativas | Decisão do usuário em 2026-11-17 | y |
+| Curso concluído e treinamento | Curso de extensão (o documento diz "extensão"): VII.9. Outro curso concluído, treinamento e participação em evento: VII.10 | Decisão do usuário em 2026-11-17; o usuário escreveu VII.19, que não existe; aplicado VII.9 ("curso de extensão, com frequência e aproveitamento") | y |
 | Reprocessamento | Rejeita os rascunhos não editados da execução anterior e mantém as atividades validadas ou editadas | Evita lixo duplicado sem apagar trabalho humano | n |
 | Substituição e exclusão | Substituir apaga o arquivo anterior e a auditoria guarda nome e hash; excluir é física, com justificativa; as atividades ficam | Prompt pede preservar o original durante o processamento, não indefinidamente | n |
 | Retenção | Sem expiração automática; os documentos ficam enquanto o usuário não os excluir | O processo não é excluído, só arquivado; política de retenção fica para a implantação | n |
@@ -151,13 +155,14 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 1. The system SHALL restringir o tipo da atividade a uma taxonomia fechada de códigos, aceitando `OUTRA` quando nenhum serve.
 2. The system SHALL mapear cada tipo da taxonomia, por regra determinística e versionada, a um item sugerido e a itens alternativos da numeração do Anexo I da Res. 4.644/2015, registrando a fonte de cada regra.
-3. IF o tipo é `OUTRA`, ou não há regra para ele THEN the system SHALL criar a atividade sem grupo e item, com a razão `SEM_ENQUADRAMENTO`.
+3. IF o tipo é `OUTRA`, ou a regra do tipo não prevê item de pontuação (como a coorientação de TCC de graduação) THEN the system SHALL não criar atividade, marcar o documento `PROCESSADO` com o aviso `SEM_ITEM_DE_PONTUACAO` e manter o texto e os dados extraídos disponíveis para o usuário criar a atividade à mão.
 4. WHERE o tipo tem itens alternativos the system SHALL gravar o item principal como o escolhido e os demais como candidatos, sem justificativa de escolha, até o usuário confirmar.
 5. IF o item sugerido não existe na tabela escolhida do processo THEN the system SHALL criar a atividade com a razão `SEM_ENQUADRAMENTO`.
 6. The system SHALL derivar quantidade e horas por regras determinísticas a partir dos campos extraídos, e SHALL nunca pedir à IA que calcule pontos, quantidades ou horas.
 7. WHEN o documento descreve mais de uma atividade, como uma declaração de disciplinas por período letivo THEN the system SHALL criar uma atividade por item descrito.
 8. The system SHALL criar toda atividade vinda da extração com origem `SUGERIDA_IA` e status `AGUARDANDO_REVISAO`, e SHALL nunca tratá-la como definitiva.
 9. WHEN a data extraída da atividade está fora do interstício do processo THEN the system SHALL sinalizar `FORA_DO_INTERSTICIO` na sugestão e manter a atividade para revisão.
+10. WHERE o tipo sugerido é curso concluído de extensão the system SHALL aceitá-lo somente se o texto do documento contém a palavra "extensão"; IF não contém THEN the system SHALL tratá-lo como curso concluído comum.
 
 **Independent Test**: Extrair uma declaração de banca de TCC e ver o item sugerido, as alternativas e a origem da regra.
 
@@ -215,6 +220,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 6. WHEN o usuário abre a Etapa 3 THEN the frontend SHALL listar as atividades com origem, status, grupo e item, pontuação potencial e documentos vinculados (nome e página), com ações de validar, rejeitar, editar com justificativa, vincular documento e validar as selecionadas.
 7. WHILE um documento está `EXTRAIDO_SEM_IA` the frontend SHALL exibir o aviso de que a IA ficou indisponível e orientar o cadastro manual da atividade.
 8. The frontend SHALL ser utilizável em largura de 360 px sem rolagem horizontal.
+9. WHEN o usuário escolhe criar atividade a partir de um documento THEN the frontend SHALL abrir o formulário de atividade com o documento já vinculado, e, quando o documento tem aviso `SEM_ITEM_DE_PONTUACAO`, SHALL exibir esse aviso ao lado do documento na lista.
 
 **Independent Test**: No navegador, enviar documentos, acompanhar o processamento e validar as atividades sugeridas.
 
@@ -241,6 +247,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 Edge cases are usually unwanted-behavior (IF/THEN) or boundary (WHEN) criteria:
 
+- WHEN um lote de documentos tem vários que não correspondem a nenhum item (certificados de treinamento sem item, coorientação de TCC) THEN the system SHALL processar todos, criar atividades só para os que têm item e listar os demais como `SEM_ITEM_DE_PONTUACAO`.
 - IF um PDF tem páginas com camada de texto boa e páginas digitalizadas THEN the system SHALL usar o método `TEXTO` nas primeiras e `OCR` nas demais, página a página.
 - WHEN o mesmo arquivo é enviado duas vezes na mesma requisição THEN the system SHALL gravar o primeiro e responder 409 ao segundo.
 - IF a IA devolve uma lista de atividades vazia para um documento legível THEN the system SHALL marcar o documento `PROCESSADO` com o aviso `NENHUMA_ATIVIDADE_ENCONTRADA`.
@@ -303,6 +310,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLS-07 | P1: Classificação em item de pontuação | Design | Pending |
 | CLS-08 | P1: Classificação em item de pontuação | Design | Pending |
 | CLS-09 | P1: Classificação em item de pontuação | Design | Pending |
+| CLS-10 | P1: Classificação em item de pontuação | Design | Pending |
 | VINC-01 | P1: Atividades ligadas aos documentos | Design | Pending |
 | VINC-02 | P1: Atividades ligadas aos documentos | Design | Pending |
 | VINC-03 | P1: Atividades ligadas aos documentos | Design | Pending |
@@ -321,6 +329,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | TELA-06 | P1: Etapas 2 e 3 na interface | Design | Pending |
 | TELA-07 | P1: Etapas 2 e 3 na interface | Design | Pending |
 | TELA-08 | P1: Etapas 2 e 3 na interface | Design | Pending |
+| TELA-09 | P1: Etapas 2 e 3 na interface | Design | Pending |
 | ACC-01 | P2: Aceitação com os documentos reais | Design | Pending |
 | ACC-02 | P2: Aceitação com os documentos reais | Design | Pending |
 | ACC-03 | P2: Aceitação com os documentos reais | Design | Pending |
@@ -330,7 +339,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 70 total, 0 mapped to tasks, 70 unmapped ⚠️ (esperado antes de Tasks)
+**Coverage:** 72 total, 0 mapped to tasks, 72 unmapped ⚠️ (esperado antes de Tasks)
 
 ---
 
