@@ -998,10 +998,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Atividade com um vínculo e sem nota: conta em `with_evidence` e não emite `SEM_COMPROVANTE`
-- [ ] Sem vínculo e sem nota: emite `SEM_COMPROVANTE`
-- [ ] Com nota e sem vínculo: conta e não emite (comportamento anterior preservado)
-- [ ] Os testes existentes do motor continuam passando sem alteração; Gate quick passa; 6+ testes novos
+- [x] Atividade com um vínculo e sem nota: conta em `with_evidence` e não emite `SEM_COMPROVANTE`
+- [x] Sem vínculo e sem nota: emite `SEM_COMPROVANTE`
+- [x] Com nota e sem vínculo: conta e não emite (comportamento anterior preservado)
+- [x] Os testes existentes do motor continuam passando sem alteração; Gate quick passa; 6+ testes novos
 
 **Tests**: unit
 **Gate**: quick

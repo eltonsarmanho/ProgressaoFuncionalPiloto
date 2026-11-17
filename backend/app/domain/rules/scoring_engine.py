@@ -8,7 +8,7 @@ Per-activity points stay uncapped; caps apply to the summed subtotals and are re
 """
 
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from enum import StrEnum
@@ -45,6 +45,7 @@ class ScoringRow:
     status: RowStatus
     reasons: tuple[NotScoredReason, ...] = ()
     alerts: tuple[Alert, ...] = ()
+    evidence_count: int = 0  # documents linked to the activity (VINC-04)
 
 
 @dataclass(frozen=True)
@@ -87,7 +88,12 @@ def _limit_alert(label: str, before: Decimal, after: Decimal, version) -> Alert:
     return _row_alert(ScoringAlertCode.LIMITE_APLICADO, message, version)
 
 
-def _not_scored(activity: Activity, reason: NotScoredReason) -> ScoringRow:
+def has_evidence(activity: Activity, evidence_count: int) -> bool:
+    """A linked document or a non-empty evidence note proves the activity (VINC-04)."""
+    return evidence_count > 0 or bool((activity.evidence_note or "").strip())
+
+
+def _not_scored(activity: Activity, reason: NotScoredReason, evidence_count: int) -> ScoringRow:
     return ScoringRow(
         activity_id=activity.id,
         group_number=activity.group_number,
@@ -98,6 +104,7 @@ def _not_scored(activity: Activity, reason: NotScoredReason) -> ScoringRow:
         points=ZERO,
         status=RowStatus.NAO_PONTUADA,
         reasons=(reason,),
+        evidence_count=evidence_count,
     )
 
 
@@ -120,29 +127,30 @@ def _evaluate(
     interstice: Interstice,
     duplicates: set[UUID],
     limit_adjustments: list[LimitAdjustment],
+    evidence_count: int,
 ) -> ScoringRow:
     criterion = None
     if activity.group_number is not None and activity.item_number is not None:
         criterion = version.get_criterion(activity.group_number, activity.item_number)
     if criterion is None:
-        return _not_scored(activity, NotScoredReason.SEM_ENQUADRAMENTO)
+        return _not_scored(activity, NotScoredReason.SEM_ENQUADRAMENTO, evidence_count)
     if activity.status is ActivityStatus.REJEITADA:
-        return _not_scored(activity, NotScoredReason.REJEITADA)
+        return _not_scored(activity, NotScoredReason.REJEITADA, evidence_count)
 
     state = evaluate_period(activity, interstice)
     if state is PeriodState.FORA:
-        return _not_scored(activity, NotScoredReason.FORA_DO_INTERSTICIO)
+        return _not_scored(activity, NotScoredReason.FORA_DO_INTERSTICIO, evidence_count)
 
     group = version.get_group(criterion.group_number)
     if group is not None and not group.counts_in_total:
-        return _not_scored(activity, NotScoredReason.GRUPO_NAO_CONTA)
+        return _not_scored(activity, NotScoredReason.GRUPO_NAO_CONTA, evidence_count)
     if activity.id in duplicates:
-        return _not_scored(activity, NotScoredReason.DUPLICIDADE)
+        return _not_scored(activity, NotScoredReason.DUPLICIDADE, evidence_count)
 
     result = criterion_points(criterion, activity)
     alerts = _period_alerts(state, version)
-    if not (activity.evidence_note or "").strip():
-        message = "A atividade não tem nota de comprovante."
+    if not has_evidence(activity, evidence_count):
+        message = "A atividade não tem documento vinculado nem nota de comprovante."
         alerts.append(_row_alert(ScoringAlertCode.SEM_COMPROVANTE, message, version))
     if result.overridden:
         message = "Pontos informados manualmente substituem o cálculo da carga semanal."
@@ -176,6 +184,7 @@ def _evaluate(
         points=result.points,
         status=RowStatus.PONTUADA if scored else RowStatus.POTENCIAL,
         alerts=tuple(alerts),
+        evidence_count=evidence_count,
     )
 
 
@@ -215,11 +224,19 @@ def _subtotals(
 
 
 def calculate(
-    version: ScoringTableVersion, activities: Sequence[Activity], interstice: Interstice
+    version: ScoringTableVersion,
+    activities: Sequence[Activity],
+    interstice: Interstice,
+    evidence_counts: Mapping[UUID, int] | None = None,
 ) -> ScoringResult:
+    """`evidence_counts` maps an activity id to its linked documents; absent means none."""
+    counts = evidence_counts or {}
     duplicates = find_duplicates(activities)
     adjustments: list[LimitAdjustment] = []
-    rows = tuple(_evaluate(a, version, interstice, duplicates, adjustments) for a in activities)
+    rows = tuple(
+        _evaluate(a, version, interstice, duplicates, adjustments, counts.get(a.id, 0))
+        for a in activities
+    )
 
     subtotals = _subtotals(version, rows, adjustments)
     total = sum(subtotals.values(), ZERO)
@@ -230,7 +247,7 @@ def calculate(
 
     counters = Counters(
         activities=len(activities),
-        with_evidence=sum(1 for a in activities if (a.evidence_note or "").strip()),
+        with_evidence=sum(1 for a in activities if has_evidence(a, counts.get(a.id, 0))),
         pending=sum(1 for a in activities if a.status is ActivityStatus.AGUARDANDO_REVISAO),
         not_scored=sum(1 for r in rows if r.status is RowStatus.NAO_PONTUADA),
         with_alerts=sum(1 for r in rows if r.alerts),
