@@ -373,9 +373,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] `alembic upgrade head` e `downgrade -1` funcionam no Postgres de teste
-- [ ] Constraints: único (versão, número do grupo), único (grupo, item), número do grupo de 1 a 8
-- [ ] Gate full passa; 5+ testes
+- [x] `alembic upgrade head` e `downgrade -1` funcionam no Postgres de teste
+- [x] Constraints: único (versão, número do grupo), único (grupo, item), número do grupo de 1 a 8
+- [x] Gate full passa; 5+ testes
 
 **Tests**: integration
 **Gate**: full

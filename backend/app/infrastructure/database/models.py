@@ -2,30 +2,37 @@
 
 import uuid
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
     CHAR,
     BigInteger,
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     Enum,
     ForeignKey,
     Index,
     Integer,
+    Numeric,
+    SmallInteger,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import CITEXT, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from app.domain.entities.academic_unit import UnitKind
+from app.domain.entities.activity import ActivitySource, ActivityStatus, Level, PeriodPrecision
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.career import Modality
 from app.domain.entities.process import ProcessStatus
 from app.domain.entities.professor import Titration, WorkRegime
+from app.domain.entities.scoring import ScoringMode, TableStatus
 from app.domain.entities.user import Role
 
 
@@ -169,6 +176,9 @@ class FunctionalProcessModel(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     version: Mapped[int] = mapped_column(Integer, default=1)
+    scoring_table_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scoring_table_versions.id")
+    )
 
 
 class AuditLogModel(Base):
@@ -183,3 +193,123 @@ class AuditLogModel(Base):
     action: Mapped[AuditAction] = mapped_column(_enum(AuditAction, "audit_action"))
     changes: Mapped[dict[str, Any]] = mapped_column(JSONB)
     justification: Mapped[str | None] = mapped_column(Text)
+
+
+class ScoringTableModel(Base):
+    __tablename__ = "scoring_tables"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), unique=True)
+    archived: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class ScoringTableUnitModel(Base):
+    __tablename__ = "scoring_table_units"
+
+    table_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scoring_tables.id", ondelete="CASCADE"), primary_key=True
+    )
+    unit_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("academic_units.id"), primary_key=True
+    )
+
+
+class ScoringTableVersionModel(Base):
+    __tablename__ = "scoring_table_versions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    table_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("scoring_tables.id"))
+    name: Mapped[str] = mapped_column(String(255))
+    valid_from: Mapped[date] = mapped_column(Date)
+    valid_to: Mapped[date | None] = mapped_column(Date)
+    norm_reference: Mapped[str] = mapped_column(Text)
+    status: Mapped[TableStatus] = mapped_column(_enum(TableStatus, "table_status"))
+    minimums: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    notes: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ScoringGroupModel(Base):
+    __tablename__ = "scoring_groups"
+    __table_args__ = (
+        UniqueConstraint("version_id", "number", name="uq_scoring_groups_version_number"),
+        CheckConstraint("number BETWEEN 1 AND 8", name="ck_scoring_groups_number"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scoring_table_versions.id", ondelete="CASCADE")
+    )
+    number: Mapped[int] = mapped_column(SmallInteger)
+    name: Mapped[str] = mapped_column(String(255))
+    counts_in_total: Mapped[bool] = mapped_column(Boolean)
+    max_points: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
+
+
+class ScoringCriterionModel(Base):
+    __tablename__ = "scoring_criteria"
+    __table_args__ = (
+        UniqueConstraint("group_id", "item_number", name="uq_scoring_criteria_group_item"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    group_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scoring_groups.id", ondelete="CASCADE")
+    )
+    item_number: Mapped[int] = mapped_column(SmallInteger)
+    description: Mapped[str] = mapped_column(Text)
+    unit_label: Mapped[str] = mapped_column(Text)
+    mode: Mapped[ScoringMode] = mapped_column(_enum(ScoringMode, "scoring_mode"))
+    unit_points: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
+    hours_per_block: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
+    weeks_per_semester: Mapped[int | None] = mapped_column(SmallInteger)
+    prep_ratio: Mapped[Decimal | None] = mapped_column(Numeric(4, 2))
+    max_points: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
+    accepted_evidence: Mapped[str] = mapped_column(Text)
+    rules: Mapped[str] = mapped_column(Text)
+    review_note: Mapped[str | None] = mapped_column(Text)
+
+
+class ActivityModel(Base):
+    __tablename__ = "activities"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    process_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_processes.id"), index=True
+    )
+    group_number: Mapped[int | None] = mapped_column(SmallInteger)
+    item_number: Mapped[int | None] = mapped_column(SmallInteger)
+    title: Mapped[str] = mapped_column(String(300))
+    description: Mapped[str] = mapped_column(Text)
+    event_date: Mapped[date | None] = mapped_column(Date)
+    period_start: Mapped[date | None] = mapped_column(Date)
+    period_end: Mapped[date | None] = mapped_column(Date)
+    period_precision: Mapped[PeriodPrecision] = mapped_column(
+        _enum(PeriodPrecision, "period_precision")
+    )
+    academic_period: Mapped[str | None] = mapped_column(String(7))
+    level: Mapped[Level | None] = mapped_column(_enum(Level, "activity_level"))
+    quantity: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
+    hours: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
+    course_hours: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
+    informed_points: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
+    points_override: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
+    evidence_note: Mapped[str | None] = mapped_column(String(500))
+    source: Mapped[ActivitySource] = mapped_column(_enum(ActivitySource, "activity_source"))
+    status: Mapped[ActivityStatus] = mapped_column(_enum(ActivityStatus, "activity_status"))
+    distinct_justification: Mapped[str | None] = mapped_column(Text)
+    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    version: Mapped[int] = mapped_column(Integer, default=1)
+
+
+class ActivityCandidateModel(Base):
+    __tablename__ = "activity_candidates"
+
+    activity_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("activities.id", ondelete="CASCADE"), primary_key=True
+    )
+    group_number: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
+    item_number: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
+    justification: Mapped[str] = mapped_column(Text)
