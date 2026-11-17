@@ -426,10 +426,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Contagem por grupo exatamente 3, 16, 12, 7, 6, 14, 11, 66
-- [ ] Soma das pontuações por grupo conferida contra o PDF (valor da soma registrado no teste)
-- [ ] Itens de referência conferidos: II.2 = 30, III.2 = 8, IV.4 = 2, VI.10 = 7, VII.10 = 1, VIII.1 = 50
-- [ ] Gate quick passa; 6+ testes
+- [x] Contagem por grupo exatamente 3, 16, 12, 7, 6, 14, 11, 66
+- [x] Soma das pontuações por grupo conferida contra o PDF (valor da soma registrado no teste)
+- [x] Itens de referência conferidos: II.2 = 30, III.2 = 8, IV.4 = 2, VI.10 = 7, VII.10 = 1, VIII.1 = 50
+- [x] Gate quick passa; 6+ testes
 
 **Tests**: unit
 **Gate**: quick
