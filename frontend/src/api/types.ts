@@ -43,3 +43,40 @@ export type Professor = {
   archived: boolean;
   version: number;
 };
+
+export type Alert = {
+  code: string;
+  severity: Severity;
+  message: string;
+  norm_reference: string;
+};
+
+export type ProcessFields = {
+  modality: Modality;
+  current_class: string;
+  current_denomination: string;
+  current_level: number;
+  target_class: string;
+  target_denomination: string;
+  target_level: number;
+  start_date: string;
+  end_date: string;
+  opening_date: string;
+  notes: string | null;
+  resp_name: string | null;
+  resp_position: string | null;
+  resp_appointment: string | null;
+  resp_admin_unit: string | null;
+};
+
+export type Process = ProcessFields & {
+  id: string;
+  professor_id: string;
+  unit_id: string;
+  status: ProcessStatus;
+  version: number;
+  created_at: string | null;
+  updated_at: string | null;
+  interstice: Interstice;
+  alerts: Alert[];
+};

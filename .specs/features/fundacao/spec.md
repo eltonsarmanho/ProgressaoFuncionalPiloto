@@ -294,10 +294,10 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | AUD-04 | P1: Trilha de auditoria | Design | Implementing |
 | UI-01 | P1: Interface web | Design | Implementing |
 | UI-02 | P1: Interface web | Design | Implementing |
-| UI-03 | P1: Interface web | Design | Pending |
-| UI-04 | P1: Interface web | Design | Pending |
+| UI-03 | P1: Interface web | Design | Implementing |
+| UI-04 | P1: Interface web | Design | Implementing |
 | UI-05 | P1: Interface web | Design | Implementing |
-| UI-06 | P1: Interface web | Design | Pending |
+| UI-06 | P1: Interface web | Design | Implementing |
 | UNIT-01 | P2: Unidades acadêmicas | Design | Implementing |
 | UNIT-02 | P2: Unidades acadêmicas | Design | Implementing |
 | UNIT-03 | P2: Unidades acadêmicas | Design | Implementing |

@@ -201,3 +201,65 @@ h2 {
 [aria-invalid="true"] {
   border-color: var(--erro);
 }
+
+fieldset {
+  min-width: 0;
+  margin: 1rem 0 0;
+  padding: 0.5rem 0.75rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+fieldset.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0 1rem;
+}
+
+fieldset.grid legend {
+  grid-column: 1 / -1;
+}
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.step {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 0.9rem;
+}
+
+.step.active {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.step.disabled {
+  color: var(--muted);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.alert-group h3 {
+  font-size: 1rem;
+  margin: 1rem 0 0.25rem;
+}
+
+.alert-group ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.alert-group li {
+  margin-bottom: 0.5rem;
+  color: var(--fg);
+}

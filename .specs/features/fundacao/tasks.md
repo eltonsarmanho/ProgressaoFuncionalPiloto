@@ -738,9 +738,9 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Teste: após salvar, exibe duração e alertas agrupados; etapas 2–9 desabilitadas com "em breve"
-- [ ] CSS sem largura fixa > 360 px (verificado em teste de estilo ou revisão no navegador)
-- [ ] Build gate passa
+- [x] Teste: após salvar, exibe duração e alertas agrupados; etapas 2–9 desabilitadas com "em breve"
+- [x] CSS sem largura fixa > 360 px (verificado em teste de estilo ou revisão no navegador)
+- [x] Build gate passa
 
 **Tests**: unit
 **Gate**: build
