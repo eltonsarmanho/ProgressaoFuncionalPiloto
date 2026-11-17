@@ -390,9 +390,9 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Curso de 21 h: quantidade 1 e horas 21; evento coordenado: quantidade 1
-- [ ] `ESTAGIO_CAPACITACAO` continua com horas e sem quantidade
-- [ ] Gate quick passa; 8+ testes
+- [x] Curso de 21 h: quantidade 1 e horas 21; evento coordenado: quantidade 1
+- [x] `ESTAGIO_CAPACITACAO` continua com horas e sem quantidade
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick

@@ -319,7 +319,7 @@ def test_the_word_extension_on_another_page_counts():
 # --- CLS-06: quantity and hours by rule ----------------------------------------------------------
 
 
-def test_hour_based_item_takes_the_hours_from_the_text_and_no_quantity():
+def test_course_takes_the_hours_from_the_text_and_counts_one_per_document():
     text = "Declaramos que Fulana de Tal Exemplo ministrou o curso Oficina de Dados, 20 horas."
     item = activity(
         taxonomy="EXTENSAO_CURSO_MINISTRANTE",
@@ -330,7 +330,7 @@ def test_hour_based_item_takes_the_hours_from_the_text_and_no_quantity():
         evidence_text="ministrou o curso",
     )
     found = analyze(payload(item), text).activities[0]
-    assert (found.quantity, found.hours, found.course_hours) == (None, Decimal(20), Decimal(20))
+    assert (found.quantity, found.hours, found.course_hours) == (1, Decimal(20), Decimal(20))
     assert (found.group_number, found.item_number) == (4, 4)
 
 

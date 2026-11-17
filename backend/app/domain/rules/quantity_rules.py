@@ -9,13 +9,14 @@ from app.domain.entities.document import DocAlertCode
 from app.domain.entities.extraction import ExtractedActivity
 from app.domain.entities.extraction import TaxonomyCode as T
 
-_HOUR_BASED = frozenset(
+_HOUR_BASED = frozenset({T.ESTAGIO_CAPACITACAO})
+# One per document; the extracted hours are kept for the minimum course load check (MAP-04).
+_PER_DOCUMENT_WITH_HOURS = frozenset(
     {
         T.EXTENSAO_CURSO_COORDENACAO,
         T.EXTENSAO_CURSO_MINISTRANTE,
         T.EXTENSAO_EVENTO_COORDENACAO,
         T.EXTENSAO_EVENTO_MINISTRANTE,
-        T.ESTAGIO_CAPACITACAO,
     }
 )
 _PER_YEAR = frozenset(
@@ -56,6 +57,8 @@ def derive_quantity(taxonomy: T, extracted: ExtractedActivity) -> QuantityResult
         return QuantityResult(None, extracted.hours, extracted.level, extracted.academic_period, ())
     if taxonomy in _HOUR_BASED:
         return QuantityResult(None, extracted.hours, None, None, ())
+    if taxonomy in _PER_DOCUMENT_WITH_HOURS:
+        return QuantityResult(Decimal(1), extracted.hours, None, None, ())
     if taxonomy in _PER_YEAR:
         years = 1
         if extracted.start_date and extracted.end_date:

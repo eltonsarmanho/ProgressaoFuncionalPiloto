@@ -16,12 +16,12 @@ D = Decimal
 
 BANCAS = [t for t in T if t.value.startswith("BANCA_")]
 ORIENTACOES = [t for t in T if "ORIENTACAO" in t.value]
-HOUR_BASED = [
+HOUR_BASED = [T.ESTAGIO_CAPACITACAO]
+PER_DOCUMENT_WITH_HOURS = [
     T.EXTENSAO_CURSO_COORDENACAO,
     T.EXTENSAO_CURSO_MINISTRANTE,
     T.EXTENSAO_EVENTO_COORDENACAO,
     T.EXTENSAO_EVENTO_MINISTRANTE,
-    T.ESTAGIO_CAPACITACAO,
 ]
 PER_YEAR = [
     T.EXTENSAO_PROJETO_COORDENACAO,
@@ -78,27 +78,48 @@ def test_everything_else_has_quantity_one(taxonomy):
 
 
 @pytest.mark.parametrize("taxonomy", HOUR_BASED)
-def test_hour_based_items_carry_the_extracted_hours_and_no_quantity(taxonomy):
-    result = derive_quantity(taxonomy, extracted(taxonomy, hours=D("21")))
-    assert result.hours == D("21")
+def test_only_the_training_internship_is_hour_based(taxonomy):
+    result = derive_quantity(taxonomy, extracted(taxonomy, hours=D("60")))
+    assert result.hours == D("60")
     assert result.quantity is None
     assert result.warnings == ()
 
 
-def test_course_of_21_hours_gives_hours_21():
+@pytest.mark.parametrize("taxonomy", PER_DOCUMENT_WITH_HOURS)
+def test_courses_and_events_count_one_per_document_and_keep_the_hours(taxonomy):
+    result = derive_quantity(taxonomy, extracted(taxonomy, hours=D("21")))
+    assert result.quantity == D(1)
+    assert result.hours == D("21")
+    assert result.warnings == ()
+
+
+def test_course_of_21_hours_gives_quantity_1_and_hours_21():
     result = derive_quantity(
         T.EXTENSAO_CURSO_MINISTRANTE, extracted(T.EXTENSAO_CURSO_MINISTRANTE, hours=D("21"))
     )
-    assert result.hours == D("21")
+    assert (result.quantity, result.hours) == (D(1), D("21"))
 
 
-def test_hour_based_item_without_hours_leaves_hours_empty():
+def test_coordinated_event_counts_one_without_hours_being_required():
+    result = derive_quantity(
+        T.EXTENSAO_EVENTO_COORDENACAO, extracted(T.EXTENSAO_EVENTO_COORDENACAO)
+    )
+    assert (result.quantity, result.hours) == (D(1), None)
+
+
+@pytest.mark.parametrize("taxonomy", PER_DOCUMENT_WITH_HOURS)
+def test_course_or_event_without_hours_still_counts_one_and_leaves_hours_empty(taxonomy):
+    result = derive_quantity(taxonomy, extracted(taxonomy))
+    assert (result.quantity, result.hours) == (D(1), None)
+
+
+def test_internship_without_hours_leaves_hours_and_quantity_empty():
     result = derive_quantity(T.ESTAGIO_CAPACITACAO, extracted(T.ESTAGIO_CAPACITACAO))
     assert result.hours is None
     assert result.quantity is None
 
 
-def test_hour_based_item_does_not_take_the_hours_from_the_course_workload_of_a_discipline():
+def test_course_hours_are_not_taken_from_the_course_workload_of_a_discipline():
     activity = extracted(T.EXTENSAO_EVENTO_MINISTRANTE, hours=D("3"), course_hours=D("60"))
     assert derive_quantity(T.EXTENSAO_EVENTO_MINISTRANTE, activity).hours == D("3")
 
