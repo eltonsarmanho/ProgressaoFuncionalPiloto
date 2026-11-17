@@ -313,9 +313,9 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Os dois arquivos não existem mais e nenhum código os lê
-- [ ] Cada teste removido tem um equivalente para a tabela oficial (contagem, somas, itens de referência) e o commit lista os testes substituídos
-- [ ] Gate full passa
+- [x] Os dois arquivos não existem mais e nenhum código os lê
+- [x] Cada teste removido tem um equivalente para a tabela oficial (contagem, somas, itens de referência) e o commit lista os testes substituídos
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full
