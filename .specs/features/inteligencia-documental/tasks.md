@@ -1266,9 +1266,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] O envio do CSV continua funcionando e mostra os erros por linha
-- [ ] Não há `fetch` direto no componente
-- [ ] Gate quick (frontend) passa
+- [x] O envio do CSV continua funcionando e mostra os erros por linha
+- [x] Não há `fetch` direto no componente
+- [x] Gate quick (frontend) passa
 
 **Tests**: unit
 **Gate**: quick

@@ -147,20 +147,6 @@ function VersionForm({
   );
 }
 
-/** The shared `request` helper only sends JSON, so the multipart upload sends the CSRF token itself. */
-async function postCsv(path: string, form: FormData): Promise<void> {
-  const me = await request<{ csrf_token: string }>("GET", "/api/auth/me");
-  const response = await fetch(path, {
-    method: "POST",
-    headers: { "X-CSRF-Token": me.csrf_token },
-    credentials: "include",
-    body: form,
-  });
-  if (response.ok) return;
-  const text = await response.text();
-  throw new ApiError(response.status, text ? JSON.parse(text)?.detail : undefined);
-}
-
 function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [validFrom, setValidFrom] = useState("");
@@ -175,7 +161,7 @@ function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: () 
     form.set("norm_reference", reference.trim());
     form.set("status", status);
     if (validTo) form.set("valid_to", validTo);
-    await postCsv(`/api/scoring-tables/${table.id}/versions/import`, form);
+    await request("POST", `/api/scoring-tables/${table.id}/versions/import`, form);
     setFile(null);
   }, onChanged);
 
