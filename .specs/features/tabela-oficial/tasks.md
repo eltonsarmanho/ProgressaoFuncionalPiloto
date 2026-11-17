@@ -701,9 +701,9 @@ T24 → T25 → T26 → T27
 
 **Done when**:
 
-- [ ] 19 h: `NAO_PONTUADA` com `CARGA_HORARIA_INSUFICIENTE`; 20 h e 21 h: pontuada (2 pontos)
-- [ ] Sem horas: pontuada com o alerta `CARGA_HORARIA_NAO_INFORMADA`
-- [ ] Gate full passa; 4+ testes
+- [x] 19 h: `NAO_PONTUADA` com `CARGA_HORARIA_INSUFICIENTE`; 20 h e 21 h: pontuada (2 pontos)
+- [x] Sem horas: pontuada com o alerta `CARGA_HORARIA_NAO_INFORMADA`
+- [x] Gate full passa; 4+ testes
 
 **Tests**: integration
 **Gate**: full
