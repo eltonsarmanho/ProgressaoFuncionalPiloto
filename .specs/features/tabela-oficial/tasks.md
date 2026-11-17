@@ -286,10 +286,10 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Banco vazio: só a tabela oficial, `OFICIAL`, associada a FASI e IFCH
-- [ ] Banco com as tabelas antigas sem uso: arquivadas e sem unidades; com uma versão escolhida por processo: mantida sem alteração
-- [ ] Rodar duas vezes não duplica nada e não altera o que já existe
-- [ ] Gate full passa; 10+ testes
+- [x] Banco vazio: só a tabela oficial, `OFICIAL`, associada a FASI e IFCH
+- [x] Banco com as tabelas antigas sem uso: arquivadas e sem unidades; com uma versão escolhida por processo: mantida sem alteração
+- [x] Rodar duas vezes não duplica nada e não altera o que já existe
+- [x] Gate full passa; 10+ testes
 
 **Tests**: integration
 **Gate**: full

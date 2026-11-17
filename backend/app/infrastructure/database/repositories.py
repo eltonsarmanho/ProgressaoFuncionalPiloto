@@ -547,6 +547,12 @@ class SqlScoringTableRepository:
         )
         self._insert_units(table_id, unit_ids)
 
+    def set_table_archived(self, table_id: UUID, archived: bool) -> None:
+        model = self._s.get(ScoringTableModel, table_id)
+        if model is None:
+            raise NotFound("Tabela de pontuação não encontrada")
+        model.archived = archived
+
     def _versions(self, models: Sequence[ScoringTableVersionModel]) -> list[ScoringTableVersion]:
         result = []
         for m in models:

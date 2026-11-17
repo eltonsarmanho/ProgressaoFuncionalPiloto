@@ -31,7 +31,10 @@ FASI = ("Faculdade de Sistemas de Informação", "FASI", UnitKind.FACULDADE)
 IFCH = ("Instituto de Filosofia e Ciências Humanas", "IFCH", UnitKind.INSTITUTO)
 
 SEED_DATA = Path(__file__).parent / "seed_data"
-SCORING_SEEDS = (("ifch.json", "IFCH"), ("fasi.json", "FASI"))
+OFFICIAL_TABLE_SEED = "ufpa.json"
+OFFICIAL_TABLE_UNITS = ("FASI", "IFCH")
+# Tables replaced by the official UFPA table (OFI-08, OFI-09): archived, never deleted.
+LEGACY_TABLE_NAMES = ("Tabela de Pontuação do IFCH", "Tabela de Pontuação da FASI")
 
 
 def _ensure_unit(uow: SqlUnitOfWork, spec: tuple[str, str, UnitKind], parent_id=None):
@@ -94,6 +97,7 @@ def _scoring_version(data: dict[str, Any], table_id: uuid.UUID) -> ScoringTableV
                 accepted_evidence=c["accepted_evidence"],
                 rules=c["rules"],
                 review_note=c["review_note"],
+                min_hours=_decimal(c.get("min_hours")),
             )
             for c in g["criteria"]
         )
@@ -119,30 +123,51 @@ def _scoring_version(data: dict[str, Any], table_id: uuid.UUID) -> ScoringTableV
     )
 
 
-def seed_scoring_tables(uow: SqlUnitOfWork) -> None:
-    """Create the IFCH and FASI scoring tables and associate each to its unit (TAB-03..TAB-06).
+def _archive_legacy_tables(uow: SqlUnitOfWork) -> None:
+    """Archive the IFCH and FASI tables and detach their units (OFI-09).
 
-    Idempotent: an existing table keeps its units; an existing version is left untouched.
-    Requires the units created by `seed_reference_data`.
+    A table with any version chosen by a process stays exactly as it is.
+    """
+    for table in uow.scoring_tables.list_tables():
+        if table.name not in LEGACY_TABLE_NAMES:
+            continue
+        if any(
+            uow.scoring_tables.version_in_use(v.id)
+            for v in uow.scoring_tables.list_versions(table.id)
+        ):
+            continue
+        if not table.archived:
+            uow.scoring_tables.set_table_archived(table.id, True)
+        if table.unit_ids:
+            uow.scoring_tables.set_table_units(table.id, ())
+
+
+def seed_scoring_tables(uow: SqlUnitOfWork) -> None:
+    """Create the official UFPA scoring table for FASI and IFCH and archive the old ones.
+
+    OFI-01, OFI-08..OFI-11. Idempotent: an existing table keeps its units; an existing
+    version is left untouched. Requires the units created by `seed_reference_data`.
     """
     with uow:
         units = {u.acronym: u for u in uow.units.list()}
-        for filename, acronym in SCORING_SEEDS:
-            data = json.loads((SEED_DATA / filename).read_text(encoding="utf-8"))
-            if acronym not in units:
-                raise LookupError(f"Unidade {acronym} não cadastrada; rode a semente de unidades")
-            table = next(
-                (t for t in uow.scoring_tables.list_tables() if t.name == data["table_name"]),
-                None,
+        missing = [a for a in OFFICIAL_TABLE_UNITS if a not in units]
+        if missing:
+            raise LookupError(f"Unidade {missing[0]} não cadastrada; rode a semente de unidades")
+        data = json.loads((SEED_DATA / OFFICIAL_TABLE_SEED).read_text(encoding="utf-8"))
+        table = next(
+            (t for t in uow.scoring_tables.list_tables() if t.name == data["table_name"]), None
+        )
+        if table is None:
+            table = ScoringTableRecord(
+                id=uuid.uuid4(),
+                name=data["table_name"],
+                unit_ids=tuple(units[a].id for a in OFFICIAL_TABLE_UNITS),
             )
-            if table is None:
-                table = ScoringTableRecord(
-                    id=uuid.uuid4(), name=data["table_name"], unit_ids=(units[acronym].id,)
-                )
-                uow.scoring_tables.add_table(table)
-            existing = {v.name for v in uow.scoring_tables.list_versions(table.id)}
-            if data["version_name"] not in existing:
-                uow.scoring_tables.add_version(_scoring_version(data, table.id))
+            uow.scoring_tables.add_table(table)
+        existing = {v.name for v in uow.scoring_tables.list_versions(table.id)}
+        if data["version_name"] not in existing:
+            uow.scoring_tables.add_version(_scoring_version(data, table.id))
+        _archive_legacy_tables(uow)
         uow.commit()
 
 
