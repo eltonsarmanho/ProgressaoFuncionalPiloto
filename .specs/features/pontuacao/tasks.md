@@ -807,9 +807,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Exibe subtotais de cada grupo, total geral, potencial e percentual
-- [ ] Exibe ATINGE, NAO_ATINGE ou NAO_DEFINIDO e os cinco contadores
-- [ ] Gate quick (frontend) passa; 4+ testes
+- [x] Exibe subtotais de cada grupo, total geral, potencial e percentual
+- [x] Exibe ATINGE, NAO_ATINGE ou NAO_DEFINIDO e os cinco contadores
+- [x] Gate quick (frontend) passa; 4+ testes
 
 **Tests**: unit
 **Gate**: quick

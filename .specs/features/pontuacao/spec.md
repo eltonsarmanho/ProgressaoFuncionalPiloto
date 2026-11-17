@@ -330,7 +330,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VERIF-13 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
 | TELA-01 | P1: Etapa 4 na interface | Design | Implementing |
 | TELA-02 | P1: Etapa 4 na interface | Design | Implementing |
-| TELA-03 | P1: Etapa 4 na interface | Design | In Tasks |
+| TELA-03 | P1: Etapa 4 na interface | Design | Implementing |
 | TELA-04 | P1: Etapa 4 na interface | Design | In Tasks |
 | TELA-05 | P1: Etapa 4 na interface | Design | In Tasks |
 | TELA-06 | P1: Etapa 4 na interface | Design | In Tasks |
