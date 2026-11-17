@@ -860,9 +860,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Exibe nome, situação (`PENDENTE_VALIDACAO` em destaque) e referência normativa
-- [ ] Pede justificativa para tabela de outra unidade
-- [ ] Gate quick (frontend) passa; 4+ testes
+- [x] Exibe nome, situação (`PENDENTE_VALIDACAO` em destaque) e referência normativa
+- [x] Pede justificativa para tabela de outra unidade
+- [x] Gate quick (frontend) passa; 4+ testes
 
 **Tests**: unit
 **Gate**: quick

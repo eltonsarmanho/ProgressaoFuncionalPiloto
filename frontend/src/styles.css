@@ -337,3 +337,10 @@ fieldset.grid legend {
     color: var(--muted);
   }
 }
+
+.badge-pending {
+  background: #fff4e5;
+  border-color: var(--alerta);
+  color: var(--alerta);
+  font-weight: 700;
+}

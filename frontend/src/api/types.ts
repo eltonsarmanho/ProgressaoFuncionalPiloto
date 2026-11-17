@@ -200,3 +200,11 @@ export type Activity = {
   candidates: unknown[];
   version: number;
 };
+
+export type ScoringTableInfo = {
+  id: string;
+  name: string;
+  archived: boolean;
+  unit_ids: string[];
+  versions: (VersionInfo & { in_use: boolean })[];
+};
