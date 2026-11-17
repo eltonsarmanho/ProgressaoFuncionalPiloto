@@ -1,0 +1,206 @@
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
+import { setCsrfToken } from "../api/client";
+import type { Activity, DocumentSummary, ScoringGroup, ScoringRow } from "../api/types";
+import { mockFetch } from "../test/fetchMock";
+import { ActivityReviewList } from "./ActivityReviewList";
+
+const GROUPS: ScoringGroup[] = [
+  {
+    number: 3,
+    name: "Bancas",
+    counts_in_total: true,
+    max_points: null,
+    criteria: [
+      { group_number: 3, item_number: 2, description: "Banca de mestrado", unit_label: "banca", mode: "POR_UNIDADE", unit_points: "4.00", hours_per_block: null, weeks_per_semester: null, prep_ratio: null, min_hours: null, max_points: null, accepted_evidence: null, rules: null, review_note: null },
+    ],
+  },
+];
+
+function activity(over: Partial<Activity> = {}): Activity {
+  return {
+    id: "a1",
+    process_id: "p1",
+    title: "Banca de mestrado de Maria",
+    group_number: 3,
+    item_number: 2,
+    description: "",
+    event_date: "2025-05-10",
+    period_start: null,
+    period_end: null,
+    period_precision: "DAY",
+    academic_period: null,
+    level: null,
+    quantidade: "1.00",
+    horas: null,
+    course_hours: null,
+    informed_points: null,
+    points_override: null,
+    evidence_note: null,
+    source: "SUGERIDA_IA",
+    status: "AGUARDANDO_REVISAO",
+    distinct_justification: null,
+    candidates: [],
+    evidences: [{ id: "e1", document_id: "d1", document_name: "ata-defesa.pdf", page: 2, excerpt: "" }],
+    version: 4,
+    ...over,
+  };
+}
+
+const ROW = (id: string, points: string, status: ScoringRow["status"] = "POTENCIAL"): ScoringRow => ({
+  activity_id: id, title: "x", activity_status: "AGUARDANDO_REVISAO", evidence_note: null, group_number: 3, item_number: 2,
+  unit_points: "4.00", effective_quantity: "1.00", formula_text: null, points, pit_hours: null, status, reasons: [], alerts: [],
+});
+
+const DOCS = [{ id: "d1", original_name: "ata-defesa.pdf" }, { id: "d2", original_name: "portaria.pdf" }] as DocumentSummary[];
+
+function setup(activities: Activity[], routes: Parameters<typeof mockFetch>[0] = {}) {
+  setCsrfToken("tok");
+  const mock = mockFetch(routes);
+  const onChanged = vi.fn();
+  render(
+    <ActivityReviewList
+      processId="p1"
+      activities={activities}
+      rows={activities.map((a) => ROW(a.id, "4.00"))}
+      groups={GROUPS}
+      documents={DOCS}
+      onChanged={onChanged}
+    />,
+  );
+  return { ...mock, onChanged, user: userEvent.setup() };
+}
+
+const body = (init: RequestInit | undefined) => JSON.parse(init?.body as string);
+
+describe("TELA-06: lista de revisão", () => {
+  it("mostra origem, status, grupo e item, pontuação potencial e os documentos com a página", () => {
+    setup([activity()]);
+    const row = screen.getByText("Banca de mestrado de Maria", { selector: "td" }).closest("tr")!;
+    expect(within(row).getByText("Sugerido pela IA")).toBeInTheDocument();
+    expect(within(row).getByText("Aguardando revisão")).toBeInTheDocument();
+    expect(row).toHaveTextContent("III.2");
+    expect(row).toHaveTextContent("Banca de mestrado");
+    expect(row).toHaveTextContent("4,00 (Potencial)");
+    expect(row).toHaveTextContent("ata-defesa.pdf, página 2");
+  });
+
+  it("atividade sem vínculo mostra 'Sem documento vinculado' e a de horas de PIT mostra horas, não pontos", () => {
+    setCsrfToken("tok");
+    render(
+      <ActivityReviewList
+        processId="p1"
+        activities={[activity({ id: "a2", evidences: [], group_number: 1, item_number: null })]}
+        rows={[{ ...ROW("a2", "0.00"), group_number: 1, pit_hours: "8.00" }]}
+        groups={GROUPS}
+        documents={DOCS}
+        onChanged={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Sem documento vinculado")).toBeInTheDocument();
+    expect(screen.getByText("8,00 horas (PIT) (Potencial)")).toBeInTheDocument();
+  });
+
+  it("em 360 px usa as células rotuladas dos cartões", () => {
+    setup([activity()]);
+    expect(screen.getByRole("table")).toHaveClass("scoring-table");
+    const row = screen.getByText("Banca de mestrado de Maria", { selector: "td" }).closest("tr")!;
+    expect(within(row).getAllByRole("cell").map((c) => c.getAttribute("data-label"))).toEqual([
+      "Selecionar", "Atividade", "Origem", "Status", "Grupo e item", "Pontuação potencial", "Documentos", "Ações",
+    ]);
+  });
+});
+
+describe("REV-03: validar e rejeitar", () => {
+  it("validar exige justificativa e envia o status VALIDADA com a versão esperada", async () => {
+    const { calls, onChanged, user } = setup([activity()], { "POST /api/activities/a1/status": { status: 200, body: activity({ status: "VALIDADA" }) } });
+    await user.click(screen.getByRole("button", { name: "Validar Banca de mestrado de Maria" }));
+    await user.click(screen.getByRole("button", { name: "Confirmar validação" }));
+    expect(await screen.findByText("Informe a justificativa.")).toBeInTheDocument();
+    expect(calls).toHaveLength(0);
+
+    await user.type(screen.getByLabelText("Justificativa"), "Conferi com a ata");
+    await user.click(screen.getByRole("button", { name: "Confirmar validação" }));
+    await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
+    expect(body(calls[0].init)).toEqual({ status: "VALIDADA", expected_version: 4, justificativa: "Conferi com a ata" });
+  });
+
+  it("rejeitar envia REJEITADA; atividade já validada não oferece validar de novo", async () => {
+    const { calls, onChanged, user } = setup([activity(), activity({ id: "a2", title: "Outra", status: "VALIDADA" })], {
+      "POST /api/activities/a1/status": { status: 200, body: activity({ status: "REJEITADA" }) },
+    });
+    expect(screen.getByRole("button", { name: "Validar Outra" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Rejeitar Banca de mestrado de Maria" }));
+    await user.type(screen.getByLabelText("Justificativa"), "Não é minha banca");
+    await user.click(screen.getByRole("button", { name: "Confirmar rejeição" }));
+    await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
+    expect(body(calls[0].init).status).toBe("REJEITADA");
+  });
+
+  it("erro 409 de versão desatualizada aparece como alerta e não recarrega", async () => {
+    const { onChanged, user } = setup([activity()], { "POST /api/activities/a1/status": { status: 409, body: { detail: "A atividade foi alterada; recarregue" } } });
+    await user.click(screen.getByRole("button", { name: "Validar Banca de mestrado de Maria" }));
+    await user.type(screen.getByLabelText("Justificativa"), "ok");
+    await user.click(screen.getByRole("button", { name: "Confirmar validação" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("A atividade foi alterada; recarregue");
+    expect(onChanged).not.toHaveBeenCalled();
+  });
+});
+
+describe("REV-02: editar com justificativa", () => {
+  it("abre o formulário de edição, que exige a justificativa, e recarrega após salvar", async () => {
+    const { calls, onChanged, user } = setup([activity()], { "PUT /api/activities/a1": { status: 200, body: activity({ title: "Banca corrigida" }) } });
+    await user.click(screen.getByRole("button", { name: "Editar Banca de mestrado de Maria" }));
+    const title = screen.getByLabelText("Título");
+    await user.clear(title);
+    await user.type(title, "Banca corrigida");
+    await user.type(screen.getByLabelText("Justificativa da alteração"), "Título errado");
+    await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
+    await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
+    expect(body(calls[0].init)).toMatchObject({ title: "Banca corrigida", expected_version: 4, justificativa: "Título errado" });
+  });
+});
+
+describe("VINC: vincular documento", () => {
+  it("envia o documento e a página e recarrega", async () => {
+    const { calls, onChanged, user } = setup([activity()], { "POST /api/activities/a1/evidences": { status: 201, body: { id: "e9" } } });
+    await user.click(screen.getByRole("button", { name: "Vincular documento a Banca de mestrado de Maria" }));
+    await user.selectOptions(screen.getByLabelText("Documento"), "d2");
+    await user.clear(screen.getByLabelText("Página do documento"));
+    await user.type(screen.getByLabelText("Página do documento"), "3");
+    await user.click(screen.getByRole("button", { name: "Vincular" }));
+    await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
+    expect(body(calls[0].init)).toEqual({ document_id: "d2", page: 3 });
+  });
+
+  it("documento já ligado a outra atividade: o 422 pede a justificativa no campo", async () => {
+    const { user } = setup([activity()], {
+      "POST /api/activities/a1/evidences": { status: 422, body: { detail: [{ field: "justificativa", message: "Justificativa obrigatória: o documento já está ligado a outra atividade" }] } },
+    });
+    await user.click(screen.getByRole("button", { name: "Vincular documento a Banca de mestrado de Maria" }));
+    await user.selectOptions(screen.getByLabelText("Documento"), "d1");
+    await user.click(screen.getByRole("button", { name: "Vincular" }));
+    expect(await screen.findByText("Justificativa obrigatória: o documento já está ligado a outra atividade")).toBeInTheDocument();
+  });
+});
+
+describe("REV-04: validar as selecionadas", () => {
+  it("o botão só habilita com seleção; uma justificativa vale para todas e a rota em lote recebe os ids", async () => {
+    const { calls, onChanged, user } = setup([activity(), activity({ id: "a2", title: "Segunda" }), activity({ id: "a3", title: "Terceira" })], {
+      "POST /api/processes/p1/activities/validate-batch": { status: 200, body: [] },
+    });
+    expect(screen.getByRole("button", { name: "Validar as selecionadas (0)" })).toBeDisabled();
+    await user.click(screen.getByLabelText("Selecionar Banca de mestrado de Maria"));
+    await user.click(screen.getByLabelText("Selecionar Terceira"));
+    await user.click(screen.getByRole("button", { name: "Validar as selecionadas (2)" }));
+    await user.click(screen.getByRole("button", { name: "Confirmar validação em lote" }));
+    expect(await screen.findByText("Informe a justificativa.")).toBeInTheDocument();
+    expect(calls).toHaveLength(0);
+
+    await user.type(screen.getByLabelText("Justificativa"), "Revisei todas");
+    await user.click(screen.getByRole("button", { name: "Confirmar validação em lote" }));
+    await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
+    expect(body(calls[0].init)).toEqual({ activity_ids: ["a1", "a3"], justificativa: "Revisei todas" });
+  });
+});

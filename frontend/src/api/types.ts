@@ -205,6 +205,8 @@ export type Activity = {
   status: ActivityStatus;
   distinct_justification: string | null;
   candidates: unknown[];
+  /** Documents (and pages) linked to the activity; absent where the API call does not send them. */
+  evidences?: Evidence[];
   version: number;
 };
 

@@ -1397,9 +1397,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Mostra origem, status, grupo e item, pontuação potencial e os documentos vinculados com a página
-- [ ] Ações validar, rejeitar, editar com justificativa, vincular documento e validar as selecionadas (uma justificativa)
-- [ ] Em 360 px vira cartões; Gate quick (frontend) passa; 8+ testes
+- [x] Mostra origem, status, grupo e item, pontuação potencial e os documentos vinculados com a página
+- [x] Ações validar, rejeitar, editar com justificativa, vincular documento e validar as selecionadas (uma justificativa)
+- [x] Em 360 px vira cartões; Gate quick (frontend) passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
