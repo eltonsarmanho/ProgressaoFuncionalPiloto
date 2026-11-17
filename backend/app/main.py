@@ -14,6 +14,7 @@ from app.presentation.api import (
     activities,
     auth,
     career,
+    documents,
     health,
     processes,
     professors,
@@ -73,4 +74,5 @@ def create_app(
     app.include_router(scoring_tables_admin.router)
     app.include_router(scoring.router)
     app.include_router(activities.router)
+    app.include_router(documents.router)
     return app

@@ -16,6 +16,12 @@ from app.application.use_cases.career import (
     UpdateCareerVersion,
 )
 from app.application.use_cases.document_processing import ProcessDocument, RecoverStuckJobs
+from app.application.use_cases.documents import (
+    DocumentLimits,
+    GetDocument,
+    ListDocuments,
+    UploadDocuments,
+)
 from app.application.use_cases.processes import (
     ChangeProcessStatus,
     CreateProcess,
@@ -128,6 +134,9 @@ class Container:
     inspector: FileInspector
     process_document: ProcessDocument
     recover_stuck_jobs: RecoverStuckJobs
+    upload_documents: UploadDocuments
+    list_documents: ListDocuments
+    get_document: GetDocument
 
 
 def build_container(
@@ -152,6 +161,14 @@ def build_container(
     policy = AccessPolicy()
     create_activity = CreateActivity(uow_factory, audit, policy)
     storage = LocalFileStorage(settings.storage_dir)
+    inspector = PillowFileInspector(settings.max_megapixels)
+    limits = DocumentLimits(
+        max_file_bytes=settings.max_upload_mb * 1024 * 1024,
+        max_pages=settings.max_pages,
+        max_megapixels=settings.max_megapixels,
+        max_documents_per_process=settings.max_documents_per_process,
+        max_uploads_per_minute=settings.max_uploads_per_minute,
+    )
     analyzer = DocumentAnalyzer(
         text_extractor or DocumentTextExtractor(clock),
         ai_extractor or MariTalkExtractor(settings),
@@ -205,9 +222,14 @@ def build_container(
         change_activity_status=ChangeActivityStatus(uow_factory, audit, policy),
         mark_activities_distinct=MarkActivitiesDistinct(uow_factory, audit, policy),
         storage=storage,
-        inspector=PillowFileInspector(settings.max_megapixels),
+        inspector=inspector,
         process_document=ProcessDocument(uow_factory, audit, storage, analyzer, create_activity),
         recover_stuck_jobs=RecoverStuckJobs(uow_factory),
+        upload_documents=UploadDocuments(
+            uow_factory, audit, policy, storage, inspector, clock, limits
+        ),
+        list_documents=ListDocuments(uow_factory, audit, policy),
+        get_document=GetDocument(uow_factory, audit, policy),
     )
 
 

@@ -10,6 +10,7 @@ from app.core.config import Settings
 from app.domain.entities.user import Role, User
 from app.infrastructure.security.argon2_hasher import Argon2PasswordHasher
 from app.main import create_app
+from tests.integration.api.factories import add_professor, process_payload
 
 PASSWORD = "senha-correta-1"
 
@@ -133,3 +134,27 @@ def scoring_tables(uow_factory, reference):
             units[t.unit_ids[0]]: uow.scoring_tables.list_versions(t.id)[-1]
             for t in uow.scoring_tables.list_tables()
         }
+
+
+@pytest.fixture
+def admin(act_as, scoring_tables):
+    """(admin user, CSRF headers), logged in; used by the document API tests."""
+    return act_as("admin@ufpa.br", Role.ADMIN)
+
+
+@pytest.fixture
+def headers(admin):
+    return admin[1]
+
+
+@pytest.fixture
+def professor(reference, uow_factory):
+    return add_professor(uow_factory, reference["FASI"])
+
+
+@pytest.fixture
+def process(client, admin, professor):
+    """A FASI process of `professor`, created through the API by the admin."""
+    response = client.post("/api/processes", json=process_payload(professor), headers=admin[1])
+    assert response.status_code == 201, response.text
+    return response.json()

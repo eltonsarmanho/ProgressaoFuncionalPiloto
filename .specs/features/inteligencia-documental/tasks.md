@@ -1079,11 +1079,11 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Envio multipart com vários arquivos: 201 com o resultado de cada um; recusados mostram o campo `arquivo` e o código
-- [ ] 409 do duplicado traz o id do existente; 429 acima de 60 envios por minuto
-- [ ] Lista filtrada por status e tipo; detalhe com páginas, JSON extraído e atividades
-- [ ] 401 sem sessão; 403 sem CSRF; 404 sem acesso ao processo
-- [ ] Gate full passa; 16+ testes
+- [x] Envio multipart com vários arquivos: 201 com o resultado de cada um; recusados mostram o campo `arquivo` e o código
+- [x] 409 do duplicado traz o id do existente; 429 acima de 60 envios por minuto
+- [x] Lista filtrada por status e tipo; detalhe com páginas, JSON extraído e atividades
+- [x] 401 sem sessão; 403 sem CSRF; 404 sem acesso ao processo
+- [x] Gate full passa; 16+ testes
 
 **Tests**: integration
 **Gate**: full

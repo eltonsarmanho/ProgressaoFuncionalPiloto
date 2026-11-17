@@ -80,6 +80,8 @@ class Document:
     confidence: Decimal | None = None
     uploaded_at: datetime | None = None
     version: int = 1
+    # Set by the database on every change; read only, so it takes no part in equality.
+    updated_at: datetime | None = field(default=None, compare=False)
 
 
 @dataclass(frozen=True)

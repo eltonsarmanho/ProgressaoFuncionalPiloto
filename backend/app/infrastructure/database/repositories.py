@@ -867,6 +867,7 @@ class SqlDocumentRepository:
             id=m.id,
             uploaded_at=m.uploaded_at,
             version=m.version,
+            updated_at=m.updated_at,
             **{f: getattr(m, f) for f in _DOCUMENT_FIELDS},
         )
 
