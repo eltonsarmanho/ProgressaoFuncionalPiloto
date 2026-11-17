@@ -3,6 +3,8 @@
 **Escopo:** Complex (arquivos pessoais, serviço externo, estados assíncronos, LGPD).
 **Fontes:** `docs/referencias/normas/FONTES.md`, seção 6 do prompt original e inventário dos 45 documentos reais (44 PDFs e 1 PNG) (Documentos/).
 
+> **Nota de substituição (2026-11-17):** a feature `tabela-oficial` (`.specs/features/tabela-oficial/spec.md`) substitui as regras de sugestão (CLS-02) e a quantidade por horas dos cursos e eventos: os itens passam para a numeração da planilha oficial da UFPA (por exemplo, palestra VIII.28 passa a VIII.24; BANCA_PROCESSO_SELETIVO e EXTENSAO_EVENTO_MINISTRANTE ficam sem item). A tabela renumerada está em `design.md`, seção "Regras de sugestão".
+
 ## Problem Statement
 
 O docente reúne dezenas de comprovantes em PDF e imagem (declarações de banca e de orientação, atas, certificados, portarias, artigos e registros) e transcreve à mão, para cada um, o tipo da atividade, as datas, a carga horária e o item da tabela. Os arquivos reais misturam PDF com texto bom, PDF com camada de texto cheia de lixo, PDF só de imagem e PNG. Esta feature guarda os documentos com segurança, extrai o texto (com OCR quando precisa), pede à MariTalk os dados estruturados, sugere o item de pontuação por regras claras e cria atividades rascunho ligadas ao documento e à página de origem. A IA só sugere: tudo passa por revisão humana, e a falta da IA nunca trava o cadastro manual.
@@ -49,7 +51,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Taxonomia e regras de sugestão | Códigos fixos e regras versionadas como dados, com a fonte no Anexo I; o usuário revisa a tabela no Design | Evita regra institucional escondida no prompt; o usuário decidiu as quatro ambiguidades em 2026-11-17 (ver as linhas seguintes) | y |
 | Documentos sem item de pontuação | Muitos documentos reais não preenchem a tabela; o sistema os processa e guarda, não cria atividade e avisa `SEM_ITEM_DE_PONTUACAO`; o usuário pode criar a atividade à mão a partir do documento | Decisão do usuário em 2026-11-17: evita encher a Etapa 3 de atividades sem enquadramento | y |
 | Coorientação de TCC de graduação | Não pontua: sem item e sem atividade | Decisão do usuário em 2026-11-17 | y |
-| Palestra, conferência e mesa-redonda | VIII.28, sem alternativas | Decisão do usuário em 2026-11-17 | y |
+| Palestra, conferência e mesa-redonda | VIII.24 na tabela oficial (era VIII.28 na numeração do Anexo I), sem alternativas | Decisão do usuário em 2026-11-17 pela descrição do item; o número mudou com a tabela oficial | y |
 | Curso concluído e treinamento | Curso de extensão (o documento diz "extensão"): VII.9. Outro curso concluído, treinamento e participação em evento: VII.10 | Decisão do usuário em 2026-11-17; o usuário escreveu VII.19, que não existe; aplicado VII.9 ("curso de extensão, com frequência e aproveitamento") | y |
 | Reprocessamento | Rejeita os rascunhos não editados da execução anterior e mantém as atividades validadas ou editadas | Evita lixo duplicado sem apagar trabalho humano | n |
 | Substituição e exclusão | Substituir apaga o arquivo anterior e a auditoria guarda nome e hash; excluir é física, com justificativa; as atividades ficam | Prompt pede preservar o original durante o processamento, não indefinidamente | n |

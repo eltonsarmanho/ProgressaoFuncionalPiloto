@@ -157,35 +157,35 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story       | Phase  | Status  |
 | -------------- | ----------- | ------ | ------- |
-| OFI-01 | P1: Tabela oficial da UFPA como única fonte | Design | Pending |
-| OFI-02 | P1: Tabela oficial da UFPA como única fonte | Design | Pending |
-| OFI-03 | P1: Tabela oficial da UFPA como única fonte | Design | Pending |
-| OFI-04 | P1: Tabela oficial da UFPA como única fonte | Design | Pending |
-| OFI-05 | P1: Tabela oficial da UFPA como única fonte | Design | Pending |
-| OFI-06 | P1: Tabela oficial da UFPA como única fonte | Design | Pending |
-| OFI-07 | P1: Tabela oficial da UFPA como única fonte | Design | Pending |
-| OFI-08 | P1: Tabela oficial da UFPA como única fonte | Design | Pending |
-| OFI-09 | P1: Tabela oficial da UFPA como única fonte | Design | Pending |
-| OFI-10 | P1: Tabela oficial da UFPA como única fonte | Design | Pending |
-| OFI-11 | P1: Tabela oficial da UFPA como única fonte | Design | Pending |
-| OFI-12 | P1: Tabela oficial da UFPA como única fonte | Design | Pending |
-| PIT-01 | P1: Grupo I em horas de PIT, fora do total | Design | Pending |
-| PIT-02 | P1: Grupo I em horas de PIT, fora do total | Design | Pending |
-| PIT-03 | P1: Grupo I em horas de PIT, fora do total | Design | Pending |
-| MAP-01 | P1: Regras de sugestão na numeração oficial | Design | Pending |
-| MAP-02 | P1: Regras de sugestão na numeração oficial | Design | Pending |
-| MAP-03 | P1: Regras de sugestão na numeração oficial | Design | Pending |
-| MAP-04 | P1: Regras de sugestão na numeração oficial | Design | Pending |
-| ACE-01 | P1: Aceitação recalculada | Design | Pending |
+| OFI-01 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
+| OFI-02 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
+| OFI-03 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
+| OFI-04 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
+| OFI-05 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
+| OFI-06 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
+| OFI-07 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
+| OFI-08 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
+| OFI-09 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
+| OFI-10 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
+| OFI-11 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
+| OFI-12 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
+| PIT-01 | P1: Grupo I em horas de PIT, fora do total | Design | Implemented |
+| PIT-02 | P1: Grupo I em horas de PIT, fora do total | Design | Implemented |
+| PIT-03 | P1: Grupo I em horas de PIT, fora do total | Design | Implemented |
+| MAP-01 | P1: Regras de sugestão na numeração oficial | Design | Implemented |
+| MAP-02 | P1: Regras de sugestão na numeração oficial | Design | Implemented |
+| MAP-03 | P1: Regras de sugestão na numeração oficial | Design | Implemented |
+| MAP-04 | P1: Regras de sugestão na numeração oficial | Design | Implemented |
+| ACE-01 | P1: Aceitação recalculada | Design | Implemented |
 | ACE-02 | P1: Aceitação recalculada | Design | Pending |
-| TELA-01 | P1: Etapa 4 com o Grupo I em horas | Design | Pending |
-| TELA-02 | P1: Etapa 4 com o Grupo I em horas | Design | Pending |
+| TELA-01 | P1: Etapa 4 com o Grupo I em horas | Design | Implemented |
+| TELA-02 | P1: Etapa 4 com o Grupo I em horas | Design | Implemented |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
-**Status values:** Pending → In Design → In Tasks → Implementing → Verified
+**Status values:** Pending → In Design → In Tasks → Implementing → Implemented → Verified
 
-**Coverage:** 23 total, 0 mapped to tasks, 23 unmapped ⚠️ (esperado antes de Tasks)
+**Coverage:** 23 total, 22 Implemented (com teste), 1 Pending (ACE-02: sem teste dedicado, é critério de processo; a suíte atualizada está verde e cada valor alterado está no corpo dos commits)
 
 ---
 

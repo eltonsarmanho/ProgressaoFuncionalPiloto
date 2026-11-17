@@ -149,7 +149,7 @@ Tipo de documento: **regra por palavras-chave** escolhe o schema; a IA devolve o
 
 ## Regras de sugestão (taxonomia → item) — para revisão do usuário
 
-A tabela vira `suggestion_rules.py`. A numeração é a do Anexo I da Res. 4.644/2015 (a mesma nas tabelas do IFCH e da FASI). O item **principal** é o gravado como escolhido; os **alternativos** entram como candidatos. Tipo **sem item** não cria atividade: o documento fica `PROCESSADO` com o aviso `SEM_ITEM_DE_PONTUACAO`, e o usuário pode criar a atividade à mão. As quatro decisões de prática foram do usuário em 2026-11-17 (coorientação de TCC, palestra, curso concluído, treinamento).
+A tabela vira `suggestion_rules.py`. A numeração é a da tabela oficial de pontuação da UFPA (planilha fornecida pelo usuário em 2026-11-17, feature `tabela-oficial`), que substitui a numeração do Anexo I da Res. 4.644/2015 usada na primeira versão desta tabela; só mudam o Grupo VIII, o Grupo III (III.11 e III.12 não existem) e o Grupo IV (IV.7 não existe). O item **principal** é o gravado como escolhido; os **alternativos** entram como candidatos. Tipo **sem item** não cria atividade: o documento fica `PROCESSADO` com o aviso `SEM_ITEM_DE_PONTUACAO`, e o usuário pode criar a atividade à mão. As quatro decisões de prática foram do usuário em 2026-11-17 (coorientação de TCC, palestra, curso concluído, treinamento).
 
 | Código da taxonomia | Principal | Alternativos | Quantidade e horas | Observação |
 | --- | --- | --- | --- | --- |
@@ -168,11 +168,13 @@ A tabela vira `suggestion_rules.py`. A numeração é a do Anexo I da Res. 4.644
 | `BANCA_TCC_GRADUACAO` | III.4 | — | 1 | Graduação ou técnico |
 | `BANCA_CONCURSO_SUBSTITUTO` / `EFETIVO` | III.5 / III.6 | — | 1 | Por banca |
 | `BANCA_QUALIFICACAO` | III.7 | — | 1 | Pós-graduação |
-| `BANCA_SELECAO_POS` / `BOLSAS` / `PROCESSO_SELETIVO` | III.8 / III.9 / III.11 | III.12 (teste de habilidades) | 1 | Por banca |
+| `BANCA_SELECAO_POS` / `BOLSAS` | III.8 / III.9 | — | 1 | Por banca |
+| `BANCA_PROCESSO_SELETIVO` | sem item | — | — | Antes III.11 (alt. III.12); não existe na tabela oficial; não cria atividade |
 | `EXTENSAO_PROJETO_COORDENACAO` / `PARTICIPACAO` | IV.1 / IV.2 | — | anos inteiros do período (`QUANTIDADE_ESTIMADA`) | Por ano |
-| `EXTENSAO_CURSO_COORDENACAO` | IV.3 | — | horas (bloco 20 h, pela tabela) | |
-| `EXTENSAO_CURSO_MINISTRANTE` | IV.4 | IV.5 | horas (bloco 3 h) | |
-| `EXTENSAO_EVENTO_COORDENACAO` / `EVENTO_MINISTRANTE` | IV.6 / IV.7 | — | horas (blocos 15 h e 3 h) | |
+| `EXTENSAO_CURSO_COORDENACAO` | IV.3 | — | 1 por documento; horas guardadas | Carga mínima de 20 h verificada pelo motor |
+| `EXTENSAO_CURSO_MINISTRANTE` | IV.4 | IV.5 | 1 por documento; horas guardadas | Carga mínima de 20 h verificada pelo motor |
+| `EXTENSAO_EVENTO_COORDENACAO` | IV.6 | — | 1 por documento; horas guardadas | |
+| `EXTENSAO_EVENTO_MINISTRANTE` | sem item | — | — | Antes IV.7; não existe na tabela oficial; não cria atividade |
 | `PESQUISA_PROJETO_COORDENACAO` | V.1 | — | 1 | Por projeto, com relatório final |
 | `PESQUISA_GRUPO_COORDENACAO` / `MEMBRO` | V.2 / V.3 | — | anos (`QUANTIDADE_ESTIMADA`) | |
 | `PESQUISA_BOLSA_PRODUTIVIDADE` | V.4 | — | anos | |
@@ -190,16 +192,16 @@ A tabela vira `suggestion_rules.py`. A numeração é a do Anexo I da Res. 4.644
 | `ESTAGIO_CAPACITACAO` | VII.11 | — | horas (bloco 30 h) | |
 | `LIVRO_COM_PARECERISTAS` / `SEM` | VIII.1 / VIII.2 | — | 1 | |
 | `CAPITULO_INTERNACIONAL` / `NACIONAL` | VIII.3 / VIII.4 | — | 1 | |
-| `ARTIGO_INTERNACIONAL_INDEXADO` | VIII.11 | VIII.13 | 1 | ISSN e Qualis |
-| `ARTIGO_NACIONAL_INDEXADO` | VIII.12 | VIII.13 | 1 | |
-| `ARTIGO_NAO_INDEXADO` | VIII.13 | — | 1 | |
-| `TRABALHO_COMPLETO_CONGRESSO` | VIII.23 | VIII.12 | 1 | |
-| `COMUNICACAO_COM_RESUMO` / `SEM_RESUMO` | VIII.24 / VIII.25 | — | 1 | |
-| `APRESENTACAO_TRABALHO_INTERNACIONAL` / `NACIONAL` | VIII.26 / VIII.27 | — | 1 | |
-| `PALESTRA` | VIII.28 | — | 1 | Palestra, conferência ou mesa-redonda (decisão do usuário) |
-| `PATENTE_DEPOSITADA` / `CONCEDIDA` | VIII.35 / VIII.36 | — | 1 | |
-| `REGISTRO_SOFTWARE` | VIII.63 | — | 1 | INPI |
-| `CONSULTORIA_AD_HOC` | VIII.66 | — | anos | |
+| `ARTIGO_INTERNACIONAL_INDEXADO` | VIII.9 | VIII.11 | 1 | ISSN e Qualis (antes VIII.11, alt. VIII.13) |
+| `ARTIGO_NACIONAL_INDEXADO` | VIII.10 | VIII.11 | 1 | Antes VIII.12, alt. VIII.13 |
+| `ARTIGO_NAO_INDEXADO` | VIII.11 | — | 1 | Antes VIII.13 |
+| `TRABALHO_COMPLETO_CONGRESSO` | VIII.19 | VIII.10 | 1 | Antes VIII.23, alt. VIII.12 |
+| `COMUNICACAO_COM_RESUMO` / `SEM_RESUMO` | VIII.20 / VIII.21 | — | 1 | Antes VIII.24 / VIII.25 |
+| `APRESENTACAO_TRABALHO_INTERNACIONAL` / `NACIONAL` | VIII.22 / VIII.23 | — | 1 | Antes VIII.26 / VIII.27 |
+| `PALESTRA` | VIII.24 | — | 1 | Palestra, conferência ou mesa-redonda (decisão do usuário pela descrição; antes VIII.28) |
+| `PATENTE_DEPOSITADA` / `CONCEDIDA` | VIII.29 / VIII.30 | — | 1 | Antes VIII.35 / VIII.36 |
+| `REGISTRO_SOFTWARE` | VIII.33 | — | 1 | INPI (antes VIII.63) |
+| `CONSULTORIA_AD_HOC` | VIII.36 | — | anos | Antes VIII.66 |
 | `OUTRA` | sem item | — | — | Não cria atividade; `SEM_ITEM_DE_PONTUACAO` |
 
 ---

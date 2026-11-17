@@ -3,6 +3,8 @@
 **Escopo:** Complex (regras normativas, cálculo, estado, persistência e auditoria).
 **Fontes:** `docs/referencias/normas/FONTES.md` (itens 8 e 9), tabela do IFCH, tabela preenchida da FASI 2022–2024, Res. 4.644/2015 e Res. 4.074/2010.
 
+> **Nota de substituição (2026-11-17):** a feature `tabela-oficial` (`.specs/features/tabela-oficial/spec.md`) substitui TAB-03, TAB-04, TAB-05, TAB-06, TAB-07 e CALC-14 deste documento. A planilha oficial da UFPA passa a ser a única fonte de pontuação; as tabelas do IFCH (PDF) e da FASI (tabela preenchida) deixam de valer, o Grupo I passa a horas de PIT fora do total e o caso real de 2022–2024 (total 414) é substituído pelo cenário derivado de 211 pontos. O texto abaixo permanece como registro do que foi construído e verificado até então.
+
 ## Problem Statement
 
 O docente soma à mão, em PDF, as pontuações de dezenas de atividades de um interstício, conferindo a tabela da unidade, as notas de dupla pontuação e os limites. O resultado do caso real tem erro de soma (96 no lugar de 92 no Grupo I) e a tabela da FASI tem pontos diferentes dos da IFCH sem norma que as sustente. A feature entrega o cálculo determinístico e rastreável da pontuação de um processo, com tabelas versionadas por unidade, atividades cadastradas e validadas por pessoas, e verificações que apontam inconsistências sem corrigi-las.

@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/tabela-oficial/design.md`
-**Status**: Draft
+**Status**: Approved
 
 ---
 
@@ -643,9 +643,9 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] `FONTES.md` descreve a planilha, as decisões dos cinco itens, o Grupo I em horas e a lista de fontes que deixam de valer
-- [ ] As specs de `pontuacao` e `inteligencia-documental` e o design da segunda recebem a nota de substituição e a tabela de regras renumerada
-- [ ] Build gate passa
+- [x] `FONTES.md` descreve a planilha, as decisões dos cinco itens, o Grupo I em horas e a lista de fontes que deixam de valer
+- [x] As specs de `pontuacao` e `inteligencia-documental` e o design da segunda recebem a nota de substituição e a tabela de regras renumerada
+- [x] Build gate passa
 
 **Tests**: none
 **Gate**: build
