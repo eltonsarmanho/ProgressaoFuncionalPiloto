@@ -121,10 +121,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Transições válidas: PENDENTE→PROCESSANDO→(PROCESSADO|REQUER_REVISAO|EXTRAIDO_SEM_IA|FALHOU); qualquer outra é recusada
-- [ ] Os 11 códigos de alerta existem com o nome exato do design
-- [ ] Nada importa framework (teste de arquitetura verde)
-- [ ] Gate quick passa; 8+ testes
+- [x] Transições válidas: PENDENTE→PROCESSANDO→(PROCESSADO|REQUER_REVISAO|EXTRAIDO_SEM_IA|FALHOU); qualquer outra é recusada
+- [x] Os 11 códigos de alerta existem com o nome exato do design
+- [x] Nada importa framework (teste de arquitetura verde)
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
