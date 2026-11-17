@@ -1134,9 +1134,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Reprocessar devolve 202 e cria uma tarefa; concorrente dá 409
-- [ ] Classificação manual grava tipo e categoria e devolve o documento
-- [ ] Gate full passa; 8+ testes
+- [x] Reprocessar devolve 202 e cria uma tarefa; concorrente dá 409
+- [x] Classificação manual grava tipo e categoria e devolve o documento
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full

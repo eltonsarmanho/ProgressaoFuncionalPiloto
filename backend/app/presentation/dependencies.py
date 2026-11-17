@@ -17,12 +17,14 @@ from app.application.use_cases.career import (
 )
 from app.application.use_cases.document_processing import ProcessDocument, RecoverStuckJobs
 from app.application.use_cases.documents import (
+    ClassifyDocumentManually,
     DeleteDocument,
     DocumentLimits,
     DownloadDocument,
     GetDocument,
     ListDocuments,
     ReplaceDocument,
+    ReprocessDocument,
     UploadDocuments,
 )
 from app.application.use_cases.processes import (
@@ -143,6 +145,8 @@ class Container:
     download_document: DownloadDocument
     replace_document: ReplaceDocument
     delete_document: DeleteDocument
+    reprocess_document: ReprocessDocument
+    classify_document: ClassifyDocumentManually
 
 
 def build_container(
@@ -242,6 +246,8 @@ def build_container(
             uow_factory, audit, policy, storage, inspector, clock, change_status, limits
         ),
         delete_document=DeleteDocument(uow_factory, audit, policy, storage),
+        reprocess_document=ReprocessDocument(uow_factory, audit, policy, change_status),
+        classify_document=ClassifyDocumentManually(uow_factory, audit, policy),
     )
 
 

@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.application.use_cases.documents import DocumentDetail, UploadResult
 from app.domain.entities.document import Document, DocumentStatus, PageText, TextMethod
@@ -43,6 +43,16 @@ class DocumentOut(BaseModel):
 
 def _document_fields(d: Document) -> dict[str, Any]:
     return {name: getattr(d, name) for name in DocumentOut.model_fields}
+
+
+class ClassificationIn(BaseModel):
+    """The user's own type and category; the values are checked against the enums (422)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tipo: str
+    categoria: str
+    expected_version: int | None = None
 
 
 class UploadResultOut(BaseModel):

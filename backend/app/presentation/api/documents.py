@@ -1,4 +1,5 @@
-"""Document routes: upload, list, detail, file, replace and delete (DOC-01..10, 12, 14, 15, REV-01).
+"""Document routes (DOC-01..12, 14, 15, PIPE-09, REV-01): upload, list, detail, file, replace,
+delete, reprocess and manual classification.
 
 Access follows the process: outside it, 404. Each uploaded part is copied in chunks to a
 temporary file while its SHA-256 and size are computed; a part above the size limit stops being
@@ -22,6 +23,7 @@ from app.domain.entities.extraction import DocumentType
 from app.domain.entities.user import User
 from app.presentation.dependencies import Container, current_user, get_container
 from app.presentation.schemas.documents import (
+    ClassificationIn,
     DocumentDetailOut,
     DocumentOut,
     UploadResultOut,
@@ -153,3 +155,26 @@ async def delete_document(
 ) -> Response:
     await run_in_threadpool(container.delete_document.execute, actor, document_id, justificativa)
     return Response(status_code=204)
+
+
+@router.post("/documents/{document_id}/reprocess", response_model=DocumentOut, status_code=202)
+async def reprocess_document(
+    document_id: UUID, actor: UserDep, container: ContainerDep
+) -> DocumentOut:
+    document = await run_in_threadpool(container.reprocess_document.execute, actor, document_id)
+    return DocumentOut.of(document)
+
+
+@router.put("/documents/{document_id}/classification", response_model=DocumentOut)
+async def classify_document(
+    document_id: UUID, body: ClassificationIn, actor: UserDep, container: ContainerDep
+) -> DocumentOut:
+    document = await run_in_threadpool(
+        container.classify_document.execute,
+        actor,
+        document_id,
+        body.tipo,
+        body.categoria,
+        body.expected_version,
+    )
+    return DocumentOut.of(document)
