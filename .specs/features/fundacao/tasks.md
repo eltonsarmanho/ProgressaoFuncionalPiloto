@@ -386,8 +386,8 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Hash começa com `$argon2id$`; verify correto/incorreto
-- [ ] Gate quick passa
+- [x] Hash começa com `$argon2id$`; verify correto/incorreto
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

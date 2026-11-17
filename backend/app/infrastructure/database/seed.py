@@ -58,10 +58,9 @@ def seed_reference_data(
 
 
 def main() -> None:
-    from argon2 import PasswordHasher as Argon2
-
     from app.core.config import load_settings
     from app.infrastructure.database.session import make_engine, make_session_factory
+    from app.infrastructure.security.argon2_hasher import Argon2PasswordHasher
 
     settings = load_settings()
     engine = make_engine(settings.database_url)
@@ -70,7 +69,7 @@ def main() -> None:
             SqlUnitOfWork(make_session_factory(engine)),
             settings.admin_email,
             settings.admin_password.get_secret_value(),
-            Argon2(),
+            Argon2PasswordHasher(),
         )
     finally:
         engine.dispose()

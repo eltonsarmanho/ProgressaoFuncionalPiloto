@@ -256,7 +256,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | AUTH-04 | P1: Autenticação | Design | Pending |
 | AUTH-05 | P1: Autenticação | Design | Pending |
 | AUTH-06 | P1: Autenticação | Design | Pending |
-| AUTH-07 | P1: Autenticação | Design | Pending |
+| AUTH-07 | P1: Autenticação | Design | Implementing |
 | AUTH-08 | P1: Autenticação | Design | Implementing |
 | AUTH-09 | P1: Autenticação | Design | Implementing |
 | AUTH-10 | P1: Autenticação | Design | Pending |
