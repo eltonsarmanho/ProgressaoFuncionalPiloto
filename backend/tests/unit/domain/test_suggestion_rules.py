@@ -3,10 +3,12 @@
 import pytest
 
 from app.domain.entities.activity import Level
+from app.domain.entities.extraction import DocumentType as DT
 from app.domain.entities.extraction import TaxonomyCode as T
 from app.domain.rules.suggestion_rules import (
     Item,
     Suggestion,
+    confirm_board_document,
     confirm_extension_course,
     confirm_extension_project,
     is_dismissal_clause,
@@ -347,3 +349,30 @@ def test_project_check_passes_every_other_type_through(taxonomy):
 def test_extension_project_item_numbers_stay_iv_1_and_iv_2_with_the_wording():
     assert suggest_item(T.EXTENSAO_PROJETO_COORDENACAO).principal == Item(4, 1)
     assert suggest_item(T.EXTENSAO_PROJETO_PARTICIPACAO).principal == Item(4, 2)
+
+
+# REAL-18: no banca from a seminar evaluation form.
+FORM = "Ficha de avaliação de seminário 2. Avaliador 1: Prof. Ana. Avaliador 2: Prof. Carlos."
+BOARDS = [t for t in T if t.value.startswith("BANCA_")]
+
+
+@pytest.mark.parametrize("taxonomy", BOARDS)
+def test_board_from_a_seminar_form_of_unknown_type_has_no_item(taxonomy):
+    downgraded = confirm_board_document(taxonomy, DT.OUTRO, FORM)
+    assert downgraded is T.OUTRA
+    assert suggest_item(downgraded).principal is NO_ITEM
+
+
+@pytest.mark.parametrize("document_type", [t for t in DT if t is not DT.OUTRO])
+def test_board_from_a_recognized_document_type_is_kept(document_type):
+    assert confirm_board_document(T.BANCA_MESTRADO, document_type, FORM) is T.BANCA_MESTRADO
+
+
+def test_board_from_other_text_of_unknown_type_is_kept():
+    text = "Declaro que a banca examinadora aprovou a dissertação."
+    assert confirm_board_document(T.BANCA_MESTRADO, DT.OUTRO, text) is T.BANCA_MESTRADO
+
+
+@pytest.mark.parametrize("taxonomy", [t for t in T if t not in BOARDS])
+def test_non_board_types_pass_through_the_board_check(taxonomy):
+    assert confirm_board_document(taxonomy, DT.OUTRO, FORM) is taxonomy

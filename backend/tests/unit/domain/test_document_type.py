@@ -3,7 +3,7 @@
 import pytest
 
 from app.domain.entities.extraction import DocumentType as T
-from app.domain.rules.document_type import detect_document_type
+from app.domain.rules.document_type import detect_document_type, is_seminar_evaluation_form
 
 DECLARACAO_BANCA_TCC = """
 UNIVERSIDADE FEDERAL EXEMPLAR
@@ -165,3 +165,31 @@ def test_software_registration_wins_over_the_certificate_word():
 def test_word_ata_inside_other_words_does_not_make_a_defense_minutes():
     text = "Data da defesa: a banca examinadora aprovou. Estatais e datas diversas."
     assert detect_document_type(text) is T.OUTRO
+
+
+# REAL-18: a seminar evaluation form is not a defense board.
+FICHA_SEMINARIO = """
+UNIVERSIDADE FEDERAL EXEMPLAR
+FICHA DE AVALIAÇÃO DE SEMINÁRIO 2
+Discente: Joao Inventado. Título do seminário: Estudo de caso fictício.
+Avaliador 1: Prof. Ana Ficticia Lima  Nota: 9,0
+Avaliador 2: Prof. Carlos Imaginario  Nota: 8,5
+Data da apresentação: 12/05/2023
+"""
+
+
+def test_seminar_evaluation_form_is_other_and_is_recognized_as_a_form():
+    assert detect_document_type(FICHA_SEMINARIO) is T.OUTRO
+    assert is_seminar_evaluation_form(FICHA_SEMINARIO) is True
+
+
+@pytest.mark.parametrize(
+    "text",
+    [ATA_DEFESA_UFPA, DECLARACAO_BANCA_DISSERTACAO, CERTIFICADO_SEMINARIO, PORTARIA, ""],
+)
+def test_other_documents_are_not_seminar_evaluation_forms(text):
+    assert is_seminar_evaluation_form(text) is False
+
+
+def test_evaluation_wording_without_a_seminar_is_not_a_seminar_form():
+    assert is_seminar_evaluation_form("Ficha de avaliação de estágio probatório") is False

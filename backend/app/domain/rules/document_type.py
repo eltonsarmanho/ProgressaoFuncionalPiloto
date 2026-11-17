@@ -19,6 +19,9 @@ _DISCIPLINAS = re.compile(r"componentes? curriculares?|\bch docente\b")
 _ATA = re.compile(r"\bata\b")
 _CERTIFICA = re.compile(r"\bcertificamos\b|\bcertifica que\b|\b(?:esse|este) certificado\b")
 _PORTARIA_BODY = re.compile(r"\bresolve\b|\bdesignar\b|\bdesignado\b|\bdesigna\b|\bconsiderar\b")
+_EVALUATION_FORM = re.compile(
+    r"\b(?:ficha|formulario|folha)\s+de\s+avaliacao\b|\bavaliacao\s+d[oe]s?\s+seminarios?\b"
+)
 _ARTICLE_MARKERS = (
     re.compile(r"\bissn\b"),
     re.compile(r"\bdoi\b"),
@@ -40,6 +43,13 @@ def _declaration_type(text: str) -> DocumentType | None:
     if orientacao:
         return DocumentType.DECLARACAO_ORIENTACAO
     return None
+
+
+def is_seminar_evaluation_form(text: str) -> bool:
+    """A seminar evaluation form ("ficha de avaliação de seminário"): its evaluators are not a
+    defense board, so it never counts as a banca (REAL-18)."""
+    norm = normalize_title(text)
+    return _EVALUATION_FORM.search(norm) is not None and "seminario" in norm
 
 
 def detect_document_type(text: str) -> DocumentType:

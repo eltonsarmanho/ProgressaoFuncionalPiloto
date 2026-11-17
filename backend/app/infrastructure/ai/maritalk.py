@@ -35,6 +35,8 @@ _SYSTEM_PROMPT = (
     "Em portarias, devolva como atividade somente a designação do docente para a função ou a "
     "comissão; cláusulas que dispensam, exoneram ou destituem o docente, ou encerram um "
     "mandato, não são atividades e não devem ser devolvidas. "
+    "Atividades de banca só existem em atas de defesa, declarações ou portarias de banca; "
+    "fichas de avaliação de seminário, de disciplina ou de trabalho de aluno não são bancas. "
     "Datas no formato AAAA-MM-DD. Responda somente com o JSON do esquema, sem comentários. "
     "Tipo provável do documento: {hint}"
 )

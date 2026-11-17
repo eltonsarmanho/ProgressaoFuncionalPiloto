@@ -1955,7 +1955,7 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 ### T69: Ficha de avaliação de seminário não é banca
 
-**What**: `detect_document_type` mantém `OUTRO` para ficha de avaliação de seminário, e o prompt manda a IA só criar atividade de banca para ata de defesa ou declaração de banca.
+**What**: `is_seminar_evaluation_form` reconhece a ficha de avaliação de seminário (o tipo continua `OUTRO`); `confirm_board_document` tira o item de banca de uma atividade de banca vinda dessa ficha, e o prompt manda a IA só criar banca para ata de defesa, declaração ou portaria de banca.
 **Where**: `backend/app/domain/rules/document_type.py`
 **Depends on**: T68
 **Reuses**: `detect_document_type`, `_SYSTEM_PROMPT`
@@ -1968,10 +1968,10 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] Texto sintético de ficha de avaliação de seminário com avaliadores é detectado `OUTRO` (antes: dica de banca de mestrado pelo corpo)
-- [ ] Ata de defesa de mestrado e declaração de banca seguem detectadas
-- [ ] O prompt contém a regra das bancas
-- [ ] Gate full passa
+- [x] Ficha sintética de avaliação de seminário com dois avaliadores, lida pela IA como banca de mestrado, não cria atividade e emite `SEM_ITEM_DE_PONTUACAO` (antes: III.2 por avaliador); o tipo detectado é `OUTRO`
+- [x] Ata de defesa de mestrado segue criando a banca III.2; tipos reconhecidos e outros textos não são afetados
+- [x] O prompt contém a regra das bancas
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

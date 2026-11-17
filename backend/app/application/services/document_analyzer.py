@@ -37,6 +37,7 @@ from app.domain.rules.scoring_alerts import NotScoredReason
 from app.domain.rules.scoring_periods import PeriodState, evaluate_period, normalize_title
 from app.domain.rules.suggestion_rules import (
     Item,
+    confirm_board_document,
     confirm_extension_course,
     confirm_extension_project,
     is_dismissal_clause,
@@ -259,7 +260,8 @@ class DocumentAnalyzer:
         if is_dismissal_clause(activity.taxonomy, activity.evidence_text):
             run.alerts.append(DocAlert(DocAlertCode.CLAUSULA_DE_DISPENSA, None, index))
             return None
-        taxonomy = confirm_extension_course(activity.taxonomy, document_text)
+        taxonomy = confirm_board_document(activity.taxonomy, run.document_type, document_text)
+        taxonomy = confirm_extension_course(taxonomy, document_text)
         taxonomy = confirm_extension_project(taxonomy, document_text)
         suggestion = suggest_item(taxonomy, activity.level)
         if suggestion.principal is None:

@@ -4,7 +4,9 @@ import re
 from dataclasses import dataclass
 
 from app.domain.entities.activity import Level
+from app.domain.entities.extraction import DocumentType
 from app.domain.entities.extraction import TaxonomyCode as T
+from app.domain.rules.document_type import is_seminar_evaluation_form
 from app.domain.rules.scoring_periods import normalize_title
 
 _ROMAN = {1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI", 7: "VII", 8: "VIII"}
@@ -123,6 +125,18 @@ def confirm_extension_course(taxonomy: T, text: str) -> T:
     """A course counts as extension only when the document says "extensão" (CLS-10)."""
     if taxonomy is T.CURSO_EXTENSAO_CONCLUIDO and "extensao" not in normalize_title(text):
         return T.CURSO_CONCLUIDO
+    return taxonomy
+
+
+def confirm_board_document(taxonomy: T, document_type: DocumentType, text: str) -> T:
+    """Only defense minutes, board declarations and the like make a banca (REAL-18).
+
+    A seminar evaluation form that no rule recognizes (type OUTRO) can list evaluators and
+    grades; the AI takes them for a master's board. Such a banca has no scoring item.
+    """
+    is_board = taxonomy.value.startswith("BANCA_")
+    if is_board and document_type is DocumentType.OUTRO and is_seminar_evaluation_form(text):
+        return T.OUTRA
     return taxonomy
 
 

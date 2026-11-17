@@ -386,6 +386,37 @@ def test_certificate_of_a_project_that_says_extension_keeps_item_iv_2():
     assert (suggested.group_number, suggested.item_number) == (4, 2)
 
 
+# --- seminar evaluation forms are not boards (REAL-18) -----------------------------------
+
+SEMINAR_FORM = (
+    "FICHA DE AVALIAÇÃO DE SEMINÁRIO 2. Discente: Joao Inventado. Avaliador 1: Prof. "
+    "Fulana de Tal Exemplo, nota 9,0. Avaliador 2: Prof. Carlos Imaginario, nota 8,5. "
+    "Seminário apresentado em 12 de marco de 2025."
+)
+
+
+def test_seminar_form_read_by_the_ai_as_masters_boards_creates_no_activity():
+    boards = [
+        activity(taxonomy="BANCA_MESTRADO", title=None, evidence_text=f"Avaliador {n}")
+        for n in (1, 2)
+    ]
+    result, _ = analyze(payload(*boards, document_type="OUTRO"), text_page(1, SEMINAR_FORM))
+    assert result.document_type is DocumentType.OUTRO
+    assert result.activities == ()
+    assert codes(result, DocAlertCode.SEM_ITEM_DE_PONTUACAO)
+
+
+def test_a_real_defense_minutes_still_makes_the_master_board():
+    text = (
+        "ATA DA DEFESA DE DISSERTACAO. A banca examinadora composta por Fulana de Tal Exemplo "
+        "aprovou o trabalho Estudo Ficticio sobre Dados Abertos em 12 de marco de 2025."
+    )
+    board = activity(taxonomy="BANCA_MESTRADO", evidence_text="banca examinadora composta")
+    result, _ = analyze(payload(board, document_type="ATA_DEFESA"), text_page(1, text))
+    assert [a.group_number for a in result.activities] == [3]
+    assert [a.item_number for a in result.activities] == [2]
+
+
 # --- invalid answers (EXT-09) -------------------------------------------------------------
 
 OUT_OF_SCHEMA = [

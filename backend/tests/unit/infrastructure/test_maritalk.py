@@ -361,3 +361,11 @@ def test_prompt_tells_the_model_not_to_return_dismissals_as_activities():
     system = fx.server.body()["messages"][0]["content"]
     assert "dispensam, exoneram ou destituem" in system
     assert "não são atividades" in system
+
+
+def test_prompt_restricts_boards_to_defense_minutes_and_board_documents():
+    fx = run(ok())
+    fx.extract()
+    system = fx.server.body()["messages"][0]["content"]
+    assert "atas de defesa, declarações ou portarias de banca" in system
+    assert "fichas de avaliação de seminário" in system
