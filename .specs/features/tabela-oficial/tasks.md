@@ -727,9 +727,9 @@ T24 → T25 → T26 → T27
 
 **Done when**:
 
-- [ ] PIT-02 e PIT-03 dizem que a regra vale onde o Grupo I tem critério de carga semanal e fica fora do total; versões antigas mantêm o cálculo
-- [ ] Nenhum `SPEC_DEVIATION` resta em `scoring.py`; o comentário cita PIT-03
-- [ ] `validate_spec.py` sem erro; Gate full passa
+- [x] PIT-02 e PIT-03 dizem que a regra vale onde o Grupo I tem critério de carga semanal e fica fora do total; versões antigas mantêm o cálculo
+- [x] Nenhum `SPEC_DEVIATION` resta em `scoring.py`; o comentário cita PIT-03
+- [x] `validate_spec.py` sem erro; Gate full passa
 
 **Tests**: none
 **Gate**: full

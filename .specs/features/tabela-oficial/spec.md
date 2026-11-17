@@ -44,7 +44,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Palestra | VIII.24 ("participação como apresentador em conferências, palestras e mesas redondas"), a mesma descrição do item que o usuário havia indicado como VIII.28 na numeração antiga | A decisão do usuário foi pela descrição; o número mudou | n |
 | Curso de extensão concluído | VII.9; outro curso, treinamento e evento: VII.10 | Decisão anterior do usuário; a numeração não mudou no Grupo VII | y |
 | Tabelas antigas no banco | Arquivadas e sem unidades, exceto versões usadas por processo, que permanecem | Não quebrar processo existente | n |
-| Pontos informados no Grupo I | Recusados (422 em `points_override`); o valor vem do cálculo de PIT | O ajuste manual servia para reproduzir o 92 em pontos, que deixa de existir | n |
+| Pontos informados no Grupo I | Recusados (422 em `points_override`) somente onde o Grupo I é medido em horas de PIT (critério de carga semanal, fora do total: `is_pit_criterion`); versões antigas que contam o Grupo I em pontos continuam aceitando o valor informado; o valor vem do cálculo de PIT | O ajuste manual servia para reproduzir o 92 em pontos, que deixa de existir; processos que escolheram as tabelas antigas mantêm o cálculo (ver os edge cases) | n |
 | Cenário de aceitação | Derivado: as mesmas quantidades do caso de 2022–2024 lançadas na tabela oficial (IV.4 como um curso de 21 horas); não é um resultado aprovado em processo real | O total aprovado (414) foi calculado com outra tabela | n |
 
 **Open questions:** none - all resolved or logged above.
@@ -87,8 +87,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 **Acceptance Criteria** (each line is one EARS pattern):
 
 1. The system SHALL calcular as horas de PIT de cada oferta como CH docente ÷ 17 semanas × (1 + preparação), com preparação 1 na graduação e 2 na pós-graduação, arredondadas a 2 casas pelo critério meio para cima: 68 h na graduação dão 8,00 horas, 34 h dão 4,00 horas e 68 h na pós-graduação dão 12,00 horas.
-2. WHEN o resultado é calculado THEN the system SHALL devolver as horas de PIT somadas por período letivo e o total de horas do Grupo I, e SHALL manter em 0 a pontuação, o subtotal e a contribuição do Grupo I ao total geral.
-3. IF uma atividade do Grupo I informa pontos que substituem o cálculo (`points_override`) THEN the system SHALL responder 422 no campo `points_override`.
+2. WHEN o resultado é calculado com uma versão cujo Grupo I fica fora do total e tem critério de carga semanal THEN the system SHALL devolver as horas de PIT somadas por período letivo e o total de horas do Grupo I, e SHALL manter em 0 a pontuação, o subtotal e a contribuição do Grupo I ao total geral; WHERE a versão escolhida pelo processo é anterior (Grupo I que entra no total, ou fora do total sem critério de carga semanal) the system SHALL manter o cálculo que o processo já tinha.
+3. IF uma atividade do Grupo I informa pontos que substituem o cálculo (`points_override`) numa versão cujo Grupo I fica fora do total e tem critério de carga semanal THEN the system SHALL responder 422 no campo `points_override`; WHERE a versão é anterior (Grupo I que conta pontos) the system SHALL continuar aceitando os pontos informados.
 
 **Independent Test**: Lançar quatro períodos de disciplinas e ver as horas de PIT por período, com o total geral sem o Grupo I.
 
@@ -148,6 +148,7 @@ Edge cases are usually unwanted-behavior (IF/THEN) or boundary (WHEN) criteria:
 - IF uma atividade com carga mínima tem exatamente 20 horas THEN the system SHALL pontuá-la; WHEN tem 19,99 horas THEN the system SHALL não pontuá-la.
 - WHEN o banco já tem a tabela oficial e as tabelas antigas arquivadas THEN the system SHALL não alterar nada na nova inicialização.
 - IF um processo existente escolheu uma versão da tabela do IFCH ou da FASI THEN the system SHALL manter essa versão e o cálculo dele inalterados.
+- IF a versão escolhida tem o Grupo I fora do total sem critério de carga semanal (tipo IFCH) THEN the system SHALL não tratá-lo como horas de PIT, e a interface SHALL não mostrar o total de horas de PIT.
 
 ---
 

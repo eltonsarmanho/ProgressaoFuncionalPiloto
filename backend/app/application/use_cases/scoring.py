@@ -314,8 +314,8 @@ def _check_criterion_inputs(data: ActivityData, version: ScoringTableVersion | N
         and criterion is not None
         and is_pit_criterion(version, criterion)
     ):
-        # SPEC_DEVIATION: refused only where group I is reported in PIT hours (the official
-        # table); group I of the old FASI version keeps accepting informed points (PIT-03).
+        # PIT-03: refused only where group I is reported in PIT hours (the official table);
+        # group I of the old FASI version keeps accepting informed points.
         raise ValidationFailed(
             "points_override",
             "No Grupo I, as horas de PIT são calculadas da carga horária; não há pontos a informar",
