@@ -912,10 +912,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Cria tabela com nome único, unidades e primeira versão com vigência e referência
-- [ ] Duplicar copia a última versão e as duas tabelas ficam independentes
-- [ ] Não ADMIN: 403; nome repetido: 409/422 com campo
-- [ ] Gate full passa; 8+ testes
+- [x] Cria tabela com nome único, unidades e primeira versão com vigência e referência
+- [x] Duplicar copia a última versão e as duas tabelas ficam independentes
+- [x] Não ADMIN: 403; nome repetido: 409/422 com campo
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full

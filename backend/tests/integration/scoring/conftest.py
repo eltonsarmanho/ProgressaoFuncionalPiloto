@@ -8,7 +8,7 @@ import pytest
 
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
-from app.application.use_cases import scoring
+from app.application.use_cases import scoring, scoring_admin
 from app.domain.entities.career import Modality
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor, Titration, WorkRegime
@@ -136,3 +136,13 @@ def fasi_chosen(world):
     """The FASI table version chosen for the main process."""
     world.choose.execute(world.admin, world.process.id, world.fasi_version.id, None, None)
     return world
+
+
+@pytest.fixture
+def admin_uc(world):
+    """Scoring table administration use cases (phase 6)."""
+    uf, audit = world.uow_factory, world.audit
+    return SimpleNamespace(
+        create_table=scoring_admin.CreateScoringTable(uf, audit),
+        duplicate=scoring_admin.DuplicateScoringTable(uf, audit),
+    )
