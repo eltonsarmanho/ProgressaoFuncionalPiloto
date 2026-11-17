@@ -1213,10 +1213,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Envia PDF com texto, PDF digitalizado e PNG, processa com o executor e confere o texto por página e o método
-- [ ] Declaração de banca vira atividade rascunho vinculada; validar em lote muda o total da pontuação; um documento sem item e a coorientação de TCC ficam sem atividade
-- [ ] Em todas as respostas e nos logs capturados a chave da MariTalk não aparece
-- [ ] Build gate passa; 6+ testes
+- [x] Envia PDF com texto, PDF digitalizado e PNG, processa com o executor e confere o texto por página e o método
+- [x] Declaração de banca vira atividade rascunho vinculada; validar em lote muda o total da pontuação; um documento sem item e a coorientação de TCC ficam sem atividade
+- [x] Em todas as respostas e nos logs capturados a chave da MariTalk não aparece
+- [x] Build gate passa; 6+ testes
 
 **Tests**: integration
 **Gate**: build
