@@ -208,8 +208,8 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] `alembic upgrade head` e `downgrade -1` funcionam no Postgres de teste
-- [ ] Gate full passa; 3+ testes
+- [x] `alembic upgrade head` e `downgrade -1` funcionam no Postgres de teste
+- [x] Gate full passa; 3+ testes
 
 **Tests**: integration
 **Gate**: full

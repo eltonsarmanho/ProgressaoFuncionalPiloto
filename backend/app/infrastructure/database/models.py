@@ -267,6 +267,7 @@ class ScoringCriterionModel(Base):
     hours_per_block: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
     weeks_per_semester: Mapped[int | None] = mapped_column(SmallInteger)
     prep_ratio: Mapped[Decimal | None] = mapped_column(Numeric(4, 2))
+    min_hours: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
     max_points: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
     accepted_evidence: Mapped[str] = mapped_column(Text)
     rules: Mapped[str] = mapped_column(Text)
