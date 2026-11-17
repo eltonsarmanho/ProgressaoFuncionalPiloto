@@ -3,16 +3,29 @@
 Access follows the process (AccessPolicy): anything outside it is NotFound, never Forbidden.
 """
 
+import re
+import uuid
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, fields, replace
+from datetime import date
+from decimal import Decimal
 from uuid import UUID
 
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
+from app.domain.entities.activity import (
+    Activity,
+    ActivitySource,
+    Candidate,
+    Level,
+    PeriodPrecision,
+    group1_item,
+    initial_status,
+)
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor
-from app.domain.entities.scoring import ScoringTableVersion
+from app.domain.entities.scoring import ScoringMode, ScoringTableVersion
 from app.domain.entities.user import User
 from app.domain.errors import Conflict, NotFound, StaleVersion, ValidationFailed
 from app.domain.repositories.ports import UnitOfWork
@@ -156,3 +169,180 @@ class ChooseProcessTable(_ScoringUseCase):
             )
             uow.commit()
             return table_state(uow, uow.processes.get(process.id))
+
+
+MAX_VALUE = Decimal(10000)
+MAX_TITLE = 300
+MAX_EVIDENCE_NOTE = 500
+ACADEMIC_PERIOD = re.compile(r"^\d{4}\.\d$")
+ACTIVITY_ENTITY = "activity"
+ACTIVITY_NOT_FOUND = "Atividade não encontrada"
+_ACTIVITY_AUDIT_EXCLUDED = {"id", "process_id", "created_by", "created_at", "updated_at", "version"}
+# Changing any of these on an existing activity needs a justification (ATV-08).
+JUSTIFIED_FIELDS = (
+    "group_number",
+    "item_number",
+    "quantity",
+    "hours",
+    "informed_points",
+    "points_override",
+)
+
+
+@dataclass(frozen=True)
+class ActivityData:
+    """What the user informs about an activity; saved exactly as given (CALC and VERIF read it)."""
+
+    title: str
+    group_number: int | None = None
+    item_number: int | None = None
+    description: str = ""
+    event_date: date | None = None
+    period_start: date | None = None
+    period_end: date | None = None
+    period_precision: PeriodPrecision = PeriodPrecision.DAY
+    academic_period: str | None = None
+    level: Level | None = None
+    quantity: Decimal | None = None
+    hours: Decimal | None = None
+    course_hours: Decimal | None = None
+    informed_points: Decimal | None = None
+    points_override: Decimal | None = None
+    evidence_note: str | None = None
+    candidates: tuple[Candidate, ...] = ()
+
+
+def _plain(value):
+    if isinstance(value, Decimal):
+        return format(value.normalize(), "f")
+    return value
+
+
+def activity_audit_view(activity: Activity) -> dict:
+    view = {k: _plain(v) for k, v in asdict(activity).items() if k not in _ACTIVITY_AUDIT_EXCLUDED}
+    view["candidates"] = [asdict(c) for c in activity.candidates]
+    return view
+
+
+def _range(field: str, label: str, value: Decimal | None) -> None:
+    if value is not None and not 0 <= value <= MAX_VALUE:
+        raise ValidationFailed(field, f"{label} deve estar entre 0 e 10000")
+
+
+def _validate_basics(data: ActivityData) -> None:
+    if not data.title.strip():
+        raise ValidationFailed("title", "Título é obrigatório")
+    if len(data.title) > MAX_TITLE:
+        raise ValidationFailed("title", "Título deve ter no máximo 300 caracteres")
+    if data.evidence_note is not None and len(data.evidence_note) > MAX_EVIDENCE_NOTE:
+        raise ValidationFailed(
+            "evidence_note", "Nota de comprovante deve ter no máximo 500 caracteres"
+        )
+    if data.group_number is not None and not 1 <= data.group_number <= 8:
+        raise ValidationFailed("group_number", "Grupo deve estar entre I e VIII (1 a 8)")
+    if data.item_number is not None and data.item_number < 1:
+        raise ValidationFailed("item_number", "Item deve ser um número positivo")
+    _range("quantidade", "Quantidade", data.quantity)
+    _range("horas", "Horas", data.hours)
+    _range("course_hours", "CH da disciplina", data.course_hours)
+    _range("informed_points", "Pontos informados", data.informed_points)
+    _range("points_override", "Pontos informados", data.points_override)
+    if data.period_start and data.period_end and data.period_end < data.period_start:
+        raise ValidationFailed("period_end", "Fim do período anterior ao início")
+    for candidate in data.candidates:
+        if not candidate.justification.strip():
+            raise ValidationFailed("candidates", "Item candidato exige justificativa da escolha")
+
+
+def _apply_group1(data: ActivityData) -> ActivityData:
+    """Group I needs academic period, level and hours; the item follows the level (ATV-02)."""
+    if data.group_number != 1:
+        return data
+    if data.academic_period is None or not ACADEMIC_PERIOD.match(data.academic_period):
+        raise ValidationFailed("academic_period", "Informe o período letivo no formato AAAA.N")
+    if data.level is None:
+        raise ValidationFailed("level", "Informe o nível (graduação ou pós-graduação)")
+    if data.hours is None:
+        raise ValidationFailed("horas", "Informe a CH docente em horas")
+    return replace(data, item_number=group1_item(data.level))
+
+
+def _check_criterion_inputs(data: ActivityData, version: ScoringTableVersion | None) -> None:
+    criterion = None
+    if version and data.group_number is not None and data.item_number is not None:
+        criterion = version.get_criterion(data.group_number, data.item_number)
+    if (
+        criterion is not None
+        and criterion.mode is ScoringMode.POR_UNIDADE
+        and data.quantity is not None
+        and data.quantity != data.quantity.to_integral_value()
+    ):
+        raise ValidationFailed("quantidade", "Quantidade deve ser inteira neste critério")
+    if data.points_override is not None and (
+        criterion is None or criterion.mode is not ScoringMode.CARGA_SEMANAL
+    ):
+        raise ValidationFailed(
+            "points_override",
+            "Pontos informados só se aplicam a critérios de carga semanal da tabela escolhida",
+        )
+
+
+def normalize_activity(data: ActivityData, version: ScoringTableVersion | None) -> ActivityData:
+    _validate_basics(data)
+    data = _apply_group1(replace(data, title=data.title.strip()))
+    _check_criterion_inputs(data, version)
+    return data
+
+
+class _ActivityUseCase(_ScoringUseCase):
+    def _chosen_version(
+        self, uow: UnitOfWork, process: FunctionalProcess
+    ) -> ScoringTableVersion | None:
+        if process.scoring_table_version_id is None:
+            return None
+        return uow.scoring_tables.get_version(process.scoring_table_version_id)
+
+
+def _fields(data: ActivityData) -> dict:
+    return {f.name: getattr(data, f.name) for f in fields(data)}
+
+
+class CreateActivity(_ActivityUseCase):
+    def execute(
+        self,
+        actor: User,
+        process_id: UUID,
+        data: ActivityData,
+        justification: str | None = None,
+        source: ActivitySource = ActivitySource.MANUAL,
+    ) -> Activity:
+        """`source` is not reachable from the public API; the AI feature will pass it (ATV-03)."""
+        with self._uow_factory() as uow:
+            process = self._writable(uow, actor, process_id)
+            data = normalize_activity(data, self._chosen_version(uow, process))
+            justification = (justification or "").strip() or None
+            if data.points_override is not None and justification is None:
+                raise ValidationFailed(
+                    "justificativa", "Justificativa obrigatória ao informar pontos manualmente"
+                )
+            activity = Activity(
+                id=uuid.uuid4(),
+                process_id=process.id,
+                created_by=actor.id,
+                source=source,
+                status=initial_status(source),
+                **_fields(data),
+            )
+            uow.activities.add(activity)
+            self._audit.record(
+                uow,
+                actor.id,
+                ACTIVITY_ENTITY,
+                activity.id,
+                AuditAction.CREATE,
+                {},
+                activity_audit_view(activity),
+                justification,
+            )
+            uow.commit()
+            return uow.activities.get(activity.id)

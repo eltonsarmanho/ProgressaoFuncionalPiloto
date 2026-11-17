@@ -535,12 +535,12 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Manual vira `VALIDADA`; origem `SUGERIDA_IA` vira `AGUARDANDO_REVISAO`
-- [ ] Grupo I exige período letivo `AAAA.N`, nível e horas e deriva o item (graduação I.1, pós I.2)
-- [ ] Sem grupo e item ou item inexistente: salva como `SEM_ENQUADRAMENTO`
-- [ ] Quantidade negativa, maior que 10000 ou não inteira em `POR_UNIDADE`: 422 em `quantidade`; horas inválidas: 422 em `horas`
-- [ ] Processo `CONCLUIDO` ou `ARQUIVADO`: 409; sem acesso: 404
-- [ ] Gate full passa; 14+ testes
+- [x] Manual vira `VALIDADA`; origem `SUGERIDA_IA` vira `AGUARDANDO_REVISAO`
+- [x] Grupo I exige período letivo `AAAA.N`, nível e horas e deriva o item (graduação I.1, pós I.2)
+- [x] Sem grupo e item ou item inexistente: salva como `SEM_ENQUADRAMENTO`
+- [x] Quantidade negativa, maior que 10000 ou não inteira em `POR_UNIDADE`: 422 em `quantidade`; horas inválidas: 422 em `horas`
+- [x] Processo `CONCLUIDO` ou `ARQUIVADO`: 409; sem acesso: 404
+- [x] Gate full passa; 14+ testes
 
 **Tests**: integration
 **Gate**: full

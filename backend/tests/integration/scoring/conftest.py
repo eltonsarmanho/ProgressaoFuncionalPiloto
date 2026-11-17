@@ -109,6 +109,7 @@ def world(uow_factory):
         ifch_version=versions["Tabela de Pontuação do IFCH"],
         suggest=scoring.SuggestScoringTable(uow_factory, audit, policy),
         choose=scoring.ChooseProcessTable(uow_factory, audit, policy),
+        create=scoring.CreateActivity(uow_factory, audit, policy),
     )
 
 
@@ -123,3 +124,10 @@ def add_process(world):
         return process
 
     return add
+
+
+@pytest.fixture
+def fasi_chosen(world):
+    """The FASI table version chosen for the main process."""
+    world.choose.execute(world.admin, world.process.id, world.fasi_version.id, None, None)
+    return world
