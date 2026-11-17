@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 8,
+  "next_id": 10,
   "lessons": [
     {
       "id": "L-001",
@@ -131,6 +131,42 @@
       ],
       "created": "2026-11-17T02:17:06Z",
       "last_seen": "2026-11-17T02:17:06Z"
+    },
+    {
+      "id": "L-008",
+      "key": "surviving_mutant::test interval overlap checks with ranges that share exactly one endpoint day on each side",
+      "text": "Test interval overlap checks with ranges that share exactly one endpoint day on each side",
+      "signal": "surviving_mutant",
+      "scope": "career-versions",
+      "status": "candidate",
+      "features": [
+        "fundacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "K1/K2 backend/app/application/use_cases/career.py:77,80 (CARR-08 overlap) (career-versions)"
+      ],
+      "created": "2026-11-17T02:32:56Z",
+      "last_seen": "2026-11-17T02:32:56Z"
+    },
+    {
+      "id": "L-009",
+      "key": "surviving_mutant::for each date guard test the last allowed day as well as the first rejected day",
+      "text": "For each date guard test the last allowed day as well as the first rejected day",
+      "signal": "surviving_mutant",
+      "scope": "career-versions",
+      "status": "candidate",
+      "features": [
+        "fundacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "K3 backend/app/application/use_cases/career.py:125 (CARR-09/CARR-10) (career-versions)"
+      ],
+      "created": "2026-11-17T02:32:56Z",
+      "last_seen": "2026-11-17T02:32:56Z"
     }
   ]
 }

@@ -1,19 +1,20 @@
 # Fundação Validation
 
-**Verdict**: FAIL ❌
+**Verdict**: FAIL ❌ (escalate: iteration 3 of 3)
 
-**Iteration**: 2 of 3
+**Iteration**: 3 of 3
 **Date**: 2026-11-16
-**Spec**: `.specs/features/fundacao/spec.md` (60 requirement IDs)
-**Diff range**: `3387587..e6875e4` (branch `feat/fundacao`, 34 commits). Fix commits since iteration 1: `af7e27d..e6875e4` (T29–T32)
+**Spec**: `.specs/features/fundacao/spec.md` (60 requirement IDs, 5 edge cases)
+**Diff range**: `3387587..6c022e1` (branch `feat/fundacao`). Fix commits since iteration 2: `6b8a2c7..6c022e1` (T33 `4ddebbf`, T34 `6c022e1`)
 **Verifier**: independent sub-agent (author ≠ verifier), evidence-or-zero
 
-Why FAIL: two discrimination-sensor mutants survived on the new CARR-09/CARR-10 code in `backend/app/application/use_cases/career.py`. Both change a date comparison at the exact boundary day the spec names, and no test exercises that day:
+Why FAIL: all three iteration-2 gaps are closed (N4 and N5 are killed, and the pytest volume leak is fixed). But three new boundary mutants on the same career-version code survive. Each one is non-equivalent and violates a spec outcome:
 
-- **N4** (`career.py:125`, `process.end_date >= new.valid_from` → `>`). CARR-10 says "data final **em ou após** o início da nova versão". With the mutant, a process ending exactly on the new version's start date no longer blocks the close. That process then silently moves to the new version, which is the outcome CARR-10 exists to prevent.
-- **N5** (`career.py:121`, `new.valid_from <= open_version.valid_from` → `<`). CARR-09 applies only when the new version "começa **depois** do início" of the open one. With the mutant, a version that starts on the same day as the open version closes it to `valid_to = valid_from − 1 day`, an inverted validity. The overlap check then accepts the new version (201) instead of rejecting it (409).
+- **K1** (`backend/app/application/use_cases/career.py:80`, `b.valid_from <= a.valid_to` → `<`). Posting a version valid 31/12/2024–31/12/2024 should return 409, because it shares 31/12/2024 with the closed Res. 4.644 version. The mutant returns 201, so two versions then cover one date. This violates the confirmed Assumption that overlapping validities are refused, and CARR-01's single applicable version.
+- **K2** (`career.py:77`, `a.valid_from <= b.valid_to` → `<`). Posting a version valid 01/01/2025–01/01/2025 should return 409, because it shares 01/01/2025 with the open Lei version. The mutant returns 201.
+- **K3** (`career.py:125`, `process.end_date >= new.valid_from` → `>= new.valid_from - 1 day`). Take a process ending 31/12/2030 and a new version starting 01/01/2031. Closing Lei on 31/12/2030 still covers that process, so CARR-10 does not apply and CARR-09 requires the close (201). The mutant returns 409.
 
-Every other check passes: all 60 IDs have evidence whose asserted value matches the spec outcome, all 5 edge cases are covered, every gate is green, and the iteration-1 survivors (M14, M15, M20) are now killed.
+The real code is correct in all three scenarios. A probe test run in the scratch worktree passed 3/3 unmutated, and each mutant failed exactly its own probe. The gap is in the tests, not the implementation.
 
 ---
 
@@ -21,11 +22,9 @@ Every other check passes: all 60 IDs have evidence whose asserted value matches 
 
 | Task | Status | Notes |
 | ---- | ------ | ----- |
-| T1–T28 | ✅ Done | Unchanged since iteration 1 |
-| T29 | ✅ Done | Auto-close of the open version (CARR-09) and 409 guard (CARR-10). Boundary days not tested (N4, N5) |
-| T30 | ✅ Done | PROC-09 invalid-date rule pinned; kills M20 |
-| T31 | ✅ Done | 5 parametrized `DADOS_INCOMPLETOS` cases; kills M14 and M15 |
-| T32 | ✅ Done | `docker rm -f -v` in `scripts/smoke_backend.sh`; volume count 61 → 61 |
+| T1–T32 | ✅ Done | Unchanged since iteration 2 |
+| T33 | ✅ Done | CARR-10 "em" boundary (`test_career_api.py:224-239`) and CARR-09 same-start boundary (`:243-252`). Kills N4 and N5 |
+| T34 | ✅ Done | `backend/tests/integration/conftest.py:70` now `docker rm -f -v`; volume count 64 → 64 across the backend gate |
 
 `tasks.md`: 0 unchecked `Done when` boxes.
 
@@ -33,7 +32,7 @@ Every other check passes: all 60 IDs have evidence whose asserted value matches 
 
 ## Spec-Anchored Acceptance Criteria
 
-Test paths are relative to `backend/tests/` unless they start with `frontend/` or `scripts/`. Every citation below was re-read at HEAD `e6875e4`.
+Test paths are relative to `backend/tests/` unless they start with `frontend/` or `scripts/`. Since `e6875e4`, the only test files that changed are `integration/api/test_career_api.py` (lines appended after 220) and `integration/conftest.py` (line 70). All other citations keep their iteration-2 line numbers. They were spot-checked at HEAD `6c022e1`, including `test_processes_api.py:69,171,197-198`, `test_process_verification.py:105,282-283,303-304`, `test_auth_api.py:59-60`, `test_process_updates_api.py:109-111`, `test_migrations.py:86-93`, `test_repositories.py:236`, `frontend/src/styles.test.ts:22` and `scripts/smoke.sh:55`.
 
 ### P1: Stack executável
 
@@ -103,9 +102,9 @@ Test paths are relative to `backend/tests/` unless they start with `frontend/` o
 | CARR-05 | Crosses 01/01/2025 → `REQUER_ANALISE_NORMATIVA`, cites Lei 15.141/2025 | `unit/domain/test_process_verification.py:219-220`; `:225`; `unit/domain/test_interstice.py:55` | ✅ PASS (M9 killed) |
 | CARR-06 | Denomination mismatch → `ALERTA`, expected shown | `unit/domain/test_process_verification.py:234-235` | ✅ PASS |
 | CARR-07 | No version → `ESTRUTURA_NAO_CADASTRADA`, skip dependent checks | `unit/domain/test_process_verification.py:251-252` | ✅ PASS |
-| CARR-08 | ADMIN registers a version with a mandatory reference, without editing versions used by processes | `integration/api/test_career_api.py:197` - 201 **while the Lei version is in use** (now reachable); `:105-106` reference required → 422 `["norm_reference"]`; `:167-168` PUT on a used version → 409, `valid_to is None`; `:177` overlap with a closed version → 409 | ✅ PASS (the iteration-1 blocker is resolved) |
-| CARR-09 | New version starting **after** the open one's start → open version closed the day before; audit UPDATE `valid_to` null → new | `integration/api/test_career_api.py:197-204` - `201`, `versions[LEI]["valid_to"] == "2030-12-31"`, `(event.action, event.user_id) == (UPDATE, actor.id)`, `event.changes == {"valid_to": {"before": None, "after": "2030-12-31"}}` | ⚠️ Outcome matches; boundary not discriminated. No test posts a version starting on the same day as the open version, so N5 survives |
-| CARR-10 | Closing would leave a process with end date **on or after** the new start → 409, nothing created, open version unchanged | `integration/api/test_career_api.py:217-220` - `409`, `versions[LEI]["valid_to"] is None`, `"Versão futura" not in versions` (new start 01/01/2026, process ends 23/11/2026) | ⚠️ Outcome matches; boundary not discriminated. No test uses an end date equal to the new start, so N4 survives |
+| CARR-08 | ADMIN registers a version with a mandatory reference, without editing versions used by processes; overlapping validities refused (confirmed Assumption) | `integration/api/test_career_api.py:197` - 201 while the Lei version is in use; `:105-106` reference required → 422 `["norm_reference"]`; `:167-168` PUT on a used version → 409, `valid_to is None`; `:177` overlap inside a closed version → 409 | ⚠️ Outcome matches, but the overlap rule is not discriminated on a single shared day (K1, K2 survive) |
+| CARR-09 | New version starting **after** the open one's start → open version closed the day before; audit UPDATE `valid_to` null → new | `integration/api/test_career_api.py:197-204` - `201`, `versions[LEI]["valid_to"] == "2030-12-31"`, audit `changes == {"valid_to": {"before": None, "after": "2030-12-31"}}`; boundary `:249-252` - same start day 01/01/2025 → `409`, `(lei["valid_from"], lei["valid_to"]) == ("2025-01-01", None)`, new version absent | ⚠️ "Depois" boundary now pinned (N5 killed). The close is not proven when a process ends on the last day the closed version still covers (K3 survives) |
+| CARR-10 | Closing would leave a process with end date **on or after** the new start → 409, nothing created, open version unchanged | `integration/api/test_career_api.py:217-220` (end 23/11/2026 vs start 01/01/2026); boundary `:232-239` - process ends 01/01/2031, new start 01/01/2031 → `409`, `versions[LEI]["valid_to"] is None`, `"Versão futura" not in versions` | ✅ PASS for the "em" boundary (N4 killed). The day-before side belongs to CARR-09 (K3) |
 
 ### P1: Trilha de auditoria
 
@@ -135,17 +134,17 @@ Test paths are relative to `backend/tests/` unless they start with `frontend/` o
 | UNIT-02 | Archived unit → 422 | `integration/api/test_professors_api.py:167-170`; `integration/api/test_processes_api.py:135-138` | ✅ PASS |
 | UNIT-03 | Seed Cametá, FASI, IFCH | `integration/test_seed.py:62-76` | ✅ PASS |
 
-**Status**: 60/60 IDs have evidence whose asserted value matches the spec outcome. 0 spec-precision gaps: PROC-02, PROC-04 and PROC-09 are now defined in the spec Assumptions, and CARR-08 is resolved by CARR-09/CARR-10. Two ACs (CARR-09, CARR-10) are not discriminating at the boundary day the spec names (sensor N5, N4). UI-06 still rests on proxy evidence.
+**Status**: 60/60 IDs have evidence whose asserted value matches the spec outcome. 0 spec-precision gaps. Not discriminating at a boundary day: the CARR-08 overlap rule on a single shared day (K1, K2) and the CARR-09 close when a process ends on the day before the new start (K3). UI-06 still rests on proxy evidence (static CSS scan), which does not block.
 
 ---
 
 ## Edge Cases
 
-- [x] End 31/12/2024 → Res. 4.644; end 01/01/2025 → Lei 15.141: `unit/domain/test_career.py:38-43`
-- [x] 29/02/2024 → 28/02/2026 = 24 months: `unit/domain/test_interstice.py:18,23`; 27/02 → 23 at `:29`
+- [x] End 31/12/2024 → Res. 4.644; end 01/01/2025 → Lei 15.141: `unit/domain/test_career.py:38-43` (M2 and K6 killed)
+- [x] 29/02/2024 → 28/02/2026 = 24 months: `unit/domain/test_interstice.py:18,23`; 27/02 → 23 at `:29` (M1 killed)
 - [x] Concurrent save → first wins, second 409: `integration/test_repositories.py:236` (`pytest.raises(StaleVersion)`), `:241-242`; `integration/api/test_process_updates_api.py:120-122`
 - [x] Archived professor → reading kept, new process 422: `integration/api/test_process_updates_api.py:228-230`
-- [x] Empty optional fields → saved plus `ALERTA` `DADOS_INCOMPLETOS` listing them: `unit/domain/test_process_verification.py:282-283` - for each of the 5 fields on its own, `severity is Severity.ALERTA` and `message == f"Campos não preenchidos: {label}."`; `:260-265` combined case; `integration/api/test_processes_api.py:117-120`. Now discriminating (M14 and M15 killed)
+- [x] Empty optional fields → saved plus `ALERTA` `DADOS_INCOMPLETOS` listing them: `unit/domain/test_process_verification.py:282-283` (each of 5 fields), `:260-265`; `integration/api/test_processes_api.py:117-120`
 
 5/5 covered.
 
@@ -153,46 +152,51 @@ Test paths are relative to `backend/tests/` unless they start with `frontend/` o
 
 ## Discrimination Sensor
 
-Expanded tier. Run in an isolated `git worktree` at `e6875e4` under the session scratchpad, against a dedicated throwaway Postgres (`TEST_DATABASE_URL`, container removed with `-v`). The real `backend/.venv` was reused read-only, and imports were confirmed to resolve from the worktree. The unmutated worktree was green first (284 passed). Each mutant was applied by exact single-occurrence replacement, then the full backend suite ran with `-x`, then the file was reverted with `git checkout`.
+Expanded tier. Run in an isolated `git worktree` at `6c022e1` under the session scratchpad. Tests ran against a dedicated throwaway `postgres:16-alpine` container (`TEST_DATABASE_URL`, removed with `-v`), reusing the real `backend/.venv` read-only. Imports were confirmed to resolve from the worktree, and the unmutated worktree was green (286 passed). Each mutant was applied by exact single-occurrence replacement. The full backend suite then ran with `-x`, and the file was reverted with `git checkout`.
 
 | # | File:line | Mutation | Killed? |
 | - | --------- | -------- | ------- |
-| M14 | `backend/app/domain/rules/process_verification.py:74` | `resp_admin_unit` removed from `OPTIONAL_FIELDS` (re-run) | ✅ Killed by `test_each_empty_optional_field_is_reported[resp_admin_unit]` |
-| M15 | `process_verification.py:72` | `resp_position` removed from `OPTIONAL_FIELDS` (re-run) | ✅ Killed by `[resp_position]` |
-| M20 | `process_verification.py:148` | `if dates_ok and minimum` → `if minimum` (re-run) | ✅ Killed by `test_invalid_dates_do_not_also_emit_insufficient_interstice[end0]` |
-| N1 | `backend/app/application/use_cases/career.py:130` | Close at `new.valid_from` instead of the day before | ✅ Killed by `test_creating_next_version_closes_open_ended_version` |
-| N2 | `career.py:125` | Process end-date check skipped (`and False`) | ✅ Killed by `test_closing_that_would_move_an_existing_process_returns_409` |
+| N4 | `backend/app/application/use_cases/career.py:125` | `process.end_date >= new.valid_from` → `>` (iteration-2 survivor) | ✅ Killed by `test_process_ending_on_new_version_start_day_blocks_close` |
+| N5 | `career.py:121` | `new.valid_from <= open_version.valid_from` → `<` (iteration-2 survivor) | ✅ Killed by `test_version_starting_on_open_version_start_day_returns_409` |
+| N1 | `career.py:130` | Close at `new.valid_from` instead of the day before | ✅ Killed by `test_creating_next_version_closes_open_ended_version` |
 | N3 | `career.py:163` | Audit record of the closing skipped | ✅ Killed by `test_creating_next_version_closes_open_ended_version` |
-| N4 | `career.py:125` | `process.end_date >= new.valid_from` → `>` | ❌ **Survived** (284 passed) |
-| N5 | `career.py:121` | `new.valid_from <= open_version.valid_from` → `<` | ❌ **Survived** (284 passed) |
-| N6 | `career.py:162` | Closed version not substituted into `existing` before the overlap check | ✅ Killed by `test_creating_next_version_closes_open_ended_version` |
-| M1 | `backend/app/domain/rules/interstice.py:23` | Month count `end.day < start.day` → `<=` (re-run) | ✅ Killed |
-| M2 | `backend/app/domain/entities/career.py:35` | `moment <= valid_to` → `<` (re-run) | ✅ Killed |
-| M6 | `backend/app/application/services/access_policy.py:25` | DOCENTE may read any process (re-run) | ✅ Killed |
-| M7 | `backend/app/application/use_cases/processes.py:161` | Justification not required in `EM_ANDAMENTO` (re-run) | ✅ Killed |
-| M9 | `interstice.py:32` | `crosses`: `moment <= end` → `<` (re-run) | ✅ Killed |
-| M10 | `backend/app/application/use_cases/auth.py:14` | `MAX_FAILURES` 5 → 6 (re-run) | ✅ Killed |
-| M12 | `backend/app/domain/entities/process.py:20` | `is_read_only` always False (re-run) | ✅ Killed |
+| M1 | `backend/app/domain/rules/interstice.py:23` | `end.day < start.day` → `<=` | ✅ Killed |
+| M2 | `backend/app/domain/entities/career.py:35` | `moment <= valid_to` → `<` | ✅ Killed by `test_select_version_end_date_31_12_2024_uses_old_structure` |
+| M6 | `backend/app/application/services/access_policy.py:25` | DOCENTE may read any process | ✅ Killed by `test_docente_sees_only_processes_of_linked_professor` |
+| M7 | `backend/app/application/use_cases/processes.py:161` | Justification not required in `EM_ANDAMENTO` | ✅ Killed |
+| M9 | `interstice.py:32` | `moment <= end` → `<` | ✅ Killed |
+| M10 | `backend/app/application/use_cases/auth.py:14` | `MAX_FAILURES` 5 → 6 | ✅ Killed by `test_sixth_attempt_after_five_failures_returns_429` |
+| M12 | `backend/app/domain/entities/process.py:20` | `is_read_only` always False | ✅ Killed |
+| M20 | `backend/app/domain/rules/process_verification.py:148` | `if dates_ok and minimum` → `if minimum` | ✅ Killed |
+| K4 (new) | `auth.py:124` | Idle expiry `>= IDLE_TIMEOUT` → `>` (AUTH-05) | ✅ Killed by `test_session_idle_for_30_minutes_gets_401` |
+| K5 (new) | `interstice.py:32` | `start < moment` → `<=` (CARR-05 "começa antes") | ✅ Killed |
+| K6 (new) | `entities/career.py:34` | `valid_from <= moment` → `<` (CARR-01, edge case 01/01/2025) | ✅ Killed |
+| K7 (new) | `process_verification.py:150` | `months < minimum` → `<=` (PROC-09) | ✅ Killed |
+| K8 (new) | `process_verification.py:176` | `end_date > opening_date` → `>=` (PROC-06) | ✅ Killed by `test_end_equal_to_opening_is_not_alert` |
+| K9 (new) | `auth.py:67` | Failure window `(now−15min, now]` → `[now−15min, now]` (AUTH-04) | ✅ Killed |
+| K1 (new) | `career.py:80` | `_overlaps`: `b.valid_from <= a.valid_to` → `<` | ❌ **Survived** (286 passed) |
+| K2 (new) | `career.py:77` | `_overlaps`: `a.valid_from <= b.valid_to` → `<` | ❌ **Survived** (286 passed) |
+| K3 (new) | `career.py:125` | `process.end_date >= new.valid_from` → `>= new.valid_from - timedelta(days=1)` | ❌ **Survived** (286 passed) |
 
-Why N4 and N5 are not equivalent mutants:
-- **N4**: take a process ending 01/01/2031 and a new version starting 01/01/2031. The real code returns 409. The mutant closes the Lei version on 31/12/2030 and returns 201, so that process now resolves to the new version. This violates CARR-10 ("em ou após").
-- **N5**: with no processes, post a version starting 01/01/2025, the open Lei version's start date. The real code skips the close, the overlap check fires, and the API returns 409. The mutant closes the Lei version to `valid_to = 2024-12-31 < valid_from = 2025-01-01`. That inverted range overlaps nothing, so the API returns 201 and leaves corrupt data. This violates CARR-09 ("começa depois do início").
+Non-equivalence proof (probe tests in the scratch worktree only, deleted afterwards; 3/3 passed on unmutated code):
+- **K1**: POST `{valid_from: 2024-12-31, valid_to: 2024-12-31}`. Real → 409. Mutant → 201, and 31/12/2024 is now covered by two versions.
+- **K2**: POST `{valid_from: 2025-01-01, valid_to: 2025-01-01}`. Real → 409. Mutant → 201, and 01/01/2025 is now covered by two versions.
+- **K3**: process ending 31/12/2030, then POST `NEW_VERSION` (starts 01/01/2031). Real → 201, with Lei `valid_to == "2030-12-31"`. Mutant → 409.
 
-**Sensor depth**: expanded (16 mutations: 3 iteration-1 survivors, 6 on new code, 7 iteration-1 kills re-run)
-**Result**: 14/16 killed. FAIL ❌
-**Isolation**: real-tree `git status --porcelain` was empty before and after. The worktree was removed and pruned, the sensor container was removed with its volume, and the volume count is back to the session baseline of 60.
+**Sensor depth**: expanded (21 mutations: 2 iteration-2 survivors, 10 earlier kills re-run across domain, auth, access policy, audit and career, and 9 new boundary mutants)
+**Result**: 18/21 killed. FAIL ❌
+**Isolation**: real-tree `git status --porcelain` was empty before and after. The worktree was removed and pruned, the sensor container was removed with its volume, and no containers or networks remain. Volume count is 64, the session baseline.
 
 ---
 
 ## Gate Check
 
-- **Backend**: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` → ruff: All checks passed; pytest **284 passed**, 0 failed, 0 skipped (1 Starlette deprecation warning)
+- **Backend**: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` → ruff: All checks passed; pytest **286 passed**, 0 failed, 0 skipped (1 Starlette deprecation warning). `docker volume ls -q`: **64 before, 64 after**. The T34 leak is fixed
 - **Frontend**: `npm run lint && npm test -- --run && npm run build` → lint exit 0; vitest **14 passed** (6 files); build OK
-- **smoke_backend**: `./scripts/smoke_backend.sh` → **PASS** (health 200, alembic at head 0001, uid 10001); `docker volume ls -q` **61 before, 61 after**. T32 is fixed
-- **smoke**: `./scripts/smoke.sh` → **PASS** (health 200 via nginx after 13 s, only nginx publishes a port, SPA and deep links, login, data and storage survive `down`/`up`); volumes 60 → 60
-- **Test count**: iteration 1 had 275 backend tests; now 284 (+9: 2 PROC-09, 5 DADOS_INCOMPLETOS, CARR-09, CARR-10; the old overlap test was rewritten, not deleted). Frontend unchanged at 14
+- **smoke_backend**: `./scripts/smoke_backend.sh` → **PASS** (health 200, alembic at head 0001, uid 10001); volumes 64 → 64
+- **smoke**: `./scripts/smoke.sh` → **PASS** (health 200 via nginx after 13 s, only nginx publishes a port, SPA and deep links, login, data and storage survive `down`/`up`); volumes 64 → 64
+- **Test count**: 284 at iteration 2, now 286 (+2: T33). Frontend unchanged at 14. No test deleted or weakened
 - **Skipped tests**: none
-- **Hygiene (non-AC)**: the backend pytest gate leaks one anonymous Postgres volume per run. `backend/tests/integration/conftest.py:70` runs `docker rm -f` without `-v` on a `--rm` container. Observed volume count went 60 → 61 after the gate run, and the verifier removed the leaked volume. This is the same defect class T32 fixed in the smoke script
 
 ---
 
@@ -200,31 +204,27 @@ Why N4 and N5 are not equivalent mutants:
 
 | Principle | Status |
 | --------- | ------ |
-| Minimum code / surgical changes / no scope creep | ✅ Fix diff touches 4 code/test files plus the smoke script |
-| Matches patterns (reuses `_reject_overlap`, `AuditService`, `_audit_view`) | ✅ |
-| Spec-anchored outcome check | ✅ 60/60; ⚠️ CARR-09/10 boundary days untested |
+| Minimum code / surgical changes / no scope creep | ✅ Fix diff: 2 tests appended, 1 flag added, `tasks.md` Phase 9 |
+| Matches patterns | ✅ Reuses `process_payload`, `NEW_VERSION`, `versions_by_name` |
+| Spec-anchored outcome check | ✅ 60/60; ⚠️ K1, K2 and K3 boundaries not discriminated |
 | Per-layer coverage | ✅ |
-| Every test maps to a spec requirement | ✅ New tests are tagged `# CARR-09`, `# CARR-10`, `# PROC-09 + Assumption`, `# Edge case` |
+| Every test maps to a spec requirement | ✅ New tests are tagged `# CARR-10 boundary` and `# CARR-09 boundary` |
 | Documented guidelines: `.specs/STATE.md` decisions; otherwise strong defaults applied | ✅ |
-| Hygiene | ⚠️ `backend/tests/integration/conftest.py:70` leaks a volume per run |
+| Hygiene | ✅ No volume leak in any gate |
 
 ---
 
 ## Fix Plans
 
-### Fix 1: Pin the CARR-10 boundary (Major, kills N4)
-- **Root cause**: the CARR-10 test uses a process ending 23/11/2026 against a new start of 01/01/2026, about 11 months apart. Nothing exercises "em" (equal day).
-- **Fix task**: in `backend/tests/integration/api/test_career_api.py`, add a test that creates a process whose interstice ends on the new version's start date (for example, end 01/01/2031 with `NEW_VERSION`). Assert 409, `versions[LEI]["valid_to"] is None` and `"Versão futura" not in versions`. Optionally add the day-before case (end 31/12/2030 → 201).
-- **Done when**: N4 is killed.
+### Fix 1: Pin the overlap rule on a single shared day (Major, kills K1 and K2)
+- **Root cause**: the only overlap test (`test_career_api.py:171-178`) posts 2020-01-01..2020-12-31, which sits deep inside the Res. 4.644 validity. No test makes two validities share exactly one day.
+- **Fix task**: in `backend/tests/integration/api/test_career_api.py`, add a parametrized test that posts `{**NEW_VERSION, "valid_from": "2024-12-31", "valid_to": "2024-12-31"}` (touches the closed version's last day) and `{**NEW_VERSION, "valid_from": "2025-01-01", "valid_to": "2025-01-01"}` (touches the open version's first day). Assert 409, the new version is absent, and both seeded versions keep their validity.
+- **Done when**: K1 and K2 are killed.
 
-### Fix 2: Pin the CARR-09 "depois" boundary (Major, kills N5)
-- **Root cause**: no test posts a version starting on the same day as the open version.
-- **Fix task**: add a test that posts `{**NEW_VERSION, "valid_from": "2025-01-01"}` with no processes. Assert 409, the Lei `valid_to` is still `None` and the new version is absent.
-- **Done when**: N5 is killed.
-
-### Fix 3: Stop the pytest volume leak (Minor, hygiene)
-- Change `backend/tests/integration/conftest.py:70` to `docker rm -f -v`.
-- **Done when**: `docker volume ls -q | wc -l` is the same before and after the backend gate.
+### Fix 2: Pin the CARR-09 close when a process ends on the day before the new start (Major, kills K3)
+- **Root cause**: the CARR-09 success test uses a process ending 23/11/2026, years before the new start. Nothing checks that a process ending on the closed version's new last day still allows the close.
+- **Fix task**: add a test that creates a process ending 31/12/2030 and posts `NEW_VERSION` (01/01/2031). Assert 201, Lei `valid_to == "2030-12-31"`, and that the process still resolves to the Lei version.
+- **Done when**: K3 is killed.
 
 ---
 
@@ -232,9 +232,9 @@ Why N4 and N5 are not equivalent mutants:
 
 | Requirement | Previous Status | New Status |
 | ----------- | --------------- | ---------- |
-| INFRA-01..07, AUTH-01..11, DOC-01..05, PROC-01..14, CARR-01..08, AUD-01..04, UI-01..05, UNIT-01..03 | Implementing | ✅ Verified |
+| INFRA-01..07, AUTH-01..11, DOC-01..05, PROC-01..14, CARR-01..07, CARR-10, AUD-01..04, UI-01..05, UNIT-01..03 | Implementing | ✅ Verified |
 | UI-06 | Implementing | ⚠️ Verified (proxy evidence) |
-| CARR-09, CARR-10 | Implementing | ❌ Needs Fix (boundary not discriminated: N5, N4) |
+| CARR-08, CARR-09 | Implementing / Needs Fix | ❌ Needs Fix (boundary not discriminated: K1, K2, K3) |
 
 ---
 
@@ -243,20 +243,21 @@ Why N4 and N5 are not equivalent mutants:
 | Iteration | Verdict | Summary |
 | --------- | ------- | ------- |
 | 1 (`3387587..cc9c41d`) | FAIL ❌ | 57/58 ACs. CARR-08 unreachable once the open version was in use. M14, M15 and M20 survived (17/20 killed). Spec-precision gaps on PROC-02, PROC-04, PROC-09 and CARR-08. Smoke backend leaked a volume |
-| 2 (`3387587..e6875e4`) | FAIL ❌ | The user added CARR-09/CARR-10 and confirmed Assumptions; T29–T32 implemented them. CARR-08 now reachable, M14/M15/M20 killed, spec-precision gaps closed, smoke volume leak fixed. New survivors N4 and N5 on the boundary days of CARR-10 and CARR-09 (14/16 killed) |
+| 2 (`3387587..e6875e4`) | FAIL ❌ | User added CARR-09/CARR-10 and confirmed Assumptions; T29–T32 implemented them. CARR-08 reachable, M14/M15/M20 killed, spec-precision gaps closed, smoke leak fixed. N4 and N5 survived on the CARR-10/CARR-09 boundary days (14/16 killed). The pytest fixture leaked a volume |
+| 3 (`3387587..6c022e1`) | FAIL ❌ | T33/T34 kill N4 and N5 and fix the pytest leak. All gates are green and volumes are stable at 64. 9 new boundary mutants: 6 killed, 3 survived on the same career-version code (K1 and K2 on `_overlaps`, K3 on the day before the CARR-10 guard). 18/21 killed. Loop limit reached, so escalate to the user |
 
 ---
 
 ## Summary
 
-**Overall**: ❌ Not Ready (one more fix round needed; iteration 3 is the last before escalation)
+**Overall**: ❌ Not Ready. The 3-iteration fix loop is exhausted, so this escalates to the user.
 
-**Spec-anchored check**: 60/60 IDs matched the spec outcome; 0 spec-precision gaps; CARR-09/CARR-10 boundaries not discriminated
-**Sensor**: 14/16 mutations killed (N4, N5 survived)
-**Gate**: backend 284 passed, frontend 14 passed, smoke_backend PASS (volumes 61/61), smoke PASS
+**Spec-anchored check**: 60/60 IDs matched the spec outcome; 0 spec-precision gaps; CARR-08 overlap and CARR-09 day-before boundaries not discriminated
+**Sensor**: 18/21 mutations killed (K1, K2 and K3 survived)
+**Gate**: backend 286 passed, frontend 14 passed, smoke_backend PASS, smoke PASS, volumes 64 → 64 throughout
 
-**What works**: every iteration-1 gap is closed. CARR-08 is reachable through the auto-close, with audit and the 409 guard. The PROC-09 invalid-date rule is pinned. Each `DADOS_INCOMPLETOS` field is checked on its own. The smoke script no longer leaks a volume.
+**What works**: every iteration-1 and iteration-2 gap is closed. The implementation behaves correctly in all three surviving-mutant scenarios. Auth, access-policy, interstice, alert and audit boundaries are all discriminated.
 
-**Issues found**: two missing boundary-day tests in `test_career_api.py` (Fix 1, Fix 2); the pytest volume leak (Fix 3, hygiene).
+**Issues found**: two missing test groups in `test_career_api.py`: the overlap rule on a single shared day (Fix 1), and the close when a process ends on the day before the new start (Fix 2). Both are test-only changes.
 
-**Next steps**: route Fix 1 and Fix 2 (and optionally Fix 3) to an implementer, then re-verify in iteration 3.
+**Next steps**: the user decides whether to approve a fourth fix round (Fix 1 and Fix 2, about 3 test cases, no production code) or to accept the residual risk.

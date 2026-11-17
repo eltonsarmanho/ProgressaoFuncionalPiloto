@@ -45,11 +45,11 @@
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao` (Complex). Depois vêm: `normativo` → `inteligencia-documental` → `pontuacao` → `documentos-gerados` → `banca-parecer` → `implantacao`
-- **Phase / Task**: Execute. Lote 1 (T1–T8) concluído (110 testes); lote 2 (T9–T15) em execução; os lotes rodam em sequência: 1 = T1–T8, 2 = T9–T15, 3 = T16–T22, 4 = T23–T28. Depois, o Verificador independente
-- **Completed**: Specify, Design e Tasks aprovados; commit `3387587` (artefatos de planejamento)
-- **In-progress** (file:line): lote 1, backend/ (scaffold e domínio)
-- **Next step**: com o resumo do lote 1, conferir os commits e o gate e disparar o lote 2
-- **Blockers**: a chave MariTalk do `.env` retorna 401 (invalid_api_key); o usuário precisa gerar uma nova antes de `inteligencia-documental`. Falta o "Modelo Relatorio Atividades 2.docx" e as URLs da PROGEP/CPPD
-- **Deploy**: o usuário ofereceu a VM descrita em AcessoVM.txt para `implantacao`. Ainda não acessada; exige aval no momento do deploy
-- **Uncommitted files**: none (além do trabalho do lote em andamento)
-- **Branch**: feat/fundacao
+- **Phase / Task**: Execute concluído (T1–T34); Verificador iteração 3 = FAIL. Limite de 3 iterações atingido: escalado ao usuário
+- **Completed**: T1–T34 (286 testes backend, 14 frontend, smoke e smoke_backend PASS); 60/60 ACs com evidência
+- **In-progress** (file:line): none
+- **Next step**: o usuário decide entre (a) 4ª rodada só de testes (K1/K2: sobreposição de um dia só em `career.py:77,80`; K3: último dia permitido em `career.py:125`) + Verificador, ou (b) aceitar o risco e encerrar a feature
+- **Blockers**: decisão do usuário; chave MariTalk retorna 401; faltam o "Modelo Relatorio Atividades 2.docx" e as URLs da PROGEP/CPPD; padrões PROC-02 (dias) e PROC-04 (referência) aguardam confirmação
+- **Deploy**: VM do AcessoVM.txt reservada para `implantacao`; não acessada; exige aval no momento
+- **Uncommitted files**: none
+- **Branch**: feat/fundacao (não enviada ao remoto)
