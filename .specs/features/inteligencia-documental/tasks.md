@@ -202,11 +202,11 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Menos de 50 caracteres úteis: inutilizável; 50 exatos: utilizável
-- [ ] Mais de 30% de símbolos: inutilizável; 30% exatos: utilizável
-- [ ] Texto de portaria sintético com lixo (como `7 r:rjo;:N *P-7-44`) é inutilizável; texto normal em português é utilizável
-- [ ] Confiança do OCR abaixo de 60 ou sem texto pede revisão (`TEXTO_ILEGIVEL`); 60 exatos não pede
-- [ ] Gate quick passa; 10+ testes
+- [x] Menos de 50 caracteres úteis: inutilizável; 50 exatos: utilizável
+- [x] Mais de 30% de símbolos: inutilizável; 30% exatos: utilizável
+- [x] Texto de portaria sintético com lixo (como `7 r:rjo;:N *P-7-44`) é inutilizável; texto normal em português é utilizável
+- [x] Confiança do OCR abaixo de 60 ou sem texto pede revisão (`TEXTO_ILEGIVEL`); 60 exatos não pede
+- [x] Gate quick passa; 10+ testes
 
 **Tests**: unit
 **Gate**: quick
