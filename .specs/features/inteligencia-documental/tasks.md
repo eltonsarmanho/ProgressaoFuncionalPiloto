@@ -888,10 +888,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Classificação manual grava o tipo e a categoria sem apagar os sugeridos e audita
-- [ ] Reprocessar marca a execução anterior `SUBSTITUIDA`, rejeita com justificativa automática os rascunhos não editados e mantém os validados ou editados
-- [ ] Duas solicitações simultâneas: a primeira vale e a segunda dá 409
-- [ ] Build gate passa; 12+ testes
+- [x] Classificação manual grava o tipo e a categoria sem apagar os sugeridos e audita
+- [x] Reprocessar marca a execução anterior `SUBSTITUIDA`, rejeita com justificativa automática os rascunhos não editados e mantém os validados ou editados
+- [x] Duas solicitações simultâneas: a primeira vale e a segunda dá 409
+- [x] Build gate passa; 12+ testes
 
 **Tests**: integration
 **Gate**: build

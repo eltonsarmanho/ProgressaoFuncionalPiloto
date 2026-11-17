@@ -26,6 +26,7 @@ from app.domain.entities.document import (
     RunStatus,
     can_transition,
 )
+from app.domain.entities.extraction import DocumentType, TaxonomyCode
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.user import User
 from app.domain.errors import Conflict, NotFound, StaleVersion, ValidationFailed
@@ -584,3 +585,60 @@ class DeleteDocument(_DocumentUseCase):
             uow.documents.delete(document.id)
             uow.commit()
         self._storage.delete(document.process_id, document.internal_name)
+
+
+class ReprocessDocument(_NewRunUseCase):
+    def execute(self, actor: User, document_id: UUID) -> Document:
+        """Queues a new extraction and retires the previous one (PIPE-09).
+
+        Only the untouched drafts of the old run are rejected. Of two simultaneous requests the
+        first stands: the second finds the document queued or hits the unique active job (409).
+        """
+        with self._uow_factory() as uow:
+            document = self._restartable(uow, actor, document_id)
+            queued = replace(document, status=DocumentStatus.PENDENTE, status_code=None)
+            retired = self._retire_runs_and_queue(uow, document)
+            uow.documents.update(queued, document.version)
+            self._record(
+                uow,
+                actor,
+                document.id,
+                AuditAction.STATUS,
+                "REPROCESS",
+                {"status": document.status},
+                {"status": queued.status},
+            )
+            uow.commit()
+            result = uow.documents.get(document.id)
+        self._reject_untouched_drafts(actor, document.process_id, retired)
+        return result
+
+
+class ClassifyDocumentManually(_DocumentUseCase):
+    def execute(
+        self, actor: User, document_id: UUID, document_type: str | None, category: str | None
+    ) -> Document:
+        """Stores the user's type and category; the suggested ones stay untouched (DOC-11).
+
+        The type is a `DocumentType` and the category a taxonomy code.
+        """
+        with self._uow_factory() as uow:
+            document = self._document(uow, actor, document_id)
+            self._writable(uow, actor, document.process_id)
+            if document_type not in {t.value for t in DocumentType}:
+                raise ValidationFailed("tipo", "Tipo de documento inválido")
+            if category not in {t.value for t in TaxonomyCode}:
+                raise ValidationFailed("categoria", "Categoria inválida")
+            classified = replace(document, manual_type=document_type, manual_category=category)
+            uow.documents.update(classified, document.version)
+            self._record(
+                uow,
+                actor,
+                document.id,
+                AuditAction.UPDATE,
+                "CLASSIFY",
+                {"manual_type": document.manual_type, "manual_category": document.manual_category},
+                {"manual_type": document_type, "manual_category": category},
+            )
+            uow.commit()
+            return uow.documents.get(document.id)

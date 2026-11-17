@@ -98,6 +98,10 @@ def docs(world, tmp_path):  # noqa: F811
         replace=manage(documents.ReplaceDocument),
         replace_with=lambda **kw: manage(documents.ReplaceDocument, **kw),
         delete=documents.DeleteDocument(world.uow_factory, audit, world.policy, storage),
+        reprocess=documents.ReprocessDocument(
+            world.uow_factory, audit, world.policy, world.change_status
+        ),
+        classify=documents.ClassifyDocumentManually(world.uow_factory, audit, world.policy),
     )
 
 

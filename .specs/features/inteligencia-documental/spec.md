@@ -272,7 +272,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | DOC-08 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-09 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-10 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-11 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-11 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-12 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-13 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-14 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
@@ -285,7 +285,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PIPE-06 | P1: Processamento: texto, OCR e estados | Design | Implementing |
 | PIPE-07 | P1: Processamento: texto, OCR e estados | Design | Implementing |
 | PIPE-08 | P1: Processamento: texto, OCR e estados | Design | Implementing |
-| PIPE-09 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
+| PIPE-09 | P1: Processamento: texto, OCR e estados | Design | Implementing |
 | PIPE-10 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
 | PIPE-11 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
 | EXT-01 | P1: Extração estruturada com a MariTalk | Design | Implementing |
