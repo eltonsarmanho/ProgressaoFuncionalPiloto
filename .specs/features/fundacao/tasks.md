@@ -282,9 +282,9 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Testes de todas as transições de status permitidas/negadas
-- [ ] Teste de arquitetura continua passando
-- [ ] Gate quick passa
+- [x] Testes de todas as transições de status permitidas/negadas
+- [x] Teste de arquitetura continua passando
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

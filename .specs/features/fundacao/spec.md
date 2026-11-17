@@ -257,14 +257,14 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | AUTH-05 | P1: Autenticação | Design | Pending |
 | AUTH-06 | P1: Autenticação | Design | Pending |
 | AUTH-07 | P1: Autenticação | Design | Pending |
-| AUTH-08 | P1: Autenticação | Design | Pending |
-| AUTH-09 | P1: Autenticação | Design | Pending |
+| AUTH-08 | P1: Autenticação | Design | Implementing |
+| AUTH-09 | P1: Autenticação | Design | Implementing |
 | AUTH-10 | P1: Autenticação | Design | Pending |
 | AUTH-11 | P1: Autenticação | Design | Pending |
 | DOC-01 | P1: Cadastro de docente | Design | Pending |
 | DOC-02 | P1: Cadastro de docente | Design | Pending |
 | DOC-03 | P1: Cadastro de docente | Design | Pending |
-| DOC-04 | P1: Cadastro de docente | Design | Pending |
+| DOC-04 | P1: Cadastro de docente | Design | Implementing |
 | DOC-05 | P1: Cadastro de docente | Design | Pending |
 | PROC-01 | P1: Processo e interstício | Design | Pending |
 | PROC-02 | P1: Processo e interstício | Design | Implementing |
@@ -277,7 +277,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | PROC-09 | P1: Processo e interstício | Design | Implementing |
 | PROC-10 | P1: Processo e interstício | Design | Implementing |
 | PROC-11 | P1: Processo e interstício | Design | Implementing |
-| PROC-12 | P1: Processo e interstício | Design | Pending |
+| PROC-12 | P1: Processo e interstício | Design | Implementing |
 | PROC-13 | P1: Processo e interstício | Design | Pending |
 | PROC-14 | P1: Processo e interstício | Design | Pending |
 | CARR-01 | P1: Estruturas de carreira | Design | Implementing |
