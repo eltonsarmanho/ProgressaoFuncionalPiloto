@@ -1,8 +1,10 @@
 """Test data for process API tests: the two real cases (PROC-10, PROC-11)."""
 
 import uuid
+from dataclasses import replace
 
 from app.domain.entities.professor import Professor, Titration, WorkRegime
+from app.domain.entities.scoring import TableStatus
 
 INSTITUTIONAL = {
     "notes": "Observação de teste",
@@ -72,3 +74,10 @@ def process_payload(professor, case=FASI_2022_2024, **overrides):
         **case,
         **overrides,
     }
+
+
+def mark_pending(uow_factory, version) -> None:
+    """The official table is OFICIAL; mark a version pending, as the old FASI table was."""
+    with uow_factory() as uow:
+        uow.scoring_tables.update_version(replace(version, status=TableStatus.PENDENTE_VALIDACAO))
+        uow.commit()

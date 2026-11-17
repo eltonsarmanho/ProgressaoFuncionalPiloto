@@ -28,7 +28,18 @@ def process(client, admin, reference, uow_factory):
 
 @pytest.fixture
 def chosen(client, headers, process, scoring_tables):
-    body = {"version_id": str(scoring_tables["FASI"].id)}
+    body = {"version_id": str(scoring_tables["OFICIAL"].id)}
+    response = client.put(
+        f"/api/processes/{process['id']}/scoring/table", json=body, headers=headers
+    )
+    assert response.status_code == 200
+    return process
+
+
+@pytest.fixture
+def points_chosen(client, headers, process, points_table):
+    """A table whose group I counts in points (the official one refuses informed points there)."""
+    body = {"version_id": str(points_table.id), "justificativa": "Teste"}
     response = client.put(
         f"/api/processes/{process['id']}/scoring/table", json=body, headers=headers
     )
@@ -133,16 +144,6 @@ def test_group_one_derives_item_from_level_and_requires_its_inputs(client, heade
         ({"title": "t" * 301}, "title"),
         ({"evidence_note": "n" * 501}, "evidence_note"),
         ({"points_override": 5, "group_number": 2, "item_number": 7}, "points_override"),
-        (
-            {
-                "points_override": 5,
-                "group_number": 1,
-                "academic_period": "2023.1",
-                "level": "GRADUACAO",
-                "horas": 68,
-            },
-            "justificativa",
-        ),
         ({"level": "OUTRO"}, "level"),
     ],
 )
@@ -150,9 +151,23 @@ def test_invalid_inputs_are_422_with_the_field_name(client, headers, chosen, cha
     field_error(client.post(activities_url(chosen), json=body(**changes), headers=headers), field)
 
 
-def test_points_override_with_justification_is_saved_for_weekly_load(client, headers, chosen):
+def test_points_override_without_justification_is_422_on_justificativa(
+    client, headers, points_chosen
+):
+    payload = body(
+        points_override=5, group_number=1, academic_period="2023.1", level="GRADUACAO", horas=68
+    )
+
+    field_error(
+        client.post(activities_url(points_chosen), json=payload, headers=headers), "justificativa"
+    )
+
+
+def test_points_override_with_justification_is_saved_for_weekly_load(
+    client, headers, points_chosen
+):
     created = create(
-        client, headers, chosen, group_number=1, academic_period="2023.1", level="GRADUACAO",
+        client, headers, points_chosen, group_number=1, academic_period="2023.1", level="GRADUACAO",
         horas=68, points_override=24, justificativa="Declaração da unidade",
     )  # fmt: skip
 
@@ -289,7 +304,7 @@ def test_distinct_mark_releases_a_duplicate_in_the_result(client, headers, chose
     field_error(blank, "justificativa")
     assert ok.status_code == 200
     assert ok.json()["distinct_justification"] == "Outro aluno"
-    assert client.get(scoring_url).json()["total"] == "20.00"
+    assert client.get(scoring_url).json()["total"] == "10.00"
 
 
 @pytest.mark.parametrize("final", ["CONCLUIDO", "ARQUIVADO"])

@@ -15,7 +15,7 @@ from tests.integration.api.test_documents_api import close_process
 
 @pytest.fixture
 def chosen(client, headers, process, scoring_tables):
-    body = {"version_id": str(scoring_tables["FASI"].id)}
+    body = {"version_id": str(scoring_tables["OFICIAL"].id)}
     response = client.put(
         f"/api/processes/{process['id']}/scoring/table", json=body, headers=headers
     )

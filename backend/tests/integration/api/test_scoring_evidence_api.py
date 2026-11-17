@@ -31,7 +31,7 @@ def test_scoring_rows_carry_evidence_count_and_the_counter_follows_the_links(
     client, admin, process, scoring_tables, uow_factory
 ):
     _, headers = admin
-    choose(client, headers, process, scoring_tables["FASI"])
+    choose(client, headers, process, scoring_tables["OFICIAL"])
     linked = add_activity(
         uow_factory, process, title="Com vinculo", group_number=2, item_number=7,
         event_date=date(2023, 5, 10),

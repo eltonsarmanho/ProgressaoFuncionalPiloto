@@ -11,6 +11,7 @@ from app.domain.entities.user import Role, User
 from app.infrastructure.security.argon2_hasher import Argon2PasswordHasher
 from app.main import create_app
 from tests.integration.api.factories import add_professor, process_payload
+from tests.support.scoring_variants import add_other_table, add_points_table
 
 PASSWORD = "senha-correta-1"
 
@@ -124,16 +125,29 @@ def reference(uow_factory):
 
 @pytest.fixture
 def scoring_tables(uow_factory, reference):
-    """Seeded IFCH and FASI scoring tables (T15); returns their latest versions by unit."""
+    """Seeded official table and a copy of it in a table of no unit (II.12 = 10).
+
+    Returns the latest versions by key: "OFICIAL" (table of FASI and IFCH) and "OUTRA" (the
+    copy, a table that is not the unit's one).
+    """
     from app.infrastructure.database.seed import seed_scoring_tables
 
     seed_scoring_tables(uow_factory())
     with uow_factory() as uow:
-        units = {u.id: u.acronym for u in uow.units.list()}
-        return {
-            units[t.unit_ids[0]]: uow.scoring_tables.list_versions(t.id)[-1]
-            for t in uow.scoring_tables.list_tables()
-        }
+        [official_table] = uow.scoring_tables.list_tables()
+        official = uow.scoring_tables.list_versions(official_table.id)[-1]
+        other = add_other_table(uow, official)
+        uow.commit()
+        return {"OFICIAL": official, "OUTRA": other}
+
+
+@pytest.fixture
+def points_table(uow_factory, scoring_tables):
+    """A copy of the official version whose group I counts in points (informed points, I.3)."""
+    with uow_factory() as uow:
+        version = add_points_table(uow, scoring_tables["OFICIAL"])
+        uow.commit()
+    return version
 
 
 @pytest.fixture

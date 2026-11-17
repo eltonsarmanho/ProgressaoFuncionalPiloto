@@ -118,7 +118,7 @@ def case(make_client, migrated_url, ai, admin, professor, scoring_tables):
     process = created.json()
     chosen = client.put(
         f"/api/processes/{process['id']}/scoring/table",
-        json={"version_id": str(scoring_tables["FASI"].id)},
+        json={"version_id": str(scoring_tables["OFICIAL"].id)},
         headers=headers,
     )
     assert chosen.status_code == 200, chosen.text
