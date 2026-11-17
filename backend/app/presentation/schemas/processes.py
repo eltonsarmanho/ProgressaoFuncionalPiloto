@@ -6,6 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from app.application.use_cases.processes import ProcessResult
+from app.domain.entities.audit import AuditAction, AuditEvent
 from app.domain.entities.career import Modality
 from app.domain.entities.process import ProcessStatus
 from app.domain.rules.process_verification import Severity
@@ -32,6 +33,37 @@ class ProcessFields(BaseModel):
 class ProcessCreate(ProcessFields):
     professor_id: UUID
     unit_id: UUID
+
+
+class ProcessUpdate(ProcessFields):
+    expected_version: int
+    justificativa: str | None = None
+
+
+class StatusChange(BaseModel):
+    status: ProcessStatus
+    expected_version: int
+    justificativa: str | None = None
+
+
+class HistoryEventOut(BaseModel):
+    id: int
+    occurred_at: datetime
+    user_id: UUID | None
+    action: AuditAction
+    changes: dict[str, dict]
+    justification: str | None
+
+    @classmethod
+    def of(cls, e: AuditEvent) -> "HistoryEventOut":
+        return cls(
+            id=e.id,
+            occurred_at=e.occurred_at,
+            user_id=e.user_id,
+            action=e.action,
+            changes=e.changes,
+            justification=e.justification,
+        )
 
 
 class IntersticeOut(BaseModel):

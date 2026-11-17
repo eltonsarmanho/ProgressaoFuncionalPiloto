@@ -278,7 +278,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | PROC-10 | P1: Processo e interstício | Design | Implementing |
 | PROC-11 | P1: Processo e interstício | Design | Implementing |
 | PROC-12 | P1: Processo e interstício | Design | Implementing |
-| PROC-13 | P1: Processo e interstício | Design | Pending |
+| PROC-13 | P1: Processo e interstício | Design | Implementing |
 | PROC-14 | P1: Processo e interstício | Design | Implementing |
 | CARR-01 | P1: Estruturas de carreira | Design | Implementing |
 | CARR-02 | P1: Estruturas de carreira | Design | Implementing |
@@ -290,7 +290,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | CARR-08 | P1: Estruturas de carreira | Design | Pending |
 | AUD-01 | P1: Trilha de auditoria | Design | Implementing |
 | AUD-02 | P1: Trilha de auditoria | Design | Implementing |
-| AUD-03 | P1: Trilha de auditoria | Design | Pending |
+| AUD-03 | P1: Trilha de auditoria | Design | Implementing |
 | AUD-04 | P1: Trilha de auditoria | Design | Pending |
 | UI-01 | P1: Interface web | Design | Pending |
 | UI-02 | P1: Interface web | Design | Pending |

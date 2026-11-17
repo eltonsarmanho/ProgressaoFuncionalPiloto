@@ -587,9 +587,9 @@ T27 → T28
 
 **Done when**:
 
-- [ ] CONCLUIDO/ARQUIVADO → 409; EM_ANDAMENTO sem justificativa → 422; versão antiga → 409
-- [ ] Histórico cronológico com valores anterior/novo
-- [ ] Gate full passa
+- [x] CONCLUIDO/ARQUIVADO → 409; EM_ANDAMENTO sem justificativa → 422; versão antiga → 409
+- [x] Histórico cronológico com valores anterior/novo
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

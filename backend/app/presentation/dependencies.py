@@ -9,7 +9,14 @@ from sqlalchemy import Engine
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
 from app.application.use_cases.auth import GetCurrentSession, Login, Logout
-from app.application.use_cases.processes import CreateProcess, GetProcess, ListProcesses
+from app.application.use_cases.processes import (
+    ChangeProcessStatus,
+    CreateProcess,
+    GetProcess,
+    GetProcessHistory,
+    ListProcesses,
+    UpdateProcess,
+)
 from app.application.use_cases.professors import (
     ArchiveProfessor,
     CreateProfessor,
@@ -51,6 +58,9 @@ class Container:
     create_process: CreateProcess
     get_process: GetProcess
     list_processes: ListProcesses
+    update_process: UpdateProcess
+    change_process_status: ChangeProcessStatus
+    process_history: GetProcessHistory
 
 
 def build_container(settings: Settings, engine: Engine, clock: Clock) -> Container:
@@ -84,6 +94,9 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
         create_process=CreateProcess(uow_factory, audit, policy),
         get_process=GetProcess(uow_factory, audit, policy),
         list_processes=ListProcesses(uow_factory, audit, policy),
+        update_process=UpdateProcess(uow_factory, audit, policy),
+        change_process_status=ChangeProcessStatus(uow_factory, audit, policy),
+        process_history=GetProcessHistory(uow_factory, audit, policy),
     )
 
 
