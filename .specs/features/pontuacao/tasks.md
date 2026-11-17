@@ -592,10 +592,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Devolve todas as atividades do processo em ordem de grupo, item e data
-- [ ] Filtros por grupo e por status funcionam isolados e combinados
-- [ ] Sem acesso: 404
-- [ ] Gate full passa; 6+ testes
+- [x] Devolve todas as atividades do processo em ordem de grupo, item e data
+- [x] Filtros por grupo e por status funcionam isolados e combinados
+- [x] Sem acesso: 404
+- [x] Gate full passa; 6+ testes
 
 **Tests**: integration
 **Gate**: full

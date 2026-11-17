@@ -113,6 +113,7 @@ def world(uow_factory):
         update=scoring.UpdateActivity(uow_factory, audit, policy),
         change_status=scoring.ChangeActivityStatus(uow_factory, audit, policy),
         mark_distinct=scoring.MarkActivitiesDistinct(uow_factory, audit, policy),
+        list_activities=scoring.ListActivities(uow_factory, audit, policy),
     )
 
 

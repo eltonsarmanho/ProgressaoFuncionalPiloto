@@ -468,3 +468,32 @@ class MarkActivitiesDistinct(_ExistingActivityUseCase):
             )
             uow.commit()
             return uow.activities.get(activity_id)
+
+
+def _listing_order(activity: Activity):
+    day = activity.event_date or activity.period_start or activity.period_end
+    return (
+        activity.group_number is None,
+        activity.group_number or 0,
+        activity.item_number is None,
+        activity.item_number or 0,
+        day is None,
+        day or date.min,
+        activity.created_at is None,
+        activity.created_at,
+    )
+
+
+class ListActivities(_ScoringUseCase):
+    def execute(
+        self,
+        actor: User,
+        process_id: UUID,
+        group_number: int | None = None,
+        status: ActivityStatus | None = None,
+    ) -> list[Activity]:
+        """All activities of the process by group, item and date; unclassified ones last."""
+        with self._uow_factory() as uow:
+            self._readable(uow, actor, process_id)
+            found = uow.activities.list_for_process(process_id, group_number, status)
+            return sorted(found, key=_listing_order)

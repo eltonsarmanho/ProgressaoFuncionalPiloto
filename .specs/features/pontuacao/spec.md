@@ -299,7 +299,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ATV-11 | P1: Atividades do processo | Design | Implementing |
 | ATV-12 | P1: Atividades do processo | Design | Implementing |
 | ATV-13 | P1: Atividades do processo | Design | Implementing |
-| ATV-14 | P1: Atividades do processo | Design | In Tasks |
+| ATV-14 | P1: Atividades do processo | Design | Implementing |
 | CALC-01 | P1: Cálculo determinístico da pontuação | Design | Implementing |
 | CALC-02 | P1: Cálculo determinístico da pontuação | Design | Implementing |
 | CALC-03 | P1: Cálculo determinístico da pontuação | Design | Implementing |
