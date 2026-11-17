@@ -255,10 +255,10 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Um teste por AC (PROC-05..09, CARR-04..07) com severidade e código exatos
-- [ ] PROC-10: zero alertas ERRO; PROC-11: conjunto exato de 5 códigos
-- [ ] Snapshot não é modificado (PROC-03)
-- [ ] Gate quick passa; 15+ testes
+- [x] Um teste por AC (PROC-05..09, CARR-04..07) com severidade e código exatos
+- [x] PROC-10: zero alertas ERRO; PROC-11: conjunto exato de 5 códigos
+- [x] Snapshot não é modificado (PROC-03)
+- [x] Gate quick passa; 15+ testes
 
 **Tests**: unit
 **Gate**: quick
