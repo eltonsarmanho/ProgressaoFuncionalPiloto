@@ -360,9 +360,9 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Rodar duas vezes não duplica registros
-- [ ] Versões persistidas idênticas ao catálogo
-- [ ] Gate full passa
+- [x] Rodar duas vezes não duplica registros
+- [x] Versões persistidas idênticas ao catálogo
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full
