@@ -19,16 +19,21 @@ export function setCsrfToken(token: string | null): void {
   csrfToken = token;
 }
 
+/**
+ * A `FormData` body is sent as is (multipart): the browser sets `Content-Type` with the boundary,
+ * so it must never be forced here. Any other body is sent as JSON.
+ */
 export async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers = new Headers();
-  if (body !== undefined) headers.set("Content-Type", "application/json");
+  const isForm = body instanceof FormData;
+  if (body !== undefined && !isForm) headers.set("Content-Type", "application/json");
   if (method !== "GET" && csrfToken) headers.set("X-CSRF-Token", csrfToken);
 
   const response = await fetch(path, {
     method,
     headers,
     credentials: "include",
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
   });
   const text = await response.text();
   const data = text ? JSON.parse(text) : undefined;

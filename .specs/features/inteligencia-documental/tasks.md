@@ -1240,9 +1240,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Corpo `FormData` é enviado sem forçar `Content-Type` e com `X-CSRF-Token`
-- [ ] Chamadas JSON existentes continuam iguais (testes existentes sem alteração)
-- [ ] Gate quick (frontend) passa; 3+ testes
+- [x] Corpo `FormData` é enviado sem forçar `Content-Type` e com `X-CSRF-Token`
+- [x] Chamadas JSON existentes continuam iguais (testes existentes sem alteração)
+- [x] Gate quick (frontend) passa; 3+ testes
 
 **Tests**: unit
 **Gate**: quick

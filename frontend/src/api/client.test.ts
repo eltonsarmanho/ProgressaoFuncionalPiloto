@@ -25,4 +25,33 @@ describe("api client", () => {
     expect(err.status).toBe(422);
     expect(fieldErrors(err)).toEqual({ siape: "SIAPE deve ter 7 dígitos" });
   });
+
+  it("TELA-02: envia FormData sem forçar Content-Type e com X-CSRF-Token", async () => {
+    const { calls } = mockFetch({ "POST /api/processes/p1/documents": { status: 207, body: { results: [] } } });
+    setCsrfToken("tok-2");
+    const form = new FormData();
+    form.append("file", new File(["%PDF-1.4"], "a.pdf", { type: "application/pdf" }));
+    await request("POST", "/api/processes/p1/documents", form);
+    const init = calls[0].init!;
+    const headers = new Headers(init.headers);
+    expect(init.body).toBe(form);
+    expect(headers.has("Content-Type")).toBe(false);
+    expect(headers.get("X-CSRF-Token")).toBe("tok-2");
+    expect(init.credentials).toBe("include");
+  });
+
+  it("TELA-02: um corpo JSON continua com Content-Type application/json", async () => {
+    const { calls } = mockFetch({ "PUT /api/x": { status: 200, body: {} } });
+    setCsrfToken("tok-3");
+    await request("PUT", "/api/x", { a: 1 });
+    expect(new Headers(calls[0].init!.headers).get("Content-Type")).toBe("application/json");
+  });
+
+  it("TELA-02: o erro de um envio multipart vira ApiError com o status e o detalhe", async () => {
+    mockFetch({ "POST /api/up": { status: 429, body: { detail: "Muitos envios" } } });
+    const err = await request<never>("POST", "/api/up", new FormData()).catch((e: ApiError) => e);
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.status).toBe(429);
+    expect(err.message).toBe("Muitos envios");
+  });
 });
