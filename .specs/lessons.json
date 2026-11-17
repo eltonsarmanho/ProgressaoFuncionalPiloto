@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 7,
+  "next_id": 8,
   "lessons": [
     {
       "id": "L-001",
@@ -112,6 +112,25 @@
       ],
       "created": "2026-11-17T01:57:02Z",
       "last_seen": "2026-11-17T01:57:02Z"
+    },
+    {
+      "id": "L-007",
+      "key": "surviving_mutant::test date range guards on the exact boundary day the spec names such as on or after versus after",
+      "text": "Test date-range guards on the exact boundary day the spec names, such as on-or-after versus after",
+      "signal": "surviving_mutant",
+      "scope": "career-versions",
+      "status": "candidate",
+      "features": [
+        "fundacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N4 backend/app/application/use_cases/career.py:125 (CARR-10) (career-versions)",
+        "N5 backend/app/application/use_cases/career.py:121 (CARR-09) (career-versions)"
+      ],
+      "created": "2026-11-17T02:17:06Z",
+      "last_seen": "2026-11-17T02:17:06Z"
     }
   ]
 }

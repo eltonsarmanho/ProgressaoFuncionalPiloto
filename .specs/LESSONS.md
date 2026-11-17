@@ -50,6 +50,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: SPEC_DEVIATION backend/alembic/versions/0001_initial_schema.py:245 (database)
 - last seen: 2026-11-17T01:57:02Z
 
+### L-007 - Test date-range guards on the exact boundary day the spec names, such as on-or-after versus after
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `career-versions` · harmful: 0
+- features: fundacao
+- evidence: N4 backend/app/application/use_cases/career.py:125 (CARR-10) (career-versions) (+1 more)
+- last seen: 2026-11-17T02:17:06Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
