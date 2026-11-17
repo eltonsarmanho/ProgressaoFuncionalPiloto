@@ -1618,10 +1618,10 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] O corpo enviado à MariTalk contém o nome do docente no prompt do sistema e nenhum CPF, matrícula ou texto sem máscara
-- [ ] Sem nome (`None`), o prompt é o anterior
-- [ ] O analisador passa o nome do processo à IA (teste com IA falsa que registra a chamada)
-- [ ] Gate full passa
+- [x] O corpo enviado à MariTalk contém o nome do docente no prompt do sistema e nenhum CPF, matrícula ou texto sem máscara
+- [x] Sem nome (`None`), o prompt é o anterior
+- [x] O analisador passa o nome do processo à IA (teste com IA falsa que registra a chamada)
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

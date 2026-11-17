@@ -27,7 +27,7 @@ class KeyedAi:
     def __init__(self):
         self.calls = 0
 
-    def extract(self, document_type: DocumentType, text: str) -> AiExtraction:
+    def extract(self, document_type: DocumentType, text: str, professor_name=None) -> AiExtraction:
         self.calls += 1
         if "BANCA" in text:
             answer = payload(activity(), name=synth.FAKE_PROFESSOR)
@@ -39,7 +39,7 @@ class KeyedAi:
 class InventingAi:
     """Returns hours that the page text does not contain (AD-009)."""
 
-    def extract(self, document_type: DocumentType, text: str) -> AiExtraction:
+    def extract(self, document_type: DocumentType, text: str, professor_name=None) -> AiExtraction:
         answer = payload(activity(hours=99), name=synth.FAKE_PROFESSOR)
         return AiExtraction(raw_json=answer, model="fake-model", duration_ms=1)
 

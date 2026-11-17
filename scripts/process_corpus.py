@@ -525,7 +525,7 @@ def pick_version(uow: Any, table_name: str, version_name: str | None, moment: da
 class NoAi:
     """The AI port of --dry-run: always unavailable, so no text leaves the machine."""
 
-    def extract(self, document_type: Any, text: str) -> Any:
+    def extract(self, document_type: Any, text: str, professor_name: str | None = None) -> Any:
         from app.domain.entities.document import DocAlertCode
         from app.domain.repositories.ports import AiExtractionError
 

@@ -53,10 +53,12 @@ class FakeAi:
     ):
         self.answers = list(answers)
         self.model = model
-        self.calls: list[tuple[DocumentType, str]] = []
+        self.calls: list[tuple[DocumentType, str, str | None]] = []
 
-    def extract(self, document_type: DocumentType, text: str) -> AiExtraction:
-        self.calls.append((document_type, text))
+    def extract(
+        self, document_type: DocumentType, text: str, professor_name: str | None = None
+    ) -> AiExtraction:
+        self.calls.append((document_type, text, professor_name))
         answer = self.answers.pop(0) if len(self.answers) > 1 else self.answers[0]
         if isinstance(answer, AiExtractionError):
             raise answer

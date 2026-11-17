@@ -194,7 +194,7 @@ class DocumentAnalyzer:
         if len(run.pages) > self._limits.max_ai_pages:
             run.alerts.append(DocAlert(DocAlertCode.TRUNCADO))
 
-        payload, failure = self._ask_ai(run, _masked_ai_text(sent))
+        payload, failure = self._ask_ai(run, _masked_ai_text(sent), professor_name)
         if failure is not None:
             run.alerts.append(DocAlert(failure))
             if failure in _NO_AI_CODES:
@@ -219,12 +219,12 @@ class DocumentAnalyzer:
         return status, None
 
     def _ask_ai(
-        self, run: _Run, text: str
+        self, run: _Run, text: str, professor_name: str
     ) -> tuple["_Payload | None", DocAlertCode | None]:
         """The validated payload, or the alert code that ends the analysis."""
         for _ in range(_AI_ATTEMPTS):
             try:
-                answer: AiExtraction = self._ai.extract(run.document_type, text)
+                answer: AiExtraction = self._ai.extract(run.document_type, text, professor_name)
             except AiExtractionError as error:
                 if error.code in _NO_AI_CODES:
                     return None, error.code

@@ -35,6 +35,11 @@ _SYSTEM_PROMPT = (
     "Datas no formato AAAA-MM-DD. Responda somente com o JSON do esquema, sem comentários. "
     "Tipo provável do documento: {hint}"
 )
+_PROFESSOR_PROMPT = (
+    " O docente deste processo se chama {name}. Em `docente_nome` devolva o nome do docente "
+    "como está escrito no texto quando ele aparece; discentes, presidentes, diretores e outros "
+    "membros que não sejam esse docente não são o docente. O texto pode citar várias pessoas."
+)
 
 
 class MariTalkExtractor:
@@ -57,7 +62,9 @@ class MariTalkExtractor:
     def __repr__(self) -> str:
         return f"MariTalkExtractor(model={self._model!r})"
 
-    def extract(self, document_type: DocumentType, text: str) -> AiExtraction:
+    def extract(
+        self, document_type: DocumentType, text: str, professor_name: str | None = None
+    ) -> AiExtraction:
         """Raw JSON of the extraction; raises `AiExtractionError` when it cannot be obtained."""
         if not self._base or self._key is None:
             raise AiExtractionError(DocAlertCode.IA_INDISPONIVEL)
@@ -66,7 +73,7 @@ class MariTalkExtractor:
         used_fallback = used_budget_retry = False
         transient_retries = 0
         while True:
-            body = self._body(document_type, text, model, max_tokens)
+            body = self._body(document_type, text, model, max_tokens, professor_name)
             try:
                 response = self._post(body)
             except httpx.HTTPError:
@@ -113,15 +120,22 @@ class MariTalkExtractor:
 
     @staticmethod
     def _body(
-        document_type: DocumentType, text: str, model: str, max_tokens: int
+        document_type: DocumentType,
+        text: str,
+        model: str,
+        max_tokens: int,
+        professor_name: str | None = None,
     ) -> dict[str, Any]:
         hint = schema_for(document_type)["description"]
+        system = _SYSTEM_PROMPT.format(hint=hint)
+        if professor_name and professor_name.strip():
+            system += _PROFESSOR_PROMPT.format(name=" ".join(professor_name.split()))
         return {
             "model": model,
             "temperature": 0,
             "max_tokens": max_tokens,
             "messages": [
-                {"role": "system", "content": _SYSTEM_PROMPT.format(hint=hint)},
+                {"role": "system", "content": system},
                 {"role": "user", "content": text},
             ],
             "response_format": response_format(document_type),

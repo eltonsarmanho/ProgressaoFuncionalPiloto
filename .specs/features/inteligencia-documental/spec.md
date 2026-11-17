@@ -369,7 +369,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ACC-02 | P2: Aceitação com os documentos reais | Design | In Tasks |
 | ACC-03 | P2: Aceitação com os documentos reais | Design | Implementing |
 | ACC-04 | P2: Aceitação com os documentos reais | Design | In Tasks |
-| REAL-01 | P1: Correções da validação real | Design | In Tasks |
+| REAL-01 | P1: Correções da validação real | Design | Implementing |
 | REAL-02 | P1: Correções da validação real | Design | Implementing |
 | REAL-03 | P1: Correções da validação real | Design | Implementing |
 | REAL-04 | P1: Correções da validação real | Design | In Tasks |

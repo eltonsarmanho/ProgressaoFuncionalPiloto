@@ -83,8 +83,8 @@ class Fixture:
             monotonic=lambda: next(clock),
         )
 
-    def extract(self, document_type=DocumentType.DECLARACAO_BANCA, text=TEXT):
-        return self.extractor.extract(document_type, text)
+    def extract(self, document_type=DocumentType.DECLARACAO_BANCA, text=TEXT, professor=None):
+        return self.extractor.extract(document_type, text, professor)
 
 
 def run(*outcomes, config=None):
@@ -321,3 +321,35 @@ def test_logs_carry_the_model_and_status_but_no_document_text(caplog):
     assert "model=sabiazinho-4" in caplog.text
     assert "status=200" in caplog.text
     assert "Fulana" not in caplog.text
+
+
+# --- the professor goes in the prompt (REAL-01) -------------------------------------------
+
+
+def test_prompt_names_the_professor_of_the_process():
+    fx = run(ok())
+    fx.extract(professor="Fulana  de Tal Exemplo")
+    system = fx.server.body()["messages"][0]["content"]
+    assert "O docente deste processo se chama Fulana de Tal Exemplo." in system
+    assert "discentes" in system and "não são o docente" in system
+
+
+@pytest.mark.parametrize("name", [None, "", "   "])
+def test_prompt_without_a_professor_name_has_no_professor_sentence(name):
+    fx = run(ok())
+    fx.extract(professor=name)
+    assert "O docente deste processo" not in fx.server.body()["messages"][0]["content"]
+
+
+def test_professor_name_with_braces_is_sent_literally():
+    fx = run(ok())
+    fx.extract(professor="Fulana {x} Exemplo")
+    assert "se chama Fulana {x} Exemplo." in fx.server.body()["messages"][0]["content"]
+
+
+def test_professor_name_is_only_in_the_system_prompt_and_nothing_else_is_added():
+    fx = run(ok())
+    fx.extract(professor="Fulana de Tal Exemplo")
+    body = fx.server.body()
+    assert body["messages"][1]["content"] == TEXT
+    assert API_KEY not in json.dumps(body)

@@ -53,6 +53,20 @@ def test_text_sent_to_the_ai_is_masked_but_keeps_names_and_siape():
     assert result.pages[0].text == text  # the stored text keeps the original
 
 
+def test_the_professor_name_goes_to_the_ai_and_the_identifiers_do_not():
+    text = f"{PROFESSOR}, SIAPE {SIAPE}, CPF 000.000.000-00, participou da banca."
+    _, ai = analyze(payload(), text_page(1, text))
+    _, sent, professor = ai.calls[0]
+    assert professor == PROFESSOR
+    assert "000.000.000-00" not in sent and "000.000.000-00" not in professor
+    assert SIAPE not in professor
+
+
+def test_the_professor_name_is_sent_again_on_the_new_attempt_after_an_invalid_answer():
+    _, ai = analyze(FakeAi({"documento": "invalido"}, payload()))
+    assert [call[2] for call in ai.calls] == [PROFESSOR, PROFESSOR]
+
+
 def test_text_sent_carries_the_page_markers():
     _, ai = analyze(payload(), text_page(1, "primeira"), text_page(2, "segunda"))
     assert ai.calls[0][1] == "[PÁGINA 1]\nprimeira\n\n[PÁGINA 2]\nsegunda"

@@ -341,8 +341,14 @@ class TextExtractor(Protocol):
 
 
 class AiExtractor(Protocol):
-    def extract(self, document_type: DocumentType, text: str) -> AiExtraction:
-        """Raises `AiExtractionError` when the provider refuses or is unavailable."""
+    def extract(
+        self, document_type: DocumentType, text: str, professor_name: str | None = None
+    ) -> AiExtraction:
+        """Raises `AiExtractionError` when the provider refuses or is unavailable.
+
+        `professor_name` is the professor of the process, sent as context so the model does not
+        take a student or a board member for the professor (REAL-01); never an identifier.
+        """
         ...
 
 
