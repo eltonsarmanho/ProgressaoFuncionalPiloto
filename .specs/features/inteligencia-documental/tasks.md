@@ -1590,11 +1590,11 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] Texto sintético com o nome completo do docente, IA devolvendo o discente, o presidente ou o diretor: sem `DOCENTE_DIVERGENTE` e documento `PROCESSADO` (antes: `REQUER_REVISAO`)
-- [ ] "SOBRENOME, Nome", sem acento e em outra caixa: aceito
-- [ ] Texto sem o docente e IA devolvendo outra pessoa: `DOCENTE_DIVERGENTE` mantido; termos do nome espalhados longe uns dos outros no texto não valem
-- [ ] Nome abreviado "M. A. Souza" aceito para "Maria Aparecida de Souza"; iniciais ou sobrenome diferentes recusados
-- [ ] Gate full passa
+- [x] Texto sintético com o nome completo do docente, IA devolvendo o discente, o presidente ou o diretor: sem `DOCENTE_DIVERGENTE` e documento `PROCESSADO` (antes: `REQUER_REVISAO`)
+- [x] "SOBRENOME, Nome", sem acento e em outra caixa: aceito
+- [x] Texto sem o docente e IA devolvendo outra pessoa: `DOCENTE_DIVERGENTE` mantido; termos do nome espalhados longe uns dos outros no texto não valem
+- [x] Nome abreviado "M. A. Souza" aceito para "Maria Aparecida de Souza"; iniciais ou sobrenome diferentes recusados
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

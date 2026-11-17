@@ -16,6 +16,7 @@ from app.domain.entities.extraction import ExtractedActivity
 from app.domain.rules.scoring_periods import normalize_title
 
 MIN_TOKEN_LENGTH = 3
+NAME_WINDOW_SLACK = 2  # extra words allowed between the tokens of a full name
 TITLE_MIN_PERCENT = 90
 
 _MONTHS = (
@@ -32,6 +33,7 @@ _MONTHS = (
     ("novembro", "nov"),
     ("dezembro", "dez"),
 )
+_PARTICLES = frozenset({"de", "da", "do", "das", "dos", "e"})
 _DATE_FIELDS = ("start_date", "end_date", "event_date")
 _HOURS_FIELDS = ("hours", "course_hours")
 
@@ -127,15 +129,66 @@ def name_in_text(value: str, text: str) -> bool:
     return bool(tokens) and tokens <= _tokens(text)
 
 
+def _words(text: str) -> list[str]:
+    return re.findall(r"[a-z0-9]+", normalize_title(text))
+
+
+def professor_named_in_text(professor_name: str, text: str) -> bool:
+    """True when the whole name (2+ tokens of 3+ letters) sits together in the text.
+
+    Case, accents, order ("SOBRENOME, Nome") and the particles "de", "da", "dos" do not matter,
+    but the tokens must fall within a short window of words, so the same words scattered over
+    a page that names other people do not count as the professor (REAL-02).
+    """
+    wanted = _tokens(professor_name)
+    if len(wanted) < 2:
+        return False
+    words = _words(text)
+    width = len(wanted) + NAME_WINDOW_SLACK
+    for index, word in enumerate(words):
+        if word in wanted and wanted <= set(words[index : index + width]):
+            return True
+    return False
+
+
+def _abbreviation_of(extracted_name: str, professor_name: str) -> bool:
+    """"M. A. Souza" or "SOUZA, M. A." for "Maria Aparecida de Souza" (REAL-03).
+
+    The last surname must be equal and every given-name token must be the full name or the
+    initial of the professor's given name at the same position.
+    """
+    professor = [w for w in _words(professor_name) if w not in _PARTICLES]
+    if len(professor) < 2:
+        return False
+    if "," in extracted_name:
+        surname_part, _, given_part = extracted_name.partition(",")
+        surname, given = _words(surname_part), _words(given_part)
+        surname = surname[-1:] if surname else []
+    else:
+        parts = _words(extracted_name)
+        surname, given = parts[-1:], parts[:-1]
+    given = [w for w in given if w not in _PARTICLES]
+    if not surname or not given or len(given) > len(professor) - 1:
+        return False
+    if surname[0] != professor[-1] or len(surname[0]) < MIN_TOKEN_LENGTH:
+        return False
+    return all(
+        token == professor[i] or (len(token) == 1 and token == professor[i][0])
+        for i, token in enumerate(given)
+    )
+
+
 def same_person(
     extracted_name: str | None, professor_name: str, siape: str | None, text: str
 ) -> bool:
-    """True when the names match by tokens (3+ letters) or the SIAPE appears in the text."""
+    """True when the names match by tokens (3+ letters), by abbreviation or the SIAPE is in text."""
     if extracted_name:
         extracted, professor = _tokens(extracted_name), _tokens(professor_name)
         if professor and professor <= extracted:
             return True
         if len(extracted) >= 2 and extracted <= professor:
+            return True
+        if _abbreviation_of(extracted_name, professor_name):
             return True
     return bool(siape) and re.search(rf"(?<!\d){re.escape(siape)}(?!\d)", text) is not None
 

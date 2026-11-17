@@ -177,6 +177,42 @@ def test_no_name_extracted_but_the_professor_in_the_text_is_not_a_divergence():
     assert DocAlertCode.DOCENTE_DIVERGENTE not in codes(result)
 
 
+def test_ai_returns_a_student_but_the_professor_is_named_in_the_text_is_no_divergence():
+    text = (
+        "ATA DE DEFESA. Discente: Joana Imaginaria Costa. Banca examinadora: "
+        f"Prof. {PROFESSOR} (presidente), Prof. Carlos Ficticio Lima (membro). "
+        "A defesa ocorreu em 12 de marco de 2025."
+    )
+    result, _ = analyze(payload(activity(), name="Joana Imaginaria Costa"), text_page(1, text))
+    assert DocAlertCode.DOCENTE_DIVERGENTE not in codes(result)
+    assert result.status is DocumentStatus.PROCESSADO
+
+
+def test_ai_returns_the_president_but_the_professor_is_a_listed_member_is_no_divergence():
+    text = (
+        "PORTARIA. Designar os servidores Carlos Ficticio Lima (presidente) e "
+        "EXEMPLO, Fulana de Tal (membro) para a comissao, a partir de 12 de marco de 2025."
+    )
+    result, _ = analyze(payload(activity(), name="Carlos Ficticio Lima"), text_page(1, text))
+    assert DocAlertCode.DOCENTE_DIVERGENTE not in codes(result)
+
+
+def test_ai_returns_another_person_and_the_professor_name_is_scattered_is_a_divergence():
+    text = (
+        "Fulana Beltrana presidiu. Maria de Tal assistiu a sessao, e o Prof. Pedro Exemplo "
+        "apresentou o trabalho de Ana de Tal na sala 12 do predio principal."
+    )
+    result, _ = analyze(payload(activity(), name="Fulana Beltrana"), text_page(1, text))
+    assert DocAlertCode.DOCENTE_DIVERGENTE in codes(result)
+    assert result.status is DocumentStatus.REQUER_REVISAO
+
+
+def test_abbreviated_ai_name_of_the_professor_is_no_divergence():
+    text = "Participaram da banca os docentes F. T. Exemplo e Carlos Lima, em 12 de marco de 2025."
+    result, _ = analyze(payload(activity(), name="F. T. Exemplo"), text_page(1, text))
+    assert DocAlertCode.DOCENTE_DIVERGENTE not in codes(result)
+
+
 # --- invalid answers (EXT-09) -------------------------------------------------------------
 
 OUT_OF_SCHEMA = [

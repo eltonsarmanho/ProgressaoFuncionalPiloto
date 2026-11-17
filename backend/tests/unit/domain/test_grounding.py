@@ -15,6 +15,7 @@ from app.domain.rules.grounding import (
     hours_in_text,
     identifier_in_text,
     name_in_text,
+    professor_named_in_text,
     same_person,
     title_in_text,
 )
@@ -347,3 +348,59 @@ def test_ground_does_not_change_the_input_item():
     item = activity(hours=Decimal("99"))
     ground(item, {1: PAGE1})
     assert item.hours == Decimal("99")
+
+
+# ---------- REAL-02, REAL-03: the professor in the page text ----------
+
+PROFESSOR = "Maria Aparecida de Souza Exemplo"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Declaramos que Maria Aparecida de Souza Exemplo participou da banca.",
+        "Presidente: MARIA APARECIDA DE SOUZA EXEMPLO (UFPA)",
+        "Membro: EXEMPLO, Maria Aparecida de Souza",
+        "Membro externo: Maria Aparecida Souza Exemplo",
+        "docente maria aparecida de souza exemplo, orientadora",
+    ],
+)
+def test_professor_named_in_the_text_in_any_case_accent_order_or_particles(text):
+    assert professor_named_in_text(PROFESSOR, text) is True
+
+
+def test_professor_named_with_accents_in_the_professor_field_matches_plain_text():
+    text = "Jose Ficticio Arvore, membro"
+    assert professor_named_in_text("José Fictício da Árvore", text) is True
+
+
+def test_professor_tokens_scattered_across_the_text_are_not_the_professor():
+    text = (
+        "Maria Antonia Lima foi a presidente. Aparecida Costa e Joao de Souza assistiram. "
+        "A sessão ocorreu na sala onde o Prof. Pedro Exemplo apresentou o trabalho."
+    )
+    assert professor_named_in_text(PROFESSOR, text) is False
+
+
+def test_professor_with_a_missing_name_token_is_not_in_the_text():
+    assert professor_named_in_text(PROFESSOR, "Maria Aparecida de Souza participou") is False
+
+
+def test_a_single_token_name_is_never_enough():
+    assert professor_named_in_text("Exemplo", "Exemplo") is False
+
+
+@pytest.mark.parametrize(
+    "extracted",
+    ["M. A. Souza Exemplo", "EXEMPLO, M. A. S.", "Maria A. Souza Exemplo", "M. Exemplo"],
+)
+def test_abbreviated_name_with_the_same_initials_and_last_surname_is_the_professor(extracted):
+    assert same_person(extracted, PROFESSOR, None, "") is True
+
+
+@pytest.mark.parametrize(
+    "extracted",
+    ["J. A. Exemplo", "M. A. Silva", "A. Exemplo", "M. B. Exemplo", "Exemplo"],
+)
+def test_abbreviation_with_other_initials_or_surname_is_not_the_professor(extracted):
+    assert same_person(extracted, PROFESSOR, None, "") is False

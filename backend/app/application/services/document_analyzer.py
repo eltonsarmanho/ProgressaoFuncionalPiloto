@@ -29,7 +29,7 @@ from app.domain.repositories.ports import (
 )
 from app.domain.rules.confidence import final_confidence, needs_review
 from app.domain.rules.document_type import detect_document_type
-from app.domain.rules.grounding import ground, name_in_text, same_person
+from app.domain.rules.grounding import ground, professor_named_in_text, same_person
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.masking import mask_identifiers
 from app.domain.rules.quantity_rules import derive_quantity
@@ -329,10 +329,16 @@ def _same_professor(
     siape: str | None,
     pages: tuple[ExtractedPage, ...],
 ) -> bool:
+    """The AI answer is untrusted (AD-009), so the page text decides too (REAL-02).
+
+    The professor is the same person when the AI name matches, or when the professor's full
+    name or SIAPE is in the text, whatever the AI returned (students and board members
+    appear next to the professor in the same document).
+    """
     text = _join(pages)
-    if same_person(extracted_name, professor_name, siape, text):
-        return True
-    return extracted_name is None and name_in_text(professor_name, text)
+    return same_person(extracted_name, professor_name, siape, text) or professor_named_in_text(
+        professor_name, text
+    )
 
 
 def _items_in_table(table_version: ScoringTableVersion | None) -> Callable[[Item], bool]:
