@@ -1067,6 +1067,10 @@ class SqlJobRepository:
                 raise Conflict("O documento já tem uma tarefa de processamento ativa") from None
             raise
 
+    def get(self, job_id: UUID) -> ProcessingJob | None:
+        m = self._s.get(ProcessingJobModel, job_id, populate_existing=True)
+        return self._to_entity(m) if m else None
+
     def claim_next(self, now: datetime) -> ProcessingJob | None:
         m = self._s.scalars(
             select(ProcessingJobModel)

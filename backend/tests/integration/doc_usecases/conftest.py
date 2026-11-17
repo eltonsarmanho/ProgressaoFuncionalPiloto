@@ -10,11 +10,13 @@ from types import SimpleNamespace
 import pytest
 
 from app.application.services.audit_service import AuditService
-from app.application.use_cases import documents
+from app.application.services.document_analyzer import DocumentAnalyzer
+from app.application.use_cases import document_processing, documents
 from app.infrastructure.files.inspector import PillowFileInspector
 from app.infrastructure.storage.local_storage import LocalFileStorage
 from tests.integration.documents.factories import make_document
 from tests.integration.scoring.conftest import add_process, world  # noqa: F401  (fixtures)
+from tests.unit.application.analyzer_fakes import StepClock
 
 START = datetime(2026, 11, 17, 9, 0, tzinfo=UTC)
 
@@ -83,6 +85,22 @@ def docs(world, tmp_path):  # noqa: F811
             limits,
         )
 
+    def processor(extractor, ai, analyzer=None):
+        """ProcessDocument over the real analyzer with a fake text extractor and a fake AI."""
+        analyzer = analyzer or DocumentAnalyzer(extractor, ai, StepClock())
+        return document_processing.ProcessDocument(
+            world.uow_factory, audit, storage, analyzer, world.create
+        )
+
+    def run_next_job(use_case):
+        """What the executor does: claim the oldest pending job and process it."""
+        with world.uow_factory() as uow:
+            job = uow.jobs.claim_next(clock.now())
+            uow.commit()
+        assert job is not None, "no pending job"
+        use_case.execute(job.id, clock.now())
+        return job
+
     return SimpleNamespace(
         world=world,
         clock=clock,
@@ -95,6 +113,8 @@ def docs(world, tmp_path):  # noqa: F811
         upload=upload,
         upload_one=upload_one,
         upload_with=upload_uc,
+        processor=processor,
+        run_next_job=run_next_job,
         replace=manage(documents.ReplaceDocument),
         replace_with=lambda **kw: manage(documents.ReplaceDocument, **kw),
         delete=documents.DeleteDocument(world.uow_factory, audit, world.policy, storage),

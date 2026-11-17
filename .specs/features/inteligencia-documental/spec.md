@@ -286,8 +286,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PIPE-07 | P1: Processamento: texto, OCR e estados | Design | Implementing |
 | PIPE-08 | P1: Processamento: texto, OCR e estados | Design | Implementing |
 | PIPE-09 | P1: Processamento: texto, OCR e estados | Design | Implementing |
-| PIPE-10 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
-| PIPE-11 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
+| PIPE-10 | P1: Processamento: texto, OCR e estados | Design | Implementing |
+| PIPE-11 | P1: Processamento: texto, OCR e estados | Design | Implementing |
 | EXT-01 | P1: Extração estruturada com a MariTalk | Design | Implementing |
 | EXT-02 | P1: Extração estruturada com a MariTalk | Design | Implementing |
 | EXT-03 | P1: Extração estruturada com a MariTalk | Design | Implementing |
@@ -311,7 +311,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLS-08 | P1: Classificação em item de pontuação | Design | Implementing |
 | CLS-09 | P1: Classificação em item de pontuação | Design | Implementing |
 | CLS-10 | P1: Classificação em item de pontuação | Design | Implementing |
-| VINC-01 | P1: Atividades ligadas aos documentos | Design | In Tasks |
+| VINC-01 | P1: Atividades ligadas aos documentos | Design | Implementing |
 | VINC-02 | P1: Atividades ligadas aos documentos | Design | Implementing |
 | VINC-03 | P1: Atividades ligadas aos documentos | Design | In Tasks |
 | VINC-04 | P1: Atividades ligadas aos documentos | Design | In Tasks |

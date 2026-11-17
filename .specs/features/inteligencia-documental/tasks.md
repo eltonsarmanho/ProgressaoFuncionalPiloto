@@ -915,12 +915,12 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Documento de banca com IA falsa: status `PROCESSADO`, atividade `SUGERIDA_IA` e `AGUARDANDO_REVISAO` com vínculo (documento, página e trecho de até 300 caracteres)
-- [ ] IA indisponível: `EXTRAIDO_SEM_IA` e o cadastro manual segue funcionando
-- [ ] Documento sem item: `PROCESSADO`, nenhuma atividade, aviso `SEM_ITEM_DE_PONTUACAO`
-- [ ] `RecoverStuckJobs` volta `PROCESSANDO` para `PENDENTE`
-- [ ] Logs capturados não contêm texto, nomes nem números de documento
-- [ ] Gate full passa; 14+ testes
+- [x] Documento de banca com IA falsa: status `PROCESSADO`, atividade `SUGERIDA_IA` e `AGUARDANDO_REVISAO` com vínculo (documento, página e trecho de até 300 caracteres)
+- [x] IA indisponível: `EXTRAIDO_SEM_IA` e o cadastro manual segue funcionando
+- [x] Documento sem item: `PROCESSADO`, nenhuma atividade, aviso `SEM_ITEM_DE_PONTUACAO`
+- [x] `RecoverStuckJobs` volta `PROCESSANDO` para `PENDENTE`
+- [x] Logs capturados não contêm texto, nomes nem números de documento
+- [x] Gate full passa; 14+ testes
 
 **Tests**: integration
 **Gate**: full
