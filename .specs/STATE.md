@@ -64,8 +64,8 @@
 - **Phase / Task**: Specify de `inteligencia-documental`: `spec.md` escrita (70 requisitos, `validate_spec.py` limpo). Aguarda a aprovação do usuário. Em seguida vem o Design (taxonomia e regras de sugestão para revisão do usuário)
 - **Completed**: `fundacao` (T1–T37) e `pontuacao` (T1–T41, 731 testes backend, 67 frontend, 80/80 verificados)
 - **In-progress** (file:line): none
-- **Next step**: o usuário aprova a spec; Design em seguida (ler `references/design.md`; superseder o padrão de modelo da AD-005 por `sabia-4-br-sp`; registrar ADs do executor assíncrono e do armazenamento)
-- **Decisões do usuário em 2026-11-17**: modelo padrão da IA = `sabia-4-br-sp`; mascarar CPF, RG, e-mail e telefone antes de enviar à MariTalk
+- **Next step**: o usuário aprova a spec; Design em seguida (ler `references/design.md`; registrar ADs do executor assíncrono e do armazenamento)
+- **Decisões do usuário em 2026-11-17**: o modelo da IA é o do `MARITALK_MODEL` no `.env` (hoje `sabiazinho-4`; vazio = `sabia-4-br-sp`; erro de modelo = nova tentativa com `sabia-4-br-sp`), revisando a decisão anterior de usar `sabia-4-br-sp` como padrão; mascarar CPF, RG, e-mail e telefone antes de enviar à MariTalk. A AD-005 continua válida
 - **Blockers**: nenhum técnico. Pendentes de confirmação: padrões PROC-02 e PROC-04 (`fundacao`), 3 suposições e a isenção do I.3 (`pontuacao`); faltam o "Modelo Relatorio Atividades 2.docx" e as URLs da PROGEP/CPPD
 - **Dívidas**: teste de 360 px só estático; sem backup; sem troca de senha; rotas de negócio devolvem 500 com banco fora do ar; `api/client.ts` só envia JSON; Grupo I do caso real com 16 pontos sem explicação; mínimos das classes novas sem regra; nginx do compose e do servidor limitam o corpo a 20 MB (precisa subir a 120 MB nesta feature); antivírus ausente na VM
 - **MariTalk**: funciona (`test/test_maritalk.py`): `sabia-4`, `sabia-4-br-sp`, `sabiazinho-4` em `https://chat.maritaca.ai/api` (Bearer); `response_format` com `json_schema` estrito devolve `null` para dado ausente. A VM ainda tem `MARITALK_API_KEY` vazia; configurar no deploy desta feature

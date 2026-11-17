@@ -38,7 +38,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 | Assumption / decision | Chosen default  | Rationale | Confirmed? |
 | --------------------- | --------------- | --------- | ---------- |
-| Modelo padrão da IA | `sabia-4-br-sp` quando `MARITALK_MODEL` está vazio; com outro modelo configurado, em erro de modelo repete com `sabia-4-br-sp` | Decisão do usuário em 2026-11-17: processamento 100% em território nacional para dados de terceiros (+30% de custo). Substitui o padrão da AD-005 | y |
+| Modelo da IA | O modelo configurado em `MARITALK_MODEL` no `.env` (hoje `sabiazinho-4`); com a variável vazia, `sabia-4-br-sp`; em erro de modelo, uma nova tentativa com `sabia-4-br-sp` | Decisão do usuário em 2026-11-17, que revisa a anterior (padrão `sabia-4-br-sp`). Risco aceito: o modelo configurado pode processar fora do Brasil; mitigado pelo mascaramento de identificadores e por `MARITALK_MODEL=sabia-4-br-sp` quando se quiser processamento nacional | y |
 | Mascaramento antes da IA | CPF, RG, e-mail e telefone viram marcadores; nomes e matrícula SIAPE seguem | Decisão do usuário em 2026-11-17 (LGPD: enviar só o necessário) | y |
 | Executor em segundo plano | Executor no próprio processo do backend, uma tarefa por vez, com tarefas e estados no banco; evolui para Celery e Redis depois | Prompt, seção 18: primeira versão com processamento assíncrono e controle de tarefas; a VM tem 1 CPU | n |
 | Limites de envio | 20 MB por arquivo, 120 MB por requisição, 100 páginas, 100 megapixels, 200 documentos por processo, 60 envios por minuto por usuário | Valores razoáveis para a VM e para os documentos reais (maior artigo: 12 páginas); ajustáveis por configuração | n |
