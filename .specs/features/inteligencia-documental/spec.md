@@ -245,6 +245,39 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ---
 
+### P1: Correções da validação real ⭐ MVP
+
+**User Story**: Como docente, quero que o sistema leia os meus documentos reais sem alertas falsos, sem atividades repetidas e sem pontuação potencial inflada, para revisar só o que importa.
+
+**Why P1**: A execução real sobre os 45 documentos do interstício (relatório mascarado local, `corpus-reports/ANALISE.md`) mostrou 11 alertas falsos de docente em 15 casos, datas por extenso e faixas de datas rejeitadas, atividades repetidas, 173 de 249 pontos potenciais sem data e três regras de sugestão que pontuam a mais. Esses defeitos nasceram da validação real, por isso entram como requisitos novos e não alteram os anteriores.
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. WHEN o analisador pede a extração à IA THEN the system SHALL informar no pedido o nome do docente do processo, e SHALL nunca incluir CPF, matrícula nem outro identificador além do que o texto mascarado já traz.
+2. IF o nome completo do docente do processo aparece no texto das páginas, sem distinguir acento, caixa, ordem ("SOBRENOME, Nome") nem partículas ("de", "da", "dos"), THEN the system SHALL não emitir `DOCENTE_DIVERGENTE`, qualquer que seja o nome devolvido pela IA; IF nem o nome devolvido nem o texto trazem o nome completo do docente nem a sua matrícula THEN the system SHALL emitir `DOCENTE_DIVERGENTE`.
+3. WHERE o nome devolvido pela IA vem abreviado (iniciais dos prenomes e último sobrenome) the system SHALL aceitá-lo como o docente somente se o último sobrenome e cada inicial coincidem com o nome do docente, na mesma ordem.
+4. WHEN a data devolvida pela IA está escrita por extenso no texto da página (dia e ano em palavras, nome do mês, ou numerais misturados com palavras) THEN the system SHALL mantê-la como encontrada no texto.
+5. WHEN o texto traz uma faixa de dias "D a D de mês de AAAA" THEN the system SHALL aceitar como encontradas tanto a data inicial quanto a final da faixa.
+6. WHEN a carga horária devolvida aparece no texto com zero à esquerda ("08 horas") THEN the system SHALL mantê-la como encontrada.
+7. WHEN a IA devolve, para uma mesma página e um mesmo item, atividades com o mesmo título normalizado e com datas iguais, sobrepostas ou ausentes THEN the system SHALL criar uma única atividade, SHALL descartar as repetidas e SHALL registrar o aviso `ATIVIDADE_REPETIDA`; the system SHALL manter separadas as atividades de títulos, itens ou datas distintos.
+8. The system SHALL calcular e devolver, junto da pontuação potencial total, a parcela das atividades com data no interstício e a parcela das atividades sem data, mantendo a regra de que atividade sem data entra com alerta `DATA_AUSENTE`.
+9. WHEN o usuário abre a Etapa 4 ou a Etapa 3 THEN the frontend SHALL exibir a pontuação potencial dividida em "com data no interstício" e "sem data — aguardando revisão", e SHALL marcar cada atividade sem data na lista.
+10. IF a cláusula da portaria dispensa ou exonera o docente da função (e não o designa) THEN the system SHALL não criar atividade a partir dela e SHALL registrar o aviso `CLAUSULA_DE_DISPENSA`; the system SHALL instruir a IA a não devolver dispensas como atividade.
+11. WHERE o item é por ano de exercício the system SHALL derivar a quantidade como o número de anos completos do período dentro do interstício, sem arredondar para cima; IF o período tem menos de um ano ou falta uma das datas THEN the system SHALL deixar a quantidade em 0 e emitir `QUANTIDADE_ESTIMADA`, para o usuário informar a quantidade.
+12. IF o tipo é projeto ou programa de extensão e o texto do documento não contém a palavra "extensão" THEN the system SHALL não sugerir o item IV.1 nem IV.2 e SHALL tratar a atividade como sem item de pontuação (`SEM_ITEM_DE_PONTUACAO`).
+13. IF a página de PDF tem camada de texto utilizável, mas imagens que cobrem grande parte da página e poucas palavras distintas THEN the system SHALL executar também o OCR da página e, WHEN o OCR devolve mais texto útil, SHALL usá-lo com o método `OCR`, mantendo na página o texto da camada de texto.
+14. The system SHALL mascarar, no relatório do script de corpus, o nome de cada arquivo (substituído por um identificador estável derivado do hash) e toda sequência de 11 ou mais dígitos.
+15. WHEN o script de corpus recebe uma pasta com subpastas THEN the system SHALL processar os arquivos das subpastas por padrão, com `--no-recursive` para desligar.
+16. WHERE a execução de extração tem o dado, the system SHALL registrar no relatório do script, por documento, o modelo usado e o número de chamadas à IA.
+17. WHEN um documento emite `SEM_ITEM_DE_PONTUACAO` mais de uma vez THEN the system SHALL contá-lo uma só vez como "sem item" no relatório do script.
+18. IF o texto é uma ficha de avaliação de seminário THEN the system SHALL não a classificar como banca de mestrado e SHALL detectar o tipo `OUTRO`, sem atividade de banca.
+19. WHEN o documento tem os marcadores de artigo (resumo, palavras-chave, referências, ou uma só destes com DOI ou ISSN) THEN the system SHALL detectar o tipo `ARTIGO`.
+20. WHEN a declaração diz que o docente participou de banca examinadora THEN the system SHALL detectar `DECLARACAO_BANCA`, mesmo que o texto cite "orientador" antes; WHEN o texto declara a orientação THEN the system SHALL detectar `DECLARACAO_ORIENTACAO`.
+
+**Independent Test**: Rodar o script de corpus sobre `Documentos/` e ver menos de 10% dos documentos em `REQUER_REVISAO` por `DOCENTE_DIVERGENTE`, nenhuma atividade repetida e a pontuação potencial dividida entre com data e sem data.
+
+---
+
 ## Edge Cases
 
 Edge cases are usually unwanted-behavior (IF/THEN) or boundary (WHEN) criteria:
@@ -336,12 +369,32 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ACC-02 | P2: Aceitação com os documentos reais | Design | In Tasks |
 | ACC-03 | P2: Aceitação com os documentos reais | Design | Implementing |
 | ACC-04 | P2: Aceitação com os documentos reais | Design | In Tasks |
+| REAL-01 | P1: Correções da validação real | Design | In Tasks |
+| REAL-02 | P1: Correções da validação real | Design | In Tasks |
+| REAL-03 | P1: Correções da validação real | Design | In Tasks |
+| REAL-04 | P1: Correções da validação real | Design | In Tasks |
+| REAL-05 | P1: Correções da validação real | Design | In Tasks |
+| REAL-06 | P1: Correções da validação real | Design | In Tasks |
+| REAL-07 | P1: Correções da validação real | Design | In Tasks |
+| REAL-08 | P1: Correções da validação real | Design | In Tasks |
+| REAL-09 | P1: Correções da validação real | Design | In Tasks |
+| REAL-10 | P1: Correções da validação real | Design | In Tasks |
+| REAL-11 | P1: Correções da validação real | Design | In Tasks |
+| REAL-12 | P1: Correções da validação real | Design | In Tasks |
+| REAL-13 | P1: Correções da validação real | Design | In Tasks |
+| REAL-14 | P1: Correções da validação real | Design | In Tasks |
+| REAL-15 | P1: Correções da validação real | Design | In Tasks |
+| REAL-16 | P1: Correções da validação real | Design | In Tasks |
+| REAL-17 | P1: Correções da validação real | Design | In Tasks |
+| REAL-18 | P1: Correções da validação real | Design | In Tasks |
+| REAL-19 | P1: Correções da validação real | Design | In Tasks |
+| REAL-20 | P1: Correções da validação real | Design | In Tasks |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 72 total, 72 mapped to tasks, 0 unmapped
+**Coverage:** 92 total, 92 mapped to tasks, 0 unmapped
 
 ---
 

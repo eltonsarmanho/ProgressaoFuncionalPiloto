@@ -102,6 +102,14 @@ T48 → T49 → T50
 T51 → T52 → T53 → T54
 ```
 
+### Phase 11: Correções da validação real
+
+Defeitos achados pela execução real sobre os 45 documentos do interstício (`corpus-reports/ANALISE.md`, local). Cada defeito vira uma tarefa; os testes usam texto sintético com a forma descrita, nunca os documentos reais. Fase maior que o orçamento por ser uma cadeia de correções independentes de um mesmo analisador, ordenadas pela gravidade.
+
+```
+T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → T65 → T66 → T67 → T68 → T69 → T70
+```
+
 ---
 
 ## Task Breakdown
@@ -1567,10 +1575,442 @@ T51 → T52 → T53 → T54
 
 ---
 
+### T55: Docente no texto da página
+
+**What**: `professor_named_in_text` (nome completo sem distinguir acento, caixa, ordem nem partículas, com os termos juntos numa janela curta) e `same_person` com abreviação (iniciais mais último sobrenome); `_same_professor` do analisador passa a aceitar o docente no texto mesmo quando a IA devolve outra pessoa.
+**Where**: `backend/app/domain/rules/grounding.py`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `name_in_text`, `same_person`, `_same_professor`
+**Requirement**: REAL-02, REAL-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Texto sintético com o nome completo do docente, IA devolvendo o discente, o presidente ou o diretor: sem `DOCENTE_DIVERGENTE` e documento `PROCESSADO` (antes: `REQUER_REVISAO`)
+- [ ] "SOBRENOME, Nome", sem acento e em outra caixa: aceito
+- [ ] Texto sem o docente e IA devolvendo outra pessoa: `DOCENTE_DIVERGENTE` mantido; termos do nome espalhados longe uns dos outros no texto não valem
+- [ ] Nome abreviado "M. A. Souza" aceito para "Maria Aparecida de Souza"; iniciais ou sobrenome diferentes recusados
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(documents): accept the professor named in the page text`
+
+---
+
+### T56: Nome do docente no pedido à IA
+
+**What**: A porta `AiExtractor.extract` recebe `professor_name` opcional; o analisador o envia e o adaptador da MariTalk o acrescenta ao prompt do sistema (só o nome, com a regra de não tratar como docente quem não for ele).
+**Where**: `backend/app/infrastructure/ai/maritalk.py`
+**Depends on**: T55
+**Reuses**: Porta `AiExtractor`, `_SYSTEM_PROMPT`
+**Requirement**: REAL-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O corpo enviado à MariTalk contém o nome do docente no prompt do sistema e nenhum CPF, matrícula ou texto sem máscara
+- [ ] Sem nome (`None`), o prompt é o anterior
+- [ ] O analisador passa o nome do processo à IA (teste com IA falsa que registra a chamada)
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `feat(ai): tell the model who the professor is`
+
+---
+
+### T57: Datas por extenso no aterramento
+
+**What**: `date_in_text` reconhece dia e ano em palavras ("vinte e um dias do mês de agosto do ano de dois mil e vinte e quatro"), nome do mês e numerais misturados.
+**Where**: `backend/app/domain/rules/grounding.py`
+**Depends on**: T56
+**Reuses**: `date_in_text`, `normalize_title`
+**Requirement**: REAL-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] "vinte e um de agosto de dois mil e vinte e quatro" encontra 2024-08-21 (antes: `NAO_ENCONTRADO_NO_TEXTO`)
+- [ ] "primeiro", "trinta e um", "21 de agosto de dois mil e vinte e quatro" e "vinte e um de agosto de 2024" também encontram
+- [ ] Data errada em palavras (dia ou ano diferentes) não é encontrada
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(grounding): recognize dates written in words`
+
+---
+
+### T58: Faixas de datas e carga horária com zero
+
+**What**: `date_in_text` aceita o primeiro e o último dia de "D a D de mês de AAAA" (também "D e D"); `hours_in_text` aceita "08 horas" para 8.
+**Where**: `backend/app/domain/rules/grounding.py`
+**Depends on**: T57
+**Reuses**: `date_in_text`, `hours_in_text`
+**Requirement**: REAL-05, REAL-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] "18 a 22 de maio de 2026" encontra 2026-05-18 e 2026-05-22 (antes: início anulado)
+- [ ] Dia fora da faixa (23) não é encontrado; faixa com meses distintos "28 de abril a 2 de maio de 2026" continua valendo pelos dois dias
+- [ ] "08 horas" encontra 8; "108 horas" e "0,8" não encontram 8
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(grounding): accept date ranges and zero padded hours`
+
+---
+
+### T59: Atividades repetidas no mesmo documento
+
+**What**: Colapsar, ao sugerir, as atividades de mesma página, mesmo item e mesmo título normalizado com datas iguais, sobrepostas ou ausentes; aviso `ATIVIDADE_REPETIDA`.
+**Where**: `backend/app/application/services/document_analyzer.py`
+**Depends on**: T58
+**Reuses**: `_suggest`, `normalize_title`, `activity_interval`
+**Requirement**: REAL-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Seis atividades idênticas na mesma página geram uma só, com cinco avisos `ATIVIDADE_REPETIDA` (antes: seis atividades)
+- [ ] Idênticas sem data e idênticas com a mesma data colapsam; datas disjuntas, títulos ou itens diferentes e páginas diferentes não colapsam
+- [ ] O índice de origem dos avisos continua apontando para a resposta da IA
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(documents): collapse repeated activities of one document`
+
+---
+
+### T60: Pontuação potencial com e sem data
+
+**What**: `ScoringResult` ganha `potential_dated` e `potential_undated` (linhas `POTENCIAL` com `DATA_AUSENTE`), expostos no schema do cálculo; a regra de que atividade sem data entra com alerta fica como está.
+**Where**: `backend/app/domain/rules/scoring_engine.py`
+**Depends on**: T59
+**Reuses**: `ScoringResult`, `RowStatus`, schema de `ScoringResultResponse`
+**Requirement**: REAL-08
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `potential_dated + potential_undated == potential_total` em cálculo com atividades datadas e sem data pendentes
+- [ ] Atividade sem data validada continua em `total` com `DATA_AUSENTE`
+- [ ] A rota de cálculo devolve os dois campos
+- [ ] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(scoring): split potential points by dated and undated`
+
+---
+
+### T61: Divisão do potencial na interface
+
+**What**: `ScoringSummary` (Etapa 4) mostra o potencial "com data no interstício" e "sem data — aguardando revisão"; `ActivityReviewList` (Etapa 3) marca a atividade sem data; rótulos de `ATIVIDADE_REPETIDA` e `CLAUSULA_DE_DISPENSA` em `labels.ts`.
+**Where**: `frontend/src/components/ScoringSummary.tsx`
+**Depends on**: T60
+**Reuses**: `ScoringSummary`, `ActivityReviewList`, `labels.ts`
+**Requirement**: REAL-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] A Etapa 4 exibe as duas parcelas com os valores da API e o total potencial
+- [ ] A lista da Etapa 3 marca "sem data" nas atividades sem data
+- [ ] Build gate passa (lint, testes, build)
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `feat(frontend): show dated and undated potential points`
+
+---
+
+### T62: Cláusula de dispensa não é atividade
+
+**What**: Regra que descarta, no analisador, a atividade de função ou comissão cujo trecho dispensa ou exonera o docente e não o designa, com aviso `CLAUSULA_DE_DISPENSA`; o prompt manda a IA não devolver dispensas.
+**Where**: `backend/app/domain/rules/suggestion_rules.py`
+**Depends on**: T61
+**Reuses**: `suggest_item`, `_SYSTEM_PROMPT`
+**Requirement**: REAL-10
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Trecho "dispensar [docente] da função de Diretor" não cria atividade e emite `CLAUSULA_DE_DISPENSA` (antes: VI.6 criada)
+- [ ] Trecho "designar [docente] como Vice-Diretor" cria a atividade
+- [ ] Trecho que designa e dispensa pessoas diferentes na mesma frase não descarta a designação do docente
+- [ ] O prompt contém a instrução sobre dispensa
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(suggestions): ignore dismissal clauses of portarias`
+
+---
+
+### T63: Quantidade por ano completo de exercício
+
+**What**: `derive_quantity` calcula, para itens por ano de exercício, os anos completos do período recortado pelo interstício, sem arredondar para cima; menos de um ano ou datas ausentes dão quantidade 0 com `QUANTIDADE_ESTIMADA`.
+**Where**: `backend/app/domain/rules/quantity_rules.py`
+**Depends on**: T62
+**Reuses**: `derive_quantity`, `_whole_years`, `Interstice`
+**Requirement**: REAL-11
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Três meses de exercício dão quantidade 0 com `QUANTIDADE_ESTIMADA` (antes: 1)
+- [ ] Dois anos e meio dão 2; período maior que o interstício é recortado por ele
+- [ ] Sem uma das datas, quantidade 0 com o aviso
+- [ ] Itens que não são por ano seguem inalterados; o analisador passa o interstício
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(quantity): floor yearly items to complete years`
+
+---
+
+### T64: Projeto de extensão exige a palavra extensão
+
+**What**: `confirm_extension_course` passa a cobrir também projeto e programa: sem "extensão" no texto, a atividade vira `OUTRA` (sem item) e o analisador avisa `SEM_ITEM_DE_PONTUACAO`.
+**Where**: `backend/app/domain/rules/suggestion_rules.py`
+**Depends on**: T63
+**Reuses**: `confirm_extension_course`
+**Requirement**: REAL-12
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Certificado de participação em projeto sem a palavra "extensão" não recebe IV.2 e sai `SEM_ITEM_DE_PONTUACAO` (antes: IV.2, 8 pontos)
+- [ ] Com "extensão" no texto, IV.1 e IV.2 continuam sugeridos
+- [ ] Curso de extensão sem a palavra segue como curso concluído (VII.10)
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(suggestions): require extension wording for extension projects`
+
+---
+
+### T65: OCR em página com imagem grande e pouco texto
+
+**What**: `pdf_text` mede a cobertura de imagens da página; o extrator também faz OCR quando a camada de texto é utilizável mas há imagem grande e poucas palavras distintas, e usa o OCR se tiver mais texto útil, mantendo o texto da camada.
+**Where**: `backend/app/infrastructure/ocr/extractor.py`
+**Depends on**: T64
+**Reuses**: `is_text_layer_usable`, `ocr_image`, `extract_pdf_page`
+**Requirement**: REAL-13
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] PDF sintético com cabeçalho, rodapé e imagem de página inteira faz OCR e devolve o texto do corpo com método `OCR` (antes: só o cabeçalho, `TEXTO`)
+- [ ] Página só de texto, ou com imagem pequena, não faz OCR
+- [ ] OCR com menos texto útil que a camada mantém `TEXTO`
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(ocr): run ocr on image heavy pages with a short text layer`
+
+---
+
+### T66: Máscara dos nomes de arquivo no relatório
+
+**What**: O relatório troca o nome de cada arquivo por um identificador estável do hash e mascara qualquer sequência de 11 ou mais dígitos, inclusive depois de `_`.
+**Where**: `scripts/process_corpus.py`
+**Depends on**: T65
+**Reuses**: `mask_text`, `_BARE_NUMBER`
+**Requirement**: REAL-14
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Nome de arquivo com nome de pessoa e número de 25 dígitos após `_` não aparece no relatório
+- [ ] Duas execuções dão o mesmo identificador para o mesmo arquivo
+- [ ] Sequência de 11 ou mais dígitos em qualquer texto do relatório vira marcador
+- [ ] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(scripts): mask file names and long digit runs in corpus reports`
+
+---
+
+### T67: Script recursivo e documento sem item contado uma vez
+
+**What**: `--recursive` (padrão ligado, `--no-recursive` desliga) percorre as subpastas; o documento com vários `SEM_ITEM_DE_PONTUACAO` conta uma só vez como sem item.
+**Where**: `scripts/process_corpus.py`
+**Depends on**: T66
+**Reuses**: `collect_files`, resumo do relatório
+**Requirement**: REAL-15, REAL-17
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Pasta sintética com subpastas é processada por inteiro; `--no-recursive` lê só o nível raiz
+- [ ] Documento com três avisos `SEM_ITEM_DE_PONTUACAO` e nenhuma atividade conta como um "sem item"
+- [ ] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(scripts): walk subfolders and count no-item documents once`
+
+---
+
+### T68: Modelo e chamadas da IA por documento no relatório
+
+**What**: O relatório traz, por documento, o modelo usado e o número de chamadas à IA (tentativas), a partir da execução de extração e do analisador.
+**Where**: `scripts/process_corpus.py`
+**Depends on**: T67
+**Reuses**: `ExtractionRun.model`, `AnalysisResult.model`
+**Requirement**: REAL-16
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Relatório de pasta sintética com IA falsa traz `model` e `ai_calls` por documento
+- [ ] Documento sem IA (dry-run) traz `ai_calls` 0 e modelo nulo
+- [ ] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(scripts): report model and ai calls per document`
+
+---
+
+### T69: Ficha de avaliação de seminário não é banca
+
+**What**: `detect_document_type` mantém `OUTRO` para ficha de avaliação de seminário, e o prompt manda a IA só criar atividade de banca para ata de defesa ou declaração de banca.
+**Where**: `backend/app/domain/rules/document_type.py`
+**Depends on**: T68
+**Reuses**: `detect_document_type`, `_SYSTEM_PROMPT`
+**Requirement**: REAL-18
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Texto sintético de ficha de avaliação de seminário com avaliadores é detectado `OUTRO` (antes: dica de banca de mestrado pelo corpo)
+- [ ] Ata de defesa de mestrado e declaração de banca seguem detectadas
+- [ ] O prompt contém a regra das bancas
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(documents): do not read seminar evaluation forms as a defense board`
+
+---
+
+### T70: Tipos: artigo e declaração de banca
+
+**What**: `detect_document_type` aceita artigo com um marcador mais DOI ou ISSN e escolhe entre declaração de banca e de orientação pelo verbo declarado, não pela primeira palavra.
+**Where**: `backend/app/domain/rules/document_type.py`
+**Depends on**: T69
+**Reuses**: `_declaration_type`, marcadores de artigo
+**Requirement**: REAL-19, REAL-20
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Texto de artigo com "Resumo" e DOI, sem "Referências" no trecho enviado, é `ARTIGO` (antes: `OUTRO`)
+- [ ] Declaração que cita "orientador" e depois declara a participação em banca é `DECLARACAO_BANCA` (antes: orientação)
+- [ ] Declaração de orientação segue `DECLARACAO_ORIENTACAO`
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(documents): detect articles and board declarations better`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11
 
 Phase 1:  T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 Phase 2:  T9 → T10 → T11 → T12 → T13 → T14 → T15
@@ -1582,5 +2022,5 @@ Phase 7:  T35 → T36 → T37 → T38 → T39 → T40 → T41
 Phase 8:  T42 → T43 → T44 → T45 → T46 → T47
 Phase 9:  T48 → T49 → T50
 Phase 10:  T51 → T52 → T53 → T54
+Phase 11:  T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → T65 → T66 → T67 → T68 → T69 → T70
 ```
-
