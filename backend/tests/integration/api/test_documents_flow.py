@@ -99,7 +99,7 @@ def ai():
 def case(make_client, migrated_url, ai, admin, professor, scoring_tables):
     """(client, CSRF headers, process): an app whose AI is the simulated MariTalk server.
 
-    The process has the FASI table chosen, so the suggested item exists in it.
+    The process has the official table chosen, so the suggested item exists in it.
     """
     settings = Settings(
         _env_file=None,

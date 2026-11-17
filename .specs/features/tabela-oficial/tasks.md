@@ -492,8 +492,8 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Os testes passam com os itens novos (ex.: palestra em VIII.24, artigo internacional em VIII.9)
-- [ ] Nenhuma asserção que não codificasse item ou valor antigo é removida ou enfraquecida; valores que mudaram listados no commit; Gate full passa
+- [x] Os testes passam com os itens novos (ex.: palestra em VIII.24, artigo internacional em VIII.9)
+- [x] Nenhuma asserção que não codificasse item ou valor antigo é removida ou enfraquecida; valores que mudaram listados no commit; Gate full passa
 
 **Tests**: integration
 **Gate**: full

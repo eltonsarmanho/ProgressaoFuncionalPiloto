@@ -14,7 +14,7 @@ REFERENCE = "Res. 5.000/2026, art. 3"
 
 @pytest.fixture
 def unused(world, admin_uc):
-    """A copy of the FASI table: its version is used by no process."""
+    """A copy of the official table: its version is used by no process."""
     view = admin_uc.duplicate.execute(world.admin, world.official_version.table_id, "Cópia FASI")
     return view.versions[0].version
 
