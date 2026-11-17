@@ -772,3 +772,51 @@ def test_group1_that_counts_in_total_keeps_the_legacy_points_calculation():
     assert row_of(result, a).pit_hours is None
     assert result.group_subtotals[1] == D("8.00")
     assert result.group1_total_hours == D("0")
+
+
+# --- potential split by date (REAL-08) ------------------------------------------------------
+
+
+def pending(**kwargs):
+    return act(status=ActivityStatus.AGUARDANDO_REVISAO, **kwargs)
+
+
+def test_potential_is_split_into_dated_and_undated_and_the_parts_sum_to_the_total():
+    dated = pending(quantity="3")
+    undated = pending(quantity="2", event_date=None)
+
+    result = calculate(BASIC, [dated, undated], INTERSTICE)
+
+    assert result.potential_total == D("50")
+    assert result.potential_dated == D("30")
+    assert result.potential_undated == D("20")
+    assert result.potential_dated + result.potential_undated == result.potential_total
+
+
+def test_undated_activity_keeps_the_rule_of_counting_with_the_missing_date_alert():
+    a = act(quantity="2", event_date=None)  # validated
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert result.total == D("20")
+    assert ScoringAlertCode.DATA_AUSENTE in [x.code for x in row_of(result, a).alerts]
+    assert (result.potential_dated, result.potential_undated) == (D("0"), D("0"))
+
+
+def test_partially_overlapping_period_counts_as_dated_potential():
+    a = pending(quantity="1", event_date=None,
+                period_start=date(2022, 1, 1), period_end=date(2023, 1, 1))  # fmt: skip
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert (result.potential_dated, result.potential_undated) == (D("10"), D("0"))
+
+
+def test_dated_outside_the_interstice_is_in_neither_part():
+    a = pending(quantity="1", event_date=date(2020, 1, 1))
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert (result.potential_total, result.potential_dated, result.potential_undated) == (
+        D("0"), D("0"), D("0"),
+    )  # fmt: skip

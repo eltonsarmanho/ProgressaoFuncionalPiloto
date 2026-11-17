@@ -6,7 +6,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.domain.entities.activity import Activity
+from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.entities.user import Role
 from tests.integration.api.factories import add_professor, mark_pending, process_payload
 
@@ -50,6 +50,29 @@ def add_activity(uow_factory, process, **kw):
         uow.activities.add(activity)
         uow.commit()
     return activity
+
+
+def test_potential_points_are_split_into_dated_and_undated_in_the_response(
+    client, admin, process, scoring_tables, uow_factory
+):
+    _, headers = admin
+    mark_pending(uow_factory, scoring_tables["OFICIAL"])
+    choose(client, headers, process, scoring_tables["OFICIAL"])
+    pending = ActivityStatus.AGUARDANDO_REVISAO
+    add_activity(
+        uow_factory, process, title="Com data", group_number=2, item_number=7,
+        quantity=D("2"), status=pending,
+    )  # fmt: skip
+    add_activity(
+        uow_factory, process, title="Sem data", group_number=2, item_number=7,
+        quantity=D("1"), status=pending, event_date=None,
+    )  # fmt: skip
+
+    body = client.get(f"/api/processes/{process['id']}/scoring").json()
+
+    assert body["potential_total"] == "15.00"  # item 2.7 is worth 5 points
+    assert body["potential_dated"] == "10.00"
+    assert body["potential_undated"] == "5.00"
 
 
 def test_table_route_suggests_the_unit_table_without_choosing(client, process):
@@ -207,6 +230,7 @@ def test_scoring_result_has_rows_reasons_alerts_and_decimal_text(
     ]
     assert body["total"] == "20.00"
     assert body["potential_total"] == "0.00"
+    assert (body["potential_dated"], body["potential_undated"]) == ("0.00", "0.00")
     assert body["group1_percent"] == "0.00"
     assert body["counters"] == {
         "activities": 2, "with_evidence": 1, "pending": 0, "not_scored": 1, "with_alerts": 1,

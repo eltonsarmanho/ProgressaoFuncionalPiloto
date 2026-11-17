@@ -86,6 +86,9 @@ class ScoringResult:
     limit_adjustments: tuple[LimitAdjustment, ...]
     group1_hours_by_period: dict[str, Decimal] = field(default_factory=dict)
     group1_total_hours: Decimal = ZERO
+    # `potential_total` split (REAL-08): activities with a date or period against those without
+    potential_dated: Decimal = ZERO
+    potential_undated: Decimal = ZERO
 
 
 def is_pit_criterion(version: ScoringTableVersion, criterion: ScoringCriterion) -> bool:
@@ -293,6 +296,13 @@ def _pit_hours_by_period(
     return dict(sorted(by_period.items())), total
 
 
+def _is_undated_potential(row: ScoringRow) -> bool:
+    """A potential row whose activity has no date nor period (it carries DATA_AUSENTE)."""
+    return row.status is RowStatus.POTENCIAL and any(
+        alert.code is ScoringAlertCode.DATA_AUSENTE for alert in row.alerts
+    )
+
+
 def calculate(
     version: ScoringTableVersion,
     activities: Sequence[Activity],
@@ -311,6 +321,7 @@ def calculate(
     subtotals = _subtotals(version, rows, adjustments)
     total = sum(subtotals.values(), ZERO)
     potential = sum((r.points for r in rows if r.status is RowStatus.POTENCIAL), ZERO)
+    undated = sum((r.points for r in rows if _is_undated_potential(r)), ZERO)
     percent = None
     if total > 0:
         percent = (subtotals[1] * 100 / total).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
@@ -333,4 +344,6 @@ def calculate(
         tuple(adjustments),
         hours_by_period,
         hours_total,
+        potential - undated,
+        undated,
     )

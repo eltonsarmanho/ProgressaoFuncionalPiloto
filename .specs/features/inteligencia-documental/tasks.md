@@ -1726,10 +1726,10 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] `potential_dated + potential_undated == potential_total` em cálculo com atividades datadas e sem data pendentes
-- [ ] Atividade sem data validada continua em `total` com `DATA_AUSENTE`
-- [ ] A rota de cálculo devolve os dois campos
-- [ ] Gate full passa
+- [x] `potential_dated + potential_undated == potential_total` em cálculo com atividades datadas e sem data pendentes
+- [x] Atividade sem data validada continua em `total` com `DATA_AUSENTE`
+- [x] A rota de cálculo devolve os dois campos
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

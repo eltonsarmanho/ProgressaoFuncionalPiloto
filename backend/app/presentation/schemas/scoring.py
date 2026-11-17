@@ -209,6 +209,8 @@ class ProcessScoreOut(BaseModel):
     subtotals: list[GroupSubtotalOut]
     total: Money
     potential_total: Money
+    potential_dated: Money
+    potential_undated: Money
     group1_percent: Money | None
     group1_hours_by_period: dict[str, Money]
     group1_total_hours: Money
@@ -232,6 +234,8 @@ class ProcessScoreOut(BaseModel):
             ],
             total=result.total,
             potential_total=result.potential_total,
+            potential_dated=result.potential_dated,
+            potential_undated=result.potential_undated,
             group1_percent=result.group1_percent,
             group1_hours_by_period=result.group1_hours_by_period,
             group1_total_hours=result.group1_total_hours,
