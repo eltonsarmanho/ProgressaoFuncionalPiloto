@@ -229,9 +229,9 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Testes afirmam cada classe/nível/denominação/interstício da tabela do design e a vigência
-- [ ] Toda versão tem `norm_reference` não vazia
-- [ ] Gate quick passa
+- [x] Testes afirmam cada classe/nível/denominação/interstício da tabela do design e a vigência
+- [x] Toda versão tem `norm_reference` não vazia
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick
