@@ -120,4 +120,67 @@ describe("ScoringTable", () => {
       "Status",
     ]);
   });
+  describe("TELA-01: Grupo I em horas de PIT", () => {
+    const pit = (over: Partial<ScoringRow> = {}) =>
+      row({
+        activity_id: "g1",
+        title: "Cálculo I",
+        group_number: 1,
+        item_number: 1,
+        unit_points: null,
+        effective_quantity: null,
+        points: "0.00",
+        pit_hours: "8.00",
+        ...over,
+      });
+    const G1_SUBTOTALS = [{ group_number: 1, subtotal: "0.00" }, ...SUBTOTALS.slice(1)];
+
+    it("mostra as horas com o rótulo 'horas (PIT)' e nenhum valor em pontos", () => {
+      render(<ScoringTable rows={[pit()]} subtotals={G1_SUBTOTALS} />);
+      const r = screen.getByText("Cálculo I").closest("tr")!;
+      const cells = within(r).getAllByRole("cell").map((c) => c.textContent);
+      expect(cells).toEqual(["I", "1", "Cálculo I", "—", "—", "8,00 horas (PIT)", "Sem comprovante", "Pontuada"]);
+      expect(r).not.toHaveTextContent("0,00");
+    });
+
+    it("rotula a célula de valor como 'horas (PIT)' no modo de cartões", () => {
+      render(<ScoringTable rows={[pit()]} subtotals={G1_SUBTOTALS} />);
+      const r = screen.getByText("Cálculo I").closest("tr")!;
+      const labels = within(r).getAllByRole("cell").map((c) => c.getAttribute("data-label"));
+      expect(labels[5]).toBe("horas (PIT)");
+    });
+
+    it("troca o subtotal em pontos do Grupo I pelo total de horas de PIT", () => {
+      render(<ScoringTable rows={[pit()]} subtotals={G1_SUBTOTALS} group1TotalHours="24.00" />);
+      const head = screen.getAllByRole("rowgroup").filter((g) => g.tagName === "TBODY")[0];
+      const text = within(head).getAllByRole("row")[0].textContent;
+      expect(text).toContain("Total de horas (PIT): 24,00");
+      expect(text).not.toContain("Subtotal");
+    });
+
+    it("não muda os demais grupos: continuam com o subtotal e a coluna 'Total' em pontos", () => {
+      render(<ScoringTable rows={[pit(), row({})]} subtotals={G1_SUBTOTALS} group1TotalHours="8.00" />);
+      const groups = screen.getAllByRole("rowgroup").filter((g) => g.tagName === "TBODY");
+      expect(within(groups[1]).getAllByRole("row")[0].textContent).toContain("Subtotal: 40,00");
+      const r = screen.getByText("Palestra").closest("tr")!;
+      const cells = within(r).getAllByRole("cell");
+      expect(cells[5]).toHaveTextContent("40,00");
+      expect(cells[5].textContent).not.toContain("horas");
+      expect(cells[5]).toHaveAttribute("data-label", "Total");
+    });
+
+    it("em tabela antiga (sem pit_hours) o Grupo I continua em pontos", () => {
+      const old = pit({ pit_hours: null, unit_points: "10.00", effective_quantity: "9.20", points: "92.00" });
+      render(<ScoringTable rows={[old]} subtotals={[{ group_number: 1, subtotal: "92.00" }]} />);
+      const r = screen.getByText("Cálculo I").closest("tr")!;
+      expect(within(r).getAllByRole("cell")[5]).toHaveTextContent("92,00");
+      expect(screen.getAllByRole("rowgroup")[1]).toHaveTextContent("Subtotal: 92,00");
+    });
+
+    it("explica em português a razão CARGA_HORARIA_INSUFICIENTE", () => {
+      const short = row({ activity_id: "c", title: "Curso curto", group_number: 4, item_number: 4, status: "NAO_PONTUADA", points: "0.00", reasons: ["CARGA_HORARIA_INSUFICIENTE"] });
+      render(<ScoringTable rows={[short]} subtotals={[{ group_number: 4, subtotal: "0.00" }]} />);
+      expect(screen.getByText("Curso curto").closest("tr")).toHaveTextContent("Carga horária abaixo do mínimo do item");
+    });
+  });
 });

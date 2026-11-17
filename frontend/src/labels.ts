@@ -56,6 +56,7 @@ export const REASON_LABELS: Record<string, string> = {
   SEM_TABELA: "Sem tabela escolhida",
   AGUARDANDO_REVISAO: "Aguardando revisão",
   REJEITADA: "Rejeitada",
+  CARGA_HORARIA_INSUFICIENTE: "Carga horária abaixo do mínimo do item",
 };
 
 export const MINIMUM_LABELS: Record<string, string> = {

@@ -568,8 +568,8 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Linhas do Grupo I mostram as horas com o rótulo "horas (PIT)" e nenhum valor em pontos
-- [ ] Os demais grupos não mudam; Gate quick (frontend) passa; 4+ testes
+- [x] Linhas do Grupo I mostram as horas com o rótulo "horas (PIT)" e nenhum valor em pontos
+- [x] Os demais grupos não mudam; Gate quick (frontend) passa; 4+ testes
 
 **Tests**: unit
 **Gate**: quick
