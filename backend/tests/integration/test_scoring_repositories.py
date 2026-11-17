@@ -311,3 +311,18 @@ def test_list_for_process_filters_by_group_and_status(uow_factory, base):
     assert [x.title for x in validated] == ["B"]
     assert [x.title for x in pending] == ["A"]
     assert other == []
+
+
+def test_version_in_use_ending_from_compares_chosen_process_end_date(uow_factory, base):
+    _, version = add_table(uow_factory, base)
+    _, other_version = add_table(uow_factory, base, name="Outra")
+    process = add_process(uow_factory, base)  # interstice ends 2024-11-23
+    with uow_factory() as uow:
+        uow.processes.set_scoring_table_version(process.id, version.id)
+        uow.commit()
+    with uow_factory() as uow:
+        repo = uow.scoring_tables
+        assert repo.version_in_use_ending_from(version.id, date(2024, 11, 23)) is True
+        assert repo.version_in_use_ending_from(version.id, date(2024, 11, 24)) is False
+        assert repo.version_in_use_ending_from(version.id, date(2020, 1, 1)) is True
+        assert repo.version_in_use_ending_from(other_version.id, date(2020, 1, 1)) is False

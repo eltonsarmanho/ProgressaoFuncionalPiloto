@@ -966,10 +966,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Nova versão copia grupos e critérios; a versão aberta termina no dia anterior ao início da nova
-- [ ] Processo que perderia a versão escolhida: 409 sem criar nada
-- [ ] Vigência sobreposta: 409
-- [ ] Gate full passa; 8+ testes
+- [x] Nova versão copia grupos e critérios; a versão aberta termina no dia anterior ao início da nova
+- [x] Processo que perderia a versão escolhida: 409 sem criar nada
+- [x] Vigência sobreposta: 409
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full

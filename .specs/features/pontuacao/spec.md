@@ -340,9 +340,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ADM-02 | P2: Administração das tabelas | Design | Implementing |
 | ADM-03 | P2: Administração das tabelas | Design | Implementing |
 | ADM-04 | P2: Administração das tabelas | Design | Implementing |
-| ADM-05 | P2: Administração das tabelas | Design | In Tasks |
-| ADM-06 | P2: Administração das tabelas | Design | In Tasks |
-| ADM-07 | P2: Administração das tabelas | Design | In Tasks |
+| ADM-05 | P2: Administração das tabelas | Design | Implementing |
+| ADM-06 | P2: Administração das tabelas | Design | Implementing |
+| ADM-07 | P2: Administração das tabelas | Design | Implementing |
 | ADM-08 | P2: Administração das tabelas | Design | In Tasks |
 | ADM-09 | P2: Administração das tabelas | Design | In Tasks |
 | ADM-10 | P2: Administração das tabelas | Design | In Tasks |

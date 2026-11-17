@@ -3,7 +3,7 @@
 import uuid
 from collections.abc import Sequence
 from dataclasses import asdict
-from datetime import datetime
+from datetime import date, datetime
 from types import TracebackType
 from typing import Any, Self
 from uuid import UUID
@@ -672,6 +672,18 @@ class SqlScoringTableRepository:
             self._s.scalar(
                 select(
                     exists().where(FunctionalProcessModel.scoring_table_version_id == version_id)
+                )
+            )
+        )
+
+    def version_in_use_ending_from(self, version_id: UUID, moment: date) -> bool:
+        return bool(
+            self._s.scalar(
+                select(
+                    exists().where(
+                        FunctionalProcessModel.scoring_table_version_id == version_id,
+                        FunctionalProcessModel.end_date >= moment,
+                    )
                 )
             )
         )

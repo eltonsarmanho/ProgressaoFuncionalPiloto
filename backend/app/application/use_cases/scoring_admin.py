@@ -8,7 +8,7 @@ import copy
 import uuid
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from uuid import UUID
 
@@ -356,3 +356,110 @@ class UpdateVersionCriteria:
             result = uow.scoring_tables.get_version(version_id)
             uow.commit()
         return VersionView(result, False)
+
+
+def _overlaps(a: ScoringTableVersion, b: ScoringTableVersion) -> bool:
+    starts_before_b_ends = b.valid_to is None or a.valid_from <= b.valid_to
+    b_starts_before_a_ends = a.valid_to is None or b.valid_from <= a.valid_to
+    return starts_before_b_ends and b_starts_before_a_ends
+
+
+def close_open_version(
+    uow: UnitOfWork,
+    audit: AuditService,
+    actor: User,
+    existing: Sequence[ScoringTableVersion],
+    new_valid_from: date,
+) -> list[ScoringTableVersion]:
+    """ADM-05/06: end the open-ended version the day before the new one starts.
+
+    Raises Conflict, changing nothing, if a process that chose the open version has an
+    interstice ending on or after the new start. Returns `existing` with the closed version.
+    """
+    open_version = next((v for v in existing if v.valid_to is None), None)
+    if open_version is None or new_valid_from <= open_version.valid_from:
+        return list(existing)  # no open version, or not a successor: overlap check decides
+    if uow.scoring_tables.version_in_use_ending_from(open_version.id, new_valid_from):
+        raise Conflict(
+            f"Há processo que escolheu a versão \"{open_version.name}\" com interstício "
+            f"terminando a partir de {new_valid_from:%d/%m/%Y}; encerrá-la mudaria a "
+            "versão aplicável a ele"
+        )
+    closed = replace(open_version, valid_to=new_valid_from - timedelta(days=1))
+    uow.scoring_tables.update_version(closed)
+    audit.record(
+        uow,
+        actor.id,
+        VERSION_ENTITY,
+        closed.id,
+        AuditAction.UPDATE,
+        _audit_version(open_version),
+        _audit_version(closed),
+    )
+    return [closed if v.id == closed.id else v for v in existing]
+
+
+def add_version_closing_open(
+    uow: UnitOfWork, audit: AuditService, actor: User, version: ScoringTableVersion, extra: dict
+) -> None:
+    """Close the open version if needed, reject overlaps, persist and audit the new version."""
+    existing = list(uow.scoring_tables.list_versions(version.table_id))
+    existing = close_open_version(uow, audit, actor, existing, version.valid_from)
+    for other in existing:
+        if _overlaps(version, other):
+            raise Conflict(f'Vigência sobrepõe a versão "{other.name}"')
+    uow.scoring_tables.add_version(version)
+    audit.record(
+        uow,
+        actor.id,
+        VERSION_ENTITY,
+        version.id,
+        AuditAction.CREATE,
+        {},
+        {**_audit_version(version), **extra},
+        justification=version.norm_reference,
+    )
+
+
+class CreateVersionFrom:
+    """ADM-05..07: a new version copying groups, criteria and minimums of another."""
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], audit: AuditService):
+        self._uow_factory = uow_factory
+        self._audit = audit
+
+    def execute(
+        self,
+        actor: User,
+        table_id: UUID,
+        source_version_id: UUID,
+        valid_from: date,
+        valid_to: date | None,
+        norm_reference: str,
+        version_name: str | None = None,
+        status: TableStatus = TableStatus.PENDENTE_VALIDACAO,
+    ) -> VersionView:
+        require_admin(actor)
+        reference = check_validity(valid_from, valid_to, norm_reference)
+        with self._uow_factory() as uow:
+            if uow.scoring_tables.get_table(table_id) is None:
+                raise NotFound("Tabela de pontuação não encontrada")
+            source = uow.scoring_tables.get_version(source_version_id)
+            if source is None:
+                raise NotFound("Versão de origem não encontrada")
+            version = replace(
+                source,
+                id=uuid.uuid4(),
+                table_id=table_id,
+                name=(version_name or "").strip() or default_version_name(valid_from),
+                valid_from=valid_from,
+                valid_to=valid_to,
+                norm_reference=reference,
+                status=status,
+                minimums=copy.deepcopy(source.minimums),
+            )
+            add_version_closing_open(
+                uow, self._audit, actor, version, {"copied_from_version_id": source.id}
+            )
+            uow.commit()
+        return VersionView(version, False)

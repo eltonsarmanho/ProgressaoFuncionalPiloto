@@ -2,7 +2,7 @@
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 from types import TracebackType
 from typing import Protocol, Self
 from uuid import UUID
@@ -129,6 +129,10 @@ class ScoringTableRepository(Protocol):
     def update_criterion(self, version_id: UUID, criterion: ScoringCriterion) -> None: ...
 
     def version_in_use(self, version_id: UUID) -> bool: ...
+
+    def version_in_use_ending_from(self, version_id: UUID, moment: date) -> bool:
+        """A process that chose the version has an interstice end date on or after `moment`."""
+        ...
 
 
 class ActivityRepository(Protocol):

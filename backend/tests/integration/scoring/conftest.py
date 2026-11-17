@@ -146,4 +146,5 @@ def admin_uc(world):
         create_table=scoring_admin.CreateScoringTable(uf, audit),
         duplicate=scoring_admin.DuplicateScoringTable(uf, audit),
         update_criteria=scoring_admin.UpdateVersionCriteria(uf, audit),
+        create_version=scoring_admin.CreateVersionFrom(uf, audit),
     )
