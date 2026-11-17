@@ -488,6 +488,7 @@ _CRITERION_FIELDS = (
     "hours_per_block",
     "weeks_per_semester",
     "prep_ratio",
+    "min_hours",
     "max_points",
     "accepted_evidence",
     "rules",

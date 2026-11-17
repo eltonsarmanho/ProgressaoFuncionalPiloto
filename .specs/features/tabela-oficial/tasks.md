@@ -233,8 +233,8 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Ida e volta de um critério com `min_hours` = 20 e sem
-- [ ] Duplicar tabela e nova versão copiam o campo; Gate full passa; 4+ testes
+- [x] Ida e volta de um critério com `min_hours` = 20 e sem
+- [x] Duplicar tabela e nova versão copiam o campo; Gate full passa; 4+ testes
 
 **Tests**: integration
 **Gate**: build
