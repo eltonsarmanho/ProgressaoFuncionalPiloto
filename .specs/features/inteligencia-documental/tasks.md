@@ -1450,9 +1450,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Carrega as atividades do processo e atualiza após validar, rejeitar ou editar
-- [ ] Validar as selecionadas chama a rota em lote com uma justificativa
-- [ ] Rota `processos/:id/atividades`; Build gate passa (lint, testes, build); 6+ testes
+- [x] Carrega as atividades do processo e atualiza após validar, rejeitar ou editar
+- [x] Validar as selecionadas chama a rota em lote com uma justificativa
+- [x] Rota `processos/:id/atividades`; Build gate passa (lint, testes, build); 6+ testes
 
 **Tests**: unit
 **Gate**: build
