@@ -44,14 +44,14 @@
 
 ## Handoff
 
-- **Feature**: `fundacao` CONCLUÍDA e verificada (`.specs/features/fundacao/validation.md`, iteração 5 = PASS; `validate_state.py` exit 0). Próximas, em ordem: `normativo` → `inteligencia-documental` → `pontuacao` → `documentos-gerados` → `banca-parecer` → `implantacao`
-- **Phase / Task**: nenhuma em andamento. Próxima: Specify de `normativo` ou de `inteligencia-documental` (a definir com o usuário)
-- **Completed**: T1–T37; 290 testes backend, 14 frontend; 60/60 requisitos verificados; sensor 40/41 mutantes mortos (o sobrevivente Y1 é equivalente); deploy feito
+- **Feature**: `.specs/features/pontuacao` (Complex). `fundacao` está concluída e verificada. Depois de `pontuacao`: `normativo` → `inteligencia-documental` → `documentos-gerados` → `banca-parecer` → `implantacao`
+- **Phase / Task**: Specify de `pontuacao`: `spec.md` escrita, 80 requisitos, `validate_spec.py` limpo. Aguarda o usuário esclarecer 4 pontos e aprovar. Em seguida vem o Design
+- **Completed**: `fundacao` (T1–T37, 290 testes backend, 14 frontend, deploy no ar); spec de `pontuacao`
 - **In-progress** (file:line): none
-- **Next step**: o usuário escolhe a próxima feature; antes de `inteligencia-documental` é preciso uma chave MariTalk válida
-- **Blockers**: nenhum bloqueio técnico. Padrões PROC-02 (dias sem o dia final) e PROC-04 (referência genérica) aguardam confirmação; faltam o "Modelo Relatorio Atividades 2.docx" e as URLs da PROGEP/CPPD
-- **MariTalk** (testado em 2026-11-17 com `test/test_maritalk.py`, chave nova no `.env`): `sabia-4`, `sabia-4-br-sp` e `sabiazinho-4` respondem em `https://chat.maritaca.ai/api` (Bearer). `response_format` com `json_schema` estrito funciona no `sabia-4` e devolveu `null` para o dado ausente (carga horária), como a regra anti-invenção exige. A VM ainda tem `MARITALK_API_KEY` vazia, porque a `fundacao` não usa IA; configurar no deploy de `inteligencia-documental`
-- **Dívidas**: UI-06 (360 px) só tem verificação estática de CSS, falta teste em navegador real (cabe em `implantacao`); sem backup configurado; rotas de negócio devolvem 500 (não 503) com o banco fora do ar; sem tela de troca de senha
+- **Next step**: o usuário responde às divergências do Grupo I (CH docente 68 h × 20 h; ofertas de 2022 anteriores ao interstício; soma 92 não reproduzível) e aprova a spec; depois, Design de `pontuacao` (ler `references/design.md`, registrar ADs)
+- **Blockers**: as 3 divergências do Grupo I acima (linhas "Caso real e Grupo I", "CH docente do Cálculo Computacional II" e "Grupo I e o início do interstício" da spec); padrões PROC-02 e PROC-04 de `fundacao` aguardam confirmação; faltam o "Modelo Relatorio Atividades 2.docx" e as URLs da PROGEP/CPPD
+- **Dívidas**: UI-06 (360 px) só tem verificação estática; sem backup configurado; rotas de negócio devolvem 500 (não 503) com o banco fora do ar; sem tela de troca de senha
+- **MariTalk**: funciona (testado em 2026-11-17 com `test/test_maritalk.py`): `sabia-4`, `sabia-4-br-sp` e `sabiazinho-4` respondem em `https://chat.maritaca.ai/api` (Bearer); `response_format` com `json_schema` estrito funciona e devolve `null` para dado ausente. A VM ainda tem `MARITALK_API_KEY` vazia; configurar no deploy de `inteligencia-documental`
 - **Deploy**: https://progressao.srv1633081.hstgr.cloud (VM compartilhada; stack em /opt/progressao com compose + override local que publica o nginx só em 127.0.0.1:8400; site `progressao` no nginx do servidor; certificado Let's Encrypt com renovação automática). Credenciais do ADMIN em /opt/progressao/.admin-credentials (modo 600). Código de produção no ar = commit 360eefb (idêntico ao HEAD em backend/app e frontend/src)
-- **Uncommitted files**: none
-- **Branch**: feat/fundacao (enviada ao origin; sem PR; main intocada)
+- **Uncommitted files**: none (pasta `test/` sem versionar)
+- **Branch**: feat/pontuacao (local; `feat/fundacao` enviada ao origin, com 1 commit local de STATE ainda não enviado)
