@@ -394,9 +394,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] As portas existem com os métodos do design (claim de tarefa, contagem de envios por usuário no último minuto, existência por hash)
-- [ ] Teste de arquitetura continua passando
-- [ ] Build gate passa
+- [x] As portas existem com os métodos do design (claim de tarefa, contagem de envios por usuário no último minuto, existência por hash)
+- [x] Teste de arquitetura continua passando
+- [x] Build gate passa
 
 **Tests**: none
 **Gate**: build
