@@ -10,6 +10,7 @@ from app.domain.repositories.ports import Clock
 from app.infrastructure.clock import SystemClock
 from app.infrastructure.database.session import make_engine
 from app.presentation.api import (
+    activities,
     auth,
     career,
     health,
@@ -49,4 +50,5 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     app.include_router(career.router)
     app.include_router(scoring_tables.router)
     app.include_router(scoring.router)
+    app.include_router(activities.router)
     return app

@@ -31,8 +31,14 @@ from app.application.use_cases.professors import (
 )
 from app.application.use_cases.scoring import (
     CalculateProcessScore,
+    ChangeActivityStatus,
     ChooseProcessTable,
+    CreateActivity,
+    GetActivity,
+    ListActivities,
+    MarkActivitiesDistinct,
     SuggestScoringTable,
+    UpdateActivity,
 )
 from app.application.use_cases.scoring_admin import (
     GetScoringVersion,
@@ -85,6 +91,12 @@ class Container:
     suggest_scoring_table: SuggestScoringTable
     choose_process_table: ChooseProcessTable
     calculate_process_score: CalculateProcessScore
+    create_activity: CreateActivity
+    get_activity: GetActivity
+    list_activities: ListActivities
+    update_activity: UpdateActivity
+    change_activity_status: ChangeActivityStatus
+    mark_activities_distinct: MarkActivitiesDistinct
 
 
 def build_container(settings: Settings, engine: Engine, clock: Clock) -> Container:
@@ -130,6 +142,12 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
         suggest_scoring_table=SuggestScoringTable(uow_factory, audit, policy),
         choose_process_table=ChooseProcessTable(uow_factory, audit, policy),
         calculate_process_score=CalculateProcessScore(uow_factory, audit, policy),
+        create_activity=CreateActivity(uow_factory, audit, policy),
+        get_activity=GetActivity(uow_factory, audit, policy),
+        list_activities=ListActivities(uow_factory, audit, policy),
+        update_activity=UpdateActivity(uow_factory, audit, policy),
+        change_activity_status=ChangeActivityStatus(uow_factory, audit, policy),
+        mark_activities_distinct=MarkActivitiesDistinct(uow_factory, audit, policy),
     )
 
 

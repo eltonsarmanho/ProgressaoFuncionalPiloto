@@ -701,10 +701,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Cada rota: caminho feliz e erros 401, 404, 409 e 422 com campo
-- [ ] Datas com mês e ano (`2022-05`) viram `MONTH`
-- [ ] Origem fora de `MANUAL` não é aceita pela API pública
-- [ ] Gate full passa; 20+ testes
+- [x] Cada rota: caminho feliz e erros 401, 404, 409 e 422 com campo
+- [x] Datas com mês e ano (`2022-05`) viram `MONTH`
+- [x] Origem fora de `MANUAL` não é aceita pela API pública
+- [x] Gate full passa; 20+ testes
 
 **Tests**: integration
 **Gate**: full

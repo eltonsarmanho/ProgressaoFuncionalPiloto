@@ -603,3 +603,13 @@ class CalculateProcessScore(_ScoringUseCase):
                 state.alerts + verify_scoring(context, result),
                 reference_minimum(version, process.current_class, career, result.total),
             )
+
+
+class GetActivity(_ScoringUseCase):
+    def execute(self, actor: User, activity_id: UUID) -> Activity:
+        with self._uow_factory() as uow:
+            activity = uow.activities.get(activity_id)
+            if activity is None:
+                raise NotFound(ACTIVITY_NOT_FOUND)
+            self._readable(uow, actor, activity.process_id)
+            return activity
