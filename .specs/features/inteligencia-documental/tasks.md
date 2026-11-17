@@ -1516,7 +1516,7 @@ T51 → T52 → T53 → T54
 
 ### T53: Script de corpus real
 
-**What**: `scripts/process_corpus.py <pasta>` processa os arquivos pelo analisador e gera relatório JSON sem imprimir texto; modo `--fake-ai` para teste.
+**What**: `scripts/process_corpus.py <pasta> --start AAAA-MM-DD --end AAAA-MM-DD --table <nome> --professor <nome> [--siape N]` processa os arquivos pelo analisador e gera relatório JSON sem imprimir texto; modo `--fake-ai` para teste. Os dados pessoais entram só pela linha de comando.
 **Where**: `scripts/process_corpus.py`
 **Depends on**: T52
 **Reuses**: `DocumentAnalyzer`
@@ -1529,7 +1529,7 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Sobre uma pasta sintética com `--fake-ai`: relatório por arquivo com método por página, status, tipo, quantidade de atividades, avisos e tempo
+- [ ] Sobre uma pasta sintética com `--fake-ai` e o interstício 2024-11-23 a 2026-11-23: relatório por arquivo com método por página, status, tipo, item sugerido ou `SEM_ITEM_DE_PONTUACAO`, dentro ou fora do interstício, quantidade de atividades, avisos e tempo
 - [ ] A saída e o relatório não contêm texto dos documentos
 - [ ] `Documentos/` e `Modelos/` estão no `.gitignore` e a suíte automática não executa o script
 - [ ] Gate full passa; 5+ testes

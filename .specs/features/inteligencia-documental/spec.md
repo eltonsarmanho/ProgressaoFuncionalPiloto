@@ -58,7 +58,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Docente do documento | O nome extraído é comparado, normalizado, ao nome do docente ou à matrícula; divergência vira alerta | Evita pontuar documento de outra pessoa | n |
 | Um documento, várias atividades | Permitido; uma atividade por item descrito | Declarações de disciplinas listam várias ofertas | n |
 | Contagem de comprovantes | `counters.with_evidence` e `SEM_COMPROVANTE` passam a considerar documentos vinculados, além da nota de texto | A nota de texto da feature `pontuacao` era provisória | n |
-| Documentos reais nos testes | Não são versionados; testes usam documentos sintéticos; validação real por script local | Repositório público e LGPD | n |
+| Documentos reais nos testes | Não são versionados; testes usam documentos sintéticos; validação real por script local, com o interstício 23/11/2024 a 23/11/2026 do usuário (as pastas de `Documentos/` são os arquivos reais dessa progressão, informado em 2026-11-17) | Repositório público e LGPD | n |
 | Perfis | Mesmo acesso do processo: ADMIN, SECRETARIA da unidade e DOCENTE dono | Mesma política da `fundacao` | n |
 
 **Open questions:** none - all resolved or logged above.
@@ -234,7 +234,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 **Acceptance Criteria** (each line is one EARS pattern):
 
-1. WHEN o script `scripts/process_corpus.py` roda localmente sobre uma pasta THEN the system SHALL gerar um relatório JSON com, por arquivo, o método de extração de cada página, o status final, o tipo, a quantidade de atividades sugeridas, os avisos e o tempo, sem imprimir texto.
+1. WHEN o script `scripts/process_corpus.py` roda localmente sobre uma pasta, com o interstício, a tabela de pontuação e o docente informados na linha de comando THEN the system SHALL gerar um relatório JSON com, por arquivo, o método de extração de cada página, o status final, o tipo, o item sugerido ou `SEM_ITEM_DE_PONTUACAO`, a indicação de dentro ou fora do interstício, a quantidade de atividades sugeridas, os avisos e o tempo, sem imprimir texto.
 2. The system SHALL nunca versionar documentos reais e SHALL nunca executar o script de corpus na suíte automática.
 3. The system SHALL testar a suíte automática com documentos sintéticos gerados no próprio teste (PDF com texto, PDF digitalizado, JPG, PNG e PDF com camada de texto ruidosa) e com provedor de IA falso.
 4. WHERE existe credencial válida da MariTalk the system SHALL permitir um teste de contrato marcado `maritalk_live`, que não roda por padrão.
