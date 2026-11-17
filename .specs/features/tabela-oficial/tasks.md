@@ -61,6 +61,12 @@ T12 → T13 → T14 → T15 → T16 → T17 → T18
 T19 → T20 → T21 → T22 → T23
 ```
 
+### Phase 5: Lacunas do Verificador
+
+```
+T24 → T25 → T26 → T27
+```
+
 ---
 
 ## Task Breakdown
@@ -654,14 +660,118 @@ T19 → T20 → T21 → T22 → T23
 
 ---
 
+### T24: Teste de valores item a item da semente
+
+**What**: Teste que fixa pontos, unidade, modo, carga mínima e o começo e o fim da descrição dos 98 itens dos Grupos II a VIII e o Grupo I, contra uma tabela esperada escrita no próprio teste a partir da planilha.
+**Where**: `backend/tests/unit/test_seed_ufpa_items.py`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `ufpa.json`; padrão de `backend/tests/unit/test_seed_ufpa.py`
+**Requirement**: OFI-02, OFI-03, OFI-04, OFI-05, OFI-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] A tabela esperada vem da planilha (fórmulas) com as cinco decisões do usuário, sem ler `ufpa.json`
+- [x] Troca de II.1 por II.2 e VIII.20 +1 / VIII.21 −1 (somas intactas) falham; o texto duplicado "(N pontos)" de VIII.7, VIII.8, VIII.13 e VIII.14 é conferido
+- [x] Gate full passa; 200+ casos
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `test(seed): pin every item of the official table against the spreadsheet`
+
+---
+
+### T25: Carga mínima de ponta a ponta
+
+**What**: Testes de API que lançam atividades de IV.4 com 19 h, 20 h, 21 h e sem horas na tabela oficial semeada e conferem o resultado do endpoint de pontuação.
+**Where**: `backend/tests/integration/api/test_scoring_min_hours_api.py`
+**Depends on**: T24
+**Reuses**: fixtures de `test_scoring_pit_hours_api.py` e `test_scoring_golden.py`
+**Requirement**: OFI-06, OFI-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] 19 h: `NAO_PONTUADA` com `CARGA_HORARIA_INSUFICIENTE`; 20 h e 21 h: pontuada (2 pontos)
+- [ ] Sem horas: pontuada com o alerta `CARGA_HORARIA_NAO_INFORMADA`
+- [ ] Gate full passa; 4+ testes
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(scoring): cover the minimum hours rule through the official table`
+
+---
+
+### T26: Spec alinhada à regra condicional do Grupo I
+
+**What**: `spec.md` descreve a regra condicional implementada (`is_pit_criterion`) em PIT-02, PIT-03, na premissa e no edge case; o marcador `SPEC_DEVIATION` de `scoring.py` passa a apontar para o texto da spec, sem mudar o comportamento.
+**Where**: `.specs/features/tabela-oficial/spec.md`, `backend/app/application/use_cases/scoring.py`
+**Depends on**: T25
+**Reuses**: `is_pit_criterion`
+**Requirement**: PIT-02, PIT-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] PIT-02 e PIT-03 dizem que a regra vale onde o Grupo I tem critério de carga semanal e fica fora do total; versões antigas mantêm o cálculo
+- [ ] Nenhum `SPEC_DEVIATION` resta em `scoring.py`; o comentário cita PIT-03
+- [ ] `validate_spec.py` sem erro; Gate full passa
+
+**Tests**: none
+**Gate**: full
+
+**Commit**: `docs(spec): state the conditional group I rule that the code implements`
+
+---
+
+### T27: Total de horas de PIT só no modo PIT
+
+**What**: A página de pontuação não mostra o bloco "Total de horas de PIT" para uma versão cujo Grupo I está fora do total mas não é medido em horas de PIT.
+**Where**: `frontend/src/pages/ProcessScoring.tsx`, `frontend/src/pages/ProcessScoring.test.tsx`
+**Depends on**: T26
+**Reuses**: `group1InHours`
+**Requirement**: TELA-01, TELA-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Versão com Grupo I fora do total sem critério de carga semanal não mostra o bloco de horas de PIT
+- [ ] A tabela oficial continua mostrando as horas; Build gate passa (lint, testes, build); 1+ teste novo
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): hide pit hours for versions that do not measure group I in hours`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 
 Phase 1:  T1 → T2 → T3 → T4 → T5 → T6 → T7
 Phase 2:  T8 → T9 → T10 → T11
 Phase 3:  T12 → T13 → T14 → T15 → T16 → T17 → T18
 Phase 4:  T19 → T20 → T21 → T22 → T23
+Phase 5:  T24 → T25 → T26 → T27
 ```
 
