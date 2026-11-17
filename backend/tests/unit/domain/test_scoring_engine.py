@@ -482,3 +482,122 @@ def test_real_case_fasi_2022_2024_in_miniature():
     assert result.group1_percent == D("22.22")
     assert result.potential_total == D("0")
     assert result.counters.not_scored == 0
+
+
+# --- minimum course hours (OFI-06, OFI-07) ------------------------------------------------------
+
+
+def with_minimum(group_number=4, item=4, points="5", min_hours="20") -> ScoringCriterion:
+    return ScoringCriterion(
+        group_number, item, f"item {group_number}.{item}", "curso", ScoringMode.POR_UNIDADE,
+        unit_points=D(points), min_hours=None if min_hours is None else D(min_hours),
+    )  # fmt: skip
+
+
+COURSES = table(group(4, with_minimum(), with_minimum(item=1, min_hours=None)))
+
+
+def test_activity_with_19_99_hours_is_not_scored_for_insufficient_load():
+    a = act(g=4, item=4, hours=D("19.99"))
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
+    assert row_of(result, a).reasons == (NotScoredReason.CARGA_HORARIA_INSUFICIENTE,)
+    assert row_of(result, a).points == D("0")
+    assert result.total == D("0")
+
+
+def test_activity_with_exactly_20_hours_is_scored():
+    a = act(g=4, item=4, hours=D("20"))
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.PONTUADA
+    assert row_of(result, a).points == D("5")
+    assert row_of(result, a).reasons == ()
+    assert result.total == D("5")
+
+
+def test_activity_above_the_minimum_is_scored_without_a_load_alert():
+    a = act(g=4, item=4, hours=D("21"))
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    assert row_of(result, a).points == D("5")
+    assert ScoringAlertCode.CARGA_HORARIA_NAO_INFORMADA not in codes(result, a)
+
+
+def test_activity_without_hours_is_scored_with_the_missing_hours_alert():
+    a = act(g=4, item=4, hours=None)
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.PONTUADA
+    assert row_of(result, a).points == D("5")
+    assert ScoringAlertCode.CARGA_HORARIA_NAO_INFORMADA in codes(result, a)
+    missing = ScoringAlertCode.CARGA_HORARIA_NAO_INFORMADA
+    alert = next(x for x in row_of(result, a).alerts if x.code is missing)
+    assert alert.severity is Severity.ALERTA
+    assert alert.norm_reference == "Res. 4.644/2015-CONSEPE, Anexo I"
+    assert result.total == D("5")
+
+
+def test_zero_hours_is_below_the_minimum_not_missing():
+    a = act(g=4, item=4, hours=D("0"))
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    assert row_of(result, a).reasons == (NotScoredReason.CARGA_HORARIA_INSUFICIENTE,)
+    assert row_of(result, a).alerts == ()
+
+
+def test_criterion_without_minimum_ignores_hours_and_never_alerts_on_them():
+    short = act(g=4, item=1, hours=D("1"))
+    none = act(g=4, item=1, hours=None)
+
+    result = calculate(COURSES, [short, none], INTERSTICE)
+
+    assert row_of(result, short).points == D("5")
+    assert row_of(result, none).points == D("5")
+    assert ScoringAlertCode.CARGA_HORARIA_NAO_INFORMADA not in codes(result, none)
+    assert result.total == D("10")
+
+
+def test_insufficient_row_is_counted_as_not_scored_and_has_no_alerts():
+    low = act(g=4, item=4, hours=D("10"), evidence_note=None)
+    ok = act(g=4, item=4, hours=D("30"))
+
+    result = calculate(COURSES, [low, ok], INTERSTICE)
+
+    assert row_of(result, low).alerts == ()
+    assert result.counters.not_scored == 1
+    assert result.total == D("5")
+
+
+def test_awaiting_review_with_insufficient_hours_is_not_potential():
+    a = act(g=4, item=4, hours=D("10"), status=ActivityStatus.AGUARDANDO_REVISAO)
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
+    assert result.potential_total == D("0")
+
+
+def test_outside_interstice_takes_precedence_over_insufficient_hours():
+    a = act(g=4, item=4, hours=D("10"), event_date=date(2020, 1, 1))
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    assert row_of(result, a).reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
+
+
+def test_missing_hours_alert_is_added_to_the_other_row_alerts():
+    a = act(g=4, item=4, hours=None, evidence_note=None)
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    assert {
+        ScoringAlertCode.CARGA_HORARIA_NAO_INFORMADA,
+        ScoringAlertCode.SEM_COMPROVANTE,
+    } == set(codes(result, a))

@@ -130,9 +130,9 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] 19,99 h: `NAO_PONTUADA` com `CARGA_HORARIA_INSUFICIENTE`; 20 h exatas: pontua
-- [ ] Sem horas: pontua e emite `CARGA_HORARIA_NAO_INFORMADA` ALERTA
-- [ ] Critério sem `min_hours` não muda de comportamento (testes existentes sem alteração); Gate quick passa; 8+ testes
+- [x] 19,99 h: `NAO_PONTUADA` com `CARGA_HORARIA_INSUFICIENTE`; 20 h exatas: pontua
+- [x] Sem horas: pontua e emite `CARGA_HORARIA_NAO_INFORMADA` ALERTA
+- [x] Critério sem `min_hours` não muda de comportamento (testes existentes sem alteração); Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick

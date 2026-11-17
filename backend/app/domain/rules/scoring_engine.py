@@ -147,8 +147,21 @@ def _evaluate(
     if activity.id in duplicates:
         return _not_scored(activity, NotScoredReason.DUPLICIDADE, evidence_count)
 
+    missing_hours = False
+    if criterion.min_hours is not None:
+        if activity.hours is None:
+            missing_hours = True
+        elif activity.hours < criterion.min_hours:
+            return _not_scored(activity, NotScoredReason.CARGA_HORARIA_INSUFICIENTE, evidence_count)
+
     result = criterion_points(criterion, activity)
     alerts = _period_alerts(state, version)
+    if missing_hours:
+        message = (
+            f"O item exige carga horária mínima de {criterion.min_hours:f} h e as horas não "
+            "foram informadas; pontuada, a revisão humana confere a carga."
+        )
+        alerts.append(_row_alert(ScoringAlertCode.CARGA_HORARIA_NAO_INFORMADA, message, version))
     if not has_evidence(activity, evidence_count):
         message = "A atividade não tem documento vinculado nem nota de comprovante."
         alerts.append(_row_alert(ScoringAlertCode.SEM_COMPROVANTE, message, version))
