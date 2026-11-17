@@ -45,11 +45,11 @@
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao` (Complex). Depois vêm: `normativo` → `inteligencia-documental` → `pontuacao` → `documentos-gerados` → `banca-parecer` → `implantacao`
-- **Phase / Task**: Execute concluído (T1–T34); Verificador iteração 3 = FAIL. Limite de 3 iterações atingido: escalado ao usuário
-- **Completed**: T1–T34 (286 testes backend, 14 frontend, smoke e smoke_backend PASS); 60/60 ACs com evidência
+- **Phase / Task**: Execute concluído (T1–T36). Verificador iteração 4 (rodada extra aprovada pelo usuário) = FAIL: 27 de 28 mutantes mortos, 60/60 ACs com evidência
+- **Completed**: T1–T36; 289 testes backend, 14 frontend, smoke e smoke_backend PASS; branch enviada ao GitHub; deploy na VM
 - **In-progress** (file:line): none
-- **Next step**: o usuário decide entre (a) 4ª rodada só de testes (K1/K2: sobreposição de um dia só em `career.py:77,80`; K3: último dia permitido em `career.py:125`) + Verificador, ou (b) aceitar o risco e encerrar a feature
-- **Blockers**: decisão do usuário; chave MariTalk retorna 401; faltam o "Modelo Relatorio Atividades 2.docx" e as URLs da PROGEP/CPPD; padrões PROC-02 (dias) e PROC-04 (referência) aguardam confirmação
-- **Deploy**: VM do AcessoVM.txt reservada para `implantacao`; não acessada; exige aval no momento
+- **Next step**: o usuário decide entre (a) mais uma rodada com 1 teste (X6: a regra "em uso" de `career.py:89` não é pinada; criar o processo do Requerimento 2024-2026 e afirmar `in_use` False para Res. 4.644 e True para a Lei) + Verificador, ou (b) aceitar o risco e encerrar a feature
+- **Blockers**: chave MariTalk retorna 401 (invalid_api_key) em sabia-4 e sabia-4-br-sp, com Bearer e Key; padrões PROC-02 (dias) e PROC-04 (referência) aguardam confirmação; falta o "Modelo Relatorio Atividades 2.docx" e as URLs da PROGEP/CPPD
+- **Deploy**: https://progressao.srv1633081.hstgr.cloud (VM compartilhada; stack em /opt/progressao com compose + override local que publica o nginx só em 127.0.0.1:8400; site `progressao` no nginx do servidor; certificado Let's Encrypt com renovação automática). Credenciais do ADMIN em /opt/progressao/.admin-credentials (modo 600). Sem backup configurado (feature `implantacao`). Imagens construídas localmente do commit 360eefb e enviadas por `docker save | docker load`
 - **Uncommitted files**: none
-- **Branch**: feat/fundacao (não enviada ao remoto)
+- **Branch**: feat/fundacao (enviada ao origin; sem PR; main intocada)

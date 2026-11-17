@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 10,
+  "next_id": 11,
   "lessons": [
     {
       "id": "L-001",
@@ -167,6 +167,24 @@
       ],
       "created": "2026-11-17T02:32:56Z",
       "last_seen": "2026-11-17T02:32:56Z"
+    },
+    {
+      "id": "L-010",
+      "key": "surviving_mutant::when a derived flag requires two conditions together assert a case where only one holds and the flag stays false",
+      "text": "When a derived flag requires two conditions together, assert a case where only one holds and the flag stays false",
+      "signal": "surviving_mutant",
+      "scope": "career-versions",
+      "status": "candidate",
+      "features": [
+        "fundacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "X6 backend/app/application/use_cases/career.py:89 (CARR-08) (career-versions)"
+      ],
+      "created": "2026-11-17T03:07:40Z",
+      "last_seen": "2026-11-17T03:07:40Z"
     }
   ]
 }

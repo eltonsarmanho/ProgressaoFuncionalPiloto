@@ -68,6 +68,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: K3 backend/app/application/use_cases/career.py:125 (CARR-09/CARR-10) (career-versions)
 - last seen: 2026-11-17T02:32:56Z
 
+### L-010 - When a derived flag requires two conditions together, assert a case where only one holds and the flag stays false
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `career-versions` · harmful: 0
+- features: fundacao
+- evidence: X6 backend/app/application/use_cases/career.py:89 (CARR-08) (career-versions)
+- last seen: 2026-11-17T03:07:40Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
