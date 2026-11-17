@@ -284,7 +284,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SEL-05 | P1: Tabela aplicada ao processo | Design | In Tasks |
 | SEL-06 | P1: Tabela aplicada ao processo | Design | In Tasks |
 | SEL-07 | P1: Tabela aplicada ao processo | Design | In Tasks |
-| SEL-08 | P1: Tabela aplicada ao processo | Design | In Tasks |
+| SEL-08 | P1: Tabela aplicada ao processo | Design | Implementing |
 | SEL-09 | P1: Tabela aplicada ao processo | Design | In Tasks |
 | ATV-01 | P1: Atividades do processo | Design | In Tasks |
 | ATV-02 | P1: Atividades do processo | Design | Implementing |
@@ -298,7 +298,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ATV-10 | P1: Atividades do processo | Design | In Tasks |
 | ATV-11 | P1: Atividades do processo | Design | In Tasks |
 | ATV-12 | P1: Atividades do processo | Design | In Tasks |
-| ATV-13 | P1: Atividades do processo | Design | In Tasks |
+| ATV-13 | P1: Atividades do processo | Design | Implementing |
 | ATV-14 | P1: Atividades do processo | Design | In Tasks |
 | CALC-01 | P1: Cálculo determinístico da pontuação | Design | Implementing |
 | CALC-02 | P1: Cálculo determinístico da pontuação | Design | Implementing |

@@ -292,9 +292,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] As portas existem com os métodos do design (lista, leitura, criação, `version_in_use`, bloqueio por versão)
-- [ ] Teste de arquitetura continua passando
-- [ ] Build gate passa
+- [x] As portas existem com os métodos do design (lista, leitura, criação, `version_in_use`, bloqueio por versão)
+- [x] Teste de arquitetura continua passando
+- [x] Build gate passa
 
 **Tests**: none
 **Gate**: build

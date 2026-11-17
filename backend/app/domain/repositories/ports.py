@@ -1,16 +1,19 @@
 """Ports implemented by the infrastructure layer (AD-001)."""
 
 from collections.abc import Sequence
+from dataclasses import dataclass, field
 from datetime import datetime
 from types import TracebackType
 from typing import Protocol, Self
 from uuid import UUID
 
 from app.domain.entities.academic_unit import AcademicUnit
+from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.entities.audit import AuditEvent
 from app.domain.entities.career import CareerVersion
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor
+from app.domain.entities.scoring import ScoringCriterion, ScoringTableVersion
 from app.domain.entities.user import Session, User
 
 
@@ -69,6 +72,8 @@ class ProcessRepository(Protocol):
 
     def list(self) -> Sequence[FunctionalProcess]: ...
 
+    def set_scoring_table_version(self, process_id: UUID, version_id: UUID | None) -> None: ...
+
 
 class AcademicUnitRepository(Protocol):
     def get(self, unit_id: UUID) -> AcademicUnit | None: ...
@@ -92,6 +97,55 @@ class CareerVersionRepository(Protocol):
     def update(self, version: CareerVersion) -> None: ...
 
 
+@dataclass
+class ScoringTableRecord:
+    """A named scoring table and the academic units it is associated with."""
+
+    id: UUID
+    name: str
+    archived: bool = False
+    unit_ids: tuple[UUID, ...] = field(default=())
+
+
+class ScoringTableRepository(Protocol):
+    def list_tables(self) -> Sequence[ScoringTableRecord]: ...
+
+    def get_table(self, table_id: UUID) -> ScoringTableRecord | None: ...
+
+    def add_table(self, table: ScoringTableRecord) -> None: ...
+
+    def set_table_units(self, table_id: UUID, unit_ids: Sequence[UUID]) -> None: ...
+
+    def list_versions(self, table_id: UUID) -> Sequence[ScoringTableVersion]: ...
+
+    def list_versions_for_unit(self, unit_id: UUID) -> Sequence[ScoringTableVersion]: ...
+
+    def get_version(self, version_id: UUID) -> ScoringTableVersion | None: ...
+
+    def add_version(self, version: ScoringTableVersion) -> None: ...
+
+    def update_version(self, version: ScoringTableVersion) -> None: ...
+
+    def update_criterion(self, version_id: UUID, criterion: ScoringCriterion) -> None: ...
+
+    def version_in_use(self, version_id: UUID) -> bool: ...
+
+
+class ActivityRepository(Protocol):
+    def get(self, activity_id: UUID) -> Activity | None: ...
+
+    def add(self, activity: Activity) -> None: ...
+
+    def update(self, activity: Activity, expected_version: int) -> None: ...
+
+    def list_for_process(
+        self,
+        process_id: UUID,
+        group_number: int | None = None,
+        status: ActivityStatus | None = None,
+    ) -> Sequence[Activity]: ...
+
+
 class AuditRepository(Protocol):
     def add(self, event: AuditEvent) -> None: ...
 
@@ -106,6 +160,8 @@ class UnitOfWork(Protocol):
     processes: ProcessRepository
     units: AcademicUnitRepository
     career_versions: CareerVersionRepository
+    scoring_tables: ScoringTableRepository
+    activities: ActivityRepository
     audit: AuditRepository
 
     def __enter__(self) -> Self: ...
