@@ -1529,10 +1529,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Sobre uma pasta sintética com `--fake-ai` e o interstício 2024-11-23 a 2026-11-23: relatório por arquivo com método por página, status, tipo, item sugerido ou `SEM_ITEM_DE_PONTUACAO`, dentro ou fora do interstício, quantidade de atividades, avisos e tempo
-- [ ] A saída e o relatório não contêm texto dos documentos
-- [ ] `Documentos/` e `Modelos/` estão no `.gitignore` e a suíte automática não executa o script
-- [ ] Gate full passa; 5+ testes
+- [x] Sobre uma pasta sintética com `--fake-ai` e o interstício 2024-11-23 a 2026-11-23: relatório por arquivo com método por página, status, tipo, item sugerido ou `SEM_ITEM_DE_PONTUACAO`, dentro ou fora do interstício, quantidade de atividades, avisos e tempo
+- [x] A saída e o relatório não contêm texto dos documentos
+- [x] `Documentos/` e `Modelos/` estão no `.gitignore` e a suíte automática não executa o script
+- [x] Gate full passa; 5+ testes
 
 **Tests**: integration
 **Gate**: full
