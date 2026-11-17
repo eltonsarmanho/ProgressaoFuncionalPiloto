@@ -168,13 +168,56 @@ def test_version_used_by_a_process_cannot_be_edited(client, admin, reference, uo
     assert versions_by_name(client)[LEI]["valid_to"] is None
 
 
-def test_overlapping_validity_returns_409(client, admin):
+def test_overlapping_a_closed_version_returns_409(client, admin):
     _, headers = admin
+    overlapping = {**NEW_VERSION, "valid_from": "2020-01-01", "valid_to": "2020-12-31"}
 
-    response = client.post(URL, json=NEW_VERSION, headers=headers)  # Lei version is open-ended
+    response = client.post(URL, json=overlapping, headers=headers)  # inside Res. 4.644 validity
 
     assert response.status_code == 409
     assert "Versão futura" not in versions_by_name(client)
+
+
+def _create_requerimento_process(client, headers, reference, uow_factory):
+    professor = add_professor(uow_factory, reference["FASI"])
+    created = client.post(
+        "/api/processes", json=process_payload(professor, REQUERIMENTO_2024_2026), headers=headers
+    )
+    assert created.status_code == 201  # ends 23/11/2026: uses the open-ended Lei version
+
+
+# CARR-09
+def test_creating_next_version_closes_open_ended_version(client, admin, reference, uow_factory):
+    actor, headers = admin
+    _create_requerimento_process(client, headers, reference, uow_factory)
+    lei_id = versions_by_name(client)[LEI]["id"]
+
+    response = client.post(URL, json=NEW_VERSION, headers=headers)  # starts 01/01/2031
+
+    assert response.status_code == 201
+    versions = versions_by_name(client)
+    assert versions[LEI]["valid_to"] == "2030-12-31"
+    assert versions["Versão futura"]["valid_from"] == "2031-01-01"
+    with uow_factory() as uow:
+        event = uow.audit.list_for("career_version", lei_id)[-1]
+    assert (event.action, event.user_id) == (AuditAction.UPDATE, actor.id)
+    assert event.changes == {"valid_to": {"before": None, "after": "2030-12-31"}}
+
+
+# CARR-10
+def test_closing_that_would_move_an_existing_process_returns_409(
+    client, admin, reference, uow_factory
+):
+    _, headers = admin
+    _create_requerimento_process(client, headers, reference, uow_factory)
+    early = {**NEW_VERSION, "valid_from": "2026-01-01"}  # process ends 23/11/2026, after it
+
+    response = client.post(URL, json=early, headers=headers)
+
+    assert response.status_code == 409
+    versions = versions_by_name(client)
+    assert versions[LEI]["valid_to"] is None
+    assert "Versão futura" not in versions
 
 
 def test_unknown_structure_returns_404(client, admin):

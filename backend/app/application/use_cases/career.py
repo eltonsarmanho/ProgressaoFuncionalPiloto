@@ -1,12 +1,14 @@
 """Career version administration (CARR-08) with audit trail (AUD-01).
 
-Versions are immutable once a process falls inside their validity. Overlapping
+Versions are immutable once a process falls inside their validity, except that creating
+the next version closes the open-ended one (CARR-09/10). Overlapping
 validities are rejected: they would change which version existing processes use.
 """
 
 import uuid
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
+from datetime import timedelta
 from uuid import UUID
 
 from app.application.services.audit_service import AuditService
@@ -102,6 +104,34 @@ def _reject_overlap(existing: Sequence[CareerVersion], version: CareerVersion) -
             raise Conflict(f'Vigência sobrepõe a versão "{other.name}"')
 
 
+def _close_open_version(
+    uow: UnitOfWork,
+    structure_id: UUID,
+    existing: Sequence[CareerVersion],
+    new: CareerVersion,
+) -> tuple[CareerVersion, CareerVersion] | None:
+    """CARR-09/10: end the open-ended version the day before `new` starts.
+
+    Returns (before, after) when a version was closed. Raises Conflict if an existing
+    process would move from the open version to the new one.
+    """
+    open_version = next((v for v in existing if v.valid_to is None), None)
+    if open_version is None or new.valid_from is None:
+        return None
+    if open_version.valid_from is not None and new.valid_from <= open_version.valid_from:
+        return None  # not a successor; the overlap check rejects it
+    for process in uow.processes.list():
+        professor = uow.professors.get(process.professor_id)
+        if professor.career_structure_id == structure_id and process.end_date >= new.valid_from:
+            raise Conflict(
+                f'Há processo com interstício terminando a partir de {new.valid_from:%d/%m/%Y}; '
+                f'encerrar "{open_version.name}" mudaria a versão aplicável a ele'
+            )
+    closed = replace(open_version, valid_to=new.valid_from - timedelta(days=1))
+    uow.career_versions.update(closed)
+    return open_version, closed
+
+
 class ListCareerVersions:
     def __init__(self, uow_factory: Callable[[], UnitOfWork]):
         self._uow_factory = uow_factory
@@ -124,8 +154,22 @@ class CreateCareerVersion:
         require_admin(actor)
         version = replace(_validate(version), id=uuid.uuid4())
         with self._uow_factory() as uow:
-            _structure(uow, code)
-            _reject_overlap(uow.career_versions.list_versions(code), version)
+            structure_id = _structure(uow, code)
+            existing = list(uow.career_versions.list_versions(code))
+            closing = _close_open_version(uow, structure_id, existing, version)
+            if closing is not None:
+                before, after = closing
+                existing = [after if v.id == after.id else v for v in existing]
+                self._audit.record(
+                    uow,
+                    actor.id,
+                    ENTITY,
+                    after.id,
+                    AuditAction.UPDATE,
+                    _audit_view(before),
+                    _audit_view(after),
+                )
+            _reject_overlap(existing, version)
             uow.career_versions.add(code, version)
             self._audit.record(
                 uow, actor.id, ENTITY, version.id, AuditAction.CREATE, {}, _audit_view(version)

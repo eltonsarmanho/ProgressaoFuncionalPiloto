@@ -823,10 +823,10 @@ T29 → T30 → T31 → T32
 
 **Done when**:
 
-- [ ] Com processo terminando em 23/11/2026, cadastrar versão de 01/01/2031 → 201; versão Lei 15.141 com `valid_to` 2030-12-31; evento UPDATE `{"valid_to": {"before": None, "after": "2030-12-31"}}`
-- [ ] Nova versão começando em 01/01/2026 (processo termina depois) → 409; nada muda
-- [ ] Sobreposição com versão já fechada → 409 (substitui o teste antigo, invalidado pela decisão do usuário)
-- [ ] Gate full passa
+- [x] Com processo terminando em 23/11/2026, cadastrar versão de 01/01/2031 → 201; versão Lei 15.141 com `valid_to` 2030-12-31; evento UPDATE `{"valid_to": {"before": None, "after": "2030-12-31"}}`
+- [x] Nova versão começando em 01/01/2026 (processo termina depois) → 409; nada muda
+- [x] Sobreposição com versão já fechada → 409 (substitui o teste antigo, invalidado pela decisão do usuário)
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full
