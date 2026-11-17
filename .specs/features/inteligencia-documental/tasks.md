@@ -1916,9 +1916,9 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] Pasta sintética com subpastas é processada por inteiro; `--no-recursive` lê só o nível raiz
-- [ ] Documento com três avisos `SEM_ITEM_DE_PONTUACAO` e nenhuma atividade conta como um "sem item"
-- [ ] Gate full passa
+- [x] Pasta sintética com subpastas é processada por inteiro; `--no-recursive` lê só o nível raiz
+- [x] Documento com três avisos `SEM_ITEM_DE_PONTUACAO` e nenhuma atividade conta como um "sem item"
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

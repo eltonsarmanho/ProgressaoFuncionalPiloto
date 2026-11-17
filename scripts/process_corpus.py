@@ -71,6 +71,7 @@ _BARE_NUMBER = re.compile(r"(?<![\w.])\d{7,}(?![\w])")
 _LONG_DIGITS = re.compile(r"\d{11,}")  # a long run is an identifier wherever it sits, `_` included
 _DOTTED_NUMBER = re.compile(r"(?<!\d)\d{1,3}(?:\.\d{3}){2}(?:-[\dXx])?(?!\d)")
 MAX_TITLE_CHARS = 80
+NO_ITEM_ALERT = "SEM_ITEM_DE_PONTUACAO"
 
 
 class CorpusError(Exception):
@@ -124,6 +125,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="inclui no relatório o título (mascarado e truncado) de cada atividade",
     )
+    parser.add_argument(
+        "--recursive",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="processa também as subpastas (padrão); --no-recursive lê só a pasta informada",
+    )
     parser.add_argument("--limit", type=int, help="processa só os N primeiros arquivos")
     return parser
 
@@ -142,16 +149,36 @@ def validate_args(args: argparse.Namespace) -> None:
         raise CorpusError("A pasta informada não existe")
 
 
-def list_corpus_files(folder: Path) -> list[Path]:
-    """Supported files directly inside `folder`, by name; hidden files and folders are skipped."""
+def list_corpus_files(folder: Path, recursive: bool = False) -> list[Path]:
+    """Supported files of `folder` ordered by path; hidden files and folders are skipped.
+
+    Only the files directly inside it, unless `recursive` (REAL-15: `Documentos/` keeps
+    `Artigos/`, `Registros/` and similar subfolders).
+    """
+    candidates = folder.rglob("*") if recursive else folder.iterdir()
     return sorted(
         (
             p
-            for p in folder.iterdir()
-            if p.is_file() and not p.name.startswith(".") and p.suffix.lower() in SUPPORTED_SUFFIXES
+            for p in candidates
+            if p.is_file()
+            and p.suffix.lower() in SUPPORTED_SUFFIXES
+            and not any(part.startswith(".") for part in p.relative_to(folder).parts)
         ),
-        key=lambda p: p.name.casefold(),
+        key=lambda p: p.relative_to(folder).as_posix().casefold(),
     )
+
+
+def summarize_alerts(codes: Sequence[str]) -> tuple[list[str], int]:
+    """The alert codes of a document with SEM_ITEM_DE_PONTUACAO once, and how often it came.
+
+    A document can emit it once per activity the AI listed; it is one "no item" document
+    (REAL-17).
+    """
+    unique: list[str] = []
+    for code in codes:
+        if code != NO_ITEM_ALERT or code not in unique:
+            unique.append(code)
+    return unique, sum(1 for code in codes if code == NO_ITEM_ALERT)
 
 
 def load_env_file(path: Path) -> dict[str, str]:
@@ -267,6 +294,7 @@ class DocumentEntry:
     activities: list[ActivityEntry] = field(default_factory=list)
     grounding_warnings: list[dict[str, Any]] = field(default_factory=list)
     alerts: list[str] = field(default_factory=list)
+    no_item_alerts: int = 0  # how many SEM_ITEM_DE_PONTUACAO alerts the document emitted
     duration_ms: int | None = None
     wall_seconds: float | None = None
 
@@ -441,6 +469,7 @@ class Options:
     dry_run: bool = False
     include_titles: bool = False
     limit: int | None = None
+    recursive: bool = True
 
 
 def options_from_args(args: argparse.Namespace) -> Options:
@@ -459,6 +488,7 @@ def options_from_args(args: argparse.Namespace) -> Options:
         dry_run=args.dry_run,
         include_titles=args.include_titles,
         limit=args.limit,
+        recursive=args.recursive,
     )
 
 
@@ -671,7 +701,7 @@ def _create_process(container: Any, engine: Any, settings: Any, options: Options
 
 
 def _upload_files(
-    container: Any, setup: _Setup, files: Sequence[Path]
+    container: Any, setup: _Setup, files: Sequence[Path], root: Path
 ) -> tuple[list[DocumentEntry], dict[Any, DocumentEntry]]:
     """One upload request per file, as the browser does; returns entries in order and by id."""
     from app.application.use_cases.documents import IncomingFile
@@ -689,7 +719,9 @@ def _upload_files(
         )
         result = container.upload_documents.execute(setup.admin, setup.process.id, [incoming])[0]
         entry = DocumentEntry(
-            file=path.name, size_bytes=len(content), upload_status=result.status_code
+            file=path.relative_to(root).as_posix(),
+            size_bytes=len(content),
+            upload_status=result.status_code,
         )
         if result.document is None:
             entry.upload_error = result.code
@@ -751,7 +783,7 @@ def run_corpus(
     from app.infrastructure.database.session import make_engine
     from app.presentation.dependencies import build_container
 
-    files = list_corpus_files(options.folder)
+    files = list_corpus_files(options.folder, options.recursive)
     if options.limit is not None:
         files = files[: options.limit]
     if not files:
@@ -767,7 +799,7 @@ def run_corpus(
             settings = _make_settings(options, database_url, env, storage_dir, len(files))
             container = build_container(settings, engine, SystemClock(), ai)
             setup = _create_process(container, engine, settings, options)
-            order, by_id = _upload_files(container, setup, files)
+            order, by_id = _upload_files(container, setup, files, options.folder)
             _run_jobs(container, by_id, progress)
             score = container.calculate_process_score.execute(setup.admin, setup.process.id)
             rows = {row.activity_id: row for row in score.result.rows}
@@ -828,7 +860,9 @@ def _fill_entry(
             for w in detail.run.warnings
         ]
         entry.grounding_warnings = [w for w in warnings if w["code"] in GROUNDING_CODES]
-        entry.alerts = [w["code"] for w in warnings if w["code"] not in GROUNDING_CODES]
+        entry.alerts, entry.no_item_alerts = summarize_alerts(
+            [w["code"] for w in warnings if w["code"] not in GROUNDING_CODES]
+        )
     interstice = Interstice(options.start, options.end)
     states: list[str] = []
     for linked in detail.activities:
@@ -856,7 +890,8 @@ def _fill_entry(
         )
     entry.interstice = interstice_summary(states)
     entry.without_item = (
-        document.suggested_category == "SEM_ITEM_DE_PONTUACAO"
+        document.suggested_category == NO_ITEM_ALERT
+        or NO_ITEM_ALERT in entry.alerts
         or any(a.item is None for a in entry.activities)
     )
 

@@ -200,6 +200,56 @@ def test_written_reports_name_documents_by_id_and_never_by_file_name(
             assert corpus.file_id(name) in text
 
 
+class NoItemAi:
+    """Lists three different coorientation activities, none with a scoring item."""
+
+    def extract(self, document_type: DocumentType, text: str, professor_name=None) -> AiExtraction:
+        titles = ("Estudo Ficticio sobre Dados Abertos", "Estudo Ficticio", "Dados Abertos")
+        items = [activity(taxonomy="COORIENTACAO_TCC_GRADUACAO", title=t) for t in titles]
+        answer = payload(*items, name=synth.FAKE_PROFESSOR)
+        return AiExtraction(raw_json=answer, model="fake-model", duration_ms=1)
+
+
+def test_document_with_repeated_no_item_alerts_counts_once_as_without_item(
+    folder, tmp_path, engine, migrated_url
+):
+    report = run(folder, tmp_path, migrated_url, NoItemAi())
+
+    banca = by_name(report)["a-banca.pdf"]
+    assert banca.activities == []
+    assert banca.alerts == ["SEM_ITEM_DE_PONTUACAO"]
+    assert banca.no_item_alerts == 3
+    assert banca.without_item is True
+    assert report.process["documents"]["without_item"] == 2  # a and b; the copy is a 409
+
+
+def add_nested_document(folder):
+    nested = folder / "Artigos"
+    nested.mkdir()
+    (nested / "d-artigo.pdf").write_bytes(
+        synth.pdf_with_text([synth.SAMPLE_PAGES[0] + " Outro documento do subdiretorio."])
+    )
+
+
+def test_subfolders_are_processed_by_default(folder, tmp_path, engine, migrated_url):
+    add_nested_document(folder)
+
+    report = run(folder, tmp_path, migrated_url, KeyedAi())
+
+    assert list(by_name(report)) == [
+        "a-banca.pdf", "Artigos/d-artigo.pdf", "b-outro.pdf", "c-copia.pdf",
+    ]  # fmt: skip
+    assert by_name(report)["Artigos/d-artigo.pdf"].status == "PROCESSADO"
+
+
+def test_no_recursive_reads_only_the_given_folder(folder, tmp_path, engine, migrated_url):
+    add_nested_document(folder)
+
+    report = run(folder, tmp_path, migrated_url, KeyedAi(), recursive=False)
+
+    assert list(by_name(report)) == ["a-banca.pdf", "b-outro.pdf", "c-copia.pdf"]
+
+
 def test_activity_titles_appear_only_when_asked_and_are_truncated(
     folder, tmp_path, engine, migrated_url
 ):

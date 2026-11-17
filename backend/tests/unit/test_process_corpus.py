@@ -109,6 +109,39 @@ def test_list_corpus_files_takes_supported_files_by_name_only(tmp_path):
     ]
 
 
+def test_list_corpus_files_recursive_takes_subfolders_in_path_order_and_skips_hidden(tmp_path):
+    for relative in ("b.pdf", "Artigos/a.pdf", "Registros/x.png", "ATA Especializacao/y.pdf",
+                     ".oculta/z.pdf", "Artigos/.rascunho.pdf", "Artigos/notas.txt"):  # fmt: skip
+        target = tmp_path / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(b"x")
+
+    found = corpus.list_corpus_files(tmp_path, recursive=True)
+
+    assert [p.relative_to(tmp_path).as_posix() for p in found] == [
+        "Artigos/a.pdf", "ATA Especializacao/y.pdf", "b.pdf", "Registros/x.png",
+    ]  # fmt: skip
+
+
+def test_parser_is_recursive_by_default_and_no_recursive_turns_it_off():
+    assert _parse().recursive is True
+    assert _parse("--no-recursive").recursive is False
+    assert _parse("--recursive").recursive is True
+
+
+def test_repeated_no_item_alerts_count_once_and_keep_the_other_alerts():
+    alerts, count = corpus.summarize_alerts(
+        ["SEM_ITEM_DE_PONTUACAO", "TRUNCADO", "SEM_ITEM_DE_PONTUACAO", "SEM_ITEM_DE_PONTUACAO"]
+    )
+
+    assert alerts == ["SEM_ITEM_DE_PONTUACAO", "TRUNCADO"]
+    assert count == 3
+
+
+def test_alerts_without_no_item_are_untouched():
+    assert corpus.summarize_alerts(["TRUNCADO", "TRUNCADO"]) == (["TRUNCADO", "TRUNCADO"], 0)
+
+
 def test_item_label_uses_roman_group_and_is_none_without_item():
     assert corpus.item_label(8, 24) == "VIII.24"
     assert corpus.item_label(3, 4) == "III.4"
