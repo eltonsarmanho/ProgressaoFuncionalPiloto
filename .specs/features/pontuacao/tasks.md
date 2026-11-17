@@ -235,11 +235,11 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Mesmo título, períodos sobrepostos: a atividade mais nova sai
-- [ ] Com `distinct_justification`: ambas contam
-- [ ] Membro e presidente da mesma comissão (Grupo VI) são duplicidade
-- [ ] Mesmo título sem datas ou em períodos separados não duplica
-- [ ] Gate quick passa; 8+ testes
+- [x] Mesmo título, períodos sobrepostos: a atividade mais nova sai
+- [x] Com `distinct_justification`: ambas contam
+- [x] Membro e presidente da mesma comissão (Grupo VI) são duplicidade
+- [x] Mesmo título sem datas ou em períodos separados não duplica
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick

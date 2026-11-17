@@ -318,9 +318,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VERIF-02 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
 | VERIF-03 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
 | VERIF-04 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-05 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
-| VERIF-06 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
-| VERIF-07 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-05 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
+| VERIF-06 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
+| VERIF-07 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
 | VERIF-08 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
 | VERIF-09 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
 | VERIF-10 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
