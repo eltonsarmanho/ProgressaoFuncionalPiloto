@@ -753,8 +753,8 @@ T24 → T25 → T26 → T27
 
 **Done when**:
 
-- [ ] Versão com Grupo I fora do total sem critério de carga semanal não mostra o bloco de horas de PIT
-- [ ] A tabela oficial continua mostrando as horas; Build gate passa (lint, testes, build); 1+ teste novo
+- [x] Versão com Grupo I fora do total sem critério de carga semanal não mostra o bloco de horas de PIT
+- [x] A tabela oficial continua mostrando as horas; Build gate passa (lint, testes, build); 1+ teste novo
 
 **Tests**: unit
 **Gate**: build

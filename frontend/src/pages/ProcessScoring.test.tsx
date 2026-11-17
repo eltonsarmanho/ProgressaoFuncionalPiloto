@@ -294,9 +294,13 @@ describe("ProcessScoring", () => {
       pit_hours: hours,
       alerts: [],
     });
+    const WEEKLY_LOAD = {
+      group_number: 1, item_number: 1, description: "Aulas Efetivas em Curso de Graduação", unit_label: "horas (PIT)", mode: "CARGA_SEMANAL" as const,
+      unit_points: null, hours_per_block: null, weeks_per_semester: 17, prep_ratio: "1.00", min_hours: null, max_points: null, accepted_evidence: null, rules: null, review_note: null,
+    };
     const OFFICIAL_VERSION = {
       ...VERSION,
-      groups: [{ ...VERSION.groups[0], number: 1, name: "Docência", counts_in_total: false, criteria: [] }, VERSION.groups[1]],
+      groups: [{ ...VERSION.groups[0], number: 1, name: "Docência", counts_in_total: false, criteria: [WEEKLY_LOAD] }, VERSION.groups[1]],
     };
     const official = (): ScoringResult => ({
       ...result("40.00", [PIT_ROW("p1", "Cálculo I", "8.00"), PIT_ROW("p2", "Álgebra", "4.00"), ROW]),
@@ -333,6 +337,22 @@ describe("ProcessScoring", () => {
       expect(await screen.findByText("Total geral (Grupos II a VIII)", { selector: "dt" })).toBeInTheDocument();
       const hours = screen.getByRole("group", { name: "Horas de PIT do Grupo I" });
       expect(within(hours).getByText("Total de horas de PIT", { selector: "dt" }).nextElementSibling).toHaveTextContent("0,00 horas");
+    });
+
+    it("com Grupo I fora do total mas sem carga semanal (tipo IFCH), não mostra as horas de PIT", async () => {
+      const informed = { ...WEEKLY_LOAD, mode: "VALOR_INFORMADO" as const, unit_label: "pontos", weeks_per_semester: null, prep_ratio: null };
+      const IFCH_VERSION = {
+        ...VERSION,
+        groups: [{ ...VERSION.groups[0], number: 1, name: "Docência", counts_in_total: false, criteria: [informed] }, VERSION.groups[1]],
+      };
+      mockFetch({
+        ...baseRoutes(() => result("40.00", [ROW])),
+        "GET /api/scoring-versions/v-fasi": { status: 200, body: IFCH_VERSION },
+      });
+      renderPage();
+      expect(await screen.findByText("Total geral", { selector: "dt" })).toBeInTheDocument();
+      expect(screen.queryByRole("group", { name: "Horas de PIT do Grupo I" })).not.toBeInTheDocument();
+      expect(screen.queryByText("Total de horas de PIT")).not.toBeInTheDocument();
     });
 
     it("explica em português o alerta CARGA_HORARIA_NAO_INFORMADA e a razão CARGA_HORARIA_INSUFICIENTE", async () => {

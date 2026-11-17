@@ -158,7 +158,10 @@ export function ProcessScoring() {
 
   const groupNames = version ? Object.fromEntries(version.groups.map((g) => [g.number, g.name])) : undefined;
   const groupOne = version?.groups.find((g) => g.number === 1);
-  const group1InHours = groupOne ? !groupOne.counts_in_total : undefined;
+  // PIT hours only where group I is outside the total and has a weekly-load criterion (PIT-02/03).
+  const group1InHours = groupOne
+    ? !groupOne.counts_in_total && groupOne.criteria.some((c) => c.mode === "CARGA_SEMANAL")
+    : undefined;
 
   const alerts: Alert[] = [];
   const seen = new Set<string>();
