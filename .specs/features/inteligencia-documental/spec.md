@@ -302,15 +302,15 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | EXT-12 | P1: Extração estruturada com a MariTalk | Design | Implementing |
 | EXT-13 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
 | CLS-01 | P1: Classificação em item de pontuação | Design | Implementing |
-| CLS-02 | P1: Classificação em item de pontuação | Design | In Tasks |
-| CLS-03 | P1: Classificação em item de pontuação | Design | In Tasks |
-| CLS-04 | P1: Classificação em item de pontuação | Design | In Tasks |
+| CLS-02 | P1: Classificação em item de pontuação | Design | Implementing |
+| CLS-03 | P1: Classificação em item de pontuação | Design | Implementing |
+| CLS-04 | P1: Classificação em item de pontuação | Design | Implementing |
 | CLS-05 | P1: Classificação em item de pontuação | Design | In Tasks |
 | CLS-06 | P1: Classificação em item de pontuação | Design | In Tasks |
 | CLS-07 | P1: Classificação em item de pontuação | Design | In Tasks |
 | CLS-08 | P1: Classificação em item de pontuação | Design | In Tasks |
 | CLS-09 | P1: Classificação em item de pontuação | Design | In Tasks |
-| CLS-10 | P1: Classificação em item de pontuação | Design | In Tasks |
+| CLS-10 | P1: Classificação em item de pontuação | Design | Implementing |
 | VINC-01 | P1: Atividades ligadas aos documentos | Design | In Tasks |
 | VINC-02 | P1: Atividades ligadas aos documentos | Design | In Tasks |
 | VINC-03 | P1: Atividades ligadas aos documentos | Design | In Tasks |

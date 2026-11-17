@@ -338,11 +338,11 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Cada linha da tabela do design dá o principal e os alternativos exatos (ex.: `BANCA_TCC_GRADUACAO` é III.4; `PALESTRA` é VIII.28 sem alternativas; `TREINAMENTO_INTERNO` e `PARTICIPACAO_EVENTO` são VII.10)
-- [ ] `COORIENTACAO_TCC_GRADUACAO` e `OUTRA` devolvem principal `None`
-- [ ] `CURSO_EXTENSAO_CONCLUIDO` com texto sem "extensão" vira `CURSO_CONCLUIDO` (VII.10); com "extensão" fica VII.9
-- [ ] Todo tipo da taxonomia tem uma regra; cada regra cita a fonte
-- [ ] Gate quick passa; 30+ testes
+- [x] Cada linha da tabela do design dá o principal e os alternativos exatos (ex.: `BANCA_TCC_GRADUACAO` é III.4; `PALESTRA` é VIII.28 sem alternativas; `TREINAMENTO_INTERNO` e `PARTICIPACAO_EVENTO` são VII.10)
+- [x] `COORIENTACAO_TCC_GRADUACAO` e `OUTRA` devolvem principal `None`
+- [x] `CURSO_EXTENSAO_CONCLUIDO` com texto sem "extensão" vira `CURSO_CONCLUIDO` (VII.10); com "extensão" fica VII.9
+- [x] Todo tipo da taxonomia tem uma regra; cada regra cita a fonte
+- [x] Gate quick passa; 30+ testes
 
 **Tests**: unit
 **Gate**: quick
