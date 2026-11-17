@@ -67,7 +67,7 @@ def database_url() -> Iterator[str]:
         _wait_ready(url)
         yield url
     finally:
-        subprocess.run(["docker", "rm", "-f", container], capture_output=True)
+        subprocess.run(["docker", "rm", "-f", "-v", container], capture_output=True)
 
 
 def alembic_config(url: str) -> Config:

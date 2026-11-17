@@ -959,8 +959,8 @@ T33 → T34
 
 **Done when**:
 
-- [ ] Contagem de `docker volume ls -q` igual antes e depois de `pytest tests/integration`
-- [ ] Build gate passa
+- [x] Contagem de `docker volume ls -q` igual antes e depois de `pytest tests/integration`
+- [x] Build gate passa
 
 **Tests**: integration
 **Gate**: build
