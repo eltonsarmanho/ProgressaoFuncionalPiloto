@@ -755,9 +755,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Etapa 1 e Etapa 4 habilitadas; etapas 2, 3 e 5 a 9 desabilitadas com "em breve"
-- [ ] Teste UI-04 ajustado de forma explícita, sem enfraquecer
-- [ ] Gate quick (frontend) passa
+- [x] Etapa 1 e Etapa 4 habilitadas; etapas 2, 3 e 5 a 9 desabilitadas com "em breve"
+- [x] Teste UI-04 ajustado de forma explícita, sem enfraquecer
+- [x] Gate quick (frontend) passa
 
 **Tests**: unit
 **Gate**: quick

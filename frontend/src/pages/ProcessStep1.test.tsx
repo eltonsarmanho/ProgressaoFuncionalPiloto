@@ -128,7 +128,7 @@ describe("ProcessStep1", () => {
     });
   });
 
-  it("UI-04: exibe as 9 etapas com a Etapa 1 ativa e as etapas 2–9 desabilitadas e rotuladas 'em breve'", async () => {
+  it("UI-04 / TELA-01: exibe as 9 etapas com a Etapa 1 ativa, a Etapa 4 habilitada e as etapas 2, 3 e 5–9 desabilitadas e rotuladas 'em breve'", async () => {
     mockFetch({
       "GET /api/units": { status: 200, body: UNITS },
       "GET /api/professors": { status: 200, body: PROFESSORS },
@@ -140,13 +140,35 @@ describe("ProcessStep1", () => {
     expect(steps[0]).toHaveAttribute("aria-current", "step");
     expect(steps[0]).not.toHaveTextContent("em breve");
     expect(steps[0]).not.toHaveAttribute("aria-disabled");
-    steps.slice(1).forEach((step, i) => {
-      expect(step).toHaveTextContent(`Etapa ${i + 2}`);
+    expect(steps[3]).toHaveTextContent("Etapa 4");
+    expect(steps[3]).toHaveTextContent("Pontuação");
+    expect(steps[3]).not.toHaveTextContent("em breve");
+    expect(steps[3]).not.toHaveAttribute("aria-disabled");
+    expect(steps[3]).not.toHaveAttribute("aria-current");
+    steps.forEach((step, i) => {
+      if (i === 0 || i === 3) return;
+      expect(step).toHaveTextContent(`Etapa ${i + 1}`);
       expect(step).toHaveTextContent("em breve");
       expect(step).toHaveAttribute("aria-disabled", "true");
       expect(step).not.toHaveAttribute("aria-current");
       expect(within(step).queryByRole("link")).not.toBeInTheDocument();
     });
+  });
+
+  it("TELA-01: com um processo aberto, Etapa 1 e Etapa 4 são links para o processo e para a pontuação", async () => {
+    mockFetch({
+      "GET /api/units": { status: 200, body: UNITS },
+      "GET /api/professors": { status: 200, body: PROFESSORS },
+      "GET /api/processes/proc-1": { status: 200, body: SAVED },
+    });
+    renderAt("/processos/proc-1");
+    const nav = await screen.findByRole("navigation", { name: "Etapas do processo" });
+    const steps = within(nav).getAllByRole("listitem");
+    expect(within(steps[3]).getByRole("link", { name: /Etapa 4/ })).toHaveAttribute(
+      "href",
+      "/processos/proc-1/pontuacao",
+    );
+    expect(within(steps[0]).getByRole("link", { name: /Etapa 1/ })).toHaveAttribute("href", "/processos/proc-1");
   });
 
   it("edição em andamento: 422 exibe a mensagem junto ao campo justificativa e PUT envia expected_version", async () => {

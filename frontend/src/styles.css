@@ -263,3 +263,8 @@ fieldset.grid legend {
   margin-bottom: 0.5rem;
   color: var(--fg);
 }
+
+.step a {
+  color: inherit;
+  text-decoration: none;
+}
