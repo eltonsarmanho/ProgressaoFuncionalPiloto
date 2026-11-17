@@ -152,8 +152,8 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Teste passa no esqueleto e falha se um import proibido for adicionado (verificado manualmente uma vez)
-- [ ] Gate quick passa (`pytest tests/unit tests/architecture`)
+- [x] Teste passa no esqueleto e falha se um import proibido for adicionado (verificado manualmente uma vez)
+- [x] Gate quick passa (`pytest tests/unit tests/architecture`)
 
 **Tests**: unit
 **Gate**: quick
