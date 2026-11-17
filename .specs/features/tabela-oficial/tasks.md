@@ -416,9 +416,9 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Todo item principal e alternativo existe na tabela oficial
-- [ ] Uma regra apontando para item inexistente faria o teste falhar (verificado ao inserir uma regra falsa temporária)
-- [ ] Gate full passa; 2+ testes
+- [x] Todo item principal e alternativo existe na tabela oficial
+- [x] Uma regra apontando para item inexistente faria o teste falhar (verificado ao inserir uma regra falsa temporária)
+- [x] Gate full passa; 2+ testes
 
 **Tests**: integration
 **Gate**: full
