@@ -511,8 +511,8 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Não-ADMIN não altera; unidade arquivada em docente/processo → 422
-- [ ] Gate full passa
+- [x] Não-ADMIN não altera; unidade arquivada em docente/processo → 422
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

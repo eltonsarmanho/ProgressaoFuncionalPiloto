@@ -298,8 +298,8 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | UI-04 | P1: Interface web | Design | Pending |
 | UI-05 | P1: Interface web | Design | Pending |
 | UI-06 | P1: Interface web | Design | Pending |
-| UNIT-01 | P2: Unidades acadêmicas | Design | Pending |
-| UNIT-02 | P2: Unidades acadêmicas | Design | Pending |
+| UNIT-01 | P2: Unidades acadêmicas | Design | Implementing |
+| UNIT-02 | P2: Unidades acadêmicas | Design | Implementing |
 | UNIT-03 | P2: Unidades acadêmicas | Design | Implementing |
 
 IDs numeram os critérios de cada história na ordem em que aparecem (ex.: PROC-11 = 11º critério de "Processo e interstício").

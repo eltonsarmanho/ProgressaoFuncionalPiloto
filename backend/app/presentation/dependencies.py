@@ -8,6 +8,7 @@ from sqlalchemy import Engine
 
 from app.application.services.audit_service import AuditService
 from app.application.use_cases.auth import GetCurrentSession, Login, Logout
+from app.application.use_cases.units import ArchiveUnit, CreateUnit, ListUnits, UpdateUnit
 from app.application.use_cases.users import CreateUser, ListUsers
 from app.core.config import Settings
 from app.domain.entities.user import Session, User
@@ -29,6 +30,10 @@ class Container:
     current_session: GetCurrentSession
     create_user: CreateUser
     list_users: ListUsers
+    list_units: ListUnits
+    create_unit: CreateUnit
+    update_unit: UpdateUnit
+    archive_unit: ArchiveUnit
 
 
 def build_container(settings: Settings, engine: Engine, clock: Clock) -> Container:
@@ -49,6 +54,10 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
         current_session=GetCurrentSession(uow_factory, tokens, clock),
         create_user=CreateUser(uow_factory, hasher, audit),
         list_users=ListUsers(uow_factory),
+        list_units=ListUnits(uow_factory),
+        create_unit=CreateUnit(uow_factory, audit),
+        update_unit=UpdateUnit(uow_factory, audit),
+        archive_unit=ArchiveUnit(uow_factory, audit),
     )
 
 

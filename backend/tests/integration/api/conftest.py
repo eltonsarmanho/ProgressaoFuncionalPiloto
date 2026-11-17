@@ -83,3 +83,14 @@ def login(client: TestClient, email: str, password: str = PASSWORD) -> str:
     me = client.get("/api/auth/me")
     assert me.status_code == 200, me.text
     return me.json()["csrf_token"]
+
+
+@pytest.fixture
+def act_as(client, make_user):
+    """Create a user with the given role, log the client in as them; return (user, headers)."""
+
+    def act(email: str, role: Role = Role.DOCENTE, **kw) -> tuple[User, dict[str, str]]:
+        user = make_user(email, role=role, **kw)
+        return user, {"X-CSRF-Token": login(client, email)}
+
+    return act
