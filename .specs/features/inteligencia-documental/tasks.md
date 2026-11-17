@@ -501,11 +501,11 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Dois claims concorrentes não pegam a mesma tarefa
-- [ ] `recover_stuck` recoloca `PROCESSANDO` em `PENDENTE`
-- [ ] Mesmo hash no mesmo processo dá `Conflict` com o id do existente; processos diferentes aceitam
-- [ ] Contagem de documentos do processo e de envios do usuário no último minuto corretas
-- [ ] Gate full passa; 14+ testes
+- [x] Dois claims concorrentes não pegam a mesma tarefa
+- [x] `recover_stuck` recoloca `PROCESSANDO` em `PENDENTE`
+- [x] Mesmo hash no mesmo processo dá `Conflict` com o id do existente; processos diferentes aceitam
+- [x] Contagem de documentos do processo e de envios do usuário no último minuto corretas
+- [x] Gate full passa; 14+ testes
 
 **Tests**: integration
 **Gate**: build
