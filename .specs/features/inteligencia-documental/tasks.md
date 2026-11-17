@@ -1371,9 +1371,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Mostra o arquivo em linha e a lista de páginas com método (`TEXTO` ou `OCR`) e confiança
-- [ ] O JSON extraído é somente leitura
-- [ ] Gate quick (frontend) passa; 4+ testes
+- [x] Mostra o arquivo em linha e a lista de páginas com método (`TEXTO` ou `OCR`) e confiança
+- [x] O JSON extraído é somente leitura
+- [x] Gate quick (frontend) passa; 4+ testes
 
 **Tests**: unit
 **Gate**: quick

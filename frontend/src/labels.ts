@@ -203,3 +203,26 @@ export function formatSize(bytes: number): string {
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1).replace(".", ",")} MB`;
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
+
+export const ACTIVITY_STATUS_LABELS: Record<string, string> = {
+  AGUARDANDO_REVISAO: "Aguardando revisão",
+  VALIDADA: "Validada",
+  REJEITADA: "Rejeitada",
+};
+
+export const ACTIVITY_SOURCE_LABELS: Record<string, string> = {
+  MANUAL: "Cadastrada por você",
+  SUGERIDA_IA: "Sugerido pela IA",
+  IMPORTADA: "Importada",
+};
+
+export const TEXT_METHOD_LABELS: Record<string, string> = {
+  TEXTO: "TEXTO (camada de texto do arquivo)",
+  OCR: "OCR (leitura da imagem)",
+};
+
+/** "IV.3" for an activity item; "Sem enquadramento" when the activity has none. */
+export function itemLabel(group: number | null, item: number | null): string {
+  if (group == null) return "Sem enquadramento";
+  return item == null ? roman(group) : `${roman(group)}.${item}`;
+}

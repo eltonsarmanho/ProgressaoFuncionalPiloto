@@ -260,3 +260,52 @@ export type DocumentSummary = {
   updated_at: string | null;
   version: number;
 };
+
+export type TextMethod = "TEXTO" | "OCR";
+
+export type DocumentPage = {
+  page_number: number;
+  method: TextMethod;
+  char_count: number;
+  /** Mean OCR confidence in percent ("87.50"); null for pages read from the text layer. */
+  ocr_confidence: string | null;
+  text: string;
+};
+
+export type DocumentRun = {
+  id: string;
+  model: string;
+  duration_ms: number;
+  /** What the AI returned, untouched; read only. */
+  raw_json: Record<string, unknown>;
+  created_at: string | null;
+};
+
+export type DocumentAlert = { code: string; field: string | null; activity_index: number | null };
+
+/** A link between an activity and a page of a document (VINC-01). */
+export type Evidence = {
+  id: string;
+  document_id: string;
+  document_name: string;
+  page: number;
+  excerpt: string;
+};
+
+export type LinkedActivity = {
+  id: string;
+  title: string;
+  group_number: number | null;
+  item_number: number | null;
+  source: string;
+  status: string;
+  version: number;
+  evidences: Evidence[];
+};
+
+export type DocumentDetail = DocumentSummary & {
+  pages: DocumentPage[];
+  run: DocumentRun | null;
+  alerts: DocumentAlert[];
+  activities: LinkedActivity[];
+};
