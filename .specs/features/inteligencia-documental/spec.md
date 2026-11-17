@@ -262,84 +262,84 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story       | Phase  | Status  |
 | -------------- | ----------- | ------ | ------- |
-| DOC-01 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| DOC-02 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| DOC-03 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| DOC-04 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| DOC-05 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| DOC-06 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| DOC-07 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| DOC-08 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| DOC-09 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| DOC-10 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| DOC-11 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| DOC-12 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| DOC-13 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| DOC-14 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| DOC-15 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
-| PIPE-01 | P1: Processamento: texto, OCR e estados | Design | Pending |
-| PIPE-02 | P1: Processamento: texto, OCR e estados | Design | Pending |
-| PIPE-03 | P1: Processamento: texto, OCR e estados | Design | Pending |
-| PIPE-04 | P1: Processamento: texto, OCR e estados | Design | Pending |
-| PIPE-05 | P1: Processamento: texto, OCR e estados | Design | Pending |
-| PIPE-06 | P1: Processamento: texto, OCR e estados | Design | Pending |
-| PIPE-07 | P1: Processamento: texto, OCR e estados | Design | Pending |
-| PIPE-08 | P1: Processamento: texto, OCR e estados | Design | Pending |
-| PIPE-09 | P1: Processamento: texto, OCR e estados | Design | Pending |
-| PIPE-10 | P1: Processamento: texto, OCR e estados | Design | Pending |
-| PIPE-11 | P1: Processamento: texto, OCR e estados | Design | Pending |
-| EXT-01 | P1: Extração estruturada com a MariTalk | Design | Pending |
-| EXT-02 | P1: Extração estruturada com a MariTalk | Design | Pending |
-| EXT-03 | P1: Extração estruturada com a MariTalk | Design | Pending |
-| EXT-04 | P1: Extração estruturada com a MariTalk | Design | Pending |
-| EXT-05 | P1: Extração estruturada com a MariTalk | Design | Pending |
-| EXT-06 | P1: Extração estruturada com a MariTalk | Design | Pending |
-| EXT-07 | P1: Extração estruturada com a MariTalk | Design | Pending |
-| EXT-08 | P1: Extração estruturada com a MariTalk | Design | Pending |
-| EXT-09 | P1: Extração estruturada com a MariTalk | Design | Pending |
-| EXT-10 | P1: Extração estruturada com a MariTalk | Design | Pending |
-| EXT-11 | P1: Extração estruturada com a MariTalk | Design | Pending |
-| EXT-12 | P1: Extração estruturada com a MariTalk | Design | Pending |
-| EXT-13 | P1: Extração estruturada com a MariTalk | Design | Pending |
-| CLS-01 | P1: Classificação em item de pontuação | Design | Pending |
-| CLS-02 | P1: Classificação em item de pontuação | Design | Pending |
-| CLS-03 | P1: Classificação em item de pontuação | Design | Pending |
-| CLS-04 | P1: Classificação em item de pontuação | Design | Pending |
-| CLS-05 | P1: Classificação em item de pontuação | Design | Pending |
-| CLS-06 | P1: Classificação em item de pontuação | Design | Pending |
-| CLS-07 | P1: Classificação em item de pontuação | Design | Pending |
-| CLS-08 | P1: Classificação em item de pontuação | Design | Pending |
-| CLS-09 | P1: Classificação em item de pontuação | Design | Pending |
-| CLS-10 | P1: Classificação em item de pontuação | Design | Pending |
-| VINC-01 | P1: Atividades ligadas aos documentos | Design | Pending |
-| VINC-02 | P1: Atividades ligadas aos documentos | Design | Pending |
-| VINC-03 | P1: Atividades ligadas aos documentos | Design | Pending |
-| VINC-04 | P1: Atividades ligadas aos documentos | Design | Pending |
-| VINC-05 | P1: Atividades ligadas aos documentos | Design | Pending |
-| VINC-06 | P1: Atividades ligadas aos documentos | Design | Pending |
-| REV-01 | P1: Revisão humana | Design | Pending |
-| REV-02 | P1: Revisão humana | Design | Pending |
-| REV-03 | P1: Revisão humana | Design | Pending |
-| REV-04 | P1: Revisão humana | Design | Pending |
-| TELA-01 | P1: Etapas 2 e 3 na interface | Design | Pending |
-| TELA-02 | P1: Etapas 2 e 3 na interface | Design | Pending |
-| TELA-03 | P1: Etapas 2 e 3 na interface | Design | Pending |
-| TELA-04 | P1: Etapas 2 e 3 na interface | Design | Pending |
-| TELA-05 | P1: Etapas 2 e 3 na interface | Design | Pending |
-| TELA-06 | P1: Etapas 2 e 3 na interface | Design | Pending |
-| TELA-07 | P1: Etapas 2 e 3 na interface | Design | Pending |
-| TELA-08 | P1: Etapas 2 e 3 na interface | Design | Pending |
-| TELA-09 | P1: Etapas 2 e 3 na interface | Design | Pending |
-| ACC-01 | P2: Aceitação com os documentos reais | Design | Pending |
-| ACC-02 | P2: Aceitação com os documentos reais | Design | Pending |
-| ACC-03 | P2: Aceitação com os documentos reais | Design | Pending |
-| ACC-04 | P2: Aceitação com os documentos reais | Design | Pending |
+| DOC-01 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-02 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-03 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-04 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-05 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-06 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-07 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-08 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-09 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-10 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-11 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-12 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-13 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-14 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-15 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| PIPE-01 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
+| PIPE-02 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
+| PIPE-03 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
+| PIPE-04 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
+| PIPE-05 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
+| PIPE-06 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
+| PIPE-07 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
+| PIPE-08 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
+| PIPE-09 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
+| PIPE-10 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
+| PIPE-11 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
+| EXT-01 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-02 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-03 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-04 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-05 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-06 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-07 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-08 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-09 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-10 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-11 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-12 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-13 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| CLS-01 | P1: Classificação em item de pontuação | Design | In Tasks |
+| CLS-02 | P1: Classificação em item de pontuação | Design | In Tasks |
+| CLS-03 | P1: Classificação em item de pontuação | Design | In Tasks |
+| CLS-04 | P1: Classificação em item de pontuação | Design | In Tasks |
+| CLS-05 | P1: Classificação em item de pontuação | Design | In Tasks |
+| CLS-06 | P1: Classificação em item de pontuação | Design | In Tasks |
+| CLS-07 | P1: Classificação em item de pontuação | Design | In Tasks |
+| CLS-08 | P1: Classificação em item de pontuação | Design | In Tasks |
+| CLS-09 | P1: Classificação em item de pontuação | Design | In Tasks |
+| CLS-10 | P1: Classificação em item de pontuação | Design | In Tasks |
+| VINC-01 | P1: Atividades ligadas aos documentos | Design | In Tasks |
+| VINC-02 | P1: Atividades ligadas aos documentos | Design | In Tasks |
+| VINC-03 | P1: Atividades ligadas aos documentos | Design | In Tasks |
+| VINC-04 | P1: Atividades ligadas aos documentos | Design | In Tasks |
+| VINC-05 | P1: Atividades ligadas aos documentos | Design | In Tasks |
+| VINC-06 | P1: Atividades ligadas aos documentos | Design | In Tasks |
+| REV-01 | P1: Revisão humana | Design | In Tasks |
+| REV-02 | P1: Revisão humana | Design | In Tasks |
+| REV-03 | P1: Revisão humana | Design | In Tasks |
+| REV-04 | P1: Revisão humana | Design | In Tasks |
+| TELA-01 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
+| TELA-02 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
+| TELA-03 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
+| TELA-04 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
+| TELA-05 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
+| TELA-06 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
+| TELA-07 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
+| TELA-08 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
+| TELA-09 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
+| ACC-01 | P2: Aceitação com os documentos reais | Design | In Tasks |
+| ACC-02 | P2: Aceitação com os documentos reais | Design | In Tasks |
+| ACC-03 | P2: Aceitação com os documentos reais | Design | In Tasks |
+| ACC-04 | P2: Aceitação com os documentos reais | Design | In Tasks |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 72 total, 0 mapped to tasks, 72 unmapped ⚠️ (esperado antes de Tasks)
+**Coverage:** 72 total, 72 mapped to tasks, 0 unmapped
 
 ---
 

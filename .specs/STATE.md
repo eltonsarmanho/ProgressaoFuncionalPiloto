@@ -77,10 +77,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/inteligencia-documental` (Complex). `fundacao` e `pontuacao` concluídas e verificadas. Depois: `documentos-gerados` → `banca-parecer` → `normativo` → `implantacao`
-- **Phase / Task**: Specify de `inteligencia-documental` aprovada (70 requisitos); Design escrito em `design.md` (AD-008 e AD-009 registradas), aguardando aprovação e a revisão da tabela de regras de sugestão (linhas ⚠). Em seguida vem o Tasks
+- **Phase / Task**: Specify (72 requisitos) e Design aprovados; `tasks.md` escrita (54 tarefas em 10 fases, 72/72 requisitos cobertos, `validate_tasks.py` limpo), aguardando aprovação e a escolha de sub-agentes (7 lotes: 8, 7, 10, 9, 7, 9 e 4 tarefas). Em seguida vem o Execute
 - **Completed**: `fundacao` (T1–T37) e `pontuacao` (T1–T41, 731 testes backend, 67 frontend, 80/80 verificados)
 - **In-progress** (file:line): none
-- **Next step**: o usuário aprova o Design e revisa as linhas ⚠ da tabela de regras; depois, Tasks e Execute em lotes
+- **Next step**: o usuário aprova as tarefas e escolhe a execução; depois, Execute em lotes e o Verificador independente
 - **Decisões do usuário em 2026-11-17**: o modelo da IA é o do `MARITALK_MODEL` no `.env` (hoje `sabia-4-thinking`, que raciocina e devolve `content` vazio com `max_tokens` baixo; use 8000 ou mais; vazio = `sabia-4-br-sp`; erro de modelo = nova tentativa com `sabia-4-br-sp`), revisando a decisão anterior de usar `sabia-4-br-sp` como padrão; mascarar CPF, RG, e-mail e telefone antes de enviar à MariTalk. A AD-005 continua válida
 - **Blockers**: nenhum técnico. Pendentes de confirmação: padrões PROC-02 e PROC-04 (`fundacao`), 3 suposições e a isenção do I.3 (`pontuacao`); faltam o "Modelo Relatorio Atividades 2.docx" e as URLs da PROGEP/CPPD
 - **Dívidas**: teste de 360 px só estático; sem backup; sem troca de senha; rotas de negócio devolvem 500 com banco fora do ar; `api/client.ts` só envia JSON; Grupo I do caso real com 16 pontos sem explicação; mínimos das classes novas sem regra; nginx do compose e do servidor limitam o corpo a 20 MB (precisa subir a 120 MB nesta feature); antivírus ausente na VM
