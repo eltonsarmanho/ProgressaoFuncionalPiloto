@@ -1476,10 +1476,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] A imagem constrói e `tesseract --list-langs` lista `por`
-- [ ] O contêiner continua rodando como usuário sem privilégios
-- [ ] `./scripts/smoke_backend.sh` passa
-- [ ] Build gate passa
+- [x] A imagem constrói e `tesseract --list-langs` lista `por`
+- [x] O contêiner continua rodando como usuário sem privilégios
+- [x] `./scripts/smoke_backend.sh` passa
+- [x] Build gate passa
 
 **Tests**: e2e
 **Gate**: build
