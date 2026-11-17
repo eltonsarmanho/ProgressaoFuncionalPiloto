@@ -7,13 +7,15 @@ is looked up in the ORIGINAL (unmasked) text of the page it cites before it is k
 """
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
-from app.domain.entities.activity import Level
+from app.domain.entities.activity import Activity, ActivitySource, Candidate, Level
 from app.domain.entities.document import DocAlertCode, DocumentStatus, TextMethod
 from app.domain.entities.extraction import DocumentType, ExtractedActivity, TaxonomyCode
 from app.domain.entities.scoring import ScoringTableVersion
@@ -30,6 +32,10 @@ from app.domain.rules.document_type import detect_document_type
 from app.domain.rules.grounding import ground, name_in_text, same_person
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.masking import mask_identifiers
+from app.domain.rules.quantity_rules import derive_quantity
+from app.domain.rules.scoring_alerts import NotScoredReason
+from app.domain.rules.scoring_periods import PeriodState, evaluate_period
+from app.domain.rules.suggestion_rules import Item, confirm_extension_course, suggest_item
 from app.domain.rules.text_quality import ocr_needs_review
 from app.domain.rules.upload_validation import FileKind
 
@@ -72,14 +78,31 @@ class DocAlert:
 
 @dataclass(frozen=True)
 class SuggestedActivity:
-    """An activity read from the document, grounded in its page text, awaiting human review."""
+    """An activity read from the document, grounded in its page text, awaiting human review.
 
+    The origin is always `SUGERIDA_IA`; the use case gives it the status AGUARDANDO_REVISAO.
+    `source_index` is the position in the AI answer, which the alerts refer to. Without
+    `group_number` and `item_number` the table has no matching item (`SEM_ENQUADRAMENTO`).
+    """
+
+    source_index: int
     extracted: ExtractedActivity
     taxonomy: TaxonomyCode
     page: int
     excerpt: str
     confidence: Decimal
     needs_review: bool
+    group_number: int | None
+    item_number: int | None
+    candidates: tuple[Candidate, ...]
+    quantity: Decimal | None
+    hours: Decimal | None
+    course_hours: Decimal | None
+    level: Level | None
+    academic_period: str | None
+    reasons: tuple[NotScoredReason, ...]
+    source_note: str
+    source: ActivitySource = ActivitySource.SUGERIDA_IA
 
 
 @dataclass(frozen=True)
@@ -132,7 +155,7 @@ class DocumentAnalyzer:
         started = self._clock.now()
         run = _Run()
         status, status_code = self._analyze(
-            run, file_path, kind, professor_name, professor_siape
+            run, file_path, kind, professor_name, professor_siape, process_interstice, table_version
         )
         elapsed = self._clock.now() - started
         return AnalysisResult(
@@ -154,6 +177,8 @@ class DocumentAnalyzer:
         kind: FileKind,
         professor_name: str,
         professor_siape: str | None,
+        interstice: Interstice | None,
+        table_version: ScoringTableVersion | None,
     ) -> tuple[DocumentStatus, str | None]:
         extraction = self._text_extractor.extract(file_path, kind)
         run.pages = extraction.pages
@@ -179,8 +204,13 @@ class DocumentAnalyzer:
 
         status = DocumentStatus.PROCESSADO
         original = {page.page_number: page.text for page in sent}
+        document_text = _join(run.pages)
         for index, raw in enumerate(payload.activities):
-            run.activities.append(self._verified(run, index, raw, original))
+            suggested = self._suggest(
+                run, index, raw, original, document_text, interstice, table_version
+            )
+            if suggested is not None:
+                run.activities.append(suggested)
         if not payload.activities:
             run.alerts.append(DocAlert(DocAlertCode.NENHUMA_ATIVIDADE_ENCONTRADA))
         if not _same_professor(payload.docente_nome, professor_name, professor_siape, run.pages):
@@ -205,21 +235,59 @@ class DocumentAnalyzer:
                 return payload, None
         return None, DocAlertCode.RESPOSTA_INVALIDA
 
-    def _verified(
-        self, run: _Run, index: int, raw: ExtractedActivity, pages: dict[int, str]
-    ) -> SuggestedActivity:
+    def _suggest(
+        self,
+        run: _Run,
+        index: int,
+        raw: ExtractedActivity,
+        pages: dict[int, str],
+        document_text: str,
+        interstice: Interstice | None,
+        table_version: ScoringTableVersion | None,
+    ) -> SuggestedActivity | None:
+        """Ground, classify and size one activity; None when its type has no scoring item."""
         grounded = ground(raw, pages)
         for warning in grounded.warnings:
             run.alerts.append(DocAlert(warning.code, warning.field, index))
-        confidence = final_confidence(raw.confidence, grounded.grounded_ratio)
         activity = grounded.activity
+        taxonomy = confirm_extension_course(activity.taxonomy, document_text)
+        suggestion = suggest_item(taxonomy, activity.level)
+        if suggestion.principal is None:
+            run.alerts.append(DocAlert(DocAlertCode.SEM_ITEM_DE_PONTUACAO, None, index))
+            return None
+        quantity = derive_quantity(taxonomy, activity)
+        run.alerts += [DocAlert(code, None, index) for code in quantity.warnings]
+
+        in_table = _items_in_table(table_version)
+        principal = suggestion.principal if in_table(suggestion.principal) else None
+        reasons: list[NotScoredReason] = []
+        if principal is None:
+            reasons.append(NotScoredReason.SEM_ENQUADRAMENTO)
+        if _outside_interstice(activity, interstice):
+            reasons.append(NotScoredReason.FORA_DO_INTERSTICIO)
+        confidence = final_confidence(raw.confidence, grounded.grounded_ratio)
         return SuggestedActivity(
+            source_index=index,
             extracted=activity,
-            taxonomy=activity.taxonomy,
+            taxonomy=taxonomy,
             page=activity.page,
             excerpt=_excerpt(activity.evidence_text, pages.get(activity.page, "")),
             confidence=confidence,
             needs_review=needs_review(confidence),
+            group_number=principal.group if principal else None,
+            item_number=principal.item if principal else None,
+            candidates=tuple(
+                Candidate(alt.group, alt.item, "")
+                for alt in suggestion.alternatives
+                if in_table(alt)
+            ),
+            quantity=quantity.quantity,
+            hours=quantity.hours,
+            course_hours=activity.course_hours,
+            level=quantity.level,
+            academic_period=quantity.academic_period,
+            reasons=tuple(reasons),
+            source_note=suggestion.source_note,
         )
 
 
@@ -265,6 +333,33 @@ def _same_professor(
     if same_person(extracted_name, professor_name, siape, text):
         return True
     return extracted_name is None and name_in_text(professor_name, text)
+
+
+def _items_in_table(table_version: ScoringTableVersion | None) -> Callable[[Item], bool]:
+    """Whether an item exists in the process table; every item exists without a table."""
+
+    def exists(item: Item) -> bool:
+        if table_version is None:
+            return True
+        return table_version.get_criterion(item.group, item.item) is not None
+
+    return exists
+
+
+def _outside_interstice(activity: ExtractedActivity, interstice: Interstice | None) -> bool:
+    if interstice is None:
+        return False
+    placeholder = UUID(int=0)
+    probe = Activity(
+        id=placeholder,
+        process_id=placeholder,
+        title=activity.title or "",
+        created_by=placeholder,
+        event_date=activity.event_date,
+        period_start=activity.start_date,
+        period_end=activity.end_date,
+    )
+    return evaluate_period(probe, interstice) is PeriodState.FORA
 
 
 def _excerpt(evidence_text: str, page_text: str) -> str:

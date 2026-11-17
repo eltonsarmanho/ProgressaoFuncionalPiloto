@@ -775,13 +775,13 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Declaração de banca de TCC dá III.4 como escolhido, sem candidatos, origem `SUGERIDA_IA` e status `AGUARDANDO_REVISAO`
-- [ ] Declaração de disciplinas com 3 ofertas dá 3 atividades do Grupo I com nível, período e CH docente
-- [ ] Coorientação de TCC, treinamento sem item e `OUTRA` não criam atividade e dão `SEM_ITEM_DE_PONTUACAO`
-- [ ] Item inexistente na versão da tabela do processo: atividade com `SEM_ENQUADRAMENTO`
-- [ ] Data fora do interstício: sinalizada na sugestão e a atividade é mantida
-- [ ] Curso de extensão sem a palavra "extensão" no texto cai em VII.10
-- [ ] Build gate passa; 18+ testes
+- [x] Declaração de banca de TCC dá III.4 como escolhido, sem candidatos, origem `SUGERIDA_IA` e status `AGUARDANDO_REVISAO`
+- [x] Declaração de disciplinas com 3 ofertas dá 3 atividades do Grupo I com nível, período e CH docente
+- [x] Coorientação de TCC, treinamento sem item e `OUTRA` não criam atividade e dão `SEM_ITEM_DE_PONTUACAO`
+- [x] Item inexistente na versão da tabela do processo: atividade com `SEM_ENQUADRAMENTO`
+- [x] Data fora do interstício: sinalizada na sugestão e a atividade é mantida
+- [x] Curso de extensão sem a palavra "extensão" no texto cai em VII.10
+- [x] Build gate passa; 18+ testes
 
 **Tests**: unit
 **Gate**: build
