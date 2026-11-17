@@ -5,11 +5,14 @@ export type FieldIssue = { field: string; message: string };
 export class ApiError extends Error {
   readonly status: number;
   readonly detail: unknown;
+  /** The whole response body, for the few errors that carry more than `detail` (409 duplicate). */
+  readonly body: unknown;
 
-  constructor(status: number, detail: unknown) {
+  constructor(status: number, detail: unknown, body?: unknown) {
     super(typeof detail === "string" ? detail : `Erro ${status}`);
     this.status = status;
     this.detail = detail;
+    this.body = body;
   }
 }
 
@@ -37,7 +40,7 @@ export async function request<T>(method: string, path: string, body?: unknown): 
   });
   const text = await response.text();
   const data = text ? JSON.parse(text) : undefined;
-  if (!response.ok) throw new ApiError(response.status, data?.detail);
+  if (!response.ok) throw new ApiError(response.status, data?.detail, data);
   return data as T;
 }
 

@@ -391,3 +391,30 @@ fieldset.grid legend {
 .upload-results .refused {
   color: var(--erro);
 }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.doc-warning {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+}
+
+.status-REQUER_REVISAO,
+.status-EXTRAIDO_SEM_IA {
+  color: var(--alerta);
+  font-weight: 700;
+}
+
+.status-FALHOU {
+  color: var(--erro);
+  font-weight: 700;
+}

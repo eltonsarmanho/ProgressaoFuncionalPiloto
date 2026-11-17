@@ -1344,10 +1344,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Mostra as colunas e as ações visualizar, baixar, substituir, excluir (com justificativa), reprocessar e classificar
-- [ ] Documento `EXTRAIDO_SEM_IA` mostra o aviso da IA indisponível com a orientação do cadastro manual
-- [ ] Documento com aviso `SEM_ITEM_DE_PONTUACAO` mostra o aviso e a ação "criar atividade deste documento"
-- [ ] Em 360 px vira cartões; Gate quick (frontend) passa; 8+ testes
+- [x] Mostra as colunas e as ações visualizar, baixar, substituir, excluir (com justificativa), reprocessar e classificar
+- [x] Documento `EXTRAIDO_SEM_IA` mostra o aviso da IA indisponível com a orientação do cadastro manual
+- [x] Documento com aviso `SEM_ITEM_DE_PONTUACAO` mostra o aviso e a ação "criar atividade deste documento"
+- [x] Em 360 px vira cartões; Gate quick (frontend) passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
