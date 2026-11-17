@@ -215,3 +215,48 @@ export type ScoringTableInfo = {
   unit_ids: string[];
   versions: (VersionInfo & { in_use: boolean })[];
 };
+
+/* ---- Documentos (Etapa 2) ---- */
+
+export type DocumentStatus =
+  | "PENDENTE"
+  | "PROCESSANDO"
+  | "PROCESSADO"
+  | "REQUER_REVISAO"
+  | "EXTRAIDO_SEM_IA"
+  | "FALHOU";
+
+/** One file of an upload request: 201 stored, 409 duplicate, 422 refused, 429 rate limited. */
+export type UploadResult = {
+  original_name: string;
+  status_code: number;
+  document: DocumentSummary | null;
+  existing_document_id: string | null;
+  field: string | null;
+  code: string | null;
+  message: string | null;
+};
+
+export type DocumentSummary = {
+  id: string;
+  process_id: string;
+  original_name: string;
+  mime: string;
+  size_bytes: number;
+  sha256: string;
+  page_count: number;
+  status: DocumentStatus;
+  /** Why the document is in this status (e.g. IA_INDISPONIVEL); null when there is nothing to say. */
+  status_code: string | null;
+  manual_type: string | null;
+  manual_category: string | null;
+  suggested_type: string | null;
+  /** A taxonomy code, or SEM_ITEM_DE_PONTUACAO when the document has no scoring item. */
+  suggested_category: string | null;
+  /** 2-decimal string from 0.00 to 1.00; null while nothing was extracted. */
+  confidence: string | null;
+  uploaded_by: string;
+  uploaded_at: string | null;
+  updated_at: string | null;
+  version: number;
+};

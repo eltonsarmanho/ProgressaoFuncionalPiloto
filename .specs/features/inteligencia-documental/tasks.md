@@ -1318,9 +1318,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Aceita vários arquivos por arrastar e soltar e pelo seletor
-- [ ] Resposta com 201, 409 e 422: o motivo aparece ao lado do arquivo, sem impedir os demais
-- [ ] Gate quick (frontend) passa; 6+ testes
+- [x] Aceita vários arquivos por arrastar e soltar e pelo seletor
+- [x] Resposta com 201, 409 e 422: o motivo aparece ao lado do arquivo, sem impedir os demais
+- [x] Gate quick (frontend) passa; 6+ testes
 
 **Tests**: unit
 **Gate**: quick

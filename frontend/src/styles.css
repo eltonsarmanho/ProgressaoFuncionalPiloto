@@ -366,3 +366,28 @@ fieldset.grid legend {
   font-weight: 600;
   color: var(--alerta);
 }
+
+.dropzone {
+  padding: 1rem;
+  text-align: center;
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+}
+
+.dropzone.dragging {
+  border-color: var(--primary);
+  background: var(--bg);
+}
+
+.dropzone label {
+  display: inline-block;
+}
+
+.upload-results {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.upload-results .refused {
+  color: var(--erro);
+}
