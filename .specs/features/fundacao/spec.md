@@ -46,6 +46,10 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | Senhas | Hash Argon2id; mínimo 10 caracteres | Prática atual recomendada | y |
 | Um docente, vários processos | Permitido, inclusive simultâneos (Res. 4.644, art. 6º) | Norma permite requerer mais de uma progressão ao mesmo tempo | y |
 | Docente ↔ usuário | O cadastro de docente existe independentemente de conta de usuário; um usuário DOCENTE pode ser vinculado a no máximo um docente | Secretaria cadastra docentes que não usam o sistema | y |
+| Nova versão de carreira com outra versão aberta (CARR-08) | O cadastro fecha automaticamente a versão aberta no dia anterior ao início da nova (CARR-09), desde que nenhum processo existente mude de versão (CARR-10). Vigências que se sobrepõem a uma versão já fechada continuam recusadas (409) | Decisão do usuário após o Verificador (2026-11-16): um passo só para o ADMIN, sem alterar as regras de processos existentes | y |
+| Interstício insuficiente com datas inválidas (PROC-09) | Com data final anterior ou igual à inicial, emite só `INTERSTICIO_DATAS_INVALIDAS`, e não `INTERSTICIO_INSUFICIENTE` | Decisão do usuário (2026-11-16): a duração não faz sentido com datas inválidas | y |
+| Duração em dias (PROC-02) | Dias = data final − data inicial, sem contar o dia final (23/11/2024 → 23/11/2026 = 730 dias) | Padrão do agente; convenção usual de intervalo de datas | n |
+| Referência normativa de `DADOS_INCOMPLETOS` (PROC-04) | Cita "Res. 4.644/2015-CONSEPE" genericamente, porque nenhuma norma exige esses campos | Padrão do agente; evita inventar artigo | n |
 
 **Open questions:** none - all resolved or logged above (as assumptions aguardando confirmação do usuário).
 
@@ -158,6 +162,8 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 6. IF a denominação informada não corresponde à classe informada na versão aplicável THEN the system SHALL emitir alerta `ALERTA` com código `DENOMINACAO_DIVERGENTE`, mostrando a denominação esperada.
 7. IF não existe versão de estrutura vigente na data final do interstício THEN the system SHALL emitir alerta `REQUER_ANALISE_NORMATIVA` com código `ESTRUTURA_NAO_CADASTRADA` e pular as verificações dependentes de estrutura.
 8. WHERE o usuário é ADMIN the system SHALL permitir cadastrar nova versão de estrutura de carreira com vigência e referência normativa obrigatória, sem editar versões já usadas por processos.
+9. WHEN um ADMIN cadastra uma versão cuja vigência começa depois do início de uma versão sem data final THEN the system SHALL encerrar a versão aberta no dia anterior ao início da nova e registrar evento de auditoria UPDATE com `valid_to` anterior (nulo) e novo.
+10. IF encerrar a versão aberta deixaria algum processo existente com data final em ou após o início da nova versão THEN the system SHALL responder 409 sem criar a nova versão nem alterar a versão aberta.
 
 **Independent Test**: Testes unitários de domínio com datas 31/12/2024 e 01/01/2025 e com os dois casos reais.
 
@@ -288,6 +294,8 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | CARR-06 | P1: Estruturas de carreira | Design | Implementing |
 | CARR-07 | P1: Estruturas de carreira | Design | Implementing |
 | CARR-08 | P1: Estruturas de carreira | Design | Implementing |
+| CARR-09 | P1: Estruturas de carreira | Design | Pending |
+| CARR-10 | P1: Estruturas de carreira | Design | Pending |
 | AUD-01 | P1: Trilha de auditoria | Design | Implementing |
 | AUD-02 | P1: Trilha de auditoria | Design | Implementing |
 | AUD-03 | P1: Trilha de auditoria | Design | Implementing |
@@ -304,7 +312,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 
 IDs numeram os critérios de cada história na ordem em que aparecem (ex.: PROC-11 = 11º critério de "Processo e interstício").
 
-**Coverage:** 58 total, 0 mapped to tasks, 58 unmapped ⚠️ (esperado antes de Tasks)
+**Coverage:** 60 total, 60 mapped to tasks, 0 unmapped
 
 ---
 

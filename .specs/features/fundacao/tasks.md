@@ -81,6 +81,12 @@ T23 → T24 → T25 → T26
 T27 → T28
 ```
 
+### Phase 8: Correções do Verificador (validation.md, iteração 1)
+
+```
+T29 → T30 → T31 → T32
+```
+
 ---
 
 ## Task Breakdown
@@ -800,10 +806,114 @@ T27 → T28
 
 ---
 
+---
+
+### T29: Fechamento automático da versão de carreira aberta
+
+**What**: `CreateCareerVersion` encerra a versão sem data final no dia anterior ao início da nova (com auditoria UPDATE) e responde 409 se algum processo existente mudaria de versão.
+**Where**: `backend/app/application/use_cases/career.py`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `_overlaps`, `_reject_overlap`, `AuditService`
+**Requirement**: CARR-08, CARR-09, CARR-10
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Com processo terminando em 23/11/2026, cadastrar versão de 01/01/2031 → 201; versão Lei 15.141 com `valid_to` 2030-12-31; evento UPDATE `{"valid_to": {"before": None, "after": "2030-12-31"}}`
+- [ ] Nova versão começando em 01/01/2026 (processo termina depois) → 409; nada muda
+- [ ] Sobreposição com versão já fechada → 409 (substitui o teste antigo, invalidado pela decisão do usuário)
+- [ ] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(career): close open-ended version when the next one is created`
+
+---
+
+### T30: Fixar a regra de datas inválidas em PROC-09
+
+**What**: Teste unitário que fixa: datas inválidas emitem só `INTERSTICIO_DATAS_INVALIDAS` (mata o mutante M20).
+**Where**: `backend/tests/unit/domain/test_process_verification.py`
+**Depends on**: T29
+**Reuses**: fixtures do arquivo
+**Requirement**: PROC-05, PROC-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Com data final anterior à inicial (duração negativa, abaixo do mínimo), o conjunto de alertas de interstício é exatamente `{INTERSTICIO_DATAS_INVALIDAS}`
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(domain): pin invalid-date rule for insufficient interstice`
+
+---
+
+### T31: Cobrir cada campo opcional em DADOS_INCOMPLETOS
+
+**What**: Um teste por campo opcional (observações, nome, cargo, portaria de designação e unidade administrativa do responsável), cada um esvaziando só aquele campo (mata M14 e M15).
+**Where**: `backend/tests/unit/domain/test_process_verification.py`
+**Depends on**: T30
+**Reuses**: `CLEAN_NEW`
+**Requirement**: Edge case DADOS_INCOMPLETOS
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] 5 casos parametrizados; cada um afirma severidade ALERTA e o rótulo do campo na mensagem
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(domain): cover each optional field in incomplete-data alert`
+
+---
+
+### T32: Smoke do backend sem volumes órfãos
+
+**What**: `scripts/smoke_backend.sh` remove o container do Postgres com `-v`, sem deixar volume anônimo.
+**Where**: `scripts/smoke_backend.sh`
+**Depends on**: T31
+**Reuses**: -
+**Requirement**: INFRA-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Contagem de `docker volume ls -q` igual antes e depois de rodar o script; script continua PASS
+- [ ] Build gate passa
+
+**Tests**: e2e
+**Gate**: build
+
+**Commit**: `fix(scripts): remove smoke database volume on cleanup`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8
 
 Phase 1:  T1 → T2 → T3
 Phase 2:  T4 → T5 → T6 → T7 → T8
@@ -812,4 +922,5 @@ Phase 4:  T12 → T13 → T14 → T15
 Phase 5:  T16 → T17 → T18 → T19 → T20 → T21 → T22
 Phase 6:  T23 → T24 → T25 → T26
 Phase 7:  T27 → T28
+Phase 8:  T29 → T30 → T31 → T32
 ```
