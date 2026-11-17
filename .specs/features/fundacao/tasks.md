@@ -177,9 +177,9 @@ T27 → T28
 
 **Done when**:
 
-- [ ] 23/11/2024→23/11/2026 = 24 meses; →22/11/2026 = 23; 29/02/2024→28/02/2026 = 24; dias corretos
-- [ ] `crosses(2025-01-01)` verdadeiro/falso nos limites
-- [ ] Gate quick passa; 6+ testes
+- [x] 23/11/2024→23/11/2026 = 24 meses; →22/11/2026 = 23; 29/02/2024→28/02/2026 = 24; dias corretos
+- [x] `crosses(2025-01-01)` verdadeiro/falso nos limites
+- [x] Gate quick passa; 6+ testes
 
 **Tests**: unit
 **Gate**: quick

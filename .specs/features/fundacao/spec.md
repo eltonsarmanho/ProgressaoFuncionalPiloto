@@ -267,7 +267,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | DOC-04 | P1: Cadastro de docente | Design | Pending |
 | DOC-05 | P1: Cadastro de docente | Design | Pending |
 | PROC-01 | P1: Processo e interstício | Design | Pending |
-| PROC-02 | P1: Processo e interstício | Design | Pending |
+| PROC-02 | P1: Processo e interstício | Design | Implementing |
 | PROC-03 | P1: Processo e interstício | Design | Pending |
 | PROC-04 | P1: Processo e interstício | Design | Pending |
 | PROC-05 | P1: Processo e interstício | Design | Pending |
