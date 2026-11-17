@@ -318,9 +318,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VINC-05 | P1: Atividades ligadas aos documentos | Design | Implementing |
 | VINC-06 | P1: Atividades ligadas aos documentos | Design | In Tasks |
 | REV-01 | P1: Revisão humana | Design | Implementing |
-| REV-02 | P1: Revisão humana | Design | In Tasks |
-| REV-03 | P1: Revisão humana | Design | In Tasks |
-| REV-04 | P1: Revisão humana | Design | In Tasks |
+| REV-02 | P1: Revisão humana | Design | Implementing |
+| REV-03 | P1: Revisão humana | Design | Implementing |
+| REV-04 | P1: Revisão humana | Design | Implementing |
 | TELA-01 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
 | TELA-02 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
 | TELA-03 | P1: Etapas 2 e 3 na interface | Design | In Tasks |

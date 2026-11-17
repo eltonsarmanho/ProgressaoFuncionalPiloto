@@ -971,10 +971,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Três atividades selecionadas ficam `VALIDADA` com a mesma justificativa e três eventos de auditoria
-- [ ] Sem justificativa: 422; atividade de outro processo na lista: 404 sem validar nenhuma
-- [ ] Nada é validado sem a chamada explícita
-- [ ] Gate full passa; 8+ testes
+- [x] Três atividades selecionadas ficam `VALIDADA` com a mesma justificativa e três eventos de auditoria
+- [x] Sem justificativa: 422; atividade de outro processo na lista: 404 sem validar nenhuma
+- [x] Nada é validado sem a chamada explícita
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full

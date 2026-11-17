@@ -5,7 +5,7 @@ Access follows the process (AccessPolicy): anything outside it is NotFound, neve
 
 import re
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass, fields, replace
 from datetime import date
 from decimal import Decimal
@@ -484,6 +484,40 @@ class ChangeActivityStatus(_ExistingActivityUseCase):
             )
             uow.commit()
             return uow.activities.get(activity_id)
+
+
+class BulkValidateActivities(_ActivityUseCase):
+    def execute(
+        self,
+        actor: User,
+        process_id: UUID,
+        activity_ids: Sequence[UUID],
+        justification: str | None,
+    ) -> list[Activity]:
+        """Validates the selected activities with one justification and one audit event each.
+
+        Every activity must belong to the process, otherwise nothing is validated (REV-04).
+        The ones already validated are left alone. A validation only happens here, on an
+        explicit call (REV-03).
+        """
+        with self._uow_factory() as uow:
+            self._writable(uow, actor, process_id)
+            justification = _require_justification(
+                justification, "Justificativa obrigatória para validar as atividades"
+            )
+            selected = []
+            for activity_id in dict.fromkeys(activity_ids):
+                activity = uow.activities.get(activity_id)
+                if activity is None or activity.process_id != process_id:
+                    raise NotFound(ACTIVITY_NOT_FOUND)
+                selected.append(activity)
+        change = ChangeActivityStatus(self._uow_factory, self._audit, self._policy)
+        return [
+            change.execute(actor, a.id, ActivityStatus.VALIDADA, a.version, justification)
+            if a.status is not ActivityStatus.VALIDADA
+            else a
+            for a in selected
+        ]
 
 
 class MarkActivitiesDistinct(_ExistingActivityUseCase):
