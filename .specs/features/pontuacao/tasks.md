@@ -507,11 +507,11 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Sem tabela escolhida: sugere a versão da unidade vigente na data final, sem gravar
-- [ ] Escolher grava a versão no processo com evento de auditoria (anterior, nova, justificativa)
-- [ ] Tabela de outra unidade sem justificativa: 422 no campo `justificativa`
-- [ ] Processo fora do acesso: 404
-- [ ] Gate full passa; 8+ testes
+- [x] Sem tabela escolhida: sugere a versão da unidade vigente na data final, sem gravar
+- [x] Escolher grava a versão no processo com evento de auditoria (anterior, nova, justificativa)
+- [x] Tabela de outra unidade sem justificativa: 422 no campo `justificativa`
+- [x] Processo fora do acesso: 404
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full

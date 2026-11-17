@@ -278,9 +278,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | TAB-07 | P1: Catálogo de tabelas de pontuação versionadas | Design | Implementing |
 | TAB-08 | P1: Catálogo de tabelas de pontuação versionadas | Design | In Tasks |
 | SEL-01 | P1: Tabela aplicada ao processo | Design | Implementing |
-| SEL-02 | P1: Tabela aplicada ao processo | Design | In Tasks |
+| SEL-02 | P1: Tabela aplicada ao processo | Design | Implementing |
 | SEL-03 | P1: Tabela aplicada ao processo | Design | Implementing |
-| SEL-04 | P1: Tabela aplicada ao processo | Design | In Tasks |
+| SEL-04 | P1: Tabela aplicada ao processo | Design | Implementing |
 | SEL-05 | P1: Tabela aplicada ao processo | Design | Implementing |
 | SEL-06 | P1: Tabela aplicada ao processo | Design | Implementing |
 | SEL-07 | P1: Tabela aplicada ao processo | Design | Implementing |

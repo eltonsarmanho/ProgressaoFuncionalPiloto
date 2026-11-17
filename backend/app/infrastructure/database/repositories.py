@@ -275,6 +275,7 @@ class SqlProcessRepository:
             created_at=m.created_at,
             updated_at=m.updated_at,
             version=m.version,
+            scoring_table_version_id=m.scoring_table_version_id,
             **{f: getattr(m, f) for f in _PROCESS_FIELDS},
         )
 

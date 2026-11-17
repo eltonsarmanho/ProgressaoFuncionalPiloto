@@ -62,3 +62,4 @@ class FunctionalProcess:
     created_at: datetime | None = None
     updated_at: datetime | None = None
     version: int = 1
+    scoring_table_version_id: UUID | None = None
