@@ -351,3 +351,18 @@ fieldset.grid legend {
   gap: 0.25rem 0.75rem;
   margin-top: 0.25rem;
 }
+
+.review {
+  background: #fffbe6;
+}
+
+.review-note {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.review-summary {
+  font-weight: 600;
+  color: var(--alerta);
+}

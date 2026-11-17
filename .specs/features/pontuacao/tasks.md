@@ -1124,8 +1124,8 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Os itens marcados mostram a anotação da diferença
-- [ ] Build gate passa (lint, testes, build); 3+ testes
+- [x] Os itens marcados mostram a anotação da diferença
+- [x] Build gate passa (lint, testes, build); 3+ testes
 
 **Tests**: unit
 **Gate**: build

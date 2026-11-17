@@ -129,6 +129,26 @@ describe("ADMUI-01: lista de tabelas e versões", () => {
   });
 });
 
+describe("ADMUI-03: revisão na tabela aberta", () => {
+  it("a página destaca o critério com anotação da versão aberta", async () => {
+    const marked = { ...VERSION.groups[0].criteria[0], review_note: "Valor diverge do IFCH" };
+    renderAdmin("ADMIN", {
+      "GET /api/scoring-versions/v-fasi-2": {
+        status: 200,
+        body: { ...VERSION, groups: [{ ...VERSION.groups[0], criteria: [marked] }] },
+      },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    await user.click(within(fasi).getByRole("button", { name: "Ver critérios de FASI 2026" }));
+
+    const row = await screen.findByRole("row", { name: /Orientação de TCC/ });
+    expect(row).toHaveClass("review");
+    expect(row).toHaveTextContent("Valor diverge do IFCH");
+  });
+});
+
 describe("ADMUI-02: formulários na página", () => {
   it("duplicar uma tabela recarrega a lista de tabelas", async () => {
     const { calls } = renderAdmin("ADMIN", {

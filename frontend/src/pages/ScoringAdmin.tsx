@@ -1,47 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { errorMessage, request } from "../api/client";
 import type { ScoringTableInfo, ScoringVersion } from "../api/types";
+import { ReviewHighlight } from "../components/ReviewHighlight";
 import { ScoringAdminForms } from "../components/ScoringAdminForms";
-import { TABLE_STATUS_LABELS, formatDate, formatDecimal, roman } from "../labels";
+import { TABLE_STATUS_LABELS, formatDate } from "../labels";
 
 type Selection = { table: ScoringTableInfo; versionId: string; versionName: string };
-
-function CriteriaTable({ version }: { version: ScoringVersion }) {
-  return (
-    <table className="scoring-table">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Descrição</th>
-          <th>Modo</th>
-          <th>Pontos</th>
-          <th>Limite</th>
-        </tr>
-      </thead>
-      <tbody>
-        {version.groups.flatMap((group) => [
-          <tr className="group-head" key={`g${group.number}`}>
-            <th colSpan={5}>
-              Grupo {roman(group.number)} · {group.name}
-              {group.counts_in_total ? "" : " (não conta no total)"}
-            </th>
-          </tr>,
-          ...group.criteria.map((c) => (
-            <tr key={`${c.group_number}.${c.item_number}`}>
-              <td data-label="Item">
-                {roman(c.group_number)}.{c.item_number}
-              </td>
-              <td data-label="Descrição">{c.description}</td>
-              <td data-label="Modo">{c.mode}</td>
-              <td data-label="Pontos">{formatDecimal(c.unit_points)}</td>
-              <td data-label="Limite">{formatDecimal(c.max_points)}</td>
-            </tr>
-          )),
-        ])}
-      </tbody>
-    </table>
-  );
-}
 
 /** ADMUI-01: tables, their versions (validity, status, norm reference) and the criteria of one. */
 export function ScoringAdmin() {
@@ -141,7 +105,7 @@ export function ScoringAdmin() {
           <h2>
             Critérios · {selection.table.name} · {selection.versionName}
           </h2>
-          <CriteriaTable version={version} />
+          <ReviewHighlight groups={version.groups} />
           <ScoringAdminForms
             table={selection.table}
             version={{ id: selection.versionId, name: selection.versionName }}
