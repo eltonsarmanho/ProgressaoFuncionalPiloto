@@ -663,8 +663,8 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Teste: rota protegida sem sessão redireciona para `/login`; erro 401 exibe mensagem
-- [ ] `npm run lint`, `npm test -- --run` e `npm run build` passam
+- [x] Teste: rota protegida sem sessão redireciona para `/login`; erro 401 exibe mensagem
+- [x] `npm run lint`, `npm test -- --run` e `npm run build` passam
 
 **Tests**: unit
 **Gate**: quick
