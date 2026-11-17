@@ -713,8 +713,8 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Teste: 422 exibe mensagem junto ao campo `siape`
-- [ ] Gate quick (frontend) passa
+- [x] Teste: 422 exibe mensagem junto ao campo `siape`
+- [x] Gate quick (frontend) passa
 
 **Tests**: unit
 **Gate**: quick

@@ -192,3 +192,12 @@ h2 {
 .sev-REQUER_ANALISE_NORMATIVA {
   color: var(--analise);
 }
+
+.field-error {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+[aria-invalid="true"] {
+  border-color: var(--erro);
+}

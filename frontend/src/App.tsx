@@ -3,6 +3,7 @@ import { RequireAuth } from "./auth/RequireAuth";
 import { Layout } from "./components/Layout";
 import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
+import { ProfessorForm } from "./pages/ProfessorForm";
 
 export function AppRoutes() {
   return (
@@ -16,6 +17,8 @@ export function AppRoutes() {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="professores/novo" element={<ProfessorForm />} />
+        <Route path="professores/:id" element={<ProfessorForm />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
