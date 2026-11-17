@@ -1,7 +1,7 @@
 # Pontuação Design
 
 **Spec**: `.specs/features/pontuacao/spec.md`
-**Status**: Draft (aguarda aprovação do usuário)
+**Status**: Approved
 
 ---
 
