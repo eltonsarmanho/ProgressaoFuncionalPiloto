@@ -154,9 +154,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Os 11 códigos existem com o nome exato do design
-- [ ] `Alert(code=ScoringAlertCode.X, ...)` é aceito e os testes de `fundacao` continuam passando
-- [ ] Gate quick passa; 3+ testes
+- [x] Os 11 códigos existem com o nome exato do design
+- [x] `Alert(code=ScoringAlertCode.X, ...)` é aceito e os testes de `fundacao` continuam passando
+- [x] Gate quick passa; 3+ testes
 
 **Tests**: unit
 **Gate**: quick

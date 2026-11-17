@@ -10,6 +10,7 @@ from enum import StrEnum
 
 from app.domain.entities.career import CareerVersion, Modality, select_version
 from app.domain.rules.interstice import Interstice
+from app.domain.rules.scoring_alerts import ScoringAlertCode
 
 RESTRUCTURING_DATE = date(2025, 1, 1)  # Lei 15.141/2025 em vigor
 
@@ -41,7 +42,7 @@ class AlertCode(StrEnum):
 
 @dataclass(frozen=True)
 class Alert:
-    code: AlertCode
+    code: AlertCode | ScoringAlertCode
     severity: Severity
     message: str
     norm_reference: str
