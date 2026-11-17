@@ -185,6 +185,14 @@ For A, B and C: second boot leaves the full state identical (`cmp` of the table/
 6. **Info, deployment.** The success criterion "on the VM `GET /api/scoring-tables` lists only the official table as active" holds only if no process on the VM chose an old version; otherwise that old table stays active and still associated to its unit (scenarios A and B), so the unit gets two tables. No VM access: not verified. Also: spec traceability still reads "Implemented" (ACE-02 "Pending"); it can move to Verified after the gaps are triaged.
 7. **Process note.** T17 was committed after T18 (disclosed in the commit body, gate green). The Verifier did not write `.specs/LESSONS.md`/`lessons.json` because this run was restricted to writing only this file; the two grounded lessons are (a) pin per-item values, not only sums, for seed data; (b) a domain rule needs at least one end-to-end test through seeded data.
 
+**Closed by T24 to T27** (author fixes, 2b6bc59, 985de8f, af1664e, 87dab27; Build gate after them: backend 2235 passed, frontend 88 passed, ruff, eslint and build clean):
+
+- Gap 1 and Gap 5: closed by T24 (`2b6bc59`, `backend/tests/unit/test_seed_ufpa_items.py`, 203 cases). Per-item points, unit, mode, minimum hours and the start and end of every description are pinned against a table written from the xlsx. Mutants D12 (II.1 <-> II.2) and D13 (VIII.20 +1 / VIII.21 -1) now fail (2 cases each) while `test_seed_ufpa.py` alone still passes them; extra mutants (VIII.7 duplicated text restored, III.1 unit label, IV.5 minimum removed) are killed too. The mutations were applied locally and reverted.
+- Gap 2: closed by T25 (`985de8f`, `backend/tests/integration/api/test_scoring_min_hours_api.py`, 4 tests): IV.4 at 19 h, 20 h, 21 h and without hours through the seeded table and the scoring endpoint. Dropping the IV.4 minimum from the seed fails 2 of them.
+- Gap 3: closed by T26 (`af1664e`): PIT-02, PIT-03, the assumption row and the edge cases state the conditional rule; the `SPEC_DEVIATION` marker in `scoring.py` now cites PIT-03.
+- Gap 4: closed by T27 (`87dab27`): `group1InHours` requires a `CARGA_SEMANAL` criterion in group I; new test in `ProcessScoring.test.tsx`.
+- Gap 6 stays open until the deploy (needs VM data).
+
 ---
 
 ## Requirement Traceability Update
