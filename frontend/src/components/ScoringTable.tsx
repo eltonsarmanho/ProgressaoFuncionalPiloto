@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { ScoringRow } from "../api/types";
 import { GROUP_NAMES, REASON_LABELS, ROW_STATUS_LABELS, formatDecimal, roman } from "../labels";
 
@@ -16,10 +17,11 @@ type Props = {
   rows: ScoringRow[];
   subtotals: { group_number: number; subtotal: string }[];
   groupNames?: Record<number, string>;
+  actions?: (row: ScoringRow) => ReactNode;
 };
 
 /** TELA-02 / TELA-08: rows grouped I..VIII; stacked cards on narrow screens (CSS). */
-export function ScoringTable({ rows, subtotals, groupNames = GROUP_NAMES }: Props) {
+export function ScoringTable({ rows, subtotals, groupNames = GROUP_NAMES, actions }: Props) {
   const numbers = [...new Set([...subtotals.map((s) => s.group_number), ...rows.flatMap((r) => (r.group_number ? [r.group_number] : []))])].sort(
     (a, b) => a - b,
   );
@@ -51,6 +53,7 @@ export function ScoringTable({ rows, subtotals, groupNames = GROUP_NAMES }: Prop
               ))}
             </ul>
           )}
+          {actions?.(r)}
         </td>
       </tr>
     );

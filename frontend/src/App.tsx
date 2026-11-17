@@ -3,6 +3,7 @@ import { RequireAuth } from "./auth/RequireAuth";
 import { Layout } from "./components/Layout";
 import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
+import { ProcessScoring } from "./pages/ProcessScoring";
 import { ProcessStep1 } from "./pages/ProcessStep1";
 import { ProfessorForm } from "./pages/ProfessorForm";
 
@@ -22,6 +23,7 @@ export function AppRoutes() {
         <Route path="professores/:id" element={<ProfessorForm />} />
         <Route path="processos/novo" element={<ProcessStep1 />} />
         <Route path="processos/:id" element={<ProcessStep1 />} />
+        <Route path="processos/:id/pontuacao" element={<ProcessScoring />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

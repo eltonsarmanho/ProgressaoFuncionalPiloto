@@ -344,3 +344,10 @@ fieldset.grid legend {
   color: var(--alerta);
   font-weight: 700;
 }
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin-top: 0.25rem;
+}

@@ -886,9 +886,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Carrega e exibe a pontuação e os alertas agrupados por severidade com a referência
-- [ ] Cria e edita atividade e atualiza o resultado
-- [ ] Build gate passa (lint, testes, build)
+- [x] Carrega e exibe a pontuação e os alertas agrupados por severidade com a referência
+- [x] Cria e edita atividade e atualiza o resultado
+- [x] Build gate passa (lint, testes, build)
 
 **Tests**: unit
 **Gate**: build
