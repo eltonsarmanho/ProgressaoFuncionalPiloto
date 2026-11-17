@@ -480,10 +480,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Rodar duas vezes não duplica tabelas, versões nem critérios
-- [ ] IFCH: situação `OFICIAL`, Grupo I não conta; FASI: `PENDENTE_VALIDACAO`, Grupo I conta
-- [ ] Cada tabela associada à sua unidade; mínimos gravados com a referência normativa
-- [ ] Build gate passa; 6+ testes
+- [x] Rodar duas vezes não duplica tabelas, versões nem critérios
+- [x] IFCH: situação `OFICIAL`, Grupo I não conta; FASI: `PENDENTE_VALIDACAO`, Grupo I conta
+- [x] Cada tabela associada à sua unidade; mínimos gravados com a referência normativa
+- [x] Build gate passa; 6+ testes
 
 **Tests**: integration
 **Gate**: build
