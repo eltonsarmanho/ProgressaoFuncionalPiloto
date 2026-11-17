@@ -8,26 +8,40 @@ from types import TracebackType
 from typing import Any, Self
 from uuid import UUID
 
-from sqlalchemy import Table, delete, func, insert, select, update
+from sqlalchemy import Table, delete, exists, func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.domain.entities.academic_unit import AcademicUnit
+from app.domain.entities.activity import Activity, ActivityStatus, Candidate
 from app.domain.entities.audit import AuditEvent
 from app.domain.entities.career import CareerClass, CareerVersion
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor
+from app.domain.entities.scoring import (
+    ScoringCriterion,
+    ScoringGroup,
+    ScoringTableVersion,
+)
 from app.domain.entities.user import Session as UserSession
 from app.domain.entities.user import User
 from app.domain.errors import Conflict, NotFound, StaleVersion
+from app.domain.repositories.ports import ScoringTableRecord
 from app.infrastructure.database.models import (
     AcademicUnitModel,
+    ActivityCandidateModel,
+    ActivityModel,
     AuditLogModel,
     CareerStructureModel,
     CareerVersionModel,
     FunctionalProcessModel,
     LoginAttemptModel,
     ProfessorModel,
+    ScoringCriterionModel,
+    ScoringGroupModel,
+    ScoringTableModel,
+    ScoringTableUnitModel,
+    ScoringTableVersionModel,
     SessionModel,
     UserModel,
     UserUnitModel,
@@ -53,7 +67,7 @@ def _insert(session: Session, table: Table, values: dict[str, Any], what: str) -
 
 def _versioned_update(
     session: Session,
-    model: type[ProfessorModel] | type[FunctionalProcessModel],
+    model: type[ProfessorModel] | type[FunctionalProcessModel] | type[ActivityModel],
     entity_id: UUID,
     expected_version: int,
     values: dict[str, Any],
@@ -289,6 +303,15 @@ class SqlProcessRepository:
         ).all()
         return [self._to_entity(m) for m in models]
 
+    def set_scoring_table_version(self, process_id: UUID, version_id: UUID | None) -> None:
+        rowcount = self._s.execute(
+            update(FunctionalProcessModel)
+            .where(FunctionalProcessModel.id == process_id)
+            .values(scoring_table_version_id=version_id)
+        ).rowcount
+        if rowcount == 0:
+            raise NotFound("Processo não encontrado")
+
 
 class SqlAcademicUnitRepository:
     def __init__(self, session: Session):
@@ -436,6 +459,319 @@ class SqlCareerVersionRepository:
             raise NotFound("Versão de carreira não encontrada")
 
 
+_CRITERION_FIELDS = (
+    "description",
+    "unit_label",
+    "mode",
+    "unit_points",
+    "hours_per_block",
+    "weeks_per_semester",
+    "prep_ratio",
+    "max_points",
+    "accepted_evidence",
+    "rules",
+    "review_note",
+)
+
+
+def _criterion_entity(group_number: int, m: ScoringCriterionModel) -> ScoringCriterion:
+    return ScoringCriterion(
+        group_number=group_number,
+        item_number=m.item_number,
+        **{f: getattr(m, f) for f in _CRITERION_FIELDS},
+    )
+
+
+class SqlScoringTableRepository:
+    def __init__(self, session: Session):
+        self._s = session
+
+    def _record(self, m: ScoringTableModel) -> ScoringTableRecord:
+        unit_ids = self._s.scalars(
+            select(ScoringTableUnitModel.unit_id).where(ScoringTableUnitModel.table_id == m.id)
+        ).all()
+        return ScoringTableRecord(
+            id=m.id, name=m.name, archived=m.archived, unit_ids=tuple(sorted(unit_ids))
+        )
+
+    def list_tables(self) -> Sequence[ScoringTableRecord]:
+        models = self._s.scalars(select(ScoringTableModel).order_by(ScoringTableModel.name)).all()
+        return [self._record(m) for m in models]
+
+    def get_table(self, table_id: UUID) -> ScoringTableRecord | None:
+        m = self._s.get(ScoringTableModel, table_id, populate_existing=True)
+        return self._record(m) if m else None
+
+    def add_table(self, table: ScoringTableRecord) -> None:
+        _insert(
+            self._s,
+            ScoringTableModel.__table__,
+            {"id": table.id, "name": table.name, "archived": table.archived},
+            "Tabela de pontuação",
+        )
+        self._insert_units(table.id, table.unit_ids)
+
+    def _insert_units(self, table_id: UUID, unit_ids: Sequence[UUID]) -> None:
+        for unit_id in dict.fromkeys(unit_ids):
+            self._s.execute(
+                insert(ScoringTableUnitModel).values(table_id=table_id, unit_id=unit_id)
+            )
+
+    def set_table_units(self, table_id: UUID, unit_ids: Sequence[UUID]) -> None:
+        if self._s.get(ScoringTableModel, table_id) is None:
+            raise NotFound("Tabela de pontuação não encontrada")
+        self._s.execute(
+            delete(ScoringTableUnitModel).where(ScoringTableUnitModel.table_id == table_id)
+        )
+        self._insert_units(table_id, unit_ids)
+
+    def _versions(self, models: Sequence[ScoringTableVersionModel]) -> list[ScoringTableVersion]:
+        result = []
+        for m in models:
+            groups = self._s.scalars(
+                select(ScoringGroupModel)
+                .where(ScoringGroupModel.version_id == m.id)
+                .order_by(ScoringGroupModel.number)
+            ).all()
+            entities = []
+            for g in groups:
+                criteria = self._s.scalars(
+                    select(ScoringCriterionModel)
+                    .where(ScoringCriterionModel.group_id == g.id)
+                    .order_by(ScoringCriterionModel.item_number)
+                ).all()
+                entities.append(
+                    ScoringGroup(
+                        number=g.number,
+                        name=g.name,
+                        counts_in_total=g.counts_in_total,
+                        max_points=g.max_points,
+                        criteria=tuple(_criterion_entity(g.number, c) for c in criteria),
+                    )
+                )
+            result.append(
+                ScoringTableVersion(
+                    id=m.id,
+                    table_id=m.table_id,
+                    name=m.name,
+                    valid_from=m.valid_from,
+                    valid_to=m.valid_to,
+                    norm_reference=m.norm_reference,
+                    status=m.status,
+                    minimums=m.minimums,
+                    notes=m.notes,
+                    groups=tuple(entities),
+                )
+            )
+        return result
+
+    def list_versions(self, table_id: UUID) -> Sequence[ScoringTableVersion]:
+        models = self._s.scalars(
+            select(ScoringTableVersionModel)
+            .where(ScoringTableVersionModel.table_id == table_id)
+            .order_by(ScoringTableVersionModel.valid_from)
+        ).all()
+        return self._versions(models)
+
+    def list_versions_for_unit(self, unit_id: UUID) -> Sequence[ScoringTableVersion]:
+        models = self._s.scalars(
+            select(ScoringTableVersionModel)
+            .join(
+                ScoringTableUnitModel,
+                ScoringTableUnitModel.table_id == ScoringTableVersionModel.table_id,
+            )
+            .where(ScoringTableUnitModel.unit_id == unit_id)
+            .order_by(ScoringTableVersionModel.valid_from)
+        ).all()
+        return self._versions(models)
+
+    def get_version(self, version_id: UUID) -> ScoringTableVersion | None:
+        m = self._s.get(ScoringTableVersionModel, version_id, populate_existing=True)
+        return self._versions([m])[0] if m else None
+
+    def add_version(self, version: ScoringTableVersion) -> None:
+        if version.table_id is None or self._s.get(ScoringTableModel, version.table_id) is None:
+            raise NotFound("Tabela de pontuação não encontrada")
+        version_id = version.id or uuid.uuid4()
+        self._s.execute(
+            insert(ScoringTableVersionModel).values(
+                id=version_id,
+                table_id=version.table_id,
+                name=version.name,
+                valid_from=version.valid_from,
+                valid_to=version.valid_to,
+                norm_reference=version.norm_reference,
+                status=version.status,
+                minimums=version.minimums,
+                notes=version.notes,
+            )
+        )
+        for group in version.groups:
+            group_id = uuid.uuid4()
+            self._s.execute(
+                insert(ScoringGroupModel).values(
+                    id=group_id,
+                    version_id=version_id,
+                    number=group.number,
+                    name=group.name,
+                    counts_in_total=group.counts_in_total,
+                    max_points=group.max_points,
+                )
+            )
+            for c in group.criteria:
+                self._s.execute(
+                    insert(ScoringCriterionModel).values(
+                        id=uuid.uuid4(),
+                        group_id=group_id,
+                        item_number=c.item_number,
+                        **{f: getattr(c, f) for f in _CRITERION_FIELDS},
+                    )
+                )
+
+    def update_version(self, version: ScoringTableVersion) -> None:
+        """Update the version-level fields; groups and criteria change via update_criterion."""
+        rowcount = self._s.execute(
+            update(ScoringTableVersionModel)
+            .where(ScoringTableVersionModel.id == version.id)
+            .values(
+                name=version.name,
+                valid_from=version.valid_from,
+                valid_to=version.valid_to,
+                norm_reference=version.norm_reference,
+                status=version.status,
+                minimums=version.minimums,
+                notes=version.notes,
+            )
+        ).rowcount
+        if rowcount == 0:
+            raise NotFound("Versão da tabela não encontrada")
+
+    def update_criterion(self, version_id: UUID, criterion: ScoringCriterion) -> None:
+        group_id = self._s.scalar(
+            select(ScoringGroupModel.id).where(
+                ScoringGroupModel.version_id == version_id,
+                ScoringGroupModel.number == criterion.group_number,
+            )
+        )
+        rowcount = 0
+        if group_id is not None:
+            rowcount = self._s.execute(
+                update(ScoringCriterionModel)
+                .where(
+                    ScoringCriterionModel.group_id == group_id,
+                    ScoringCriterionModel.item_number == criterion.item_number,
+                )
+                .values(**{f: getattr(criterion, f) for f in _CRITERION_FIELDS})
+            ).rowcount
+        if rowcount == 0:
+            raise NotFound("Critério não encontrado")
+
+    def version_in_use(self, version_id: UUID) -> bool:
+        return bool(
+            self._s.scalar(
+                select(
+                    exists().where(FunctionalProcessModel.scoring_table_version_id == version_id)
+                )
+            )
+        )
+
+
+_ACTIVITY_FIELDS = (
+    "process_id",
+    "group_number",
+    "item_number",
+    "title",
+    "description",
+    "event_date",
+    "period_start",
+    "period_end",
+    "period_precision",
+    "academic_period",
+    "level",
+    "quantity",
+    "hours",
+    "course_hours",
+    "informed_points",
+    "points_override",
+    "evidence_note",
+    "source",
+    "status",
+    "distinct_justification",
+    "created_by",
+)
+
+
+class SqlActivityRepository:
+    def __init__(self, session: Session):
+        self._s = session
+
+    def _to_entity(self, m: ActivityModel) -> Activity:
+        candidates = self._s.scalars(
+            select(ActivityCandidateModel)
+            .where(ActivityCandidateModel.activity_id == m.id)
+            .order_by(ActivityCandidateModel.group_number, ActivityCandidateModel.item_number)
+        ).all()
+        return Activity(
+            id=m.id,
+            created_at=m.created_at,
+            updated_at=m.updated_at,
+            version=m.version,
+            candidates=tuple(
+                Candidate(c.group_number, c.item_number, c.justification) for c in candidates
+            ),
+            **{f: getattr(m, f) for f in _ACTIVITY_FIELDS},
+        )
+
+    def _replace_candidates(self, activity: Activity) -> None:
+        self._s.execute(
+            delete(ActivityCandidateModel).where(ActivityCandidateModel.activity_id == activity.id)
+        )
+        for c in activity.candidates:
+            self._s.execute(
+                insert(ActivityCandidateModel).values(
+                    activity_id=activity.id,
+                    group_number=c.group_number,
+                    item_number=c.item_number,
+                    justification=c.justification,
+                )
+            )
+
+    def get(self, activity_id: UUID) -> Activity | None:
+        m = self._s.get(ActivityModel, activity_id, populate_existing=True)
+        return self._to_entity(m) if m else None
+
+    def add(self, activity: Activity) -> None:
+        values = {f: getattr(activity, f) for f in _ACTIVITY_FIELDS}
+        values.update(id=activity.id, version=activity.version)
+        for stamp in ("created_at", "updated_at"):
+            if getattr(activity, stamp) is not None:
+                values[stamp] = getattr(activity, stamp)
+        _insert(self._s, ActivityModel.__table__, values, "Atividade")
+        self._replace_candidates(activity)
+
+    def update(self, activity: Activity, expected_version: int) -> None:
+        values = {f: getattr(activity, f) for f in _ACTIVITY_FIELDS}
+        values["updated_at"] = func.now()
+        activity.version = _versioned_update(
+            self._s, ActivityModel, activity.id, expected_version, values, "Atividade"
+        )
+        self._replace_candidates(activity)
+
+    def list_for_process(
+        self,
+        process_id: UUID,
+        group_number: int | None = None,
+        status: ActivityStatus | None = None,
+    ) -> Sequence[Activity]:
+        stmt = select(ActivityModel).where(ActivityModel.process_id == process_id)
+        if group_number is not None:
+            stmt = stmt.where(ActivityModel.group_number == group_number)
+        if status is not None:
+            stmt = stmt.where(ActivityModel.status == status)
+        models = self._s.scalars(stmt.order_by(ActivityModel.created_at, ActivityModel.id)).all()
+        return [self._to_entity(m) for m in models]
+
+
 class SqlAuditRepository:
     def __init__(self, session: Session):
         self._s = session
@@ -481,6 +817,8 @@ class SqlUnitOfWork:
         self.processes = SqlProcessRepository(self._session)
         self.units = SqlAcademicUnitRepository(self._session)
         self.career_versions = SqlCareerVersionRepository(self._session)
+        self.scoring_tables = SqlScoringTableRepository(self._session)
+        self.activities = SqlActivityRepository(self._session)
         self.audit = SqlAuditRepository(self._session)
         return self
 

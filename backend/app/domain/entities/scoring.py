@@ -56,6 +56,7 @@ class ScoringTableVersion:
     status: TableStatus
     groups: tuple[ScoringGroup, ...] = ()
     minimums: dict[str, Any] | None = None
+    notes: str | None = None
     id: UUID | None = field(default=None, compare=False)  # persistence identity only
 
     def covers(self, moment: date) -> bool:

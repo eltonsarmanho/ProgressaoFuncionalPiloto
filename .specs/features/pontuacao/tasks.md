@@ -399,10 +399,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Ida e volta de versão com grupos e critérios, e de atividade com candidatas
-- [ ] `version_in_use` verdadeiro só depois de um processo escolher a versão
-- [ ] Gravar atividade com versão antiga dá `StaleVersion`
-- [ ] Gate full passa; 10+ testes
+- [x] Ida e volta de versão com grupos e critérios, e de atividade com candidatas
+- [x] `version_in_use` verdadeiro só depois de um processo escolher a versão
+- [x] Gravar atividade com versão antiga dá `StaleVersion`
+- [x] Gate full passa; 10+ testes
 
 **Tests**: integration
 **Gate**: full
