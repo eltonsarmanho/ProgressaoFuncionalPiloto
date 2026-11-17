@@ -313,7 +313,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CALC-11 | P1: Cálculo determinístico da pontuação | Design | Implementing |
 | CALC-12 | P1: Cálculo determinístico da pontuação | Design | Implementing |
 | CALC-13 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-14 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-14 | P1: Cálculo determinístico da pontuação | Design | Implementing |
 | VERIF-01 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
 | VERIF-02 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
 | VERIF-03 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |

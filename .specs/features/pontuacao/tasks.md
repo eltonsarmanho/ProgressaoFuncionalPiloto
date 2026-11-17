@@ -728,10 +728,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Subtotais I a VIII exatamente 92, 120, 15, 95, 0, 30, 6 e 56 e total 414
-- [ ] Percentual do Grupo I 22,22%; comparação com o mínimo `ATINGE` (classe C, 100)
-- [ ] Alerta `TABELA_PENDENTE_VALIDACAO` presente; atividades fora do interstício ou duplicadas ficam fora do total
-- [ ] Build gate passa; 4+ testes
+- [x] Subtotais I a VIII exatamente 92, 120, 15, 95, 0, 30, 6 e 56 e total 414
+- [x] Percentual do Grupo I 22,22%; comparação com o mínimo `ATINGE` (classe C, 100)
+- [x] Alerta `TABELA_PENDENTE_VALIDACAO` presente; atividades fora do interstício ou duplicadas ficam fora do total
+- [x] Build gate passa; 4+ testes
 
 **Tests**: integration
 **Gate**: build
