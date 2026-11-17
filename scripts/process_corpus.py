@@ -295,6 +295,8 @@ class DocumentEntry:
     grounding_warnings: list[dict[str, Any]] = field(default_factory=list)
     alerts: list[str] = field(default_factory=list)
     no_item_alerts: int = 0  # how many SEM_ITEM_DE_PONTUACAO alerts the document emitted
+    model: str | None = None  # AI model of the extraction run
+    ai_calls: int = 0  # calls made to the AI port for this document (the new attempt included)
     duration_ms: int | None = None
     wall_seconds: float | None = None
 
@@ -375,8 +377,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         "## Documentos",
         "",
         "| # | Arquivo | Tipo | Status | Páginas (método) | Itens | Interstício | Atividades "
-        "| Confiança | Avisos de verificação | Alertas | Tempo (s) |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Confiança | Avisos de verificação | Alertas | Tempo (s) | Modelo | Chamadas IA |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for number, doc in enumerate(docs, start=1):
         lines.append(_document_row(number, doc))
@@ -428,6 +430,8 @@ def _document_row(number: int, doc: dict[str, Any]) -> str:
         grounding,
         ", ".join(doc["alerts"]) or "-",
         seconds,
+        doc["model"] or "-",
+        str(doc["ai_calls"]),
     ]
     return "| " + " | ".join(_cell(c) for c in cells) + " |"
 
@@ -569,6 +573,22 @@ def pick_version(uow: Any, table_name: str, version_name: str | None, moment: da
     return (covering or versions)[-1]
 
 
+class CountingAi:
+    """Wraps the AI port and counts the calls, so the report can tell the calls per document.
+
+    Retries inside the adapter (HTTP 429 and 5xx) and token usage are not visible through the
+    port and are not stored by the extraction run, so the report does not carry them.
+    """
+
+    def __init__(self, inner: Any) -> None:
+        self._inner = inner
+        self.calls = 0
+
+    def extract(self, document_type: Any, text: str, professor_name: str | None = None) -> Any:
+        self.calls += 1
+        return self._inner.extract(document_type, text, professor_name)
+
+
 class NoAi:
     """The AI port of --dry-run: always unavailable, so no text leaves the machine."""
 
@@ -628,6 +648,17 @@ def _make_settings(
         max_documents_per_process=max(200, files),
     )
     return settings
+
+
+def _counting_port(ai: Any | None, settings: Any) -> CountingAi | None:
+    """The AI port wrapped in a counter; None for --dry-run, which never calls the AI."""
+    if isinstance(ai, NoAi):
+        return None
+    if ai is None:
+        from app.infrastructure.ai.maritalk import MariTalkExtractor
+
+        ai = MariTalkExtractor(settings)
+    return CountingAi(ai)
 
 
 def _create_process(container: Any, engine: Any, settings: Any, options: Options) -> _Setup:
@@ -731,7 +762,12 @@ def _upload_files(
     return order, by_id
 
 
-def _run_jobs(container: Any, by_id: Mapping[Any, DocumentEntry], progress: Any) -> None:
+def _run_jobs(
+    container: Any,
+    by_id: Mapping[Any, DocumentEntry],
+    progress: Any,
+    counter: CountingAi | None = None,
+) -> None:
     """What the background worker does: claim each pending job and process it, timing it."""
     from app.infrastructure.clock import SystemClock
 
@@ -744,8 +780,10 @@ def _run_jobs(container: Any, by_id: Mapping[Any, DocumentEntry], progress: Any)
         if job is None:
             return
         tick = time.monotonic()
+        calls_before = counter.calls if counter else 0
         container.process_document.execute(job.id, clock.now())
         entry = by_id[job.document_id]
+        entry.ai_calls = (counter.calls if counter else 0) - calls_before
         entry.wall_seconds = round(time.monotonic() - tick, 2)
         if progress is not None:
             progress(index, total, entry.file, tick)
@@ -797,10 +835,11 @@ def run_corpus(
     try:
         with tempfile.TemporaryDirectory(prefix="corpus-storage-") as storage_dir:
             settings = _make_settings(options, database_url, env, storage_dir, len(files))
-            container = build_container(settings, engine, SystemClock(), ai)
+            counter = _counting_port(ai, settings)
+            container = build_container(settings, engine, SystemClock(), counter or ai)
             setup = _create_process(container, engine, settings, options)
             order, by_id = _upload_files(container, setup, files, options.folder)
-            _run_jobs(container, by_id, progress)
+            _run_jobs(container, by_id, progress, counter)
             score = container.calculate_process_score.execute(setup.admin, setup.process.id)
             rows = {row.activity_id: row for row in score.result.rows}
             for document_id, entry in by_id.items():
@@ -851,6 +890,7 @@ def _fill_entry(
         returned = raw.get("activities") if isinstance(raw, dict) else None
         entry.ai_returned = len(returned) if isinstance(returned, list) else None
         entry.duration_ms = detail.run.duration_ms
+        entry.model = detail.run.model or None  # the no-AI run stores an empty model
         warnings = [
             {
                 "code": w.get("code"),

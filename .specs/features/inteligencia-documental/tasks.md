@@ -1942,9 +1942,9 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] Relatório de pasta sintética com IA falsa traz `model` e `ai_calls` por documento
-- [ ] Documento sem IA (dry-run) traz `ai_calls` 0 e modelo nulo
-- [ ] Gate full passa
+- [x] Relatório de pasta sintética com IA falsa traz `model` e `ai_calls` por documento
+- [x] Documento sem IA (dry-run) traz `ai_calls` 0 e modelo nulo
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

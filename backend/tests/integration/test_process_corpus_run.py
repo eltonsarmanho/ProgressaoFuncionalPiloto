@@ -250,6 +250,25 @@ def test_no_recursive_reads_only_the_given_folder(folder, tmp_path, engine, migr
     assert list(by_name(report)) == ["a-banca.pdf", "b-outro.pdf", "c-copia.pdf"]
 
 
+def test_report_carries_the_model_and_the_ai_calls_of_each_document(
+    folder, tmp_path, engine, migrated_url
+):
+    docs = by_name(run(folder, tmp_path, migrated_url, KeyedAi()))
+
+    assert (docs["a-banca.pdf"].model, docs["a-banca.pdf"].ai_calls) == ("fake-model", 1)
+    assert (docs["b-outro.pdf"].model, docs["b-outro.pdf"].ai_calls) == ("fake-model", 1)
+    assert (docs["c-copia.pdf"].model, docs["c-copia.pdf"].ai_calls) == (None, 0)  # a 409
+
+
+def test_dry_run_report_has_no_model_and_no_ai_calls(folder, tmp_path, engine, migrated_url):
+    report = corpus.run_corpus(
+        options(folder, tmp_path, dry_run=True), migrated_url, ai_extractor=None, env={}
+    )
+
+    banca = by_name(report)["a-banca.pdf"]
+    assert (banca.model, banca.ai_calls) == (None, 0)
+
+
 def test_activity_titles_appear_only_when_asked_and_are_truncated(
     folder, tmp_path, engine, migrated_url
 ):

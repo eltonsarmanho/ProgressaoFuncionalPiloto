@@ -142,6 +142,31 @@ def test_alerts_without_no_item_are_untouched():
     assert corpus.summarize_alerts(["TRUNCADO", "TRUNCADO"]) == (["TRUNCADO", "TRUNCADO"], 0)
 
 
+def test_counting_ai_counts_each_call_and_passes_every_argument_through():
+    class Inner:
+        def __init__(self):
+            self.seen = []
+
+        def extract(self, document_type, text, professor_name=None):
+            self.seen.append((document_type, text, professor_name))
+            return "answer"
+
+    inner = Inner()
+    counting = corpus.CountingAi(inner)
+
+    assert counting.calls == 0
+    assert counting.extract("T", "texto", "Fulana") == "answer"
+    assert counting.extract("T", "outro") == "answer"
+    assert counting.calls == 2
+    assert inner.seen == [("T", "texto", "Fulana"), ("T", "outro", None)]
+
+
+def test_dry_run_port_is_not_counted_and_any_other_port_is_wrapped():
+    assert corpus._counting_port(corpus.NoAi(), settings=None) is None
+    port = corpus._counting_port(object(), settings=None)
+    assert isinstance(port, corpus.CountingAi)
+
+
 def test_item_label_uses_roman_group_and_is_none_without_item():
     assert corpus.item_label(8, 24) == "VIII.24"
     assert corpus.item_label(3, 4) == "III.4"
@@ -304,6 +329,23 @@ def test_markdown_lists_per_document_fields_and_per_process_potential_and_valida
         assert expected in row
     assert "| Total validado | 0 |" in markdown
     assert "| Total potencial | 2 |" in markdown
+
+
+def test_markdown_row_lists_the_model_and_the_ai_calls_of_the_document():
+    entry = _entry(model="sabia-4-thinking", ai_calls=2)
+    markdown = corpus.render_markdown(_report(entry).to_dict())
+
+    header = next(line for line in markdown.splitlines() if line.startswith("| # |"))
+    row = next(line for line in markdown.splitlines() if line.startswith("| 1 |"))
+    assert header.endswith("| Modelo | Chamadas IA |")
+    assert row.endswith("| sabia-4-thinking | 2 |")
+
+
+def test_markdown_row_shows_a_dash_for_a_document_without_a_model():
+    markdown = corpus.render_markdown(_report(_entry()).to_dict())
+
+    row = next(line for line in markdown.splitlines() if line.startswith("| 1 |"))
+    assert row.endswith("| - | 0 |")
 
 
 def test_markdown_marks_document_without_scoring_item():
