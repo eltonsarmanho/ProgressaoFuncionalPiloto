@@ -80,3 +80,123 @@ export type Process = ProcessFields & {
   interstice: Interstice;
   alerts: Alert[];
 };
+
+/* ---- Pontuação (Etapa 4) ---- */
+
+export type RowStatus = "PONTUADA" | "POTENCIAL" | "NAO_PONTUADA";
+export type ActivityStatus = "AGUARDANDO_REVISAO" | "VALIDADA" | "REJEITADA";
+export type ScoringMode = "POR_UNIDADE" | "POR_BLOCO_DE_HORAS" | "CARGA_SEMANAL" | "VALOR_INFORMADO";
+export type TableStatus = "OFICIAL" | "PENDENTE_VALIDACAO";
+export type MinimumStatus = "ATINGE" | "NAO_ATINGE" | "NAO_DEFINIDO";
+export type Level = "GRADUACAO" | "POS_GRADUACAO";
+
+export type ScoringRow = {
+  activity_id: string;
+  title: string;
+  activity_status: ActivityStatus;
+  evidence_note: string | null;
+  group_number: number | null;
+  item_number: number | null;
+  unit_points: string | null;
+  effective_quantity: string | null;
+  formula_text: string | null;
+  points: string;
+  status: RowStatus;
+  reasons: string[];
+  alerts: Alert[];
+};
+
+export type ScoringResult = {
+  process_id: string;
+  chosen: ChosenTable | null;
+  suggested: ChosenTable | null;
+  subtotals: { group_number: number; subtotal: string }[];
+  total: string;
+  potential_total: string;
+  group1_percent: string | null;
+  counters: {
+    activities: number;
+    with_evidence: number;
+    pending: number;
+    not_scored: number;
+    with_alerts: number;
+  };
+  rows: ScoringRow[];
+  limit_adjustments: unknown[];
+  alerts: Alert[];
+  minimum: { status: MinimumStatus; minimum: string | null; total: string };
+};
+
+export type VersionInfo = {
+  id: string;
+  table_id: string;
+  name: string;
+  valid_from: string;
+  valid_to: string | null;
+  norm_reference: string;
+  status: TableStatus;
+};
+
+export type ChosenTable = { table_name: string; version: VersionInfo };
+
+export type TableChoice = {
+  chosen: ChosenTable | null;
+  suggested: ChosenTable | null;
+  alerts: Alert[];
+};
+
+export type Criterion = {
+  group_number: number;
+  item_number: number;
+  description: string;
+  unit_label: string | null;
+  mode: ScoringMode;
+  unit_points: string | null;
+  hours_per_block: string | null;
+  weeks_per_semester: number | null;
+  prep_ratio: string | null;
+  max_points: string | null;
+  accepted_evidence: string | null;
+  rules: string | null;
+  review_note: string | null;
+};
+
+export type ScoringGroup = {
+  number: number;
+  name: string;
+  counts_in_total: boolean;
+  max_points: string | null;
+  criteria: Criterion[];
+};
+
+export type ScoringVersion = VersionInfo & {
+  minimums: unknown;
+  notes: string | null;
+  groups: ScoringGroup[];
+};
+
+export type Activity = {
+  id: string;
+  process_id: string;
+  title: string;
+  group_number: number | null;
+  item_number: number | null;
+  description: string | null;
+  event_date: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  period_precision: "DAY" | "MONTH";
+  academic_period: string | null;
+  level: Level | null;
+  quantidade: string | null;
+  horas: string | null;
+  course_hours: string | null;
+  informed_points: string | null;
+  points_override: string | null;
+  evidence_note: string | null;
+  source: string;
+  status: ActivityStatus;
+  distinct_justification: string | null;
+  candidates: unknown[];
+  version: number;
+};

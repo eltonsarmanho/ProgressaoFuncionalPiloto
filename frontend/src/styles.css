@@ -268,3 +268,72 @@ fieldset.grid legend {
   color: inherit;
   text-decoration: none;
 }
+
+.scoring-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.scoring-table th,
+.scoring-table td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.scoring-table .group-head th {
+  background: var(--bg);
+}
+
+.scoring-table .reasons {
+  margin: 0.25rem 0 0;
+  padding-left: 1rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.status-PONTUADA {
+  font-weight: 700;
+}
+
+.status-POTENCIAL {
+  color: var(--alerta);
+}
+
+.status-NAO_PONTUADA {
+  color: var(--erro);
+}
+
+@media (max-width: 480px) {
+  .scoring-table thead {
+    display: none;
+  }
+
+  .scoring-table,
+  .scoring-table tbody,
+  .scoring-table tr,
+  .scoring-table td,
+  .scoring-table .group-head th {
+    display: block;
+    width: 100%;
+  }
+
+  .scoring-table tr {
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card);
+  }
+
+  .scoring-table td {
+    border-bottom: 0;
+  }
+
+  .scoring-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+}

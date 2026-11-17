@@ -26,4 +26,12 @@ describe("UI-06: utilizável em 360 px sem rolagem horizontal", () => {
     expect(css).toMatch(/\.container\s*{[^}]*width:\s*100%/);
     expect(html).toContain('name="viewport" content="width=device-width, initial-scale=1.0"');
   });
+
+  it("TELA-08: abaixo de 480 px a tabela de pontuação vira cartões empilhados", () => {
+    const media = css.match(/@media\s*\(max-width:\s*480px\)\s*{([\s\S]*?)\n}\n/);
+    expect(media).not.toBeNull();
+    expect(media![1]).toMatch(/\.scoring-table\s+td\s*[,{][^}]*display:\s*block/);
+    expect(media![1]).toMatch(/\.scoring-table\s+thead\s*{[^}]*display:\s*none/);
+    expect(media![1]).toMatch(/content:\s*attr\(data-label\)/);
+  });
 });

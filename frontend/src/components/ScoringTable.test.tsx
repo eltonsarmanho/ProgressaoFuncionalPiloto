@@ -1,0 +1,122 @@
+import { render, screen, within } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import type { ScoringRow } from "../api/types";
+import { ScoringTable } from "./ScoringTable";
+
+function row(over: Partial<ScoringRow>): ScoringRow {
+  return {
+    activity_id: "a",
+    title: "Palestra",
+    activity_status: "VALIDADA",
+    evidence_note: null,
+    group_number: 2,
+    item_number: 7,
+    unit_points: "10.00",
+    effective_quantity: "4.00",
+    formula_text: null,
+    points: "40.00",
+    status: "PONTUADA",
+    reasons: [],
+    alerts: [],
+    ...over,
+  };
+}
+
+const SUBTOTALS = [
+  { group_number: 1, subtotal: "0.00" },
+  { group_number: 2, subtotal: "40.00" },
+];
+
+describe("ScoringTable", () => {
+  it("TELA-02: exibe as 8 colunas pedidas, na ordem", () => {
+    render(<ScoringTable rows={[row({})]} subtotals={SUBTOTALS} />);
+    const headers = screen.getAllByRole("columnheader").map((h) => h.textContent);
+    expect(headers).toEqual([
+      "Grupo",
+      "Item",
+      "Atividade",
+      "Quantidade",
+      "Pontuação unitária",
+      "Total",
+      "Comprovante",
+      "Status",
+    ]);
+  });
+
+  it("TELA-02: agrupa as linhas de I a VIII com o subtotal de cada grupo", () => {
+    const rows = [
+      row({ activity_id: "b", title: "Bancas", group_number: 3, item_number: 2, points: "8.00", unit_points: "8.00", effective_quantity: "1.00" }),
+      row({ activity_id: "a", title: "Orientação TCC", group_number: 2 }),
+    ];
+    render(
+      <ScoringTable
+        rows={rows}
+        subtotals={[...SUBTOTALS, { group_number: 3, subtotal: "8.00" }]}
+        groupNames={{ 1: "Docência", 2: "Orientação", 3: "Bancas" }}
+      />,
+    );
+    const groups = screen.getAllByRole("rowgroup").filter((g) => g.tagName === "TBODY");
+    const heads = groups.map((g) => within(g).getAllByRole("row")[0].textContent);
+    expect(heads[0]).toContain("Grupo I · Docência");
+    expect(heads[1]).toContain("Grupo II · Orientação");
+    expect(heads[1]).toContain("Subtotal: 40,00");
+    expect(heads[2]).toContain("Grupo III · Bancas");
+    expect(heads[2]).toContain("Subtotal: 8,00");
+    expect(within(groups[1]).getByText("Orientação TCC")).toBeInTheDocument();
+    expect(within(groups[2]).queryByText("Orientação TCC")).not.toBeInTheDocument();
+  });
+
+  it("TELA-02: mostra grupo, item, quantidade, unitária e total em pt-BR e o comprovante", () => {
+    render(
+      <ScoringTable rows={[row({ evidence_note: "Portaria 12/2023" })]} subtotals={SUBTOTALS} groupNames={{ 2: "Orientação" }} />,
+    );
+    const r = screen.getByText("Palestra").closest("tr")!;
+    const cells = within(r).getAllByRole("cell").map((c) => c.textContent);
+    expect(cells).toEqual(["II", "7", "Palestra", "4,00", "10,00", "40,00", "Portaria 12/2023", "Pontuada"]);
+  });
+
+  it("TELA-02: sem comprovante exibe 'Sem comprovante'", () => {
+    render(<ScoringTable rows={[row({})]} subtotals={SUBTOTALS} />);
+    const r = screen.getByText("Palestra").closest("tr")!;
+    expect(within(r).getByText("Sem comprovante")).toBeInTheDocument();
+  });
+
+  it("TELA-07: o status mostra PONTUADA, POTENCIAL ou NAO_PONTUADA e as razões em português", () => {
+    render(
+      <ScoringTable
+        rows={[
+          row({ activity_id: "p", title: "Curso piloto", status: "POTENCIAL", points: "0.00" }),
+          row({ activity_id: "q", title: "Palestra" }),
+          row({ activity_id: "n", title: "Fora", status: "NAO_PONTUADA", points: "0.00", reasons: ["FORA_DO_INTERSTICIO", "DUPLICIDADE"] }),
+          row({ activity_id: "s", title: "Solta", status: "NAO_PONTUADA", group_number: null, item_number: null, unit_points: null, effective_quantity: null, points: "0.00", reasons: ["SEM_ENQUADRAMENTO"] }),
+        ]}
+        subtotals={SUBTOTALS}
+      />,
+    );
+    expect(screen.getByText("Curso piloto").closest("tr")).toHaveTextContent("Potencial");
+    expect(screen.getByText("Palestra").closest("tr")).toHaveTextContent("Pontuada");
+    const fora = screen.getByText("Fora").closest("tr")!;
+    expect(fora).toHaveTextContent("Não pontuada");
+    expect(fora).toHaveTextContent("Fora do interstício");
+    expect(fora).toHaveTextContent("Duplicidade");
+    const solta = screen.getByText("Solta").closest("tr")!;
+    expect(solta).toHaveTextContent("Sem enquadramento na tabela");
+    expect(within(solta).getAllByRole("cell")[0]).toHaveTextContent("—");
+  });
+
+  it("TELA-08: cada célula traz o rótulo da coluna para o modo de cartões", () => {
+    render(<ScoringTable rows={[row({})]} subtotals={SUBTOTALS} />);
+    const r = screen.getByText("Palestra").closest("tr")!;
+    const labels = within(r).getAllByRole("cell").map((c) => c.getAttribute("data-label"));
+    expect(labels).toEqual([
+      "Grupo",
+      "Item",
+      "Atividade",
+      "Quantidade",
+      "Pontuação unitária",
+      "Total",
+      "Comprovante",
+      "Status",
+    ]);
+  });
+});

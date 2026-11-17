@@ -781,9 +781,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Renderiza as linhas por grupo com as 8 colunas
-- [ ] Em largura estreita vira cartões, sem largura fixa maior que 360 px (teste de estilo)
-- [ ] Gate quick (frontend) passa; 4+ testes
+- [x] Renderiza as linhas por grupo com as 8 colunas
+- [x] Em largura estreita vira cartões, sem largura fixa maior que 360 px (teste de estilo)
+- [x] Gate quick (frontend) passa; 4+ testes
 
 **Tests**: unit
 **Gate**: quick
