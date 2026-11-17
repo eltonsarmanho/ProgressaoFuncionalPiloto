@@ -833,10 +833,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Campos mudam conforme o modo; Grupo I mostra período letivo, nível e horas
-- [ ] Edição sem justificativa não envia
-- [ ] 422 mostra a mensagem junto ao campo
-- [ ] Gate quick (frontend) passa; 6+ testes
+- [x] Campos mudam conforme o modo; Grupo I mostra período letivo, nível e horas
+- [x] Edição sem justificativa não envia
+- [x] 422 mostra a mensagem junto ao campo
+- [x] Gate quick (frontend) passa; 6+ testes
 
 **Tests**: unit
 **Gate**: quick

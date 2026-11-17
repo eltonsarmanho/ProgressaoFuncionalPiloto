@@ -331,8 +331,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | TELA-01 | P1: Etapa 4 na interface | Design | Implementing |
 | TELA-02 | P1: Etapa 4 na interface | Design | Implementing |
 | TELA-03 | P1: Etapa 4 na interface | Design | Implementing |
-| TELA-04 | P1: Etapa 4 na interface | Design | In Tasks |
-| TELA-05 | P1: Etapa 4 na interface | Design | In Tasks |
+| TELA-04 | P1: Etapa 4 na interface | Design | Implementing |
+| TELA-05 | P1: Etapa 4 na interface | Design | Implementing |
 | TELA-06 | P1: Etapa 4 na interface | Design | In Tasks |
 | TELA-07 | P1: Etapa 4 na interface | Design | In Tasks |
 | TELA-08 | P1: Etapa 4 na interface | Design | Implementing |
