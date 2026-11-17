@@ -1073,8 +1073,8 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] ADMIN vê a lista; outros perfis não veem a rota
-- [ ] Gate quick (frontend) passa; 3+ testes
+- [x] ADMIN vê a lista; outros perfis não veem a rota
+- [x] Gate quick (frontend) passa; 3+ testes
 
 **Tests**: unit
 **Gate**: quick
