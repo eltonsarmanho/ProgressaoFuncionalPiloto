@@ -556,9 +556,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Os geradores sintéticos produzem os fatos esperados (PDF com JS: ação ativa; criptografado; imagem acima de 100 MP; JPG e PNG válidos)
-- [ ] PDF corrompido devolve fatos de arquivo inválido sem lançar exceção
-- [ ] Gate quick passa; 10+ testes
+- [x] Os geradores sintéticos produzem os fatos esperados (PDF com JS: ação ativa; criptografado; imagem acima de 100 MP; JPG e PNG válidos)
+- [x] PDF corrompido devolve fatos de arquivo inválido sem lançar exceção
+- [x] Gate quick passa; 10+ testes
 
 **Tests**: unit
 **Gate**: quick
