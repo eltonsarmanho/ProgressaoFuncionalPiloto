@@ -291,7 +291,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | AUD-01 | P1: Trilha de auditoria | Design | Implementing |
 | AUD-02 | P1: Trilha de auditoria | Design | Implementing |
 | AUD-03 | P1: Trilha de auditoria | Design | Implementing |
-| AUD-04 | P1: Trilha de auditoria | Design | Pending |
+| AUD-04 | P1: Trilha de auditoria | Design | Implementing |
 | UI-01 | P1: Interface web | Design | Pending |
 | UI-02 | P1: Interface web | Design | Pending |
 | UI-03 | P1: Interface web | Design | Pending |

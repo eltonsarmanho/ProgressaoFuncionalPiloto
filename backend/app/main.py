@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.core.config import Settings, load_settings
+from app.core.logging import configure_logging, install_access_log
 from app.domain.repositories.ports import Clock
 from app.infrastructure.clock import SystemClock
 from app.infrastructure.database.session import make_engine
@@ -16,6 +17,7 @@ from app.presentation.errors import install_error_handlers
 
 def create_app(settings: Settings | None = None, clock: Clock | None = None) -> FastAPI:
     settings = settings or load_settings()
+    configure_logging()
     engine = make_engine(settings.database_url)
 
     @asynccontextmanager
@@ -27,6 +29,7 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     app.state.container = build_container(settings, engine, clock or SystemClock())
     install_error_handlers(app)
     install_auth_middleware(app)
+    install_access_log(app)
     app.include_router(health.router)
     app.include_router(auth.router)
     app.include_router(users.router)

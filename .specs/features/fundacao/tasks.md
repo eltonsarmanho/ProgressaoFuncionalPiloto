@@ -638,8 +638,8 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Teste captura logs de um fluxo completo (cria docente e processo) e afirma ausência de nome e SIAPE
-- [ ] Gate full passa
+- [x] Teste captura logs de um fluxo completo (cria docente e processo) e afirma ausência de nome e SIAPE
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full
