@@ -472,3 +472,76 @@ def test_the_ai_date_in_words_is_kept_by_ground():
     result = ground(extracted, {1: text})
     assert result.activity.event_date == date(2024, 8, 21)
     assert result.warnings == ()
+
+
+# ---------- REAL-05, REAL-06: date ranges and zero padded hours ----------
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "de 18 a 22 de maio de 2026",
+        "realizado de 18 a 22 de maio de 2026, em Belém",
+        "18 a 22 de Maio de 2026",
+        "18 à 22 de maio de 2026",
+        "18 até 22 de maio de 2026",
+        "18 e 22 de maio de 2026",
+        "18 - 22 de maio de 2026",
+        "dezoito a vinte e dois de maio de dois mil e vinte e seis",
+    ],
+)
+def test_first_and_last_day_of_a_range_are_found(text):
+    assert date_in_text(date(2026, 5, 18), text) is True
+    assert date_in_text(date(2026, 5, 22), text) is True
+
+
+@pytest.mark.parametrize("day", [17, 19, 21, 23])
+def test_a_day_outside_or_inside_the_range_that_is_not_an_end_is_not_found(day):
+    assert date_in_text(date(2026, 5, day), "de 18 a 22 de maio de 2026") is False
+
+
+def test_range_with_zero_padded_days():
+    text = "03 a 05 de dezembro de 2025"
+    assert date_in_text(date(2025, 12, 3), text) is True
+    assert date_in_text(date(2025, 12, 5), text) is True
+
+
+def test_range_across_two_months_finds_both_ends_with_the_shared_year():
+    text = "de 28 de abril a 2 de maio de 2026"
+    assert date_in_text(date(2026, 4, 28), text) is True
+    assert date_in_text(date(2026, 5, 2), text) is True
+
+
+def test_range_of_another_month_or_year_is_not_found():
+    text = "18 a 22 de maio de 2026"
+    assert date_in_text(date(2026, 6, 18), text) is False
+    assert date_in_text(date(2025, 5, 18), text) is False
+
+
+def test_the_start_date_of_a_range_is_kept_by_ground():
+    extracted = ExtractedActivity(
+        taxonomy=TaxonomyCode.PARTICIPACAO_EVENTO,
+        page=1,
+        evidence_text="x",
+        confidence=Decimal("0.9"),
+        start_date=date(2026, 5, 18),
+        end_date=date(2026, 5, 22),
+    )
+    result = ground(extracted, {1: "Semana de Computação, de 18 a 22 de maio de 2026."})
+    assert (result.activity.start_date, result.activity.end_date) == (
+        date(2026, 5, 18),
+        date(2026, 5, 22),
+    )
+    assert result.warnings == ()
+
+
+@pytest.mark.parametrize(
+    "text", ["carga horária de 08 horas", "08h", "CH: 008 h", "total 8 horas", "08,"]
+)
+def test_hours_with_leading_zeros_are_found(text):
+    assert hours_in_text(Decimal(8), text) is True
+
+
+@pytest.mark.parametrize("text", ["108 horas", "carga de 0,8 horas", "1.008 horas", "80 horas"])
+def test_leading_zero_tolerance_does_not_match_other_numbers(text):
+    assert hours_in_text(Decimal(8), text) is False

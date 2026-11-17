@@ -1672,10 +1672,10 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] "18 a 22 de maio de 2026" encontra 2026-05-18 e 2026-05-22 (antes: início anulado)
-- [ ] Dia fora da faixa (23) não é encontrado; faixa com meses distintos "28 de abril a 2 de maio de 2026" continua valendo pelos dois dias
-- [ ] "08 horas" encontra 8; "108 horas" e "0,8" não encontram 8
-- [ ] Gate full passa
+- [x] "18 a 22 de maio de 2026" encontra 2026-05-18 e 2026-05-22 (antes: início anulado)
+- [x] Dia fora da faixa (23) não é encontrado; faixa com meses distintos "28 de abril a 2 de maio de 2026" continua valendo pelos dois dias
+- [x] "08 horas" encontra 8; "108 horas" e "0,8" não encontram 8
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

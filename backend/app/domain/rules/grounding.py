@@ -97,22 +97,27 @@ def _date_found(value: date, norm: str, precision: DatePrecision) -> bool:
     sep = r"\s?[/.\-]\s?"
     numeric = rf"(?<!\d)0?{day}{sep}0?{month}{sep}{year}(?!\d)"
     iso = rf"(?<!\d){year}{sep}0?{month}{sep}0?{day}(?!\d)"
+    # the day may be an end of a range ("18 a 22 de maio de 2026"); the other end is any day
+    any_day, link = r"\d{1,2}o?", r"\s*(?:a|ate|e|-|/)\s*"
+    day_part = rf"(?:(?<!\d){any_day}{link})?(?<!\d)0?{day}o?(?:{link}{any_day})?"
+    # a range may cross months and share the year: "28 de abril a 2 de maio de 2026"
+    other_month = rf"(?:{link}{any_day}(?:\s+de)?\s+[a-z]{{3,9}}\.?)?"
     spelled = (
-        rf"(?<!\d)0?{day}o?(?:\s+dias?)?(?:\s+do\s+mes)?(?:\s+de)?\s+(?<![a-z]){_month_name(month)}"
-        rf"\s*(?:de\s+|do\s+ano\s+(?:de\s+)?|,\s*|/\s*)?{year}(?!\d)"
+        rf"{day_part}(?:\s+dias?)?(?:\s+do\s+mes)?(?:\s+de)?\s+(?<![a-z]){_month_name(month)}"
+        rf"{other_month}\s*(?:de\s+|do\s+ano\s+(?:de\s+)?|,\s*|/\s*)?{year}(?!\d)"
     )
     return re.search(f"{numeric}|{iso}|{spelled}", norm) is not None
 
 
 def hours_in_text(value: Decimal, text: str) -> bool:
-    """True when the number appears as a token (68, 68h, 68 horas, 68,5, 1.200)."""
+    """True when the number appears as a token (68, 68h, 68 horas, 68,5, 1.200, 08 horas)."""
     plain = format(value.normalize(), "f")
     forms = {plain, plain.replace(".", ",")}
     integer, _, fraction = plain.partition(".")
     if len(integer) > 3 and not fraction:
         forms.add(f"{int(integer):,}".replace(",", "."))
     pattern = "|".join(re.escape(f) for f in forms)
-    return re.search(rf"(?<![\d.,])(?:{pattern})(?![.,]?\d)", text) is not None
+    return re.search(rf"(?<![\d.,])0*(?:{pattern})(?![.,]?\d)", text) is not None
 
 
 def _alnum(text: str) -> str:
