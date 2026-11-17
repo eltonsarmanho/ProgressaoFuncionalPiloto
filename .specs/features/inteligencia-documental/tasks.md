@@ -1556,9 +1556,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] O marcador `maritalk_live` está registrado e a suíte padrão o exclui
-- [ ] Com credencial válida, extrai de um texto sintético com schema estrito e recebe `null` para o dado ausente
-- [ ] Build gate passa
+- [x] O marcador `maritalk_live` está registrado e a suíte padrão o exclui
+- [x] Com credencial válida, extrai de um texto sintético com schema estrito e recebe `null` para o dado ausente
+- [x] Build gate passa
 
 **Tests**: integration
 **Gate**: build

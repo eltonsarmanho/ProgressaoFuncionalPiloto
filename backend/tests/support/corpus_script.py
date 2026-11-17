@@ -5,7 +5,8 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
-SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "process_corpus.py"
+REPO_ROOT = Path(__file__).resolve().parents[3]
+SCRIPT = REPO_ROOT / "scripts" / "process_corpus.py"
 _NAME = "process_corpus_script"
 
 
