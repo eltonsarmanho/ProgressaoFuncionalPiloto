@@ -39,9 +39,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Assumption / decision | Chosen default  | Rationale | Confirmed? |
 | --------------------- | --------------- | --------- | ---------- |
 | Fórmula do Grupo I (FASI) | CARGA_SEMANAL: horas docente ÷ 17 semanas × (1 + preparação); preparação 1 na graduação e 2 na pós-graduação (Res. 4.074/2010, art. 10, I) | Informada pelo usuário em 2026-11-17; o art. 10, I foi conferido no texto oficial; as 17 semanas não constam da resolução | y |
-| Caso real e Grupo I | Os testes de aceitação usam os pontos declarados na tabela preenchida (24, 24, 24, 20 = 92) como pontos informados. A fórmula aplicada às ofertas dá 124 (CH docente da declaração) ou 118,35 (CH docente do relatório) e nenhuma das duas explica o 92 | Divergência sem explicação nas fontes; não inventar regra de corte. Aguarda esclarecimento do usuário | n |
-| CH docente do Cálculo Computacional II (2023.1) | O sistema usa a CH docente informada pelo usuário e não escolhe entre fontes. A declaração mostra 68 h e o Relatório de Atividades mostra 20 h para a mesma oferta | Dois documentos reais discordam; a escolha é humana. Com 68 h a oferta vale 8 pontos, com 20 h vale 2,35 | n |
-| Grupo I e o início do interstício | Regra provisória: o Grupo I segue a mesma verificação de datas das demais atividades. As ofertas de 2022.2, 2022.3 e 2022.4 (mai–out/2022, 48 pontos) terminam antes do início do interstício (23/11/2022) e seriam excluídas com `FORA_DO_INTERSTICIO`, embora o caso real as tenha pontuado | Não há norma encontrada que trate o Grupo I por período letivo; manter a verificação evita pontuar fora do interstício em silêncio. Aguarda decisão do usuário | n |
+| Caso real e Grupo I | Os testes de aceitação usam os pontos declarados na tabela preenchida (24, 24, 24 e 20 = 92) como pontos informados, com datas dentro do interstício. O usuário confirma que 92 é o valor correto | Decisão do usuário em 2026-11-17. Com a CH docente da declaração, as ofertas listadas no Relatório de Atividades dentro do interstício somam 76; os 16 pontos restantes não são explicados pelos documentos fornecidos | y |
+| CH docente do Cálculo Computacional II (2023.1) | 68 h, como na declaração; a CH docente de 20 h do Relatório de Atividades está errada. Em geral o sistema usa a CH docente informada pelo usuário e não escolhe entre fontes | Decisão do usuário em 2026-11-17 | y |
+| Grupo I e o início do interstício | O Grupo I segue a mesma verificação de datas das demais atividades: oferta fora do interstício não pontua, com razão `FORA_DO_INTERSTICIO` | Decisão do usuário em 2026-11-17 | y |
 | Entrada do Grupo I | A atividade do Grupo I chega por componente curricular e período letivo, com CH disciplina, CH docente, nível e datas com mês e ano, como na declaração da unidade | Estrutura mostrada pelo usuário em 2026-11-17; o item I.1 (graduação) usa HORAS como unidade | y |
 | Datas só com mês e ano | Valem como o mês inteiro (primeiro ao último dia); mês que atravessa o limite do interstício gera `INTERSTICIO_PARCIAL` | As declarações trazem "Mai/22 a Mai/22"; sem dia não há como ser mais preciso | n |
 | Quem entra no total | Atividade manual entra como `VALIDADA`; atividade de origem diferente de `MANUAL` entra como `AGUARDANDO_REVISAO` e fica fora do total (pontuação potencial à parte) | Decisão do usuário em 2026-11-17 | y |
@@ -61,7 +61,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Importação | CSV em UTF-8, tudo ou nada | Importação determinística; ler PDF de tabela fica fora | n |
 | Limites do sistema | Quantidade e horas até 10000; título até 300 caracteres; nota de comprovante até 500 | Evita entradas absurdas; valores ajustáveis no Design | n |
 
-**Open questions:** none - all resolved or logged above (a linha "Caso real e Grupo I" aguarda esclarecimento do usuário).
+**Open questions:** none - all resolved or logged above.
 
 ---
 
@@ -158,7 +158,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 11. The system SHALL retornar subtotal de cada grupo (I a VIII), total geral, pontuação potencial, quantidade de atividades, quantidade com comprovante, quantidade pendente (`AGUARDANDO_REVISAO`), quantidade não pontuada e quantidade com alertas.
 12. The system SHALL retornar, para cada atividade, o critério (grupo e item), a pontuação unitária, a quantidade efetiva, a fórmula aplicada em texto, os pontos, a situação (`PONTUADA`, `POTENCIAL`, `NAO_PONTUADA`) e as razões e alertas.
 13. The system SHALL retornar o percentual do Grupo I sobre o total geral, sem emitir alerta por esse percentual.
-14. WHEN as atividades do caso real FASI 2022–2024 são cadastradas na tabela da FASI (Grupo I: 4 atividades com pontos informados 24, 24, 24 e 20; II.7 × 4; II.8 × 4; II.12 × 4; III.2 × 1; III.3 × 1; IV.1 × 4; IV.4 com 21 horas; VI.6 × 1; VII.10 × 2; VIII.11, VIII.12, VIII.13 e VIII.66 × 1) THEN the system SHALL retornar subtotais I a VIII de 92, 120, 15, 95, 0, 30, 6 e 56 e total geral de 414.
+14. WHEN as atividades do caso real FASI 2022–2024 são cadastradas na tabela da FASI (Grupo I: 4 atividades com datas dentro do interstício e pontos informados 24, 24, 24 e 20; II.7 × 4; II.8 × 4; II.12 × 4; III.2 × 1; III.3 × 1; IV.1 × 4; IV.4 com 21 horas; VI.6 × 1; VII.10 × 2; VIII.11, VIII.12, VIII.13 e VIII.66 × 1) THEN the system SHALL retornar subtotais I a VIII de 92, 120, 15, 95, 0, 30, 6 e 56 e total geral de 414.
 
 **Independent Test**: Lançar o caso real e comparar os subtotais com a tabela preenchida de 2022–2024.
 
