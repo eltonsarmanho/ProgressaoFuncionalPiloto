@@ -601,3 +601,174 @@ def test_missing_hours_alert_is_added_to_the_other_row_alerts():
         ScoringAlertCode.CARGA_HORARIA_NAO_INFORMADA,
         ScoringAlertCode.SEM_COMPROVANTE,
     } == set(codes(result, a))
+
+
+# --- group I as PIT hours outside the total (PIT-01, PIT-02) --------------------------------------
+
+
+def pit_criterion(item, prep) -> ScoringCriterion:
+    return ScoringCriterion(
+        1, item, f"I.{item}", "horas (PIT)", ScoringMode.CARGA_SEMANAL,
+        weeks_per_semester=17, prep_ratio=D(prep),
+    )  # fmt: skip
+
+
+def pit_table() -> ScoringTableVersion:
+    return table(
+        group(1, pit_criterion(1, "1"), pit_criterion(2, "2"), counts=False),
+        group(2, per_unit(2, 7, "10")),
+    )
+
+
+def offer(hours, level=Level.GRADUACAO, period="2023.1", **kwargs):
+    item = 1 if level is Level.GRADUACAO else 2
+    return act(
+        g=1, item=item, hours=D(hours), level=level, academic_period=period, **kwargs
+    )
+
+
+def test_68_hours_in_graduation_give_8_pit_hours_and_no_points():
+    a = offer("68")
+
+    result = calculate(pit_table(), [a], INTERSTICE)
+
+    assert row_of(result, a).pit_hours == D("8.00")
+    assert row_of(result, a).points == D("0")
+    assert row_of(result, a).status is RowStatus.PONTUADA
+    assert row_of(result, a).reasons == ()
+
+
+def test_34_hours_in_graduation_give_4_pit_hours():
+    a = offer("34")
+
+    assert row_of(calculate(pit_table(), [a], INTERSTICE), a).pit_hours == D("4.00")
+
+
+def test_68_hours_in_postgraduation_give_12_pit_hours():
+    a = offer("68", level=Level.POS_GRADUACAO)
+
+    assert row_of(calculate(pit_table(), [a], INTERSTICE), a).pit_hours == D("12.00")
+
+
+def test_pit_hours_are_rounded_half_up_to_two_places():
+    a = offer("10")  # 10 / 17 * 2 = 1.1764... -> 1.18
+
+    assert row_of(calculate(pit_table(), [a], INTERSTICE), a).pit_hours == D("1.18")
+
+
+def test_pit_hours_are_summed_per_academic_period():
+    offers = [
+        offer("68", period="2023.1"),
+        offer("68", period="2023.1"),
+        offer("68", level=Level.POS_GRADUACAO, period="2023.1"),
+        offer("68", period="2023.2"),
+        offer("34", period="2023.2"),
+    ]
+
+    result = calculate(pit_table(), offers, INTERSTICE)
+
+    assert result.group1_hours_by_period == {"2023.1": D("28.00"), "2023.2": D("12.00")}
+    assert list(result.group1_hours_by_period) == ["2023.1", "2023.2"]
+
+
+def test_three_offers_of_68_hours_in_one_period_give_24_hours():
+    offers = [offer("68", period="2022.2") for _ in range(3)]
+
+    result = calculate(pit_table(), offers, INTERSTICE)
+
+    assert result.group1_hours_by_period == {"2022.2": D("24.00")}
+    assert result.group1_total_hours == D("24.00")
+
+
+def test_group1_total_hours_sums_all_periods():
+    offers = [
+        offer("68", period="2022.2"),
+        offer("68", period="2023.1"),
+        offer("34", period="2023.1"),
+    ]
+
+    assert calculate(pit_table(), offers, INTERSTICE).group1_total_hours == D("20.00")
+
+
+def test_group1_contributes_nothing_to_subtotal_total_or_potential():
+    scored = offer("68")
+    pending = offer("68", status=ActivityStatus.AGUARDANDO_REVISAO)
+    other = act(g=2, item=7, quantity="2")
+
+    result = calculate(pit_table(), [scored, pending, other], INTERSTICE)
+
+    assert result.group_subtotals[1] == D("0")
+    assert result.total == D("20")
+    assert result.potential_total == D("0")
+    assert result.group1_percent == D("0.00")
+
+
+def test_group1_only_process_has_zero_total_and_hours_reported():
+    result = calculate(pit_table(), [offer("68")], INTERSTICE)
+
+    assert result.total == D("0")
+    assert result.group1_total_hours == D("8.00")
+    assert result.group1_percent is None
+
+
+def test_informed_points_do_not_replace_the_pit_hours_calculation():
+    a = offer("68", points_override=D("99"))
+
+    row = row_of(calculate(pit_table(), [a], INTERSTICE), a)
+
+    assert row.pit_hours == D("8.00")
+    assert row.points == D("0")
+    assert ScoringAlertCode.PONTOS_AJUSTADOS_MANUALMENTE not in {x.code for x in row.alerts}
+
+
+def test_pit_row_reports_the_hours_formula():
+    a = offer("68")
+
+    row = row_of(calculate(pit_table(), [a], INTERSTICE), a)
+
+    assert row.formula_text == "68 h ÷ 17 semanas × (1 + 1) = 8.00"
+
+
+def test_pit_hours_of_awaiting_review_and_rejected_offers_stay_out_of_the_summary():
+    pending = offer("68", status=ActivityStatus.AGUARDANDO_REVISAO)
+    rejected = offer("68", status=ActivityStatus.REJEITADA)
+    valid = offer("34")
+
+    result = calculate(pit_table(), [pending, rejected, valid], INTERSTICE)
+
+    assert row_of(result, pending).pit_hours == D("8.00")
+    assert row_of(result, pending).status is RowStatus.POTENCIAL
+    assert row_of(result, rejected).pit_hours is None
+    assert result.group1_total_hours == D("4.00")
+
+
+def test_offer_outside_the_interstice_has_no_pit_hours():
+    a = offer("68", event_date=date(2020, 1, 1))
+
+    result = calculate(pit_table(), [a], INTERSTICE)
+
+    assert row_of(result, a).reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
+    assert row_of(result, a).pit_hours is None
+    assert result.group1_total_hours == D("0")
+
+
+def test_rows_of_other_groups_have_no_pit_hours_and_result_without_group1_is_empty():
+    a = act(g=2, item=7)
+
+    result = calculate(pit_table(), [a], INTERSTICE)
+
+    assert row_of(result, a).pit_hours is None
+    assert result.group1_hours_by_period == {}
+    assert result.group1_total_hours == D("0")
+
+
+def test_group1_that_counts_in_total_keeps_the_legacy_points_calculation():
+    legacy = table(group(1, pit_criterion(1, "1"), counts=True))
+    a = offer("68")
+
+    result = calculate(legacy, [a], INTERSTICE)
+
+    assert row_of(result, a).points == D("8.00")
+    assert row_of(result, a).pit_hours is None
+    assert result.group_subtotals[1] == D("8.00")
+    assert result.group1_total_hours == D("0")

@@ -156,10 +156,10 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] 68 h na graduação: 8,00 horas; 34 h: 4,00; 68 h na pós-graduação: 12,00
-- [ ] Horas somadas por período letivo (3 ofertas de 68 h: 24,00) e total de horas do Grupo I
-- [ ] Subtotal, pontos e total geral não recebem nada do Grupo I
-- [ ] Gate quick passa; 10+ testes; testes existentes do motor que codificavam o Grupo I em pontos são ajustados e registrados no commit
+- [x] 68 h na graduação: 8,00 horas; 34 h: 4,00; 68 h na pós-graduação: 12,00
+- [x] Horas somadas por período letivo (3 ofertas de 68 h: 24,00) e total de horas do Grupo I
+- [x] Subtotal, pontos e total geral não recebem nada do Grupo I
+- [x] Gate quick passa; 10+ testes; testes existentes do motor que codificavam o Grupo I em pontos são ajustados e registrados no commit
 
 **Tests**: unit
 **Gate**: quick

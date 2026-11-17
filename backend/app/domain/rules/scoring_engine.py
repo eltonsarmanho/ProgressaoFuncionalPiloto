@@ -5,17 +5,23 @@ criterion exists -> status REJEITADA -> period -> group counts in total -> dupli
 points -> limits (criterion cap, then group cap, only on activities that count).
 Per-activity points stay uncapped; caps apply to the summed subtotals and are reported in
 `limit_adjustments` with the points before and after.
+
+Group I of the official table is reported in PIT hours, not points (PIT-01, PIT-02): a
+CARGA_SEMANAL criterion of group I in a group that does not count in the total yields a row
+with `points = 0` and `pit_hours`, summed per academic period in `group1_hours_by_period`.
+Tables whose group I counts in the total keep the points calculation (processes that chose
+them are unchanged).
 """
 
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from decimal import ROUND_HALF_UP, Decimal
 from enum import StrEnum
 from uuid import UUID
 
 from app.domain.entities.activity import Activity, ActivityStatus
-from app.domain.entities.scoring import ScoringTableVersion
+from app.domain.entities.scoring import ScoringCriterion, ScoringMode, ScoringTableVersion
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.process_verification import Alert, Severity
 from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
@@ -46,6 +52,7 @@ class ScoringRow:
     reasons: tuple[NotScoredReason, ...] = ()
     alerts: tuple[Alert, ...] = ()
     evidence_count: int = 0  # documents linked to the activity (VINC-04)
+    pit_hours: Decimal | None = None  # group I rows only: PIT hours of the offer
 
 
 @dataclass(frozen=True)
@@ -77,6 +84,19 @@ class ScoringResult:
     group1_percent: Decimal | None
     counters: Counters
     limit_adjustments: tuple[LimitAdjustment, ...]
+    group1_hours_by_period: dict[str, Decimal] = field(default_factory=dict)
+    group1_total_hours: Decimal = ZERO
+
+
+def is_pit_criterion(version: ScoringTableVersion, criterion: ScoringCriterion) -> bool:
+    """Group I weekly-load criterion of a table whose group I is outside the total."""
+    group = version.get_group(criterion.group_number)
+    return (
+        criterion.group_number == 1
+        and criterion.mode is ScoringMode.CARGA_SEMANAL
+        and group is not None
+        and not group.counts_in_total
+    )
 
 
 def _row_alert(code: ScoringAlertCode, message: str, version: ScoringTableVersion) -> Alert:
@@ -142,7 +162,8 @@ def _evaluate(
         return _not_scored(activity, NotScoredReason.FORA_DO_INTERSTICIO, evidence_count)
 
     group = version.get_group(criterion.group_number)
-    if group is not None and not group.counts_in_total:
+    pit = is_pit_criterion(version, criterion)
+    if group is not None and not group.counts_in_total and not pit:
         return _not_scored(activity, NotScoredReason.GRUPO_NAO_CONTA, evidence_count)
     if activity.id in duplicates:
         return _not_scored(activity, NotScoredReason.DUPLICIDADE, evidence_count)
@@ -154,7 +175,9 @@ def _evaluate(
         elif activity.hours < criterion.min_hours:
             return _not_scored(activity, NotScoredReason.CARGA_HORARIA_INSUFICIENTE, evidence_count)
 
-    result = criterion_points(criterion, activity)
+    # PIT hours come from the weekly load only; informed points never replace them
+    scored_activity = replace(activity, points_override=None) if pit else activity
+    result = criterion_points(criterion, scored_activity)
     alerts = _period_alerts(state, version)
     if missing_hours:
         message = (
@@ -187,6 +210,20 @@ def _evaluate(
         )
 
     scored = activity.status is ActivityStatus.VALIDADA
+    if pit:
+        return ScoringRow(
+            activity_id=activity.id,
+            group_number=activity.group_number,
+            item_number=activity.item_number,
+            unit_points=criterion.unit_points,
+            effective_quantity=result.effective_quantity,
+            formula_text=result.formula_text,
+            points=ZERO,
+            status=RowStatus.PONTUADA if scored else RowStatus.POTENCIAL,
+            alerts=tuple(alerts),
+            evidence_count=evidence_count,
+            pit_hours=result.points,
+        )
     return ScoringRow(
         activity_id=activity.id,
         group_number=activity.group_number,
@@ -236,6 +273,26 @@ def _subtotals(
     return subtotals
 
 
+def _pit_hours_by_period(
+    rows: Sequence[ScoringRow], activities: Sequence[Activity]
+) -> tuple[dict[str, Decimal], Decimal]:
+    """Hours of validated group I offers, per academic period (sorted) and in total.
+
+    An offer without an academic period counts in the total only.
+    """
+    periods = {a.id: a.academic_period for a in activities}
+    by_period: dict[str, Decimal] = defaultdict(lambda: ZERO)
+    total = ZERO
+    for row in rows:
+        if row.status is not RowStatus.PONTUADA or row.pit_hours is None:
+            continue
+        total += row.pit_hours
+        period = periods[row.activity_id]
+        if period is not None:
+            by_period[period] += row.pit_hours
+    return dict(sorted(by_period.items())), total
+
+
 def calculate(
     version: ScoringTableVersion,
     activities: Sequence[Activity],
@@ -265,4 +322,15 @@ def calculate(
         not_scored=sum(1 for r in rows if r.status is RowStatus.NAO_PONTUADA),
         with_alerts=sum(1 for r in rows if r.alerts),
     )
-    return ScoringResult(rows, subtotals, total, potential, percent, counters, tuple(adjustments))
+    hours_by_period, hours_total = _pit_hours_by_period(rows, activities)
+    return ScoringResult(
+        rows,
+        subtotals,
+        total,
+        potential,
+        percent,
+        counters,
+        tuple(adjustments),
+        hours_by_period,
+        hours_total,
+    )
