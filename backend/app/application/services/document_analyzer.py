@@ -35,7 +35,12 @@ from app.domain.rules.masking import mask_identifiers
 from app.domain.rules.quantity_rules import derive_quantity
 from app.domain.rules.scoring_alerts import NotScoredReason
 from app.domain.rules.scoring_periods import PeriodState, evaluate_period, normalize_title
-from app.domain.rules.suggestion_rules import Item, confirm_extension_course, suggest_item
+from app.domain.rules.suggestion_rules import (
+    Item,
+    confirm_extension_course,
+    is_dismissal_clause,
+    suggest_item,
+)
 from app.domain.rules.text_quality import ocr_needs_review
 from app.domain.rules.upload_validation import FileKind
 
@@ -250,6 +255,9 @@ class DocumentAnalyzer:
         for warning in grounded.warnings:
             run.alerts.append(DocAlert(warning.code, warning.field, index))
         activity = grounded.activity
+        if is_dismissal_clause(activity.taxonomy, activity.evidence_text):
+            run.alerts.append(DocAlert(DocAlertCode.CLAUSULA_DE_DISPENSA, None, index))
+            return None
         taxonomy = confirm_extension_course(activity.taxonomy, document_text)
         suggestion = suggest_item(taxonomy, activity.level)
         if suggestion.principal is None:

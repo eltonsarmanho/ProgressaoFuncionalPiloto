@@ -353,3 +353,11 @@ def test_professor_name_is_only_in_the_system_prompt_and_nothing_else_is_added()
     body = fx.server.body()
     assert body["messages"][1]["content"] == TEXT
     assert API_KEY not in json.dumps(body)
+
+
+def test_prompt_tells_the_model_not_to_return_dismissals_as_activities():
+    fx = run(ok())
+    fx.extract()
+    system = fx.server.body()["messages"][0]["content"]
+    assert "dispensam, exoneram ou destituem" in system
+    assert "não são atividades" in system

@@ -1,5 +1,6 @@
 """Taxonomy to scoring item rules, numbered as in the official UFPA table (CLS-02..04, MAP)."""
 
+import re
 from dataclasses import dataclass
 
 from app.domain.entities.activity import Level
@@ -123,3 +124,35 @@ def confirm_extension_course(taxonomy: T, text: str) -> T:
     if taxonomy is T.CURSO_EXTENSAO_CONCLUIDO and "extensao" not in normalize_title(text):
         return T.CURSO_CONCLUIDO
     return taxonomy
+
+
+_DISMISSAL_TAXONOMIES = frozenset(
+    {
+        T.FUNCAO_DIRETOR_FACULDADE,
+        T.FUNCAO_VICE_DIRETOR_FACULDADE,
+        T.FUNCAO_COORDENADOR_CURSO_GRADUACAO,
+        T.COMISSAO_ADMINISTRACAO_SUPERIOR,
+        T.COMISSAO_NDE_MEMBRO,
+        T.COMISSAO_UNIDADE,
+        T.COLEGIADO_MEMBRO,
+    }
+)
+_VOIDED = re.compile(r"\bsem efeito\b")  # "fica sem efeito a designação ..."
+_DISMISSAL = re.compile(r"\bdispens\w*|\bexoner\w*|\bdestitu\w*|\bcessa\w*")
+_DESIGNATION = re.compile(
+    r"\bdesign\w*|\bnomea\w*|\bnomead\w*|\brecondu\w*|\bempossa\w*|\binvest\w*"
+)
+
+
+def is_dismissal_clause(taxonomy: T, evidence_text: str) -> bool:
+    """A portaria clause that dispenses the professor from a function is not an activity.
+
+    Only the designation scores (REAL-10). The clause is a dismissal when its quoted passage
+    says so and does not also designate; a passage with both is kept for the human review.
+    """
+    if taxonomy not in _DISMISSAL_TAXONOMIES:
+        return False
+    passage = normalize_title(evidence_text)
+    if _VOIDED.search(passage):
+        return True
+    return _DISMISSAL.search(passage) is not None and _DESIGNATION.search(passage) is None

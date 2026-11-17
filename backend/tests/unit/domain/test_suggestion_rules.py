@@ -8,6 +8,7 @@ from app.domain.rules.suggestion_rules import (
     Item,
     Suggestion,
     confirm_extension_course,
+    is_dismissal_clause,
     suggest_item,
 )
 
@@ -262,3 +263,50 @@ def test_selection_board_types_have_no_alternative():
 def test_types_without_a_table_item_cite_the_official_table_as_the_reason():
     for taxonomy in (T.BANCA_PROCESSO_SELETIVO, T.EXTENSAO_EVENTO_MINISTRANTE):
         assert "tabela oficial" in suggest_item(taxonomy).source_note
+
+
+# REAL-10: a clause that dispenses the professor from a function is not an activity.
+FUNCTION_TAXONOMIES = [
+    T.FUNCAO_DIRETOR_FACULDADE,
+    T.FUNCAO_VICE_DIRETOR_FACULDADE,
+    T.FUNCAO_COORDENADOR_CURSO_GRADUACAO,
+    T.COMISSAO_ADMINISTRACAO_SUPERIOR,
+    T.COMISSAO_NDE_MEMBRO,
+    T.COMISSAO_UNIDADE,
+    T.COLEGIADO_MEMBRO,
+]
+
+
+@pytest.mark.parametrize("taxonomy", FUNCTION_TAXONOMIES)
+@pytest.mark.parametrize(
+    "clause",
+    [
+        "DISPENSAR a Profa. Fulana de Tal da função de Diretora da Faculdade",
+        "Fica dispensado o servidor da função de Coordenador, a partir de 09/08/2026",
+        "EXONERAR Fulana de Tal do cargo de Diretora",
+        "destituir o docente da comissão",
+        "Fica sem efeito a designação de Fulana de Tal como membro do colegiado",
+    ],
+)
+def test_clause_that_dismisses_the_professor_is_not_an_activity(taxonomy, clause):
+    assert is_dismissal_clause(taxonomy, clause) is True
+
+
+@pytest.mark.parametrize("taxonomy", FUNCTION_TAXONOMIES)
+@pytest.mark.parametrize(
+    "clause",
+    [
+        "DESIGNAR a Profa. Fulana de Tal para exercer a função de Vice-Diretora",
+        "Fica designado o servidor como membro titular do NDE",
+        "NOMEAR Fulana de Tal Coordenadora do curso",
+        "Dispensar Beltrano da função de Diretor e designar Fulana de Tal como Vice-Diretora",
+        "",
+    ],
+)
+def test_designation_or_mixed_or_empty_clause_is_kept(taxonomy, clause):
+    assert is_dismissal_clause(taxonomy, clause) is False
+
+
+@pytest.mark.parametrize("taxonomy", [t for t in T if t not in FUNCTION_TAXONOMIES])
+def test_dismissal_wording_in_other_types_is_not_a_dismissal_clause(taxonomy):
+    assert is_dismissal_clause(taxonomy, "Dispensa de licitação para o curso") is False

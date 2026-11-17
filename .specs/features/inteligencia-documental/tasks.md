@@ -1779,11 +1779,11 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] Trecho "dispensar [docente] da função de Diretor" não cria atividade e emite `CLAUSULA_DE_DISPENSA` (antes: VI.6 criada)
-- [ ] Trecho "designar [docente] como Vice-Diretor" cria a atividade
-- [ ] Trecho que designa e dispensa pessoas diferentes na mesma frase não descarta a designação do docente
-- [ ] O prompt contém a instrução sobre dispensa
-- [ ] Gate full passa
+- [x] Trecho "dispensar [docente] da função de Diretor" não cria atividade e emite `CLAUSULA_DE_DISPENSA` (antes: VI.6 criada)
+- [x] Trecho "designar [docente] como Vice-Diretor" cria a atividade
+- [x] Trecho que designa e dispensa pessoas diferentes na mesma frase não descarta a designação do docente
+- [x] O prompt contém a instrução sobre dispensa
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

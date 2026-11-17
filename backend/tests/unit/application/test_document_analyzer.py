@@ -277,6 +277,39 @@ def test_different_titles_items_or_pages_stay_separate():
     assert len(result.activities) == 2
 
 
+# --- portaria clauses that dismiss the professor (REAL-10) --------------------------------
+
+PORTARIA_TEXT = (
+    "PORTARIA Nº 100. Art. 1º DESIGNAR Fulana de Tal Exemplo para exercer a função de "
+    "Vice-Diretora da Faculdade Exemplo, a partir de 09 de agosto de 2026. "
+    "Art. 2º DISPENSAR Fulana de Tal Exemplo da função de Diretora da Faculdade Exemplo."
+)
+
+
+def portaria_activity(taxonomy, evidence):
+    return activity(
+        taxonomy=taxonomy, title=None, event_date=None, evidence_text=evidence, role="cargo"
+    )
+
+
+def test_dismissal_clause_creates_no_activity_but_the_designation_does():
+    designation = portaria_activity(
+        "FUNCAO_VICE_DIRETOR_FACULDADE",
+        "DESIGNAR Fulana de Tal Exemplo para exercer a função de Vice-Diretora",
+    )
+    dismissal = portaria_activity(
+        "FUNCAO_DIRETOR_FACULDADE",
+        "DISPENSAR Fulana de Tal Exemplo da função de Diretora da Faculdade Exemplo",
+    )
+    result, _ = analyze(
+        payload(designation, dismissal, document_type="PORTARIA"), text_page(1, PORTARIA_TEXT)
+    )
+    assert [a.taxonomy.value for a in result.activities] == ["FUNCAO_VICE_DIRETOR_FACULDADE"]
+    dispensed = [a for a in result.alerts if a.code is DocAlertCode.CLAUSULA_DE_DISPENSA]
+    assert [a.activity_index for a in dispensed] == [1]
+    assert DocAlertCode.SEM_ITEM_DE_PONTUACAO not in codes(result)
+
+
 # --- invalid answers (EXT-09) -------------------------------------------------------------
 
 OUT_OF_SCHEMA = [
