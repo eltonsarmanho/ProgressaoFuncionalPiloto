@@ -689,10 +689,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Todo tipo tem schema; todos os campos factuais aceitam `null`; `additionalProperties` falso
-- [ ] `taxonomy` é um enum fechado com os códigos da taxonomia
-- [ ] Resposta de exemplo válida passa e resposta com campo extra é recusada
-- [ ] Gate quick passa; 8+ testes
+- [x] Todo tipo tem schema; todos os campos factuais aceitam `null`; `additionalProperties` falso
+- [x] `taxonomy` é um enum fechado com os códigos da taxonomia
+- [x] Resposta de exemplo válida passa e resposta com campo extra é recusada
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
