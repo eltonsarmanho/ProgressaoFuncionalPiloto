@@ -6,8 +6,16 @@ from dataclasses import dataclass
 from fastapi import Request
 from sqlalchemy import Engine
 
+from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
 from app.application.use_cases.auth import GetCurrentSession, Login, Logout
+from app.application.use_cases.professors import (
+    ArchiveProfessor,
+    CreateProfessor,
+    GetProfessor,
+    ListProfessors,
+    UpdateProfessor,
+)
 from app.application.use_cases.units import ArchiveUnit, CreateUnit, ListUnits, UpdateUnit
 from app.application.use_cases.users import CreateUser, ListUsers
 from app.core.config import Settings
@@ -34,6 +42,11 @@ class Container:
     create_unit: CreateUnit
     update_unit: UpdateUnit
     archive_unit: ArchiveUnit
+    create_professor: CreateProfessor
+    update_professor: UpdateProfessor
+    archive_professor: ArchiveProfessor
+    get_professor: GetProfessor
+    list_professors: ListProfessors
 
 
 def build_container(settings: Settings, engine: Engine, clock: Clock) -> Container:
@@ -44,6 +57,7 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
 
     hasher = Argon2PasswordHasher()
     audit = AuditService(clock)
+    policy = AccessPolicy()
     return Container(
         settings=settings,
         engine=engine,
@@ -58,6 +72,11 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
         create_unit=CreateUnit(uow_factory, audit),
         update_unit=UpdateUnit(uow_factory, audit),
         archive_unit=ArchiveUnit(uow_factory, audit),
+        create_professor=CreateProfessor(uow_factory, audit, policy),
+        update_professor=UpdateProfessor(uow_factory, audit, policy),
+        archive_professor=ArchiveProfessor(uow_factory, audit, policy),
+        get_professor=GetProfessor(uow_factory, audit, policy),
+        list_professors=ListProfessors(uow_factory, audit, policy),
     )
 
 

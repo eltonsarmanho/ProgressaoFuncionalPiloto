@@ -536,8 +536,8 @@ T27 → T28
 
 **Done when**:
 
-- [ ] SIAPE inválido 422; duplicado 409; enums restritos; edição audita
-- [ ] Gate full passa
+- [x] SIAPE inválido 422; duplicado 409; enums restritos; edição audita
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

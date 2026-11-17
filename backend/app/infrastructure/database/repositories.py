@@ -382,6 +382,16 @@ class SqlCareerVersionRepository:
         )
         return structure_id
 
+    def structure_id(self, structure_code: str) -> UUID | None:
+        return self._s.scalar(
+            select(CareerStructureModel.id).where(CareerStructureModel.code == structure_code)
+        )
+
+    def structure_code(self, structure_id: UUID) -> str | None:
+        return self._s.scalar(
+            select(CareerStructureModel.code).where(CareerStructureModel.id == structure_id)
+        )
+
     def list_versions(self, structure_code: str) -> Sequence[CareerVersion]:
         models = self._s.scalars(
             select(CareerVersionModel)

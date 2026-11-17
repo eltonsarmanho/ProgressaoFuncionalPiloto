@@ -94,3 +94,15 @@ def act_as(client, make_user):
         return user, {"X-CSRF-Token": login(client, email)}
 
     return act
+
+
+@pytest.fixture
+def reference(uow_factory):
+    """Seeded career versions and units (UNIT-03); returns units by acronym."""
+    from app.infrastructure.database.seed import seed_reference_data
+
+    seed_reference_data(
+        uow_factory(), "seed-admin@ufpa.br", "seed-password-1", Argon2PasswordHasher()
+    )
+    with uow_factory() as uow:
+        return {u.acronym: u for u in uow.units.list()}
