@@ -326,7 +326,7 @@ T19 → T20 → T21 → T22 → T23
 
 ### T11: API: horas de PIT
 
-**What**: O esquema e a rota de pontuação devolvem `pit_hours` por linha, `group1_hours_by_period` e `group1_total_hours`.
+**What**: O esquema e a rota de pontuação devolvem `pit_hours` por linha, `group1_hours_by_period` e `group1_total_hours`. Também: coluna opcional `min_hours` no CSV de critérios, `min_hours` editável na atualização de critério e exposto em `CriterionOut`.
 **Where**: `backend/app/presentation/schemas/scoring.py`
 **Depends on**: T10
 **Reuses**: `ScoreRowOut` existente
@@ -339,8 +339,8 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] `GET /api/processes/{id}/scoring` traz os três campos, com decimais em texto de 2 casas
-- [ ] Os testes de API existentes continuam passando (campos novos são aditivos); Build gate passa; 4+ testes
+- [x] `GET /api/processes/{id}/scoring` traz os três campos, com decimais em texto de 2 casas
+- [x] Os testes de API existentes continuam passando (campos novos são aditivos); Build gate passa; 4+ testes (gate parcial em T11: quick + testes novos; suíte de integração vermelha até T15–T17, onde os testes de API existentes são reconferidos)
 
 **Tests**: integration
 **Gate**: build

@@ -252,7 +252,7 @@ class DuplicateScoringTable:
 
 
 _TEXT_FIELDS = ("description", "unit_label", "accepted_evidence", "rules", "review_note")
-_DECIMAL_FIELDS = ("unit_points", "hours_per_block", "prep_ratio", "max_points")
+_DECIMAL_FIELDS = ("unit_points", "hours_per_block", "prep_ratio", "min_hours", "max_points")
 EDITABLE_CRITERION_FIELDS = (
     *_TEXT_FIELDS,
     *_DECIMAL_FIELDS,
