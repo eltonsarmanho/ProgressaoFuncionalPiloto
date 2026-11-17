@@ -716,12 +716,12 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Chama `POST {base}/chat/completions` com `Authorization: Bearer` e o modelo configurado, ou `sabia-4-br-sp` quando vazio (transporte simulado)
-- [ ] 400 ou 404 de modelo repete uma vez com `sabia-4-br-sp`; 401 e 403 não repetem e dão `IA_CREDENCIAL_RECUSADA`
-- [ ] 429, 5xx e tempo esgotado repetem 2 vezes com espera de 2 e 6 s e depois dão `IA_INDISPONIVEL` (espera injetada)
-- [ ] `content` vazio ou `finish_reason: length` repete com `max_tokens` dobrado (8000 para 16000); `reasoning_content` nunca é lido
-- [ ] A chave não aparece em mensagens de erro, `repr` nem logs capturados
-- [ ] Gate quick passa; 16+ testes
+- [x] Chama `POST {base}/chat/completions` com `Authorization: Bearer` e o modelo configurado, ou `sabia-4-br-sp` quando vazio (transporte simulado)
+- [x] 400 ou 404 de modelo repete uma vez com `sabia-4-br-sp`; 401 e 403 não repetem e dão `IA_CREDENCIAL_RECUSADA`
+- [x] 429, 5xx e tempo esgotado repetem 2 vezes com espera de 2 e 6 s e depois dão `IA_INDISPONIVEL` (espera injetada)
+- [x] `content` vazio ou `finish_reason: length` repete com `max_tokens` dobrado (8000 para 16000); `reasoning_content` nunca é lido
+- [x] A chave não aparece em mensagens de erro, `repr` nem logs capturados
+- [x] Gate quick passa; 16+ testes
 
 **Tests**: unit
 **Gate**: quick

@@ -288,12 +288,12 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PIPE-09 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
 | PIPE-10 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
 | PIPE-11 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
-| EXT-01 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-01 | P1: Extração estruturada com a MariTalk | Design | Implementing |
 | EXT-02 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-03 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
-| EXT-04 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
-| EXT-05 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
-| EXT-06 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-03 | P1: Extração estruturada com a MariTalk | Design | Implementing |
+| EXT-04 | P1: Extração estruturada com a MariTalk | Design | Implementing |
+| EXT-05 | P1: Extração estruturada com a MariTalk | Design | Implementing |
+| EXT-06 | P1: Extração estruturada com a MariTalk | Design | Implementing |
 | EXT-07 | P1: Extração estruturada com a MariTalk | Design | Implementing |
 | EXT-08 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
 | EXT-09 | P1: Extração estruturada com a MariTalk | Design | Implementing |
