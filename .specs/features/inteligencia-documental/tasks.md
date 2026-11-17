@@ -745,13 +745,13 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Com IA falsa: o texto enviado está mascarado (CPF vira `[CPF]`) e tem no máximo 6 páginas; o aviso `TRUNCADO` aparece acima disso
-- [ ] IA falsa que inventa uma data: o campo vira `null` com `NAO_ENCONTRADO_NO_TEXTO` e a atividade não carrega a data
-- [ ] Nome de outro docente: alerta `DOCENTE_DIVERGENTE` e `REQUER_REVISAO`
-- [ ] JSON fora do schema: uma nova tentativa e depois `REQUER_REVISAO` com `RESPOSTA_INVALIDA`
-- [ ] Lista vazia em documento legível: `PROCESSADO` com `NENHUMA_ATIVIDADE_ENCONTRADA`
-- [ ] Confiança abaixo de 0,70 marca revisão; o JSON bruto, o modelo e a duração são devolvidos
-- [ ] Gate quick passa; 20+ testes
+- [x] Com IA falsa: o texto enviado está mascarado (CPF vira `[CPF]`) e tem no máximo 6 páginas; o aviso `TRUNCADO` aparece acima disso
+- [x] IA falsa que inventa uma data: o campo vira `null` com `NAO_ENCONTRADO_NO_TEXTO` e a atividade não carrega a data
+- [x] Nome de outro docente: alerta `DOCENTE_DIVERGENTE` e `REQUER_REVISAO`
+- [x] JSON fora do schema: uma nova tentativa e depois `REQUER_REVISAO` com `RESPOSTA_INVALIDA`
+- [x] Lista vazia em documento legível: `PROCESSADO` com `NENHUMA_ATIVIDADE_ENCONTRADA`
+- [x] Confiança abaixo de 0,70 marca revisão; o JSON bruto, o modelo e a duração são devolvidos
+- [x] Gate quick passa; 20+ testes
 
 **Tests**: unit
 **Gate**: quick
