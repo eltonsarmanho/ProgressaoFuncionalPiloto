@@ -33,6 +33,7 @@ class CsvError:
 @dataclass(frozen=True)
 class CsvParseResult:
     criteria: tuple[ScoringCriterion, ...] = ()
+    lines: tuple[int, ...] = ()  # source line of each criterion
     errors: tuple[CsvError, ...] = ()
 
 
@@ -128,6 +129,7 @@ def parse_criteria_csv(text: str) -> CsvParseResult:
         )
 
     criteria: list[ScoringCriterion] = []
+    lines: list[int] = []
     seen: set[tuple[int, int]] = set()
     for line, cells in rows[1:]:
         if len(cells) != len(header):
@@ -146,6 +148,7 @@ def parse_criteria_csv(text: str) -> CsvParseResult:
             errors.append(CsvError(line, "item", f"critério {key[0]}.{key[1]} repetido no arquivo"))
         seen.add(key)
         criteria.append(criterion)
+        lines.append(line)
     if errors:
         return CsvParseResult(errors=tuple(errors))
-    return CsvParseResult(criteria=tuple(criteria))
+    return CsvParseResult(criteria=tuple(criteria), lines=tuple(lines))

@@ -13,6 +13,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from app.application.services.audit_service import AuditService
+from app.application.services.criteria_csv import CsvError, parse_criteria_csv
 from app.application.use_cases.users import require_admin
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.scoring import (
@@ -23,7 +24,7 @@ from app.domain.entities.scoring import (
     TableStatus,
 )
 from app.domain.entities.user import User
-from app.domain.errors import Conflict, NotFound, ValidationFailed
+from app.domain.errors import Conflict, DomainError, NotFound, ValidationFailed
 from app.domain.repositories.ports import ScoringTableRecord, UnitOfWork
 
 TABLE_ENTITY = "scoring_table"
@@ -460,6 +461,102 @@ class CreateVersionFrom:
             )
             add_version_closing_open(
                 uow, self._audit, actor, version, {"copied_from_version_id": source.id}
+            )
+            uow.commit()
+        return VersionView(version, False)
+
+
+class InvalidCsv(DomainError):
+    """ADM-09: every invalid line and field of the file (HTTP 422, nothing created)."""
+
+    def __init__(self, errors: Sequence[CsvError]):
+        super().__init__(f"{len(errors)} erro(s) no arquivo CSV")
+        self.errors = list(errors)
+
+
+class ImportCriteriaCsv:
+    """ADM-08/09: all-or-nothing import of a CSV as a new version of the table.
+
+    Group names, group limits and `counts_in_total` come from the table's latest version;
+    the criteria come only from the file. CARGA_SEMANAL rows have no columns for weeks and
+    preparation, so they take both from the same item of the latest version.
+    """
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], audit: AuditService):
+        self._uow_factory = uow_factory
+        self._audit = audit
+
+    def execute(
+        self,
+        actor: User,
+        table_id: UUID,
+        valid_from: date,
+        valid_to: date | None,
+        norm_reference: str,
+        csv_text: str,
+        status: TableStatus = TableStatus.PENDENTE_VALIDACAO,
+        version_name: str | None = None,
+    ) -> VersionView:
+        require_admin(actor)
+        reference = check_validity(valid_from, valid_to, norm_reference)
+        with self._uow_factory() as uow:
+            if uow.scoring_tables.get_table(table_id) is None:
+                raise NotFound("Tabela de pontuação não encontrada")
+            base = latest_version(uow.scoring_tables.list_versions(table_id))
+            parsed = parse_criteria_csv(csv_text)
+            errors = list(parsed.errors)
+            criteria = []
+            for criterion, line in zip(parsed.criteria, parsed.lines, strict=True):
+                if criterion.mode is ScoringMode.CARGA_SEMANAL:
+                    previous = base and base.get_criterion(
+                        criterion.group_number, criterion.item_number
+                    )
+                    if previous is None or previous.weeks_per_semester is None:
+                        errors.append(
+                            CsvError(
+                                line,
+                                "modo",
+                                "CARGA_SEMANAL exige semanas e preparação, que o CSV não traz; "
+                                "o item precisa existir na última versão com esses valores",
+                            )
+                        )
+                        continue
+                    criterion = replace(
+                        criterion,
+                        weeks_per_semester=previous.weeks_per_semester,
+                        prep_ratio=previous.prep_ratio,
+                    )
+                criteria.append(criterion)
+            if errors:
+                raise InvalidCsv(sorted(errors, key=lambda e: e.line))
+            groups = []
+            for number, template in enumerate(empty_groups(), start=1):
+                group = (base and base.get_group(number)) or template
+                groups.append(
+                    replace(
+                        group,
+                        criteria=tuple(
+                            sorted(
+                                (c for c in criteria if c.group_number == number),
+                                key=lambda c: c.item_number,
+                            )
+                        ),
+                    )
+                )
+            version = ScoringTableVersion(
+                id=uuid.uuid4(),
+                table_id=table_id,
+                name=(version_name or "").strip() or default_version_name(valid_from),
+                valid_from=valid_from,
+                valid_to=valid_to,
+                norm_reference=reference,
+                status=status,
+                groups=tuple(groups),
+                minimums=copy.deepcopy(base.minimums) if base else None,
+                notes=base.notes if base else None,
+            )
+            add_version_closing_open(
+                uow, self._audit, actor, version, {"imported_criteria": len(criteria)}
             )
             uow.commit()
         return VersionView(version, False)

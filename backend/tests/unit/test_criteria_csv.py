@@ -144,3 +144,9 @@ def test_empty_file_is_an_error(text):
 
 def test_header_only_file_has_no_criteria_and_is_an_error():
     assert errors_of(csv()) == [(1, "arquivo")]
+
+
+def test_result_keeps_the_source_line_of_each_criterion():
+    result = parse_criteria_csv(csv("2,7,Ok,x,POR_UNIDADE,10,,", "", "2,8,Ok,x,POR_UNIDADE,1,,"))
+
+    assert result.lines == (2, 4)

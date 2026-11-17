@@ -1020,9 +1020,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] CSV válido cria a nova versão com todas as linhas
-- [ ] Qualquer linha inválida: 422 listando todas e nenhuma versão criada
-- [ ] Gate full passa; 6+ testes
+- [x] CSV válido cria a nova versão com todas as linhas
+- [x] Qualquer linha inválida: 422 listando todas e nenhuma versão criada
+- [x] Gate full passa; 6+ testes
 
 **Tests**: integration
 **Gate**: full
