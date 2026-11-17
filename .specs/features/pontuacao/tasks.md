@@ -346,10 +346,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Sem versão para a unidade e a data: `TABELA_NAO_ENCONTRADA` REQUER_ANALISE_NORMATIVA
-- [ ] Tabela de outra unidade: `TABELA_DE_OUTRA_UNIDADE` ALERTA; versão pendente: `TABELA_PENDENTE_VALIDACAO` REQUER_ANALISE_NORMATIVA
-- [ ] Versão que não cobre a data final do interstício: `TABELA_FORA_DE_VIGENCIA` ALERTA
-- [ ] Gate quick passa; 8+ testes
+- [x] Sem versão para a unidade e a data: `TABELA_NAO_ENCONTRADA` REQUER_ANALISE_NORMATIVA
+- [x] Tabela de outra unidade: `TABELA_DE_OUTRA_UNIDADE` ALERTA; versão pendente: `TABELA_PENDENTE_VALIDACAO` REQUER_ANALISE_NORMATIVA
+- [x] Versão que não cobre a data final do interstício: `TABELA_FORA_DE_VIGENCIA` ALERTA
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
