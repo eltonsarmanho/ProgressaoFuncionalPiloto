@@ -142,3 +142,37 @@ def test_stale_process_version_is_a_conflict(world):
         world.choose.execute(
             world.admin, world.process.id, world.fasi_version.id, world.process.version + 1, None
         )
+
+
+# SEL-02: the suggested version is the one valid on the interstice END date, not on its start
+def test_suggestion_uses_the_interstice_end_date_not_the_start(world, admin_uc):
+    new = admin_uc.create_version.execute(
+        world.admin,
+        world.fasi_version.table_id,
+        world.fasi_version.id,
+        date(2023, 6, 1),  # between the process start (2022-11-23) and its end (2024-11-23)
+        None,
+        "Nova norma da FASI, 2023",
+    )
+
+    result = world.suggest.execute(world.admin, world.process.id)
+
+    assert result.suggested.version.id == new.version.id
+    assert result.suggested.version.id != world.fasi_version.id
+
+
+# SEL-02 + assumption "Desempate da sugestão": the newest start of validity wins
+def test_suggestion_picks_the_newest_validity_when_several_tables_fit_the_unit(world, admin_uc):
+    newer = admin_uc.create_table.execute(
+        world.admin,
+        name="Outra tabela da FASI",
+        unit_ids=[world.professor.unit_id],
+        valid_from=date(2024, 1, 1),
+        valid_to=None,
+        norm_reference="Norma de teste",
+    )
+
+    result = world.suggest.execute(world.admin, world.process.id)
+
+    assert result.suggested.table_name == "Outra tabela da FASI"
+    assert result.suggested.version.table_id == newer.table.id

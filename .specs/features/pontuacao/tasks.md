@@ -82,6 +82,12 @@ T31 → T32 → T33 → T34 → T35 → T36
 T37 → T38 → T39
 ```
 
+### Phase 8: Correções do Verificador (validation.md, iteração 1)
+
+```
+T40 → T41
+```
+
 ---
 
 ## Task Breakdown
@@ -1134,10 +1140,63 @@ T37 → T38 → T39
 
 ---
 
+---
+
+### T40: Fronteira e desempate da sugestão de tabela
+
+**What**: Testes de integração: a sugestão usa a data final do interstício, e não a inicial (mata M31); entre várias tabelas válidas para a unidade, vale a de início de vigência mais recente (mata M32).
+**Where**: `backend/tests/integration/scoring/test_table_choice.py`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: fixture `world`, `admin_uc`
+**Requirement**: SEL-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Com uma nova versão a partir de 01/06/2023, a sugestão para o processo que termina em 23/11/2024 é a nova versão
+- [x] Com duas tabelas válidas para a unidade, a sugerida é a de vigência mais recente
+- [x] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(scoring): cover suggestion end date and newest-validity tie-break`
+
+---
+
+### T41: Duplicar tabela com duas versões
+
+**What**: Teste de integração: duplicar uma tabela com duas versões copia a última (mata M56).
+**Where**: `backend/tests/integration/scoring/test_admin_create.py`
+**Depends on**: T40
+**Reuses**: fixture `admin_uc`
+**Requirement**: ADM-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] A cópia tem `valid_from` 01/06/2023 e a referência normativa da versão mais nova
+- [x] Build gate passa
+
+**Tests**: integration
+**Gate**: build
+
+**Commit**: `test(scoring): cover duplicating a table with two versions`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8
 
 Phase 1:  T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 Phase 2:  T9 → T10 → T11 → T12 → T13 → T14 → T15
@@ -1146,5 +1205,6 @@ Phase 4:  T21 → T22 → T23 → T24
 Phase 5:  T25 → T26 → T27 → T28 → T29 → T30
 Phase 6:  T31 → T32 → T33 → T34 → T35 → T36
 Phase 7:  T37 → T38 → T39
+Phase 8:  T40 → T41
 ```
 
