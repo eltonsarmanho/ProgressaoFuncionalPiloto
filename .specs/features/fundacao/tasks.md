@@ -99,6 +99,12 @@ T33 → T34
 T35 → T36
 ```
 
+### Phase 11: Correção do Verificador (validation.md, iteração 4, quinta rodada aprovada pelo usuário)
+
+```
+T37
+```
+
 ---
 
 ## Task Breakdown
@@ -1028,10 +1034,38 @@ T35 → T36
 
 ---
 
+---
+
+### T37: Regra "em uso" das versões da carreira
+
+**What**: Teste de integração que fixa o `in_use` por versão: com o processo do Requerimento 2024-2026, a Lei 15.141 tem `in_use` verdadeiro e a Res. 4.644 falso, e a versão sem uso continua editável (mata X6).
+**Where**: `backend/tests/integration/api/test_career_api.py`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `process_payload`, `versions_by_name`
+**Requirement**: CARR-08
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `in_use` da Res. 4.644 é falso e o da Lei 15.141 é verdadeiro após criar o processo
+- [x] Editar a Res. 4.644 (versão sem uso) com o mesmo conteúdo → 200
+- [x] Build gate passa
+
+**Tests**: integration
+**Gate**: build
+
+**Commit**: `test(career): pin per-version in-use rule`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11
 
 Phase 1:  T1 → T2 → T3
 Phase 2:  T4 → T5 → T6 → T7 → T8
@@ -1043,4 +1077,5 @@ Phase 7:  T27 → T28
 Phase 8:  T29 → T30 → T31 → T32
 Phase 9:  T33 → T34
 Phase 10: T35 → T36
+Phase 11: T37
 ```

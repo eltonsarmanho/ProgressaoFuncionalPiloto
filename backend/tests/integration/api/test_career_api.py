@@ -290,3 +290,21 @@ def test_process_ending_day_before_new_version_allows_close(
     versions = versions_by_name(client)
     assert versions[LEI]["valid_to"] == "2030-12-31"
     assert versions["Versão futura"]["valid_from"] == "2031-01-01"
+
+
+RES_4644 = "Res. 4.644/2015-CONSEPE"
+
+
+# CARR-08: "in use" is decided per version, by the interstice end date each one covers
+def test_in_use_is_decided_per_version(client, admin, reference, uow_factory):
+    _, headers = admin
+    _create_requerimento_process(client, headers, reference, uow_factory)  # ends 23/11/2026
+
+    versions = versions_by_name(client)
+    assert versions[RES_4644]["in_use"] is False
+    assert versions[LEI]["in_use"] is True
+
+    res = versions[RES_4644]
+    unchanged = {k: res[k] for k in NEW_VERSION}
+    response = client.put(f"{URL}/{res['id']}", json=unchanged, headers=headers)
+    assert response.status_code == 200
