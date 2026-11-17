@@ -420,10 +420,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Modelo efetivo é `maritalk_model` quando preenchido e `sabia-4-br-sp` quando vazio
-- [ ] Limites têm os padrões da spec (20 MB, 120 MB, 100 páginas, 100 MP, 200 documentos, 60 envios/min)
-- [ ] Nenhum valor secreto aparece em `repr(settings)`
-- [ ] Gate quick passa; 6+ testes
+- [x] Modelo efetivo é `maritalk_model` quando preenchido e `sabia-4-br-sp` quando vazio
+- [x] Limites têm os padrões da spec (20 MB, 120 MB, 100 páginas, 100 MP, 200 documentos, 60 envios/min)
+- [x] Nenhum valor secreto aparece em `repr(settings)`
+- [x] Gate quick passa; 6+ testes
 
 **Tests**: unit
 **Gate**: quick
