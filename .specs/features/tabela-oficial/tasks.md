@@ -258,11 +258,11 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Contagem por grupo 2, 16, 9, 6, 5, 14, 11 e 37
-- [ ] Somas dos Grupos II a VIII: 158, 44, 40, 75, 332, 258 e 407 (total 1314)
-- [ ] II.10 = 10, VI.14 = 6, VIII.4 = 15, VIII.8 = 15, VIII.12 = 2; II.7 = 5, III.2 = 5, III.4 = 2, IV.1 = 15, VIII.9 = 25, VIII.24 = 10, VIII.33 = 15
-- [ ] IV.3, IV.4 e IV.5 com `min_hours` 20; VII.11 por bloco de 30 h; VIII.37 com 0 pontos; Grupo I com `CARGA_SEMANAL` (17 semanas, preparação 1 e 2) e `counts_in_total` falso
-- [ ] `minimums` por classe 60, 80, 100 e 120 com a referência da Res. 4.644, art. 12; Gate quick passa; 10+ testes
+- [x] Contagem por grupo 2, 16, 9, 6, 5, 14, 11 e 37
+- [x] Somas dos Grupos II a VIII: 158, 44, 40, 75, 332, 258 e 407 (total 1314)
+- [x] II.10 = 10, VI.14 = 6, VIII.4 = 15, VIII.8 = 15, VIII.12 = 2; II.7 = 5, III.2 = 5, III.4 = 2, IV.1 = 15, VIII.9 = 25, VIII.24 = 10, VIII.33 = 15
+- [x] IV.3, IV.4 e IV.5 com `min_hours` 20; VII.11 por bloco de 30 h; VIII.37 com 0 pontos; Grupo I com `CARGA_SEMANAL` (17 semanas, preparação 1 e 2) e `counts_in_total` falso
+- [x] `minimums` por classe 60, 80, 100 e 120 com a referência da Res. 4.644, art. 12; Gate quick passa; 10+ testes
 
 **Tests**: unit
 **Gate**: quick
