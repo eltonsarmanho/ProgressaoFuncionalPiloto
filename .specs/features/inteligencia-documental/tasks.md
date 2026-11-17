@@ -1025,9 +1025,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Resultado do processo mostra `evidence_count` por linha e `counters.with_evidence` coerente com os vínculos
-- [ ] O teste do caso real FASI continua com 414
-- [ ] Build gate passa; 6+ testes
+- [x] Resultado do processo mostra `evidence_count` por linha e `counters.with_evidence` coerente com os vínculos
+- [x] O teste do caso real FASI continua com 414
+- [x] Build gate passa; 6+ testes
 
 **Tests**: integration
 **Gate**: build

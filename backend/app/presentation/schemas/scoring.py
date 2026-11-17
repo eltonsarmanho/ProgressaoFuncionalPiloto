@@ -181,6 +181,7 @@ class ScoreRowOut(BaseModel):
     status: RowStatus
     reasons: list[NotScoredReason]
     alerts: list[AlertOut]
+    evidence_count: int
 
 
 class LimitAdjustmentOut(BaseModel):
@@ -244,6 +245,7 @@ class ProcessScoreOut(BaseModel):
                     status=r.status,
                     reasons=list(r.reasons),
                     alerts=[AlertOut.of(a) for a in r.alerts],
+                    evidence_count=r.evidence_count,
                 )
                 for r in result.rows
             ],

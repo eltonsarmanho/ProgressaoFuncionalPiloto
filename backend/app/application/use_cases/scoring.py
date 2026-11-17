@@ -42,6 +42,7 @@ from app.domain.rules.scoring_engine import (
     ScoringResult,
     ScoringRow,
     calculate,
+    has_evidence,
 )
 from app.domain.rules.scoring_table_choice import verify_table_choice
 from app.domain.rules.scoring_verification import (
@@ -589,7 +590,7 @@ class ProcessScore:
     minimum: MinimumComparison
 
 
-def _without_table(activities: list[Activity]) -> ScoringResult:
+def _without_table(activities: list[Activity], evidence_counts: dict[UUID, int]) -> ScoringResult:
     """No table chosen: total 0 and every activity not scored with reason SEM_TABELA."""
     rows = tuple(
         ScoringRow(
@@ -602,12 +603,13 @@ def _without_table(activities: list[Activity]) -> ScoringResult:
             points=ZERO,
             status=RowStatus.NAO_PONTUADA,
             reasons=(NotScoredReason.SEM_TABELA,),
+            evidence_count=evidence_counts.get(a.id, 0),
         )
         for a in activities
     )
     counters = Counters(
         activities=len(activities),
-        with_evidence=sum(1 for a in activities if (a.evidence_note or "").strip()),
+        with_evidence=sum(1 for a in activities if has_evidence(a, evidence_counts.get(a.id, 0))),
         pending=sum(1 for a in activities if a.status is ActivityStatus.AGUARDANDO_REVISAO),
         not_scored=len(activities),
         with_alerts=0,
@@ -624,20 +626,21 @@ class CalculateProcessScore(_ScoringUseCase):
             process = self._readable(uow, actor, process_id)
             state = table_state(uow, process)
             activities = sorted(uow.activities.list_for_process(process.id), key=_listing_order)
+            evidence_counts = uow.evidences.counts_for_activities([a.id for a in activities])
             if state.chosen is None:
                 no_table = MinimumComparison(MinimumStatus.NAO_DEFINIDO, None, ZERO)
                 return ProcessScore(
                     process.id,
                     None,
                     state.suggested,
-                    _without_table(activities),
+                    _without_table(activities, evidence_counts),
                     tuple(activities),
                     state.alerts,
                     no_table,
                 )
             version = state.chosen.version
             interstice = Interstice(process.start_date, process.end_date)
-            result = calculate(version, activities, interstice)
+            result = calculate(version, activities, interstice, evidence_counts)
             professor = uow.professors.get(process.professor_id)
             code = uow.career_versions.structure_code(professor.career_structure_id)
             versions = uow.career_versions.list_versions(code) if code else []
