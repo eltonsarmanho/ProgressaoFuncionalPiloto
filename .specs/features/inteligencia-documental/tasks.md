@@ -661,11 +661,11 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] PDF com texto: método `TEXTO` em todas as páginas; PDF digitalizado: `OCR`; PDF misto: `TEXTO` nas primeiras e `OCR` nas demais
-- [ ] PDF com camada ruidosa usa `OCR` nessa página
-- [ ] PNG e JPG sintéticos usam `OCR`
-- [ ] Documento que passa de 10 minutos devolve `TEMPO_ESGOTADO` mantendo as páginas já extraídas (relógio injetado)
-- [ ] Build gate passa; 12+ testes
+- [x] PDF com texto: método `TEXTO` em todas as páginas; PDF digitalizado: `OCR`; PDF misto: `TEXTO` nas primeiras e `OCR` nas demais
+- [x] PDF com camada ruidosa usa `OCR` nessa página
+- [x] PNG e JPG sintéticos usam `OCR`
+- [x] Documento que passa de 10 minutos devolve `TEMPO_ESGOTADO` mantendo as páginas já extraídas (relógio injetado)
+- [x] Build gate passa; 12+ testes
 
 **Tests**: unit
 **Gate**: build
