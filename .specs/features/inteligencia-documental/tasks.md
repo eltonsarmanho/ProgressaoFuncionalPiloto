@@ -1423,10 +1423,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] A lista atualiza sozinha a cada 3 s enquanto há `PENDENTE` ou `PROCESSANDO` e para quando não há (relógio simulado)
-- [ ] Todas as ações funcionam e a lista recarrega
-- [ ] "Criar atividade deste documento" abre o formulário com o documento vinculado
-- [ ] Rota `processos/:id/documentos`; Gate quick (frontend) passa; 8+ testes
+- [x] A lista atualiza sozinha a cada 3 s enquanto há `PENDENTE` ou `PROCESSANDO` e para quando não há (relógio simulado)
+- [x] Todas as ações funcionam e a lista recarrega
+- [x] "Criar atividade deste documento" abre o formulário com o documento vinculado
+- [x] Rota `processos/:id/documentos`; Gate quick (frontend) passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
