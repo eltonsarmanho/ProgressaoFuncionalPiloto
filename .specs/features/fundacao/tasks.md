@@ -461,8 +461,8 @@ T27 → T28
 
 **Done when**:
 
-- [ ] 200 com corpo exato; 503 com corpo exato quando o banco está inacessível
-- [ ] Gate full passa
+- [x] 200 com corpo exato; 503 com corpo exato quando o banco está inacessível
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

@@ -245,7 +245,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | --- | --- | --- | --- |
 | INFRA-01 | P1: Stack executável | Design | Implementing |
 | INFRA-02 | P1: Stack executável | Design | Implementing |
-| INFRA-03 | P1: Stack executável | Design | Pending |
+| INFRA-03 | P1: Stack executável | Design | Implementing |
 | INFRA-04 | P1: Stack executável | Design | Pending |
 | INFRA-05 | P1: Stack executável | Design | Pending |
 | INFRA-06 | P1: Stack executável | Design | Implementing |
