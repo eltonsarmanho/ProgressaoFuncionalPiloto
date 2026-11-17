@@ -33,6 +33,39 @@ def test_mask_text_masks_bare_long_numbers_and_dotted_ids_but_keeps_dates_and_it
     assert masked.endswith("em 2025-03-12 item III.4")
 
 
+LONG_NAME = "Fulano da Silva Exemplo_2024001234567890123456789.pdf"
+
+
+def test_mask_text_masks_a_long_digit_run_after_an_underscore():
+    masked = corpus.mask_text(LONG_NAME)  # REAL-14: the digits after `_` are an identifier
+
+    assert "2024001234567890123456789" not in masked
+    assert not any(len(run) >= 11 for run in __import__("re").findall(r"\d+", masked))
+
+
+def test_mask_text_masks_eleven_digits_but_keeps_ten_inside_a_word_and_dates():
+    assert "12345678901" not in corpus.mask_text("arquivo_12345678901_x")
+    assert corpus.mask_text("lote 2025-03-12 item III.4 ref ab1234567890cd") == (
+        "lote 2025-03-12 item III.4 ref ab1234567890cd"
+    )
+
+
+def test_file_id_is_stable_hides_the_name_and_keeps_only_the_extension():
+    first = corpus.file_id(LONG_NAME)
+
+    assert first == corpus.file_id(LONG_NAME)
+    assert first != corpus.file_id("Outro Nome.pdf")
+    assert first.startswith("doc-") and first.endswith(".pdf")
+    for fragment in ("Fulano", "Silva", "Exemplo", "2024"):
+        assert fragment not in first
+    assert corpus.file_id("a.PNG").endswith(".png")
+    assert not any(char.isdigit() for char in first)
+
+
+def test_file_id_differs_for_the_same_name_in_different_folders():
+    assert corpus.file_id("Artigos/a.pdf") != corpus.file_id("Registros/a.pdf")
+
+
 def test_mask_deep_masks_every_string_in_nested_structures():
     data = {"file": "CPF 123.456.789-09.pdf", "list": [{"x": "a@b.com"}], "n": 3}
 
@@ -201,7 +234,27 @@ def test_report_json_masks_personal_data_in_every_string():
 
     text = json.dumps(data, ensure_ascii=False)
     assert "123.456.789-09" not in text and "joao@ufpa.br" not in text
-    assert data["documents"][0]["file"] == "Declaracao CPF [CPF].pdf"
+    # REAL-14: the file name is replaced by a stable id, so no name or number reaches the report
+    assert data["documents"][0]["file"] == corpus.file_id("Declaracao CPF 123.456.789-09.pdf")
+    assert "Declaracao" not in text
+
+
+def test_report_dict_masks_long_digits_in_every_string_and_hides_the_file_name():
+    entry = _entry(file=LONG_NAME, alerts=["ref_99999999999999"])
+
+    text = json.dumps(_report(entry).to_dict(), ensure_ascii=False)
+
+    assert corpus.file_id(LONG_NAME) in text
+    assert "ref_[NUMERO]" in text
+    for forbidden in ("Fulano", "Silva", "2024001234567890123456789", "99999999999999"):
+        assert forbidden not in text
+
+
+def test_markdown_report_lists_the_file_id_not_the_name():
+    markdown = corpus.render_markdown(_report(_entry(file=LONG_NAME)).to_dict())
+
+    assert corpus.file_id(LONG_NAME) in markdown
+    assert "Fulano" not in markdown and "2024001234567890123456789" not in markdown
 
 
 def test_markdown_lists_per_document_fields_and_per_process_potential_and_validated():

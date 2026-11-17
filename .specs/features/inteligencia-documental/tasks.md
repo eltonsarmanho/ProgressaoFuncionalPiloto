@@ -1889,10 +1889,10 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] Nome de arquivo com nome de pessoa e número de 25 dígitos após `_` não aparece no relatório
-- [ ] Duas execuções dão o mesmo identificador para o mesmo arquivo
-- [ ] Sequência de 11 ou mais dígitos em qualquer texto do relatório vira marcador
-- [ ] Gate full passa
+- [x] Nome de arquivo com nome de pessoa e número de 25 dígitos após `_` não aparece no relatório
+- [x] Duas execuções dão o mesmo identificador para o mesmo arquivo
+- [x] Sequência de 11 ou mais dígitos em qualquer texto do relatório vira marcador
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

@@ -68,6 +68,7 @@ GROUNDING_CODES = frozenset(
 )
 _ROMAN = ("", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X")
 _BARE_NUMBER = re.compile(r"(?<![\w.])\d{7,}(?![\w])")
+_LONG_DIGITS = re.compile(r"\d{11,}")  # a long run is an identifier wherever it sits, `_` included
 _DOTTED_NUMBER = re.compile(r"(?<!\d)\d{1,3}(?:\.\d{3}){2}(?:-[\dXx])?(?!\d)")
 MAX_TITLE_CHARS = 80
 
@@ -178,10 +179,23 @@ def maritalk_settings(env: Mapping[str, str]) -> dict[str, str | None]:
 
 
 def mask_text(text: str) -> str:
-    """CPF, RG, e-mail and phone masked, plus any bare run of 7+ digits and dotted ID numbers."""
+    """CPF, RG, e-mail and phone masked, plus bare runs of 7+ digits, any run of 11+ digits and
+    dotted ID numbers."""
     masked = mask_identifiers(text).text
     masked = _DOTTED_NUMBER.sub("[NUMERO]", masked)
+    masked = _LONG_DIGITS.sub("[NUMERO]", masked)
     return _BARE_NUMBER.sub("[NUMERO]", masked)
+
+
+def file_id(relative_path: str) -> str:
+    """A stable identifier for a file in the report: file names carry personal names (REAL-14).
+
+    Letters only, derived from the hash of the relative path, with the extension kept; the
+    table position (#) in the report maps it back to the file on the local machine.
+    """
+    digest = hashlib.sha256(relative_path.encode("utf-8")).hexdigest()[:10]
+    name = "".join(chr(ord("a") + int(char, 16)) for char in digest)
+    return f"doc-{name}{Path(relative_path).suffix.lower()}"
 
 
 def mask_deep(value: Any) -> Any:
@@ -265,8 +279,11 @@ class CorpusReport:
     documents: list[DocumentEntry]
 
     def to_dict(self) -> dict[str, Any]:
-        """JSON-ready and masked: every string passes through `mask_text`."""
-        return mask_deep(asdict(self))
+        """JSON-ready and masked: file names become ids, every string passes `mask_text`."""
+        data = asdict(self)
+        for document in data["documents"]:
+            document["file"] = file_id(document["file"])
+        return mask_deep(data)
 
 
 def summarize_documents(documents: Sequence[DocumentEntry]) -> dict[str, Any]:
@@ -854,7 +871,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         def progress(index: int, total: int, name: str, tick: float) -> None:
             seconds = time.monotonic() - tick
-            print(f"[{index}/{total}] {mask_text(name)} ({seconds:.1f}s)", flush=True)
+            print(f"[{index}/{total}] {file_id(name)} ({seconds:.1f}s)", flush=True)
 
         if options.database_url:
             report = run_corpus(options, options.database_url, env=env, progress=progress)

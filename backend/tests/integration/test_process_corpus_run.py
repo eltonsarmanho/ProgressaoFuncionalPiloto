@@ -188,6 +188,18 @@ def test_report_carries_no_document_text_and_no_personal_data(
             assert forbidden not in text
 
 
+def test_written_reports_name_documents_by_id_and_never_by_file_name(
+    folder, tmp_path, engine, migrated_url
+):
+    report = run(folder, tmp_path, migrated_url, KeyedAi())
+
+    json_path, md_path = corpus.write_report(report, tmp_path / "out", datetime.now())
+    for text in (json_path.read_text(encoding="utf-8"), md_path.read_text(encoding="utf-8")):
+        for name in ("a-banca.pdf", "b-outro.pdf", "c-copia.pdf"):
+            assert name not in text
+            assert corpus.file_id(name) in text
+
+
 def test_activity_titles_appear_only_when_asked_and_are_truncated(
     folder, tmp_path, engine, migrated_url
 ):
