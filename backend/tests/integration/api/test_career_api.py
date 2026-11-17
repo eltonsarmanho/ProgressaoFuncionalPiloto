@@ -254,3 +254,20 @@ def test_version_starting_on_open_version_start_day_returns_409(client, admin):
 
 def test_unknown_structure_returns_404(client, admin):
     assert client.get("/api/career-structures/EBTT/versions").status_code == 404
+
+
+# CARR-08 boundary: validities sharing exactly one day overlap
+@pytest.mark.parametrize(
+    "day",
+    ["2024-12-31", "2025-01-01"],
+    ids=["last-day-of-res-4644", "first-day-of-open-lei"],
+)
+def test_single_day_overlap_returns_409(client, admin, day):
+    _, headers = admin
+    before = client.get(URL).json()
+    one_day = {**NEW_VERSION, "valid_from": day, "valid_to": day}
+
+    response = client.post(URL, json=one_day, headers=headers)
+
+    assert response.status_code == 409
+    assert client.get(URL).json() == before

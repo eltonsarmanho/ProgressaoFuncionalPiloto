@@ -93,6 +93,12 @@ T29 → T30 → T31 → T32
 T33 → T34
 ```
 
+### Phase 10: Correções do Verificador (validation.md, iteração 3, rodada extra aprovada pelo usuário)
+
+```
+T35 → T36
+```
+
 ---
 
 ## Task Breakdown
@@ -969,10 +975,63 @@ T33 → T34
 
 ---
 
+---
+
+### T35: Sobreposição de vigência em um único dia
+
+**What**: Testes de integração em que a nova versão compartilha exatamente um dia com outra: só 31/12/2024 (fim da Res. 4.644) e só 01/01/2025 (início da versão Lei aberta). Ambos → 409 (mata K1 e K2).
+**Where**: `backend/tests/integration/api/test_career_api.py`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `NEW_VERSION`, `versions_by_name`
+**Requirement**: CARR-08
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Versão de 31/12/2024 a 31/12/2024 → 409; versões existentes inalteradas
+- [x] Versão de 01/01/2025 a 01/01/2025 → 409; versão Lei inalterada
+- [x] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(career): cover single-day validity overlaps`
+
+---
+
+### T36: Último dia permitido no fechamento automático
+
+**What**: Processo com data final 31/12/2030 e nova versão de 01/01/2031 → 201, versão Lei encerrada em 31/12/2030 (mata K3).
+**Where**: `backend/tests/integration/api/test_career_api.py`
+**Depends on**: T35
+**Reuses**: `process_payload`
+**Requirement**: CARR-09, CARR-10
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Resposta 201; `valid_to` da versão Lei = 2030-12-31; nova versão listada
+- [ ] Build gate passa
+
+**Tests**: integration
+**Gate**: build
+
+**Commit**: `test(career): cover last allowed day before version auto-close`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10
 
 Phase 1:  T1 → T2 → T3
 Phase 2:  T4 → T5 → T6 → T7 → T8
@@ -983,4 +1042,5 @@ Phase 6:  T23 → T24 → T25 → T26
 Phase 7:  T27 → T28
 Phase 8:  T29 → T30 → T31 → T32
 Phase 9:  T33 → T34
+Phase 10: T35 → T36
 ```
