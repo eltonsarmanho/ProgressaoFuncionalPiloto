@@ -634,10 +634,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Imagem sintética com texto em português devolve esse texto e confiança acima de 60
-- [ ] Imagem em branco devolve texto vazio
-- [ ] Estouro de 60 s devolve `TEMPO_ESGOTADO` sem travar (processo filho encerrado)
-- [ ] Gate quick passa; 7+ testes
+- [x] Imagem sintética com texto em português devolve esse texto e confiança acima de 60
+- [x] Imagem em branco devolve texto vazio
+- [x] Estouro de 60 s devolve `TEMPO_ESGOTADO` sem travar (processo filho encerrado)
+- [x] Gate quick passa; 7+ testes
 
 **Tests**: unit
 **Gate**: quick
