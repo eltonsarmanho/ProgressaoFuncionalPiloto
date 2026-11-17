@@ -58,14 +58,30 @@
 - **Date**: 2026-11-17
 - **Status**: active
 
+### AD-008
+- **Decision**: O processamento de documentos roda numa thread única dentro do processo do backend, com tarefas e estados no PostgreSQL (`FOR UPDATE SKIP LOCKED`), e não em Celery e Redis.
+- **Reason**: A VM tem 1 CPU e pouca memória livre; o prompt admite começar assim (seção 18) e os casos de uso não mudam quando a fila externa chegar.
+- **Trade-off**: Sem escala horizontal nem reentrega automática além da recuperação na partida; a thread morre com o app.
+- **Scope**: `inteligencia-documental`, `documentos-gerados`
+- **Date**: 2026-11-17
+- **Status**: active
+
+### AD-009
+- **Decision**: A saída da IA é tratada como não confiável: resposta em JSON com schema estrito, mais a verificação determinística de que cada valor extraído aparece no texto da página citada (senão vira `null` com aviso). O item de pontuação vem de uma tabela de regras versionada, nunca da IA. A IA recebe só texto.
+- **Reason**: O prompt proíbe inventar datas, cargas horárias, participantes e títulos; a validação determinística garante a regra mesmo se o modelo errar.
+- **Trade-off**: A verificação pode recusar valor certo por formatação e exige normalizar datas e números; campos vazios pedem digitação.
+- **Scope**: `inteligencia-documental`, `documentos-gerados`, `banca-parecer`
+- **Date**: 2026-11-17
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/inteligencia-documental` (Complex). `fundacao` e `pontuacao` concluídas e verificadas. Depois: `documentos-gerados` → `banca-parecer` → `normativo` → `implantacao`
-- **Phase / Task**: Specify de `inteligencia-documental`: `spec.md` escrita (70 requisitos, `validate_spec.py` limpo). Aguarda a aprovação do usuário. Em seguida vem o Design (taxonomia e regras de sugestão para revisão do usuário)
+- **Phase / Task**: Specify de `inteligencia-documental` aprovada (70 requisitos); Design escrito em `design.md` (AD-008 e AD-009 registradas), aguardando aprovação e a revisão da tabela de regras de sugestão (linhas ⚠). Em seguida vem o Tasks
 - **Completed**: `fundacao` (T1–T37) e `pontuacao` (T1–T41, 731 testes backend, 67 frontend, 80/80 verificados)
 - **In-progress** (file:line): none
-- **Next step**: o usuário aprova a spec; Design em seguida (ler `references/design.md`; registrar ADs do executor assíncrono e do armazenamento)
-- **Decisões do usuário em 2026-11-17**: o modelo da IA é o do `MARITALK_MODEL` no `.env` (hoje `sabiazinho-4`; vazio = `sabia-4-br-sp`; erro de modelo = nova tentativa com `sabia-4-br-sp`), revisando a decisão anterior de usar `sabia-4-br-sp` como padrão; mascarar CPF, RG, e-mail e telefone antes de enviar à MariTalk. A AD-005 continua válida
+- **Next step**: o usuário aprova o Design e revisa as linhas ⚠ da tabela de regras; depois, Tasks e Execute em lotes
+- **Decisões do usuário em 2026-11-17**: o modelo da IA é o do `MARITALK_MODEL` no `.env` (hoje `sabia-4-thinking`, que raciocina e devolve `content` vazio com `max_tokens` baixo; use 8000 ou mais; vazio = `sabia-4-br-sp`; erro de modelo = nova tentativa com `sabia-4-br-sp`), revisando a decisão anterior de usar `sabia-4-br-sp` como padrão; mascarar CPF, RG, e-mail e telefone antes de enviar à MariTalk. A AD-005 continua válida
 - **Blockers**: nenhum técnico. Pendentes de confirmação: padrões PROC-02 e PROC-04 (`fundacao`), 3 suposições e a isenção do I.3 (`pontuacao`); faltam o "Modelo Relatorio Atividades 2.docx" e as URLs da PROGEP/CPPD
 - **Dívidas**: teste de 360 px só estático; sem backup; sem troca de senha; rotas de negócio devolvem 500 com banco fora do ar; `api/client.ts` só envia JSON; Grupo I do caso real com 16 pontos sem explicação; mínimos das classes novas sem regra; nginx do compose e do servidor limitam o corpo a 20 MB (precisa subir a 120 MB nesta feature); antivírus ausente na VM
 - **MariTalk**: funciona (`test/test_maritalk.py`): `sabia-4`, `sabia-4-br-sp`, `sabiazinho-4` em `https://chat.maritaca.ai/api` (Bearer); `response_format` com `json_schema` estrito devolve `null` para dado ausente. A VM ainda tem `MARITALK_API_KEY` vazia; configurar no deploy desta feature
