@@ -593,8 +593,8 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] O total mostra o rótulo novo e não inclui o Grupo I
-- [ ] Horas por período e total de horas aparecem à parte; Gate quick (frontend) passa; 4+ testes
+- [x] O total mostra o rótulo novo e não inclui o Grupo I
+- [x] Horas por período e total de horas aparecem à parte; Gate quick (frontend) passa; 4+ testes
 
 **Tests**: unit
 **Gate**: quick
