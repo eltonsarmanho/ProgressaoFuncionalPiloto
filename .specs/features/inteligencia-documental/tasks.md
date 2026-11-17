@@ -257,9 +257,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Textos sintéticos de cada tipo, no estilo dos documentos reais, resultam no tipo esperado
-- [ ] Texto sem nenhuma palavra-chave resulta em `OUTRO`
-- [ ] Gate quick passa; 12+ testes
+- [x] Textos sintéticos de cada tipo, no estilo dos documentos reais, resultam no tipo esperado
+- [x] Texto sem nenhuma palavra-chave resulta em `OUTRO`
+- [x] Gate quick passa; 12+ testes
 
 **Tests**: unit
 **Gate**: quick
