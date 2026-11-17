@@ -106,3 +106,13 @@ def _clean_tables(request) -> Iterator[None]:
         ).scalars().all()
         if tables:
             conn.execute(text(f"TRUNCATE {', '.join(tables)} RESTART IDENTITY CASCADE"))
+
+
+@pytest.fixture
+def uow_factory(engine: Engine):
+    """Builds a fresh SqlUnitOfWork per call, bound to the test database."""
+    from app.infrastructure.database.repositories import SqlUnitOfWork
+    from app.infrastructure.database.session import make_session_factory
+
+    factory = make_session_factory(engine)
+    return lambda: SqlUnitOfWork(factory)

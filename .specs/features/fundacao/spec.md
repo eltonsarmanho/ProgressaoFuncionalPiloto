@@ -263,7 +263,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | AUTH-11 | P1: Autenticação | Design | Pending |
 | DOC-01 | P1: Cadastro de docente | Design | Pending |
 | DOC-02 | P1: Cadastro de docente | Design | Pending |
-| DOC-03 | P1: Cadastro de docente | Design | Pending |
+| DOC-03 | P1: Cadastro de docente | Design | Implementing |
 | DOC-04 | P1: Cadastro de docente | Design | Implementing |
 | DOC-05 | P1: Cadastro de docente | Design | Pending |
 | PROC-01 | P1: Processo e interstício | Design | Pending |

@@ -334,9 +334,9 @@ T27 → T28
 
 **Done when**:
 
-- [ ] SIAPE duplicado → `Conflict`; versão desatualizada → `StaleVersion`
-- [ ] Round-trip de cada entidade
-- [ ] Gate full passa
+- [x] SIAPE duplicado → `Conflict`; versão desatualizada → `StaleVersion`
+- [x] Round-trip de cada entidade
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full
