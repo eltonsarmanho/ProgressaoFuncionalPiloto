@@ -608,9 +608,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] A página A4 a 300 dpi tem cerca de 2480 × 3508 pixels e fica em tons de cinza
-- [ ] Imagem JPG ou PNG passa pelo mesmo pré-processamento
-- [ ] Gate quick passa; 5+ testes
+- [x] A página A4 a 300 dpi tem cerca de 2480 × 3508 pixels e fica em tons de cinza
+- [x] Imagem JPG ou PNG passa pelo mesmo pré-processamento
+- [x] Gate quick passa; 5+ testes
 
 **Tests**: unit
 **Gate**: quick

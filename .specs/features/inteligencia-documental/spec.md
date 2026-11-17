@@ -282,7 +282,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PIPE-03 | P1: Processamento: texto, OCR e estados | Design | Implementing |
 | PIPE-04 | P1: Processamento: texto, OCR e estados | Design | Implementing |
 | PIPE-05 | P1: Processamento: texto, OCR e estados | Design | Implementing |
-| PIPE-06 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
+| PIPE-06 | P1: Processamento: texto, OCR e estados | Design | Implementing |
 | PIPE-07 | P1: Processamento: texto, OCR e estados | Design | Implementing |
 | PIPE-08 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
 | PIPE-09 | P1: Processamento: texto, OCR e estados | Design | In Tasks |
