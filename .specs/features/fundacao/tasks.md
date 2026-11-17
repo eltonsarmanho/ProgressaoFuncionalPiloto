@@ -100,9 +100,9 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `backend/.venv/bin/pip install -r requirements.txt` termina sem erro
-- [ ] `backend/.venv/bin/pytest --collect-only -q` executa (0 testes)
-- [ ] `backend/.venv/bin/ruff check .` passa
+- [x] `backend/.venv/bin/pip install -r requirements.txt` termina sem erro
+- [x] `backend/.venv/bin/pytest --collect-only -q` executa (0 testes)
+- [x] `backend/.venv/bin/ruff check .` passa
 
 **Tests**: none
 **Gate**: build

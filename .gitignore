@@ -3,3 +3,7 @@ AcessoVM.txt
 Documentos/
 storage/
 Modelos/
+backend/.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
