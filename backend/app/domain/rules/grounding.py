@@ -13,6 +13,7 @@ from enum import StrEnum
 
 from app.domain.entities.document import DocAlertCode
 from app.domain.entities.extraction import ExtractedActivity
+from app.domain.rules.number_words import numerals_from_words
 from app.domain.rules.scoring_periods import normalize_title
 
 MIN_TOKEN_LENGTH = 3
@@ -69,8 +70,17 @@ def _month_name(month: int) -> str:
 
 
 def date_in_text(value: date, text: str, precision: DatePrecision = DatePrecision.DAY) -> bool:
-    """True when the date appears in the text with the given precision."""
+    """True when the date appears in the text with the given precision.
+
+    Numbers written in words ("vinte e um de agosto de dois mil e vinte e quatro") count: the
+    text is also searched with those words read as digits (REAL-04).
+    """
     norm = normalize_title(text)
+    candidates = dict.fromkeys((norm, numerals_from_words(norm)))
+    return any(_date_found(value, candidate, precision) for candidate in candidates)
+
+
+def _date_found(value: date, norm: str, precision: DatePrecision) -> bool:
     year = rf"{value.year}"
     if precision is DatePrecision.YEAR:
         return re.search(rf"(?<!\d){year}(?!\d)", norm) is not None
@@ -78,7 +88,8 @@ def date_in_text(value: date, text: str, precision: DatePrecision = DatePrecisio
     if precision is DatePrecision.MONTH:
         two_digit_year = f"{value.year % 100:02d}"
         named = (
-            rf"(?<![a-z]){_month_name(month)}\s*(?:[/.\-,]|de)?\s*(?:{year}|{two_digit_year})(?!\d)"
+            rf"(?<![a-z]){_month_name(month)}\s*(?:[/.\-,]|de|do\s+ano(?:\s+de)?)?\s*"
+            rf"(?:{year}|{two_digit_year})(?!\d)"
         )
         numeric = rf"(?<![\d/.\-])0?{month}\s?[/.\-]\s?{year}(?!\d)"
         return re.search(f"{named}|{numeric}", norm) is not None
@@ -87,8 +98,8 @@ def date_in_text(value: date, text: str, precision: DatePrecision = DatePrecisio
     numeric = rf"(?<!\d)0?{day}{sep}0?{month}{sep}{year}(?!\d)"
     iso = rf"(?<!\d){year}{sep}0?{month}{sep}0?{day}(?!\d)"
     spelled = (
-        rf"(?<!\d)0?{day}o?(?:\s+de)?\s+(?<![a-z]){_month_name(month)}\s*(?:de\s+|,\s*|/\s*)?"
-        rf"{year}(?!\d)"
+        rf"(?<!\d)0?{day}o?(?:\s+dias?)?(?:\s+do\s+mes)?(?:\s+de)?\s+(?<![a-z]){_month_name(month)}"
+        rf"\s*(?:de\s+|do\s+ano\s+(?:de\s+)?|,\s*|/\s*)?{year}(?!\d)"
     )
     return re.search(f"{numeric}|{iso}|{spelled}", norm) is not None
 

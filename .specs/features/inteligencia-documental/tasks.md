@@ -1632,7 +1632,7 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 ### T57: Datas por extenso no aterramento
 
-**What**: `date_in_text` reconhece dia e ano em palavras ("vinte e um dias do mês de agosto do ano de dois mil e vinte e quatro"), nome do mês e numerais misturados.
+**What**: `number_words.py` lê números por extenso como dígitos; `date_in_text` reconhece dia e ano em palavras ("vinte e um dias do mês de agosto do ano de dois mil e vinte e quatro"), nome do mês e numerais misturados.
 **Where**: `backend/app/domain/rules/grounding.py`
 **Depends on**: T56
 **Reuses**: `date_in_text`, `normalize_title`
@@ -1645,10 +1645,10 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] "vinte e um de agosto de dois mil e vinte e quatro" encontra 2024-08-21 (antes: `NAO_ENCONTRADO_NO_TEXTO`)
-- [ ] "primeiro", "trinta e um", "21 de agosto de dois mil e vinte e quatro" e "vinte e um de agosto de 2024" também encontram
-- [ ] Data errada em palavras (dia ou ano diferentes) não é encontrada
-- [ ] Gate full passa
+- [x] "vinte e um de agosto de dois mil e vinte e quatro" encontra 2024-08-21 (antes: `NAO_ENCONTRADO_NO_TEXTO`)
+- [x] "primeiro", "trinta e um", "21 de agosto de dois mil e vinte e quatro" e "vinte e um de agosto de 2024" também encontram
+- [x] Data errada em palavras (dia ou ano diferentes) não é encontrada
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

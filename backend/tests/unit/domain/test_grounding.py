@@ -404,3 +404,71 @@ def test_abbreviated_name_with_the_same_initials_and_last_surname_is_the_profess
 )
 def test_abbreviation_with_other_initials_or_surname_is_not_the_professor(extracted):
     assert same_person(extracted, PROFESSOR, None, "") is False
+
+
+# ---------- REAL-04: dates written in words ----------
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "no vinte e um dias do mês de agosto do ano de dois mil e vinte e quatro, reuniu-se",
+        "Aos vinte e um dias do mês de agosto de dois mil e vinte e quatro",
+        "em vinte e um de agosto de dois mil e vinte e quatro",
+        "em 21 de agosto de dois mil e vinte e quatro",
+        "em vinte e um de agosto de 2024",
+        "AOS VINTE E UM DIAS DO MÊS DE AGOSTO DO ANO DE DOIS MIL E VINTE E QUATRO",
+    ],
+)
+def test_date_written_in_words_is_found(text):
+    assert date_in_text(date(2024, 8, 21), text) is True
+
+
+@pytest.mark.parametrize(
+    ("value", "text"),
+    [
+        (date(2025, 5, 1), "no primeiro dia do mês de maio de dois mil e vinte e cinco"),
+        (date(2019, 12, 31), "trinta e um de dezembro de dois mil e dezenove"),
+        (date(2020, 3, 3), "aos três dias do mês de março do ano de dois mil e vinte"),
+        (date(2023, 2, 15), "quinze de fevereiro de dois mil e vinte e três"),
+    ],
+)
+def test_other_dates_in_words_are_found(value, text):
+    assert date_in_text(value, text) is True
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "vinte e dois dias do mês de agosto do ano de dois mil e vinte e quatro",
+        "vinte e um dias do mês de agosto do ano de dois mil e vinte e três",
+        "vinte e um dias do mês de setembro do ano de dois mil e vinte e quatro",
+    ],
+)
+def test_a_different_day_month_or_year_in_words_is_not_found(text):
+    assert date_in_text(date(2024, 8, 21), text) is False
+
+
+def test_year_and_month_precision_read_words_too():
+    text = "agosto do ano de dois mil e vinte e quatro"
+    assert date_in_text(date(2024, 8, 1), text, D.MONTH) is True
+    assert date_in_text(date(2024, 1, 1), "no ano de dois mil e vinte e quatro", D.YEAR) is True
+    assert date_in_text(date(2023, 1, 1), "no ano de dois mil e vinte e quatro", D.YEAR) is False
+
+
+def test_abbreviated_month_named_dez_still_matches_next_to_number_words():
+    assert date_in_text(date(2024, 12, 5), "em 5 dez 2024, às dez horas") is True
+
+
+def test_the_ai_date_in_words_is_kept_by_ground():
+    extracted = ExtractedActivity(
+        taxonomy=TaxonomyCode.BANCA_MESTRADO,
+        page=1,
+        evidence_text="x",
+        confidence=Decimal("0.9"),
+        event_date=date(2024, 8, 21),
+    )
+    text = "Aos vinte e um dias do mês de agosto do ano de dois mil e vinte e quatro, banca."
+    result = ground(extracted, {1: text})
+    assert result.activity.event_date == date(2024, 8, 21)
+    assert result.warnings == ()
