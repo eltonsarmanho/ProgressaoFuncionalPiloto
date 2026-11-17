@@ -993,10 +993,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] CSV válido vira critérios com tipos corretos
-- [ ] Linhas inválidas: erro lista todas as linhas e campos, sem parar na primeira
-- [ ] Coluna ausente e UTF-8 com BOM tratadas
-- [ ] Gate quick passa; 10+ testes
+- [x] CSV válido vira critérios com tipos corretos
+- [x] Linhas inválidas: erro lista todas as linhas e campos, sem parar na primeira
+- [x] Coluna ausente e UTF-8 com BOM tratadas
+- [x] Gate quick passa; 10+ testes
 
 **Tests**: unit
 **Gate**: quick
