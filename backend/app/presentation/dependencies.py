@@ -29,6 +29,11 @@ from app.application.use_cases.professors import (
     ListProfessors,
     UpdateProfessor,
 )
+from app.application.use_cases.scoring_admin import (
+    GetScoringVersion,
+    ListScoringTables,
+    ListTableVersions,
+)
 from app.application.use_cases.units import ArchiveUnit, CreateUnit, ListUnits, UpdateUnit
 from app.application.use_cases.users import CreateUser, ListUsers
 from app.core.config import Settings
@@ -69,6 +74,9 @@ class Container:
     list_career_versions: ListCareerVersions
     create_career_version: CreateCareerVersion
     update_career_version: UpdateCareerVersion
+    list_scoring_tables: ListScoringTables
+    list_table_versions: ListTableVersions
+    get_scoring_version: GetScoringVersion
 
 
 def build_container(settings: Settings, engine: Engine, clock: Clock) -> Container:
@@ -108,6 +116,9 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
         list_career_versions=ListCareerVersions(uow_factory),
         create_career_version=CreateCareerVersion(uow_factory, audit),
         update_career_version=UpdateCareerVersion(uow_factory, audit),
+        list_scoring_tables=ListScoringTables(uow_factory),
+        list_table_versions=ListTableVersions(uow_factory),
+        get_scoring_version=GetScoringVersion(uow_factory),
     )
 
 

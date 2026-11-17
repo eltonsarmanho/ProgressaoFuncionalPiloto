@@ -646,10 +646,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Lista as duas tabelas semeadas com versões, vigência, situação e referência
-- [ ] A versão devolve os 8 grupos e os critérios em ordem de grupo e item
-- [ ] Sem sessão: 401; decimais como texto com 2 casas
-- [ ] Gate full passa; 6+ testes
+- [x] Lista as duas tabelas semeadas com versões, vigência, situação e referência
+- [x] A versão devolve os 8 grupos e os critérios em ordem de grupo e item
+- [x] Sem sessão: 401; decimais como texto com 2 casas
+- [x] Gate full passa; 6+ testes
 
 **Tests**: integration
 **Gate**: full
