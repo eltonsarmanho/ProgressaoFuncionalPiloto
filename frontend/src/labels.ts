@@ -120,6 +120,8 @@ export const DOCUMENT_CODE_LABELS: Record<string, string> = {
   IA_INDISPONIVEL: "IA indisponível",
   TEMPO_ESGOTADO: "Tempo de leitura esgotado",
   QUANTIDADE_ESTIMADA: "Quantidade estimada: confira",
+  ATIVIDADE_REPETIDA: "Atividade repetida no documento: criada uma só vez",
+  CLAUSULA_DE_DISPENSA: "Dispensa da função: não vira atividade",
   ERRO_INTERNO: "Erro interno",
 };
 

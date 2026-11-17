@@ -19,6 +19,8 @@ const BASE: ScoringResult = {
   ],
   total: "414.00",
   potential_total: "450.50",
+  potential_dated: "300.50",
+  potential_undated: "150.00",
   group1_percent: "22.22",
   group1_hours_by_period: {},
   group1_total_hours: "0.00",
@@ -47,6 +49,13 @@ describe("ScoringSummary", () => {
     expect(def("Grupo VIII · Produção")).toHaveTextContent("56,00");
     expect(def("Total geral")).toHaveTextContent("414,00");
     expect(def("Pontuação potencial")).toHaveTextContent("450,50");
+  });
+
+  it("REAL-09: divide a pontuação potencial entre com data no interstício e sem data", () => {
+    render(<ScoringSummary result={BASE} />);
+    expect(def("Pontuação potencial")).toHaveTextContent("450,50");
+    expect(def("Potencial com data no interstício")).toHaveTextContent("300,50");
+    expect(def("Potencial sem data — aguardando revisão")).toHaveTextContent("150,00");
   });
 
   it("TELA-03: exibe o percentual do Grupo I com vírgula e '—' quando nulo", () => {
@@ -99,6 +108,8 @@ describe("ScoringSummary", () => {
       ],
       total: "211.00",
       potential_total: "211.00",
+      potential_dated: "211.00",
+      potential_undated: "0.00",
       group1_percent: null,
       group1_hours_by_period: { "2022.1": "24.00", "2022.2": "24.00", "2023.1": "24.00", "2023.2": "20.00" },
       group1_total_hours: "92.00",

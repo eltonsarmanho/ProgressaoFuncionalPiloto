@@ -102,6 +102,28 @@ describe("TELA-06: lista de revisão", () => {
     expect(screen.getByText("8,00 horas (PIT) (Potencial)")).toBeInTheDocument();
   });
 
+  it("REAL-09: atividade sem data é marcada 'sem data' ao lado do potencial; a datada não", () => {
+    setCsrfToken("tok");
+    const undated = {
+      ...ROW("a2", "4.00"),
+      alerts: [{ code: "DATA_AUSENTE", severity: "ALERTA" as const, message: "sem data", norm_reference: "" }],
+    };
+    render(
+      <ActivityReviewList
+        processId="p1"
+        activities={[activity({ id: "a1" }), activity({ id: "a2", title: "Sem data alguma", event_date: null })]}
+        rows={[ROW("a1", "4.00"), undated]}
+        groups={GROUPS}
+        documents={DOCS}
+        onChanged={vi.fn()}
+      />,
+    );
+    const dated = screen.getByText("Banca de mestrado de Maria", { selector: "td" }).closest("tr")!;
+    const missing = screen.getByText("Sem data alguma", { selector: "td" }).closest("tr")!;
+    expect(missing).toHaveTextContent("4,00 (Potencial) · sem data");
+    expect(dated).not.toHaveTextContent("sem data");
+  });
+
   it("em 360 px usa as células rotuladas dos cartões", () => {
     setup([activity()]);
     expect(screen.getByRole("table")).toHaveClass("scoring-table");

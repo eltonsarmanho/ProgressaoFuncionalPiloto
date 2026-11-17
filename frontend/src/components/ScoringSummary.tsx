@@ -43,6 +43,14 @@ export function ScoringSummary({
           <dd>{formatDecimal(result.potential_total)}</dd>
         </div>
         <div>
+          <dt>Potencial com data no interstício</dt>
+          <dd>{formatDecimal(result.potential_dated)}</dd>
+        </div>
+        <div>
+          <dt>Potencial sem data — aguardando revisão</dt>
+          <dd>{formatDecimal(result.potential_undated)}</dd>
+        </div>
+        <div>
           <dt>Percentual do Grupo I</dt>
           <dd>{result.group1_percent == null ? "—" : `${formatDecimal(result.group1_percent)}%`}</dd>
         </div>

@@ -1753,9 +1753,9 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] A Etapa 4 exibe as duas parcelas com os valores da API e o total potencial
-- [ ] A lista da Etapa 3 marca "sem data" nas atividades sem data
-- [ ] Build gate passa (lint, testes, build)
+- [x] A Etapa 4 exibe as duas parcelas com os valores da API e o total potencial
+- [x] A lista da Etapa 3 marca "sem data" nas atividades sem data
+- [x] Build gate passa (lint, testes, build)
 
 **Tests**: unit
 **Gate**: build

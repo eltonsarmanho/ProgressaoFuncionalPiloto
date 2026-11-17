@@ -211,6 +211,10 @@ export function ActivityReviewList({
     return `${value} (${ROW_STATUS_LABELS[row.status] ?? row.status})`;
   }
 
+  function isUndated(activity: Activity): boolean {
+    return rowOf.get(activity.id)?.alerts.some((alert) => alert.code === "DATA_AUSENTE") ?? false;
+  }
+
   return (
     <section aria-labelledby="review-title">
       <h2 id="review-title">Atividades</h2>
@@ -258,7 +262,10 @@ export function ActivityReviewList({
                       {itemLabel(a.group_number, a.item_number)}
                       {criterion && <small className="muted"> · {criterion.description}</small>}
                     </td>
-                    <td data-label="Pontuação potencial">{potential(a)}</td>
+                    <td data-label="Pontuação potencial">
+                      {potential(a)}
+                      {isUndated(a) && <small className="muted"> · sem data</small>}
+                    </td>
                     <td data-label="Documentos">
                       {a.evidences && a.evidences.length > 0 ? (
                         <ul className="evidence-list">

@@ -377,7 +377,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | REAL-06 | P1: Correções da validação real | Design | Implementing |
 | REAL-07 | P1: Correções da validação real | Design | Implementing |
 | REAL-08 | P1: Correções da validação real | Design | Implementing |
-| REAL-09 | P1: Correções da validação real | Design | In Tasks |
+| REAL-09 | P1: Correções da validação real | Design | Implementing |
 | REAL-10 | P1: Correções da validação real | Design | In Tasks |
 | REAL-11 | P1: Correções da validação real | Design | In Tasks |
 | REAL-12 | P1: Correções da validação real | Design | In Tasks |

@@ -54,6 +54,8 @@ function result(total: string, rows: ScoringResult["rows"]): ScoringResult {
     ],
     total,
     potential_total: total,
+    potential_dated: total,
+    potential_undated: "0.00",
     group1_percent: null,
     group1_hours_by_period: {},
     group1_total_hours: "0.00",

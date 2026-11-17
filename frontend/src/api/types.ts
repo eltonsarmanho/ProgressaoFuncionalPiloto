@@ -115,6 +115,10 @@ export type ScoringResult = {
   subtotals: { group_number: number; subtotal: string }[];
   total: string;
   potential_total: string;
+  /** Potential points of activities with a date or period in the interstice (REAL-08). */
+  potential_dated: string;
+  /** Potential points of activities without date, awaiting review (REAL-08). */
+  potential_undated: string;
   group1_percent: string | null;
   /** Group I PIT hours summed per academic period (e.g. "2023.1"), outside the total. */
   group1_hours_by_period: Record<string, string>;
