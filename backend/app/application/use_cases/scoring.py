@@ -43,6 +43,7 @@ from app.domain.rules.scoring_engine import (
     ScoringRow,
     calculate,
     has_evidence,
+    is_pit_criterion,
 )
 from app.domain.rules.scoring_table_choice import verify_table_choice
 from app.domain.rules.scoring_verification import (
@@ -308,6 +309,17 @@ def _check_criterion_inputs(data: ActivityData, version: ScoringTableVersion | N
         and data.quantity != data.quantity.to_integral_value()
     ):
         raise ValidationFailed("quantidade", "Quantidade deve ser inteira neste critério")
+    if (
+        data.points_override is not None
+        and criterion is not None
+        and is_pit_criterion(version, criterion)
+    ):
+        # SPEC_DEVIATION: refused only where group I is reported in PIT hours (the official
+        # table); group I of the old FASI version keeps accepting informed points (PIT-03).
+        raise ValidationFailed(
+            "points_override",
+            "No Grupo I, as horas de PIT são calculadas da carga horária; não há pontos a informar",
+        )
     if data.points_override is not None and (
         criterion is None or criterion.mode is not ScoringMode.CARGA_SEMANAL
     ):

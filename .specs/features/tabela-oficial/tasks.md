@@ -183,8 +183,8 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Atividade do Grupo I com `points_override`: 422 no campo `points_override`, na criação e na edição
-- [ ] Outros grupos e o ajuste manual de pontuação de itens que o permitem não mudam; Gate full passa; 4+ testes
+- [x] Atividade do Grupo I com `points_override`: 422 no campo `points_override`, na criação e na edição
+- [x] Outros grupos e o ajuste manual de pontuação de itens que o permitem não mudam; Gate full passa; 4+ testes
 
 **Tests**: integration
 **Gate**: full
