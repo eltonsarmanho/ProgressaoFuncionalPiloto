@@ -1,0 +1,342 @@
+# Inteligência Documental — Specification
+
+**Escopo:** Complex (arquivos pessoais, serviço externo, estados assíncronos, LGPD).
+**Fontes:** `docs/referencias/normas/FONTES.md`, seção 6 do prompt original e inventário dos 45 documentos reais (44 PDFs e 1 PNG) (Documentos/).
+
+## Problem Statement
+
+O docente reúne dezenas de comprovantes em PDF e imagem (declarações de banca e de orientação, atas, certificados, portarias, artigos e registros) e transcreve à mão, para cada um, o tipo da atividade, as datas, a carga horária e o item da tabela. Os arquivos reais misturam PDF com texto bom, PDF com camada de texto cheia de lixo, PDF só de imagem e PNG. Esta feature guarda os documentos com segurança, extrai o texto (com OCR quando precisa), pede à MariTalk os dados estruturados, sugere o item de pontuação por regras claras e cria atividades rascunho ligadas ao documento e à página de origem. A IA só sugere: tudo passa por revisão humana, e a falta da IA nunca trava o cadastro manual.
+
+## Goals
+
+- [ ] Aceitar PDF, JPG, JPEG e PNG com validação de tipo, tamanho e conteúdo, guardados em área privada, com duplicidade por hash.
+- [ ] Extrair texto de PDF com texto, de PDF digitalizado e de imagem, com a página e o método de cada trecho.
+- [ ] Devolver dados estruturados validados por schema, com `null` no que não consta e nenhum valor que não esteja no texto.
+- [ ] Criar atividades rascunho ligadas ao documento, à página e ao trecho, que só valem depois de validadas por uma pessoa.
+- [ ] Processar os 45 documentos reais do usuário sem erro, validando pelo script local.
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature     | Reason         |
+| ----------- | -------------- |
+| Gerar o Comprovante (DOCX/PDF) e escolher páginas a anexar | Feature `documentos-gerados` |
+| Ler Requerimento e Portaria da banca e o parecer | Feature `banca-parecer`; aqui só a portaria de função administrativa como evidência de atividade |
+| Ler o currículo Lattes | Fonte de dados diferente; fora do prompt desta feature |
+| Reconhecimento de escrita manual e de assinaturas | Tesseract não cobre; vai para revisão humana |
+| Antivírus (ClamAV) e varredura de malware por assinatura | Não há serviço na VM; só verificações estruturais |
+| Celery e Redis | Evolução prevista; a primeira versão usa executor interno |
+| Decidir aprovação, validar atividade sozinha ou pontuar pela IA | Decisão humana; a IA só sugere |
+| Pesquisa de normas pela IA | Feature `normativo` |
+
+---
+
+## Assumptions & Open Questions
+
+Every ambiguity is resolved or recorded here - nothing is left silently unclear.
+
+| Assumption / decision | Chosen default  | Rationale | Confirmed? |
+| --------------------- | --------------- | --------- | ---------- |
+| Modelo padrão da IA | `sabia-4-br-sp` quando `MARITALK_MODEL` está vazio; com outro modelo configurado, em erro de modelo repete com `sabia-4-br-sp` | Decisão do usuário em 2026-11-17: processamento 100% em território nacional para dados de terceiros (+30% de custo). Substitui o padrão da AD-005 | y |
+| Mascaramento antes da IA | CPF, RG, e-mail e telefone viram marcadores; nomes e matrícula SIAPE seguem | Decisão do usuário em 2026-11-17 (LGPD: enviar só o necessário) | y |
+| Executor em segundo plano | Executor no próprio processo do backend, uma tarefa por vez, com tarefas e estados no banco; evolui para Celery e Redis depois | Prompt, seção 18: primeira versão com processamento assíncrono e controle de tarefas; a VM tem 1 CPU | n |
+| Limites de envio | 20 MB por arquivo, 120 MB por requisição, 100 páginas, 100 megapixels, 200 documentos por processo, 60 envios por minuto por usuário | Valores razoáveis para a VM e para os documentos reais (maior artigo: 12 páginas); ajustáveis por configuração | n |
+| Arquivos perigosos | Verificações estruturais (assinatura, JavaScript, lançamento, arquivo embutido, criptografia, bomba de descompressão); sem antivírus | Não há ClamAV na VM; risco anotado e tratado na implantação | n |
+| Qualidade do texto e OCR | Camada de texto inutilizável com menos de 50 caracteres úteis ou mais de 30% de símbolos; OCR Tesseract `por` a 300 dpi; confiança mínima 60% | As portarias reais têm camada de texto com lixo; limiares simples e ajustáveis | n |
+| Texto enviado à IA | Somente texto das 6 primeiras páginas; sem imagens | Prompt: IA não faz OCR; artigos longos só precisam da primeira página | n |
+| Confiança mínima | 0,70; abaixo disso a atividade pede revisão | Padrão do agente; ajustável | n |
+| Taxonomia e regras de sugestão | Códigos fixos e regras versionadas como dados, com a fonte no Anexo I; o usuário revisa a tabela no Design | Evita regra institucional escondida no prompt; ambiguidades (coorientação de TCC, palestras, certificados) viram itens alternativos | n |
+| Reprocessamento | Rejeita os rascunhos não editados da execução anterior e mantém as atividades validadas ou editadas | Evita lixo duplicado sem apagar trabalho humano | n |
+| Substituição e exclusão | Substituir apaga o arquivo anterior e a auditoria guarda nome e hash; excluir é física, com justificativa; as atividades ficam | Prompt pede preservar o original durante o processamento, não indefinidamente | n |
+| Retenção | Sem expiração automática; os documentos ficam enquanto o usuário não os excluir | O processo não é excluído, só arquivado; política de retenção fica para a implantação | n |
+| Mesmo arquivo em vários processos | Permitido; duplicidade só dentro do mesmo processo | Uma portaria pode servir a interstícios diferentes | n |
+| Docente do documento | O nome extraído é comparado, normalizado, ao nome do docente ou à matrícula; divergência vira alerta | Evita pontuar documento de outra pessoa | n |
+| Um documento, várias atividades | Permitido; uma atividade por item descrito | Declarações de disciplinas listam várias ofertas | n |
+| Contagem de comprovantes | `counters.with_evidence` e `SEM_COMPROVANTE` passam a considerar documentos vinculados, além da nota de texto | A nota de texto da feature `pontuacao` era provisória | n |
+| Documentos reais nos testes | Não são versionados; testes usam documentos sintéticos; validação real por script local | Repositório público e LGPD | n |
+| Perfis | Mesmo acesso do processo: ADMIN, SECRETARIA da unidade e DOCENTE dono | Mesma política da `fundacao` | n |
+
+**Open questions:** none - all resolved or logged above.
+
+---
+
+## User Stories
+
+### P1: Envio, guarda e segurança dos documentos ⭐ MVP
+
+**User Story**: Como docente ou secretaria, quero enviar os documentos comprobatórios do processo, para que fiquem guardados com segurança e prontos para leitura.
+
+**Why P1**: Sem os arquivos guardados e protegidos não há leitura nem comprovante; são dados pessoais (LGPD).
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. WHEN um usuário com acesso ao processo envia um ou mais arquivos THEN the system SHALL aceitar PDF, JPG, JPEG e PNG, gravar cada um com identificador, nome original, nome interno aleatório, tipo MIME, tamanho, hash SHA-256, data de envio, usuário, número de páginas e status `PENDENTE`, e responder com o resultado de cada arquivo.
+2. IF a extensão não é `.pdf`, `.jpg`, `.jpeg` ou `.png`, ou o tipo MIME declarado ou a assinatura (bytes iniciais) não corresponde à extensão THEN the system SHALL recusar o arquivo com 422 no campo `arquivo`, sem gravá-lo.
+3. IF o arquivo tem mais de 20 MB THEN the system SHALL recusá-lo com 422 no campo `arquivo`; the system SHALL aceitar requisições de envio de até 120 MB no total, no nginx do compose e no do servidor.
+4. IF um PDF contém JavaScript, ação de lançamento ou arquivo embutido, está criptografado, não abre ou tem mais de 100 páginas, ou uma imagem não decodifica ou tem mais de 100 megapixels THEN the system SHALL recusá-lo com 422 no campo `arquivo` e código `ARQUIVO_INVALIDO`.
+5. The system SHALL gravar os arquivos em diretório privado fora de qualquer caminho público e SHALL nunca servi-los sem sessão e acesso ao processo.
+6. The system SHALL preservar o arquivo original byte a byte e SHALL nunca modificá-lo durante o processamento.
+7. IF já existe documento com o mesmo hash SHA-256 no mesmo processo THEN the system SHALL responder 409 com o identificador do documento existente, sem gravar o arquivo; the system SHALL permitir o mesmo arquivo em processos diferentes.
+8. WHEN o usuário baixa um documento THEN the system SHALL devolver o original com `Content-Disposition: attachment` e `X-Content-Type-Options: nosniff`; WHEN visualiza THEN the system SHALL devolver o arquivo em linha, apenas para PDF e imagem, com os mesmos controles de acesso.
+9. WHEN o usuário substitui um documento THEN the system SHALL validar o novo arquivo como no envio, gravá-lo sob o mesmo identificador, remover o arquivo anterior, reiniciar o processamento e registrar auditoria com nome e hash anterior e novo.
+10. WHEN o usuário exclui um documento THEN the system SHALL exigir justificativa, remover o arquivo e o texto extraído, remover as ligações com atividades, manter as atividades e registrar auditoria.
+11. WHEN o usuário define o tipo e a categoria do documento THEN the system SHALL gravar a classificação manual sem apagar a sugerida pela IA e registrar auditoria.
+12. IF o usuário não tem acesso ao processo THEN the system SHALL responder 404; WHILE o processo está `CONCLUIDO` ou `ARQUIVADO` the system SHALL recusar envio, substituição, exclusão e reprocessamento com 409.
+13. WHEN ocorre envio, download, substituição, exclusão, reprocessamento ou classificação manual THEN the system SHALL registrar evento de auditoria com usuário, data e hora UTC, documento e operação, sem gravar o conteúdo.
+14. IF o processo já tem 200 documentos, ou o usuário fez mais de 60 envios no último minuto THEN the system SHALL recusar o envio, com 422 no campo `limite` no primeiro caso e 429 no segundo.
+15. WHEN o usuário lista os documentos de um processo THEN the system SHALL devolver todos com status, tipo, categoria sugerida e confiança, com filtros por status e tipo, em ordem de envio.
+
+**Independent Test**: Enviar três arquivos de uma vez (um válido, um duplicado e um com extensão trocada) e ver o resultado de cada um.
+
+---
+
+### P1: Processamento: texto, OCR e estados ⭐ MVP
+
+**User Story**: Como docente, quero que o sistema leia o texto de PDFs, digitalizações e imagens, para não ter que digitar o que está no documento.
+
+**Why P1**: Os documentos reais misturam PDF com texto bom, PDF com texto ruidoso, PDF só de imagem e PNG.
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. WHEN um documento é gravado THEN the system SHALL criar uma tarefa de processamento persistida no banco, e WHEN o executor em segundo plano a pega THEN the system SHALL passar o documento a `PROCESSANDO`, processando uma tarefa por vez.
+2. The system SHALL percorrer os estados do documento `PENDENTE`, `PROCESSANDO` e, ao fim, `PROCESSADO`, `REQUER_REVISAO`, `EXTRAIDO_SEM_IA` ou `FALHOU`, e SHALL recusar qualquer outra transição.
+3. WHEN o backend reinicia THEN the system SHALL recolocar em `PENDENTE` as tarefas que estavam `PROCESSANDO`.
+4. WHERE a página de um PDF tem camada de texto utilizável the system SHALL extrair o texto com PyMuPDF e registrar a página, o método `TEXTO` e a contagem de caracteres.
+5. IF a página tem menos de 50 caracteres úteis, ou mais de 30% dos caracteres fora de letras, dígitos, pontuação comum e espaço THEN the system SHALL tratar a camada de texto como inutilizável e usar OCR nessa página.
+6. WHERE a página é imagem, ou de PDF digitalizado, ou tem camada inutilizável the system SHALL renderizá-la a 300 dpi, convertê-la a tons de cinza, executar OCR Tesseract em português e registrar o método `OCR` e a confiança média.
+7. IF a confiança média do OCR do documento é menor que 60% ou nenhum texto é extraído THEN the system SHALL marcar o documento `REQUER_REVISAO` com o alerta `TEXTO_ILEGIVEL`.
+8. IF o OCR de uma página passa de 60 segundos ou o documento passa de 10 minutos THEN the system SHALL marcar o documento `FALHOU` com o código `TEMPO_ESGOTADO`, mantendo o texto das páginas já extraídas.
+9. WHEN o usuário reprocessa um documento THEN the system SHALL executar nova extração, marcar a anterior `SUBSTITUIDA` e rejeitar, com justificativa automática, as atividades sugeridas dela ainda `AGUARDANDO_REVISAO` e não editadas, mantendo as validadas ou editadas.
+10. The system SHALL registrar nos logs apenas identificadores, método, duração, número de páginas e códigos, e SHALL nunca registrar texto, nomes ou números de documentos.
+11. WHILE o OCR ou a IA estão indisponíveis the system SHALL manter o cadastro, a organização e a edição manual de documentos e atividades.
+
+**Independent Test**: Enviar um PDF com texto, um só de imagem e um PNG e ver o texto por página com o método usado.
+
+---
+
+### P1: Extração estruturada com a MariTalk ⭐ MVP
+
+**User Story**: Como docente, quero que a IA leia o texto e preencha os dados da atividade, sem inventar nada.
+
+**Why P1**: Núcleo do produto; a IA nunca decide e nunca inventa (prompt, seção 6).
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. The system SHALL acessar a IA por uma interface de provedor com adaptador da MariTalk em `infrastructure`, e SHALL manter domínio e aplicação sem importar `httpx`.
+2. WHEN a extração é solicitada THEN the system SHALL chamar `POST {MARITALK_API_BASE}/chat/completions` com `Authorization: Bearer` e o modelo `MARITALK_MODEL`, ou `sabia-4-br-sp` quando a variável está vazia.
+3. IF a MariTalk indica modelo inválido (HTTP 400 ou 404 com erro de modelo) e o modelo usado não é `sabia-4-br-sp` THEN the system SHALL repetir a chamada uma vez com `sabia-4-br-sp`.
+4. IF a MariTalk responde 401 ou 403 THEN the system SHALL marcar o documento `EXTRAIDO_SEM_IA` com o código `IA_CREDENCIAL_RECUSADA`, sem repetir a chamada.
+5. IF a MariTalk responde 429 ou 5xx, ou passa de 60 segundos THEN the system SHALL repetir até 2 vezes, com espera de 2 e de 6 segundos, e, esgotadas, SHALL marcar o documento `EXTRAIDO_SEM_IA` com o código `IA_INDISPONIVEL`.
+6. The system SHALL manter `MARITALK_API_KEY` somente no backend e SHALL nunca incluí-la em respostas HTTP, logs, pacote do frontend, mensagens de erro ou eventos de auditoria.
+7. WHEN o texto vai ser enviado à IA THEN the system SHALL substituir CPF, RG, e-mails e telefones por `[CPF]`, `[RG]`, `[EMAIL]` e `[TELEFONE]`, manter nomes e matrícula SIAPE, e guardar o texto original sem máscara somente no banco.
+8. The system SHALL enviar à IA somente texto, nunca imagem ou arquivo, das 6 primeiras páginas, e SHALL marcar o aviso `TRUNCADO` quando o documento tem mais páginas.
+9. The system SHALL exigir resposta em JSON validada por schema estrito por tipo de documento; IF o JSON é inválido ou fora do schema THEN the system SHALL tentar mais uma vez e, persistindo, marcar o documento `REQUER_REVISAO` com o alerta `RESPOSTA_INVALIDA`.
+10. The system SHALL instruir a IA a extrair somente o que está no texto e a devolver `null` para o dado ausente; IF a IA devolve data, carga horária, número, título ou nome que não aparece no texto da página citada THEN the system SHALL trocar o valor por `null` e registrar o aviso `NAO_ENCONTRADO_NO_TEXTO` com o nome do campo.
+11. IF o nome do docente extraído do documento difere do nome e da matrícula do docente do processo THEN the system SHALL emitir o alerta `DOCENTE_DIVERGENTE` e marcar o documento `REQUER_REVISAO`.
+12. The system SHALL calcular a confiança final de cada atividade como o menor valor entre a confiança informada pela IA e a fração dos campos verificáveis encontrados no texto, e SHALL marcar para revisão as atividades abaixo de 0,70.
+13. The system SHALL guardar, em cada execução, o JSON bruto devolvido, o modelo usado, a duração e os avisos, e SHALL não permitir a alteração desse registro.
+
+**Independent Test**: Com um provedor falso, extrair uma declaração de banca e ver os campos, o trecho de origem e o aviso quando a IA inventa uma data.
+
+---
+
+### P1: Classificação em item de pontuação ⭐ MVP
+
+**User Story**: Como banca, quero que a classificação sugerida use regras claras e nunca seja definitiva sem validação humana.
+
+**Why P1**: Prompt: regras determinísticas no backend sempre que possível; a IA não decide.
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. The system SHALL restringir o tipo da atividade a uma taxonomia fechada de códigos, aceitando `OUTRA` quando nenhum serve.
+2. The system SHALL mapear cada tipo da taxonomia, por regra determinística e versionada, a um item sugerido e a itens alternativos da numeração do Anexo I da Res. 4.644/2015, registrando a fonte de cada regra.
+3. IF o tipo é `OUTRA`, ou não há regra para ele THEN the system SHALL criar a atividade sem grupo e item, com a razão `SEM_ENQUADRAMENTO`.
+4. WHERE o tipo tem itens alternativos the system SHALL gravar o item principal como o escolhido e os demais como candidatos, sem justificativa de escolha, até o usuário confirmar.
+5. IF o item sugerido não existe na tabela escolhida do processo THEN the system SHALL criar a atividade com a razão `SEM_ENQUADRAMENTO`.
+6. The system SHALL derivar quantidade e horas por regras determinísticas a partir dos campos extraídos, e SHALL nunca pedir à IA que calcule pontos, quantidades ou horas.
+7. WHEN o documento descreve mais de uma atividade, como uma declaração de disciplinas por período letivo THEN the system SHALL criar uma atividade por item descrito.
+8. The system SHALL criar toda atividade vinda da extração com origem `SUGERIDA_IA` e status `AGUARDANDO_REVISAO`, e SHALL nunca tratá-la como definitiva.
+9. WHEN a data extraída da atividade está fora do interstício do processo THEN the system SHALL sinalizar `FORA_DO_INTERSTICIO` na sugestão e manter a atividade para revisão.
+
+**Independent Test**: Extrair uma declaração de banca de TCC e ver o item sugerido, as alternativas e a origem da regra.
+
+---
+
+### P1: Atividades ligadas aos documentos ⭐ MVP
+
+**User Story**: Como docente, quero que cada atividade aponte para o documento e a página que a comprovam.
+
+**Why P1**: Prompt: toda informação extraída mantém o documento e a página de origem; pontuação rastreável até a evidência.
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. WHEN a extração termina com atividades THEN the system SHALL criar as atividades pelo caso de uso de atividades da pontuação e vinculá-las ao documento, à página e a um trecho de até 300 caracteres de origem.
+2. The system SHALL permitir que um documento comprove várias atividades e que uma atividade tenha vários documentos, com um único vínculo por (atividade, documento, página).
+3. WHEN o usuário vincula manualmente a uma atividade um documento já vinculado a outra THEN the system SHALL exigir justificativa, com 422 no campo `justificativa`.
+4. WHEN a atividade tem ao menos um documento vinculado THEN the system SHALL contá-la em `counters.with_evidence` e SHALL não emitir `SEM_COMPROVANTE`; IF não tem documento nem nota de comprovante THEN the system SHALL emitir `SEM_COMPROVANTE`.
+5. WHEN o usuário remove o vínculo de um documento com uma atividade THEN the system SHALL registrar auditoria e manter a atividade.
+6. WHILE duas atividades ligadas ao mesmo documento são consideradas a mesma pela regra de duplicidade da pontuação the system SHALL manter a exclusão do total já definida, sem dupla contagem.
+
+**Independent Test**: Ver uma atividade sugerida com o nome do documento, a página e o trecho; remover o vínculo e ver o alerta de comprovante.
+
+---
+
+### P1: Revisão humana ⭐ MVP
+
+**User Story**: Como docente ou banca, quero conferir e corrigir o que a IA extraiu antes de pontuar.
+
+**Why P1**: Prompt: todas as informações extraídas passam por revisão humana; nada processado vale como validado.
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. WHEN o usuário abre um documento processado THEN the system SHALL devolver o texto por página com o método e a confiança, o JSON extraído em somente leitura, os alertas e as atividades sugeridas vinculadas.
+2. WHEN o usuário edita uma atividade sugerida THEN the system SHALL usar os endpoints de atividade da pontuação, com justificativa e auditoria, e SHALL manter intacto o JSON bruto da execução.
+3. The system SHALL nunca validar uma atividade por conta própria; WHEN o usuário valida ou rejeita THEN the system SHALL usar o endpoint de status da pontuação.
+4. WHEN o usuário valida várias atividades selecionadas THEN the system SHALL exigir uma justificativa, aplicá-la a cada atividade e registrar um evento de auditoria por atividade.
+
+**Independent Test**: Corrigir o título de uma atividade sugerida, validá-la e ver o total mudar.
+
+---
+
+### P1: Etapas 2 e 3 na interface ⭐ MVP
+
+**User Story**: Como docente sem conhecimento técnico, quero enviar os arquivos e revisar as atividades em telas simples.
+
+**Why P1**: Etapas 2 (Documentos) e 3 (Atividades) do fluxo do prompt.
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. WHEN o usuário abre um processo THEN the frontend SHALL habilitar as Etapas 2 e 3, mantendo as etapas 5 a 9 como "em breve".
+2. WHEN o usuário abre a Etapa 2 THEN the frontend SHALL oferecer envio múltiplo por arrastar e soltar e por seletor, e a lista dos documentos com nome, tipo, tamanho, status, categoria sugerida e confiança.
+3. WHILE há documento `PENDENTE` ou `PROCESSANDO` the frontend SHALL atualizar a lista a cada 3 segundos, sem recarregar a página.
+4. The frontend SHALL permitir visualizar, baixar, substituir, excluir (com justificativa), reprocessar e classificar manualmente cada documento.
+5. IF o envio de um arquivo é recusado (422, 409 ou 429) THEN the frontend SHALL exibir o motivo ao lado desse arquivo, sem impedir os demais.
+6. WHEN o usuário abre a Etapa 3 THEN the frontend SHALL listar as atividades com origem, status, grupo e item, pontuação potencial e documentos vinculados (nome e página), com ações de validar, rejeitar, editar com justificativa, vincular documento e validar as selecionadas.
+7. WHILE um documento está `EXTRAIDO_SEM_IA` the frontend SHALL exibir o aviso de que a IA ficou indisponível e orientar o cadastro manual da atividade.
+8. The frontend SHALL ser utilizável em largura de 360 px sem rolagem horizontal.
+
+**Independent Test**: No navegador, enviar documentos, acompanhar o processamento e validar as atividades sugeridas.
+
+---
+
+### P2: Aceitação com os documentos reais
+
+**User Story**: Como responsável, quero rodar o sistema nos meus documentos reais sem expô-los no repositório.
+
+**Why P2**: Os 45 documentos reais são dados pessoais e o repositório é público; a validação com eles é local.
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. WHEN o script `scripts/process_corpus.py` roda localmente sobre uma pasta THEN the system SHALL gerar um relatório JSON com, por arquivo, o método de extração de cada página, o status final, o tipo, a quantidade de atividades sugeridas, os avisos e o tempo, sem imprimir texto.
+2. The system SHALL nunca versionar documentos reais e SHALL nunca executar o script de corpus na suíte automática.
+3. The system SHALL testar a suíte automática com documentos sintéticos gerados no próprio teste (PDF com texto, PDF digitalizado, JPG, PNG e PDF com camada de texto ruidosa) e com provedor de IA falso.
+4. WHERE existe credencial válida da MariTalk the system SHALL permitir um teste de contrato marcado `maritalk_live`, que não roda por padrão.
+
+**Independent Test**: Rodar o script na pasta Documentos e conferir o relatório.
+
+---
+
+## Edge Cases
+
+Edge cases are usually unwanted-behavior (IF/THEN) or boundary (WHEN) criteria:
+
+- IF um PDF tem páginas com camada de texto boa e páginas digitalizadas THEN the system SHALL usar o método `TEXTO` nas primeiras e `OCR` nas demais, página a página.
+- WHEN o mesmo arquivo é enviado duas vezes na mesma requisição THEN the system SHALL gravar o primeiro e responder 409 ao segundo.
+- IF a IA devolve uma lista de atividades vazia para um documento legível THEN the system SHALL marcar o documento `PROCESSADO` com o aviso `NENHUMA_ATIVIDADE_ENCONTRADA`.
+- IF o nome original do arquivo tem caracteres de caminho (`../`) ou mais de 255 caracteres THEN the system SHALL guardar o nome apenas como texto de exibição e SHALL nunca usá-lo para formar o caminho em disco.
+- WHEN dois usuários reprocessam o mesmo documento ao mesmo tempo THEN the system SHALL aceitar a primeira solicitação e responder 409 à segunda.
+
+---
+
+## Requirement Traceability
+
+Each requirement gets a unique ID for tracking across design, tasks, and validation. IDs numeram os critérios de cada história na ordem em que aparecem.
+
+| Requirement ID | Story       | Phase  | Status  |
+| -------------- | ----------- | ------ | ------- |
+| DOC-01 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| DOC-02 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| DOC-03 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| DOC-04 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| DOC-05 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| DOC-06 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| DOC-07 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| DOC-08 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| DOC-09 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| DOC-10 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| DOC-11 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| DOC-12 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| DOC-13 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| DOC-14 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| DOC-15 | P1: Envio, guarda e segurança dos documentos | Design | Pending |
+| PIPE-01 | P1: Processamento: texto, OCR e estados | Design | Pending |
+| PIPE-02 | P1: Processamento: texto, OCR e estados | Design | Pending |
+| PIPE-03 | P1: Processamento: texto, OCR e estados | Design | Pending |
+| PIPE-04 | P1: Processamento: texto, OCR e estados | Design | Pending |
+| PIPE-05 | P1: Processamento: texto, OCR e estados | Design | Pending |
+| PIPE-06 | P1: Processamento: texto, OCR e estados | Design | Pending |
+| PIPE-07 | P1: Processamento: texto, OCR e estados | Design | Pending |
+| PIPE-08 | P1: Processamento: texto, OCR e estados | Design | Pending |
+| PIPE-09 | P1: Processamento: texto, OCR e estados | Design | Pending |
+| PIPE-10 | P1: Processamento: texto, OCR e estados | Design | Pending |
+| PIPE-11 | P1: Processamento: texto, OCR e estados | Design | Pending |
+| EXT-01 | P1: Extração estruturada com a MariTalk | Design | Pending |
+| EXT-02 | P1: Extração estruturada com a MariTalk | Design | Pending |
+| EXT-03 | P1: Extração estruturada com a MariTalk | Design | Pending |
+| EXT-04 | P1: Extração estruturada com a MariTalk | Design | Pending |
+| EXT-05 | P1: Extração estruturada com a MariTalk | Design | Pending |
+| EXT-06 | P1: Extração estruturada com a MariTalk | Design | Pending |
+| EXT-07 | P1: Extração estruturada com a MariTalk | Design | Pending |
+| EXT-08 | P1: Extração estruturada com a MariTalk | Design | Pending |
+| EXT-09 | P1: Extração estruturada com a MariTalk | Design | Pending |
+| EXT-10 | P1: Extração estruturada com a MariTalk | Design | Pending |
+| EXT-11 | P1: Extração estruturada com a MariTalk | Design | Pending |
+| EXT-12 | P1: Extração estruturada com a MariTalk | Design | Pending |
+| EXT-13 | P1: Extração estruturada com a MariTalk | Design | Pending |
+| CLS-01 | P1: Classificação em item de pontuação | Design | Pending |
+| CLS-02 | P1: Classificação em item de pontuação | Design | Pending |
+| CLS-03 | P1: Classificação em item de pontuação | Design | Pending |
+| CLS-04 | P1: Classificação em item de pontuação | Design | Pending |
+| CLS-05 | P1: Classificação em item de pontuação | Design | Pending |
+| CLS-06 | P1: Classificação em item de pontuação | Design | Pending |
+| CLS-07 | P1: Classificação em item de pontuação | Design | Pending |
+| CLS-08 | P1: Classificação em item de pontuação | Design | Pending |
+| CLS-09 | P1: Classificação em item de pontuação | Design | Pending |
+| VINC-01 | P1: Atividades ligadas aos documentos | Design | Pending |
+| VINC-02 | P1: Atividades ligadas aos documentos | Design | Pending |
+| VINC-03 | P1: Atividades ligadas aos documentos | Design | Pending |
+| VINC-04 | P1: Atividades ligadas aos documentos | Design | Pending |
+| VINC-05 | P1: Atividades ligadas aos documentos | Design | Pending |
+| VINC-06 | P1: Atividades ligadas aos documentos | Design | Pending |
+| REV-01 | P1: Revisão humana | Design | Pending |
+| REV-02 | P1: Revisão humana | Design | Pending |
+| REV-03 | P1: Revisão humana | Design | Pending |
+| REV-04 | P1: Revisão humana | Design | Pending |
+| TELA-01 | P1: Etapas 2 e 3 na interface | Design | Pending |
+| TELA-02 | P1: Etapas 2 e 3 na interface | Design | Pending |
+| TELA-03 | P1: Etapas 2 e 3 na interface | Design | Pending |
+| TELA-04 | P1: Etapas 2 e 3 na interface | Design | Pending |
+| TELA-05 | P1: Etapas 2 e 3 na interface | Design | Pending |
+| TELA-06 | P1: Etapas 2 e 3 na interface | Design | Pending |
+| TELA-07 | P1: Etapas 2 e 3 na interface | Design | Pending |
+| TELA-08 | P1: Etapas 2 e 3 na interface | Design | Pending |
+| ACC-01 | P2: Aceitação com os documentos reais | Design | Pending |
+| ACC-02 | P2: Aceitação com os documentos reais | Design | Pending |
+| ACC-03 | P2: Aceitação com os documentos reais | Design | Pending |
+| ACC-04 | P2: Aceitação com os documentos reais | Design | Pending |
+
+**ID format:** `[CATEGORY]-[NUMBER]`
+
+**Status values:** Pending → In Design → In Tasks → Implementing → Verified
+
+**Coverage:** 70 total, 0 mapped to tasks, 70 unmapped ⚠️ (esperado antes de Tasks)
+
+---
+
+## Success Criteria
+
+- [ ] Os 45 documentos reais passam pelo script local sem erro, com o método e o status de cada um registrados.
+- [ ] Nenhum valor extraído que não esteja no texto da página citada chega a uma atividade (teste automatizado com IA falsa que inventa).
+- [ ] A chave da MariTalk não aparece em nenhuma resposta, log ou pacote do frontend (teste automatizado).
+- [ ] Um docente envia os documentos de um interstício, valida as atividades sugeridas e vê a pontuação em menos de 30 minutos, sem instrução.
