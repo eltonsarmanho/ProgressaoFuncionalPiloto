@@ -1,0 +1,32 @@
+# Específico desta VM compartilhada (não faz parte do compose do projeto):
+# - reaproveita o PostgreSQL do projeto "dashboard" (banco `progressao`, papel próprio);
+# - publica o nginx só em 127.0.0.1:8400 (o nginx do servidor repassa);
+# - limita memória e gira os logs, porque a VM tem 1 CPU e pouca folga.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  postgres:
+    profiles: ["local-db"]
+  backend:
+    depends_on: !reset null
+    networks: [default, dashdb]
+    mem_limit: 384m
+    cpus: 0.75
+    logging: *logging
+  frontend:
+    mem_limit: 32m
+    logging: *logging
+  nginx:
+    ports: !override
+      - "127.0.0.1:8400:80"
+    mem_limit: 32m
+    logging: *logging
+
+networks:
+  dashdb:
+    external: true
+    name: dashboard_app_network
