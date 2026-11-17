@@ -582,9 +582,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] PDF sintético com texto devolve o texto de cada página, com número e contagem
-- [ ] PDF digitalizado devolve texto vazio
-- [ ] Gate quick passa; 5+ testes
+- [x] PDF sintético com texto devolve o texto de cada página, com número e contagem
+- [x] PDF digitalizado devolve texto vazio
+- [x] Gate quick passa; 5+ testes
 
 **Tests**: unit
 **Gate**: quick

@@ -79,6 +79,15 @@ def pdf_scanned(pages: Sequence[str] = SAMPLE_PAGES) -> bytes:
     return _pdf_bytes(doc)
 
 
+def pdf_mixed(text_page: str = SAMPLE_PAGES[0], scanned_page: str = SAMPLE_PAGES[0]) -> bytes:
+    """Two pages: the first has a text layer, the second is a scanned image."""
+    doc = _new_pdf([text_page])
+    page = doc.new_page()
+    picture = _encode(_render_text(scanned_page, _PAGE_WIDTH_PX, _PAGE_HEIGHT_PX), "PNG")
+    page.insert_image(page.rect, stream=picture)
+    return _pdf_bytes(doc)
+
+
 def jpg_with_text(text: str = SAMPLE_PAGES[0]) -> bytes:
     return _encode(_render_text(text, _PAGE_WIDTH_PX, _PAGE_HEIGHT_PX), "JPEG")
 
