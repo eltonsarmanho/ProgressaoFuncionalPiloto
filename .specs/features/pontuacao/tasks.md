@@ -263,12 +263,12 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Só `VALIDADA` dentro do interstício, com critério, sem duplicidade e em grupo que conta entra no total; `AGUARDANDO_REVISAO` vira `POTENCIAL` fora do total
-- [ ] Grupo que não conta dá subtotal 0 e razão `GRUPO_NAO_CONTA`; sem critério dá `SEM_ENQUADRAMENTO`; fora do interstício dá `FORA_DO_INTERSTICIO`
-- [ ] Limite por critério e por grupo corta a soma e gera `LIMITE_APLICADO` com antes e depois
-- [ ] Alertas por linha: `INTERSTICIO_PARCIAL`, `DATA_AUSENTE`, `SEM_COMPROVANTE`, `PONTOS_AJUSTADOS_MANUALMENTE`
-- [ ] Caso real em miniatura: subtotais 92, 120, 15, 95, 0, 30, 6, 56 e total 414
-- [ ] Mesma entrada dá o mesmo resultado; contadores corretos; Gate quick passa; 25+ testes
+- [x] Só `VALIDADA` dentro do interstício, com critério, sem duplicidade e em grupo que conta entra no total; `AGUARDANDO_REVISAO` vira `POTENCIAL` fora do total
+- [x] Grupo que não conta dá subtotal 0 e razão `GRUPO_NAO_CONTA`; sem critério dá `SEM_ENQUADRAMENTO`; fora do interstício dá `FORA_DO_INTERSTICIO`
+- [x] Limite por critério e por grupo corta a soma e gera `LIMITE_APLICADO` com antes e depois
+- [x] Alertas por linha: `INTERSTICIO_PARCIAL`, `DATA_AUSENTE`, `SEM_COMPROVANTE`, `PONTOS_AJUSTADOS_MANUALMENTE`
+- [x] Caso real em miniatura: subtotais 92, 120, 15, 95, 0, 30, 6, 56 e total 414
+- [x] Mesma entrada dá o mesmo resultado; contadores corretos; Gate quick passa; 25+ testes
 
 **Tests**: unit
 **Gate**: quick

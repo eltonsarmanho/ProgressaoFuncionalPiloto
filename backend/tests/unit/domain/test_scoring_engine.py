@@ -1,0 +1,484 @@
+"""CALC-01, CALC-07..CALC-14 and VERIF-08: the deterministic scoring engine."""
+
+from datetime import UTC, date, datetime
+from decimal import Decimal
+from itertools import count
+from uuid import uuid4
+
+from app.domain.entities.activity import Activity, ActivityStatus, Level
+from app.domain.entities.scoring import (
+    ScoringCriterion,
+    ScoringGroup,
+    ScoringMode,
+    ScoringTableVersion,
+    TableStatus,
+)
+from app.domain.rules.interstice import Interstice
+from app.domain.rules.process_verification import Severity
+from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
+from app.domain.rules.scoring_engine import RowStatus, calculate
+
+D = Decimal
+INTERSTICE = Interstice(date(2022, 11, 23), date(2024, 11, 23))
+INSIDE = date(2023, 6, 1)
+_seq = count(1)
+
+
+def per_unit(group, item, points, max_points=None) -> ScoringCriterion:
+    return ScoringCriterion(
+        group, item, f"item {group}.{item}", "unidade", ScoringMode.POR_UNIDADE,
+        unit_points=D(points), max_points=None if max_points is None else D(max_points),
+    )  # fmt: skip
+
+
+def group(number, *criteria, counts=True, max_points=None) -> ScoringGroup:
+    return ScoringGroup(
+        number, f"Grupo {number}", counts_in_total=counts,
+        max_points=None if max_points is None else D(max_points), criteria=tuple(criteria),
+    )  # fmt: skip
+
+
+def table(*groups) -> ScoringTableVersion:
+    return ScoringTableVersion(
+        table_id=None,
+        name="Tabela de teste",
+        valid_from=date(2020, 1, 1),
+        valid_to=None,
+        norm_reference="Res. 4.644/2015-CONSEPE, Anexo I",
+        status=TableStatus.OFICIAL,
+        groups=tuple(groups),
+    )
+
+
+def act(g=2, item=7, quantity="1", **kwargs) -> Activity:
+    n = next(_seq)
+    defaults = {
+        "title": f"Atividade {n}",
+        "event_date": INSIDE,
+        "evidence_note": "Certificado",
+        "created_at": datetime(2025, 1, 1, tzinfo=UTC),
+    }
+    defaults.update(kwargs)
+    return Activity(
+        id=uuid4(), process_id=uuid4(), created_by=uuid4(), group_number=g, item_number=item,
+        quantity=D(quantity), **defaults,
+    )  # fmt: skip
+
+
+BASIC = table(group(2, per_unit(2, 7, "10")))
+
+
+def row_of(result, activity):
+    return next(r for r in result.rows if r.activity_id == activity.id)
+
+
+# --- inclusion rules (CALC-08, CALC-10, VERIF-08) -------------------------------------------
+
+
+def test_validated_activity_inside_interstice_counts_in_total():
+    a = act(quantity="4")
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.PONTUADA
+    assert row_of(result, a).points == D("40")
+    assert result.group_subtotals[2] == D("40")
+    assert result.total == D("40")
+
+
+def test_awaiting_review_becomes_potential_and_stays_out_of_the_total():
+    a = act(quantity="3", status=ActivityStatus.AGUARDANDO_REVISAO)
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.POTENCIAL
+    assert row_of(result, a).points == D("30")
+    assert result.potential_total == D("30")
+    assert result.total == D("0")
+    assert result.group_subtotals[2] == D("0")
+
+
+def test_rejected_activity_is_not_scored_with_reason_rejeitada():
+    a = act(status=ActivityStatus.REJEITADA)
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
+    assert row_of(result, a).reasons == (NotScoredReason.REJEITADA,)
+    assert result.total == D("0")
+
+
+def test_activity_without_criterion_in_table_is_sem_enquadramento():
+    a = act(item=99)
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
+    assert row_of(result, a).reasons == (NotScoredReason.SEM_ENQUADRAMENTO,)
+    assert result.total == D("0")
+
+
+def test_activity_without_group_and_item_is_sem_enquadramento():
+    a = act(g=None, item=None)
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert row_of(result, a).reasons == (NotScoredReason.SEM_ENQUADRAMENTO,)
+
+
+def test_activity_outside_interstice_is_fora_do_interstício():
+    a = act(event_date=date(2022, 11, 22))
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
+    assert row_of(result, a).reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
+    assert result.total == D("0")
+
+
+def test_group_that_does_not_count_gives_zero_subtotal_and_reason():
+    version = table(group(1, per_unit(1, 1, "10"), counts=False), group(2, per_unit(2, 7, "10")))
+    a = act(g=1, item=1, quantity="2")
+    b = act(quantity="1")
+
+    result = calculate(version, [a, b], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
+    assert row_of(result, a).reasons == (NotScoredReason.GRUPO_NAO_CONTA,)
+    assert result.group_subtotals[1] == D("0")
+    assert result.total == D("10")
+
+
+def test_newer_duplicate_is_excluded_and_older_counts():
+    older = act(title="Comissão X", created_at=datetime(2025, 1, 1, tzinfo=UTC))
+    newer = act(title="comissao x", created_at=datetime(2025, 1, 2, tzinfo=UTC))
+
+    result = calculate(BASIC, [newer, older], INTERSTICE)
+
+    assert row_of(result, older).status is RowStatus.PONTUADA
+    assert row_of(result, newer).status is RowStatus.NAO_PONTUADA
+    assert row_of(result, newer).reasons == (NotScoredReason.DUPLICIDADE,)
+    assert result.total == D("10")
+
+
+def test_distinct_justification_makes_both_count():
+    older = act(title="Comissão X", created_at=datetime(2025, 1, 1, tzinfo=UTC))
+    newer = act(
+        title="Comissão X",
+        created_at=datetime(2025, 1, 2, tzinfo=UTC),
+        distinct_justification="Outra comissão",
+    )
+
+    result = calculate(BASIC, [older, newer], INTERSTICE)
+
+    assert result.total == D("20")
+
+
+def test_precedence_missing_criterion_over_rejected_over_period():
+    rejected_missing = act(item=99, status=ActivityStatus.REJEITADA)
+    rejected_outside = act(status=ActivityStatus.REJEITADA, event_date=date(2020, 1, 1))
+
+    result = calculate(BASIC, [rejected_missing, rejected_outside], INTERSTICE)
+
+    assert row_of(result, rejected_missing).reasons == (NotScoredReason.SEM_ENQUADRAMENTO,)
+    assert row_of(result, rejected_outside).reasons == (NotScoredReason.REJEITADA,)
+
+
+def test_precedence_period_over_group_that_does_not_count():
+    version = table(group(1, per_unit(1, 1, "10"), counts=False))
+    a = act(g=1, item=1, event_date=date(2020, 1, 1))
+
+    result = calculate(version, [a], INTERSTICE)
+
+    assert row_of(result, a).reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
+
+
+def test_awaiting_review_outside_interstice_is_not_potential():
+    a = act(status=ActivityStatus.AGUARDANDO_REVISAO, event_date=date(2020, 1, 1))
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
+    assert result.potential_total == D("0")
+
+
+# --- limits (CALC-07) -----------------------------------------------------------------------
+
+
+def test_criterion_cap_cuts_the_sum_and_reports_before_and_after():
+    version = table(group(3, per_unit(3, 1, "6", max_points="10")))
+    a, b = act(g=3, item=1), act(g=3, item=1)
+
+    result = calculate(version, [a, b], INTERSTICE)
+
+    assert result.group_subtotals[3] == D("10")
+    assert result.total == D("10")
+    assert len(result.limit_adjustments) == 1
+    adjustment = result.limit_adjustments[0]
+    assert (adjustment.scope, adjustment.group_number, adjustment.item_number) == ("CRITERIO", 3, 1)
+    assert (adjustment.before, adjustment.after) == (D("12"), D("10"))
+    assert adjustment.alert.code is ScoringAlertCode.LIMITE_APLICADO
+    assert adjustment.alert.severity is Severity.ALERTA
+
+
+def test_per_activity_points_stay_uncapped_when_the_criterion_cap_applies():
+    version = table(group(3, per_unit(3, 1, "6", max_points="10")))
+    a, b = act(g=3, item=1), act(g=3, item=1)
+
+    result = calculate(version, [a, b], INTERSTICE)
+
+    assert row_of(result, a).points == D("6")
+    assert row_of(result, b).points == D("6")
+
+
+def test_group_cap_cuts_the_group_subtotal():
+    version = table(group(4, per_unit(4, 1, "30"), per_unit(4, 2, "30"), max_points="50"))
+
+    result = calculate(version, [act(g=4, item=1), act(g=4, item=2)], INTERSTICE)
+
+    assert result.group_subtotals[4] == D("50")
+    adjustment = result.limit_adjustments[0]
+    assert (adjustment.scope, adjustment.group_number, adjustment.item_number) == ("GRUPO", 4, None)
+    assert (adjustment.before, adjustment.after) == (D("60"), D("50"))
+    assert adjustment.alert.code is ScoringAlertCode.LIMITE_APLICADO
+
+
+def test_criterion_cap_is_applied_before_the_group_cap():
+    version = table(
+        group(4, per_unit(4, 1, "30", max_points="20"), per_unit(4, 2, "30"), max_points="45")
+    )
+
+    result = calculate(version, [act(g=4, item=1), act(g=4, item=2)], INTERSTICE)
+
+    assert result.group_subtotals[4] == D("45")
+    assert [(a.scope, a.before, a.after) for a in result.limit_adjustments] == [
+        ("CRITERIO", D("30"), D("20")),
+        ("GRUPO", D("50"), D("45")),
+    ]
+
+
+def test_sum_at_or_below_the_limit_reports_no_adjustment():
+    version = table(group(3, per_unit(3, 1, "5", max_points="10")))
+
+    result = calculate(version, [act(g=3, item=1), act(g=3, item=1)], INTERSTICE)
+
+    assert result.group_subtotals[3] == D("10")
+    assert result.limit_adjustments == ()
+
+
+def test_cap_ignores_activities_that_do_not_count():
+    version = table(group(3, per_unit(3, 1, "8", max_points="10")))
+    counted = act(g=3, item=1)
+    pending = act(g=3, item=1, status=ActivityStatus.AGUARDANDO_REVISAO)
+    rejected = act(g=3, item=1, status=ActivityStatus.REJEITADA)
+
+    result = calculate(version, [counted, pending, rejected], INTERSTICE)
+
+    assert result.total == D("8")
+    assert result.limit_adjustments == ()
+
+
+def test_informed_value_above_the_criterion_cap_is_reported_per_activity():
+    criterion = ScoringCriterion(
+        1, 3, "Avaliação discente", "nota", ScoringMode.VALOR_INFORMADO, max_points=D("10")
+    )
+    a = act(g=1, item=3, informed_points=D("14"))
+
+    result = calculate(table(group(1, criterion)), [a], INTERSTICE)
+
+    assert row_of(result, a).points == D("10")
+    assert result.group_subtotals[1] == D("10")
+    adjustment = result.limit_adjustments[0]
+    assert (adjustment.scope, adjustment.activity_id) == ("ATIVIDADE", a.id)
+    assert (adjustment.before, adjustment.after) == (D("14"), D("10"))
+    assert ScoringAlertCode.LIMITE_APLICADO in {x.code for x in row_of(result, a).alerts}
+
+
+# --- row alerts (VERIF-03, VERIF-04, VERIF-08, CALC-06) ---------------------------------------
+
+
+def codes(result, activity):
+    return {alert.code for alert in row_of(result, activity).alerts}
+
+
+def test_partial_period_is_scored_with_intersticio_parcial_alert():
+    a = act(
+        quantity="2",
+        event_date=None,
+        period_start=date(2022, 10, 1),
+        period_end=date(2023, 1, 1),
+    )
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.PONTUADA
+    assert row_of(result, a).points == D("20")
+    assert ScoringAlertCode.INTERSTICIO_PARCIAL in codes(result, a)
+
+
+def test_activity_without_date_is_scored_with_data_ausente_alert():
+    a = act(event_date=None)
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.PONTUADA
+    assert ScoringAlertCode.DATA_AUSENTE in codes(result, a)
+
+
+def test_activity_without_evidence_note_keeps_points_and_gets_sem_comprovante():
+    a = act(evidence_note=None)
+    b = act(evidence_note="  ")
+    c = act()
+
+    result = calculate(BASIC, [a, b, c], INTERSTICE)
+
+    assert ScoringAlertCode.SEM_COMPROVANTE in codes(result, a)
+    assert ScoringAlertCode.SEM_COMPROVANTE in codes(result, b)
+    assert ScoringAlertCode.SEM_COMPROVANTE not in codes(result, c)
+    assert result.total == D("30")
+
+
+def test_manual_points_on_weekly_load_raise_pontos_ajustados_manualmente():
+    criterion = ScoringCriterion(
+        1, 1, "Aulas", "h", ScoringMode.CARGA_SEMANAL, weeks_per_semester=17, prep_ratio=D("1")
+    )
+    a = act(g=1, item=1, hours=D("68"), points_override=D("24"), level=Level.GRADUACAO)
+
+    result = calculate(table(group(1, criterion)), [a], INTERSTICE)
+
+    assert row_of(result, a).points == D("24")
+    assert ScoringAlertCode.PONTOS_AJUSTADOS_MANUALMENTE in codes(result, a)
+
+
+def test_row_alerts_carry_severity_message_and_norm_reference():
+    a = act(event_date=None, evidence_note=None)
+
+    alerts = row_of(calculate(BASIC, [a], INTERSTICE), a).alerts
+
+    assert len(alerts) == 2
+    for alert in alerts:
+        assert alert.severity is Severity.ALERTA
+        assert alert.message
+        assert alert.norm_reference == "Res. 4.644/2015-CONSEPE, Anexo I"
+
+
+def test_invalid_interstice_does_not_exclude_nor_alert_on_dates():
+    a = act(event_date=date(2020, 1, 1))
+    bad = Interstice(date(2024, 11, 23), date(2022, 11, 23))
+
+    result = calculate(BASIC, [a], bad)
+
+    assert row_of(result, a).status is RowStatus.PONTUADA
+    assert NotScoredReason.FORA_DO_INTERSTICIO not in row_of(result, a).reasons
+    assert ScoringAlertCode.INTERSTICIO_PARCIAL not in codes(result, a)
+
+
+def test_non_scored_row_has_no_alerts():
+    a = act(event_date=date(2020, 1, 1), evidence_note=None)
+
+    assert row_of(calculate(BASIC, [a], INTERSTICE), a).alerts == ()
+
+
+# --- row detail, percent, counters, determinism (CALC-01, CALC-11..CALC-13) -------------------
+
+
+def test_row_reports_criterion_unit_points_effective_quantity_and_formula():
+    a = act(quantity="4")
+
+    row = row_of(calculate(BASIC, [a], INTERSTICE), a)
+
+    assert (row.group_number, row.item_number) == (2, 7)
+    assert row.unit_points == D("10")
+    assert row.effective_quantity == D("4")
+    assert row.formula_text == "4 × 10"
+
+
+def test_subtotals_cover_groups_one_to_eight_with_zero_for_empty_groups():
+    result = calculate(BASIC, [act()], INTERSTICE)
+
+    assert sorted(result.group_subtotals) == [1, 2, 3, 4, 5, 6, 7, 8]
+    assert result.group_subtotals[2] == D("10")
+    assert all(v == D("0") for k, v in result.group_subtotals.items() if k != 2)
+
+
+def test_group1_percent_is_none_when_total_is_zero():
+    assert calculate(BASIC, [], INTERSTICE).group1_percent is None
+
+
+def test_counters():
+    version = table(group(2, per_unit(2, 7, "10")))
+    ok = act()
+    no_evidence = act(evidence_note=None)
+    pending = act(status=ActivityStatus.AGUARDANDO_REVISAO)
+    rejected = act(status=ActivityStatus.REJEITADA)
+    outside = act(event_date=date(2020, 1, 1))
+
+    everything = [ok, no_evidence, pending, rejected, outside]
+    counters = calculate(version, everything, INTERSTICE).counters
+
+    assert counters.activities == 5
+    assert counters.with_evidence == 4  # all but no_evidence
+    assert counters.pending == 1
+    assert counters.not_scored == 2  # rejected, outside
+    assert counters.with_alerts == 1  # no_evidence
+
+
+def test_same_input_gives_the_same_result():
+    activities = [act(quantity="2"), act(g=2, item=99), act(event_date=None)]
+
+    assert calculate(BASIC, activities, INTERSTICE) == calculate(BASIC, activities, INTERSTICE)
+
+
+# --- real case in miniature (CALC-14) ---------------------------------------------------------
+
+
+def _fasi_miniature() -> ScoringTableVersion:
+    weekly = lambda item, prep: ScoringCriterion(  # noqa: E731
+        1, item, f"I.{item}", "h", ScoringMode.CARGA_SEMANAL,
+        weeks_per_semester=17, prep_ratio=D(prep),
+    )  # fmt: skip
+    iv4 = ScoringCriterion(
+        4, 4, "IV.4", "h", ScoringMode.POR_BLOCO_DE_HORAS,
+        unit_points=D("5"), hours_per_block=D("3"),
+    )  # fmt: skip
+    return table(
+        group(1, weekly(1, "1"), weekly(2, "2"), counts=True),
+        group(2, per_unit(2, 7, "10"), per_unit(2, 8, "10"), per_unit(2, 12, "10")),
+        group(3, per_unit(3, 2, "10"), per_unit(3, 3, "5")),
+        group(4, per_unit(4, 1, "15"), iv4),
+        group(5),
+        group(6, per_unit(6, 6, "30")),
+        group(7, per_unit(7, 10, "3")),
+        group(
+            8, per_unit(8, 11, "25"), per_unit(8, 12, "20"), per_unit(8, 13, "6"),
+            per_unit(8, 66, "5"),
+        ),
+    )  # fmt: skip
+
+
+def test_real_case_fasi_2022_2024_in_miniature():
+    activities = [
+        act(g=1, item=1, hours=D("68"), points_override=D("24"), level=Level.GRADUACAO),
+        act(g=1, item=1, hours=D("68"), points_override=D("24"), level=Level.GRADUACAO),
+        act(g=1, item=2, hours=D("68"), points_override=D("24"), level=Level.POS_GRADUACAO),
+        act(g=1, item=1, hours=D("20"), points_override=D("20"), level=Level.GRADUACAO),
+    ]
+    activities += [act(g=2, item=7) for _ in range(4)]
+    activities += [act(g=2, item=8) for _ in range(4)]
+    activities += [act(g=2, item=12) for _ in range(4)]
+    activities += [act(g=3, item=2), act(g=3, item=3)]
+    activities += [act(g=4, item=1) for _ in range(4)]
+    activities += [act(g=4, item=4, hours=D("21"))]
+    activities += [act(g=6, item=6)]
+    activities += [act(g=7, item=10) for _ in range(2)]
+    activities += [act(g=8, item=n) for n in (11, 12, 13, 66)]
+
+    result = calculate(_fasi_miniature(), activities, INTERSTICE)
+
+    assert [result.group_subtotals[n] for n in range(1, 9)] == [
+        D("92"), D("120"), D("15"), D("95"), D("0"), D("30"), D("6"), D("56"),
+    ]  # fmt: skip
+    assert result.total == D("414")
+    assert result.group1_percent == D("22.22")
+    assert result.potential_total == D("0")
+    assert result.counters.not_scored == 0

@@ -300,19 +300,19 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ATV-12 | P1: Atividades do processo | Design | In Tasks |
 | ATV-13 | P1: Atividades do processo | Design | In Tasks |
 | ATV-14 | P1: Atividades do processo | Design | In Tasks |
-| CALC-01 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-01 | P1: Cálculo determinístico da pontuação | Design | Implementing |
 | CALC-02 | P1: Cálculo determinístico da pontuação | Design | Implementing |
 | CALC-03 | P1: Cálculo determinístico da pontuação | Design | Implementing |
 | CALC-04 | P1: Cálculo determinístico da pontuação | Design | Implementing |
 | CALC-05 | P1: Cálculo determinístico da pontuação | Design | Implementing |
 | CALC-06 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-07 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
-| CALC-08 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
-| CALC-09 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
-| CALC-10 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
-| CALC-11 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
-| CALC-12 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
-| CALC-13 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-07 | P1: Cálculo determinístico da pontuação | Design | Implementing |
+| CALC-08 | P1: Cálculo determinístico da pontuação | Design | Implementing |
+| CALC-09 | P1: Cálculo determinístico da pontuação | Design | Implementing |
+| CALC-10 | P1: Cálculo determinístico da pontuação | Design | Implementing |
+| CALC-11 | P1: Cálculo determinístico da pontuação | Design | Implementing |
+| CALC-12 | P1: Cálculo determinístico da pontuação | Design | Implementing |
+| CALC-13 | P1: Cálculo determinístico da pontuação | Design | Implementing |
 | CALC-14 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
 | VERIF-01 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
 | VERIF-02 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
@@ -321,7 +321,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VERIF-05 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
 | VERIF-06 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
 | VERIF-07 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-08 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-08 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
 | VERIF-09 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
 | VERIF-10 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
 | VERIF-11 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
