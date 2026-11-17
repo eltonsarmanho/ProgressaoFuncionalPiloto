@@ -251,16 +251,16 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | INFRA-06 | P1: Stack executável | Design | Implementing |
 | INFRA-07 | P1: Stack executável | Design | Implementing |
 | AUTH-01 | P1: Autenticação | Design | Pending |
-| AUTH-02 | P1: Autenticação | Design | Pending |
+| AUTH-02 | P1: Autenticação | Design | Implementing |
 | AUTH-03 | P1: Autenticação | Design | Pending |
-| AUTH-04 | P1: Autenticação | Design | Pending |
-| AUTH-05 | P1: Autenticação | Design | Pending |
+| AUTH-04 | P1: Autenticação | Design | Implementing |
+| AUTH-05 | P1: Autenticação | Design | Implementing |
 | AUTH-06 | P1: Autenticação | Design | Pending |
 | AUTH-07 | P1: Autenticação | Design | Implementing |
 | AUTH-08 | P1: Autenticação | Design | Implementing |
 | AUTH-09 | P1: Autenticação | Design | Implementing |
 | AUTH-10 | P1: Autenticação | Design | Pending |
-| AUTH-11 | P1: Autenticação | Design | Pending |
+| AUTH-11 | P1: Autenticação | Design | Implementing |
 | DOC-01 | P1: Cadastro de docente | Design | Pending |
 | DOC-02 | P1: Cadastro de docente | Design | Pending |
 | DOC-03 | P1: Cadastro de docente | Design | Implementing |

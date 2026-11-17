@@ -411,8 +411,8 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Testes: 5 falhas → 6ª bloqueada; liberada após 15 min; expiração 30 min/8 h nos limites
-- [ ] Gate full passa
+- [x] Testes: 5 falhas → 6ª bloqueada; liberada após 15 min; expiração 30 min/8 h nos limites
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full
