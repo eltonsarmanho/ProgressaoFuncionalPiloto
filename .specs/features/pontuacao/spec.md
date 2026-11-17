@@ -269,92 +269,92 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story       | Phase  | Status  |
 | -------------- | ----------- | ------ | ------- |
-| TAB-01 | P1: Catálogo de tabelas de pontuação versionadas | Design | Pending |
-| TAB-02 | P1: Catálogo de tabelas de pontuação versionadas | Design | Pending |
-| TAB-03 | P1: Catálogo de tabelas de pontuação versionadas | Design | Pending |
-| TAB-04 | P1: Catálogo de tabelas de pontuação versionadas | Design | Pending |
-| TAB-05 | P1: Catálogo de tabelas de pontuação versionadas | Design | Pending |
-| TAB-06 | P1: Catálogo de tabelas de pontuação versionadas | Design | Pending |
-| TAB-07 | P1: Catálogo de tabelas de pontuação versionadas | Design | Pending |
-| TAB-08 | P1: Catálogo de tabelas de pontuação versionadas | Design | Pending |
-| SEL-01 | P1: Tabela aplicada ao processo | Design | Pending |
-| SEL-02 | P1: Tabela aplicada ao processo | Design | Pending |
-| SEL-03 | P1: Tabela aplicada ao processo | Design | Pending |
-| SEL-04 | P1: Tabela aplicada ao processo | Design | Pending |
-| SEL-05 | P1: Tabela aplicada ao processo | Design | Pending |
-| SEL-06 | P1: Tabela aplicada ao processo | Design | Pending |
-| SEL-07 | P1: Tabela aplicada ao processo | Design | Pending |
-| SEL-08 | P1: Tabela aplicada ao processo | Design | Pending |
-| SEL-09 | P1: Tabela aplicada ao processo | Design | Pending |
-| ATV-01 | P1: Atividades do processo | Design | Pending |
-| ATV-02 | P1: Atividades do processo | Design | Pending |
-| ATV-03 | P1: Atividades do processo | Design | Pending |
-| ATV-04 | P1: Atividades do processo | Design | Pending |
-| ATV-05 | P1: Atividades do processo | Design | Pending |
-| ATV-06 | P1: Atividades do processo | Design | Pending |
-| ATV-07 | P1: Atividades do processo | Design | Pending |
-| ATV-08 | P1: Atividades do processo | Design | Pending |
-| ATV-09 | P1: Atividades do processo | Design | Pending |
-| ATV-10 | P1: Atividades do processo | Design | Pending |
-| ATV-11 | P1: Atividades do processo | Design | Pending |
-| ATV-12 | P1: Atividades do processo | Design | Pending |
-| ATV-13 | P1: Atividades do processo | Design | Pending |
-| ATV-14 | P1: Atividades do processo | Design | Pending |
-| CALC-01 | P1: Cálculo determinístico da pontuação | Design | Pending |
-| CALC-02 | P1: Cálculo determinístico da pontuação | Design | Pending |
-| CALC-03 | P1: Cálculo determinístico da pontuação | Design | Pending |
-| CALC-04 | P1: Cálculo determinístico da pontuação | Design | Pending |
-| CALC-05 | P1: Cálculo determinístico da pontuação | Design | Pending |
-| CALC-06 | P1: Cálculo determinístico da pontuação | Design | Pending |
-| CALC-07 | P1: Cálculo determinístico da pontuação | Design | Pending |
-| CALC-08 | P1: Cálculo determinístico da pontuação | Design | Pending |
-| CALC-09 | P1: Cálculo determinístico da pontuação | Design | Pending |
-| CALC-10 | P1: Cálculo determinístico da pontuação | Design | Pending |
-| CALC-11 | P1: Cálculo determinístico da pontuação | Design | Pending |
-| CALC-12 | P1: Cálculo determinístico da pontuação | Design | Pending |
-| CALC-13 | P1: Cálculo determinístico da pontuação | Design | Pending |
-| CALC-14 | P1: Cálculo determinístico da pontuação | Design | Pending |
-| VERIF-01 | P1: Verificações: interstício, duplicidade e requisitos | Design | Pending |
-| VERIF-02 | P1: Verificações: interstício, duplicidade e requisitos | Design | Pending |
-| VERIF-03 | P1: Verificações: interstício, duplicidade e requisitos | Design | Pending |
-| VERIF-04 | P1: Verificações: interstício, duplicidade e requisitos | Design | Pending |
-| VERIF-05 | P1: Verificações: interstício, duplicidade e requisitos | Design | Pending |
-| VERIF-06 | P1: Verificações: interstício, duplicidade e requisitos | Design | Pending |
-| VERIF-07 | P1: Verificações: interstício, duplicidade e requisitos | Design | Pending |
-| VERIF-08 | P1: Verificações: interstício, duplicidade e requisitos | Design | Pending |
-| VERIF-09 | P1: Verificações: interstício, duplicidade e requisitos | Design | Pending |
-| VERIF-10 | P1: Verificações: interstício, duplicidade e requisitos | Design | Pending |
-| VERIF-11 | P1: Verificações: interstício, duplicidade e requisitos | Design | Pending |
-| VERIF-12 | P1: Verificações: interstício, duplicidade e requisitos | Design | Pending |
-| VERIF-13 | P1: Verificações: interstício, duplicidade e requisitos | Design | Pending |
-| TELA-01 | P1: Etapa 4 na interface | Design | Pending |
-| TELA-02 | P1: Etapa 4 na interface | Design | Pending |
-| TELA-03 | P1: Etapa 4 na interface | Design | Pending |
-| TELA-04 | P1: Etapa 4 na interface | Design | Pending |
-| TELA-05 | P1: Etapa 4 na interface | Design | Pending |
-| TELA-06 | P1: Etapa 4 na interface | Design | Pending |
-| TELA-07 | P1: Etapa 4 na interface | Design | Pending |
-| TELA-08 | P1: Etapa 4 na interface | Design | Pending |
-| ADM-01 | P2: Administração das tabelas | Design | Pending |
-| ADM-02 | P2: Administração das tabelas | Design | Pending |
-| ADM-03 | P2: Administração das tabelas | Design | Pending |
-| ADM-04 | P2: Administração das tabelas | Design | Pending |
-| ADM-05 | P2: Administração das tabelas | Design | Pending |
-| ADM-06 | P2: Administração das tabelas | Design | Pending |
-| ADM-07 | P2: Administração das tabelas | Design | Pending |
-| ADM-08 | P2: Administração das tabelas | Design | Pending |
-| ADM-09 | P2: Administração das tabelas | Design | Pending |
-| ADM-10 | P2: Administração das tabelas | Design | Pending |
-| ADM-11 | P2: Administração das tabelas | Design | Pending |
-| ADMUI-01 | P3: Interface de administração das tabelas | Design | Pending |
-| ADMUI-02 | P3: Interface de administração das tabelas | Design | Pending |
-| ADMUI-03 | P3: Interface de administração das tabelas | Design | Pending |
+| TAB-01 | P1: Catálogo de tabelas de pontuação versionadas | Design | In Tasks |
+| TAB-02 | P1: Catálogo de tabelas de pontuação versionadas | Design | In Tasks |
+| TAB-03 | P1: Catálogo de tabelas de pontuação versionadas | Design | In Tasks |
+| TAB-04 | P1: Catálogo de tabelas de pontuação versionadas | Design | In Tasks |
+| TAB-05 | P1: Catálogo de tabelas de pontuação versionadas | Design | In Tasks |
+| TAB-06 | P1: Catálogo de tabelas de pontuação versionadas | Design | In Tasks |
+| TAB-07 | P1: Catálogo de tabelas de pontuação versionadas | Design | In Tasks |
+| TAB-08 | P1: Catálogo de tabelas de pontuação versionadas | Design | In Tasks |
+| SEL-01 | P1: Tabela aplicada ao processo | Design | In Tasks |
+| SEL-02 | P1: Tabela aplicada ao processo | Design | In Tasks |
+| SEL-03 | P1: Tabela aplicada ao processo | Design | In Tasks |
+| SEL-04 | P1: Tabela aplicada ao processo | Design | In Tasks |
+| SEL-05 | P1: Tabela aplicada ao processo | Design | In Tasks |
+| SEL-06 | P1: Tabela aplicada ao processo | Design | In Tasks |
+| SEL-07 | P1: Tabela aplicada ao processo | Design | In Tasks |
+| SEL-08 | P1: Tabela aplicada ao processo | Design | In Tasks |
+| SEL-09 | P1: Tabela aplicada ao processo | Design | In Tasks |
+| ATV-01 | P1: Atividades do processo | Design | In Tasks |
+| ATV-02 | P1: Atividades do processo | Design | In Tasks |
+| ATV-03 | P1: Atividades do processo | Design | In Tasks |
+| ATV-04 | P1: Atividades do processo | Design | In Tasks |
+| ATV-05 | P1: Atividades do processo | Design | In Tasks |
+| ATV-06 | P1: Atividades do processo | Design | In Tasks |
+| ATV-07 | P1: Atividades do processo | Design | In Tasks |
+| ATV-08 | P1: Atividades do processo | Design | In Tasks |
+| ATV-09 | P1: Atividades do processo | Design | In Tasks |
+| ATV-10 | P1: Atividades do processo | Design | In Tasks |
+| ATV-11 | P1: Atividades do processo | Design | In Tasks |
+| ATV-12 | P1: Atividades do processo | Design | In Tasks |
+| ATV-13 | P1: Atividades do processo | Design | In Tasks |
+| ATV-14 | P1: Atividades do processo | Design | In Tasks |
+| CALC-01 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-02 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-03 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-04 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-05 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-06 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-07 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-08 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-09 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-10 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-11 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-12 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-13 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-14 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| VERIF-01 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-02 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-03 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-04 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-05 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-06 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-07 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-08 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-09 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-10 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-11 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-12 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-13 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| TELA-01 | P1: Etapa 4 na interface | Design | In Tasks |
+| TELA-02 | P1: Etapa 4 na interface | Design | In Tasks |
+| TELA-03 | P1: Etapa 4 na interface | Design | In Tasks |
+| TELA-04 | P1: Etapa 4 na interface | Design | In Tasks |
+| TELA-05 | P1: Etapa 4 na interface | Design | In Tasks |
+| TELA-06 | P1: Etapa 4 na interface | Design | In Tasks |
+| TELA-07 | P1: Etapa 4 na interface | Design | In Tasks |
+| TELA-08 | P1: Etapa 4 na interface | Design | In Tasks |
+| ADM-01 | P2: Administração das tabelas | Design | In Tasks |
+| ADM-02 | P2: Administração das tabelas | Design | In Tasks |
+| ADM-03 | P2: Administração das tabelas | Design | In Tasks |
+| ADM-04 | P2: Administração das tabelas | Design | In Tasks |
+| ADM-05 | P2: Administração das tabelas | Design | In Tasks |
+| ADM-06 | P2: Administração das tabelas | Design | In Tasks |
+| ADM-07 | P2: Administração das tabelas | Design | In Tasks |
+| ADM-08 | P2: Administração das tabelas | Design | In Tasks |
+| ADM-09 | P2: Administração das tabelas | Design | In Tasks |
+| ADM-10 | P2: Administração das tabelas | Design | In Tasks |
+| ADM-11 | P2: Administração das tabelas | Design | In Tasks |
+| ADMUI-01 | P3: Interface de administração das tabelas | Design | In Tasks |
+| ADMUI-02 | P3: Interface de administração das tabelas | Design | In Tasks |
+| ADMUI-03 | P3: Interface de administração das tabelas | Design | In Tasks |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 80 total, 0 mapped to tasks, 80 unmapped ⚠️ (esperado antes de Tasks)
+**Coverage:** 80 total, 80 mapped to tasks, 0 unmapped
 
 ---
 

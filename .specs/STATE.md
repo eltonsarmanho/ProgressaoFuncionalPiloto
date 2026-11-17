@@ -61,10 +61,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/pontuacao` (Complex). `fundacao` está concluída e verificada. Depois de `pontuacao`: `normativo` → `inteligencia-documental` → `documentos-gerados` → `banca-parecer` → `implantacao`
-- **Phase / Task**: Specify de `pontuacao` aprovada (80 requisitos, `validate_spec.py` limpo); Design escrito em `design.md`, aguardando aprovação. Em seguida vem o Tasks
+- **Phase / Task**: Specify de `pontuacao` aprovada (80 requisitos, `validate_spec.py` limpo); Design aprovado; `tasks.md` escrita (39 tarefas em 7 fases, 80/80 requisitos cobertos, `validate_tasks.py` limpo), aguardando aprovação e a escolha de sub-agentes. Em seguida vem o Execute
 - **Completed**: `fundacao` (T1–T37, 290 testes backend, 14 frontend, deploy no ar); spec de `pontuacao`
 - **In-progress** (file:line): none
-- **Next step**: o usuário aprova o Design de `pontuacao`; depois, Tasks (tasks.md, `validate_tasks.py`) e Execute em lotes
+- **Next step**: o usuário aprova as tarefas e escolhe a execução (5 lotes: 8, 7, 9, 6 e 9 tarefas; depois o Verificador independente)
 - **Blockers**: nenhum técnico. Resolvido em 2026-11-17: CH docente 68 h, Grupo I segue a verificação de datas, 92 correto. Pendentes de `fundacao`: padrões PROC-02 e PROC-04 de `fundacao` aguardam confirmação; faltam o "Modelo Relatorio Atividades 2.docx" e as URLs da PROGEP/CPPD
 - **Dívidas**: UI-06 (360 px) só tem verificação estática; sem backup configurado; rotas de negócio devolvem 500 (não 503) com o banco fora do ar; sem tela de troca de senha
 - **MariTalk**: funciona (testado em 2026-11-17 com `test/test_maritalk.py`): `sabia-4`, `sabia-4-br-sp` e `sabiazinho-4` respondem em `https://chat.maritaca.ai/api` (Bearer); `response_format` com `json_schema` estrito funciona e devolve `null` para dado ausente. A VM ainda tem `MARITALK_API_KEY` vazia; configurar no deploy de `inteligencia-documental`
