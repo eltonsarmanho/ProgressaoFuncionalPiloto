@@ -105,8 +105,8 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Os dois códigos existem com o nome exato
-- [ ] Os testes de alertas existentes continuam passando; Gate quick passa; 2+ testes
+- [x] Os dois códigos existem com o nome exato
+- [x] Os testes de alertas existentes continuam passando; Gate quick passa; 2+ testes
 
 **Tests**: unit
 **Gate**: quick
