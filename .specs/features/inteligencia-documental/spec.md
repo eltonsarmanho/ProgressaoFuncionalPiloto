@@ -306,7 +306,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLS-03 | P1: Classificação em item de pontuação | Design | Implementing |
 | CLS-04 | P1: Classificação em item de pontuação | Design | Implementing |
 | CLS-05 | P1: Classificação em item de pontuação | Design | In Tasks |
-| CLS-06 | P1: Classificação em item de pontuação | Design | In Tasks |
+| CLS-06 | P1: Classificação em item de pontuação | Design | Implementing |
 | CLS-07 | P1: Classificação em item de pontuação | Design | In Tasks |
 | CLS-08 | P1: Classificação em item de pontuação | Design | In Tasks |
 | CLS-09 | P1: Classificação em item de pontuação | Design | In Tasks |

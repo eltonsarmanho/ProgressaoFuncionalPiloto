@@ -366,11 +366,11 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Banca e orientação: quantidade 1
-- [ ] Curso com 21 horas: horas 21; Grupo I: horas = CH docente, nível e período letivo preservados
-- [ ] Projeto de 2022-08 a 2023-07: 0 anos inteiros viram 1 com aviso; 2022-08 a 2024-08: 2 anos
-- [ ] A função nunca chama IA e nunca devolve pontos
-- [ ] Gate quick passa; 12+ testes
+- [x] Banca e orientação: quantidade 1
+- [x] Curso com 21 horas: horas 21; Grupo I: horas = CH docente, nível e período letivo preservados
+- [x] Projeto de 2022-08 a 2023-07: 0 anos inteiros viram 1 com aviso; 2022-08 a 2024-08: 2 anos
+- [x] A função nunca chama IA e nunca devolve pontos
+- [x] Gate quick passa; 12+ testes
 
 **Tests**: unit
 **Gate**: quick
