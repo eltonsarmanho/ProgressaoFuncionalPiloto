@@ -259,7 +259,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | AUTH-07 | P1: Autenticação | Design | Implementing |
 | AUTH-08 | P1: Autenticação | Design | Implementing |
 | AUTH-09 | P1: Autenticação | Design | Implementing |
-| AUTH-10 | P1: Autenticação | Design | Pending |
+| AUTH-10 | P1: Autenticação | Design | Implementing |
 | AUTH-11 | P1: Autenticação | Design | Implementing |
 | DOC-01 | P1: Cadastro de docente | Design | Pending |
 | DOC-02 | P1: Cadastro de docente | Design | Pending |
@@ -288,7 +288,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | CARR-06 | P1: Estruturas de carreira | Design | Implementing |
 | CARR-07 | P1: Estruturas de carreira | Design | Implementing |
 | CARR-08 | P1: Estruturas de carreira | Design | Pending |
-| AUD-01 | P1: Trilha de auditoria | Design | Pending |
+| AUD-01 | P1: Trilha de auditoria | Design | Implementing |
 | AUD-02 | P1: Trilha de auditoria | Design | Implementing |
 | AUD-03 | P1: Trilha de auditoria | Design | Pending |
 | AUD-04 | P1: Trilha de auditoria | Design | Pending |

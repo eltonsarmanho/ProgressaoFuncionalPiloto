@@ -6,7 +6,9 @@ from dataclasses import dataclass
 from fastapi import Request
 from sqlalchemy import Engine
 
+from app.application.services.audit_service import AuditService
 from app.application.use_cases.auth import GetCurrentSession, Login, Logout
+from app.application.use_cases.users import CreateUser, ListUsers
 from app.core.config import Settings
 from app.domain.entities.user import Session, User
 from app.domain.repositories.ports import Clock, UnitOfWork
@@ -25,6 +27,8 @@ class Container:
     login: Login
     logout: Logout
     current_session: GetCurrentSession
+    create_user: CreateUser
+    list_users: ListUsers
 
 
 def build_container(settings: Settings, engine: Engine, clock: Clock) -> Container:
@@ -33,14 +37,18 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
     def uow_factory() -> UnitOfWork:
         return SqlUnitOfWork(session_factory)
 
+    hasher = Argon2PasswordHasher()
+    audit = AuditService(clock)
     return Container(
         settings=settings,
         engine=engine,
         clock=clock,
         uow_factory=uow_factory,
-        login=Login(uow_factory, Argon2PasswordHasher(), tokens, clock),
+        login=Login(uow_factory, hasher, tokens, clock),
         logout=Logout(uow_factory, tokens),
         current_session=GetCurrentSession(uow_factory, tokens, clock),
+        create_user=CreateUser(uow_factory, hasher, audit),
+        list_users=ListUsers(uow_factory),
     )
 
 

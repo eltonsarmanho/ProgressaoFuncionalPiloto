@@ -486,8 +486,8 @@ T27 → T28
 
 **Done when**:
 
-- [ ] 422 nomeando campo (e-mail duplicado, senha < 10); não-ADMIN → 403; evento de auditoria gravado
-- [ ] Gate full passa
+- [x] 422 nomeando campo (e-mail duplicado, senha < 10); não-ADMIN → 403; evento de auditoria gravado
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full
