@@ -230,10 +230,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] CPF com e sem pontuação viram `[CPF]`; RG vira `[RG]`; e-mail vira `[EMAIL]`; telefone (com DDD, com e sem parênteses) vira `[TELEFONE]`
-- [ ] Nome próprio e matrícula SIAPE de 7 dígitos não mudam
-- [ ] O texto original não é alterado (a função devolve cópia)
-- [ ] Gate quick passa; 10+ testes
+- [x] CPF com e sem pontuação viram `[CPF]`; RG vira `[RG]`; e-mail vira `[EMAIL]`; telefone (com DDD, com e sem parênteses) vira `[TELEFONE]`
+- [x] Nome próprio e matrícula SIAPE de 7 dígitos não mudam
+- [x] O texto original não é alterado (a função devolve cópia)
+- [x] Gate quick passa; 10+ testes
 
 **Tests**: unit
 **Gate**: quick
