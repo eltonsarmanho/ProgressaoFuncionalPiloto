@@ -131,6 +131,13 @@ class ActivityDistinct(BaseModel):
     justificativa: str | None = None
 
 
+class ActivityBulkValidate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    activity_ids: list[UUID]
+    justificativa: str | None = None
+
+
 class CandidateOut(BaseModel):
     group_number: int
     item_number: int

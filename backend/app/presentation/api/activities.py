@@ -11,6 +11,7 @@ from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.entities.user import User
 from app.presentation.dependencies import Container, current_user, get_container
 from app.presentation.schemas.activities import (
+    ActivityBulkValidate,
     ActivityCreate,
     ActivityDistinct,
     ActivityOut,
@@ -56,6 +57,23 @@ async def create_activity(
         container.create_activity.execute, actor, process_id, body.to_data(), body.justificativa
     )
     return (await _present(container, [activity]))[0]
+
+
+@router.post(
+    "/processes/{process_id}/activities/validate-batch", response_model=list[ActivityOut]
+)
+async def validate_batch(
+    process_id: UUID, body: ActivityBulkValidate, actor: UserDep, container: ContainerDep
+) -> list[ActivityOut]:
+    """Validates the listed activities with one justification; one of another process: 404."""
+    validated = await run_in_threadpool(
+        container.bulk_validate_activities.execute,
+        actor,
+        process_id,
+        body.activity_ids,
+        body.justificativa,
+    )
+    return await _present(container, validated)
 
 
 @router.get("/activities/{activity_id}", response_model=ActivityOut)

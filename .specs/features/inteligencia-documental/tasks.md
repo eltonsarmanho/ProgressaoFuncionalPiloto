@@ -1187,9 +1187,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Valida as atividades listadas com a justificativa e devolve o resultado de cada uma
-- [ ] Lista com atividade de outro processo: 404 e nenhuma validada; sem justificativa: 422
-- [ ] Gate full passa; 6+ testes
+- [x] Valida as atividades listadas com a justificativa e devolve o resultado de cada uma
+- [x] Lista com atividade de outro processo: 404 e nenhuma validada; sem justificativa: 422
+- [x] Gate full passa; 6+ testes
 
 **Tests**: integration
 **Gate**: full

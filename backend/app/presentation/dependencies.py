@@ -44,6 +44,7 @@ from app.application.use_cases.professors import (
     UpdateProfessor,
 )
 from app.application.use_cases.scoring import (
+    BulkValidateActivities,
     CalculateProcessScore,
     ChangeActivityStatus,
     ChooseProcessTable,
@@ -136,6 +137,7 @@ class Container:
     update_activity: UpdateActivity
     change_activity_status: ChangeActivityStatus
     mark_activities_distinct: MarkActivitiesDistinct
+    bulk_validate_activities: BulkValidateActivities
     storage: FileStorage
     inspector: FileInspector
     process_document: ProcessDocument
@@ -236,6 +238,7 @@ def build_container(
         update_activity=UpdateActivity(uow_factory, audit, policy),
         change_activity_status=change_status,
         mark_activities_distinct=MarkActivitiesDistinct(uow_factory, audit, policy),
+        bulk_validate_activities=BulkValidateActivities(uow_factory, audit, policy),
         storage=storage,
         inspector=inspector,
         process_document=ProcessDocument(uow_factory, audit, storage, analyzer, create_activity),
