@@ -70,6 +70,19 @@ def docs(world, tmp_path):  # noqa: F811
 
     upload = upload_uc()
 
+    def manage(use_case, uow_factory=None, limits=None):
+        """A replace/reprocess use case bound to the same storage, inspector and clock."""
+        return use_case(
+            uow_factory or world.uow_factory,
+            audit,
+            world.policy,
+            storage,
+            inspector,
+            clock,
+            world.change_status,
+            limits,
+        )
+
     return SimpleNamespace(
         world=world,
         clock=clock,
@@ -82,6 +95,9 @@ def docs(world, tmp_path):  # noqa: F811
         upload=upload,
         upload_one=upload_one,
         upload_with=upload_uc,
+        replace=manage(documents.ReplaceDocument),
+        replace_with=lambda **kw: manage(documents.ReplaceDocument, **kw),
+        delete=documents.DeleteDocument(world.uow_factory, audit, world.policy, storage),
     )
 
 

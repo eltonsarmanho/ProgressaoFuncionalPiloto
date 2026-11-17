@@ -249,7 +249,7 @@ def _range(field: str, label: str, value: Decimal | None) -> None:
         raise ValidationFailed(field, f"{label} deve estar entre 0 e 10000")
 
 
-def _validate_basics(data: ActivityData) -> None:
+def _validate_basics(data: ActivityData, candidates_need_justification: bool = True) -> None:
     if not data.title.strip():
         raise ValidationFailed("title", "Título é obrigatório")
     if len(data.title) > MAX_TITLE:
@@ -270,7 +270,7 @@ def _validate_basics(data: ActivityData) -> None:
     if data.period_start and data.period_end and data.period_end < data.period_start:
         raise ValidationFailed("period_end", "Fim do período anterior ao início")
     for candidate in data.candidates:
-        if not candidate.justification.strip():
+        if candidates_need_justification and not candidate.justification.strip():
             raise ValidationFailed("candidates", "Item candidato exige justificativa da escolha")
 
 
@@ -316,8 +316,12 @@ def _check_criterion_inputs(data: ActivityData, version: ScoringTableVersion | N
         )
 
 
-def normalize_activity(data: ActivityData, version: ScoringTableVersion | None) -> ActivityData:
-    _validate_basics(data)
+def normalize_activity(
+    data: ActivityData,
+    version: ScoringTableVersion | None,
+    candidates_need_justification: bool = True,
+) -> ActivityData:
+    _validate_basics(data, candidates_need_justification)
     data = _apply_group1(replace(data, title=data.title.strip()), version)
     _check_criterion_inputs(data, version)
     return data
@@ -344,11 +348,21 @@ class CreateActivity(_ActivityUseCase):
         data: ActivityData,
         justification: str | None = None,
         source: ActivitySource = ActivitySource.MANUAL,
+        extraction_run_id: UUID | None = None,
     ) -> Activity:
-        """`source` is not reachable from the public API; the AI feature will pass it (ATV-03)."""
+        """`source` and `extraction_run_id` are not reachable from the public API; the document
+        processing passes them (ATV-03, PIPE-09).
+
+        A suggestion may carry candidate items without a justification: the user gives one
+        when confirming the choice (CLS-04). A manual entry always needs it.
+        """
         with self._uow_factory() as uow:
             process = self._writable(uow, actor, process_id)
-            data = normalize_activity(data, self._chosen_version(uow, process))
+            data = normalize_activity(
+                data,
+                self._chosen_version(uow, process),
+                candidates_need_justification=source is ActivitySource.MANUAL,
+            )
             justification = (justification or "").strip() or None
             if data.points_override is not None and justification is None:
                 raise ValidationFailed(
@@ -360,6 +374,7 @@ class CreateActivity(_ActivityUseCase):
                 created_by=actor.id,
                 source=source,
                 status=initial_status(source),
+                extraction_run_id=extraction_run_id,
                 **_fields(data),
             )
             uow.activities.add(activity)

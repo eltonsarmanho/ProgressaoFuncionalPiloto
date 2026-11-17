@@ -8,14 +8,15 @@ enum has no download or delete value.
 
 import uuid
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import timedelta
 from pathlib import Path
 from uuid import UUID
 
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
-from app.domain.entities.activity import Activity
+from app.application.use_cases.scoring import ChangeActivityStatus
+from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.document import (
     Document,
@@ -23,10 +24,11 @@ from app.domain.entities.document import (
     ExtractionRun,
     PageText,
     RunStatus,
+    can_transition,
 )
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.user import User
-from app.domain.errors import Conflict, NotFound, ValidationFailed
+from app.domain.errors import Conflict, NotFound, StaleVersion, ValidationFailed
 from app.domain.repositories.ports import (
     ActivityEvidence,
     Clock,
@@ -44,6 +46,7 @@ from app.domain.rules.upload_validation import (
 )
 
 DOCUMENT_ENTITY = "document"
+EVIDENCE_ENTITY = "activity_evidence"
 PROCESS_NOT_FOUND = "Processo não encontrado"
 DOCUMENT_NOT_FOUND = "Documento não encontrado"
 LIMIT_FIELD = "limite"
@@ -82,6 +85,22 @@ class IncomingFile:
     declared_mime: str | None
     size_bytes: int
     sha256: str
+
+
+class UploadRejected(ValidationFailed):
+    """A file refused on replacement: 422 on `arquivo` with the rejection code (DOC-02..04)."""
+
+    def __init__(self, code: str, message: str):
+        super().__init__(FILE_FIELD, message)
+        self.code = code
+
+
+class DuplicateDocument(Conflict):
+    """The same hash is already in the process: 409 carrying the existing id (DOC-07)."""
+
+    def __init__(self, existing_id: UUID | None):
+        super().__init__("Este arquivo já foi enviado neste processo")
+        self.existing_id = existing_id
 
 
 @dataclass(frozen=True)
@@ -382,3 +401,186 @@ class DownloadDocument(_DocumentUseCase):
             )
             uow.commit()
             return DownloadedFile(path, document.original_name, document.mime, inline)
+
+
+REPROCESS_JUSTIFICATION = "Substituída por reprocessamento do documento"
+_IN_QUEUE = (DocumentStatus.PENDENTE, DocumentStatus.PROCESSANDO)
+
+
+class _NewRunUseCase(_DocumentUseCase):
+    """Replacement and reprocessing both retire the active run and queue a new one (PIPE-09).
+
+    The steps shared by both live here so they behave the same way.
+    """
+
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        policy: AccessPolicy,
+        change_status: ChangeActivityStatus,
+    ):
+        super().__init__(uow_factory, audit, policy)
+        self._change_status = change_status
+
+    def _restartable(self, uow: UnitOfWork, actor: User, document_id: UUID) -> Document:
+        """The document of a writable process that is not waiting or running (else 409)."""
+        document = self._document(uow, actor, document_id)
+        self._writable(uow, actor, document.process_id)
+        if not can_transition(document.status, DocumentStatus.PENDENTE):
+            raise Conflict("O documento está na fila ou em processamento")
+        return document
+
+    @staticmethod
+    def _retire_runs_and_queue(uow: UnitOfWork, document: Document) -> list[UUID]:
+        """Marks the active runs SUBSTITUIDA and adds the new job; returns the retired run ids.
+
+        A second simultaneous request hits the unique active job and gets Conflict.
+        """
+        retired = []
+        for run in uow.extractions.list_runs(document.id):
+            if run.status is RunStatus.ATIVA:
+                uow.extractions.mark_run_status(run.id, RunStatus.SUBSTITUIDA)
+                retired.append(run.id)
+        uow.jobs.add(ProcessingJob(id=uuid.uuid4(), document_id=document.id))
+        return retired
+
+    def _reject_untouched_drafts(self, actor: User, process_id: UUID, run_ids: list[UUID]) -> None:
+        """Rejects the activities of the retired runs that are still `AGUARDANDO_REVISAO` and
+        were never edited (version 1); validated or edited ones stay (PIPE-09)."""
+        with self._uow_factory() as uow:
+            drafts = [
+                a
+                for a in uow.activities.list_for_process(
+                    process_id, status=ActivityStatus.AGUARDANDO_REVISAO
+                )
+                if a.extraction_run_id in run_ids and a.version == 1
+            ]
+        for draft in drafts:
+            try:
+                self._change_status.execute(
+                    actor,
+                    draft.id,
+                    ActivityStatus.REJEITADA,
+                    draft.version,
+                    REPROCESS_JUSTIFICATION,
+                )
+            except StaleVersion:
+                continue  # edited meanwhile: it is no longer an untouched draft
+
+
+class ReplaceDocument(_NewRunUseCase):
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        policy: AccessPolicy,
+        storage: FileStorage,
+        inspector: FileInspector,
+        clock: Clock,
+        change_status: ChangeActivityStatus,
+        limits: DocumentLimits | None = None,
+    ):
+        super().__init__(uow_factory, audit, policy, change_status)
+        self._storage = storage
+        self._inspector = inspector
+        self._limits = limits or DocumentLimits()
+
+    def execute(self, actor: User, document_id: UUID, file: IncomingFile) -> Document:
+        """New file under the same id; the old file goes only after the commit (DOC-09)."""
+        stored: str | None = None
+        try:
+            with self._uow_factory() as uow:
+                document = self._restartable(uow, actor, document_id)
+                facts = self._inspector.inspect(file.path)
+                extension = extension_of(file.original_name)
+                rejections = validate_upload(
+                    facts, file.declared_mime, extension, self._limits.for_validation()
+                )
+                if rejections:
+                    raise UploadRejected(rejections[0].code, rejections[0].message)
+                existing = uow.documents.exists_hash(document.process_id, file.sha256)
+                if existing is not None:
+                    raise DuplicateDocument(existing)
+                stored = self._storage.save(
+                    document.process_id, extension, file.path.read_bytes()
+                )
+                replaced = replace(
+                    document,
+                    original_name=safe_display_name(file.original_name),
+                    internal_name=stored,
+                    mime=MIME_BY_KIND[facts.kind],
+                    size_bytes=file.size_bytes,
+                    sha256=file.sha256,
+                    page_count=facts.page_count or 1,
+                    status=DocumentStatus.PENDENTE,
+                    status_code=None,
+                    suggested_type=None,
+                    suggested_category=None,
+                    confidence=None,
+                )
+                retired = self._retire_runs_and_queue(uow, document)
+                uow.documents.update(replaced, document.version)
+                self._record(
+                    uow,
+                    actor,
+                    document.id,
+                    AuditAction.UPDATE,
+                    "REPLACE",
+                    document_audit_view(document),
+                    document_audit_view(replaced),
+                )
+                uow.commit()
+                result = uow.documents.get(document.id)
+        except Exception:
+            if stored is not None:
+                self._storage.delete(document.process_id, stored)
+            raise
+        self._storage.delete(document.process_id, document.internal_name)
+        self._reject_untouched_drafts(actor, document.process_id, retired)
+        return result
+
+
+class DeleteDocument(_DocumentUseCase):
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        policy: AccessPolicy,
+        storage: FileStorage,
+    ):
+        super().__init__(uow_factory, audit, policy)
+        self._storage = storage
+
+    def execute(self, actor: User, document_id: UUID, justification: str | None) -> None:
+        """Physical removal of file, text and links; the activities stay (DOC-10)."""
+        with self._uow_factory() as uow:
+            document = self._document(uow, actor, document_id)
+            self._writable(uow, actor, document.process_id)
+            justification = (justification or "").strip()
+            if not justification:
+                raise ValidationFailed("justificativa", "Justificativa obrigatória para excluir")
+            for evidence in uow.evidences.list_for_document(document.id):
+                self._audit.record(
+                    uow,
+                    actor.id,
+                    EVIDENCE_ENTITY,
+                    evidence.id,
+                    AuditAction.UPDATE,
+                    {"activity_id": evidence.activity_id, "document_id": document.id},
+                    {"operation": "UNLINK"},
+                    justification,
+                )
+            self._record(
+                uow,
+                actor,
+                document.id,
+                AuditAction.UPDATE,
+                "DELETE",
+                document_audit_view(document),
+                {},
+                justification,
+            )
+            uow.documents.delete(document.id)
+            uow.commit()
+        self._storage.delete(document.process_id, document.internal_name)

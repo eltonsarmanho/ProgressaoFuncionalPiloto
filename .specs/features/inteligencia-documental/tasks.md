@@ -861,10 +861,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Substituir valida o novo arquivo, mantém o id, remove o arquivo anterior, reinicia a tarefa e audita nome e hash anterior e novo
-- [ ] Excluir sem justificativa: 422; com justificativa: remove arquivo, texto e vínculos, mantém as atividades e audita
-- [ ] Processo concluído: 409
-- [ ] Gate full passa; 10+ testes
+- [x] Substituir valida o novo arquivo, mantém o id, remove o arquivo anterior, reinicia a tarefa e audita nome e hash anterior e novo
+- [x] Excluir sem justificativa: 422; com justificativa: remove arquivo, texto e vínculos, mantém as atividades e audita
+- [x] Processo concluído: 409
+- [x] Gate full passa; 10+ testes
 
 **Tests**: integration
 **Gate**: full

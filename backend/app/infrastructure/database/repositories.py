@@ -731,6 +731,7 @@ _ACTIVITY_FIELDS = (
     "status",
     "distinct_justification",
     "created_by",
+    "extraction_run_id",
 )
 
 
@@ -919,6 +920,14 @@ class SqlDocumentRepository:
                 DocumentModel.process_id == process_id, DocumentModel.sha256 == sha256
             )
         )
+
+    def delete(self, document_id: UUID) -> None:
+        """Pages, runs, jobs and links go with it (cascade); activities stay (DOC-10)."""
+        rowcount = self._s.execute(
+            delete(DocumentModel).where(DocumentModel.id == document_id)
+        ).rowcount
+        if rowcount == 0:
+            raise NotFound("Documento não encontrado")
 
     def count_for_process(self, process_id: UUID) -> int:
         return self._s.scalar(

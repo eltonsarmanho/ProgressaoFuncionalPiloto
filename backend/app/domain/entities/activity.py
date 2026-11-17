@@ -66,6 +66,7 @@ class Activity:
     created_at: datetime | None = field(default=None)
     updated_at: datetime | None = None
     version: int = 1
+    extraction_run_id: UUID | None = None  # the run that suggested it (PIPE-09)
 
 
 def initial_status(source: ActivitySource) -> ActivityStatus:

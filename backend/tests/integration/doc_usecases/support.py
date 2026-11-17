@@ -1,5 +1,6 @@
 """Helpers shared by the document use case tests."""
 
+import dataclasses
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -7,8 +8,8 @@ from functools import lru_cache
 
 from app.application.use_cases.scoring import ActivityData
 from app.domain.entities.activity import ActivitySource
-from app.domain.entities.document import PageText, RunStatus, TextMethod
-from app.domain.repositories.ports import ActivityEvidence
+from app.domain.entities.document import DocumentStatus, PageText, RunStatus, TextMethod
+from app.domain.repositories.ports import ActivityEvidence, JobStatus
 from tests.integration.documents.factories import make_run
 from tests.support import synthetic_docs as synth
 
@@ -58,10 +59,34 @@ def seed_run(
     return run
 
 
-def draft_activity(world, process, title="Atividade sugerida", **fields):
+def draft_activity(world, process, title="Atividade sugerida", run=None, **fields):
     """An AI-suggested draft activity created through the scoring use case."""
     data = ActivityData(title=title, group_number=3, item_number=4, **fields)
-    return world.create.execute(world.admin, process.id, data, source=ActivitySource.SUGERIDA_IA)
+    return world.create.execute(
+        world.admin,
+        process.id,
+        data,
+        source=ActivitySource.SUGERIDA_IA,
+        extraction_run_id=run.id if run else None,
+    )
+
+
+def finish_processing(world, document, status=DocumentStatus.PROCESSADO, **run_options):
+    """Play what the executor does: claim and finish the job, store a run, set the status.
+
+    Returns (document, run).
+    """
+    run = seed_run(world, document, **run_options)
+    with world.uow_factory() as uow:
+        job = uow.jobs.claim_next(datetime(2026, 11, 17, 9, 2, tzinfo=UTC))
+        assert job is not None and job.document_id == document.id
+        uow.jobs.finish(job.id, JobStatus.CONCLUIDA, datetime(2026, 11, 17, 9, 3, tzinfo=UTC))
+        current = uow.documents.get(document.id)
+        uow.documents.update(
+            dataclasses.replace(current, status=status), current.version
+        )
+        uow.commit()
+        return uow.documents.get(document.id), run
 
 
 def link(world, activity, document, page=1, excerpt="trecho", run_id=None, by=None):

@@ -259,6 +259,10 @@ class DocumentRepository(Protocol):
 
     def update(self, document: Document, expected_version: int) -> None: ...
 
+    def delete(self, document_id: UUID) -> None:
+        """Physical removal with its pages, runs, jobs and links; the activities stay."""
+        ...
+
     def exists_hash(self, process_id: UUID, sha256: str) -> UUID | None:
         """Id of the document with this hash in the process, or None."""
         ...
