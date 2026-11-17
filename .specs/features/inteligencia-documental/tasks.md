@@ -1503,9 +1503,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Envio de um corpo de 25 MB chega ao backend (não recebe 413 do nginx)
-- [ ] Envio acima de 120 MB recebe 413
-- [ ] `./scripts/smoke.sh` passa; Build gate passa
+- [x] Envio de um corpo de 25 MB chega ao backend (não recebe 413 do nginx)
+- [x] Envio acima de 120 MB recebe 413
+- [x] `./scripts/smoke.sh` passa; Build gate passa
 
 **Tests**: e2e
 **Gate**: build

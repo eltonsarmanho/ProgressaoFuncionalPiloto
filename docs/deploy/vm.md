@@ -35,6 +35,16 @@ O arquivo de ajustes da VM está em `deploy/docker-compose.vm.yml` e vai para `/
 
 Trocar as etiquetas das imagens para as da versão anterior (`docker tag progressao-funcional-backend:<versao-anterior> progressao-funcional-backend:latest`), restaurar o banco do dump se houve migração, e `docker compose up -d --no-build`.
 
+## Limite de envio (nginx do servidor)
+
+O envio de documentos aceita até 120 MB por requisição (DOC-03) e 20 MB por arquivo. O nginx do projeto (`nginx/nginx.conf`) já usa `client_max_body_size 120m`. O nginx do servidor, que fica na frente dele e não faz parte deste repositório, tem de aceitar o mesmo tamanho: no bloco `server` (ou no `location /`) da configuração do site `progressao` no nginx do servidor, definir
+
+```
+client_max_body_size 120m;
+```
+
+e aplicar com `nginx -t && systemctl reload nginx`. Sem isso, o nginx do servidor responde 413 acima do valor dele (1 MB por padrão) antes de a requisição chegar ao projeto. Conferir depois enviando um corpo de 25 MB (não pode dar 413) e outro de 121 MB (tem de dar 413).
+
 ## Pontos de atenção
 
 - O backend depende da rede e do contêiner do `dashboard`. Se o projeto `dashboard` recriar a rede `dashboard_app_network`, o backend perde o banco até ser reiniciado.
