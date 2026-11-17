@@ -44,12 +44,12 @@
 
 ## Handoff
 
-- **Feature**: projeto ProgressãoDocente UFPA (Complex). Features planejadas, na ordem: `fundacao` → `normativo` → `inteligencia-documental` → `pontuacao` → `documentos-gerados` → `banca-parecer` → `implantacao`
-- **Phase / Task**: `fundacao`, Specify. `spec.md` escrita, `validate_spec.py` limpo (0/0); aguardando o usuário confirmar as 12 assumptions
-- **Completed**: pesquisa preliminar (Res. 4.644/2015, IN IFCH 01/2026, Lei 12.772 compilada e modelos MariTalk); inventário dos 50 documentos reais em `Documentos/`; leitura de `Modelos/` (tabela IFCH completa e o processo FASI 2022–2024 inteiro, que serve de caso-ouro: tabela, comprovantes, relatório, portaria e parecer). Ver `docs/referencias/normas/FONTES.md`
-- **In-progress** (file:line): none
-- **Next step**: com a spec aprovada, fazer o Design de `fundacao` (ler `references/design.md` e registrar as ADs de arquitetura em Decisions)
-- **Blockers** (nenhum bloqueia `fundacao`): falta o "Modelo Relatorio Atividades 2.docx" e as três URLs da PROGEP/CPPD. Segundo o usuário, não há norma separada da FASI: os arquivos em `Modelos/` são as fontes
-- **Deploy**: o usuário ofereceu a VM descrita em AcessoVM.txt para a feature `implantacao`. Ainda não acessada; exige aval no momento do deploy (blast radius)
-- **Uncommitted files**: .gitignore, .specs/STATE.md, docs/referencias/normas/*, Modelos/ (não decidido se entra no git: contém dados pessoais)
-- **Branch**: main
+- **Feature**: `.specs/features/fundacao` (Complex). Depois vêm: `normativo` → `inteligencia-documental` → `pontuacao` → `documentos-gerados` → `banca-parecer` → `implantacao`
+- **Phase / Task**: Execute. Lote 1 (T1–T8) concluído (110 testes); lote 2 (T9–T15) em execução; os lotes rodam em sequência: 1 = T1–T8, 2 = T9–T15, 3 = T16–T22, 4 = T23–T28. Depois, o Verificador independente
+- **Completed**: Specify, Design e Tasks aprovados; commit `3387587` (artefatos de planejamento)
+- **In-progress** (file:line): lote 1, backend/ (scaffold e domínio)
+- **Next step**: com o resumo do lote 1, conferir os commits e o gate e disparar o lote 2
+- **Blockers**: a chave MariTalk do `.env` retorna 401 (invalid_api_key); o usuário precisa gerar uma nova antes de `inteligencia-documental`. Falta o "Modelo Relatorio Atividades 2.docx" e as URLs da PROGEP/CPPD
+- **Deploy**: o usuário ofereceu a VM descrita em AcessoVM.txt para `implantacao`. Ainda não acessada; exige aval no momento do deploy
+- **Uncommitted files**: none (além do trabalho do lote em andamento)
+- **Branch**: feat/fundacao
