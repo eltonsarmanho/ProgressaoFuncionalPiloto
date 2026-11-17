@@ -271,7 +271,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 16. WHERE a execução de extração tem o dado, the system SHALL registrar no relatório do script, por documento, o modelo usado e o número de chamadas à IA.
 17. WHEN um documento emite `SEM_ITEM_DE_PONTUACAO` mais de uma vez THEN the system SHALL contá-lo uma só vez como "sem item" no relatório do script.
 18. IF o texto é uma ficha de avaliação de seminário THEN the system SHALL não a classificar como banca de mestrado e SHALL detectar o tipo `OUTRO`, sem atividade de banca.
-19. WHEN o documento tem os marcadores de artigo (resumo, palavras-chave, referências, ou uma só destes com DOI ou ISSN) THEN the system SHALL detectar o tipo `ARTIGO`.
+19. WHEN o texto traz dois marcadores de artigo (ISSN, DOI, resumo, abstract, palavras-chave ou keywords), ou um deles com a seção introdução ou referências THEN the system SHALL detectar o tipo `ARTIGO`; um marcador sozinho, ou só as seções, mantém `OUTRO`.
 20. WHEN a declaração diz que o docente participou de banca examinadora THEN the system SHALL detectar `DECLARACAO_BANCA`, mesmo que o texto cite "orientador" antes; WHEN o texto declara a orientação THEN the system SHALL detectar `DECLARACAO_ORIENTACAO`.
 
 **Independent Test**: Rodar o script de corpus sobre `Documentos/` e ver menos de 10% dos documentos em `REQUER_REVISAO` por `DOCENTE_DIVERGENTE`, nenhuma atividade repetida e a pontuação potencial dividida entre com data e sem data.
@@ -387,8 +387,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | REAL-16 | P1: Correções da validação real | Design | Implementing |
 | REAL-17 | P1: Correções da validação real | Design | Implementing |
 | REAL-18 | P1: Correções da validação real | Design | Implementing |
-| REAL-19 | P1: Correções da validação real | Design | In Tasks |
-| REAL-20 | P1: Correções da validação real | Design | In Tasks |
+| REAL-19 | P1: Correções da validação real | Design | Implementing |
+| REAL-20 | P1: Correções da validação real | Design | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 

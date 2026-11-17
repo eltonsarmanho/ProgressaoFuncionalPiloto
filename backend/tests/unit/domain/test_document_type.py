@@ -193,3 +193,68 @@ def test_other_documents_are_not_seminar_evaluation_forms(text):
 
 def test_evaluation_wording_without_a_seminar_is_not_a_seminar_form():
     assert is_seminar_evaluation_form("Ficha de avaliação de estágio probatório") is False
+
+
+# REAL-19: articles with Resumo and Abstract, or with one marker and an article section.
+ARTIGO_RESUMO_ABSTRACT = """
+Anais do Simpósio Fictício de Computação
+Um estudo inventado sobre nada
+Resumo. Este trabalho inventado não estuda nada.
+Abstract. This invented paper studies nothing.
+"""
+
+ARTIGO_PALAVRAS_CHAVE_SEM_HIFEN = """
+Revista Fictícia de Exemplos
+Palavras chave: exemplo; teste.
+1. Introdução
+Este artigo inventado apresenta um exemplo.
+"""
+
+ARTIGO_RESUMO_INTRODUCAO = """
+Um estudo inventado
+Resumo: texto inventado.
+1 Introdução
+Texto do artigo inventado.
+"""
+
+
+@pytest.mark.parametrize(
+    "text", [ARTIGO_RESUMO_ABSTRACT, ARTIGO_PALAVRAS_CHAVE_SEM_HIFEN, ARTIGO_RESUMO_INTRODUCAO]
+)
+def test_article_with_resumo_and_abstract_or_a_marker_and_a_section_is_an_article(text):
+    assert detect_document_type(text) is T.ARTIGO
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Texto qualquer com um Resumo da reunião.",
+        "1. Introdução\nRelatório interno.\nReferências: lista de documentos internos.",
+        "Palavras-chave: apenas isto.",
+    ],
+)
+def test_one_marker_or_only_article_sections_are_not_an_article(text):
+    assert detect_document_type(text) is T.OUTRO
+
+
+# REAL-20: the declaration says what the professor did, not what word comes first.
+DECLARACAO_BANCA_COM_ORIENTADOR_ANTES = """
+DECLARAÇÃO
+Declaramos que o Prof. Dr. Carlos Imaginario, orientador do discente Joao Inventado,
+participou como membro da banca examinadora do Trabalho de Conclusão de Curso de Maria Teste,
+defendido em 12 de março de 2024.
+"""
+
+DECLARACAO_ORIENTACAO_COM_BANCA_DEPOIS = """
+DECLARAÇÃO
+Declaro que Ana Ficticia Lima foi orientadora do discente Pedro Teste, cujo trabalho foi
+apresentado à banca de avaliação em 2023.
+"""
+
+
+def test_banca_declaration_that_names_an_advisor_before_the_participation_is_a_banca_declaration():
+    assert detect_document_type(DECLARACAO_BANCA_COM_ORIENTADOR_ANTES) is T.DECLARACAO_BANCA
+
+
+def test_orientation_declaration_that_mentions_a_banca_afterwards_stays_an_orientation_one():
+    assert detect_document_type(DECLARACAO_ORIENTACAO_COM_BANCA_DEPOIS) is T.DECLARACAO_ORIENTACAO

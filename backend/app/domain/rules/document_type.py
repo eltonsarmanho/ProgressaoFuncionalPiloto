@@ -13,6 +13,14 @@ _HEADER_CHARS = 300
 _PORTARIA_HEADER_CHARS = 600
 
 _BANCA = re.compile(r"membro da banca|banca examinadora|banca de ")
+# the declaration says the professor took part in a board, or acted as advisor (REAL-20)
+_BANCA_ROLE = re.compile(
+    r"(?:participou|participacao|integrou|compos|presidiu)[^.]{0,80}banca|\bmembro d[ea] banca"
+)
+_ORIENTACAO_ROLE = re.compile(
+    r"\b(?:e|foi|era|atua|atuou|atuando|exerce|exerceu)\s+(?:como\s+)?(?:co-?)?orientad(?:or|ora)\b"
+    r"|\borientou\b|\bna condicao de (?:co-?)?orientad(?:or|ora)\b"
+)
 _ORIENTACAO = re.compile(r"\b(?:co-?)?orientad(?:or|ora)\b|\borientou\b")
 _DECLARO = re.compile(r"\bdeclar(?:amos|o)\b")
 _DISCIPLINAS = re.compile(r"componentes? curriculares?|\bch docente\b")
@@ -22,11 +30,19 @@ _PORTARIA_BODY = re.compile(r"\bresolve\b|\bdesignar\b|\bdesignado\b|\bdesigna\b
 _EVALUATION_FORM = re.compile(
     r"\b(?:ficha|formulario|folha)\s+de\s+avaliacao\b|\bavaliacao\s+d[oe]s?\s+seminarios?\b"
 )
+# strong markers; one of them plus a weak one, or two strong ones, make an article (REAL-19)
 _ARTICLE_MARKERS = (
     re.compile(r"\bissn\b"),
     re.compile(r"\bdoi\b"),
-    re.compile(r"\babstract\b|\bresumo\b"),
-    re.compile(r"palavras-chave|\bkeywords?\b"),
+    re.compile(r"\bresumo\b"),
+    re.compile(r"\babstract\b"),
+    re.compile(
+        r"palavras[\s\-\u2013\u2014]*chave|\bkeywords?\b|\bindex terms\b|termos de indexacao"
+    ),
+)
+_ARTICLE_WEAK_MARKERS = (
+    re.compile(r"\bintroducao\b|\bintroduction\b"),
+    re.compile(r"\breferencias\b|\breferences\b"),
 )
 
 
@@ -37,6 +53,11 @@ def _declaration_type(text: str) -> DocumentType | None:
     body = text[declaration.start() :]
     if _DISCIPLINAS.search(body):
         return DocumentType.DECLARACAO_DISCIPLINAS
+    banca_role, orientacao_role = _BANCA_ROLE.search(body), _ORIENTACAO_ROLE.search(body)
+    if banca_role or orientacao_role:
+        if banca_role and (orientacao_role is None or banca_role.start() < orientacao_role.start()):
+            return DocumentType.DECLARACAO_BANCA
+        return DocumentType.DECLARACAO_ORIENTACAO
     banca, orientacao = _BANCA.search(body), _ORIENTACAO.search(body)
     if banca and (orientacao is None or banca.start() < orientacao.start()):
         return DocumentType.DECLARACAO_BANCA
@@ -69,6 +90,8 @@ def detect_document_type(text: str) -> DocumentType:
         return DocumentType.CERTIFICADO
     if "portaria" in norm[:_PORTARIA_HEADER_CHARS] and _PORTARIA_BODY.search(norm):
         return DocumentType.PORTARIA
-    if sum(1 for marker in _ARTICLE_MARKERS if marker.search(norm)) >= 2:
+    strong = sum(1 for marker in _ARTICLE_MARKERS if marker.search(norm))
+    weak = sum(1 for marker in _ARTICLE_WEAK_MARKERS if marker.search(norm))
+    if strong >= 2 or (strong >= 1 and weak >= 1):
         return DocumentType.ARTIGO
     return DocumentType.OUTRO

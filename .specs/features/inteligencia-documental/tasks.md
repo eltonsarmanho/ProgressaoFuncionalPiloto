@@ -1982,7 +1982,7 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 ### T70: Tipos: artigo e declaração de banca
 
-**What**: `detect_document_type` aceita artigo com um marcador mais DOI ou ISSN e escolhe entre declaração de banca e de orientação pelo verbo declarado, não pela primeira palavra.
+**What**: `detect_document_type` conta Resumo e Abstract como marcadores separados, aceita "palavras chave" sem hífen e um marcador mais a seção introdução ou referências; escolhe entre declaração de banca e de orientação pelo que o docente fez (participou da banca, atuou como orientador), não pela primeira palavra.
 **Where**: `backend/app/domain/rules/document_type.py`
 **Depends on**: T69
 **Reuses**: `_declaration_type`, marcadores de artigo
@@ -1995,10 +1995,10 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] Texto de artigo com "Resumo" e DOI, sem "Referências" no trecho enviado, é `ARTIGO` (antes: `OUTRO`)
-- [ ] Declaração que cita "orientador" e depois declara a participação em banca é `DECLARACAO_BANCA` (antes: orientação)
-- [ ] Declaração de orientação segue `DECLARACAO_ORIENTACAO`
-- [ ] Gate full passa
+- [x] Texto de artigo com Resumo e Abstract, ou com um marcador e a seção Introdução, é `ARTIGO` (antes: `OUTRO`); um marcador sozinho, ou só as seções, segue `OUTRO`
+- [x] Declaração que cita "orientador" e depois declara a participação em banca é `DECLARACAO_BANCA` (antes: orientação)
+- [x] Declaração de orientação segue `DECLARACAO_ORIENTACAO`
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full
