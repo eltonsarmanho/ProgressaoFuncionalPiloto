@@ -764,8 +764,8 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `scripts/smoke_backend.sh`: constrói a imagem, roda contra Postgres efêmero e `GET /api/health` = 200 após migrações aplicadas
-- [ ] Build gate passa
+- [x] `scripts/smoke_backend.sh`: constrói a imagem, roda contra Postgres efêmero e `GET /api/health` = 200 após migrações aplicadas
+- [x] Build gate passa
 
 **Tests**: e2e
 **Gate**: build
