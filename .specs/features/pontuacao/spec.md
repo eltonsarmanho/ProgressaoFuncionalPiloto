@@ -273,86 +273,86 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story       | Phase  | Status  |
 | -------------- | ----------- | ------ | ------- |
-| TAB-01 | P1: Catálogo de tabelas de pontuação versionadas | Design | Implementing |
-| TAB-02 | P1: Catálogo de tabelas de pontuação versionadas | Design | Implementing |
-| TAB-03 | P1: Catálogo de tabelas de pontuação versionadas | Design | Implementing |
-| TAB-04 | P1: Catálogo de tabelas de pontuação versionadas | Design | Implementing |
-| TAB-05 | P1: Catálogo de tabelas de pontuação versionadas | Design | Implementing |
-| TAB-06 | P1: Catálogo de tabelas de pontuação versionadas | Design | Implementing |
-| TAB-07 | P1: Catálogo de tabelas de pontuação versionadas | Design | Implementing |
-| TAB-08 | P1: Catálogo de tabelas de pontuação versionadas | Design | Implementing |
-| SEL-01 | P1: Tabela aplicada ao processo | Design | Implementing |
-| SEL-02 | P1: Tabela aplicada ao processo | Design | Implementing |
-| SEL-03 | P1: Tabela aplicada ao processo | Design | Implementing |
-| SEL-04 | P1: Tabela aplicada ao processo | Design | Implementing |
-| SEL-05 | P1: Tabela aplicada ao processo | Design | Implementing |
-| SEL-06 | P1: Tabela aplicada ao processo | Design | Implementing |
-| SEL-07 | P1: Tabela aplicada ao processo | Design | Implementing |
-| SEL-08 | P1: Tabela aplicada ao processo | Design | Implementing |
-| SEL-09 | P1: Tabela aplicada ao processo | Design | Implementing |
-| ATV-01 | P1: Atividades do processo | Design | Implementing |
-| ATV-02 | P1: Atividades do processo | Design | Implementing |
-| ATV-03 | P1: Atividades do processo | Design | Implementing |
-| ATV-04 | P1: Atividades do processo | Design | Implementing |
-| ATV-05 | P1: Atividades do processo | Design | Implementing |
-| ATV-06 | P1: Atividades do processo | Design | Implementing |
-| ATV-07 | P1: Atividades do processo | Design | Implementing |
-| ATV-08 | P1: Atividades do processo | Design | Implementing |
-| ATV-09 | P1: Atividades do processo | Design | Implementing |
-| ATV-10 | P1: Atividades do processo | Design | Implementing |
-| ATV-11 | P1: Atividades do processo | Design | Implementing |
-| ATV-12 | P1: Atividades do processo | Design | Implementing |
-| ATV-13 | P1: Atividades do processo | Design | Implementing |
-| ATV-14 | P1: Atividades do processo | Design | Implementing |
-| CALC-01 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-02 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-03 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-04 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-05 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-06 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-07 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-08 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-09 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-10 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-11 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-12 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-13 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| CALC-14 | P1: Cálculo determinístico da pontuação | Design | Implementing |
-| VERIF-01 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-02 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-03 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-04 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-05 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-06 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-07 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-08 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-09 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-10 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-11 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-12 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-13 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| TELA-01 | P1: Etapa 4 na interface | Design | Implementing |
-| TELA-02 | P1: Etapa 4 na interface | Design | Implementing |
-| TELA-03 | P1: Etapa 4 na interface | Design | Implementing |
-| TELA-04 | P1: Etapa 4 na interface | Design | Implementing |
-| TELA-05 | P1: Etapa 4 na interface | Design | Implementing |
-| TELA-06 | P1: Etapa 4 na interface | Design | Implementing |
-| TELA-07 | P1: Etapa 4 na interface | Design | Implementing |
-| TELA-08 | P1: Etapa 4 na interface | Design | Implementing |
-| ADM-01 | P2: Administração das tabelas | Design | Implementing |
-| ADM-02 | P2: Administração das tabelas | Design | Implementing |
-| ADM-03 | P2: Administração das tabelas | Design | Implementing |
-| ADM-04 | P2: Administração das tabelas | Design | Implementing |
-| ADM-05 | P2: Administração das tabelas | Design | Implementing |
-| ADM-06 | P2: Administração das tabelas | Design | Implementing |
-| ADM-07 | P2: Administração das tabelas | Design | Implementing |
-| ADM-08 | P2: Administração das tabelas | Design | Implementing |
-| ADM-09 | P2: Administração das tabelas | Design | Implementing |
-| ADM-10 | P2: Administração das tabelas | Design | Implementing |
-| ADM-11 | P2: Administração das tabelas | Design | Implementing |
-| ADMUI-01 | P3: Interface de administração das tabelas | Design | Implementing |
-| ADMUI-02 | P3: Interface de administração das tabelas | Design | Implementing |
-| ADMUI-03 | P3: Interface de administração das tabelas | Design | Implementing |
+| TAB-01 | P1: Catálogo de tabelas de pontuação versionadas | Design | Verified |
+| TAB-02 | P1: Catálogo de tabelas de pontuação versionadas | Design | Verified |
+| TAB-03 | P1: Catálogo de tabelas de pontuação versionadas | Design | Verified |
+| TAB-04 | P1: Catálogo de tabelas de pontuação versionadas | Design | Verified |
+| TAB-05 | P1: Catálogo de tabelas de pontuação versionadas | Design | Verified |
+| TAB-06 | P1: Catálogo de tabelas de pontuação versionadas | Design | Verified |
+| TAB-07 | P1: Catálogo de tabelas de pontuação versionadas | Design | Verified |
+| TAB-08 | P1: Catálogo de tabelas de pontuação versionadas | Design | Verified |
+| SEL-01 | P1: Tabela aplicada ao processo | Design | Verified |
+| SEL-02 | P1: Tabela aplicada ao processo | Design | Verified |
+| SEL-03 | P1: Tabela aplicada ao processo | Design | Verified |
+| SEL-04 | P1: Tabela aplicada ao processo | Design | Verified |
+| SEL-05 | P1: Tabela aplicada ao processo | Design | Verified |
+| SEL-06 | P1: Tabela aplicada ao processo | Design | Verified |
+| SEL-07 | P1: Tabela aplicada ao processo | Design | Verified |
+| SEL-08 | P1: Tabela aplicada ao processo | Design | Verified |
+| SEL-09 | P1: Tabela aplicada ao processo | Design | Verified |
+| ATV-01 | P1: Atividades do processo | Design | Verified |
+| ATV-02 | P1: Atividades do processo | Design | Verified |
+| ATV-03 | P1: Atividades do processo | Design | Verified |
+| ATV-04 | P1: Atividades do processo | Design | Verified |
+| ATV-05 | P1: Atividades do processo | Design | Verified |
+| ATV-06 | P1: Atividades do processo | Design | Verified |
+| ATV-07 | P1: Atividades do processo | Design | Verified |
+| ATV-08 | P1: Atividades do processo | Design | Verified |
+| ATV-09 | P1: Atividades do processo | Design | Verified |
+| ATV-10 | P1: Atividades do processo | Design | Verified |
+| ATV-11 | P1: Atividades do processo | Design | Verified |
+| ATV-12 | P1: Atividades do processo | Design | Verified |
+| ATV-13 | P1: Atividades do processo | Design | Verified |
+| ATV-14 | P1: Atividades do processo | Design | Verified |
+| CALC-01 | P1: Cálculo determinístico da pontuação | Design | Verified |
+| CALC-02 | P1: Cálculo determinístico da pontuação | Design | Verified |
+| CALC-03 | P1: Cálculo determinístico da pontuação | Design | Verified |
+| CALC-04 | P1: Cálculo determinístico da pontuação | Design | Verified |
+| CALC-05 | P1: Cálculo determinístico da pontuação | Design | Verified |
+| CALC-06 | P1: Cálculo determinístico da pontuação | Design | Verified |
+| CALC-07 | P1: Cálculo determinístico da pontuação | Design | Verified |
+| CALC-08 | P1: Cálculo determinístico da pontuação | Design | Verified |
+| CALC-09 | P1: Cálculo determinístico da pontuação | Design | Verified |
+| CALC-10 | P1: Cálculo determinístico da pontuação | Design | Verified |
+| CALC-11 | P1: Cálculo determinístico da pontuação | Design | Verified |
+| CALC-12 | P1: Cálculo determinístico da pontuação | Design | Verified |
+| CALC-13 | P1: Cálculo determinístico da pontuação | Design | Verified |
+| CALC-14 | P1: Cálculo determinístico da pontuação | Design | Verified |
+| VERIF-01 | P1: Verificações: interstício, duplicidade e requisitos | Design | Verified |
+| VERIF-02 | P1: Verificações: interstício, duplicidade e requisitos | Design | Verified |
+| VERIF-03 | P1: Verificações: interstício, duplicidade e requisitos | Design | Verified |
+| VERIF-04 | P1: Verificações: interstício, duplicidade e requisitos | Design | Verified |
+| VERIF-05 | P1: Verificações: interstício, duplicidade e requisitos | Design | Verified |
+| VERIF-06 | P1: Verificações: interstício, duplicidade e requisitos | Design | Verified |
+| VERIF-07 | P1: Verificações: interstício, duplicidade e requisitos | Design | Verified |
+| VERIF-08 | P1: Verificações: interstício, duplicidade e requisitos | Design | Verified |
+| VERIF-09 | P1: Verificações: interstício, duplicidade e requisitos | Design | Verified |
+| VERIF-10 | P1: Verificações: interstício, duplicidade e requisitos | Design | Verified |
+| VERIF-11 | P1: Verificações: interstício, duplicidade e requisitos | Design | Verified |
+| VERIF-12 | P1: Verificações: interstício, duplicidade e requisitos | Design | Verified |
+| VERIF-13 | P1: Verificações: interstício, duplicidade e requisitos | Design | Verified |
+| TELA-01 | P1: Etapa 4 na interface | Design | Verified |
+| TELA-02 | P1: Etapa 4 na interface | Design | Verified |
+| TELA-03 | P1: Etapa 4 na interface | Design | Verified |
+| TELA-04 | P1: Etapa 4 na interface | Design | Verified |
+| TELA-05 | P1: Etapa 4 na interface | Design | Verified |
+| TELA-06 | P1: Etapa 4 na interface | Design | Verified |
+| TELA-07 | P1: Etapa 4 na interface | Design | Verified |
+| TELA-08 | P1: Etapa 4 na interface | Design | Verified |
+| ADM-01 | P2: Administração das tabelas | Design | Verified |
+| ADM-02 | P2: Administração das tabelas | Design | Verified |
+| ADM-03 | P2: Administração das tabelas | Design | Verified |
+| ADM-04 | P2: Administração das tabelas | Design | Verified |
+| ADM-05 | P2: Administração das tabelas | Design | Verified |
+| ADM-06 | P2: Administração das tabelas | Design | Verified |
+| ADM-07 | P2: Administração das tabelas | Design | Verified |
+| ADM-08 | P2: Administração das tabelas | Design | Verified |
+| ADM-09 | P2: Administração das tabelas | Design | Verified |
+| ADM-10 | P2: Administração das tabelas | Design | Verified |
+| ADM-11 | P2: Administração das tabelas | Design | Verified |
+| ADMUI-01 | P3: Interface de administração das tabelas | Design | Verified |
+| ADMUI-02 | P3: Interface de administração das tabelas | Design | Verified |
+| ADMUI-03 | P3: Interface de administração das tabelas | Design | Verified |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 

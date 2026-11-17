@@ -1,31 +1,32 @@
 # Pontuação Validation
 
-**Verdict**: FAIL ❌
+**Verdict**: PASS ✅ (iteration 2 of 3)
 **Date**: 2026-11-17
 **Spec**: `.specs/features/pontuacao/spec.md`
-**Diff range**: `bf770bc..b4d2a27` (implementation from `51b11e9`)
+**Diff range**: `bf770bc..2f16100` (implementation from `51b11e9`; fixes since iteration 1: `aaac64d`, `2f16100`)
 **Verifier**: independent sub-agent (author ≠ verifier)
 
-FAIL reason: the discrimination sensor found two non-equivalent surviving mutants (SEL-02 date used for the suggestion; ADM-02 "última versão") and one spec-silent tie-break. All 80 IDs have evidence and every asserted value matches the spec outcome, except the two clauses below that no test discriminates.
+All 80 IDs have evidence with an asserted value equal to the spec outcome. The three iteration-1 survivors (M31, M32, M56) are now killed. The two survivors of this iteration are equivalent (proofs below). The only residual caveat, TELA-08, is now a recorded Assumption.
 
 ---
 
 ## Task Completion
 
-39 of 39 tasks marked done in `tasks.md`. No partial tasks.
+41 of 41 tasks marked done in `tasks.md` (T40, T41 added in Phase 8). No partial tasks. The two fix commits change only test files (`backend/tests/integration/scoring/test_table_choice.py`, `test_admin_create.py`) plus `spec.md` (3 Assumption rows) and `tasks.md`; no production code changed since iteration 1. Appended tests do not shift earlier line numbers, so every `file:line` test citation from iteration 1 was re-checked and still holds (spot re-reads: `test_scoring_points.py:58-62`, `test_scoring_verification.py:99-103`, `styles.test.ts:30-36`, `test_activity_update.py:245-250`, `test_scoring_periods.py:76-86`).
 
 ## Gate Check
 
 | Gate | Result |
 | ---- | ------ |
 | `cd backend && .venv/bin/ruff check .` | exit 0, "All checks passed!" |
-| `cd backend && .venv/bin/pytest -q` | 728 passed, 0 failed, 0 skipped, 128 s (unit + architecture + integration on throwaway PostgreSQL) |
+| `cd backend && .venv/bin/pytest -q` | 731 passed, 0 failed, 0 skipped, 133 s (iteration 1: 728; +3 = T40 two tests, T41 one test) |
 | `cd frontend && npm run lint` | exit 0 |
 | `cd frontend && npm test -- --run` | 14 files, 67 tests passed |
-| `cd frontend && npm run build` | built (vite) |
+| `cd frontend && npm run build` | exit 0 (vite built) |
 | `./scripts/smoke_backend.sh` | PASS (health 200, alembic head 0002, uid 10001); port 8088 was free |
-| `./scripts/smoke.sh` | PASS (compose up/down/up, login, data and storage preserved) |
-| Docker volumes before / after backend pytest | 64 / 64 (no leak); no leftover containers or networks; `progressao-funcional-*` images untouched |
+| `./scripts/smoke.sh` | PASS (login 200, data and storage preserved across restart) |
+| Docker volumes before / after backend pytest | 64 / 64 (a transient 65 during the run was the Verifier's own sensor database container, removed afterwards; volume count 64 at the end); no leftover containers or networks; `progressao-funcional-*` images untouched |
+| Real tree porcelain | baseline `?? requeriment.txt`, `?? test/`; identical after the sensor and worktree removal |
 
 ---
 
@@ -51,7 +52,7 @@ Paths relative to `backend/tests/` (B) or `frontend/src/` (F). Result ✅ = asse
 | ID | Spec-defined outcome | `file:line` + assertion | Result |
 | -- | -------------------- | ----------------------- | ------ |
 | SEL-01 | table linked to units; IFCH→IFCH, FASI→FASI | integration/test_seed_scoring.py:67, :77 `units == {"FASI"}`; :96-98; api/test_scoring_tables_api.py:39-40 | ✅ |
-| SEL-02 | suggest the version of the professor's unit valid on the interstice END date, not applied before confirmation | integration/scoring/test_table_choice.py:32-37 `chosen is None`, `suggested.version.id == fasi_version.id`, nothing stored; api/test_scoring_process_api.py:60-64 | ❌ GAP: fixtures have one version whose validity covers both start and end date, so the date used is not observable. Mutant M31 (`end_date`→`start_date`) survives. Probe confirms (see sensor). |
+| SEL-02 | suggest the version of the professor's unit valid on the interstice END date, newest validity wins (Assumption), not applied before confirmation | integration/scoring/test_table_choice.py:32-37 `chosen is None`, `suggested.version.id == fasi_version.id`; NEW :148-161 `suggested.version.id == new.version.id` with a second version starting 2023-06-01 (between process start 2022-11-23 and end 2024-11-23); NEW :164-178 `suggested.table_name == "Outra tabela da FASI"` (tie-break); api/test_scoring_process_api.py:60-64 | ✅ (M31, M32 now killed) |
 | SEL-03 | no version → `REQUER_ANALISE_NORMATIVA` `TABELA_NAO_ENCONTRADA` | integration/scoring/test_table_choice.py:46-48; api/test_scoring_process_api.py:76; unit/domain/test_scoring_table_choice.py:31 | ✅ |
 | SEL-04 | store version, audit user, before, after, justification | test_table_choice.py:58-64 `event.changes == {"scoring_table_version_id": {"before": None, "after": ...}}`, `event.user_id == secretaria.id`; :77-89 previous version in `before` | ✅ |
 | SEL-05 | other unit: 422 `justificativa` + `TABELA_DE_OUTRA_UNIDADE` `ALERTA` | test_table_choice.py:92-106; api/test_scoring_process_api.py:99-102 | ✅ |
@@ -127,7 +128,7 @@ Paths relative to `backend/tests/` (B) or `frontend/src/` (F). Result ✅ = asse
 | TELA-05 | 422 message next to the field | F components/ActivityForm.test.tsx:168-190 | ✅ |
 | TELA-06 | suggestion, status, norm ref, confirm before computing | F components/TablePicker.test.tsx:38-62; pages/ProcessScoring.test.tsx:259-269 (no `PUT` before confirm) | ✅ |
 | TELA-07 | alerts grouped by severity with norm ref | F pages/ProcessScoring.test.tsx:144-155 (regions "Requer análise normativa (1)", "Alerta (2)"); components/ScoringTable.test.tsx:84-105 | ✅ |
-| TELA-08 | usable at 360 px, stacked cards | F styles.test.ts:30-36 (CSS regex on the 480 px media query) and ScoringTable.test.tsx:107-121 (`data-label`) | ⚠️ Spec-precision/test limit: jsdom cannot measure horizontal scroll; the test proves only that the CSS rules exist |
+| TELA-08 | usable at 360 px, stacked cards | F styles.test.ts:30-36 (CSS regex on the 480 px media query) and ScoringTable.test.tsx:107-121 (`data-label`) | ⚠️ Accepted: jsdom cannot measure layout; the spec now records the static CSS test as the check and defers the real 360 px test to a browser (Assumption row, spec.md:49). Mutant FN3 (`data-label` removed) killed |
 | ADMUI-01 | ADMIN sees tables/versions with validity, status, ref | F pages/ScoringAdmin.test.tsx:83-97 (`"23/11/2022 a 28/02/2026"`, "Pendente de validação"), :114-128 (non-ADMIN redirected) | ✅ |
 | ADMUI-02 | duplicate, new version, CSV with per-line errors | F components/ScoringAdminForms.test.tsx:29-58, :61-93, :104-143 (`items.map(textContent) == [...]`) | ✅ |
 | ADMUI-03 | highlight criteria marked for review | F components/ReviewHighlight.test.tsx:39-49 (`toHaveClass("review")`), :51-57; pages/ScoringAdmin.test.tsx:133-148 | ✅ |
@@ -137,7 +138,7 @@ Paths relative to `backend/tests/` (B) or `frontend/src/` (F). Result ✅ = asse
 | ID | Spec-defined outcome | `file:line` + assertion | Result |
 | -- | -------------------- | ----------------------- | ------ |
 | ADM-01 | ADMIN creates table: unique name, units, first version | integration/scoring/test_admin_create.py:41-54, :81-90 (422 on `name`), :98 | ✅ |
-| ADM-02 | duplicate = new table, copies the LAST version, independent | test_admin_create.py:131-145 `groups == fasi_version.groups`; :157-172 independence | ❌ partial: the source has a single version, so "última versão" is not discriminated. Mutant M56 (`max`→`min` in `latest_version`) survives. Probe confirms. |
+| ADM-02 | duplicate = new table, copies the LAST version, independent, no unit association unless given (Assumption) | test_admin_create.py:131-145 `groups == fasi_version.groups`; :147-154 `unit_ids == ()`; :157-172 independence; NEW :196-211 `copy_version.valid_from == date(2023, 6, 1)`, `norm_reference == "Nova norma da FASI, 2023"` on a two-version source | ✅ (M56 now killed) |
 | ADM-03 | edit on unused version needs norm ref, audit before/after | integration/scoring/test_admin_criteria.py:32-61, :77-85 (`field == "change_reference"`) | ✅ |
 | ADM-04 | version in use → 409 asking for a new version | test_admin_criteria.py:64-74 | ✅ |
 | ADM-05 | new version copies, requires start and ref, closes open one on the day before | integration/scoring/test_admin_versions.py:33-44, :47-60 (`valid_to == date(2026, 2, 28)`), :117-123 | ✅ |
@@ -148,7 +149,7 @@ Paths relative to `backend/tests/` (B) or `frontend/src/` (F). Result ✅ = asse
 | ADM-10 | history lists versions, validity, ref, audit; old versions read-only | api/test_scoring_admin_api.py:452, :481, :498; test_admin_criteria.py:127-137 ("somente leitura") | ✅ |
 | ADM-11 | non-ADMIN → 403 | test_admin_create.py:119; test_admin_criteria.py:88; test_admin_versions.py:135; test_admin_import.py:166; api/test_scoring_admin_api.py:137 | ✅ |
 
-**Status**: 78 of 80 IDs fully matched; SEL-02 and ADM-02 each have one clause with no discriminating assertion; TELA-08 carries a test-technology caveat. 1 spec-precision gap (SEL-02 tie-break between several tables of one unit).
+**Status**: ✅ 80 of 80 IDs matched the spec outcome. SEL-02 and ADM-02 clauses closed by T40/T41. TELA-08 is covered by a static CSS test that the spec Assumptions (spec.md:49) accept. 0 open spec-precision gaps (iteration 1 gaps on the SEL-02 tie-break and zero-unit duplicates are now Assumptions, spec.md:47-48, and both match the code: `scoring.py:114` `max(..., key=valid_from)`; `test_admin_create.py:147-154`).
 
 ---
 
@@ -166,73 +167,66 @@ Paths relative to `backend/tests/` (B) or `frontend/src/` (F). Result ✅ = asse
 
 ## Discrimination Sensor
 
-Depth: expanded (60 mutations: 55 backend + 5 frontend; isolated `git worktree` under the session scratchpad; `PYTHONDONTWRITEBYTECODE=1` after a first pass was found tainted by stale `.pyc`, so M01-M49 and F01-F05 were rerun clean). Worktree removed; real porcelain equals the baseline (`?? requeriment.txt`, `?? test/`).
+Depth: expanded (49 mutations: 44 backend + 5 frontend; isolated `git worktree` of HEAD under the session scratchpad, `PYTHONDONTWRITEBYTECODE=1`, `-p no:cacheprovider`, shared throwaway PostgreSQL via `TEST_DATABASE_URL`, `frontend/node_modules` symlinked). Source lines below are from HEAD; the iteration-1 numbering of source lines had drifted a few lines, so they are re-anchored by code text.
 
-| # | File:line | Mutation | Result |
-| - | --------- | -------- | ------ |
-| M01 | scoring_points.py:41 | block floor → half-up | ✅ killed (`test_per_block_2_hours_gives_zero_blocks_and_zero_points`) |
-| M02 | scoring_points.py:55 | half-up → half-even | ✅ killed (`test_weekly_load_68_hours_graduation_is_8`) |
-| M03 | scoring_points.py:55 | preparation ratio ignored | ✅ killed (`..._postgraduate_is_12`) |
-| M04 | scoring_periods.py:102 | month start not set to day 1 | ✅ killed |
-| M05 | scoring_periods.py:102 | month end last day − 1 | ✅ killed |
-| M06 | scoring_periods.py:126 | interstice start exclusive | ✅ killed (`event_on_interstice_limits[edge0]`) |
-| M07 | scoring_periods.py:126 | interstice end exclusive | ✅ killed |
-| M08 | scoring_periods.py:128 | DENTRO start strict | ✅ killed |
-| M09 | scoring_periods.py:130 | PARCIAL → DENTRO | ✅ killed |
-| M10 | scoring_periods.py:137 | title case kept | ✅ killed |
-| M11 | scoring_periods.py:135 | accents kept | ✅ killed |
-| M12 | scoring_periods.py:137 | repeated spaces kept | ✅ killed |
-| M13 | scoring_duplicates.py:175 | overlap strict `<` | ✅ killed (`periods_touching_on_a_single_day`) |
-| M14 | scoring_duplicates.py:168 | earlier-created excluded | ✅ killed |
-| M15 | scoring_duplicates.py:170 | distinct justification ignored | ✅ killed |
-| M16 | scoring_duplicates.py:160 | rejected participates | ✅ killed |
-| M17 | scoring_engine.py:168 | AGUARDANDO counts in total | ✅ killed |
-| M18 | scoring_engine.py:187 | subtotal includes POTENCIAL | ✅ killed |
-| M19 | scoring_engine.py:137 | `counts_in_total` ignored | ✅ killed |
-| M20 | scoring_engine.py:205 | criterion cap not applied | ✅ killed |
-| M21 | scoring_engine.py:212 | group cap not applied | ✅ killed |
-| M22 | scoring_verification.py:297 | `>=` → `>` | ✅ killed (`99_nao_atinge_e_100_atinge`) |
-| M23 | scoring_verification.py:260 | Lei treated as Res. 4.644 | ✅ killed |
-| M24 | scoring_verification.py:303 | only DE (40H dropped) | ✅ killed |
-| M25 | scoring_verification.py:305 | only Group IV | ✅ killed |
-| M26 | scoring_table_choice.py:212 | other-unit alert inverted | ✅ killed |
-| M27 | scoring_table_choice.py:221 | pending alert on OFICIAL | ✅ killed |
-| M28 | scoring_engine.py:144 | `SEM_COMPROVANTE` dropped | ✅ killed |
-| M29 | scoring_engine.py:105 | `INTERSTICIO_PARCIAL` dropped | ✅ killed |
-| M30 | activity.py:80 | level→item swapped | ✅ killed |
-| M31 | scoring.py:112 | suggestion by `start_date` instead of `end_date` | ❌ SURVIVED → fix task 1 (non-equivalent: probe `test_probe_m31` passes on the original and fails on the mutant) |
-| M32 | scoring.py:114 | suggestion picks oldest (`min`) of several valid candidates | ❌ SURVIVED → spec is silent on the tie-break (spec-precision gap); probe with two FASI tables passes on the original and fails on the mutant, so it is not equivalent |
-| M33 | scoring.py:419 | change needs no justification | ✅ killed |
-| M34 | scoring.py:395 | use-case optimistic-lock check disabled | ◻ SURVIVED, equivalent: `_versioned_update` (repositories.py:77-90) enforces the same `StaleVersion`; the stale-write assertions at test_activity_update.py:245-265 still hold with the check removed. Its twin M35 (repository `WHERE version` removed) is killed by `test_scoring_repositories.py::test_activity_update_with_stale_version_raises` |
-| M35 | repositories.py:80 | repository version filter removed | ✅ killed |
-| M36 | scoring.py:87 | access check removed (404) | ✅ killed |
-| M37 | scoring.py:93 | closed process writable (create/choose) | ✅ killed |
-| M38 | scoring.py:389 | closed process writable (existing activity) | ✅ killed |
-| M39 | scoring_admin.py:348 | version-in-use guard removed | ✅ killed |
-| M40 | scoring_admin.py:397 | close on new start, not the day before | ✅ killed |
-| M41 | repositories.py:684 | `end_date >= moment` → `>` | ✅ killed |
-| M42 | scoring_admin.py:418 | overlap check removed | ✅ killed |
-| M43 | scoring_admin.py:538 | CSV errors do not stop creation | ✅ killed |
-| M44 | criteria_csv.py:143 | CSV parser stops at the first error | ✅ killed |
-| M45 | users.py:20 | `require_admin` disabled | ✅ killed |
-| M46 | scoring_admin.py:341 | superseded version editable | ✅ killed |
-| M47 | scoring.py:248 | quantity limit exclusive | ✅ killed |
-| M48 | scoring.py:452 | status change without justification | ✅ killed |
-| M49 | scoring.py:172 | other-unit table without justification | ✅ killed |
-| M51 | scoring.py (entity) `covers` | validity end exclusive | ✅ killed |
-| M52 | scoring_engine.py:229 | Group I percent from wrong group | ✅ killed |
-| M53 | scoring.py:504 | listing ignores item | ✅ killed |
-| M54 | scoring.py:294 | Group I needs no hours | ✅ killed |
-| M55 | scoring.py:290 | Group I period format unchecked | ✅ killed |
-| M56 | scoring_admin.py:136 | `latest_version` returns the first version | ❌ SURVIVED → fix task 2 (probe `test_probe_m56` passes on the original and fails on the mutant) |
-| F01 | ActivityForm.tsx:94 | edit without justification | ✅ killed |
-| F02 | labels.ts:75 | decimal dot not turned into a comma | ✅ killed |
-| F03 | StepNav.tsx:13 | Etapa 4 link target wrong | ✅ killed |
-| F04 | ProcessStep1.tsx:165 | Etapa 4 not enabled on the process page | ✅ killed |
-| F05 | ProcessScoring.tsx:176 | Etapa 4 not enabled on the scoring page | ✅ killed |
+| # | File | Mutation | Result |
+| - | ---- | -------- | ------ |
+| M31 | use_cases/scoring.py:112 | suggestion by `process.start_date` instead of `end_date` | ✅ killed (`test_suggestion_uses_the_interstice_end_date_not_the_start`) |
+| M32 | use_cases/scoring.py:114 | `max` → `min` on the candidate versions | ✅ killed (`test_suggestion_picks_the_newest_validity_when_several_tables_fit_the_unit`) |
+| M56 | use_cases/scoring_admin.py:136 | `latest_version` returns the first version | ✅ killed (`test_duplicate_of_a_table_with_two_versions_copies_the_latest`) |
+| M34 | use_cases/scoring.py:394 | use-case optimistic-lock check `if False` | ◻ survived, equivalent (see Equivalence) |
+| K01 | domain/rules/scoring_points.py:41 | block floor → half-up | ✅ killed |
+| K02 | scoring_points.py:55 | half-up → floor | ✅ killed (`rounds_half_up_not_half_even`) |
+| K03 | scoring_points.py:55 | preparation ratio dropped | ✅ killed |
+| K04 | scoring_periods.py:48 | FORA test made inclusive of the limits | ✅ killed |
+| K05 | scoring_periods.py:50 | DENTRO start strict | ✅ killed |
+| K06 | scoring_duplicates.py:38 | overlap strict `<` | ✅ killed |
+| K07 | scoring_duplicates.py:31 | newest-first order | ✅ killed |
+| K08 | scoring_duplicates.py:33 | distinct justification ignored | ✅ killed |
+| K09 | scoring_engine.py:167 | AGUARDANDO_REVISAO counts in total | ✅ killed |
+| K10 | scoring_engine.py:191 | criterion cap not applied | ✅ killed |
+| K11 | scoring_engine.py:204 | group cap not applied | ✅ killed |
+| K12 | scoring_verification.py:57 | `>=` → `>` | ✅ killed |
+| K13 | use_cases/scoring.py:87 | read access check removed | ✅ killed |
+| K14 | use_cases/scoring.py:93 | closed process writable (create/choose) | ✅ killed |
+| K14b | use_cases/scoring.py:389 | closed process writable (existing activity) | ✅ killed |
+| K15 | scoring_admin.py:398 | open version closed on the new start, not the day before | ✅ killed |
+| K16 | scoring_admin.py:538 | CSV errors do not stop creation | ✅ killed |
+| K17 | use_cases/users.py:20 | `require_admin` disabled | ✅ killed |
+| K18 | use_cases/scoring.py:248 | quantity limit exclusive | ✅ killed |
+| K19 | scoring_engine.py:229 | Group I percent from Group II | ✅ killed |
+| K20 | domain/entities/scoring.py:63 | validity end exclusive | ✅ killed |
+| K21 | use_cases/scoring.py:172 | other-unit table needs no justification | ✅ killed |
+| N01 | scoring.py:455 | same-status change accepted | ✅ killed |
+| N02 | scoring.py:452 | status change without justification | ✅ killed |
+| N03 | scoring.py:466 | status event audited as UPDATE instead of STATUS | ✅ killed |
+| N04 | scoring.py:353 | `points_override` without justification | ✅ killed |
+| N05 | scoring.py:481 | "distinct" mark without justification | ✅ killed |
+| N06 | scoring.py:493 | distinct audit before/after emptied | ✅ killed |
+| N07 | scoring_admin.py:620 | history events in reverse chronological order | ✅ killed |
+| N08 | scoring_admin.py:587 | `set_table_units` not persisted | ✅ killed |
+| N09 | services/criteria_csv.py:122 | unknown CSV columns not reported | ✅ killed |
+| N10 | criteria_csv.py:119 | missing CSV columns not reported | ✅ killed |
+| N11 | criteria_csv.py:107 | parser BOM strip removed | ✅ killed (`test_utf8_bom_is_accepted`) |
+| N11b | presentation/api/scoring_tables_admin.py:104 | `utf-8-sig` → `utf-8` alone | ◻ survived, equivalent (see Equivalence) |
+| N12 | scoring_engine.py:191 | criterion `LimitAdjustment` before/after swapped | ✅ killed |
+| N13 | scoring_engine.py:204 | group `LimitAdjustment` before/after swapped | ✅ killed |
+| N14 | use_cases/scoring.py:273 | candidate item without justification accepted | ✅ killed |
+| N15 | use_cases/scoring.py:507 | listing ignores the event date | ✅ killed |
+| N16 | presentation/api/activities.py:94 | "distinct" route passes version 0 | ✅ killed |
+| N17 | scoring_verification.py:54 | class minimums ignored | ✅ killed |
+| F01 | frontend ActivityForm.tsx:94 | edit without justification | ✅ killed |
+| F02 | frontend labels.ts:75 | decimal dot not turned into a comma | ✅ killed |
+| FN1 | ActivityForm.tsx:117 | `expected_version: activity.version + 1` | ✅ killed |
+| FN2 | TablePicker.tsx:52 | justification prompt never shown | ✅ killed |
+| FN3 | ScoringTable.tsx:43 | `data-label` attribute renamed (TELA-08 card labels) | ✅ killed |
 
-**Totals**: 55 backend + 5 frontend = 60 injected; 56 killed; 4 survived (1 equivalent: M34; 3 non-equivalent: M31, M32, M56).
-**Result**: ❌ FAIL
+**Equivalence proofs**
+- M34: with the use-case check off, `uow.activities.update(updated, expected_version)` runs `_versioned_update` (repositories.py:77-90), whose `WHERE version = expected` raises the same `StaleVersion` (HTTP 409); only the message text differs and the spec fixes none (ATV-13: "a segunda falha com 409"). The repository twin (iteration 1 M35) is killed.
+- N11b: `criteria_csv.parse_criteria_csv` strips the BOM again (`removeprefix`). Mutating only the API decode leaves behavior identical. Mutating both layers fails `test_scoring_admin_api.py::test_csv_with_bom_is_accepted` (probe run in the scratch), so the BOM assertion discriminates when the defense is really gone.
+
+**Totals**: 49 injected; 47 killed; 2 survived, both equivalent; 0 non-equivalent survivors. Scratch worktree removed; real porcelain equals the baseline.
+**Result**: ✅ PASS
 
 ---
 
@@ -240,29 +234,25 @@ Depth: expanded (60 mutations: 55 backend + 5 frontend; isolated `git worktree` 
 
 | Choice | Verdict |
 | ------ | ------- |
-| quantity None counts as 1 in POR_UNIDADE | Spec silent (CALC-02); no contradiction. A POR_UNIDADE activity without quantity scores 1 × unit. |
+| SEL-02 tie-break: newest `valid_from` | Now an Assumption (spec.md:47); matches `scoring.py:114`; asserted at `test_table_choice.py:164-178`. |
+| Duplicate table born without units | Now an Assumption (spec.md:48); the suggestion only considers tables of the professor's unit, so a unit-less copy is never suggested; asserted at `test_admin_create.py:147-154`. No contradiction with SEL-01 as scoped by the Assumption. |
+| 360 px verified by static CSS test | Now an Assumption (spec.md:49); accepted. A browser test is still advisable at deployment. |
+| quantity None counts as 1 in POR_UNIDADE | Spec silent (CALC-02); no contradiction. |
 | `points_override` only in CARGA_SEMANAL | Matches CALC-06 (`test_scoring_points.py:120-126`). |
-| `potential_total` plain sum without caps | CALC-10 silent; no contradiction (golden:171 `"10.00"`). |
-| `group1_percent` null at total 0 | CALC-13 silent; no contradiction (`test_scoring_engine.py:404`). |
-| I.3 exempt from the Group I period/level/hours rule | Recorded in the spec Assumptions (`n`); ATV-02 text is narrower than the implementation, accepted as logged. |
-| `FunctionalProcess.scoring_table_version_id` additive | Required by SEL-04; fine. |
-| New tables/versions/imports default to `PENDENTE_VALIDACAO` | Spec silent; consistent with the cautious intent of TAB-04. |
-| Duplicating a table does not copy unit associations | ADM-02 silent, but SEL-01 says every table has one or more units: `duplicate` with no `unit_ids` creates a table with zero units. Low-risk tension, not an AC contradiction. |
-| CSV import copies group data and minimums | ADM-08 silent; covered (`test_admin_import.py:65-83`). |
-| Criteria edit on any version that has a later version → 409 "somente leitura" | Stricter than ADM-03 ("versão não usada por processo") but supported by ADM-10 (earlier versions read-only). Accepted. |
-| CSV upload in the frontend bypasses `api/client.ts` | Behavior verified: multipart, CSRF header (`ScoringAdminForms.test.tsx:119`), per-line errors (`:139`). Accepted. |
+| `potential_total` plain sum without caps; `group1_percent` null at total 0 | Spec silent; no contradiction. |
+| I.3 exempt from the Group I period/level/hours rule | Spec Assumption (spec.md:46). |
+| New tables/versions/imports default to `PENDENTE_VALIDACAO` | Spec silent; consistent with TAB-04's cautious intent. |
+| Criteria edit on a superseded version → 409 "somente leitura" | Stricter than ADM-03, supported by ADM-10. Accepted. |
+| CSV upload bypasses `api/client.ts` | Behavior verified (`ScoringAdminForms.test.tsx:119`, `:139`). Accepted. |
 
 No author choice contradicts a spec AC.
 
 ---
 
-## Ranked Gaps (fix tasks)
+## Ranked Gaps
 
-1. SEL-02: no test distinguishes the interstice end date from the start date (or any other date) when suggesting a version. Add a test where a second version of the unit's table starts between the process start and end, and assert the suggestion is that version. Evidence: mutant M31 survives; `backend/app/application/use_cases/scoring.py:112`, tests `backend/tests/integration/scoring/test_table_choice.py:29-37`.
-2. ADM-02: "copiando a última versão" is asserted only on a one-version table. Add a duplicate test on a table with two versions and assert the copy has the later `valid_from`. Evidence: mutant M56 survives; `backend/app/application/use_cases/scoring_admin.py:136`, test `backend/tests/integration/scoring/test_admin_create.py:131-145`.
-3. SEL-02 spec precision: the spec does not say which version to suggest when a unit has several tables valid on the interstice end. The code picks the one with the latest `valid_from` (`scoring.py:114`); mutant M32 survives. Decide the rule in the spec and assert it.
-4. TELA-08: no test can show the absence of horizontal scroll at 360 px; the CSS regex test (`styles.test.ts:30-36`) is the best available in jsdom. Cover it in the manual UAT or a browser test.
-5. SEL-01 vs ADM-02: a duplicated table can have zero units. Decide whether the duplicate must carry at least one unit.
+None blocking. Advisory only:
+1. TELA-08: real horizontal-scroll behavior at 360 px is not machine-checked (jsdom). Spec Assumption defers it to a browser test at deployment (`spec.md:49`).
 
 ---
 
@@ -270,19 +260,26 @@ No author choice contradicts a spec AC.
 
 | Principle | Status |
 | --------- | ------ |
-| No scope creep (changes limited to the feature; `process_verification.py` +3 lines, `schemas/processes.py` +11 additive) | ✅ |
-| Matches existing patterns (use cases, ports, repositories, `require_admin`) | ✅ |
-| Tests map to ACs and edge cases; no unclaimed tests found | ✅ |
-| Spec-anchored outcome check | ⚠️ 2 clauses without a discriminating assertion (SEL-02, ADM-02) |
+| No scope creep (iteration-2 delta is two tests plus spec/tasks bookkeeping) | ✅ |
+| Matches existing patterns | ✅ |
+| Tests map to ACs and edge cases; no unclaimed tests | ✅ |
+| Spec-anchored outcome check (asserted values match spec outcomes) | ✅ |
 | Documented guidelines | none - strong defaults applied |
 
 ## Requirement Traceability Update
 
-Not applied automatically (the Verifier does not edit `spec.md`). Recommended status after the fix tasks: all IDs Verified; SEL-02 and ADM-02 stay `Implementing` until gaps 1 and 2 are closed.
+Not applied automatically (the Verifier does not edit `spec.md`). Recommended: all 80 IDs Verified.
+
+## Iteration History
+
+| Iteration | Verdict | Findings |
+| --------- | ------- | -------- |
+| 1 | FAIL ❌ | 60 mutants, 3 non-equivalent survivors (M31, M32, M56); SEL-02 and ADM-02 clauses not discriminated; 2 spec-precision gaps; TELA-08 caveat |
+| 2 | PASS ✅ | T40/T41 added 3 tests; 49 mutants (4 re-runs, 22 prior-killed re-runs, 18 new, 5 frontend), 2 equivalent survivors; gaps recorded as Assumptions |
 
 ## Summary
 
-**Overall**: ❌ Not ready (two small test gaps).
-**Spec-anchored check**: 78/80 IDs matched fully; 2 partial (SEL-02, ADM-02); 1 spec-precision gap.
-**Sensor**: 56/60 killed; 1 equivalent; 3 survivors need fix tasks.
-**Gate**: backend 728 passed; frontend 67 passed; both smokes PASS.
+**Overall**: ✅ Ready.
+**Spec-anchored check**: 80/80 IDs matched; 0 open spec-precision gaps.
+**Sensor**: 47/49 killed, 2 equivalent, 0 non-equivalent survivors.
+**Gate**: backend 731 passed; frontend 67 passed, lint and build exit 0; both smokes PASS.
