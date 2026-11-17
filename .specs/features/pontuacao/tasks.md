@@ -453,10 +453,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Contagem por grupo exatamente 3, 16, 12, 7, 6, 14, 11, 66
-- [ ] Lista exata dos 17 itens II a VII com `review_note` de divergência (II.9, II.12, II.16, III.2, III.6, III.7, III.8, III.9, IV.2, IV.4, IV.5, IV.7, VI.10, VI.11, VI.12, VII.9, VII.10) e dos itens VIII.5, VIII.6, VIII.7, VIII.38, VIII.39
-- [ ] Pontos do caso real: II.7 = 10, II.8 = 10, II.12 = 10, III.2 = 10, III.3 = 5, IV.1 = 15, IV.4 = 5, VI.6 = 30, VII.10 = 3, VIII.11 = 25, VIII.12 = 20, VIII.13 = 6, VIII.66 = 5
-- [ ] Gate quick passa; 8+ testes
+- [x] Contagem por grupo exatamente 3, 16, 12, 7, 6, 14, 11, 66
+- [x] Lista exata dos 17 itens II a VII com `review_note` de divergência (II.9, II.12, II.16, III.2, III.6, III.7, III.8, III.9, IV.2, IV.4, IV.5, IV.7, VI.10, VI.11, VI.12, VII.9, VII.10) e dos itens VIII.5, VIII.6, VIII.7, VIII.38, VIII.39
+- [x] Pontos do caso real: II.7 = 10, II.8 = 10, II.12 = 10, III.2 = 10, III.3 = 5, IV.1 = 15, IV.4 = 5, VI.6 = 30, VII.10 = 3, VIII.11 = 25, VIII.12 = 20, VIII.13 = 6, VIII.66 = 5
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
