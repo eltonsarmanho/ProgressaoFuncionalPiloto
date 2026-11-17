@@ -322,10 +322,10 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VERIF-06 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
 | VERIF-07 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
 | VERIF-08 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
-| VERIF-09 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
-| VERIF-10 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
-| VERIF-11 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
-| VERIF-12 | P1: Verificações: interstício, duplicidade e requisitos | Design | In Tasks |
+| VERIF-09 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
+| VERIF-10 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
+| VERIF-11 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
+| VERIF-12 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
 | VERIF-13 | P1: Verificações: interstício, duplicidade e requisitos | Design | Implementing |
 | TELA-01 | P1: Etapa 4 na interface | Design | In Tasks |
 | TELA-02 | P1: Etapa 4 na interface | Design | In Tasks |

@@ -318,11 +318,11 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] DE ou 40H com subtotais IV + V = 0 dá `SEM_EXTENSAO_OU_PESQUISA` ALERTA, com referência ao art. 13, II
-- [ ] Estrutura Res. 4.644: classe atual C com total 414 dá `ATINGE` (mínimo 100); 99 dá `NAO_ATINGE`
-- [ ] Estrutura Lei 15.141: `NAO_DEFINIDO` e `MINIMO_NAO_DEFINIDO` REQUER_ANALISE_NORMATIVA
-- [ ] Todo alerta traz código, severidade, mensagem em português e referência; nada é alterado
-- [ ] Gate quick passa; 10+ testes
+- [x] DE ou 40H com subtotais IV + V = 0 dá `SEM_EXTENSAO_OU_PESQUISA` ALERTA, com referência ao art. 13, II
+- [x] Estrutura Res. 4.644: classe atual C com total 414 dá `ATINGE` (mínimo 100); 99 dá `NAO_ATINGE`
+- [x] Estrutura Lei 15.141: `NAO_DEFINIDO` e `MINIMO_NAO_DEFINIDO` REQUER_ANALISE_NORMATIVA
+- [x] Todo alerta traz código, severidade, mensagem em português e referência; nada é alterado
+- [x] Gate quick passa; 10+ testes
 
 **Tests**: unit
 **Gate**: quick
