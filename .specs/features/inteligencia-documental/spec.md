@@ -332,7 +332,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | TELA-09 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
 | ACC-01 | P2: Aceitação com os documentos reais | Design | In Tasks |
 | ACC-02 | P2: Aceitação com os documentos reais | Design | In Tasks |
-| ACC-03 | P2: Aceitação com os documentos reais | Design | In Tasks |
+| ACC-03 | P2: Aceitação com os documentos reais | Design | Implementing |
 | ACC-04 | P2: Aceitação com os documentos reais | Design | In Tasks |
 
 **ID format:** `[CATEGORY]-[NUMBER]`

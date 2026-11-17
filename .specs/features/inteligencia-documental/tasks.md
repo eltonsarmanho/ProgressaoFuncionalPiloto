@@ -447,10 +447,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Cada gerador produz um arquivo que abre e tem a assinatura certa
-- [ ] O PDF digitalizado não tem camada de texto; o ruidoso tem texto com mais de 30% de símbolos
-- [ ] Nenhum texto gerado contém nome, SIAPE ou CPF reais
-- [ ] Gate quick passa; 8+ testes
+- [x] Cada gerador produz um arquivo que abre e tem a assinatura certa
+- [x] O PDF digitalizado não tem camada de texto; o ruidoso tem texto com mais de 30% de símbolos
+- [x] Nenhum texto gerado contém nome, SIAPE ou CPF reais
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
