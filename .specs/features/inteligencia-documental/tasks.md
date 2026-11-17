@@ -1051,11 +1051,11 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Tarefa `PENDENTE` inserida é processada e termina `CONCLUIDA` (analisador falso)
-- [ ] Duas tarefas são processadas uma por vez, na ordem de criação
-- [ ] Na partida, tarefa `PROCESSANDO` volta para `PENDENTE` e é reprocessada
-- [ ] Com `worker_enabled` falso nada roda; a parada do app encerra a thread
-- [ ] Gate full passa; 8+ testes
+- [x] Tarefa `PENDENTE` inserida é processada e termina `CONCLUIDA` (analisador falso)
+- [x] Duas tarefas são processadas uma por vez, na ordem de criação
+- [x] Na partida, tarefa `PROCESSANDO` volta para `PENDENTE` e é reprocessada
+- [x] Com `worker_enabled` falso nada roda; a parada do app encerra a thread
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full

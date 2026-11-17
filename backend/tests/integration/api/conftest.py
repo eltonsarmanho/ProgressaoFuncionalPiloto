@@ -28,19 +28,32 @@ def clock():
 
 
 @pytest.fixture
-def make_client(migrated_url, engine, clock):
-    """Factory for TestClients; https base URL so Secure cookies are sent back."""
+def make_client(migrated_url, engine, clock, tmp_path):
+    """Factory for TestClients; https base URL so Secure cookies are sent back.
+
+    The background worker is off and the storage is a temporary directory unless a test says
+    otherwise through `settings`; `ai_extractor` and `text_extractor` replace the real adapters.
+    """
     clients = []
 
-    def make(cookie_secure: bool = True) -> TestClient:
-        settings = Settings(
+    def make(
+        cookie_secure: bool = True, ai_extractor=None, text_extractor=None, **settings
+    ) -> TestClient:
+        options = {
+            "worker_enabled": False,
+            "storage_dir": str(tmp_path / "storage"),
+            **settings,
+        }
+        app_settings = Settings(
             database_url=migrated_url,
             admin_email="admin@ufpa.br",
             admin_password="admin-password-1",
             cookie_secure=cookie_secure,
+            **options,
         )
         scheme = "https" if cookie_secure else "http"
-        client = TestClient(create_app(settings, clock), base_url=f"{scheme}://testserver")
+        app = create_app(app_settings, clock, ai_extractor, text_extractor)
+        client = TestClient(app, base_url=f"{scheme}://testserver")
         client.__enter__()
         clients.append(client)
         return client

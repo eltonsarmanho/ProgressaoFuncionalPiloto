@@ -8,12 +8,14 @@ from sqlalchemy import Engine
 
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
+from app.application.services.document_analyzer import DocumentAnalyzer
 from app.application.use_cases.auth import GetCurrentSession, Login, Logout
 from app.application.use_cases.career import (
     CreateCareerVersion,
     ListCareerVersions,
     UpdateCareerVersion,
 )
+from app.application.use_cases.document_processing import ProcessDocument, RecoverStuckJobs
 from app.application.use_cases.processes import (
     ChangeProcessStatus,
     CreateProcess,
@@ -56,11 +58,22 @@ from app.application.use_cases.units import ArchiveUnit, CreateUnit, ListUnits, 
 from app.application.use_cases.users import CreateUser, ListUsers
 from app.core.config import Settings
 from app.domain.entities.user import Session, User
-from app.domain.repositories.ports import Clock, UnitOfWork
+from app.domain.repositories.ports import (
+    AiExtractor,
+    Clock,
+    FileInspector,
+    FileStorage,
+    TextExtractor,
+    UnitOfWork,
+)
+from app.infrastructure.ai.maritalk import MariTalkExtractor
 from app.infrastructure.database.repositories import SqlUnitOfWork
 from app.infrastructure.database.session import make_session_factory
+from app.infrastructure.files.inspector import PillowFileInspector
+from app.infrastructure.ocr.extractor import DocumentTextExtractor
 from app.infrastructure.security import tokens
 from app.infrastructure.security.argon2_hasher import Argon2PasswordHasher
+from app.infrastructure.storage.local_storage import LocalFileStorage
 
 
 @dataclass
@@ -111,9 +124,24 @@ class Container:
     update_activity: UpdateActivity
     change_activity_status: ChangeActivityStatus
     mark_activities_distinct: MarkActivitiesDistinct
+    storage: FileStorage
+    inspector: FileInspector
+    process_document: ProcessDocument
+    recover_stuck_jobs: RecoverStuckJobs
 
 
-def build_container(settings: Settings, engine: Engine, clock: Clock) -> Container:
+def build_container(
+    settings: Settings,
+    engine: Engine,
+    clock: Clock,
+    ai_extractor: AiExtractor | None = None,
+    text_extractor: TextExtractor | None = None,
+) -> Container:
+    """Wires every service; the document services are shared by the routes and the worker.
+
+    Tests pass a fake `ai_extractor` or `text_extractor`; production builds the MariTalk
+    adapter and the PyMuPDF plus Tesseract reader (AD-005, AD-009).
+    """
     session_factory = make_session_factory(engine)
 
     def uow_factory() -> UnitOfWork:
@@ -122,6 +150,13 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
     hasher = Argon2PasswordHasher()
     audit = AuditService(clock)
     policy = AccessPolicy()
+    create_activity = CreateActivity(uow_factory, audit, policy)
+    storage = LocalFileStorage(settings.storage_dir)
+    analyzer = DocumentAnalyzer(
+        text_extractor or DocumentTextExtractor(clock),
+        ai_extractor or MariTalkExtractor(settings),
+        clock,
+    )
     return Container(
         settings=settings,
         engine=engine,
@@ -163,12 +198,16 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
         suggest_scoring_table=SuggestScoringTable(uow_factory, audit, policy),
         choose_process_table=ChooseProcessTable(uow_factory, audit, policy),
         calculate_process_score=CalculateProcessScore(uow_factory, audit, policy),
-        create_activity=CreateActivity(uow_factory, audit, policy),
+        create_activity=create_activity,
         get_activity=GetActivity(uow_factory, audit, policy),
         list_activities=ListActivities(uow_factory, audit, policy),
         update_activity=UpdateActivity(uow_factory, audit, policy),
         change_activity_status=ChangeActivityStatus(uow_factory, audit, policy),
         mark_activities_distinct=MarkActivitiesDistinct(uow_factory, audit, policy),
+        storage=storage,
+        inspector=PillowFileInspector(settings.max_megapixels),
+        process_document=ProcessDocument(uow_factory, audit, storage, analyzer, create_activity),
+        recover_stuck_jobs=RecoverStuckJobs(uow_factory),
     )
 
 
