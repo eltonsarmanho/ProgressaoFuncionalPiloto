@@ -88,3 +88,19 @@ def test_criterion_keeps_mode_specific_fields_and_review_note():
     assert criterion.weeks_per_semester == 17
     assert criterion.prep_ratio == Decimal("1")
     assert criterion.review_note == "difere do IFCH"
+
+
+# --- minimum course hours (OFI-06) ----------------------------------------------------------
+
+
+def test_criterion_min_hours_defaults_to_none():
+    assert _criterion(4, 3).min_hours is None
+
+
+def test_criterion_keeps_the_minimum_hours_it_is_given():
+    assert _criterion(4, 4, min_hours=Decimal("20")).min_hours == Decimal("20")
+
+
+def test_min_hours_does_not_change_equality_of_criteria_without_it():
+    assert _criterion(4, 3) == _criterion(4, 3)
+    assert _criterion(4, 3) != _criterion(4, 3, min_hours=Decimal("20"))

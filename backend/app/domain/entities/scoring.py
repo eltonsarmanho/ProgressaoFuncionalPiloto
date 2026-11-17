@@ -35,6 +35,7 @@ class ScoringCriterion:
     accepted_evidence: str = ""
     rules: str = ""
     review_note: str | None = None
+    min_hours: Decimal | None = None  # minimum course load; below it the activity does not score
 
 
 @dataclass(frozen=True)

@@ -80,8 +80,8 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] O campo existe, é opcional e não muda a igualdade nem a construção dos testes existentes
-- [ ] Gate quick passa; 3+ testes
+- [x] O campo existe, é opcional e não muda a igualdade nem a construção dos testes existentes
+- [x] Gate quick passa; 3+ testes
 
 **Tests**: unit
 **Gate**: quick
