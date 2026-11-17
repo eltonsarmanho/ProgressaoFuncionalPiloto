@@ -436,8 +436,8 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Cookie HttpOnly/SameSite=Strict (Secure conforme config); 401 sem sessão; 403 sem CSRF; 429 no bloqueio
-- [ ] Gate full passa
+- [x] Cookie HttpOnly/SameSite=Strict (Secure conforme config); 401 sem sessão; 403 sem CSRF; 429 no bloqueio
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full
