@@ -26,8 +26,8 @@ def as_data(activity, **changes) -> ActivityData:
 
 
 @pytest.fixture
-def activity(fasi_chosen):
-    world = fasi_chosen
+def activity(official_chosen):
+    world = official_chosen
     return world.create.execute(
         world.admin,
         world.process.id,
@@ -72,8 +72,8 @@ def test_changing_scoring_inputs_without_justification_is_422(world, activity, c
         assert uow.activities.get(activity.id).version == activity.version
 
 
-def test_points_override_change_needs_justification(fasi_chosen):
-    world = fasi_chosen
+def test_points_override_change_needs_justification(points_chosen):
+    world = points_chosen
     activity = world.create.execute(
         world.admin,
         world.process.id,
@@ -167,7 +167,7 @@ def test_rejected_back_to_pending_review_counts_as_pending(world, activity):
         world.admin, activity.id, ActivityStatus.AGUARDANDO_REVISAO, rejected.version, "Revisar"
     )
 
-    result = calculate(world.fasi_version, [reopened], INTERSTICE)
+    result = calculate(world.official_version, [reopened], INTERSTICE)
 
     assert reopened.status is ActivityStatus.AGUARDANDO_REVISAO
     assert result.rows[0].status is RowStatus.POTENCIAL
@@ -202,7 +202,7 @@ def test_distinct_mark_releases_the_duplicate_and_audits_the_justification(world
     )
     with world.uow_factory() as uow:
         both = uow.activities.list_for_process(world.process.id)
-    assert calculate(world.fasi_version, both, INTERSTICE).rows[1].reasons == (
+    assert calculate(world.official_version, both, INTERSTICE).rows[1].reasons == (
         NotScoredReason.DUPLICIDADE,
     )
 
@@ -214,9 +214,9 @@ def test_distinct_mark_releases_the_duplicate_and_audits_the_justification(world
 
     with world.uow_factory() as uow:
         both = uow.activities.list_for_process(world.process.id)
-    result = calculate(world.fasi_version, both, INTERSTICE)
+    result = calculate(world.official_version, both, INTERSTICE)
     assert [r.status for r in result.rows] == [RowStatus.PONTUADA, RowStatus.PONTUADA]
-    assert result.group_subtotals[2] == D("50")
+    assert result.group_subtotals[2] == D("25")
     event = events(world, twin)[-1]
     assert event.justification == "Outro aluno"
     assert event.changes == {"distinct_justification": {"before": None, "after": "Outro aluno"}}
@@ -234,8 +234,8 @@ def test_only_the_chosen_candidate_item_scores(world, activity):
     )
 
     assert updated.candidates == (candidate,)
-    result = calculate(world.fasi_version, [updated], INTERSTICE)
-    assert result.group_subtotals[2] == D("40")
+    result = calculate(world.official_version, [updated], INTERSTICE)
+    assert result.group_subtotals[2] == D("20")
     assert result.group_subtotals[4] == 0
     assert events(world, activity)[-1].changes["candidates"]["after"] == [
         {"group_number": 4, "item_number": 2, "justification": "Também cabe em extensão"}

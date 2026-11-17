@@ -27,13 +27,13 @@ VALID = "\n".join(
 
 def versions(world):
     with world.uow_factory() as uow:
-        return list(uow.scoring_tables.list_versions(world.fasi_version.table_id))
+        return list(uow.scoring_tables.list_versions(world.official_version.table_id))
 
 
 def do_import(world, admin_uc, text=VALID, **kw):
     return admin_uc.import_csv.execute(
         kw.pop("actor", world.admin),
-        kw.pop("table_id", world.fasi_version.table_id),
+        kw.pop("table_id", world.official_version.table_id),
         kw.pop("valid_from", NEW_START),
         kw.pop("valid_to", None),
         kw.pop("norm_reference", REFERENCE),
@@ -66,19 +66,19 @@ def test_group_names_limits_and_counts_in_total_come_from_the_latest_version(wor
     do_import(world, admin_uc)
 
     created = versions(world)[-1]
-    for group, base in zip(created.groups, world.fasi_version.groups, strict=True):
+    for group, base in zip(created.groups, world.official_version.groups, strict=True):
         assert (group.name, group.counts_in_total, group.max_points) == (
             base.name, base.counts_in_total, base.max_points
         )  # fmt: skip
-    assert created.minimums == world.fasi_version.minimums
+    assert created.minimums == world.official_version.minimums
 
 
 def test_ifch_group_one_still_does_not_count_after_an_import(world, admin_uc):
     text = HEADER + "\n2,7,Ok,x,POR_UNIDADE,1,,"
-    do_import(world, admin_uc, text=text, table_id=world.ifch_version.table_id)
+    do_import(world, admin_uc, text=text, table_id=world.other_version.table_id)
 
     with world.uow_factory() as uow:
-        created = uow.scoring_tables.list_versions(world.ifch_version.table_id)[-1]
+        created = uow.scoring_tables.list_versions(world.other_version.table_id)[-1]
     assert created.get_group(1).counts_in_total is False
 
 
@@ -104,7 +104,7 @@ def test_closes_the_open_version_and_audits_the_import(world, admin_uc):
     view = do_import(world, admin_uc)
 
     old = versions(world)[0]
-    assert old.id == world.fasi_version.id
+    assert old.id == world.official_version.id
     assert old.valid_to == date(2026, 2, 28)
     with world.uow_factory() as uow:
         [event] = uow.audit.list_for("scoring_version", str(view.version.id))
@@ -134,7 +134,7 @@ def test_any_invalid_row_lists_every_error_and_creates_nothing(world, admin_uc):
     ]
     [only] = versions(world)
     assert only.valid_to is None  # the open version was not closed
-    assert only.id == world.fasi_version.id
+    assert only.id == world.official_version.id
 
 
 def test_missing_header_column_creates_nothing(world, admin_uc):
@@ -146,7 +146,7 @@ def test_missing_header_column_creates_nothing(world, admin_uc):
 
 
 def test_process_of_the_open_version_blocks_the_import_with_409(world, admin_uc):
-    world.choose.execute(world.admin, world.process.id, world.fasi_version.id, None, None)
+    world.choose.execute(world.admin, world.process.id, world.official_version.id, None, None)
 
     with pytest.raises(Conflict):
         do_import(world, admin_uc, valid_from=date(2024, 11, 23))

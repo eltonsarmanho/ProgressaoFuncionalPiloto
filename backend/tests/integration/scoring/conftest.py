@@ -1,7 +1,9 @@
 """Fixtures for scoring use case tests: seeded units and tables, professors, actors, process."""
 
 import uuid
+from dataclasses import replace
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
@@ -12,7 +14,9 @@ from app.application.use_cases import scoring, scoring_admin
 from app.domain.entities.career import Modality
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor, Titration, WorkRegime
+from app.domain.entities.scoring import ScoringCriterion, ScoringMode, TableStatus
 from app.domain.entities.user import Role, User
+from app.domain.repositories.ports import ScoringTableRecord
 from app.infrastructure.database.seed import seed_reference_data, seed_scoring_tables
 from tests.integration.test_seed import FakeHasher
 
@@ -67,6 +71,61 @@ def _process(uow, professor, created_by, **kw) -> FunctionalProcess:
     return process
 
 
+OFFICIAL_TABLE = "Tabela de Pontuação da UFPA"
+OTHER_TABLE = "Tabela Alternativa de Teste"
+POINTS_TABLE = "Tabela de Teste com Grupo I em Pontos"
+
+
+def _with_criteria(version, group_number, criteria, **group_changes):
+    groups = tuple(
+        replace(g, criteria=criteria, **group_changes) if g.number == group_number else g
+        for g in version.groups
+    )
+    return replace(version, groups=groups)
+
+
+def _other_table(uow, official) -> object:
+    """A copy of the official version in a table of no unit, differing only in II.12 (10, not 5).
+
+    Stands in for "a table that is not the unit's one": the official table is the only seeded
+    table and belongs to both FASI and IFCH. The different II.12 lets a test see a table switch.
+    """
+    table = ScoringTableRecord(uuid.uuid4(), OTHER_TABLE, unit_ids=())
+    uow.scoring_tables.add_table(table)
+    group = official.get_group(2)
+    criteria = tuple(
+        replace(c, unit_points=Decimal("10")) if c.item_number == 12 else c
+        for c in group.criteria
+    )
+    copy = _with_criteria(official, 2, criteria)
+    copy = replace(
+        copy, id=uuid.uuid4(), table_id=table.id, norm_reference="Tabela de teste, sem norma"
+    )
+    uow.scoring_tables.add_version(copy)
+    return copy
+
+
+def _points_table(uow, official) -> object:
+    """A copy of the official version whose group I counts in points, as the old FASI table.
+
+    Group I keeps the two weekly-load criteria and gets I.3, a VALOR_INFORMADO item limited to
+    10 points, so the tests of informed points and limits keep a table that accepts them.
+    """
+    table = ScoringTableRecord(uuid.uuid4(), POINTS_TABLE, unit_ids=())
+    uow.scoring_tables.add_table(table)
+    group_one = official.get_group(1)
+    informed = ScoringCriterion(
+        1, 3, "Avaliação discente (item de teste)", "pontos", ScoringMode.VALOR_INFORMADO,
+        max_points=Decimal("10"),
+    )  # fmt: skip
+    copy = _with_criteria(
+        official, 1, (*group_one.criteria, informed), counts_in_total=True
+    )
+    copy = replace(copy, id=uuid.uuid4(), table_id=table.id, norm_reference="Tabela de teste")
+    uow.scoring_tables.add_version(copy)
+    return copy
+
+
 @pytest.fixture
 def world(uow_factory):
     seed_reference_data(uow_factory(), "seed-admin@ufpa.br", "x", FakeHasher())
@@ -86,10 +145,12 @@ def world(uow_factory):
         )
         process = _process(uow, prof, admin)
         ifch_process = _process(uow, other_prof, admin)
-        tables = {t.name: t for t in uow.scoring_tables.list_tables()}
-        versions = {
-            name: uow.scoring_tables.list_versions(t.id)[0] for name, t in tables.items()
-        }
+        official = next(
+            uow.scoring_tables.list_versions(t.id)[0]
+            for t in uow.scoring_tables.list_tables()
+            if t.name == OFFICIAL_TABLE
+        )
+        other = _other_table(uow, official)
         uow.commit()
     return SimpleNamespace(
         uow_factory=uow_factory,
@@ -105,8 +166,8 @@ def world(uow_factory):
         professor=prof,
         process=process,
         ifch_process=ifch_process,
-        fasi_version=versions["Tabela de Pontuação da FASI"],
-        ifch_version=versions["Tabela de Pontuação do IFCH"],
+        official_version=official,
+        other_version=other,
         suggest=scoring.SuggestScoringTable(uow_factory, audit, policy),
         choose=scoring.ChooseProcessTable(uow_factory, audit, policy),
         create=scoring.CreateActivity(uow_factory, audit, policy),
@@ -116,6 +177,25 @@ def world(uow_factory):
         list_activities=scoring.ListActivities(uow_factory, audit, policy),
         calc=scoring.CalculateProcessScore(uow_factory, audit, policy),
     )
+
+
+@pytest.fixture
+def points_chosen(world):
+    """A table whose group I counts in points chosen for the main process."""
+    with world.uow_factory() as uow:
+        world.points_version = _points_table(uow, world.official_version)
+        uow.commit()
+    world.choose.execute(world.admin, world.process.id, world.points_version.id, None, "Teste")
+    return world
+
+
+def make_official_pending(world) -> None:
+    """The official table is OFICIAL; mark it pending, as the old FASI table was."""
+    with world.uow_factory() as uow:
+        uow.scoring_tables.update_version(
+            replace(world.official_version, status=TableStatus.PENDENTE_VALIDACAO)
+        )
+        uow.commit()
 
 
 @pytest.fixture
@@ -132,9 +212,9 @@ def add_process(world):
 
 
 @pytest.fixture
-def fasi_chosen(world):
-    """The FASI table version chosen for the main process."""
-    world.choose.execute(world.admin, world.process.id, world.fasi_version.id, None, None)
+def official_chosen(world):
+    """The official table version chosen for the main process."""
+    world.choose.execute(world.admin, world.process.id, world.official_version.id, None, None)
     return world
 
 

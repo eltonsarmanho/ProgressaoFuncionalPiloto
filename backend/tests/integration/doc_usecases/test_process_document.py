@@ -242,7 +242,7 @@ def banca_spy(w) -> SpyAnalyzer:
 
 def test_analyzer_gets_the_file_the_professor_the_interstice_and_the_chosen_table(docs):
     w = docs.world
-    w.choose.execute(w.admin, w.process.id, w.fasi_version.id, None, None)
+    w.choose.execute(w.admin, w.process.id, w.official_version.id, None, None)
     document = submit(docs, "args")
     spy = banca_spy(w)
 
@@ -253,7 +253,7 @@ def test_analyzer_gets_the_file_the_professor_the_interstice_and_the_chosen_tabl
     assert kind is FileKind.PDF
     assert (name, siape) == (w.professor.full_name, w.professor.siape)
     assert interstice == Interstice(w.process.start_date, w.process.end_date)
-    assert version.id == w.fasi_version.id
+    assert version.id == w.official_version.id
 
 
 def test_analyzer_gets_no_table_when_the_process_has_none(docs):

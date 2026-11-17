@@ -442,8 +442,8 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Os testes passam com a tabela oficial; cada valor que mudou (pontos, itens, total) é listado no corpo do commit
-- [ ] Nenhuma asserção que não codificasse valor da tabela antiga é removida ou enfraquecida; Gate full passa
+- [x] Os testes passam com a tabela oficial; cada valor que mudou (pontos, itens, total) é listado no corpo do commit
+- [x] Nenhuma asserção que não codificasse valor da tabela antiga é removida ou enfraquecida; Gate full passa
 
 **Tests**: integration
 **Gate**: full

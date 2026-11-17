@@ -11,9 +11,9 @@ from app.domain.errors import NotFound
 
 
 @pytest.fixture
-def listed(fasi_chosen):
+def listed(official_chosen):
     """Six activities created out of order; returns title -> id."""
-    world = fasi_chosen
+    world = official_chosen
     specs = [
         ("sem classificação", None, None, date(2023, 1, 5)),
         ("III.2", 3, 2, date(2023, 2, 1)),

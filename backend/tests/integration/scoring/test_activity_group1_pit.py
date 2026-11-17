@@ -158,8 +158,8 @@ def test_other_groups_are_not_affected_by_the_group1_rule(pit_world):
     assert error.value.field == "points_override"
 
 
-def test_group1_of_a_table_that_counts_points_still_accepts_informed_points(fasi_chosen):
-    world = fasi_chosen
+def test_group1_of_a_table_that_counts_points_still_accepts_informed_points(points_chosen):
+    world = points_chosen
 
     activity = world.create.execute(
         world.admin, world.process.id, offer(points_override=D("24")), "Declaração"
