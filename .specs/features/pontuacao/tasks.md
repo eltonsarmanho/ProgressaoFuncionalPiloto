@@ -939,10 +939,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Versão sem uso: altera com referência e audita valores anterior e novo
-- [ ] Versão usada por processo: 409 orientando a criar nova versão
-- [ ] Sem referência: 422 no campo; não ADMIN: 403
-- [ ] Gate full passa; 8+ testes
+- [x] Versão sem uso: altera com referência e audita valores anterior e novo
+- [x] Versão usada por processo: 409 orientando a criar nova versão
+- [x] Sem referência: 422 no campo; não ADMIN: 403
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full

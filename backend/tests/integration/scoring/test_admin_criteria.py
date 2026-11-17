@@ -1,0 +1,123 @@
+"""ADM-03, ADM-04, SEL-08: criteria edits with the norm reference and the in-use guard."""
+
+import uuid
+from decimal import Decimal
+
+import pytest
+
+from app.domain.entities.audit import AuditAction
+from app.domain.errors import Conflict, Forbidden, NotFound, ValidationFailed
+
+REFERENCE = "Res. 5.000/2026, art. 3"
+
+
+@pytest.fixture
+def unused(world, admin_uc):
+    """A copy of the FASI table: its version is used by no process."""
+    view = admin_uc.duplicate.execute(world.admin, world.fasi_version.table_id, "Cópia FASI")
+    return view.versions[0].version
+
+
+def criterion(world, version_id, group, item):
+    with world.uow_factory() as uow:
+        return uow.scoring_tables.get_version(version_id).get_criterion(group, item)
+
+
+def events(world, version_id):
+    with world.uow_factory() as uow:
+        return list(uow.audit.list_for("scoring_version", str(version_id)))
+
+
+def test_changes_criterion_of_an_unused_version_and_audits_before_and_after(
+    world, admin_uc, unused
+):
+    before = criterion(world, unused.id, 2, 7)
+    assert before.unit_points == Decimal("10")
+
+    admin_uc.update_criteria.execute(
+        world.admin, unused.id, 2, 7, {"unit_points": "12.5", "description": "Nova"}, REFERENCE
+    )
+
+    after = criterion(world, unused.id, 2, 7)
+    assert after.unit_points == Decimal("12.5")
+    assert after.description == "Nova"
+    [event] = [e for e in events(world, unused.id) if e.action is AuditAction.UPDATE]
+    assert event.user_id == world.admin.id
+    assert event.justification == REFERENCE
+    assert event.changes == {
+        "criteria.2.7.unit_points": {"before": "10", "after": "12.5"},
+        "criteria.2.7.description": {"before": before.description, "after": "Nova"},
+    }
+
+
+def test_other_criteria_are_untouched(world, admin_uc, unused):
+    other = criterion(world, unused.id, 2, 8)
+
+    admin_uc.update_criteria.execute(
+        world.admin, unused.id, 2, 7, {"unit_points": "12.5"}, REFERENCE
+    )
+
+    assert criterion(world, unused.id, 2, 8) == other
+
+
+def test_version_chosen_by_a_process_is_409_asking_for_a_new_version(world, admin_uc):
+    world.choose.execute(world.admin, world.process.id, world.fasi_version.id, None, None)
+
+    with pytest.raises(Conflict) as error:
+        admin_uc.update_criteria.execute(
+            world.admin, world.fasi_version.id, 2, 7, {"unit_points": "99"}, REFERENCE
+        )
+
+    assert "nova versão" in str(error.value)
+    assert criterion(world, world.fasi_version.id, 2, 7).unit_points == Decimal("10")
+    assert [e for e in events(world, world.fasi_version.id) if e.action is AuditAction.UPDATE] == []
+
+
+@pytest.mark.parametrize("reference", ["", "   "])
+def test_missing_change_reference_is_422_on_change_reference(world, admin_uc, unused, reference):
+    with pytest.raises(ValidationFailed) as error:
+        admin_uc.update_criteria.execute(
+            world.admin, unused.id, 2, 7, {"unit_points": "12"}, reference
+        )
+
+    assert error.value.field == "change_reference"
+    assert criterion(world, unused.id, 2, 7).unit_points == Decimal("10")
+
+
+@pytest.mark.parametrize("actor", ["docente", "secretaria"])
+def test_non_admin_gets_403(world, admin_uc, unused, actor):
+    with pytest.raises(Forbidden):
+        admin_uc.update_criteria.execute(
+            getattr(world, actor), unused.id, 2, 7, {"unit_points": "12"}, REFERENCE
+        )
+
+    assert criterion(world, unused.id, 2, 7).unit_points == Decimal("10")
+
+
+def test_unknown_version_or_criterion_is_404(world, admin_uc, unused):
+    with pytest.raises(NotFound):
+        admin_uc.update_criteria.execute(
+            world.admin, uuid.uuid4(), 2, 7, {"unit_points": "1"}, REFERENCE
+        )
+    with pytest.raises(NotFound):
+        admin_uc.update_criteria.execute(
+            world.admin, unused.id, 2, 999, {"unit_points": "1"}, REFERENCE
+        )
+
+
+@pytest.mark.parametrize(
+    ("changes", "field"),
+    [
+        ({"unit_points": "-1"}, "unit_points"),
+        ({"unit_points": "abc"}, "unit_points"),
+        ({"mode": "OUTRO"}, "mode"),
+        ({"description": " "}, "description"),
+        ({"group_number": 3}, "changes"),
+        ({}, "changes"),
+    ],
+)
+def test_invalid_changes_are_422_on_the_field(world, admin_uc, unused, changes, field):
+    with pytest.raises(ValidationFailed) as error:
+        admin_uc.update_criteria.execute(world.admin, unused.id, 2, 7, changes, REFERENCE)
+
+    assert error.value.field == field

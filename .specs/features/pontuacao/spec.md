@@ -338,8 +338,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | TELA-08 | P1: Etapa 4 na interface | Design | Implementing |
 | ADM-01 | P2: Administração das tabelas | Design | Implementing |
 | ADM-02 | P2: Administração das tabelas | Design | Implementing |
-| ADM-03 | P2: Administração das tabelas | Design | In Tasks |
-| ADM-04 | P2: Administração das tabelas | Design | In Tasks |
+| ADM-03 | P2: Administração das tabelas | Design | Implementing |
+| ADM-04 | P2: Administração das tabelas | Design | Implementing |
 | ADM-05 | P2: Administração das tabelas | Design | In Tasks |
 | ADM-06 | P2: Administração das tabelas | Design | In Tasks |
 | ADM-07 | P2: Administração das tabelas | Design | In Tasks |

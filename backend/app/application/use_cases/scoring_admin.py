@@ -9,13 +9,16 @@ import uuid
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from datetime import date
+from decimal import Decimal
 from uuid import UUID
 
 from app.application.services.audit_service import AuditService
 from app.application.use_cases.users import require_admin
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.scoring import (
+    ScoringCriterion,
     ScoringGroup,
+    ScoringMode,
     ScoringTableVersion,
     TableStatus,
 )
@@ -245,3 +248,111 @@ class DuplicateScoringTable:
             )
             uow.commit()
         return TableView(table, [VersionView(version, False)])
+
+
+_TEXT_FIELDS = ("description", "unit_label", "accepted_evidence", "rules", "review_note")
+_DECIMAL_FIELDS = ("unit_points", "hours_per_block", "prep_ratio", "max_points")
+EDITABLE_CRITERION_FIELDS = (
+    *_TEXT_FIELDS,
+    *_DECIMAL_FIELDS,
+    "mode",
+    "weeks_per_semester",
+)
+
+
+def _plain(value):
+    if isinstance(value, Decimal):
+        return format(value.normalize(), "f")
+    return value
+
+
+def _criterion_view(c: ScoringCriterion, fields) -> dict:
+    return {
+        f"criteria.{c.group_number}.{c.item_number}.{f}": _plain(getattr(c, f)) for f in fields
+    }
+
+
+def _coerce_change(field: str, value):
+    if field == "mode":
+        try:
+            return ScoringMode(value)
+        except ValueError:
+            raise ValidationFailed("mode", "Modo de pontuação inválido") from None
+    if field in _DECIMAL_FIELDS:
+        if value is None:
+            return None
+        try:
+            number = Decimal(str(value))
+        except ArithmeticError:
+            raise ValidationFailed(field, "Valor numérico inválido") from None
+        if not number.is_finite() or number < 0:
+            raise ValidationFailed(field, "Valor deve ser um número não negativo")
+        return number
+    if field == "weeks_per_semester":
+        if value is None:
+            return None
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise ValidationFailed(field, "Valor deve ser um inteiro positivo")
+        return value
+    if field == "description" and not str(value or "").strip():
+        raise ValidationFailed(field, "Descrição é obrigatória")
+    if field == "review_note":
+        return (str(value).strip() or None) if value is not None else None
+    return "" if value is None else str(value)
+
+
+class UpdateVersionCriteria:
+    """ADM-03/04: edit one criterion of a version no process uses, citing the norm."""
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], audit: AuditService):
+        self._uow_factory = uow_factory
+        self._audit = audit
+
+    def execute(
+        self,
+        actor: User,
+        version_id: UUID,
+        group: int,
+        item: int,
+        changes: dict,
+        change_reference: str,
+    ) -> VersionView:
+        require_admin(actor)
+        reference = (change_reference or "").strip()
+        if not reference:
+            raise ValidationFailed(
+                "change_reference", "Referência normativa da alteração é obrigatória"
+            )
+        unknown = sorted(set(changes) - set(EDITABLE_CRITERION_FIELDS))
+        if unknown:
+            raise ValidationFailed("changes", f"Campo não editável: {', '.join(unknown)}")
+        if not changes:
+            raise ValidationFailed("changes", "Nenhuma alteração informada")
+        values = {f: _coerce_change(f, v) for f, v in changes.items()}
+        with self._uow_factory() as uow:
+            version = uow.scoring_tables.get_version(version_id)
+            if version is None:
+                raise NotFound("Versão da tabela de pontuação não encontrada")
+            current = version.get_criterion(group, item)
+            if current is None:
+                raise NotFound("Critério não encontrado")
+            if uow.scoring_tables.version_in_use(version_id):
+                raise Conflict(
+                    "Versão já usada por processos não pode ser alterada; "
+                    "crie uma nova versão para alterar os critérios"
+                )
+            updated = replace(current, **values)
+            uow.scoring_tables.update_criterion(version_id, updated)
+            self._audit.record(
+                uow,
+                actor.id,
+                VERSION_ENTITY,
+                version_id,
+                AuditAction.UPDATE,
+                _criterion_view(current, values),
+                _criterion_view(updated, values),
+                justification=reference,
+            )
+            result = uow.scoring_tables.get_version(version_id)
+            uow.commit()
+        return VersionView(result, False)
