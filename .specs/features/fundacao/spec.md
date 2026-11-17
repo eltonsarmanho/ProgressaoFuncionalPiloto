@@ -249,66 +249,66 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| INFRA-01 | P1: Stack executável | Design | Implementing |
-| INFRA-02 | P1: Stack executável | Design | Implementing |
-| INFRA-03 | P1: Stack executável | Design | Implementing |
-| INFRA-04 | P1: Stack executável | Design | Implementing |
-| INFRA-05 | P1: Stack executável | Design | Implementing |
-| INFRA-06 | P1: Stack executável | Design | Implementing |
-| INFRA-07 | P1: Stack executável | Design | Implementing |
-| AUTH-01 | P1: Autenticação | Design | Implementing |
-| AUTH-02 | P1: Autenticação | Design | Implementing |
-| AUTH-03 | P1: Autenticação | Design | Implementing |
-| AUTH-04 | P1: Autenticação | Design | Implementing |
-| AUTH-05 | P1: Autenticação | Design | Implementing |
-| AUTH-06 | P1: Autenticação | Design | Implementing |
-| AUTH-07 | P1: Autenticação | Design | Implementing |
-| AUTH-08 | P1: Autenticação | Design | Implementing |
-| AUTH-09 | P1: Autenticação | Design | Implementing |
-| AUTH-10 | P1: Autenticação | Design | Implementing |
-| AUTH-11 | P1: Autenticação | Design | Implementing |
-| DOC-01 | P1: Cadastro de docente | Design | Implementing |
-| DOC-02 | P1: Cadastro de docente | Design | Implementing |
-| DOC-03 | P1: Cadastro de docente | Design | Implementing |
-| DOC-04 | P1: Cadastro de docente | Design | Implementing |
-| DOC-05 | P1: Cadastro de docente | Design | Implementing |
-| PROC-01 | P1: Processo e interstício | Design | Implementing |
-| PROC-02 | P1: Processo e interstício | Design | Implementing |
-| PROC-03 | P1: Processo e interstício | Design | Implementing |
-| PROC-04 | P1: Processo e interstício | Design | Implementing |
-| PROC-05 | P1: Processo e interstício | Design | Implementing |
-| PROC-06 | P1: Processo e interstício | Design | Implementing |
-| PROC-07 | P1: Processo e interstício | Design | Implementing |
-| PROC-08 | P1: Processo e interstício | Design | Implementing |
-| PROC-09 | P1: Processo e interstício | Design | Implementing |
-| PROC-10 | P1: Processo e interstício | Design | Implementing |
-| PROC-11 | P1: Processo e interstício | Design | Implementing |
-| PROC-12 | P1: Processo e interstício | Design | Implementing |
-| PROC-13 | P1: Processo e interstício | Design | Implementing |
-| PROC-14 | P1: Processo e interstício | Design | Implementing |
-| CARR-01 | P1: Estruturas de carreira | Design | Implementing |
-| CARR-02 | P1: Estruturas de carreira | Design | Implementing |
-| CARR-03 | P1: Estruturas de carreira | Design | Implementing |
-| CARR-04 | P1: Estruturas de carreira | Design | Implementing |
-| CARR-05 | P1: Estruturas de carreira | Design | Implementing |
-| CARR-06 | P1: Estruturas de carreira | Design | Implementing |
-| CARR-07 | P1: Estruturas de carreira | Design | Implementing |
-| CARR-08 | P1: Estruturas de carreira | Design | Implementing |
-| CARR-09 | P1: Estruturas de carreira | Design | Implementing |
-| CARR-10 | P1: Estruturas de carreira | Design | Implementing |
-| AUD-01 | P1: Trilha de auditoria | Design | Implementing |
-| AUD-02 | P1: Trilha de auditoria | Design | Implementing |
-| AUD-03 | P1: Trilha de auditoria | Design | Implementing |
-| AUD-04 | P1: Trilha de auditoria | Design | Implementing |
-| UI-01 | P1: Interface web | Design | Implementing |
-| UI-02 | P1: Interface web | Design | Implementing |
-| UI-03 | P1: Interface web | Design | Implementing |
-| UI-04 | P1: Interface web | Design | Implementing |
-| UI-05 | P1: Interface web | Design | Implementing |
-| UI-06 | P1: Interface web | Design | Implementing |
-| UNIT-01 | P2: Unidades acadêmicas | Design | Implementing |
-| UNIT-02 | P2: Unidades acadêmicas | Design | Implementing |
-| UNIT-03 | P2: Unidades acadêmicas | Design | Implementing |
+| INFRA-01 | P1: Stack executável | Design | Verified |
+| INFRA-02 | P1: Stack executável | Design | Verified |
+| INFRA-03 | P1: Stack executável | Design | Verified |
+| INFRA-04 | P1: Stack executável | Design | Verified |
+| INFRA-05 | P1: Stack executável | Design | Verified |
+| INFRA-06 | P1: Stack executável | Design | Verified |
+| INFRA-07 | P1: Stack executável | Design | Verified |
+| AUTH-01 | P1: Autenticação | Design | Verified |
+| AUTH-02 | P1: Autenticação | Design | Verified |
+| AUTH-03 | P1: Autenticação | Design | Verified |
+| AUTH-04 | P1: Autenticação | Design | Verified |
+| AUTH-05 | P1: Autenticação | Design | Verified |
+| AUTH-06 | P1: Autenticação | Design | Verified |
+| AUTH-07 | P1: Autenticação | Design | Verified |
+| AUTH-08 | P1: Autenticação | Design | Verified |
+| AUTH-09 | P1: Autenticação | Design | Verified |
+| AUTH-10 | P1: Autenticação | Design | Verified |
+| AUTH-11 | P1: Autenticação | Design | Verified |
+| DOC-01 | P1: Cadastro de docente | Design | Verified |
+| DOC-02 | P1: Cadastro de docente | Design | Verified |
+| DOC-03 | P1: Cadastro de docente | Design | Verified |
+| DOC-04 | P1: Cadastro de docente | Design | Verified |
+| DOC-05 | P1: Cadastro de docente | Design | Verified |
+| PROC-01 | P1: Processo e interstício | Design | Verified |
+| PROC-02 | P1: Processo e interstício | Design | Verified |
+| PROC-03 | P1: Processo e interstício | Design | Verified |
+| PROC-04 | P1: Processo e interstício | Design | Verified |
+| PROC-05 | P1: Processo e interstício | Design | Verified |
+| PROC-06 | P1: Processo e interstício | Design | Verified |
+| PROC-07 | P1: Processo e interstício | Design | Verified |
+| PROC-08 | P1: Processo e interstício | Design | Verified |
+| PROC-09 | P1: Processo e interstício | Design | Verified |
+| PROC-10 | P1: Processo e interstício | Design | Verified |
+| PROC-11 | P1: Processo e interstício | Design | Verified |
+| PROC-12 | P1: Processo e interstício | Design | Verified |
+| PROC-13 | P1: Processo e interstício | Design | Verified |
+| PROC-14 | P1: Processo e interstício | Design | Verified |
+| CARR-01 | P1: Estruturas de carreira | Design | Verified |
+| CARR-02 | P1: Estruturas de carreira | Design | Verified |
+| CARR-03 | P1: Estruturas de carreira | Design | Verified |
+| CARR-04 | P1: Estruturas de carreira | Design | Verified |
+| CARR-05 | P1: Estruturas de carreira | Design | Verified |
+| CARR-06 | P1: Estruturas de carreira | Design | Verified |
+| CARR-07 | P1: Estruturas de carreira | Design | Verified |
+| CARR-08 | P1: Estruturas de carreira | Design | Verified |
+| CARR-09 | P1: Estruturas de carreira | Design | Verified |
+| CARR-10 | P1: Estruturas de carreira | Design | Verified |
+| AUD-01 | P1: Trilha de auditoria | Design | Verified |
+| AUD-02 | P1: Trilha de auditoria | Design | Verified |
+| AUD-03 | P1: Trilha de auditoria | Design | Verified |
+| AUD-04 | P1: Trilha de auditoria | Design | Verified |
+| UI-01 | P1: Interface web | Design | Verified |
+| UI-02 | P1: Interface web | Design | Verified |
+| UI-03 | P1: Interface web | Design | Verified |
+| UI-04 | P1: Interface web | Design | Verified |
+| UI-05 | P1: Interface web | Design | Verified |
+| UI-06 | P1: Interface web | Design | Verified |
+| UNIT-01 | P2: Unidades acadêmicas | Design | Verified |
+| UNIT-02 | P2: Unidades acadêmicas | Design | Verified |
+| UNIT-03 | P2: Unidades acadêmicas | Design | Verified |
 
 IDs numeram os critérios de cada história na ordem em que aparecem (ex.: PROC-11 = 11º critério de "Processo e interstício").
 

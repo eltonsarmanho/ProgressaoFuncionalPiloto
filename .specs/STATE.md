@@ -44,12 +44,13 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/fundacao` (Complex). Depois vêm: `normativo` → `inteligencia-documental` → `pontuacao` → `documentos-gerados` → `banca-parecer` → `implantacao`
-- **Phase / Task**: Execute concluído (T1–T36). Verificador iteração 4 (rodada extra aprovada pelo usuário) = FAIL: 27 de 28 mutantes mortos, 60/60 ACs com evidência
-- **Completed**: T1–T36; 289 testes backend, 14 frontend, smoke e smoke_backend PASS; branch enviada ao GitHub; deploy na VM
+- **Feature**: `fundacao` CONCLUÍDA e verificada (`.specs/features/fundacao/validation.md`, iteração 5 = PASS; `validate_state.py` exit 0). Próximas, em ordem: `normativo` → `inteligencia-documental` → `pontuacao` → `documentos-gerados` → `banca-parecer` → `implantacao`
+- **Phase / Task**: nenhuma em andamento. Próxima: Specify de `normativo` ou de `inteligencia-documental` (a definir com o usuário)
+- **Completed**: T1–T37; 290 testes backend, 14 frontend; 60/60 requisitos verificados; sensor 40/41 mutantes mortos (o sobrevivente Y1 é equivalente); deploy feito
 - **In-progress** (file:line): none
-- **Next step**: o usuário decide entre (a) mais uma rodada com 1 teste (X6: a regra "em uso" de `career.py:89` não é pinada; criar o processo do Requerimento 2024-2026 e afirmar `in_use` False para Res. 4.644 e True para a Lei) + Verificador, ou (b) aceitar o risco e encerrar a feature
+- **Next step**: o usuário escolhe a próxima feature; antes de `inteligencia-documental` é preciso uma chave MariTalk válida
 - **Blockers**: chave MariTalk retorna 401 (invalid_api_key) em sabia-4 e sabia-4-br-sp, com Bearer e Key; padrões PROC-02 (dias) e PROC-04 (referência) aguardam confirmação; falta o "Modelo Relatorio Atividades 2.docx" e as URLs da PROGEP/CPPD
-- **Deploy**: https://progressao.srv1633081.hstgr.cloud (VM compartilhada; stack em /opt/progressao com compose + override local que publica o nginx só em 127.0.0.1:8400; site `progressao` no nginx do servidor; certificado Let's Encrypt com renovação automática). Credenciais do ADMIN em /opt/progressao/.admin-credentials (modo 600). Sem backup configurado (feature `implantacao`). Imagens construídas localmente do commit 360eefb e enviadas por `docker save | docker load`
+- **Dívidas**: UI-06 (360 px) só tem verificação estática de CSS, falta teste em navegador real (cabe em `implantacao`); sem backup configurado; rotas de negócio devolvem 500 (não 503) com o banco fora do ar; sem tela de troca de senha
+- **Deploy**: https://progressao.srv1633081.hstgr.cloud (VM compartilhada; stack em /opt/progressao com compose + override local que publica o nginx só em 127.0.0.1:8400; site `progressao` no nginx do servidor; certificado Let's Encrypt com renovação automática). Credenciais do ADMIN em /opt/progressao/.admin-credentials (modo 600). Código de produção no ar = commit 360eefb (idêntico ao HEAD em backend/app e frontend/src)
 - **Uncommitted files**: none
 - **Branch**: feat/fundacao (enviada ao origin; sem PR; main intocada)

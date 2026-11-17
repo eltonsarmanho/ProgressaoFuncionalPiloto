@@ -1,18 +1,14 @@
 # Fundação Validation
 
-**Verdict**: FAIL ❌ (iteration 4, the extra round approved by the user; the 3-iteration bound is already exceeded, so this escalates)
+**Verdict**: PASS ✅ (iteration 5, the extra round approved by the user)
 
-**Iteration**: 4
+**Iteration**: 5
 **Date**: 2026-11-17
 **Spec**: `.specs/features/fundacao/spec.md` (60 requirement IDs, 5 edge cases)
-**Diff range**: `3387587..360eefb` (branch `feat/fundacao`). Fix commits since iteration 3: `36bb48e..360eefb` (T35 `86d784e`, T36 `360eefb`)
+**Diff range**: `3387587..87114db` (branch `feat/fundacao`). Fix commit since iteration 4: `87114db` (T37)
 **Verifier**: independent sub-agent (author ≠ verifier), evidence-or-zero
 
-Why FAIL: K1, K2, K3, N4 and N5 are all killed, every gate is green, and 60/60 IDs match the spec outcome. But one new, non-equivalent mutant on the same CARR-08 code survives:
-
-- **X6** (`backend/app/application/use_cases/career.py:89`, `_in_use`: `... and version.covers(process.end_date)` removed). Any process of the structure then marks every version "in use". Probe in the scratch worktree: create the Requerimento 2024-2026 process (ends 23/11/2026, covered by the Lei version only). Real code: Lei `in_use` True, Res. 4.644 `in_use` False (probe passed unmutated). Mutant: Res. 4.644 `in_use` True, so an unused version becomes frozen (PUT → 409) and is reported as used. This violates CARR-08 ("sem editar versões já usadas por processos" means only versions that processes actually use). The suite passed 289/289 under the mutant.
-
-The real code is correct. The gap is test-only: every in-use assertion (`test_career_api.py:163`, `:21`) checks a version that is used, or no process exists, so the date-coverage half of the predicate is never discriminated.
+Why PASS: X6 is now killed by `test_in_use_is_decided_per_version`, and so are K1, K2, K3, N4 and N5. Every gate is green and 60/60 IDs match the spec outcome. The sensor injected 41 mutants (expanded tier): 40 killed, and 1 (Y1) survived but is behaviourally equivalent (a redundant guard, proof below), so it is not a test gap. UI-06 still rests on proxy evidence and does not block.
 
 ---
 
@@ -25,14 +21,15 @@ The real code is correct. The gap is test-only: every in-use assertion (`test_ca
 | T34 | ✅ Done | `backend/tests/integration/conftest.py:70` now `docker rm -f -v`; volume count 64 → 64 across the backend gate |
 | T35 | ✅ Done | CARR-08 single-shared-day overlap (`test_career_api.py:259-273`). Kills K1 and K2 |
 | T36 | ✅ Done | CARR-09/CARR-10 last allowed day (`test_career_api.py:276-292`). Kills K3 |
+| T37 | ✅ Done | CARR-08 per-version "in use" rule (`test_career_api.py:295-309`). Kills X6 |
 
-`tasks.md`: 0 unchecked `Done when` boxes (T1–T36).
+`tasks.md`: 0 unchecked `Done when` boxes (T1–T37).
 
 ---
 
 ## Spec-Anchored Acceptance Criteria
 
-Test paths are relative to `backend/tests/` unless they start with `frontend/` or `scripts/`. Since iteration 3 the only code change is `integration/api/test_career_api.py` (lines 258-292 appended), so all other citations keep their line numbers. They were re-read at HEAD `360eefb`, including `test_processes_api.py:69,171,197-198`, `test_process_verification.py:105,282-283,303-304`, `test_auth_api.py:59-60`, `test_process_updates_api.py:109-111`, `test_migrations.py:86-93`, `test_repositories.py:236`, `frontend/src/styles.test.ts:22` and `scripts/smoke.sh:55`.
+Test paths are relative to `backend/tests/` unless they start with `frontend/` or `scripts/`. Since iteration 4 the only code change is `integration/api/test_career_api.py` (lines 293-309 appended, 18 lines, no production code), so all other citations keep their line numbers. They were re-read at HEAD `87114db`, including `test_processes_api.py:69,171,197-198`, `test_process_verification.py:105,282-283,303-304`, `test_auth_api.py:59-60`, `test_process_updates_api.py:109-111`, `test_migrations.py:86-93`, `test_repositories.py:236`, `frontend/src/styles.test.ts:22` and `scripts/smoke.sh:55`.
 
 ### P1: Stack executável
 
@@ -102,8 +99,8 @@ Test paths are relative to `backend/tests/` unless they start with `frontend/` o
 | CARR-05 | Crosses 01/01/2025 → `REQUER_ANALISE_NORMATIVA`, cites Lei 15.141/2025 | `unit/domain/test_process_verification.py:219-220`; `:225`; `unit/domain/test_interstice.py:55` | ✅ PASS (M9 killed) |
 | CARR-06 | Denomination mismatch → `ALERTA`, expected shown | `unit/domain/test_process_verification.py:234-235` | ✅ PASS |
 | CARR-07 | No version → `ESTRUTURA_NAO_CADASTRADA`, skip dependent checks | `unit/domain/test_process_verification.py:251-252` | ✅ PASS |
-| CARR-08 | ADMIN registers a version with a mandatory reference, without editing versions used by processes; overlapping validities refused (confirmed Assumption) | `integration/api/test_career_api.py:105-106` reference required → 422 `["norm_reference"]`; `:167-168` PUT on a used version → 409, `valid_to is None`; `:177` overlap inside a closed version → 409; boundary `:272-273` - one-day versions 31/12/2024 and 01/01/2025 → `409` and `client.get(URL).json() == before` | ⚠️ Overlap outcome now pinned (K1, K2 killed). The "in use" predicate is not discriminated on the date-coverage condition (X6 survives) |
-| CARR-09 | New version starting **after** the open one's start → open version closed the day before; audit UPDATE `valid_to` null → new | `integration/api/test_career_api.py:197-204` - `201`, `versions[LEI]["valid_to"] == "2030-12-31"`, audit `changes == {"valid_to": {"before": None, "after": "2030-12-31"}}`; same-start boundary `:249-252` → `409`, Lei `("2025-01-01", None)`; last allowed day `:289-292` - process ends 31/12/2030, new start 01/01/2031 → `201`, Lei `valid_to == "2030-12-31"` | ✅ PASS (N1, N3, N5, K3, X10 killed) |
+| CARR-08 | ADMIN registers a version with a mandatory reference, without editing versions used by processes; overlapping validities refused (confirmed Assumption) | `integration/api/test_career_api.py:105-106` reference required → 422 `["norm_reference"]`; `:163-168` used version → `in_use is True`, PUT-close → 409, `valid_to is None`; `:177` overlap inside a closed version → 409; `:272-273` one-day versions 31/12/2024 and 01/01/2025 → `409` and `client.get(URL).json() == before`; per-version rule `:304-305` - process ends 23/11/2026, `versions[RES_4644]["in_use"] is False` and `versions[LEI]["in_use"] is True`; `:307-309` PUT on the unused Res. 4.644 → `200` | ✅ PASS (K1, K2, X6, X6b killed) |
+| CARR-09 | New version starting **after** the open one's start → open version closed the day before; audit UPDATE `valid_to` null → new | `integration/api/test_career_api.py:197-204` - `201`, `versions[LEI]["valid_to"] == "2030-12-31"`, audit `changes == {"valid_to": {"before": None, "after": "2030-12-31"}}`; same-start boundary `:249-252` → `409`, Lei `("2025-01-01", None)`; last allowed day `:289-292` - process ends 31/12/2030, new start 01/01/2031 → `201`, Lei `valid_to == "2030-12-31"` | ✅ PASS (N1, N5, K3, X10 killed) |
 | CARR-10 | Closing would leave a process with end date **on or after** the new start → 409, nothing created, open version unchanged | `integration/api/test_career_api.py:217-220` (end 23/11/2026 vs start 01/01/2026); "em" boundary `:236-239` - process ends 01/01/2031, new start 01/01/2031 → `409`, `versions[LEI]["valid_to"] is None`, `"Versão futura" not in versions`; day-before side `:289-292` | ✅ PASS (N4, K3 killed) |
 
 ### P1: Trilha de auditoria
@@ -134,13 +131,13 @@ Test paths are relative to `backend/tests/` unless they start with `frontend/` o
 | UNIT-02 | Archived unit → 422 | `integration/api/test_professors_api.py:167-170`; `integration/api/test_processes_api.py:135-138` | ✅ PASS |
 | UNIT-03 | Seed Cametá, FASI, IFCH | `integration/test_seed.py:62-76` | ✅ PASS |
 
-**Status**: 60/60 IDs have evidence whose asserted value matches the spec outcome. 0 spec-precision gaps. Not discriminating: the CARR-08 "in use" date-coverage condition (X6). UI-06 still rests on proxy evidence (static CSS scan), which does not block.
+**Status**: 60/60 IDs have evidence whose asserted value matches the spec outcome. 0 spec-precision gaps. UI-06 still rests on proxy evidence (static CSS scan), which does not block.
 
 ---
 
 ## Edge Cases
 
-- [x] End 31/12/2024 → Res. 4.644; end 01/01/2025 → Lei 15.141: `unit/domain/test_career.py:38-43` (M2 and K6 killed; M2 re-run in iteration 4)
+- [x] End 31/12/2024 → Res. 4.644; end 01/01/2025 → Lei 15.141: `unit/domain/test_career.py:38-43` (M2 killed; re-run in iterations 4 and 5)
 - [x] 29/02/2024 → 28/02/2026 = 24 months: `unit/domain/test_interstice.py:18,23`; 27/02 → 23 at `:29` (M1 killed)
 - [x] Concurrent save → first wins, second 409: `integration/test_repositories.py:236` (`pytest.raises(StaleVersion)`), `:241-242`; `integration/api/test_process_updates_api.py:120-122`
 - [x] Archived professor → reading kept, new process 422: `integration/api/test_process_updates_api.py:228-230`
@@ -152,54 +149,67 @@ Test paths are relative to `backend/tests/` unless they start with `frontend/` o
 
 ## Discrimination Sensor
 
-Expanded tier. Isolated `git worktree` at `360eefb` under the session scratchpad (the frontend `node_modules` linked read-only). Backend tests ran against a dedicated throwaway `postgres:16-alpine` container (`TEST_DATABASE_URL`, removed with `-v`), reusing the real `backend/.venv`. Imports were confirmed to resolve from the worktree and the unmutated worktree was green (289 backend, 14 frontend). Each mutant was applied by exact single-occurrence replacement, the full backend suite (or the frontend suite) ran with `-x`, and the file was reverted with `git checkout`.
+Expanded tier. Isolated `git worktree` at `87114db` under the session scratchpad (the frontend `node_modules` linked, link removed before the worktree). Backend tests ran against a dedicated throwaway `postgres:16-alpine` container (`TEST_DATABASE_URL`, removed with `-v`), reusing the real `backend/.venv`; imports resolve from the worktree and the unmutated worktree was green (290 backend). Each mutant was applied by exact single-occurrence replacement (the runner skips a mutant whose pattern is not unique), the full suite ran with `-x`, and the file was restored. The worktree had no tracked change after the run.
 
 | # | File:line | Mutation | Killed? |
 | - | --------- | -------- | ------- |
-| K1 | `backend/app/application/use_cases/career.py:80` | `_overlaps`: `b.valid_from <= a.valid_to` → `<` | ✅ Killed by `test_single_day_overlap_returns_409[last-day-of-res-4644]` |
+| X6 | `backend/app/application/use_cases/career.py:89` | `_in_use`: `and version.covers(process.end_date)` removed | ✅ Killed by `test_in_use_is_decided_per_version` |
+| X6b (new) | `career.py:89` | `version.covers(process.end_date)` → `True` | ✅ Killed by `test_in_use_is_decided_per_version` |
+| K1 | `career.py:80` | `_overlaps`: `b.valid_from <= a.valid_to` → `<` | ✅ Killed by `test_single_day_overlap_returns_409[last-day-of-res-4644]` |
 | K2 | `career.py:77` | `_overlaps`: `a.valid_from <= b.valid_to` → `<` | ✅ Killed by `test_single_day_overlap_returns_409[first-day-of-open-lei]` |
 | K3 | `career.py:125` | `process.end_date >= new.valid_from` → `>= new.valid_from - 1 day` | ✅ Killed by `test_process_ending_day_before_new_version_allows_close` |
-| N4 | `career.py:125` | `process.end_date >= new.valid_from` → `>` | ✅ Killed by `test_process_ending_on_new_version_start_day_blocks_close` |
+| N4 | `career.py:125` | `>=` → `>` | ✅ Killed by `test_process_ending_on_new_version_start_day_blocks_close` |
 | N5 | `career.py:121` | `new.valid_from <= open_version.valid_from` → `<` | ✅ Killed by `test_version_starting_on_open_version_start_day_returns_409` |
 | N1 | `career.py:130` | Close at `new.valid_from` instead of the day before | ✅ Killed by `test_creating_next_version_closes_open_ended_version` |
-| N3 | `career.py:163` | Audit record of the closing skipped | ✅ Killed by the same test |
-| M1 | `backend/app/domain/rules/interstice.py:23` | `end.day < start.day` → `<=` | ✅ Killed |
+| X10 | `career.py:162` | Closed version not substituted into `existing` | ✅ Killed by `test_creating_next_version_closes_open_ended_version` |
+| X7 | `backend/app/application/services/audit_service.py:34` | `diff` records unchanged fields (`if old != new` → `if True`) | ✅ Killed by `test_editing_unused_version_is_audited_with_before_after` |
+| M1 | `backend/app/domain/rules/interstice.py:23` | `end.day < start.day` → `<=` | ✅ Killed (first failure `test_rascunho_update_without_justification_is_saved_and_audited`) |
+| X2 | `interstice.py:28` | `days()` made inclusive (`+ 1`) | ✅ Killed by `test_proc10_fasi_case_has_24_months_and_no_alerts` |
 | M2 | `backend/app/domain/entities/career.py:35` | `moment <= valid_to` → `<` | ✅ Killed by `test_select_version_end_date_31_12_2024_uses_old_structure` |
+| M12 | `backend/app/domain/entities/process.py:20` | `is_read_only` always False | ✅ Killed by `test_read_only_process_rejects_changes_with_409[CONCLUIDO]` |
+| M20 | `backend/app/domain/rules/process_verification.py:148` | `if dates_ok and minimum` → `if minimum` | ✅ Killed by `test_invalid_dates_do_not_also_emit_insufficient_interstice[end0]` |
+| X5 | `process_verification.py:133` | Promotion check drops `current_level == last level` | ✅ Killed by `test_promotion_rules[changes1]` |
 | M6 | `backend/app/application/services/access_policy.py:25` | DOCENTE may read any process | ✅ Killed by `test_docente_sees_only_processes_of_linked_professor` |
-| M7 | `backend/app/application/use_cases/processes.py:161` | Justification not required in `EM_ANDAMENTO` | ✅ Killed |
-| M10 | `backend/app/application/use_cases/auth.py:14` | `MAX_FAILURES` 5 → 6 | ✅ Killed |
-| M12 | `backend/app/domain/entities/process.py:20` | `is_read_only` always False | ✅ Killed |
-| M20 | `backend/app/domain/rules/process_verification.py:148` | `if dates_ok and minimum` → `if minimum` | ✅ Killed |
-| K4 | `auth.py:124` | Idle expiry `>= IDLE_TIMEOUT` → `>` | ✅ Killed |
-| K9 | `auth.py:67` | Failure window start moved by 1 microsecond | ✅ Killed |
-| F1 | `frontend/src/components/StepNav.tsx:9` | Steps 1 and 2 both active (`n === 1` → `n <= 2`) | ✅ Killed by `ProcessStep1.test.tsx` UI-04 |
-| X1 (new) | `access_policy.py:16` | SECRETARIA covers every unit (`unit_id in actor.unit_ids` dropped) | ✅ Killed by `test_history_and_updates_of_unreadable_process_return_404` |
-| X2 (new) | `interstice.py:28` | `days()` made inclusive (`+ 1`) | ✅ Killed by `test_proc10_fasi_case_has_24_months_and_no_alerts` |
-| X3 (new) | `backend/app/presentation/csrf.py:35` | CSRF compare replaced by `not sent` (any non-empty token accepted) | ✅ Killed by `test_write_without_valid_csrf_token_returns_403[wrong]` |
-| X4 (new) | `auth.py:125` | Absolute expiry `>= ABSOLUTE_TIMEOUT` → `>` | ✅ Killed by `test_session_older_than_8_hours_gets_401` |
-| X5 (new) | `process_verification.py:133` | Promotion check drops `current_level == last level` | ✅ Killed by `test_promotion_rules[changes1]` |
-| X6 (new) | `career.py:89` | `_in_use`: `and version.covers(process.end_date)` removed | ❌ **Survived** (289 passed) |
-| X7 (new) | `audit_service.py:34` | `diff` records unchanged fields (`if old != new` → `if True`) | ✅ Killed by `test_editing_unused_version_is_audited_with_before_after` |
-| X8 (new) | `backend/app/application/use_cases/users.py:65` | Password minimum `< 10` → `<= 10` | ✅ Killed by `test_password_with_exactly_10_characters_is_accepted` |
-| X9 (new) | `backend/app/infrastructure/database/repositories.py:180` | Failure count ignores the e-mail (`email ==` filter dropped) | ✅ Killed by `test_block_applies_only_to_the_same_email` |
-| X10 (new) | `career.py:162` | Closed version not substituted into `existing` before the overlap check | ✅ Killed by `test_creating_next_version_closes_open_ended_version` |
-| F2 (new) | `frontend/src/components/AlertList.tsx:44` | Norm reference text dropped from each alert | ✅ Killed by `ProcessStep1.test.tsx` UI-03 |
+| X1 | `access_policy.py:16` | SECRETARIA covers every unit | ✅ Killed by `test_history_and_updates_of_unreadable_process_return_404` |
+| M7 | `backend/app/application/use_cases/processes.py:161` | Justification not required in `EM_ANDAMENTO` | ✅ Killed by `test_em_andamento_update_without_justification_returns_422[missing]` |
+| M10 | `backend/app/application/use_cases/auth.py:14` | `MAX_FAILURES` 5 → 6 | ✅ Killed by `test_sixth_attempt_after_five_failures_returns_429` |
+| K4 | `auth.py:124` | Idle expiry `>= IDLE_TIMEOUT` → `>` | ✅ Killed by `test_session_idle_for_30_minutes_gets_401` |
+| X4 | `auth.py:125` | Absolute expiry `>=` → `>` | ✅ Killed by `test_session_older_than_8_hours_gets_401` |
+| K9 | `auth.py:67` | Failure window start moved by 1 microsecond | ✅ Killed by `test_sixth_attempt_after_five_failures_returns_429` |
+| X9 | `backend/app/infrastructure/database/repositories.py:180` | Failure count ignores the e-mail | ✅ Killed by `test_block_applies_only_to_the_same_email` |
+| X3 | `backend/app/presentation/csrf.py:35` | CSRF compare replaced by `not sent` | ✅ Killed by `test_write_without_valid_csrf_token_returns_403[wrong]` |
+| X8 | `backend/app/application/use_cases/users.py:65` | Password minimum `< 10` → `<= 10` | ✅ Killed by `test_password_with_exactly_10_characters_is_accepted` |
+| F1 | `frontend/src/components/StepNav.tsx:9` | Steps 1 and 2 both active | ✅ Killed by `ProcessStep1.test.tsx` UI-04 |
+| F2 | `frontend/src/components/AlertList.tsx:22` | Norm reference text dropped | ✅ Killed by `ProcessStep1.test.tsx` UI-03 |
+| Y1 (new) | `processes.py:143` | `_check_version`: `process.version != expected` → `<` | ⚠️ Survived, **equivalent** (see below) |
+| Y2 (new) | `backend/app/domain/entities/process.py:23-26` | `_FORWARD` drops EM_ANDAMENTO → CONCLUIDO | ✅ Killed by `test_read_only_process_rejects_changes_with_409[CONCLUIDO]` |
+| Y3 (new) | `process.py:36` | Archive allowed for anyone (`return True`) | ✅ Killed by `test_only_admin_or_owner_archive` |
+| Y4 (new) | `backend/app/application/use_cases/professors.py:19` | SIAPE regex `\d{7}` → `\d{7,8}` | ✅ Killed by `test_siape_without_exactly_7_digits_returns_422_on_siape[12345678]` |
+| Y5 (new) | `auth.py:15` | Rate-limit window 15 → 16 minutes | ✅ Killed by `test_sixth_attempt_after_five_failures_returns_429` |
+| Y6 (new) | `processes.py:138` | List filter by profile dropped (`if True`) | ✅ Killed by `test_secretaria_sees_only_processes_of_its_units` |
+| Y7 (new) | `processes.py:160` | PUT justification not stripped (blank accepted) | ✅ Killed by `test_em_andamento_update_without_justification_returns_422[blank]` |
+| Y8 (new) | `career.py:51` | Reference not stripped (blank accepted) | ✅ Killed by `test_version_without_norm_reference_returns_422[blank]` |
+| Y9 (new) | `career.py:56` | `valid_to < valid_from` → `<=` | ✅ Killed by `test_single_day_overlap_returns_409[last-day-of-res-4644]` |
+| Y10 (new) | `repositories.py:63` | Version bump `+ 1` → `+ 2` | ✅ Killed by `test_rascunho_update_without_justification_is_saved_and_audited` |
+| Y11 (new) | `auth.py:16` | Idle timeout 30 → 31 minutes | ✅ Killed by `test_session_idle_for_30_minutes_gets_401` |
+| Y12 (new) | `career.py:58` | `progression_min_months <= 0` → `< 0` | ✅ Killed by `test_invalid_definition_returns_422[zero-interstice]` |
+| Y13 (new) | `repositories.py:66` | Optimistic-lock `WHERE` drops `version == expected` | ✅ Killed by `test_editing_with_stale_version_returns_409` |
 
-Non-equivalence proof for X6 (probe test in the scratch worktree only, reverted afterwards): create the Requerimento 2024-2026 process through the API (end 23/11/2026) and read `GET /versions`. Unmutated: Lei `in_use` True, Res. 4.644 `in_use` False (probe passed). Mutant: Res. 4.644 `in_use` True (probe failed). The same predicate gates `PUT` (`career.py:197`), so the unused Res. 4.644 version would also wrongly become uneditable.
+Y1 equivalence: `_check_version` (`processes.py:142-144`) is a pre-check in front of `_versioned_update` (`repositories.py:54-80`), whose `WHERE ... version == expected_version` raises the same `StaleVersion` (HTTP 409) when the row moved. With `<`, a stale (lower) request still reaches the repository guard and gets 409, and a request claiming a future version is raised by the pre-check as before. The only difference is the exception text ("O processo foi alterado..." vs "Processo foi alterado..."), which the spec does not define. The real lock is pinned by Y13. A `Y14` attempt (`rowcount == 0` → `< 0`) was skipped by the runner because the pattern is not unique, and was not run.
 
-**Sensor depth**: expanded (28 mutations: K1, K2, K3, N4, N5; 12 earlier kills re-run across domain, auth, access policy, audit, career and frontend; 11 new)
-**Result**: 27/28 killed. FAIL ❌
-**Isolation**: real-tree `git status --porcelain` was empty before and after (matches the baseline). The worktree was removed and pruned, the sensor container was removed with its volume, and no containers remain. Volume count is 64, the session baseline.
+**Sensor depth**: expanded (41 mutations: 6 mandatory re-runs, X6b, 21 earlier kills re-run across domain, auth, access policy, audit, career and frontend, 13 new Y mutants)
+**Result**: 40/41 killed, 1 equivalent (not a test gap). PASS ✅
+**Isolation**: real-tree `git status --porcelain` was empty before and after (matches the baseline). The worktree was removed and pruned, the sensor container was removed with its volume, no containers remain, and the real `frontend/node_modules` is intact. Volume count is 64, the session baseline.
 
 ---
 
 ## Gate Check
 
-- **Backend**: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` → ruff: All checks passed; pytest **289 passed**, 0 failed, 0 skipped (1 Starlette deprecation warning). `docker volume ls -q`: **64 before, 64 after**
+- **Backend**: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` → ruff: All checks passed; pytest **290 passed**, 0 failed, 0 skipped (1 Starlette deprecation warning). `docker volume ls -q`: **64 before, 64 after**
 - **Frontend**: `npm run lint && npm test -- --run && npm run build` → lint exit 0; vitest **14 passed** (6 files); build OK
 - **smoke_backend**: `./scripts/smoke_backend.sh` → **PASS** (health 200, alembic at head 0001, uid 10001); volumes 64 → 64
-- **smoke**: `./scripts/smoke.sh` → **PASS** (port 8088 free; health 200 via nginx after 12 s, only nginx publishes a port, SPA and deep links, login, data and storage survive `down`/`up`); volumes 64 → 64
-- **Test count**: 286 at iteration 3, now 289 (+3: T35 two parametrized cases, T36 one). Frontend unchanged at 14. No test deleted or weakened
+- **smoke**: `./scripts/smoke.sh` → **PASS** (port 8088 free; health 200 via nginx after 12 s, login, data and storage survive `down`/`up`); volumes 64 → 64
+- **Test count**: 289 at iteration 4, now 290 (+1: T37). Frontend unchanged at 14. No test deleted or weakened
 - **Skipped tests**: none
 
 ---
@@ -208,11 +218,11 @@ Non-equivalence proof for X6 (probe test in the scratch worktree only, reverted 
 
 | Principle | Status |
 | --------- | ------ |
-| Minimum code / surgical changes / no scope creep | ✅ Fix diff: 2 test functions appended (3 cases), `tasks.md` Phase 10; no production code |
-| Matches patterns | ✅ Reuses `process_payload`, `NEW_VERSION`, `versions_by_name` |
-| Spec-anchored outcome check | ✅ 60/60; ⚠️ X6 (`_in_use` date coverage) not discriminated |
+| Minimum code / surgical changes / no scope creep | ✅ Fix diff: 1 test function (18 lines), `tasks.md` Phase 11; no production code |
+| Matches patterns | ✅ Reuses `_create_requerimento_process`, `NEW_VERSION`, `versions_by_name` |
+| Spec-anchored outcome check | ✅ 60/60 |
 | Per-layer coverage | ✅ |
-| Every test maps to a spec requirement | ✅ New tests are tagged `# CARR-08 boundary` and `# CARR-09/CARR-10 boundary` |
+| Every test maps to a spec requirement | ✅ New test is tagged `# CARR-08` |
 | Documented guidelines: `.specs/STATE.md` decisions; otherwise strong defaults applied | ✅ |
 | Hygiene | ✅ No volume leak in any gate |
 
@@ -220,10 +230,7 @@ Non-equivalence proof for X6 (probe test in the scratch worktree only, reverted 
 
 ## Fix Plans
 
-### Fix 1: Pin the "in use" predicate on date coverage (Major, kills X6)
-- **Root cause**: no test makes a process use one version while another version of the same structure has no process. `test_career_api.py:21` runs with no process and `:163` asserts only the used version.
-- **Fix task**: in `backend/tests/integration/api/test_career_api.py`, add a test that creates the Requerimento 2024-2026 process (`_create_requerimento_process`), then asserts `versions["Res. 4.644/2015-CONSEPE"]["in_use"] is False` and `versions[LEI]["in_use"] is True`. Optionally assert that editing the unused Res. 4.644 version (PUT) is not blocked with 409.
-- **Done when**: X6 is killed. A single test case, no production code (the probe in this report already passes against the real code).
+None. UI-06 (proxy evidence, a static CSS scan at 360 px) is a non-blocking improvement that fits the `implantacao` feature (a headless-browser check).
 
 ---
 
@@ -231,9 +238,8 @@ Non-equivalence proof for X6 (probe test in the scratch worktree only, reverted 
 
 | Requirement | Previous Status | New Status |
 | ----------- | --------------- | ---------- |
-| INFRA-01..07, AUTH-01..11, DOC-01..05, PROC-01..14, CARR-01..07, CARR-09, CARR-10, AUD-01..04, UI-01..05, UNIT-01..03 | Implementing | ✅ Verified |
+| INFRA-01..07, AUTH-01..11, DOC-01..05, PROC-01..14, CARR-01..10, AUD-01..04, UI-01..05, UNIT-01..03 | Implementing | ✅ Verified |
 | UI-06 | Implementing | ⚠️ Verified (proxy evidence) |
-| CARR-08 | Needs Fix | ❌ Needs Fix (X6: "in use" date coverage not discriminated) |
 
 ---
 
@@ -244,20 +250,22 @@ Non-equivalence proof for X6 (probe test in the scratch worktree only, reverted 
 | 1 (`3387587..cc9c41d`) | FAIL ❌ | 57/58 ACs. CARR-08 unreachable once the open version was in use. M14, M15 and M20 survived (17/20 killed). Spec-precision gaps on PROC-02, PROC-04, PROC-09 and CARR-08. Smoke backend leaked a volume |
 | 2 (`3387587..e6875e4`) | FAIL ❌ | User added CARR-09/CARR-10 and confirmed Assumptions; T29–T32 implemented them. CARR-08 reachable, M14/M15/M20 killed, spec-precision gaps closed, smoke leak fixed. N4 and N5 survived on the CARR-10/CARR-09 boundary days (14/16 killed). The pytest fixture leaked a volume |
 | 3 (`3387587..6c022e1`) | FAIL ❌ | T33/T34 kill N4 and N5 and fix the pytest leak. 9 new boundary mutants: 6 killed, 3 survived on the career-version code (K1 and K2 on `_overlaps`, K3 on the day before the CARR-10 guard). 18/21 killed. Loop limit reached |
-| 4 (`3387587..360eefb`) | FAIL ❌ | User approved one extra round. T35/T36 kill K1, K2 and K3 (N4 and N5 stay killed). All gates green, volumes stable at 64, 289 backend and 14 frontend tests. 11 new mutants across auth, access policy, audit, domain, career and frontend: 10 killed, 1 survived (X6, the `_in_use` date-coverage condition on the same career-version module). 27/28 killed |
+| 4 (`3387587..360eefb`) | FAIL ❌ | User approved one extra round. T35/T36 kill K1, K2 and K3. All gates green. 11 new mutants: 10 killed, 1 survived (X6, the `_in_use` date-coverage condition). 27/28 killed |
+| 5 (`3387587..87114db`) | PASS ✅ | User approved a fifth round. T37 kills X6 (and the stronger X6b). K1, K2, K3, N4, N5 stay killed. All gates green, volumes stable at 64, 290 backend and 14 frontend tests. 13 new mutants across status transitions, optimistic lock, rate-limit window, session expiry, justification rule, list filtering, request validation and career validation: 12 killed, 1 equivalent (Y1). 40/41 killed, 0 real survivors |
 
 ---
 
 ## Summary
 
-**Overall**: ❌ Not Ready, by one test-only gap. The fix loop is past its bound (iteration 4 was the user-approved extra round), so this escalates to the user.
+**Overall**: ✅ Ready
 
-**Spec-anchored check**: 60/60 IDs matched the spec outcome; 0 spec-precision gaps; CARR-08 "in use" date coverage not discriminated (X6)
-**Sensor**: 27/28 mutations killed (X6 survived)
-**Gate**: backend 289 passed, frontend 14 passed, smoke_backend PASS, smoke PASS, volumes 64 → 64 throughout
+**Spec-anchored check**: 60/60 IDs matched the spec outcome; 0 spec-precision gaps (UI-06 on proxy evidence, non-blocking)
+**Edge cases**: 5/5
+**Sensor**: 40/41 killed; the survivor (Y1) is equivalent by proof
+**Gate**: backend 290 passed, frontend 14 passed, smoke_backend PASS, smoke PASS, volumes 64 → 64 throughout
 
-**What works**: every iteration-1 to iteration-3 gap is closed, including K1, K2, K3, N4 and N5. Overlap, auto-close, CARR-10 guard, auth, CSRF, access policy, audit, interstice and frontend boundaries are all discriminated. The implementation is correct in the X6 scenario.
+**What works**: every gap from iterations 1 to 4 is closed. The CARR-08 "in use" rule is pinned per version, on both the report (`in_use`) and the PUT guard.
 
-**Issues found**: one missing test case in `test_career_api.py` (Fix 1), no production code.
+**Issues found**: none blocking.
 
-**Next steps**: the user decides whether to approve a further one-test fix (Fix 1), then a re-verify, or to accept the residual risk (the production predicate is verified correct by the probe).
+**Next steps**: none required for this feature. Optional: a headless 360 px check for UI-06 under `implantacao`.
