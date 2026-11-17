@@ -673,11 +673,11 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] `GET .../scoring/table` devolve a escolhida, a sugestão e os alertas de tabela
-- [ ] `PUT` grava com justificativa quando exigida e responde 422 sem ela
-- [ ] Versão em uso: critérios imutáveis (409 na administração, testado em T36)
-- [ ] `GET .../scoring` devolve o resultado com linhas, razões e alertas
-- [ ] Gate full passa; 10+ testes
+- [x] `GET .../scoring/table` devolve a escolhida, a sugestão e os alertas de tabela
+- [x] `PUT` grava com justificativa quando exigida e responde 422 sem ela
+- [x] Versão em uso: critérios imutáveis (409 na administração, testado em T36)
+- [x] `GET .../scoring` devolve o resultado com linhas, razões e alertas
+- [x] Gate full passa; 10+ testes
 
 **Tests**: integration
 **Gate**: full

@@ -15,6 +15,7 @@ from app.presentation.api import (
     health,
     processes,
     professors,
+    scoring,
     scoring_tables,
     units,
     users,
@@ -47,4 +48,5 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     app.include_router(processes.router)
     app.include_router(career.router)
     app.include_router(scoring_tables.router)
+    app.include_router(scoring.router)
     return app

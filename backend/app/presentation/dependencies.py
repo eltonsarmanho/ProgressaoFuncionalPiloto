@@ -29,6 +29,11 @@ from app.application.use_cases.professors import (
     ListProfessors,
     UpdateProfessor,
 )
+from app.application.use_cases.scoring import (
+    CalculateProcessScore,
+    ChooseProcessTable,
+    SuggestScoringTable,
+)
 from app.application.use_cases.scoring_admin import (
     GetScoringVersion,
     ListScoringTables,
@@ -77,6 +82,9 @@ class Container:
     list_scoring_tables: ListScoringTables
     list_table_versions: ListTableVersions
     get_scoring_version: GetScoringVersion
+    suggest_scoring_table: SuggestScoringTable
+    choose_process_table: ChooseProcessTable
+    calculate_process_score: CalculateProcessScore
 
 
 def build_container(settings: Settings, engine: Engine, clock: Clock) -> Container:
@@ -119,6 +127,9 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
         list_scoring_tables=ListScoringTables(uow_factory),
         list_table_versions=ListTableVersions(uow_factory),
         get_scoring_version=GetScoringVersion(uow_factory),
+        suggest_scoring_table=SuggestScoringTable(uow_factory, audit, policy),
+        choose_process_table=ChooseProcessTable(uow_factory, audit, policy),
+        calculate_process_score=CalculateProcessScore(uow_factory, audit, policy),
     )
 
 
