@@ -2,6 +2,7 @@ AcessoVM.txt
 .env
 Documentos/
 storage/
+!backend/app/infrastructure/storage/
 Modelos/
 backend/.venv/
 __pycache__/

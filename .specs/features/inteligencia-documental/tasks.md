@@ -529,10 +529,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] O caminho nunca contém o nome original; nome com `../` é só texto de exibição
-- [ ] Gravar e ler devolve os mesmos bytes; o arquivo tem modo 0600
-- [ ] Excluir remove o arquivo e é idempotente
-- [ ] Gate quick passa; 8+ testes
+- [x] O caminho nunca contém o nome original; nome com `../` é só texto de exibição
+- [x] Gravar e ler devolve os mesmos bytes; o arquivo tem modo 0600
+- [x] Excluir remove o arquivo e é idempotente
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
