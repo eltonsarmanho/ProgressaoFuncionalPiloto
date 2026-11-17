@@ -90,7 +90,7 @@ def test_group_one_derives_item_from_level(fasi_chosen, level, item):
     activity = create(
         world,
         group_number=1,
-        item_number=3,  # ignored: the item follows the level
+        item_number=3 - item,  # the other course item: ignored, the item follows the level
         academic_period="2023.1",
         level=level,
         hours=D("68"),
@@ -248,3 +248,11 @@ def test_candidate_items_are_saved_with_their_justification(fasi_chosen):
 
     assert activity.candidates == (candidate,)
     assert field_of_failure(fasi_chosen, candidates=(Candidate(4, 2, " "),)) == "candidates"
+
+
+def test_group_one_student_evaluation_item_keeps_informed_points(fasi_chosen):
+    activity = create(fasi_chosen, group_number=1, item_number=3, informed_points=D("8"))
+
+    assert (activity.group_number, activity.item_number) == (1, 3)
+    assert activity.informed_points == D("8")
+    assert activity.academic_period is None

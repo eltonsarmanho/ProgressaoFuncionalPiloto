@@ -285,7 +285,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SEL-06 | P1: Tabela aplicada ao processo | Design | Implementing |
 | SEL-07 | P1: Tabela aplicada ao processo | Design | Implementing |
 | SEL-08 | P1: Tabela aplicada ao processo | Design | Implementing |
-| SEL-09 | P1: Tabela aplicada ao processo | Design | In Tasks |
+| SEL-09 | P1: Tabela aplicada ao processo | Design | Implementing |
 | ATV-01 | P1: Atividades do processo | Design | Implementing |
 | ATV-02 | P1: Atividades do processo | Design | Implementing |
 | ATV-03 | P1: Atividades do processo | Design | Implementing |

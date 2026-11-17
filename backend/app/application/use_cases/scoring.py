@@ -24,14 +24,33 @@ from app.domain.entities.activity import (
     initial_status,
 )
 from app.domain.entities.audit import AuditAction
+from app.domain.entities.career import select_version
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor
 from app.domain.entities.scoring import ScoringMode, ScoringTableVersion
 from app.domain.entities.user import User
 from app.domain.errors import Conflict, NotFound, StaleVersion, ValidationFailed
 from app.domain.repositories.ports import UnitOfWork
+from app.domain.rules.interstice import Interstice
 from app.domain.rules.process_verification import Alert
+from app.domain.rules.scoring_alerts import NotScoredReason
+from app.domain.rules.scoring_engine import (
+    GROUPS,
+    ZERO,
+    Counters,
+    RowStatus,
+    ScoringResult,
+    ScoringRow,
+    calculate,
+)
 from app.domain.rules.scoring_table_choice import verify_table_choice
+from app.domain.rules.scoring_verification import (
+    MinimumComparison,
+    MinimumStatus,
+    ScoringContext,
+    reference_minimum,
+    verify_scoring,
+)
 
 PROCESS_ENTITY = "process"
 NOT_FOUND = "Processo não encontrado"
@@ -255,10 +274,19 @@ def _validate_basics(data: ActivityData) -> None:
             raise ValidationFailed("candidates", "Item candidato exige justificativa da escolha")
 
 
-def _apply_group1(data: ActivityData) -> ActivityData:
-    """Group I needs academic period, level and hours; the item follows the level (ATV-02)."""
+def _apply_group1(data: ActivityData, version: ScoringTableVersion | None) -> ActivityData:
+    """Group I needs academic period, level and hours; the item follows the level (ATV-02).
+
+    SPEC_PRECISION: ATV-02 says "the Group I activity" without excepting I.3 (student
+    evaluation, a VALOR_INFORMADO criterion that is not a course offering). A criterion of that
+    mode chosen explicitly keeps its informed points and skips the course-offering inputs.
+    """
     if data.group_number != 1:
         return data
+    if version and data.item_number is not None:
+        criterion = version.get_criterion(1, data.item_number)
+        if criterion is not None and criterion.mode is ScoringMode.VALOR_INFORMADO:
+            return data
     if data.academic_period is None or not ACADEMIC_PERIOD.match(data.academic_period):
         raise ValidationFailed("academic_period", "Informe o período letivo no formato AAAA.N")
     if data.level is None:
@@ -290,7 +318,7 @@ def _check_criterion_inputs(data: ActivityData, version: ScoringTableVersion | N
 
 def normalize_activity(data: ActivityData, version: ScoringTableVersion | None) -> ActivityData:
     _validate_basics(data)
-    data = _apply_group1(replace(data, title=data.title.strip()))
+    data = _apply_group1(replace(data, title=data.title.strip()), version)
     _check_criterion_inputs(data, version)
     return data
 
@@ -497,3 +525,81 @@ class ListActivities(_ScoringUseCase):
             self._readable(uow, actor, process_id)
             found = uow.activities.list_for_process(process_id, group_number, status)
             return sorted(found, key=_listing_order)
+
+
+@dataclass(frozen=True)
+class ProcessScore:
+    """Engine result plus process-level alerts and the comparison with the reference minimum."""
+
+    process_id: UUID
+    chosen: TableRef | None
+    suggested: TableRef | None
+    result: ScoringResult
+    activities: tuple[Activity, ...]
+    alerts: list[Alert]
+    minimum: MinimumComparison
+
+
+def _without_table(activities: list[Activity]) -> ScoringResult:
+    """No table chosen: total 0 and every activity not scored with reason SEM_TABELA."""
+    rows = tuple(
+        ScoringRow(
+            activity_id=a.id,
+            group_number=a.group_number,
+            item_number=a.item_number,
+            unit_points=None,
+            effective_quantity=None,
+            formula_text="",
+            points=ZERO,
+            status=RowStatus.NAO_PONTUADA,
+            reasons=(NotScoredReason.SEM_TABELA,),
+        )
+        for a in activities
+    )
+    counters = Counters(
+        activities=len(activities),
+        with_evidence=sum(1 for a in activities if (a.evidence_note or "").strip()),
+        pending=sum(1 for a in activities if a.status is ActivityStatus.AGUARDANDO_REVISAO),
+        not_scored=len(activities),
+        with_alerts=0,
+    )
+    return ScoringResult(
+        rows, {number: ZERO for number in GROUPS}, ZERO, ZERO, None, counters, ()
+    )
+
+
+class CalculateProcessScore(_ScoringUseCase):
+    def execute(self, actor: User, process_id: UUID) -> ProcessScore:
+        """Computed on demand from the current data, never stored (AD-006)."""
+        with self._uow_factory() as uow:
+            process = self._readable(uow, actor, process_id)
+            state = table_state(uow, process)
+            activities = sorted(uow.activities.list_for_process(process.id), key=_listing_order)
+            if state.chosen is None:
+                no_table = MinimumComparison(MinimumStatus.NAO_DEFINIDO, None, ZERO)
+                return ProcessScore(
+                    process.id,
+                    None,
+                    state.suggested,
+                    _without_table(activities),
+                    tuple(activities),
+                    state.alerts,
+                    no_table,
+                )
+            version = state.chosen.version
+            interstice = Interstice(process.start_date, process.end_date)
+            result = calculate(version, activities, interstice)
+            professor = uow.professors.get(process.professor_id)
+            code = uow.career_versions.structure_code(professor.career_structure_id)
+            versions = uow.career_versions.list_versions(code) if code else []
+            career = select_version(versions, process.end_date)
+            context = ScoringContext(professor.work_regime, process.current_class, career, version)
+            return ProcessScore(
+                process.id,
+                state.chosen,
+                state.suggested,
+                result,
+                tuple(activities),
+                state.alerts + verify_scoring(context, result),
+                reference_minimum(version, process.current_class, career, result.total),
+            )

@@ -619,10 +619,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Sem tabela escolhida: total 0, razão `SEM_TABELA` e sugestão
-- [ ] Trocar de tabela reavalia por (grupo, item); inexistente vira `SEM_ENQUADRAMENTO`
-- [ ] Resultado traz subtotais, total, potencial, percentual do Grupo I, contadores, alertas de linha e de processo e a comparação com o mínimo
-- [ ] Build gate passa; 12+ testes
+- [x] Sem tabela escolhida: total 0, razão `SEM_TABELA` e sugestão
+- [x] Trocar de tabela reavalia por (grupo, item); inexistente vira `SEM_ENQUADRAMENTO`
+- [x] Resultado traz subtotais, total, potencial, percentual do Grupo I, contadores, alertas de linha e de processo e a comparação com o mínimo
+- [x] Build gate passa; 12+ testes
 
 **Tests**: integration
 **Gate**: build
