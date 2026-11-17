@@ -561,9 +561,9 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Casos PROC-10/PROC-11 pela API com conjuntos exatos de códigos
-- [ ] DOCENTE/SECRETARIA de fora → 404; listagem filtrada com contagem por severidade
-- [ ] Gate full passa
+- [x] Casos PROC-10/PROC-11 pela API com conjuntos exatos de códigos
+- [x] DOCENTE/SECRETARIA de fora → 404; listagem filtrada com contagem por severidade
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

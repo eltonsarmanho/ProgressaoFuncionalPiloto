@@ -9,6 +9,7 @@ from sqlalchemy import Engine
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
 from app.application.use_cases.auth import GetCurrentSession, Login, Logout
+from app.application.use_cases.processes import CreateProcess, GetProcess, ListProcesses
 from app.application.use_cases.professors import (
     ArchiveProfessor,
     CreateProfessor,
@@ -47,6 +48,9 @@ class Container:
     archive_professor: ArchiveProfessor
     get_professor: GetProfessor
     list_professors: ListProfessors
+    create_process: CreateProcess
+    get_process: GetProcess
+    list_processes: ListProcesses
 
 
 def build_container(settings: Settings, engine: Engine, clock: Clock) -> Container:
@@ -77,6 +81,9 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
         archive_professor=ArchiveProfessor(uow_factory, audit, policy),
         get_professor=GetProfessor(uow_factory, audit, policy),
         list_professors=ListProfessors(uow_factory, audit, policy),
+        create_process=CreateProcess(uow_factory, audit, policy),
+        get_process=GetProcess(uow_factory, audit, policy),
+        list_processes=ListProcesses(uow_factory, audit, policy),
     )
 
 

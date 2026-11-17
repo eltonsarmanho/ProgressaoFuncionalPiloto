@@ -8,7 +8,7 @@ from app.core.config import Settings, load_settings
 from app.domain.repositories.ports import Clock
 from app.infrastructure.clock import SystemClock
 from app.infrastructure.database.session import make_engine
-from app.presentation.api import auth, health, professors, units, users
+from app.presentation.api import auth, health, processes, professors, units, users
 from app.presentation.csrf import install_auth_middleware
 from app.presentation.dependencies import build_container
 from app.presentation.errors import install_error_handlers
@@ -32,4 +32,5 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     app.include_router(users.router)
     app.include_router(units.router)
     app.include_router(professors.router)
+    app.include_router(processes.router)
     return app
