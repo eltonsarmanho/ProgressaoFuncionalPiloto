@@ -1098,9 +1098,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Duplicar e criar versão chamam a API e atualizam a lista
-- [ ] CSV com erro mostra linha e campo de cada erro
-- [ ] Gate quick (frontend) passa; 5+ testes
+- [x] Duplicar e criar versão chamam a API e atualizam a lista
+- [x] CSV com erro mostra linha e campo de cada erro
+- [x] Gate quick (frontend) passa; 5+ testes
 
 **Tests**: unit
 **Gate**: quick

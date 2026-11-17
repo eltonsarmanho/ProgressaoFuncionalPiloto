@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter, useLocation } from "react-router";
 import { AppRoutes } from "../App";
 import { AuthProvider } from "../auth/AuthContext";
@@ -60,12 +60,13 @@ function LocationProbe() {
   return <output data-testid="location">{useLocation().pathname}</output>;
 }
 
-function renderAdmin(role: string) {
+function renderAdmin(role: string, extra: Parameters<typeof mockFetch>[0] = {}) {
   const mock = mockFetch({
     "GET /api/auth/me": { status: 200, body: { ...ME, role } },
     "GET /api/scoring-tables": { status: 200, body: TABLES },
     "GET /api/scoring-versions/v-fasi-2": { status: 200, body: VERSION },
     "GET /api/processes": { status: 200, body: [] },
+    ...extra,
   });
   render(
     <MemoryRouter initialEntries={["/administracao/tabelas"]}>
@@ -125,5 +126,23 @@ describe("ADMUI-01: lista de tabelas e versões", () => {
     expect(screen.getByTestId("location")).toHaveTextContent(/^\/$/);
     expect(screen.queryByRole("link", { name: "Tabelas de pontuação" })).not.toBeInTheDocument();
     expect(screen.queryByText("Tabela da FASI")).not.toBeInTheDocument();
+  });
+});
+
+describe("ADMUI-02: formulários na página", () => {
+  it("duplicar uma tabela recarrega a lista de tabelas", async () => {
+    const { calls } = renderAdmin("ADMIN", {
+      "POST /api/scoring-tables/t-fasi/duplicate": { status: 201, body: { id: "t-new" } },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+    await user.click(within(fasi).getByRole("button", { name: "Ver critérios de FASI 2026" }));
+    const listLoads = () => calls.filter((c) => c.method === "GET" && c.path === "/api/scoring-tables").length;
+    expect(listLoads()).toBe(1);
+
+    await user.type(await screen.findByLabelText("Nome da nova tabela"), "Cópia da FASI");
+    await user.click(screen.getByRole("button", { name: "Duplicar tabela" }));
+
+    await vi.waitFor(() => expect(listLoads()).toBe(2));
   });
 });

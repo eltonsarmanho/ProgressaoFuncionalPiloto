@@ -348,7 +348,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ADM-10 | P2: Administração das tabelas | Design | Implementing |
 | ADM-11 | P2: Administração das tabelas | Design | Implementing |
 | ADMUI-01 | P3: Interface de administração das tabelas | Design | Implementing |
-| ADMUI-02 | P3: Interface de administração das tabelas | Design | In Tasks |
+| ADMUI-02 | P3: Interface de administração das tabelas | Design | Implementing |
 | ADMUI-03 | P3: Interface de administração das tabelas | Design | In Tasks |
 
 **ID format:** `[CATEGORY]-[NUMBER]`

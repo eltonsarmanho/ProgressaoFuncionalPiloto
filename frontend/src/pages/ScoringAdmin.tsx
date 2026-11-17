@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { errorMessage, request } from "../api/client";
 import type { ScoringTableInfo, ScoringVersion } from "../api/types";
+import { ScoringAdminForms } from "../components/ScoringAdminForms";
 import { TABLE_STATUS_LABELS, formatDate, formatDecimal, roman } from "../labels";
 
 type Selection = { table: ScoringTableInfo; versionId: string; versionName: string };
@@ -141,6 +142,11 @@ export function ScoringAdmin() {
             Critérios · {selection.table.name} · {selection.versionName}
           </h2>
           <CriteriaTable version={version} />
+          <ScoringAdminForms
+            table={selection.table}
+            version={{ id: selection.versionId, name: selection.versionName }}
+            onChanged={reload}
+          />
         </section>
       )}
     </>
