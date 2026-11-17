@@ -49,7 +49,8 @@
 - **Completed**: T1–T37; 290 testes backend, 14 frontend; 60/60 requisitos verificados; sensor 40/41 mutantes mortos (o sobrevivente Y1 é equivalente); deploy feito
 - **In-progress** (file:line): none
 - **Next step**: o usuário escolhe a próxima feature; antes de `inteligencia-documental` é preciso uma chave MariTalk válida
-- **Blockers**: chave MariTalk retorna 401 (invalid_api_key) em sabia-4 e sabia-4-br-sp, com Bearer e Key; padrões PROC-02 (dias) e PROC-04 (referência) aguardam confirmação; falta o "Modelo Relatorio Atividades 2.docx" e as URLs da PROGEP/CPPD
+- **Blockers**: nenhum bloqueio técnico. Padrões PROC-02 (dias sem o dia final) e PROC-04 (referência genérica) aguardam confirmação; faltam o "Modelo Relatorio Atividades 2.docx" e as URLs da PROGEP/CPPD
+- **MariTalk** (testado em 2026-11-17 com `test/test_maritalk.py`, chave nova no `.env`): `sabia-4`, `sabia-4-br-sp` e `sabiazinho-4` respondem em `https://chat.maritaca.ai/api` (Bearer). `response_format` com `json_schema` estrito funciona no `sabia-4` e devolveu `null` para o dado ausente (carga horária), como a regra anti-invenção exige. A VM ainda tem `MARITALK_API_KEY` vazia, porque a `fundacao` não usa IA; configurar no deploy de `inteligencia-documental`
 - **Dívidas**: UI-06 (360 px) só tem verificação estática de CSS, falta teste em navegador real (cabe em `implantacao`); sem backup configurado; rotas de negócio devolvem 500 (não 503) com o banco fora do ar; sem tela de troca de senha
 - **Deploy**: https://progressao.srv1633081.hstgr.cloud (VM compartilhada; stack em /opt/progressao com compose + override local que publica o nginx só em 127.0.0.1:8400; site `progressao` no nginx do servidor; certificado Let's Encrypt com renovação automática). Credenciais do ADMIN em /opt/progressao/.admin-credentials (modo 600). Código de produção no ar = commit 360eefb (idêntico ao HEAD em backend/app e frontend/src)
 - **Uncommitted files**: none
