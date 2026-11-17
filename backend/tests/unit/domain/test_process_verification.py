@@ -98,6 +98,13 @@ def test_end_on_or_before_start_is_error(end):
     assert alert.severity is Severity.ERRO
 
 
+# PROC-09 + Assumption: invalid dates emit only INTERSTICIO_DATAS_INVALIDAS
+@pytest.mark.parametrize("end", [date(2025, 2, 1), date(2025, 1, 15)])
+def test_invalid_dates_do_not_also_emit_insufficient_interstice(end):
+    alerts = verify_process(replace(CLEAN_NEW, end_date=end), VERSIONS)
+    assert codes(alerts) == [AlertCode.INTERSTICIO_DATAS_INVALIDAS]
+
+
 # PROC-06
 def test_end_after_opening_is_alert():
     alerts = verify_process(replace(CLEAN_NEW, opening_date=date(2027, 1, 31)), VERSIONS)

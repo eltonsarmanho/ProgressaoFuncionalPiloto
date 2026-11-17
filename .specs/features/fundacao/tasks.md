@@ -850,8 +850,8 @@ T29 → T30 → T31 → T32
 
 **Done when**:
 
-- [ ] Com data final anterior à inicial (duração negativa, abaixo do mínimo), o conjunto de alertas de interstício é exatamente `{INTERSTICIO_DATAS_INVALIDAS}`
-- [ ] Gate quick passa
+- [x] Com data final anterior à inicial (duração negativa, abaixo do mínimo), o conjunto de alertas de interstício é exatamente `{INTERSTICIO_DATAS_INVALIDAS}`
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick
