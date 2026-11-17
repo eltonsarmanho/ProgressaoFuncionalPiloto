@@ -88,6 +88,27 @@ def pdf_mixed(text_page: str = SAMPLE_PAGES[0], scanned_page: str = SAMPLE_PAGES
     return _pdf_bytes(doc)
 
 
+def pdf_header_footer_over_image_body(
+    header: str = "UNIVERSIDADE FEDERAL EXEMPLAR - Pro-Reitoria de Extensao - Certificado",
+    footer: str = "Documento ficticio do sistema de testes, validacao em endereco ficticio",
+    body: str = SAMPLE_PAGES[0],
+    image_covers_page: bool = True,
+) -> bytes:
+    """One page with a text header and footer and the body as a picture (raster certificate)."""
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_textbox(pymupdf.Rect(50, 20, page.rect.width - 50, 60), header, fontsize=10)
+    page.insert_textbox(
+        pymupdf.Rect(50, page.rect.height - 60, page.rect.width - 50, page.rect.height - 20),
+        footer,
+        fontsize=10,
+    )
+    picture = _encode(_render_text(body, _PAGE_WIDTH_PX, _PAGE_HEIGHT_PX), "PNG")
+    area = page.rect if image_covers_page else pymupdf.Rect(50, 100, 150, 160)
+    page.insert_image(area, stream=picture)
+    return _pdf_bytes(doc)
+
+
 def jpg_with_text(text: str = SAMPLE_PAGES[0]) -> bytes:
     return _encode(_render_text(text, _PAGE_WIDTH_PX, _PAGE_HEIGHT_PX), "JPEG")
 

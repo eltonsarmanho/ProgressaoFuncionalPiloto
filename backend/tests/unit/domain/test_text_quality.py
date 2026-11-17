@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.domain.rules.text_quality import is_text_layer_usable, ocr_needs_review
+from app.domain.rules.text_quality import is_text_layer_thin, is_text_layer_usable, ocr_needs_review
 
 GOOD = (
     "PORTARIA Nº 3686/2024. O Diretor da Faculdade resolve designar a servidora Maria Souza "
@@ -99,3 +99,34 @@ def test_ocr_without_text_needs_review_even_with_high_confidence(text):
 
 def test_ocr_without_confidence_needs_review():
     assert ocr_needs_review(None, GOOD) is True
+
+
+# --- REAL-13: thin text layer on an image heavy page --------------------------------------------
+
+HEADER_FOOTER = (
+    "UNIVERSIDADE FEDERAL EXEMPLAR Pro-Reitoria de Extensao Certificado "
+    "Documento ficticio emitido pelo sistema de testes, validacao em endereco ficticio."
+)
+FULL_PAGE = " ".join(f"palavra{chr(97 + i % 26)}{chr(97 + i // 26)}x" for i in range(120))
+
+
+def test_header_and_footer_over_a_large_image_is_a_thin_layer():
+    assert is_text_layer_usable(HEADER_FOOTER) is True
+    assert is_text_layer_thin(HEADER_FOOTER, 0.9) is True
+
+
+def test_the_same_short_layer_with_a_small_image_is_not_thin():
+    assert is_text_layer_thin(HEADER_FOOTER, 0.1) is False
+    assert is_text_layer_thin(HEADER_FOOTER, 0.49) is False
+
+
+def test_a_full_text_page_with_a_large_image_is_not_thin():
+    assert is_text_layer_thin(FULL_PAGE, 0.9) is False
+
+
+def test_the_coverage_boundary_counts_as_image_heavy():
+    assert is_text_layer_thin(HEADER_FOOTER, 0.5) is True
+
+
+def test_repeated_words_do_not_make_a_layer_look_full():
+    assert is_text_layer_thin("certificado de participacao " * 40, 0.9) is True

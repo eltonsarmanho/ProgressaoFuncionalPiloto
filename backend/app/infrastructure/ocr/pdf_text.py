@@ -30,3 +30,15 @@ def extract_pdf_pages(path: Path) -> list[PdfPageText]:
     with pymupdf.open(path, filetype="pdf") as doc:
         texts = [page.get_text("text") for page in doc]
     return [PdfPageText(number, text, len(text)) for number, text in enumerate(texts, start=1)]
+
+
+def image_coverage(path: Path, page_number: int) -> float:
+    """Share of the page area (0 to 1) covered by images; overlaps are counted once at most."""
+    with pymupdf.open(path, filetype="pdf") as doc:
+        page = doc[page_number - 1]
+        page_area = page.rect.get_area()
+        if page_area <= 0:
+            return 0.0
+        boxes = (pymupdf.Rect(info["bbox"]) & page.rect for info in page.get_image_info())
+        covered = sum(box.get_area() for box in boxes)
+    return min(1.0, covered / page_area)

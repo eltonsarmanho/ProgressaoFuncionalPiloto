@@ -226,3 +226,72 @@ def test_extraction_does_not_alter_the_original_file(clock, write):
     extractor(clock).extract(path, FileKind.PDF)
 
     assert path.read_bytes() == before
+
+
+# --- REAL-13: image heavy page with a thin text layer ----------------------------------------
+
+
+def test_raster_certificate_with_only_header_and_footer_text_is_ocrd(clock, write):
+    ocr = FakeOcr(results=[OcrResult(text="corpo lido por ocr " * 20, confidence=Decimal("90.00"))])
+    path = write(docs.pdf_header_footer_over_image_body(), "cert.pdf")
+
+    result = extractor(clock, ocr).extract(path, FileKind.PDF)
+
+    page = result.pages[0]
+    assert page.method is TextMethod.OCR
+    assert page.ocr_confidence == Decimal("90.00")
+    assert "corpo lido por ocr" in page.text
+    assert "Pro-Reitoria de Extensao" in page.text  # the header of the text layer is kept
+    assert "validacao em endereco ficticio" in page.text
+    assert page.char_count == len(page.text)
+    assert len(ocr.calls) == 1
+
+
+def test_thin_layer_page_keeps_the_text_layer_when_the_ocr_finds_less_text(clock, write):
+    ocr = FakeOcr(results=[OcrResult(text="x", confidence=Decimal("90.00"))])
+    path = write(docs.pdf_header_footer_over_image_body(), "cert.pdf")
+
+    page = extractor(clock, ocr).extract(path, FileKind.PDF).pages[0]
+
+    assert page.method is TextMethod.TEXTO
+    assert page.ocr_confidence is None
+    assert "Pro-Reitoria de Extensao" in page.text
+    assert len(ocr.calls) == 1
+
+
+def test_thin_layer_page_keeps_the_text_layer_when_the_ocr_is_not_confident(clock, write):
+    ocr = FakeOcr(results=[OcrResult(text="lixo " * 100, confidence=Decimal("40.00"))])
+    path = write(docs.pdf_header_footer_over_image_body(), "cert.pdf")
+
+    page = extractor(clock, ocr).extract(path, FileKind.PDF).pages[0]
+
+    assert page.method is TextMethod.TEXTO
+
+
+def test_small_image_on_a_page_with_a_short_text_layer_does_not_trigger_ocr(clock, write):
+    ocr = FakeOcr()
+    path = write(docs.pdf_header_footer_over_image_body(image_covers_page=False), "logo.pdf")
+
+    page = extractor(clock, ocr).extract(path, FileKind.PDF).pages[0]
+
+    assert page.method is TextMethod.TEXTO
+    assert ocr.calls == []
+
+
+def test_text_page_without_images_never_triggers_the_extra_ocr(clock, write):
+    ocr = FakeOcr()
+    path = write(docs.pdf_with_text([TEXT_PAGE]), "t.pdf")
+
+    extractor(clock, ocr).extract(path, FileKind.PDF)
+
+    assert ocr.calls == []
+
+
+def test_ocr_timeout_on_the_extra_pass_keeps_the_text_layer(clock, write):
+    ocr = FakeOcr(results=[OcrResult(text="", confidence=None, code=DocAlertCode.TEMPO_ESGOTADO)])
+    path = write(docs.pdf_header_footer_over_image_body(), "cert.pdf")
+
+    result = extractor(clock, ocr).extract(path, FileKind.PDF)
+
+    assert result.pages[0].method is TextMethod.TEXTO
+    assert result.timed_out is False

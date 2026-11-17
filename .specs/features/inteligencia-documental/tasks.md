@@ -1862,10 +1862,10 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] PDF sintético com cabeçalho, rodapé e imagem de página inteira faz OCR e devolve o texto do corpo com método `OCR` (antes: só o cabeçalho, `TEXTO`)
-- [ ] Página só de texto, ou com imagem pequena, não faz OCR
-- [ ] OCR com menos texto útil que a camada mantém `TEXTO`
-- [ ] Gate full passa
+- [x] PDF sintético com cabeçalho, rodapé e imagem de página inteira faz OCR e devolve o texto do corpo com método `OCR` (antes: só o cabeçalho, `TEXTO`)
+- [x] Página só de texto, ou com imagem pequena, não faz OCR
+- [x] OCR com menos texto útil que a camada mantém `TEXTO`
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full
