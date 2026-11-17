@@ -101,6 +101,13 @@ describe("ADMUI-02: importar CSV", () => {
     await user.type(screen.getByLabelText("Referência normativa do CSV"), "Res. 7.000/2026");
   }
 
+  it("OFI-06: a ajuda lista a coluna opcional min_hours (carga horária mínima)", () => {
+    setup({});
+
+    const help = screen.getByText(/^Colunas:/);
+    expect(help).toHaveTextContent("min_hours (opcional, carga horária mínima em horas; vazio ou ausente = sem mínimo)");
+  });
+
   it("envia o arquivo e os campos em multipart com o token CSRF e atualiza a lista", async () => {
     const { calls, onChanged, user } = setup({
       "POST /api/scoring-tables/t-fasi/versions/import": { status: 201, body: { id: "v-csv" } },

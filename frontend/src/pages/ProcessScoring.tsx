@@ -157,6 +157,8 @@ export function ProcessScoring() {
   };
 
   const groupNames = version ? Object.fromEntries(version.groups.map((g) => [g.number, g.name])) : undefined;
+  const groupOne = version?.groups.find((g) => g.number === 1);
+  const group1InHours = groupOne ? !groupOne.counts_in_total : undefined;
 
   const alerts: Alert[] = [];
   const seen = new Set<string>();
@@ -186,7 +188,7 @@ export function ProcessScoring() {
         <>
           <section className="card" aria-labelledby="summary-title">
             <h2 id="summary-title">Resumo</h2>
-            <ScoringSummary result={result} groupNames={groupNames} />
+            <ScoringSummary result={result} groupNames={groupNames} group1InHours={group1InHours} />
           </section>
 
           <section className="card" aria-labelledby="activities-title">
@@ -195,6 +197,7 @@ export function ProcessScoring() {
               rows={result.rows}
               subtotals={result.subtotals}
               groupNames={groupNames}
+              group1TotalHours={result.group1_total_hours}
               actions={(row) => (
                 <div className="row-actions">
                   <button type="button" className="link" onClick={() => void open("edit", row)}>

@@ -279,4 +279,84 @@ describe("ProcessScoring", () => {
     renderPage();
     expect(await screen.findByRole("alert")).toHaveTextContent("Processo não encontrado");
   });
+
+  describe("TELA-01/02: Grupo I em horas de PIT", () => {
+    const PIT_ROW = (id: string, title: string, hours: string): ScoringResult["rows"][number] => ({
+      ...ROW,
+      activity_id: id,
+      title,
+      group_number: 1,
+      item_number: 1,
+      unit_points: null,
+      effective_quantity: null,
+      formula_text: null,
+      points: "0.00",
+      pit_hours: hours,
+      alerts: [],
+    });
+    const OFFICIAL_VERSION = {
+      ...VERSION,
+      groups: [{ ...VERSION.groups[0], number: 1, name: "Docência", counts_in_total: false, criteria: [] }, VERSION.groups[1]],
+    };
+    const official = (): ScoringResult => ({
+      ...result("40.00", [PIT_ROW("p1", "Cálculo I", "8.00"), PIT_ROW("p2", "Álgebra", "4.00"), ROW]),
+      group1_hours_by_period: { "2023.1": "12.00" },
+      group1_total_hours: "12.00",
+    });
+
+    it("mostra o Grupo I em horas de PIT na tabela, sem pontos", async () => {
+      mockFetch({ ...baseRoutes(official), "GET /api/scoring-versions/v-fasi": { status: 200, body: OFFICIAL_VERSION } });
+      renderPage();
+      const row = (await screen.findByText("Cálculo I", { selector: "td" })).closest("tr")!;
+      expect(row).toHaveTextContent("8,00 horas (PIT)");
+      expect(screen.getByText("Álgebra", { selector: "td" }).closest("tr")).toHaveTextContent("4,00 horas (PIT)");
+      const head = screen.getByText(/Grupo I · Docência/, { selector: "th" });
+      expect(head).toHaveTextContent("Total de horas (PIT): 12,00");
+      expect(head).not.toHaveTextContent("Subtotal");
+    });
+
+    it("mostra o resumo com 'Total geral (Grupos II a VIII)' e as horas de PIT à parte", async () => {
+      mockFetch({ ...baseRoutes(official), "GET /api/scoring-versions/v-fasi": { status: 200, body: OFFICIAL_VERSION } });
+      renderPage();
+      expect((await screen.findByText("Total geral (Grupos II a VIII)", { selector: "dt" })).nextElementSibling).toHaveTextContent("40,00");
+      const hours = screen.getByRole("group", { name: "Horas de PIT do Grupo I" });
+      expect(within(hours).getByText("PIT 2023.1", { selector: "dt" }).nextElementSibling).toHaveTextContent("12,00 horas");
+      expect(within(hours).getByText("Total de horas de PIT", { selector: "dt" }).nextElementSibling).toHaveTextContent("12,00 horas");
+    });
+
+    it("com a versão que tira o Grupo I do total e nenhum lançamento, mostra 0,00 hora", async () => {
+      mockFetch({
+        ...baseRoutes(() => result("40.00", [ROW])),
+        "GET /api/scoring-versions/v-fasi": { status: 200, body: OFFICIAL_VERSION },
+      });
+      renderPage();
+      expect(await screen.findByText("Total geral (Grupos II a VIII)", { selector: "dt" })).toBeInTheDocument();
+      const hours = screen.getByRole("group", { name: "Horas de PIT do Grupo I" });
+      expect(within(hours).getByText("Total de horas de PIT", { selector: "dt" }).nextElementSibling).toHaveTextContent("0,00 horas");
+    });
+
+    it("explica em português o alerta CARGA_HORARIA_NAO_INFORMADA e a razão CARGA_HORARIA_INSUFICIENTE", async () => {
+      const course: ScoringResult["rows"][number] = {
+        ...ROW,
+        activity_id: "c1",
+        title: "Curso de extensão",
+        group_number: 4,
+        item_number: 4,
+        status: "NAO_PONTUADA",
+        points: "0.00",
+        reasons: ["CARGA_HORARIA_INSUFICIENTE"],
+        alerts: [
+          { code: "CARGA_HORARIA_NAO_INFORMADA", severity: "ALERTA", message: "Informe as horas do curso", norm_reference: "Tabela oficial, IV.4" },
+        ],
+      };
+      mockFetch(baseRoutes(() => result("0.00", [course])));
+      renderPage();
+      expect((await screen.findByText("Curso de extensão", { selector: "td" })).closest("tr")).toHaveTextContent(
+        "Carga horária abaixo do mínimo do item",
+      );
+      const alerta = screen.getByRole("region", { name: "Alerta (2)" });
+      expect(alerta).toHaveTextContent("Carga horária não informada");
+      expect(alerta).toHaveTextContent("Curso de extensão: Informe as horas do curso");
+    });
+  });
 });

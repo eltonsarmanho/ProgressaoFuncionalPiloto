@@ -618,8 +618,8 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] A página mostra o Grupo I em horas e o resumo novo com a resposta simulada da API
-- [ ] Build gate passa (lint, testes, build); 3+ testes
+- [x] A página mostra o Grupo I em horas e o resumo novo com a resposta simulada da API
+- [x] Build gate passa (lint, testes, build); 3+ testes
 
 **Tests**: unit
 **Gate**: build

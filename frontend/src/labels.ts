@@ -59,6 +59,11 @@ export const REASON_LABELS: Record<string, string> = {
   CARGA_HORARIA_INSUFICIENTE: "Carga horária abaixo do mínimo do item",
 };
 
+/** Plain-language names for alert codes; codes without an entry are shown as sent by the API. */
+export const ALERT_CODE_LABELS: Record<string, string> = {
+  CARGA_HORARIA_NAO_INFORMADA: "Carga horária não informada",
+};
+
 export const MINIMUM_LABELS: Record<string, string> = {
   ATINGE: "Atinge o mínimo",
   NAO_ATINGE: "Não atinge o mínimo",

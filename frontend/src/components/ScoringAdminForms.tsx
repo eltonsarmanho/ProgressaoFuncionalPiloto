@@ -183,7 +183,8 @@ function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: () 
     <form className="card" onSubmit={submit} noValidate aria-label="Importar CSV">
       <h3>Importar CSV como nova versão</h3>
       <p className="muted">
-        Colunas: grupo, item, descricao, unidade, modo, pontos, horas_por_bloco, limite. UTF-8, separado por
+        Colunas: grupo, item, descricao, unidade, modo, pontos, horas_por_bloco, limite e min_hours (opcional,
+        carga horária mínima em horas; vazio ou ausente = sem mínimo). UTF-8, separado por
         vírgulas, ponto decimal. Tudo ou nada.
       </p>
       <Field id="csv-file" label="Arquivo CSV" error={errors.file}>

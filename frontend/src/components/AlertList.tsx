@@ -1,5 +1,5 @@
 import type { Alert } from "../api/types";
-import { SEVERITIES, SEVERITY_LABELS } from "../labels";
+import { ALERT_CODE_LABELS, SEVERITIES, SEVERITY_LABELS } from "../labels";
 
 /** UI-03: alerts grouped by severity, each with its norm reference. */
 export function AlertList({ alerts }: { alerts: Alert[] }) {
@@ -17,7 +17,7 @@ export function AlertList({ alerts }: { alerts: Alert[] }) {
             <ul>
               {group.map((a, i) => (
                 <li key={`${a.code}-${i}`}>
-                  <strong>{a.code}</strong>: {a.message}
+                  <strong>{ALERT_CODE_LABELS[a.code] ?? a.code}</strong>: {a.message}
                   <br />
                   <small>Referência normativa: {a.norm_reference}</small>
                 </li>
