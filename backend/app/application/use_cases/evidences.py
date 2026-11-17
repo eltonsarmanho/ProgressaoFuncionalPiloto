@@ -5,7 +5,8 @@ Audit events carry identifiers and the justification only, never the document te
 """
 
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from uuid import UUID
 
 from app.application.services.access_policy import AccessPolicy
@@ -157,3 +158,34 @@ class UnlinkEvidence(_EvidenceUseCase):
                 {"operation": "UNLINK"},
             )
             uow.commit()
+
+
+@dataclass(frozen=True)
+class EvidenceView:
+    """A link with the display name of its document."""
+
+    evidence: ActivityEvidence
+    document_name: str
+
+
+class ListEvidences:
+    def __init__(self, uow_factory: Callable[[], UnitOfWork]):
+        self._uow_factory = uow_factory
+
+    def execute(self, activity_ids: Sequence[UUID]) -> dict[UUID, list[EvidenceView]]:
+        """The links of each activity, for presenting activities the caller already read.
+
+        It checks no access: the ids must come from a use case that did.
+        """
+        names: dict[UUID, str] = {}
+        found: dict[UUID, list[EvidenceView]] = {}
+        with self._uow_factory() as uow:
+            for activity_id in activity_ids:
+                views = []
+                for evidence in uow.evidences.list_for_activity(activity_id):
+                    if evidence.document_id not in names:
+                        document = uow.documents.get(evidence.document_id)
+                        names[evidence.document_id] = document.original_name if document else ""
+                    views.append(EvidenceView(evidence, names[evidence.document_id]))
+                found[activity_id] = views
+        return found

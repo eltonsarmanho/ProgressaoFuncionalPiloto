@@ -131,6 +131,14 @@ class EvidenceOut(BaseModel):
         )
 
 
+class EvidenceCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    document_id: UUID
+    page: int
+    justificativa: str | None = None
+
+
 class LinkedActivityOut(BaseModel):
     id: UUID
     title: str

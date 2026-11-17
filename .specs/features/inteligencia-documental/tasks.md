@@ -1160,10 +1160,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Vincular, listar no detalhe da atividade e remover
-- [ ] Vínculo de documento já ligado a outra atividade exige `justificativa` (422 no campo)
-- [ ] Sem acesso: 404; sem sessão: 401
-- [ ] Gate full passa; 8+ testes
+- [x] Vincular, listar no detalhe da atividade e remover
+- [x] Vínculo de documento já ligado a outra atividade exige `justificativa` (422 no campo)
+- [x] Sem acesso: 404; sem sessão: 401
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full

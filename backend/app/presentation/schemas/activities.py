@@ -6,6 +6,7 @@ Dates may be `YYYY-MM-DD` or `YYYY-MM` (month precision). The field names `quant
 """
 
 import re
+from collections.abc import Sequence
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
@@ -21,6 +22,7 @@ from app.domain.entities.activity import (
     Level,
     PeriodPrecision,
 )
+from app.presentation.schemas.documents import EvidenceOut
 from app.presentation.schemas.scoring import Money
 
 MONTH = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
@@ -158,13 +160,14 @@ class ActivityOut(BaseModel):
     status: ActivityStatus
     distinct_justification: str | None
     candidates: list[CandidateOut]
+    evidences: list[EvidenceOut]
     created_by: UUID
     created_at: datetime | None
     updated_at: datetime | None
     version: int
 
     @classmethod
-    def of(cls, a: Activity) -> "ActivityOut":
+    def of(cls, a: Activity, evidences: Sequence[EvidenceOut] = ()) -> "ActivityOut":
         precision = a.period_precision
         return cls(
             id=a.id,
@@ -196,6 +199,7 @@ class ActivityOut(BaseModel):
                 )
                 for c in a.candidates
             ],
+            evidences=list(evidences),
             created_by=a.created_by,
             created_at=a.created_at,
             updated_at=a.updated_at,

@@ -27,6 +27,7 @@ from app.application.use_cases.documents import (
     ReprocessDocument,
     UploadDocuments,
 )
+from app.application.use_cases.evidences import LinkEvidence, ListEvidences, UnlinkEvidence
 from app.application.use_cases.processes import (
     ChangeProcessStatus,
     CreateProcess,
@@ -147,6 +148,9 @@ class Container:
     delete_document: DeleteDocument
     reprocess_document: ReprocessDocument
     classify_document: ClassifyDocumentManually
+    link_evidence: LinkEvidence
+    unlink_evidence: UnlinkEvidence
+    list_evidences: ListEvidences
 
 
 def build_container(
@@ -248,6 +252,9 @@ def build_container(
         delete_document=DeleteDocument(uow_factory, audit, policy, storage),
         reprocess_document=ReprocessDocument(uow_factory, audit, policy, change_status),
         classify_document=ClassifyDocumentManually(uow_factory, audit, policy),
+        link_evidence=LinkEvidence(uow_factory, audit, policy),
+        unlink_evidence=UnlinkEvidence(uow_factory, audit, policy),
+        list_evidences=ListEvidences(uow_factory),
     )
 
 
