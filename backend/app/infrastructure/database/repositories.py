@@ -345,6 +345,7 @@ def career_definition(version: CareerVersion) -> dict[str, Any]:
 def _career_version(m: CareerVersionModel) -> CareerVersion:
     definition = m.definition
     return CareerVersion(
+        id=m.id,
         name=m.name,
         valid_from=m.valid_from,
         valid_to=m.valid_to,
@@ -409,7 +410,7 @@ class SqlCareerVersionRepository:
             raise NotFound("Estrutura de carreira não encontrada")
         self._s.execute(
             insert(CareerVersionModel).values(
-                id=uuid.uuid4(),
+                id=version.id or uuid.uuid4(),
                 structure_id=structure_id,
                 name=version.name,
                 valid_from=version.valid_from,
@@ -418,6 +419,21 @@ class SqlCareerVersionRepository:
                 definition=career_definition(version),
             )
         )
+
+    def update(self, version: CareerVersion) -> None:
+        rowcount = self._s.execute(
+            update(CareerVersionModel)
+            .where(CareerVersionModel.id == version.id)
+            .values(
+                name=version.name,
+                valid_from=version.valid_from,
+                valid_to=version.valid_to,
+                norm_reference=version.norm_reference,
+                definition=career_definition(version),
+            )
+        ).rowcount
+        if rowcount == 0:
+            raise NotFound("Versão de carreira não encontrada")
 
 
 class SqlAuditRepository:

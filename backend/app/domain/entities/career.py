@@ -1,9 +1,10 @@
 """Versioned career structure entities (CARR-01, CARR-03)."""
 
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from enum import StrEnum
+from uuid import UUID
 
 
 class Modality(StrEnum):
@@ -27,6 +28,7 @@ class CareerVersion:
     norm_reference: str
     classes: tuple[CareerClass, ...]
     progression_min_months: int = 24
+    id: UUID | None = field(default=None, compare=False)  # persistence identity only
 
     def covers(self, moment: date) -> bool:
         after_start = self.valid_from is None or self.valid_from <= moment

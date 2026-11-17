@@ -9,6 +9,11 @@ from sqlalchemy import Engine
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
 from app.application.use_cases.auth import GetCurrentSession, Login, Logout
+from app.application.use_cases.career import (
+    CreateCareerVersion,
+    ListCareerVersions,
+    UpdateCareerVersion,
+)
 from app.application.use_cases.processes import (
     ChangeProcessStatus,
     CreateProcess,
@@ -61,6 +66,9 @@ class Container:
     update_process: UpdateProcess
     change_process_status: ChangeProcessStatus
     process_history: GetProcessHistory
+    list_career_versions: ListCareerVersions
+    create_career_version: CreateCareerVersion
+    update_career_version: UpdateCareerVersion
 
 
 def build_container(settings: Settings, engine: Engine, clock: Clock) -> Container:
@@ -97,6 +105,9 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
         update_process=UpdateProcess(uow_factory, audit, policy),
         change_process_status=ChangeProcessStatus(uow_factory, audit, policy),
         process_history=GetProcessHistory(uow_factory, audit, policy),
+        list_career_versions=ListCareerVersions(uow_factory),
+        create_career_version=CreateCareerVersion(uow_factory, audit),
+        update_career_version=UpdateCareerVersion(uow_factory, audit),
     )
 
 

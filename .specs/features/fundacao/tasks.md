@@ -613,8 +613,8 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Sem referência normativa → 422; não-ADMIN → 403; definição inválida → 422
-- [ ] Gate full passa
+- [x] Sem referência normativa → 422; não-ADMIN → 403; definição inválida → 422
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full
