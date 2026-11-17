@@ -34,7 +34,7 @@ def test_status_has_exactly_the_six_spec_values():
     }
 
 
-def test_alert_codes_are_the_eleven_names_of_the_design():
+def test_alert_codes_are_the_design_names_plus_those_of_the_real_validation():
     assert {c.value for c in DocAlertCode} == {
         "SEM_ITEM_DE_PONTUACAO",
         "TEXTO_ILEGIVEL",
@@ -47,8 +47,9 @@ def test_alert_codes_are_the_eleven_names_of_the_design():
         "IA_INDISPONIVEL",
         "TEMPO_ESGOTADO",
         "QUANTIDADE_ESTIMADA",
+        "ATIVIDADE_REPETIDA",  # REAL-07
     }
-    assert len(DocAlertCode) == 11
+    assert len(DocAlertCode) == 12
 
 
 def test_pending_goes_to_processing():

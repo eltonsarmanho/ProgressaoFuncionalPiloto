@@ -34,7 +34,7 @@ from app.domain.rules.interstice import Interstice
 from app.domain.rules.masking import mask_identifiers
 from app.domain.rules.quantity_rules import derive_quantity
 from app.domain.rules.scoring_alerts import NotScoredReason
-from app.domain.rules.scoring_periods import PeriodState, evaluate_period
+from app.domain.rules.scoring_periods import PeriodState, evaluate_period, normalize_title
 from app.domain.rules.suggestion_rules import Item, confirm_extension_course, suggest_item
 from app.domain.rules.text_quality import ocr_needs_review
 from app.domain.rules.upload_validation import FileKind
@@ -205,7 +205,7 @@ class DocumentAnalyzer:
         status = DocumentStatus.PROCESSADO
         original = {page.page_number: page.text for page in sent}
         document_text = _join(run.pages)
-        for index, raw in enumerate(payload.activities):
+        for index, raw in _collapse_repeated(payload.activities, run.alerts):
             suggested = self._suggest(
                 run, index, raw, original, document_text, interstice, table_version
             )
@@ -295,6 +295,56 @@ class DocumentAnalyzer:
 class _Payload:
     docente_nome: str | None
     activities: tuple[ExtractedActivity, ...]
+
+
+def _interval(activity: ExtractedActivity) -> tuple[date, date] | None:
+    if activity.event_date is not None:
+        return activity.event_date, activity.event_date
+    start, end = activity.start_date or activity.end_date, activity.end_date or activity.start_date
+    return None if start is None or end is None else (start, end)
+
+
+def _same_activity(one: ExtractedActivity, two: ExtractedActivity) -> bool:
+    """Same page, type, level and normalized title, with equal, overlapping or absent dates.
+
+    Compared as the AI answered, before grounding, so a date the page does not carry still
+    tells two activities apart (REAL-07).
+    """
+    if (one.page, one.taxonomy, one.level) != (two.page, two.taxonomy, two.level):
+        return False
+    title_one, title_two = normalize_title(one.title or ""), normalize_title(two.title or "")
+    if title_one != title_two:
+        return False
+    if not title_one and normalize_title(one.evidence_text) != normalize_title(two.evidence_text):
+        return False
+    span_one, span_two = _interval(one), _interval(two)
+    if span_one is None or span_two is None:
+        return True
+    return span_one[0] <= span_two[1] and span_two[0] <= span_one[1]
+
+
+def _collapse_repeated(
+    activities: tuple[ExtractedActivity, ...], alerts: list[DocAlert]
+) -> list[tuple[int, ExtractedActivity]]:
+    """The activities to suggest, with their position in the AI answer, repeats removed.
+
+    The AI sometimes lists the same activity several times (up to six in one real document).
+    The copy with a date wins; each dropped copy is reported. Distinct titles, types, pages
+    or disjoint dates are never merged.
+    """
+    kept: list[tuple[int, ExtractedActivity]] = []
+    for index, candidate in enumerate(activities):
+        twin = next(
+            (n for n, (_, other) in enumerate(kept) if _same_activity(other, candidate)), None
+        )
+        if twin is None:
+            kept.append((index, candidate))
+            continue
+        dropped = index
+        if _interval(kept[twin][1]) is None and _interval(candidate) is not None:
+            dropped, kept[twin] = kept[twin][0], (index, candidate)
+        alerts.append(DocAlert(DocAlertCode.ATIVIDADE_REPETIDA, None, dropped))
+    return kept
 
 
 def _join(pages: tuple[ExtractedPage, ...] | list[ExtractedPage]) -> str:

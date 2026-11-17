@@ -1,5 +1,6 @@
 """EXT-07..13, PIPE-07 and the empty-list edge case: text to verified extraction."""
 
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
@@ -225,6 +226,55 @@ def test_abbreviated_ai_name_of_the_professor_is_no_divergence():
     text = "Participaram da banca os docentes F. T. Exemplo e Carlos Lima, em 12 de marco de 2025."
     result, _ = analyze(payload(activity(), name="F. T. Exemplo"), text_page(1, text))
     assert DocAlertCode.DOCENTE_DIVERGENTE not in codes(result)
+
+
+# --- repeated activities of one document (REAL-07) --------------------------------------------
+
+
+def test_six_identical_activities_on_the_same_page_become_one():
+    same = activity(event_date=None)
+    result, _ = analyze(payload(*[dict(same) for _ in range(6)]))
+    assert len(result.activities) == 1
+    assert codes(result, DocAlertCode.ATIVIDADE_REPETIDA) == [DocAlertCode.ATIVIDADE_REPETIDA] * 5
+    repeated = [a for a in result.alerts if a.code is DocAlertCode.ATIVIDADE_REPETIDA]
+    assert sorted(a.activity_index for a in repeated) == [1, 2, 3, 4, 5]
+
+
+def test_identical_activities_with_the_same_date_become_one():
+    result, _ = analyze(payload(activity(), activity()))
+    assert len(result.activities) == 1
+    assert result.activities[0].source_index == 0
+
+
+def test_title_is_compared_without_case_accent_or_extra_spaces():
+    first = activity(title="Estudo Fictício  sobre Dados Abertos")
+    second = activity(title="ESTUDO FICTICIO sobre dados abertos")
+    result, _ = analyze(payload(first, second))
+    assert len(result.activities) == 1
+
+
+def test_a_dated_and_an_undated_copy_collapse_and_keep_the_dated_one():
+    result, _ = analyze(payload(activity(event_date=None), activity()))
+    assert len(result.activities) == 1
+    assert result.activities[0].extracted.event_date == date(2025, 3, 12)
+
+
+def test_different_dates_that_do_not_overlap_stay_separate():
+    text = BANCA_TEXT + " Nova sessao em 20 de marco de 2025."
+    result, _ = analyze(payload(activity(), activity(event_date="2025-03-20")), text_page(1, text))
+    assert len(result.activities) == 2
+    assert DocAlertCode.ATIVIDADE_REPETIDA not in codes(result)
+
+
+def test_different_titles_items_or_pages_stay_separate():
+    other_title = activity(title="Estudo Ficticio")
+    other_item = activity(taxonomy="BANCA_MESTRADO")
+    result, _ = analyze(payload(activity(), other_title, other_item))
+    assert len(result.activities) == 3
+
+    pages = (text_page(1), text_page(2))
+    result, _ = analyze(payload(activity(), activity(page=2)), *pages)
+    assert len(result.activities) == 2
 
 
 # --- invalid answers (EXT-09) -------------------------------------------------------------

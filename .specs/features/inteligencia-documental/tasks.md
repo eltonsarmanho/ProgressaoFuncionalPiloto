@@ -1699,10 +1699,10 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] Seis atividades idênticas na mesma página geram uma só, com cinco avisos `ATIVIDADE_REPETIDA` (antes: seis atividades)
-- [ ] Idênticas sem data e idênticas com a mesma data colapsam; datas disjuntas, títulos ou itens diferentes e páginas diferentes não colapsam
-- [ ] O índice de origem dos avisos continua apontando para a resposta da IA
-- [ ] Gate full passa
+- [x] Seis atividades idênticas na mesma página geram uma só, com cinco avisos `ATIVIDADE_REPETIDA` (antes: seis atividades)
+- [x] Idênticas sem data e idênticas com a mesma data colapsam; datas disjuntas, títulos ou itens diferentes e páginas diferentes não colapsam
+- [x] O índice de origem dos avisos continua apontando para a resposta da IA
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full
