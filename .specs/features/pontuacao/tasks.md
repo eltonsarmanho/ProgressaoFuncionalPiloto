@@ -180,10 +180,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] "Mai/22 a Mai/22" vira 01/05/2022 a 31/05/2022; "Nov/22" contra interstício que começa em 23/11/2022 dá `PARCIAL`
-- [ ] Evento antes ou depois do interstício dá `FORA`; sem data dá `SEM_DATA`; interstício inválido dá `NAO_VERIFICAVEL`
-- [ ] `normalize_title` ignora maiúsculas, acentos e espaços repetidos
-- [ ] Gate quick passa; 12+ testes
+- [x] "Mai/22 a Mai/22" vira 01/05/2022 a 31/05/2022; "Nov/22" contra interstício que começa em 23/11/2022 dá `PARCIAL`
+- [x] Evento antes ou depois do interstício dá `FORA`; sem data dá `SEM_DATA`; interstício inválido dá `NAO_VERIFICAVEL`
+- [x] `normalize_title` ignora maiúsculas, acentos e espaços repetidos
+- [x] Gate quick passa; 12+ testes
 
 **Tests**: unit
 **Gate**: quick
