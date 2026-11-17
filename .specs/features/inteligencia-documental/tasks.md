@@ -283,11 +283,11 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Data em `dd/mm/aaaa`, `dd.mm.aaaa`, "23 de março de 2026" e `Mai/22` presentes no texto passam; data ausente vira `null` com `NAO_ENCONTRADO_NO_TEXTO(campo)`
-- [ ] Horas, número de portaria, ISSN e DOI ausentes do texto viram `null`; presentes passam
-- [ ] Título com 90% ou mais dos termos no texto passa; abaixo disso vira `null`
-- [ ] `same_person`: nome do docente do processo contido no nome extraído ou matrícula SIAPE no texto dá verdadeiro; nome de outra pessoa dá falso
-- [ ] Devolve a fração de campos verificáveis encontrados; Gate quick passa; 25+ testes
+- [x] Data em `dd/mm/aaaa`, `dd.mm.aaaa`, "23 de março de 2026" e `Mai/22` presentes no texto passam; data ausente vira `null` com `NAO_ENCONTRADO_NO_TEXTO(campo)`
+- [x] Horas, número de portaria, ISSN e DOI ausentes do texto viram `null`; presentes passam
+- [x] Título com 90% ou mais dos termos no texto passa; abaixo disso vira `null`
+- [x] `same_person`: nome do docente do processo contido no nome extraído ou matrícula SIAPE no texto dá verdadeiro; nome de outra pessoa dá falso
+- [x] Devolve a fração de campos verificáveis encontrados; Gate quick passa; 25+ testes
 
 **Tests**: unit
 **Gate**: quick

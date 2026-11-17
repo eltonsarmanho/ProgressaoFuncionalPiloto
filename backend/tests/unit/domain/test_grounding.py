@@ -1,0 +1,349 @@
+"""EXT-10, EXT-11: extracted values must appear in the cited page; same person check."""
+
+from datetime import date
+from decimal import Decimal
+
+import pytest
+
+from app.domain.entities.document import DocAlertCode
+from app.domain.entities.extraction import ExtractedActivity, TaxonomyCode
+from app.domain.rules.grounding import (
+    DatePrecision,
+    GroundingWarning,
+    date_in_text,
+    ground,
+    hours_in_text,
+    identifier_in_text,
+    name_in_text,
+    same_person,
+    title_in_text,
+)
+
+D = DatePrecision
+
+
+# ---------- dates ----------
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "realizada em 23/03/2026.",
+        "realizada em 23.03.2026.",
+        "realizada em 23-03-2026.",
+        "realizada em 2026-03-23.",
+        "realizada em 23 de março de 2026.",
+        "realizada em 23 DE MARÇO DE 2026.",
+        "realizada em 23 de marco de 2026.",
+        "realizada em 23 de Março de 2026",
+    ],
+)
+def test_full_date_in_any_accepted_format_is_grounded(text):
+    assert date_in_text(date(2026, 3, 23), text) is True
+
+
+def test_date_without_zero_padding_is_grounded():
+    assert date_in_text(date(2024, 3, 3), "em 3/3/2024") is True
+    assert date_in_text(date(2024, 3, 3), "em 03/03/2024") is True
+
+
+def test_first_day_with_ordinal_mark_is_grounded():
+    assert date_in_text(date(2026, 3, 1), "em 1º de março de 2026") is True
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "realizada em 24/03/2026",
+        "realizada em 23/04/2026",
+        "realizada em 23/03/2025",
+        "realizada em 23 de abril de 2026",
+        "sem nenhuma data",
+        "",
+    ],
+)
+def test_date_not_in_the_text_is_not_grounded(text):
+    assert date_in_text(date(2026, 3, 23), text) is False
+
+
+def test_day_inside_a_longer_number_is_not_a_date():
+    assert date_in_text(date(2026, 3, 23), "protocolo 123/03/2026") is False
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["concluído em Mai/22", "concluído em mai/2022", "concluído em 05/2022", "em maio de 2022"],
+)
+def test_month_only_date_is_grounded_by_month_and_year(text):
+    assert date_in_text(date(2022, 5, 1), text, D.MONTH) is True
+
+
+@pytest.mark.parametrize("text", ["em Mai/23", "em 06/2022", "em Jun/22", "em 2022", ""])
+def test_month_only_date_with_another_month_or_year_is_not_grounded(text):
+    assert date_in_text(date(2022, 5, 1), text, D.MONTH) is False
+
+
+def test_month_year_in_text_does_not_ground_a_full_date():
+    assert date_in_text(date(2022, 5, 10), "concluído em Mai/22", D.DAY) is False
+
+
+def test_year_alone_is_grounded_when_the_year_appears():
+    assert date_in_text(date(2022, 1, 1), "no ano de 2022", D.YEAR) is True
+    assert date_in_text(date(2022, 1, 1), "no ano de 2023", D.YEAR) is False
+    assert date_in_text(date(2022, 1, 1), "protocolo 12022", D.YEAR) is False
+
+
+# ---------- hours ----------
+
+
+@pytest.mark.parametrize("text", ["CH 68", "CH 68h", "CH 68 horas", "68 h - CH Docente", "(68)"])
+def test_hours_present_as_a_token_are_grounded(text):
+    assert hours_in_text(Decimal("68"), text) is True
+
+
+def test_decimal_hours_are_grounded_with_comma_or_point():
+    assert hours_in_text(Decimal("68.5"), "carga horária de 68,5 horas") is True
+    assert hours_in_text(Decimal("68.5"), "carga horária de 68.5 horas") is True
+
+
+def test_thousands_separator_is_accepted():
+    assert hours_in_text(Decimal("1200"), "totalizando 1.200 horas") is True
+    assert hours_in_text(Decimal("1200"), "totalizando 1200 horas") is True
+
+
+@pytest.mark.parametrize("text", ["CH 168", "CH 2068", "CH 68,5", "CH 69", "sem horas", ""])
+def test_hours_not_present_as_a_token_are_not_grounded(text):
+    assert hours_in_text(Decimal("68"), text) is False
+
+
+# ---------- identifiers ----------
+
+
+def test_portaria_number_ignores_dots_spaces_and_case():
+    assert identifier_in_text("3686/2024", "PORTARIA Nº 3.686/2024 do Reitor") is True
+    assert identifier_in_text("3686 / 2024", "Portaria 3686/2024") is True
+
+
+def test_doi_and_issn_match_ignoring_punctuation_and_case():
+    assert identifier_in_text("10.1016/J.JSS.2020.110000", "doi: 10.1016/j.jss.2020.110000") is True
+    assert identifier_in_text("1234-5678", "ISSN 12345678") is True
+    assert identifier_in_text("1234-5678", "ISSN 1234 5678") is True
+
+
+@pytest.mark.parametrize("text", ["Portaria 3687/2024", "sem número", ""])
+def test_identifier_not_in_the_text_is_not_grounded(text):
+    assert identifier_in_text("3686/2024", text) is False
+
+
+def test_identifier_without_alphanumeric_characters_is_not_grounded():
+    assert identifier_in_text("--", "texto -- qualquer") is False
+
+
+# ---------- titles ----------
+
+TITLE_10 = "alpha bravo charlie delta echo foxtrot golf hotel india juliet"
+
+
+def test_title_with_all_tokens_in_the_text_is_grounded():
+    assert title_in_text(TITLE_10, "O trabalho " + TITLE_10 + " foi defendido") is True
+
+
+def test_title_with_exactly_90_percent_of_tokens_is_grounded():
+    text = "alpha bravo charlie delta echo foxtrot golf hotel india"  # 9 of 10
+    assert title_in_text(TITLE_10, text) is True
+
+
+def test_title_with_80_percent_of_tokens_is_not_grounded():
+    text = "alpha bravo charlie delta echo foxtrot golf hotel"  # 8 of 10
+    assert title_in_text(TITLE_10, text) is False
+
+
+def test_title_with_87_percent_of_8_tokens_is_not_grounded():
+    title = "alpha bravo charlie delta echo foxtrot golf hotel"
+    assert title_in_text(title, "alpha bravo charlie delta echo foxtrot golf") is False
+
+
+def test_title_matching_ignores_case_accents_and_short_words():
+    text = "ESTUDO SOBRE A EDUCAÇÃO NA AMAZÔNIA"
+    assert title_in_text("Estudo sobre educação na Amazônia", text) is True
+    assert (
+        title_in_text("Estudo de IA na educacao da Amazonia", text) is True
+    )  # short words ignored
+    assert title_in_text("Estudo sobre saude na Amazonia", text) is False  # 'saude' is missing
+
+
+def test_title_not_in_the_text_is_not_grounded():
+    assert title_in_text("Título totalmente inventado pela máquina", "Declaração de banca") is False
+
+
+# ---------- names ----------
+
+
+def test_name_with_all_tokens_in_the_text_is_grounded():
+    assert (
+        name_in_text("Ana Ficticia Lima", "Declaramos que LIMA, Ana Fictícia, participou") is True
+    )
+
+
+def test_name_with_a_missing_token_is_not_grounded():
+    assert name_in_text("Ana Ficticia Lima", "Declaramos que Ana Ficticia participou") is False
+
+
+def test_name_particles_shorter_than_three_letters_are_ignored():
+    assert name_in_text("Ana de Lima", "Ana Lima") is True
+
+
+# ---------- same person ----------
+
+
+def test_professor_name_contained_in_the_extracted_name_is_the_same_person():
+    assert same_person("Ana Ficticia Lima Souza", "Ana Ficticia Lima", "1234567", "") is True
+
+
+def test_extracted_name_contained_in_the_professor_name_needs_two_tokens():
+    assert same_person("Ana Lima", "Ana Maria Lima", "1234567", "") is True
+    assert same_person("Lima", "Ana Maria Lima", "1234567", "") is False
+
+
+def test_case_accents_and_token_order_do_not_matter():
+    assert same_person("LIMA, ANA FICTÍCIA", "Ana Ficticia Lima", "1234567", "") is True
+
+
+def test_other_person_is_not_the_same_person():
+    assert same_person("Carlos Imaginario", "Ana Ficticia Lima", "1234567", "texto") is False
+
+
+def test_siape_in_the_text_is_the_same_person_even_with_another_name():
+    assert same_person("Carlos Imaginario", "Ana Ficticia Lima", "1234567", "SIAPE 1234567") is True
+
+
+def test_siape_inside_a_longer_digit_run_does_not_count():
+    assert (
+        same_person("Carlos Imaginario", "Ana Ficticia Lima", "1234567", "proc 12345678") is False
+    )
+
+
+def test_missing_extracted_name_depends_on_the_siape_only():
+    assert same_person(None, "Ana Ficticia Lima", "1234567", "mat. 1234567") is True
+    assert same_person(None, "Ana Ficticia Lima", "1234567", "nada") is False
+    assert same_person("", "Ana Ficticia Lima", None, "nada") is False
+
+
+# ---------- ground ----------
+
+PAGE1 = (
+    'Declaramos que Ana Ficticia Lima participou da banca do trabalho "Estudo de caso '
+    'fictício sobre bancas" em 23/03/2026. Carga horária: 68 h. Portaria 3686/2024.'
+)
+
+
+def activity(**kw):
+    base = {
+        "taxonomy": TaxonomyCode.BANCA_TCC_GRADUACAO,
+        "page": 1,
+        "evidence_text": "participou da banca",
+        "confidence": Decimal("0.90"),
+    }
+    return ExtractedActivity(**(base | kw))
+
+
+def warning(field):
+    return GroundingWarning(DocAlertCode.NAO_ENCONTRADO_NO_TEXTO, field)
+
+
+def test_all_verifiable_fields_present_keep_their_values_with_ratio_one():
+    item = activity(
+        title="Estudo de caso fictício sobre bancas",
+        event_date=date(2026, 3, 23),
+        hours=Decimal("68"),
+        identifier="3686/2024",
+    )
+    result = ground(item, {1: PAGE1})
+    assert result.activity == item
+    assert result.warnings == ()
+    assert result.grounded_ratio == Decimal("1")
+
+
+def test_invented_date_becomes_none_with_a_warning_naming_the_field():
+    item = activity(event_date=date(2026, 3, 24), hours=Decimal("68"))
+    result = ground(item, {1: PAGE1})
+    assert result.activity.event_date is None
+    assert result.activity.hours == Decimal("68")
+    assert result.warnings == (warning("event_date"),)
+    assert result.grounded_ratio == Decimal("0.5")
+
+
+def test_each_invented_field_is_nulled_and_reported():
+    item = activity(
+        title="Título inventado sem relação alguma",
+        start_date=date(2020, 1, 2),
+        end_date=date(2020, 1, 3),
+        event_date=date(2026, 3, 23),
+        hours=Decimal("99"),
+        course_hours=Decimal("98"),
+        identifier="9999/2099",
+    )
+    result = ground(item, {1: PAGE1})
+    assert result.activity.title is None
+    assert result.activity.start_date is None
+    assert result.activity.end_date is None
+    assert result.activity.hours is None
+    assert result.activity.course_hours is None
+    assert result.activity.identifier is None
+    assert result.activity.event_date == date(2026, 3, 23)
+    assert {w.field for w in result.warnings} == {
+        "title",
+        "start_date",
+        "end_date",
+        "hours",
+        "course_hours",
+        "identifier",
+    }
+    assert all(w.code is DocAlertCode.NAO_ENCONTRADO_NO_TEXTO for w in result.warnings)
+    assert result.grounded_ratio == Decimal(1) / Decimal(7)
+
+
+def test_ratio_is_the_fraction_of_verifiable_fields_found():
+    item = activity(
+        event_date=date(2026, 3, 23),
+        hours=Decimal("68"),
+        identifier="3686/2024",
+        course_hours=Decimal("77"),
+    )
+    assert ground(item, {1: PAGE1}).grounded_ratio == Decimal("0.75")
+
+
+def test_only_the_cited_page_is_searched():
+    item = activity(page=2, hours=Decimal("68"))
+    result = ground(item, {1: PAGE1, 2: "outra página sem números"})
+    assert result.activity.hours is None
+    assert result.warnings == (warning("hours"),)
+
+
+def test_missing_cited_page_grounds_nothing():
+    result = ground(activity(page=5, hours=Decimal("68")), {1: PAGE1})
+    assert result.activity.hours is None
+    assert result.warnings == (warning("hours"),)
+
+
+def test_fields_that_are_none_are_neither_checked_nor_reported():
+    result = ground(activity(), {1: PAGE1})
+    assert result.activity == activity()
+    assert result.warnings == ()
+    assert result.grounded_ratio == Decimal("0")
+
+
+def test_month_precision_is_applied_per_field():
+    item = activity(start_date=date(2022, 5, 1), end_date=date(2022, 9, 1))
+    page = {1: "Período: Mai/22 a Set/22"}
+    precisions = {"start_date": D.MONTH, "end_date": D.MONTH}
+    result = ground(item, page, precisions=precisions)
+    assert result.activity.start_date == date(2022, 5, 1)
+    assert result.activity.end_date == date(2022, 9, 1)
+    assert ground(item, page).activity.start_date is None
+
+
+def test_ground_does_not_change_the_input_item():
+    item = activity(hours=Decimal("99"))
+    ground(item, {1: PAGE1})
+    assert item.hours == Decimal("99")
