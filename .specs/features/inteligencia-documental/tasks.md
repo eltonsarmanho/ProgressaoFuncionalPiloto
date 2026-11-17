@@ -311,10 +311,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] A confiança final é o menor dos dois valores (0,94 e 0,60 dão 0,60)
-- [ ] 0,70 não pede revisão; 0,69 pede
-- [ ] Valores fora de 0 a 1 são recusados
-- [ ] Gate quick passa; 6+ testes
+- [x] A confiança final é o menor dos dois valores (0,94 e 0,60 dão 0,60)
+- [x] 0,70 não pede revisão; 0,69 pede
+- [x] Valores fora de 0 a 1 são recusados
+- [x] Gate quick passa; 6+ testes
 
 **Tests**: unit
 **Gate**: quick

@@ -299,7 +299,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | EXT-09 | P1: Extração estruturada com a MariTalk | Design | Implementing |
 | EXT-10 | P1: Extração estruturada com a MariTalk | Design | Implementing |
 | EXT-11 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-12 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-12 | P1: Extração estruturada com a MariTalk | Design | Implementing |
 | EXT-13 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
 | CLS-01 | P1: Classificação em item de pontuação | Design | Implementing |
 | CLS-02 | P1: Classificação em item de pontuação | Design | In Tasks |
