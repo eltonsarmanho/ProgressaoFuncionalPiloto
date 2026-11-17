@@ -875,8 +875,8 @@ T29 → T30 → T31 → T32
 
 **Done when**:
 
-- [ ] 5 casos parametrizados; cada um afirma severidade ALERTA e o rótulo do campo na mensagem
-- [ ] Gate quick passa
+- [x] 5 casos parametrizados; cada um afirma severidade ALERTA e o rótulo do campo na mensagem
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

@@ -265,6 +265,24 @@ def test_empty_optional_fields_are_listed():
     assert codes(alerts) == [AlertCode.DADOS_INCOMPLETOS]
 
 
+# Edge case: DADOS_INCOMPLETOS lists each optional field on its own
+@pytest.mark.parametrize(
+    ("field", "label"),
+    [
+        ("notes", "observações"),
+        ("resp_name", "nome do responsável"),
+        ("resp_position", "cargo do responsável"),
+        ("resp_appointment", "portaria de designação do responsável"),
+        ("resp_admin_unit", "unidade administrativa responsável"),
+    ],
+)
+def test_each_empty_optional_field_is_reported(field, label):
+    alerts = verify_process(replace(CLEAN_NEW, **{field: ""}), VERSIONS)
+    alert = find(alerts, AlertCode.DADOS_INCOMPLETOS)
+    assert alert.severity is Severity.ALERTA
+    assert alert.message == f"Campos não preenchidos: {label}."
+
+
 # PROC-10
 def test_fasi_2022_2024_case():
     assert select_version(VERSIONS, FASI_2022_2024.end_date) is RES_4644_2015
