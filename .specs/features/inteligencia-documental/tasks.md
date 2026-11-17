@@ -174,11 +174,11 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] `.pdf`, `.jpg`, `.jpeg` e `.png` passam; `.exe`, `.docx` e extensão trocada (PDF com assinatura PNG) são recusados com o campo `arquivo`
-- [ ] 20 MB passa e 20 MB + 1 byte é recusado; 100 páginas passa e 101 é recusado; 100 megapixels passa e acima é recusado
-- [ ] PDF com JavaScript, lançamento, arquivo embutido ou criptografado: recusado com `ARQUIVO_INVALIDO`
-- [ ] Nome com `../` ou mais de 255 caracteres nunca forma caminho
-- [ ] Gate quick passa; 16+ testes
+- [x] `.pdf`, `.jpg`, `.jpeg` e `.png` passam; `.exe`, `.docx` e extensão trocada (PDF com assinatura PNG) são recusados com o campo `arquivo`
+- [x] 20 MB passa e 20 MB + 1 byte é recusado; 100 páginas passa e 101 é recusado; 100 megapixels passa e acima é recusado
+- [x] PDF com JavaScript, lançamento, arquivo embutido ou criptografado: recusado com `ARQUIVO_INVALIDO`
+- [x] Nome com `../` ou mais de 255 caracteres nunca forma caminho
+- [x] Gate quick passa; 16+ testes
 
 **Tests**: unit
 **Gate**: quick
