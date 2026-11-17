@@ -220,5 +220,37 @@ def test_closing_that_would_move_an_existing_process_returns_409(
     assert "Versão futura" not in versions
 
 
+# CARR-10 boundary: a process ending exactly on the new version's first day blocks the close
+def test_process_ending_on_new_version_start_day_blocks_close(
+    client, admin, reference, uow_factory
+):
+    _, headers = admin
+    professor = add_professor(uow_factory, reference["FASI"])
+    on_boundary = process_payload(
+        professor, REQUERIMENTO_2024_2026, end_date="2031-01-01", opening_date="2031-01-02"
+    )
+    assert client.post("/api/processes", json=on_boundary, headers=headers).status_code == 201
+
+    response = client.post(URL, json=NEW_VERSION, headers=headers)  # starts 01/01/2031
+
+    assert response.status_code == 409
+    versions = versions_by_name(client)
+    assert versions[LEI]["valid_to"] is None
+    assert "Versão futura" not in versions
+
+
+# CARR-09 boundary: a version starting on the open version's own first day is not a successor
+def test_version_starting_on_open_version_start_day_returns_409(client, admin):
+    _, headers = admin
+    same_start = {**NEW_VERSION, "valid_from": "2025-01-01"}
+
+    response = client.post(URL, json=same_start, headers=headers)
+
+    assert response.status_code == 409
+    lei = versions_by_name(client)[LEI]
+    assert (lei["valid_from"], lei["valid_to"]) == ("2025-01-01", None)
+    assert "Versão futura" not in versions_by_name(client)
+
+
 def test_unknown_structure_returns_404(client, admin):
     assert client.get("/api/career-structures/EBTT/versions").status_code == 404

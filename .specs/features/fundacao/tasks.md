@@ -87,6 +87,12 @@ T27 → T28
 T29 → T30 → T31 → T32
 ```
 
+### Phase 9: Correções do Verificador (validation.md, iteração 2)
+
+```
+T33 → T34
+```
+
 ---
 
 ## Task Breakdown
@@ -910,10 +916,63 @@ T29 → T30 → T31 → T32
 
 ---
 
+---
+
+### T33: Testes de fronteira de CARR-09 e CARR-10
+
+**What**: Dois testes de integração no dia exato de fronteira: processo terminando no dia de início da nova versão → 409 (mata N4); nova versão começando no mesmo dia da versão aberta → 409 sem alterar a vigência (mata N5).
+**Where**: `backend/tests/integration/api/test_career_api.py`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `process_payload`, `NEW_VERSION`
+**Requirement**: CARR-09, CARR-10
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Processo com data final 01/01/2031 e nova versão de 01/01/2031 → 409; versão Lei continua aberta e a nova não existe
+- [x] Nova versão com `valid_from` 01/01/2025 → 409; versão Lei inalterada (`valid_from` 2025-01-01, `valid_to` nulo)
+- [x] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(career): cover exact boundary days of version auto-close`
+
+---
+
+### T34: Fixture de PostgreSQL sem volume órfão
+
+**What**: A fixture de integração remove o container do Postgres com `-v`.
+**Where**: `backend/tests/integration/conftest.py`
+**Depends on**: T33
+**Reuses**: -
+**Requirement**: AD-004
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Contagem de `docker volume ls -q` igual antes e depois de `pytest tests/integration`
+- [ ] Build gate passa
+
+**Tests**: integration
+**Gate**: build
+
+**Commit**: `fix(tests): remove integration database volume on teardown`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9
 
 Phase 1:  T1 → T2 → T3
 Phase 2:  T4 → T5 → T6 → T7 → T8
@@ -923,4 +982,5 @@ Phase 5:  T16 → T17 → T18 → T19 → T20 → T21 → T22
 Phase 6:  T23 → T24 → T25 → T26
 Phase 7:  T27 → T28
 Phase 8:  T29 → T30 → T31 → T32
+Phase 9:  T33 → T34
 ```
