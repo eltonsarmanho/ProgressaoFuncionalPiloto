@@ -4,19 +4,23 @@ const TOTAL_STEPS = 9;
 
 const STEP_TITLES: Record<number, string> = {
   1: "Processo e interstício",
+  2: "Documentos",
+  3: "Atividades",
   4: "Pontuação",
 };
 
 function stepPath(step: number, processId?: string): string | null {
   if (!processId) return null;
   if (step === 1) return `/processos/${processId}`;
+  if (step === 2) return `/processos/${processId}/documentos`;
+  if (step === 3) return `/processos/${processId}/atividades`;
   if (step === 4) return `/processos/${processId}/pontuacao`;
   return null;
 }
 
 /** UI-04 / TELA-01: nine steps; only the enabled ones (default: step 1) are available. */
 export function StepNav({
-  enabled = [1, 4],
+  enabled = [1, 2, 3, 4],
   current = 1,
   processId,
 }: {

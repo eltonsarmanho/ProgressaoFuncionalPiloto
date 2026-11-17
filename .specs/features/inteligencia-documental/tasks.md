@@ -1292,9 +1292,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Etapas 1 a 4 habilitadas, etapas 5 a 9 desabilitadas com "em breve"
-- [ ] Links corretos para cada etapa
-- [ ] Teste de etapas ajustado de forma explícita, sem enfraquecer; Gate quick (frontend) passa
+- [x] Etapas 1 a 4 habilitadas, etapas 5 a 9 desabilitadas com "em breve"
+- [x] Links corretos para cada etapa
+- [x] Teste de etapas ajustado de forma explícita, sem enfraquecer; Gate quick (frontend) passa
 
 **Tests**: unit
 **Gate**: quick

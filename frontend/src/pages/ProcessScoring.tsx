@@ -178,7 +178,7 @@ export function ProcessScoring() {
 
   return (
     <>
-      <StepNav enabled={[1, 4]} current={4} processId={id} />
+      <StepNav current={4} processId={id} />
       <h1>Etapa 4 · Pontuação</h1>
       {error && (
         <p role="alert" className="error">
