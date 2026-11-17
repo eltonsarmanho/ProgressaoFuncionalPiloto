@@ -273,8 +273,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | DOC-09 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
 | DOC-10 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
 | DOC-11 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
-| DOC-12 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
-| DOC-13 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-12 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
+| DOC-13 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-14 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-15 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
 | PIPE-01 | P1: Processamento: texto, OCR e estados | Design | Implementing |

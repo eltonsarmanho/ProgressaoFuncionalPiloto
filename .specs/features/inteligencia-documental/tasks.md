@@ -805,12 +805,12 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Lote de três (válido, duplicado, extensão trocada): resultados 201, 409 com o id do existente e 422 no campo `arquivo`; o válido é gravado e vira tarefa `PENDENTE`
-- [ ] O mesmo arquivo duas vezes na requisição: o primeiro grava e o segundo dá 409
-- [ ] 200 documentos no processo: 422 em `limite`; 61º envio no minuto: 429
-- [ ] Processo `CONCLUIDO` ou `ARQUIVADO`: 409; sem acesso: 404
-- [ ] Auditoria registra usuário, hora, documento e operação, sem conteúdo
-- [ ] Gate full passa; 16+ testes
+- [x] Lote de três (válido, duplicado, extensão trocada): resultados 201, 409 com o id do existente e 422 no campo `arquivo`; o válido é gravado e vira tarefa `PENDENTE`
+- [x] O mesmo arquivo duas vezes na requisição: o primeiro grava e o segundo dá 409
+- [x] 200 documentos no processo: 422 em `limite`; 61º envio no minuto: 429
+- [x] Processo `CONCLUIDO` ou `ARQUIVADO`: 409; sem acesso: 404
+- [x] Auditoria registra usuário, hora, documento e operação, sem conteúdo
+- [x] Gate full passa; 16+ testes
 
 **Tests**: integration
 **Gate**: full
