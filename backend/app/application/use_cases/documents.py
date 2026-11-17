@@ -15,12 +15,20 @@ from uuid import UUID
 
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
+from app.domain.entities.activity import Activity
 from app.domain.entities.audit import AuditAction
-from app.domain.entities.document import Document
+from app.domain.entities.document import (
+    Document,
+    DocumentStatus,
+    ExtractionRun,
+    PageText,
+    RunStatus,
+)
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.user import User
-from app.domain.errors import Conflict, NotFound
+from app.domain.errors import Conflict, NotFound, ValidationFailed
 from app.domain.repositories.ports import (
+    ActivityEvidence,
     Clock,
     FileInspector,
     FileStorage,
@@ -37,6 +45,7 @@ from app.domain.rules.upload_validation import (
 
 DOCUMENT_ENTITY = "document"
 PROCESS_NOT_FOUND = "Processo não encontrado"
+DOCUMENT_NOT_FOUND = "Documento não encontrado"
 LIMIT_FIELD = "limite"
 FILE_FIELD = "arquivo"
 MIME_BY_KIND = {
@@ -119,6 +128,14 @@ class _DocumentUseCase:
         if process.status.is_read_only:
             raise Conflict("Processo concluído ou arquivado não pode ser alterado")
         return process
+
+    def _document(self, uow: UnitOfWork, actor: User, document_id: UUID) -> Document:
+        """The document, or NotFound when it does not exist or the process is out of reach."""
+        document = uow.documents.get(document_id)
+        if document is None:
+            raise NotFound(DOCUMENT_NOT_FOUND)
+        self._readable(uow, actor, document.process_id)
+        return document
 
     def _record(
         self,
@@ -257,3 +274,111 @@ class UploadDocuments(_DocumentUseCase):
         if internal_name is not None:
             self._storage.delete(process_id, internal_name)
 
+
+
+@dataclass(frozen=True)
+class LinkedActivity:
+    """An activity that cites the document, with the links (page and excerpt) to it."""
+
+    activity: Activity
+    evidences: tuple[ActivityEvidence, ...]
+
+
+@dataclass(frozen=True)
+class DocumentDetail:
+    """What the review screen needs (REV-01).
+
+    `run` is the ACTIVE extraction: its raw JSON is read only and its `warnings` are the
+    alerts (a list of `{code, field, activity_index}` dicts). `pages` belong to that run.
+    """
+
+    document: Document
+    run: ExtractionRun | None
+    pages: tuple[PageText, ...]
+    activities: tuple[LinkedActivity, ...]
+
+    @property
+    def alerts(self) -> tuple:
+        return self.run.warnings if self.run else ()
+
+
+def active_run(uow: UnitOfWork, document_id: UUID) -> ExtractionRun | None:
+    runs = [r for r in uow.extractions.list_runs(document_id) if r.status is RunStatus.ATIVA]
+    return runs[-1] if runs else None
+
+
+class GetDocument(_DocumentUseCase):
+    def execute(self, actor: User, document_id: UUID) -> DocumentDetail:
+        with self._uow_factory() as uow:
+            document = self._document(uow, actor, document_id)
+            run = active_run(uow, document.id)
+            pages = tuple(
+                p for p in uow.extractions.list_pages(document.id) if run and p.run_id == run.id
+            )
+            by_activity: dict[UUID, list[ActivityEvidence]] = {}
+            for evidence in uow.evidences.list_for_document(document.id):
+                by_activity.setdefault(evidence.activity_id, []).append(evidence)
+            linked = [
+                LinkedActivity(activity, tuple(evidences))
+                for activity_id, evidences in by_activity.items()
+                if (activity := uow.activities.get(activity_id)) is not None
+            ]
+            return DocumentDetail(document, run, pages, tuple(linked))
+
+
+class ListDocuments(_DocumentUseCase):
+    def execute(
+        self,
+        actor: User,
+        process_id: UUID,
+        status: DocumentStatus | None = None,
+        type: str | None = None,
+    ) -> list[Document]:
+        """In upload order, with suggested category and confidence (DOC-15).
+
+        The type filter matches the manual type, else the suggested one.
+        """
+        with self._uow_factory() as uow:
+            self._readable(uow, actor, process_id)
+            return list(uow.documents.list_for_process(process_id, status, type))
+
+
+@dataclass(frozen=True)
+class DownloadedFile:
+    path: Path
+    name: str  # original name, display text only
+    mime: str
+    inline: bool
+
+
+class DownloadDocument(_DocumentUseCase):
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        policy: AccessPolicy,
+        storage: FileStorage,
+    ):
+        super().__init__(uow_factory, audit, policy)
+        self._storage = storage
+
+    def execute(self, actor: User, document_id: UUID, inline: bool) -> DownloadedFile:
+        """The stored original, as attachment or inline (PDF and images only); audited (DOC-08)."""
+        with self._uow_factory() as uow:
+            document = self._document(uow, actor, document_id)
+            if inline and document.mime not in MIME_BY_KIND.values():
+                raise ValidationFailed("visualizar", "Só PDF e imagem podem ser visualizados")
+            path = self._storage.path(document.process_id, document.internal_name)
+            if not path.is_file():
+                raise NotFound("Arquivo não encontrado")
+            self._record(
+                uow,
+                actor,
+                document.id,
+                AuditAction.UPDATE,
+                "VIEW" if inline else "DOWNLOAD",
+                {},
+                {},
+            )
+            uow.commit()
+            return DownloadedFile(path, document.original_name, document.mime, inline)

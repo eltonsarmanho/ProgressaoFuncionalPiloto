@@ -269,14 +269,14 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | DOC-05 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-06 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-07 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-08 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-08 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-09 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
 | DOC-10 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
 | DOC-11 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
 | DOC-12 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-13 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-14 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-15 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-15 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | PIPE-01 | P1: Processamento: texto, OCR e estados | Design | Implementing |
 | PIPE-02 | P1: Processamento: texto, OCR e estados | Design | Implementing |
 | PIPE-03 | P1: Processamento: texto, OCR e estados | Design | Implementing |
@@ -317,7 +317,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VINC-04 | P1: Atividades ligadas aos documentos | Design | In Tasks |
 | VINC-05 | P1: Atividades ligadas aos documentos | Design | In Tasks |
 | VINC-06 | P1: Atividades ligadas aos documentos | Design | In Tasks |
-| REV-01 | P1: Revisão humana | Design | In Tasks |
+| REV-01 | P1: Revisão humana | Design | Implementing |
 | REV-02 | P1: Revisão humana | Design | In Tasks |
 | REV-03 | P1: Revisão humana | Design | In Tasks |
 | REV-04 | P1: Revisão humana | Design | In Tasks |

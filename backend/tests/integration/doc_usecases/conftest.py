@@ -57,10 +57,18 @@ def docs(world, tmp_path):  # noqa: F811
                 uow.documents.add(make_document(process, user.id, **fields))
             uow.commit()
 
+    def upload_one(actor, process, content: bytes, name: str = "declaracao.pdf"):
+        """Upload one valid file through the use case and return the stored document."""
+        [result] = upload.execute(actor, process.id, [incoming(content, name)])
+        assert result.status_code == 201, result
+        return result.document
+
     def upload_uc(limits=None, uow_factory=None):
         return documents.UploadDocuments(
             uow_factory or world.uow_factory, audit, world.policy, storage, inspector, clock, limits
         )
+
+    upload = upload_uc()
 
     return SimpleNamespace(
         world=world,
@@ -71,7 +79,8 @@ def docs(world, tmp_path):  # noqa: F811
         storage_root=tmp_path / "storage",
         incoming=incoming,
         add_documents=add_documents,
-        upload=upload_uc(),
+        upload=upload,
+        upload_one=upload_one,
         upload_with=upload_uc,
     )
 

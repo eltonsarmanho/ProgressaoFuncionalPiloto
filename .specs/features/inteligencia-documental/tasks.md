@@ -834,10 +834,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Lista com filtros por status e tipo, em ordem de envio, com categoria sugerida e confiança
-- [ ] Detalhe devolve texto por página (método e confiança), JSON extraído e atividades vinculadas
-- [ ] Download audita; visualização só para PDF e imagem; sem acesso: 404
-- [ ] Gate full passa; 10+ testes
+- [x] Lista com filtros por status e tipo, em ordem de envio, com categoria sugerida e confiança
+- [x] Detalhe devolve texto por página (método e confiança), JSON extraído e atividades vinculadas
+- [x] Download audita; visualização só para PDF e imagem; sem acesso: 404
+- [x] Gate full passa; 10+ testes
 
 **Tests**: integration
 **Gate**: full

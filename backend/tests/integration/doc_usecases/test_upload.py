@@ -2,7 +2,6 @@
 
 import hashlib
 from datetime import timedelta
-from functools import lru_cache
 
 import pytest
 
@@ -12,13 +11,8 @@ from app.domain.entities.document import DocumentStatus
 from app.domain.entities.process import ProcessStatus
 from app.domain.errors import Conflict, NotFound
 from app.domain.repositories.ports import JobStatus
+from tests.integration.doc_usecases.support import pdf
 from tests.support import synthetic_docs as synth
-
-
-@lru_cache
-def pdf(label: str, pages: int = 1) -> bytes:
-    """A valid PDF that differs from every other label; the same label gives the same bytes."""
-    return synth.pdf_with_text([f"Documento ficticio numero {label}"] * pages)
 
 
 def stored_document(docs, document_id):
