@@ -1,6 +1,7 @@
 """ADM-03, ADM-04, SEL-08: criteria edits with the norm reference and the in-use guard."""
 
 import uuid
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -121,3 +122,17 @@ def test_invalid_changes_are_422_on_the_field(world, admin_uc, unused, changes, 
         admin_uc.update_criteria.execute(world.admin, unused.id, 2, 7, changes, REFERENCE)
 
     assert error.value.field == field
+
+
+def test_superseded_version_is_read_only_even_when_no_process_uses_it(world, admin_uc, unused):
+    admin_uc.create_version.execute(
+        world.admin, unused.table_id, unused.id, date(2027, 1, 1), None, REFERENCE
+    )
+
+    with pytest.raises(Conflict) as error:
+        admin_uc.update_criteria.execute(
+            world.admin, unused.id, 2, 7, {"unit_points": "12"}, REFERENCE
+        )
+
+    assert "somente leitura" in str(error.value)
+    assert criterion(world, unused.id, 2, 7).unit_points == Decimal("10")

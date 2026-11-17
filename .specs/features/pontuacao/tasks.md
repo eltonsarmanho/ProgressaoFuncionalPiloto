@@ -1046,10 +1046,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Cada rota de escrita: ADMIN passa, SECRETARIA e DOCENTE recebem 403
-- [ ] Histórico lista versões, vigências, referências e eventos de auditoria; versões anteriores só leitura
-- [ ] Versão em uso: 409 na alteração dos critérios
-- [ ] Build gate passa; 14+ testes
+- [x] Cada rota de escrita: ADMIN passa, SECRETARIA e DOCENTE recebem 403
+- [x] Histórico lista versões, vigências, referências e eventos de auditoria; versões anteriores só leitura
+- [x] Versão em uso: 409 na alteração dos critérios
+- [x] Build gate passa; 14+ testes
 
 **Tests**: integration
 **Gate**: build

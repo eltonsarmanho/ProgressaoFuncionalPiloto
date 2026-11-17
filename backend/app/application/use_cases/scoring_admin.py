@@ -15,7 +15,7 @@ from uuid import UUID
 from app.application.services.audit_service import AuditService
 from app.application.services.criteria_csv import CsvError, parse_criteria_csv
 from app.application.use_cases.users import require_admin
-from app.domain.entities.audit import AuditAction
+from app.domain.entities.audit import AuditAction, AuditEvent
 from app.domain.entities.scoring import (
     ScoringCriterion,
     ScoringGroup,
@@ -337,6 +337,14 @@ class UpdateVersionCriteria:
             current = version.get_criterion(group, item)
             if current is None:
                 raise NotFound("Critério não encontrado")
+            if any(
+                v.valid_from > version.valid_from
+                for v in uow.scoring_tables.list_versions(version.table_id)
+            ):
+                raise Conflict(
+                    "Versão anterior é somente leitura; altere a versão mais recente "
+                    "ou crie uma nova versão"
+                )
             if uow.scoring_tables.version_in_use(version_id):
                 raise Conflict(
                     "Versão já usada por processos não pode ser alterada; "
@@ -560,3 +568,57 @@ class ImportCriteriaCsv:
             )
             uow.commit()
         return VersionView(version, False)
+
+
+class SetTableUnits:
+    """ADM-01: replace the academic units a table is associated with."""
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], audit: AuditService):
+        self._uow_factory = uow_factory
+        self._audit = audit
+
+    def execute(self, actor: User, table_id: UUID, unit_ids: Sequence[UUID]) -> TableView:
+        require_admin(actor)
+        with self._uow_factory() as uow:
+            before = uow.scoring_tables.get_table(table_id)
+            if before is None:
+                raise NotFound("Tabela de pontuação não encontrada")
+            units = _check_units(uow, unit_ids)
+            uow.scoring_tables.set_table_units(table_id, units)
+            after = uow.scoring_tables.get_table(table_id)
+            self._audit.record(
+                uow,
+                actor.id,
+                TABLE_ENTITY,
+                table_id,
+                AuditAction.UPDATE,
+                _audit_table(before),
+                _audit_table(after),
+            )
+            view = TableView(after, _views(uow, uow.scoring_tables.list_versions(table_id)))
+            uow.commit()
+        return view
+
+
+@dataclass(frozen=True)
+class TableHistory:
+    versions: list[VersionView]
+    events: list[AuditEvent]  # table and version events, chronological
+
+
+class GetTableHistory:
+    """ADM-10: every version with validity, reference and status, plus all audit events."""
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork]):
+        self._uow_factory = uow_factory
+
+    def execute(self, table_id: UUID) -> TableHistory:
+        with self._uow_factory() as uow:
+            if uow.scoring_tables.get_table(table_id) is None:
+                raise NotFound("Tabela de pontuação não encontrada")
+            versions = uow.scoring_tables.list_versions(table_id)
+            events = list(uow.audit.list_for(TABLE_ENTITY, str(table_id)))
+            for v in versions:
+                events.extend(uow.audit.list_for(VERSION_ENTITY, str(v.id)))
+            events.sort(key=lambda e: (e.occurred_at, e.id or 0))
+            return TableHistory(_views(uow, versions), events)
