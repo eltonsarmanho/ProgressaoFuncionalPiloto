@@ -203,9 +203,9 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Seleção por data final nos limites 31/12/2024 e 01/01/2025; `None` sem versão vigente
-- [ ] `min_months` para progressão e promoção conforme a definição
-- [ ] Gate quick passa; 8+ testes
+- [x] Seleção por data final nos limites 31/12/2024 e 01/01/2025; `None` sem versão vigente
+- [x] `min_months` para progressão e promoção conforme a definição
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
