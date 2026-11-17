@@ -1107,10 +1107,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Download devolve o arquivo original byte a byte com `Content-Disposition: attachment` e `X-Content-Type-Options: nosniff`
-- [ ] Visualização em linha só de PDF e imagem, com `Content-Security-Policy: sandbox`
-- [ ] Substituir e excluir seguem as regras de T28; excluir sem justificativa: 422
-- [ ] Gate full passa; 12+ testes
+- [x] Download devolve o arquivo original byte a byte com `Content-Disposition: attachment` e `X-Content-Type-Options: nosniff`
+- [x] Visualização em linha só de PDF e imagem, com `Content-Security-Policy: sandbox`
+- [x] Substituir e excluir seguem as regras de T28; excluir sem justificativa: 422
+- [x] Gate full passa; 12+ testes
 
 **Tests**: integration
 **Gate**: full

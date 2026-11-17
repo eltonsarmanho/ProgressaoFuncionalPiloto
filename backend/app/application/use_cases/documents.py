@@ -88,6 +88,11 @@ class IncomingFile:
     sha256: str
 
 
+def _check_version(document: Document, expected_version: int | None) -> None:
+    if expected_version is not None and expected_version != document.version:
+        raise StaleVersion("O documento foi alterado por outro usuário; recarregue")
+
+
 class UploadRejected(ValidationFailed):
     """A file refused on replacement: 422 on `arquivo` with the rejection code (DOC-02..04)."""
 
@@ -487,12 +492,22 @@ class ReplaceDocument(_NewRunUseCase):
         self._inspector = inspector
         self._limits = limits or DocumentLimits()
 
-    def execute(self, actor: User, document_id: UUID, file: IncomingFile) -> Document:
-        """New file under the same id; the old file goes only after the commit (DOC-09)."""
+    def execute(
+        self,
+        actor: User,
+        document_id: UUID,
+        file: IncomingFile,
+        expected_version: int | None = None,
+    ) -> Document:
+        """New file under the same id; the old file goes only after the commit (DOC-09).
+
+        A given `expected_version` that is no longer the current one is a StaleVersion.
+        """
         stored: str | None = None
         try:
             with self._uow_factory() as uow:
                 document = self._restartable(uow, actor, document_id)
+                _check_version(document, expected_version)
                 facts = self._inspector.inspect(file.path)
                 extension = extension_of(file.original_name)
                 rejections = validate_upload(
@@ -616,15 +631,22 @@ class ReprocessDocument(_NewRunUseCase):
 
 class ClassifyDocumentManually(_DocumentUseCase):
     def execute(
-        self, actor: User, document_id: UUID, document_type: str | None, category: str | None
+        self,
+        actor: User,
+        document_id: UUID,
+        document_type: str | None,
+        category: str | None,
+        expected_version: int | None = None,
     ) -> Document:
         """Stores the user's type and category; the suggested ones stay untouched (DOC-11).
 
-        The type is a `DocumentType` and the category a taxonomy code.
+        The type is a `DocumentType` and the category a taxonomy code. A given
+        `expected_version` that is no longer the current one is a StaleVersion.
         """
         with self._uow_factory() as uow:
             document = self._document(uow, actor, document_id)
             self._writable(uow, actor, document.process_id)
+            _check_version(document, expected_version)
             if document_type not in {t.value for t in DocumentType}:
                 raise ValidationFailed("tipo", "Tipo de documento inválido")
             if category not in {t.value for t in TaxonomyCode}:

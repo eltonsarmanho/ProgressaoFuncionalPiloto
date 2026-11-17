@@ -1,4 +1,4 @@
-"""Document routes: upload, list and detail (DOC-01..04, 07, 12, 14, 15, REV-01).
+"""Document routes: upload, list, detail, file, replace and delete (DOC-01..10, 12, 14, 15, REV-01).
 
 Access follows the process: outside it, 404. Each uploaded part is copied in chunks to a
 temporary file while its SHA-256 and size are computed; a part above the size limit stops being
@@ -9,12 +9,14 @@ import hashlib
 import tempfile
 from pathlib import Path
 from typing import Annotated
+from urllib.parse import quote
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response, UploadFile
+from fastapi import APIRouter, Depends, Form, Query, Response, UploadFile
+from fastapi.responses import FileResponse, JSONResponse
 from starlette.concurrency import run_in_threadpool
 
-from app.application.use_cases.documents import IncomingFile
+from app.application.use_cases.documents import DuplicateDocument, IncomingFile, UploadRejected
 from app.domain.entities.document import DocumentStatus
 from app.domain.entities.extraction import DocumentType
 from app.domain.entities.user import User
@@ -101,3 +103,53 @@ async def get_document(
 ) -> DocumentDetailOut:
     detail = await run_in_threadpool(container.get_document.execute, actor, document_id)
     return DocumentDetailOut.of(detail)
+
+
+@router.get("/documents/{document_id}/file")
+async def get_file(
+    document_id: UUID, actor: UserDep, container: ContainerDep, download: bool = False
+) -> FileResponse:
+    """The stored original, untouched: inline (default, PDF and images) or as attachment."""
+    found = await run_in_threadpool(
+        container.download_document.execute, actor, document_id, not download
+    )
+    disposition = "inline" if found.inline else "attachment"
+    headers = {
+        "Content-Disposition": f"{disposition}; filename*=UTF-8''{quote(found.name, safe='')}",
+        "X-Content-Type-Options": "nosniff",
+    }
+    if found.inline:
+        headers["Content-Security-Policy"] = "sandbox"
+    return FileResponse(found.path, media_type=found.mime, headers=headers)
+
+
+@router.put("/documents/{document_id}/file", response_model=DocumentOut)
+async def replace_file(
+    document_id: UUID,
+    file: UploadFile,
+    actor: UserDep,
+    container: ContainerDep,
+    expected_version: Annotated[int | None, Form()] = None,
+) -> DocumentOut | JSONResponse:
+    max_bytes = container.settings.max_upload_mb * 1024 * 1024
+    with tempfile.TemporaryDirectory() as scratch:
+        staged = await _stage(file, Path(scratch) / "0", max_bytes)
+        try:
+            document = await run_in_threadpool(
+                container.replace_document.execute, actor, document_id, staged, expected_version
+            )
+        except UploadRejected as refused:
+            detail = {"field": refused.field, "code": refused.code, "message": refused.message}
+            return JSONResponse({"detail": [detail]}, status_code=422)
+        except DuplicateDocument as duplicate:
+            body = {"detail": str(duplicate), "existing_document_id": str(duplicate.existing_id)}
+            return JSONResponse(body, status_code=409)
+    return DocumentOut.of(document)
+
+
+@router.delete("/documents/{document_id}", status_code=204)
+async def delete_document(
+    document_id: UUID, actor: UserDep, container: ContainerDep, justificativa: str | None = None
+) -> Response:
+    await run_in_threadpool(container.delete_document.execute, actor, document_id, justificativa)
+    return Response(status_code=204)

@@ -17,9 +17,12 @@ from app.application.use_cases.career import (
 )
 from app.application.use_cases.document_processing import ProcessDocument, RecoverStuckJobs
 from app.application.use_cases.documents import (
+    DeleteDocument,
     DocumentLimits,
+    DownloadDocument,
     GetDocument,
     ListDocuments,
+    ReplaceDocument,
     UploadDocuments,
 )
 from app.application.use_cases.processes import (
@@ -137,6 +140,9 @@ class Container:
     upload_documents: UploadDocuments
     list_documents: ListDocuments
     get_document: GetDocument
+    download_document: DownloadDocument
+    replace_document: ReplaceDocument
+    delete_document: DeleteDocument
 
 
 def build_container(
@@ -160,6 +166,7 @@ def build_container(
     audit = AuditService(clock)
     policy = AccessPolicy()
     create_activity = CreateActivity(uow_factory, audit, policy)
+    change_status = ChangeActivityStatus(uow_factory, audit, policy)
     storage = LocalFileStorage(settings.storage_dir)
     inspector = PillowFileInspector(settings.max_megapixels)
     limits = DocumentLimits(
@@ -219,7 +226,7 @@ def build_container(
         get_activity=GetActivity(uow_factory, audit, policy),
         list_activities=ListActivities(uow_factory, audit, policy),
         update_activity=UpdateActivity(uow_factory, audit, policy),
-        change_activity_status=ChangeActivityStatus(uow_factory, audit, policy),
+        change_activity_status=change_status,
         mark_activities_distinct=MarkActivitiesDistinct(uow_factory, audit, policy),
         storage=storage,
         inspector=inspector,
@@ -230,6 +237,11 @@ def build_container(
         ),
         list_documents=ListDocuments(uow_factory, audit, policy),
         get_document=GetDocument(uow_factory, audit, policy),
+        download_document=DownloadDocument(uow_factory, audit, policy, storage),
+        replace_document=ReplaceDocument(
+            uow_factory, audit, policy, storage, inspector, clock, change_status, limits
+        ),
+        delete_document=DeleteDocument(uow_factory, audit, policy, storage),
     )
 
 
