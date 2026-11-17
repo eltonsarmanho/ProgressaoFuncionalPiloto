@@ -1,7 +1,7 @@
 # Inteligência Documental Design
 
 **Spec**: `.specs/features/inteligencia-documental/spec.md`
-**Status**: Draft (aguarda aprovação do usuário)
+**Status**: Approved
 
 ---
 
