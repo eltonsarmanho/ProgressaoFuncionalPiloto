@@ -50,6 +50,7 @@ describe("UI-01: rotas protegidas", () => {
         loggedIn = true;
         return { status: 200, body: { id: ME.id, name: ME.name, role: ME.role } };
       },
+      "GET /api/processes": { status: 200, body: [] },
     });
     renderAt("/");
     const user = userEvent.setup();

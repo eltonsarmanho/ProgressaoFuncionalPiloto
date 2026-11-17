@@ -688,8 +688,8 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Teste renderiza totais e contagens a partir de resposta simulada
-- [ ] Gate quick (frontend) passa
+- [x] Teste renderiza totais e contagens a partir de resposta simulada
+- [x] Gate quick (frontend) passa
 
 **Tests**: unit
 **Gate**: quick
