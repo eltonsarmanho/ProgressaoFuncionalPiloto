@@ -11,7 +11,7 @@ DB="pd_smoke_backend_db_${SUFFIX}"
 API="pd_smoke_backend_api_${SUFFIX}"
 
 cleanup() {
-  docker rm -f "$API" "$DB" >/dev/null 2>&1 || true
+  docker rm -f -v "$API" "$DB" >/dev/null 2>&1 || true
   docker network rm "$NET" >/dev/null 2>&1 || true
   docker rmi "$IMAGE" >/dev/null 2>&1 || true
 }

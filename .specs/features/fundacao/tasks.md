@@ -900,8 +900,8 @@ T29 → T30 → T31 → T32
 
 **Done when**:
 
-- [ ] Contagem de `docker volume ls -q` igual antes e depois de rodar o script; script continua PASS
-- [ ] Build gate passa
+- [x] Contagem de `docker volume ls -q` igual antes e depois de rodar o script; script continua PASS
+- [x] Build gate passa
 
 **Tests**: e2e
 **Gate**: build
