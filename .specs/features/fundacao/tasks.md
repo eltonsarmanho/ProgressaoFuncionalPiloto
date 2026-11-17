@@ -308,9 +308,9 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `alembic upgrade head` e `downgrade base` funcionam no Postgres de teste
-- [ ] Teste: UPDATE/DELETE em `audit_logs` pelo papel da aplicação falha
-- [ ] Gate full passa
+- [x] `alembic upgrade head` e `downgrade base` funcionam no Postgres de teste
+- [x] Teste: UPDATE/DELETE em `audit_logs` pelo papel da aplicação falha
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

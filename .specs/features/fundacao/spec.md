@@ -244,7 +244,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
 | INFRA-01 | P1: Stack executável | Design | Implementing |
-| INFRA-02 | P1: Stack executável | Design | Pending |
+| INFRA-02 | P1: Stack executável | Design | Implementing |
 | INFRA-03 | P1: Stack executável | Design | Pending |
 | INFRA-04 | P1: Stack executável | Design | Pending |
 | INFRA-05 | P1: Stack executável | Design | Pending |
@@ -289,7 +289,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | CARR-07 | P1: Estruturas de carreira | Design | Implementing |
 | CARR-08 | P1: Estruturas de carreira | Design | Pending |
 | AUD-01 | P1: Trilha de auditoria | Design | Pending |
-| AUD-02 | P1: Trilha de auditoria | Design | Pending |
+| AUD-02 | P1: Trilha de auditoria | Design | Implementing |
 | AUD-03 | P1: Trilha de auditoria | Design | Pending |
 | AUD-04 | P1: Trilha de auditoria | Design | Pending |
 | UI-01 | P1: Interface web | Design | Pending |
