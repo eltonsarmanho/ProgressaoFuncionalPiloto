@@ -301,11 +301,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ATV-13 | P1: Atividades do processo | Design | In Tasks |
 | ATV-14 | P1: Atividades do processo | Design | In Tasks |
 | CALC-01 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
-| CALC-02 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
-| CALC-03 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
-| CALC-04 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
-| CALC-05 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
-| CALC-06 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
+| CALC-02 | P1: Cálculo determinístico da pontuação | Design | Implementing |
+| CALC-03 | P1: Cálculo determinístico da pontuação | Design | Implementing |
+| CALC-04 | P1: Cálculo determinístico da pontuação | Design | Implementing |
+| CALC-05 | P1: Cálculo determinístico da pontuação | Design | Implementing |
+| CALC-06 | P1: Cálculo determinístico da pontuação | Design | Implementing |
 | CALC-07 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
 | CALC-08 | P1: Cálculo determinístico da pontuação | Design | In Tasks |
 | CALC-09 | P1: Cálculo determinístico da pontuação | Design | In Tasks |

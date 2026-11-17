@@ -207,11 +207,11 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] `POR_UNIDADE`: 4 × 10 = 40
-- [ ] `POR_BLOCO_DE_HORAS`: 21 h, bloco 3, 5 pontos = 35; 2 h = 0; 22 h = 7 blocos
-- [ ] `CARGA_SEMANAL`: 68 h graduação = 8,00; 34 h = 4,00; 68 h pós = 12,00; 20 h graduação = 2,35
-- [ ] `VALOR_INFORMADO` respeita o limite; `points_override` substitui o cálculo e marca o ajuste
-- [ ] Gate quick passa; 12+ testes
+- [x] `POR_UNIDADE`: 4 × 10 = 40
+- [x] `POR_BLOCO_DE_HORAS`: 21 h, bloco 3, 5 pontos = 35; 2 h = 0; 22 h = 7 blocos
+- [x] `CARGA_SEMANAL`: 68 h graduação = 8,00; 34 h = 4,00; 68 h pós = 12,00; 20 h graduação = 2,35
+- [x] `VALOR_INFORMADO` respeita o limite; `points_override` substitui o cálculo e marca o ajuste
+- [x] Gate quick passa; 12+ testes
 
 **Tests**: unit
 **Gate**: quick
