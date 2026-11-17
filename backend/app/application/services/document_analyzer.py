@@ -38,6 +38,7 @@ from app.domain.rules.scoring_periods import PeriodState, evaluate_period, norma
 from app.domain.rules.suggestion_rules import (
     Item,
     confirm_extension_course,
+    confirm_extension_project,
     is_dismissal_clause,
     suggest_item,
 )
@@ -259,6 +260,7 @@ class DocumentAnalyzer:
             run.alerts.append(DocAlert(DocAlertCode.CLAUSULA_DE_DISPENSA, None, index))
             return None
         taxonomy = confirm_extension_course(activity.taxonomy, document_text)
+        taxonomy = confirm_extension_project(taxonomy, document_text)
         suggestion = suggest_item(taxonomy, activity.level)
         if suggestion.principal is None:
             run.alerts.append(DocAlert(DocAlertCode.SEM_ITEM_DE_PONTUACAO, None, index))

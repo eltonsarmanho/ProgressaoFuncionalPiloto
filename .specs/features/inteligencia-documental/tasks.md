@@ -1835,10 +1835,10 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] Certificado de participação em projeto sem a palavra "extensão" não recebe IV.2 e sai `SEM_ITEM_DE_PONTUACAO` (antes: IV.2, 8 pontos)
-- [ ] Com "extensão" no texto, IV.1 e IV.2 continuam sugeridos
-- [ ] Curso de extensão sem a palavra segue como curso concluído (VII.10)
-- [ ] Gate full passa
+- [x] Certificado de participação em projeto sem a palavra "extensão" não recebe IV.2 e sai `SEM_ITEM_DE_PONTUACAO` (antes: IV.2, 8 pontos)
+- [x] Com "extensão" no texto, IV.1 e IV.2 continuam sugeridos
+- [x] Curso de extensão sem a palavra segue como curso concluído (VII.10)
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

@@ -253,7 +253,11 @@ def test_activity_without_a_grounded_date_is_not_flagged_as_outside():
 
 
 def test_a_period_entirely_outside_the_interstice_is_flagged():
-    text = "Declaramos que Fulana de Tal Exemplo coordenou o projeto de 01/02/2023 a 31/01/2024."
+    # the text says "extensão": since REAL-12 an extension project needs that word to score
+    text = (
+        "Declaramos que Fulana de Tal Exemplo coordenou o projeto de extensão de 01/02/2023 "
+        "a 31/01/2024."
+    )
     item = activity(
         taxonomy="EXTENSAO_PROJETO_COORDENACAO",
         title=None,

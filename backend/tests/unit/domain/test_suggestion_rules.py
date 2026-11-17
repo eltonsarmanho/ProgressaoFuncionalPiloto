@@ -8,6 +8,7 @@ from app.domain.rules.suggestion_rules import (
     Item,
     Suggestion,
     confirm_extension_course,
+    confirm_extension_project,
     is_dismissal_clause,
     suggest_item,
 )
@@ -310,3 +311,39 @@ def test_designation_or_mixed_or_empty_clause_is_kept(taxonomy, clause):
 @pytest.mark.parametrize("taxonomy", [t for t in T if t not in FUNCTION_TAXONOMIES])
 def test_dismissal_wording_in_other_types_is_not_a_dismissal_clause(taxonomy):
     assert is_dismissal_clause(taxonomy, "Dispensa de licitação para o curso") is False
+
+
+# REAL-12: extension projects need the word "extensão" (or the table's wording) in the document.
+PROJECTS = [T.EXTENSAO_PROJETO_COORDENACAO, T.EXTENSAO_PROJETO_PARTICIPACAO]
+
+
+@pytest.mark.parametrize("taxonomy", PROJECTS)
+def test_project_without_the_extension_wording_has_no_scoring_item(taxonomy):
+    text = "Certificamos a participação no projeto Policy Brief sobre Dados, com 18 horas."
+    downgraded = confirm_extension_project(taxonomy, text)
+    assert downgraded is T.OUTRA
+    assert suggest_item(downgraded).principal is NO_ITEM
+
+
+@pytest.mark.parametrize("taxonomy", PROJECTS)
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Projeto de Extensão Dados Abertos",
+        "PROJETO DE EXTENSAO DADOS ABERTOS",
+        "Programa de Apoio a Projetos de Intervenção Metodológica - PAPIM",
+        "Pró-Reitoria de Extensão certifica a participação no projeto",
+    ],
+)
+def test_project_with_the_extension_wording_keeps_its_type(taxonomy, text):
+    assert confirm_extension_project(taxonomy, text) is taxonomy
+
+
+@pytest.mark.parametrize("taxonomy", [t for t in T if t not in PROJECTS])
+def test_project_check_passes_every_other_type_through(taxonomy):
+    assert confirm_extension_project(taxonomy, "sem a palavra") is taxonomy
+
+
+def test_extension_project_item_numbers_stay_iv_1_and_iv_2_with_the_wording():
+    assert suggest_item(T.EXTENSAO_PROJETO_COORDENACAO).principal == Item(4, 1)
+    assert suggest_item(T.EXTENSAO_PROJETO_PARTICIPACAO).principal == Item(4, 2)

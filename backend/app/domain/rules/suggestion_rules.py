@@ -126,6 +126,22 @@ def confirm_extension_course(taxonomy: T, text: str) -> T:
     return taxonomy
 
 
+_EXTENSION_PROJECTS = frozenset({T.EXTENSAO_PROJETO_COORDENACAO, T.EXTENSAO_PROJETO_PARTICIPACAO})
+_EXTENSION_WORDING = re.compile(r"extensao|\bpapim\b|intervencao metodologica")
+
+
+def confirm_extension_project(taxonomy: T, text: str) -> T:
+    """A project or program counts as extension only when the document says so (REAL-12).
+
+    The accepted wording is "extensão" or the table's own ("PAPIM", "intervenção
+    metodológica"). Without it the activity has no scoring item (`OUTRA`): the human review
+    decides, and no IV.1 or IV.2 points are suggested for a project that may be research.
+    """
+    if taxonomy in _EXTENSION_PROJECTS and not _EXTENSION_WORDING.search(normalize_title(text)):
+        return T.OUTRA
+    return taxonomy
+
+
 _DISMISSAL_TAXONOMIES = frozenset(
     {
         T.FUNCAO_DIRETOR_FACULDADE,

@@ -349,6 +349,43 @@ def test_exercise_years_are_counted_inside_the_interstice():
     assert result.activities[0].quantity == Decimal(2)
 
 
+# --- extension projects need the word "extensão" (REAL-12) -------------------------------
+
+POLICY_BRIEF = (
+    "CERTIFICADO. Certificamos que Fulana de Tal Exemplo participou do projeto Policy Brief "
+    "sobre Dados Abertos, com carga horaria de 18 horas, em 12 de marco de 2025."
+)
+
+
+def project_activity(**changes):
+    base = {
+        "taxonomy": "EXTENSAO_PROJETO_PARTICIPACAO",
+        "title": "Policy Brief sobre Dados Abertos",
+        "event_date": "2025-03-12",
+        "hours": 18,
+        "evidence_text": "participou do projeto Policy Brief",
+    }
+    return activity(**(base | changes))
+
+
+def test_certificate_of_a_project_without_the_word_extension_gets_no_item():
+    result, _ = analyze(
+        payload(project_activity(), document_type="CERTIFICADO"), text_page(1, POLICY_BRIEF)
+    )
+    assert result.activities == ()
+    assert codes(result, DocAlertCode.SEM_ITEM_DE_PONTUACAO) == [DocAlertCode.SEM_ITEM_DE_PONTUACAO]
+    assert result.status is DocumentStatus.PROCESSADO
+
+
+def test_certificate_of_a_project_that_says_extension_keeps_item_iv_2():
+    text = POLICY_BRIEF.replace("projeto Policy", "projeto de Extensao Policy")
+    result, _ = analyze(
+        payload(project_activity(), document_type="CERTIFICADO"), text_page(1, text)
+    )
+    [suggested] = result.activities
+    assert (suggested.group_number, suggested.item_number) == (4, 2)
+
+
 # --- invalid answers (EXT-09) -------------------------------------------------------------
 
 OUT_OF_SCHEMA = [
