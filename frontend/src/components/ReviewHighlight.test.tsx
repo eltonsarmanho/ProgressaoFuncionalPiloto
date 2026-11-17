@@ -14,6 +14,7 @@ function criterion(item: number, review_note: string | null): Criterion {
     hours_per_block: null,
     weeks_per_semester: null,
     prep_ratio: null,
+    min_hours: null,
     max_points: null,
     accepted_evidence: null,
     rules: null,

@@ -20,6 +20,8 @@ const BASE: ScoringResult = {
   total: "414.00",
   potential_total: "450.50",
   group1_percent: "22.22",
+  group1_hours_by_period: {},
+  group1_total_hours: "0.00",
   counters: { activities: 20, with_evidence: 15, pending: 3, not_scored: 4, with_alerts: 6 },
   rows: [],
   limit_adjustments: [],

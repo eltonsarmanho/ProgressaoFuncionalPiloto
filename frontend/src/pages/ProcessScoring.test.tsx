@@ -55,6 +55,8 @@ function result(total: string, rows: ScoringResult["rows"]): ScoringResult {
     total,
     potential_total: total,
     group1_percent: null,
+    group1_hours_by_period: {},
+    group1_total_hours: "0.00",
     counters: { activities: rows.length, with_evidence: 0, pending: 0, not_scored: 0, with_alerts: 1 },
     rows,
     limit_adjustments: [],
@@ -76,6 +78,7 @@ const ROW: ScoringResult["rows"][number] = {
   effective_quantity: "4.00",
   formula_text: "4 x 10",
   points: "40.00",
+  pit_hours: null,
   status: "PONTUADA",
   reasons: [],
   alerts: [

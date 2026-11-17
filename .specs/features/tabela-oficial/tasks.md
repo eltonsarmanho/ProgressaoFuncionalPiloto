@@ -543,8 +543,8 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Os três campos estão tipados e os testes existentes compilam
-- [ ] Gate quick (frontend) passa
+- [x] Os três campos estão tipados e os testes existentes compilam
+- [x] Gate quick (frontend) passa
 
 **Tests**: unit
 **Gate**: quick

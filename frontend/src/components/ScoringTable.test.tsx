@@ -15,6 +15,7 @@ function row(over: Partial<ScoringRow>): ScoringRow {
     effective_quantity: "4.00",
     formula_text: null,
     points: "40.00",
+    pit_hours: null,
     status: "PONTUADA",
     reasons: [],
     alerts: [],

@@ -16,6 +16,7 @@ function crit(group: number, item: number, mode: Criterion["mode"], description:
     hours_per_block: null,
     weeks_per_semester: null,
     prep_ratio: null,
+    min_hours: null,
     max_points: null,
     accepted_evidence: null,
     rules: null,

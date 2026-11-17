@@ -101,6 +101,8 @@ export type ScoringRow = {
   effective_quantity: string | null;
   formula_text: string | null;
   points: string;
+  /** Group I only: PIT hours of the offer (null elsewhere). */
+  pit_hours: string | null;
   status: RowStatus;
   reasons: string[];
   alerts: Alert[];
@@ -114,6 +116,9 @@ export type ScoringResult = {
   total: string;
   potential_total: string;
   group1_percent: string | null;
+  /** Group I PIT hours summed per academic period (e.g. "2023.1"), outside the total. */
+  group1_hours_by_period: Record<string, string>;
+  group1_total_hours: string;
   counters: {
     activities: number;
     with_evidence: number;
@@ -155,6 +160,8 @@ export type Criterion = {
   hours_per_block: string | null;
   weeks_per_semester: number | null;
   prep_ratio: string | null;
+  /** Minimum course load in hours (e.g. "20.00"); null when the item has none. */
+  min_hours: string | null;
   max_points: string | null;
   accepted_evidence: string | null;
   rules: string | null;
