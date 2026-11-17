@@ -1018,8 +1018,8 @@ T35 → T36
 
 **Done when**:
 
-- [ ] Resposta 201; `valid_to` da versão Lei = 2030-12-31; nova versão listada
-- [ ] Build gate passa
+- [x] Resposta 201; `valid_to` da versão Lei = 2030-12-31; nova versão listada
+- [x] Build gate passa
 
 **Tests**: integration
 **Gate**: build

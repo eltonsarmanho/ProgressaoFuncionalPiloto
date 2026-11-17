@@ -271,3 +271,22 @@ def test_single_day_overlap_returns_409(client, admin, day):
 
     assert response.status_code == 409
     assert client.get(URL).json() == before
+
+
+# CARR-09/CARR-10 boundary: a process ending the day before the new version starts allows the close
+def test_process_ending_day_before_new_version_allows_close(
+    client, admin, reference, uow_factory
+):
+    _, headers = admin
+    professor = add_professor(uow_factory, reference["FASI"])
+    last_allowed = process_payload(
+        professor, REQUERIMENTO_2024_2026, end_date="2030-12-31", opening_date="2031-01-02"
+    )
+    assert client.post("/api/processes", json=last_allowed, headers=headers).status_code == 201
+
+    response = client.post(URL, json=NEW_VERSION, headers=headers)  # starts 01/01/2031
+
+    assert response.status_code == 201
+    versions = versions_by_name(client)
+    assert versions[LEI]["valid_to"] == "2030-12-31"
+    assert versions["Versão futura"]["valid_from"] == "2031-01-01"
