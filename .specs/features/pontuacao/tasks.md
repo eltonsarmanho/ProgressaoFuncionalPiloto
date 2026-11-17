@@ -127,10 +127,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] `initial_status`: `MANUAL` dá `VALIDADA`; `SUGERIDA_IA` e `IMPORTADA` dão `AGUARDANDO_REVISAO`
-- [ ] `group1_item`: `GRADUACAO` dá 1, `POS_GRADUACAO` dá 2
-- [ ] O status armazenado só admite os três valores da spec
-- [ ] Gate quick passa; 5+ testes
+- [x] `initial_status`: `MANUAL` dá `VALIDADA`; `SUGERIDA_IA` e `IMPORTADA` dão `AGUARDANDO_REVISAO`
+- [x] `group1_item`: `GRADUACAO` dá 1, `POS_GRADUACAO` dá 2
+- [x] O status armazenado só admite os três valores da spec
+- [x] Gate quick passa; 5+ testes
 
 **Tests**: unit
 **Gate**: quick

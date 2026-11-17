@@ -287,9 +287,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SEL-08 | P1: Tabela aplicada ao processo | Design | In Tasks |
 | SEL-09 | P1: Tabela aplicada ao processo | Design | In Tasks |
 | ATV-01 | P1: Atividades do processo | Design | In Tasks |
-| ATV-02 | P1: Atividades do processo | Design | In Tasks |
-| ATV-03 | P1: Atividades do processo | Design | In Tasks |
-| ATV-04 | P1: Atividades do processo | Design | In Tasks |
+| ATV-02 | P1: Atividades do processo | Design | Implementing |
+| ATV-03 | P1: Atividades do processo | Design | Implementing |
+| ATV-04 | P1: Atividades do processo | Design | Implementing |
 | ATV-05 | P1: Atividades do processo | Design | In Tasks |
 | ATV-06 | P1: Atividades do processo | Design | In Tasks |
 | ATV-07 | P1: Atividades do processo | Design | In Tasks |
