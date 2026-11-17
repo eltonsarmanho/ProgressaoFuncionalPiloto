@@ -25,6 +25,7 @@ from app.application.services.document_analyzer import (
     DocumentAnalyzer,
     SuggestedActivity,
 )
+from app.application.use_cases.documents import EVIDENCE_ENTITY
 from app.application.use_cases.scoring import ActivityData, CreateActivity
 from app.domain.entities.activity import Activity, ActivitySource
 from app.domain.entities.audit import AuditAction
@@ -53,7 +54,6 @@ from app.domain.rules.upload_validation import FileKind
 
 logger = logging.getLogger("app.documents.processing")
 
-EVIDENCE_ENTITY = "activity_evidence"
 INTERNAL_ERROR = "ERRO_INTERNO"
 NO_ITEM_CATEGORY = DocAlertCode.SEM_ITEM_DE_PONTUACAO.value
 MAX_EXCERPT_CHARS = 300

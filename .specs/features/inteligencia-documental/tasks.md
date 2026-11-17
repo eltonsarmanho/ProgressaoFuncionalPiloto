@@ -944,10 +944,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] Um documento comprova várias atividades e uma atividade tem vários documentos; (atividade, documento, página) é único
-- [ ] Vincular documento já ligado a outra atividade sem justificativa: 422 em `justificativa`
-- [ ] Remover o vínculo audita e mantém a atividade
-- [ ] Gate full passa; 8+ testes
+- [x] Um documento comprova várias atividades e uma atividade tem vários documentos; (atividade, documento, página) é único
+- [x] Vincular documento já ligado a outra atividade sem justificativa: 422 em `justificativa`
+- [x] Remover o vínculo audita e mantém a atividade
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full
