@@ -31,6 +31,11 @@ TABLES = {
     "scoring_criteria",
     "activities",
     "activity_candidates",
+    "documents",
+    "extraction_runs",
+    "document_pages",
+    "processing_jobs",
+    "activity_evidences",
 }
 
 

@@ -268,7 +268,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | DOC-04 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-05 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-06 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
-| DOC-07 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
+| DOC-07 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
 | DOC-08 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
 | DOC-09 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
 | DOC-10 | P1: Envio, guarda e segurança dos documentos | Design | In Tasks |
@@ -300,7 +300,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | EXT-10 | P1: Extração estruturada com a MariTalk | Design | Implementing |
 | EXT-11 | P1: Extração estruturada com a MariTalk | Design | Implementing |
 | EXT-12 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-13 | P1: Extração estruturada com a MariTalk | Design | In Tasks |
+| EXT-13 | P1: Extração estruturada com a MariTalk | Design | Implementing |
 | CLS-01 | P1: Classificação em item de pontuação | Design | Implementing |
 | CLS-02 | P1: Classificação em item de pontuação | Design | Implementing |
 | CLS-03 | P1: Classificação em item de pontuação | Design | Implementing |
@@ -312,7 +312,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLS-09 | P1: Classificação em item de pontuação | Design | In Tasks |
 | CLS-10 | P1: Classificação em item de pontuação | Design | Implementing |
 | VINC-01 | P1: Atividades ligadas aos documentos | Design | In Tasks |
-| VINC-02 | P1: Atividades ligadas aos documentos | Design | In Tasks |
+| VINC-02 | P1: Atividades ligadas aos documentos | Design | Implementing |
 | VINC-03 | P1: Atividades ligadas aos documentos | Design | In Tasks |
 | VINC-04 | P1: Atividades ligadas aos documentos | Design | In Tasks |
 | VINC-05 | P1: Atividades ligadas aos documentos | Design | In Tasks |

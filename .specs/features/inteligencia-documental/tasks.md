@@ -474,10 +474,10 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] `alembic upgrade head` e `downgrade -1` funcionam no Postgres de teste
-- [ ] Único (processo, hash) e único (atividade, documento, página); índice parcial de uma tarefa ativa por documento
-- [ ] UPDATE do conteúdo de `extraction_runs` é recusado; só o `status` muda
-- [ ] Gate full passa; 6+ testes
+- [x] `alembic upgrade head` e `downgrade -1` funcionam no Postgres de teste
+- [x] Único (processo, hash) e único (atividade, documento, página); índice parcial de uma tarefa ativa por documento
+- [x] UPDATE do conteúdo de `extraction_runs` é recusado; só o `status` muda
+- [x] Gate full passa; 6+ testes
 
 **Tests**: integration
 **Gate**: full
