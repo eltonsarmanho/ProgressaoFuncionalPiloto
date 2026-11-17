@@ -126,9 +126,9 @@ T27 → T28
 
 **Done when**:
 
-- [ ] Teste: variável obrigatória ausente → erro cita o nome dela e não contém valores de outras variáveis
-- [ ] Teste: `repr(settings)` e `settings.model_dump()` público não expõem `MARITALK_API_KEY`
-- [ ] Gate quick passa; 3+ testes
+- [x] Teste: variável obrigatória ausente → erro cita o nome dela e não contém valores de outras variáveis
+- [x] Teste: `repr(settings)` e `settings.model_dump()` público não expõem `MARITALK_API_KEY`
+- [x] Gate quick passa; 3+ testes
 
 **Tests**: unit
 **Gate**: quick
