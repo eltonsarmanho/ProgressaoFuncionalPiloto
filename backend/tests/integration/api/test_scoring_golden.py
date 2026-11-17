@@ -1,7 +1,9 @@
-"""CALC-14, CALC-13, SEL-06, VERIF-11: real case FASI 2022-2024 end to end through the API.
+"""ACE-01, PIT-01, PIT-02: derived case FASI 2022-2024 on the official table, through the API.
 
-Expected values come from the filled FASI table (Assumptions of spec.md): subtotals
-92, 120, 15, 95, 0, 30, 6, 56 and total 414, with the Group I points as informed.
+The quantities of the 2022-2024 case are entered on the official table (tabela-oficial spec,
+Acceptance story): subtotals II to VIII of 52, 7, 62, 0, 30, 4 and 56, total 211, and PIT hours
+per period of 24, 24, 24 and 20 (92 in total), group I outside the total. The total 414 came
+from the filled FASI table and no longer applies; this is not a result approved in a real process.
 """
 
 from datetime import date
@@ -15,8 +17,11 @@ from app.domain.entities.activity import ActivitySource
 from app.domain.entities.user import Role
 from tests.integration.api.factories import FASI_2022_2024
 
-EXPECTED_SUBTOTALS = ["92.00", "120.00", "15.00", "95.00", "0.00", "30.00", "6.00", "56.00"]
-GROUP_ONE_POINTS = ["24.00", "24.00", "24.00", "20.00"]
+EXPECTED_SUBTOTALS = ["0.00", "52.00", "7.00", "62.00", "0.00", "30.00", "4.00", "56.00"]
+EXPECTED_HOURS_BY_PERIOD = {
+    "2023.1": "24.00", "2023.2": "24.00", "2023.3": "24.00", "2023.4": "20.00",
+}  # fmt: skip
+PIT_HOURS = ["8.00"] * 11 + ["4.00"]
 
 
 @pytest.fixture
@@ -60,15 +65,17 @@ def post(case, **body):
 
 
 def add_real_case(case):
-    """The activities of the filled table, all dated inside 2022-11-23..2024-11-23."""
+    """The activities of the case, all dated inside 2022-11-23..2024-11-23."""
     semesters = [("2023.1", "2023-03-06"), ("2023.2", "2023-08-07"),
                  ("2023.3", "2023-12-04"), ("2023.4", "2024-03-04")]  # fmt: skip
-    for (period, day), points in zip(semesters, (24, 24, 24, 20), strict=True):
-        post(
-            case, title=f"Cálculo Computacional II {period}", group_number=1, event_date=day,
-            academic_period=period, level="GRADUACAO", horas=68, points_override=points,
-            justificativa="Pontos declarados na tabela preenchida", evidence_note="Declaração",
-        )  # fmt: skip
+    offers = [(68, 68, 68), (68, 68, 68), (68, 68, 68), (68, 68, 34)]  # teaching hours per offer
+    for (period, day), hours in zip(semesters, offers, strict=True):
+        for number, offer_hours in enumerate(hours, start=1):
+            post(
+                case, title=f"Disciplina {number} {period}", group_number=1, event_date=day,
+                academic_period=period, level="GRADUACAO", horas=offer_hours,
+                evidence_note="Declaração",
+            )  # fmt: skip
     counts = [(2, 7, 4), (2, 8, 4), (2, 12, 4), (4, 1, 4), (7, 10, 2)]
     for group, item, times in counts:
         for n in range(1, times + 1):
@@ -77,14 +84,14 @@ def add_real_case(case):
                 item_number=item, quantidade=1, event_date=f"2023-0{n + 3}-15",
                 evidence_note="Declaração",
             )  # fmt: skip
-    for group, item in [(3, 2), (3, 3), (6, 6), (8, 11), (8, 12), (8, 13), (8, 66)]:
+    for group, item in [(3, 2), (3, 3), (6, 6), (8, 9), (8, 10), (8, 11), (8, 36)]:
         post(
             case, title=f"Item {group}.{item}", group_number=group, item_number=item,
             quantidade=1, event_date="2024-02-20", evidence_note="Declaração",
         )  # fmt: skip
     post(
-        case, title="Curso de extensão ministrado", group_number=4, item_number=4, horas=21,
-        event_date="2024-05-10", evidence_note="Certificado",
+        case, title="Curso de extensão ministrado", group_number=4, item_number=4, quantidade=1,
+        horas=21, event_date="2024-05-10", evidence_note="Certificado",
     )  # fmt: skip
 
 
@@ -100,44 +107,49 @@ def real_case(case):
     return case
 
 
-def test_subtotals_and_total_match_the_filled_table(real_case):
+def test_subtotals_and_total_match_the_official_table(real_case):
     body = score(real_case)
 
     assert [s["group_number"] for s in body["subtotals"]] == list(range(1, 9))
     assert [s["subtotal"] for s in body["subtotals"]] == EXPECTED_SUBTOTALS
-    assert body["total"] == "414.00"
+    assert body["total"] == "211.00"
     assert body["potential_total"] == "0.00"
     assert body["counters"] == {
-        "activities": 30, "with_evidence": 30, "pending": 0, "not_scored": 0, "with_alerts": 4,
+        "activities": 38, "with_evidence": 38, "pending": 0, "not_scored": 0, "with_alerts": 0,
     }  # fmt: skip
 
 
-def test_group_one_share_minimum_and_pending_table_alert(real_case):
+def test_pit_hours_per_period_and_in_total_stay_outside_the_total(real_case):
     body = score(real_case)
 
-    assert body["group1_percent"] == "22.22"
-    assert body["minimum"] == {"status": "ATINGE", "minimum": "100.00", "total": "414.00"}
+    assert body["group1_hours_by_period"] == EXPECTED_HOURS_BY_PERIOD
+    assert body["group1_total_hours"] == "92.00"
+    assert body["subtotals"][0] == {"group_number": 1, "subtotal": "0.00"}
+    assert body["group1_percent"] == "0.00"
+
+
+def test_minimum_and_table_alerts_for_the_official_table(real_case):
+    body = score(real_case)
+
+    assert body["minimum"] == {"status": "ATINGE", "minimum": "100.00", "total": "211.00"}
     alerts = {a["code"]: a for a in body["alerts"]}
-    assert alerts["TABELA_PENDENTE_VALIDACAO"]["severity"] == "REQUER_ANALISE_NORMATIVA"
-    assert alerts["TABELA_PENDENTE_VALIDACAO"]["norm_reference"].startswith(
-        "Tabela preenchida FASI"
-    )
+    assert "TABELA_PENDENTE_VALIDACAO" not in alerts
     assert "SEM_EXTENSAO_OU_PESQUISA" not in alerts
     assert "MINIMO_NAO_DEFINIDO" not in alerts
 
 
-def test_rows_carry_formula_points_and_the_manual_adjustment_alert(real_case):
+def test_rows_carry_formula_points_and_pit_hours(real_case):
     rows = score(real_case)["rows"]
     group_one = [r for r in rows if r["group_number"] == 1]
-    block_row = next(r for r in rows if (r["group_number"], r["item_number"]) == (4, 4))
+    course_row = next(r for r in rows if (r["group_number"], r["item_number"]) == (4, 4))
 
-    assert [r["points"] for r in group_one] == GROUP_ONE_POINTS
+    assert [r["pit_hours"] for r in group_one] == PIT_HOURS
+    assert {r["points"] for r in group_one} == {"0.00"}
     assert {r["item_number"] for r in group_one} == {1}
-    assert all(
-        [a["code"] for a in r["alerts"]] == ["PONTOS_AJUSTADOS_MANUALMENTE"] for r in group_one
-    )
-    assert (block_row["points"], block_row["effective_quantity"]) == ("35.00", "7.00")
-    assert block_row["formula_text"] == "21 h ÷ 3 h = 7 blocos × 5"
+    assert all(r["alerts"] == [] for r in group_one)
+    assert [r["pit_hours"] for r in rows if r["group_number"] != 1] == [None] * 26
+    assert (course_row["points"], course_row["effective_quantity"]) == ("2.00", "1.00")
+    assert course_row["formula_text"] == "1 × 2"
     assert {r["status"] for r in rows} == {"PONTUADA"}
 
 
@@ -166,9 +178,10 @@ def test_extra_activities_stay_out_of_the_total(real_case):
     after = score(case)
 
     assert [s["subtotal"] for s in after["subtotals"]] == EXPECTED_SUBTOTALS
-    assert after["total"] == "414.00"
-    assert after["group1_percent"] == "22.22"
-    assert after["potential_total"] == "10.00"
+    assert after["total"] == "211.00"
+    assert after["group1_hours_by_period"] == EXPECTED_HOURS_BY_PERIOD
+    assert after["group1_total_hours"] == "92.00"
+    assert after["potential_total"] == "5.00"
     by_title = {r["title"]: r for r in after["rows"]}
     old = by_title["Orientação anterior ao interstício"]
     assert (old["status"], old["reasons"], old["points"]) == (
@@ -178,7 +191,7 @@ def test_extra_activities_stay_out_of_the_total(real_case):
     assert (duplicate["status"], duplicate["reasons"]) == ("NAO_PONTUADA", ["DUPLICIDADE"])
     waiting = by_title["Sugestão da IA"]
     assert (waiting["status"], waiting["points"], waiting["activity_status"]) == (
-        "POTENCIAL", "10.00", "AGUARDANDO_REVISAO",
+        "POTENCIAL", "5.00", "AGUARDANDO_REVISAO",
     )  # fmt: skip
     assert pending.status.value == "AGUARDANDO_REVISAO"
     assert after["counters"]["activities"] == before["counters"]["activities"] + 3

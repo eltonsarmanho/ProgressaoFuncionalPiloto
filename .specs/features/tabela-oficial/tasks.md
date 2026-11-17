@@ -517,9 +517,9 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Subtotais II a VIII = 52, 7, 62, 0, 30, 4 e 56 e total 211
-- [ ] Horas de PIT por período = 24, 24, 24 e 20 e total de 92 horas; o Grupo I não entra no total
-- [ ] Atividade fora do interstício, duplicada e aguardando revisão continuam fora do total; Build gate passa
+- [x] Subtotais II a VIII = 52, 7, 62, 0, 30, 4 e 56 e total 211
+- [x] Horas de PIT por período = 24, 24, 24 e 20 e total de 92 horas; o Grupo I não entra no total
+- [x] Atividade fora do interstício, duplicada e aguardando revisão continuam fora do total; Build gate passa
 
 **Tests**: integration
 **Gate**: build
