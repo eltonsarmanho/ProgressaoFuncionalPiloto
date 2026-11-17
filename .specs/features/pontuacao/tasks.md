@@ -101,9 +101,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Busca por (grupo, item) devolve o critério ou `None`; `covers` correto nos dois limites da vigência
-- [ ] Grupo com `counts_in_total` falso é representável; nada importa framework (teste de arquitetura verde)
-- [ ] Gate quick passa; 6+ testes
+- [x] Busca por (grupo, item) devolve o critério ou `None`; `covers` correto nos dois limites da vigência
+- [x] Grupo com `counts_in_total` falso é representável; nada importa framework (teste de arquitetura verde)
+- [x] Gate quick passa; 6+ testes
 
 **Tests**: unit
 **Gate**: quick
