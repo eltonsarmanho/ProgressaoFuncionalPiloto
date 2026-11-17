@@ -789,9 +789,9 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `./scripts/smoke.sh`: sobe a stack, health 200 em ≤120 s via nginx, login do ADMIN, `down` sem `-v` e novo `up` preservam dados
-- [ ] `.env.example` sem valores secretos
-- [ ] Build gate passa
+- [x] `./scripts/smoke.sh`: sobe a stack, health 200 em ≤120 s via nginx, login do ADMIN, `down` sem `-v` e novo `up` preservam dados
+- [x] `.env.example` sem valores secretos
+- [x] Build gate passa
 
 **Tests**: e2e
 **Gate**: build
