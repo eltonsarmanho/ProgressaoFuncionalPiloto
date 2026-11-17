@@ -1,4 +1,4 @@
-"""Taxonomy to scoring item rules, numbered as in Annex I of Res. 4.644/2015 (CLS-02..04)."""
+"""Taxonomy to scoring item rules, numbered as in the official UFPA table (CLS-02..04, MAP)."""
 
 from dataclasses import dataclass
 
@@ -7,9 +7,9 @@ from app.domain.entities.extraction import TaxonomyCode as T
 from app.domain.rules.scoring_periods import normalize_title
 
 _ROMAN = {1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI", 7: "VII", 8: "VIII"}
-_SOURCE = "Res. 4.644/2015, Anexo I"
+_SOURCE = "Tabela oficial de pontuação da UFPA"
 _NO_ITEM_TAXONOMY = "Decisão do usuário em 2026-11-17: coorientação de TCC de graduação não pontua"
-_NO_ITEM_OTHER = "Tipo sem item no Anexo I da Res. 4.644/2015"
+_NO_ITEM_OTHER = "Tipo sem item na tabela oficial de pontuação da UFPA"
 
 
 @dataclass(frozen=True)
@@ -56,15 +56,15 @@ _RULES: dict[T, Suggestion] = {
     T.BANCA_CONCURSO_SUBSTITUTO: _rule(3, 5),
     T.BANCA_CONCURSO_EFETIVO: _rule(3, 6),
     T.BANCA_QUALIFICACAO: _rule(3, 7),
-    T.BANCA_SELECAO_POS: _rule(3, 8, (3, 12)),
-    T.BANCA_SELECAO_BOLSAS: _rule(3, 9, (3, 12)),
-    T.BANCA_PROCESSO_SELETIVO: _rule(3, 11, (3, 12)),
+    T.BANCA_SELECAO_POS: _rule(3, 8),
+    T.BANCA_SELECAO_BOLSAS: _rule(3, 9),
+    T.BANCA_PROCESSO_SELETIVO: Suggestion(None, (), _NO_ITEM_OTHER),
     T.EXTENSAO_PROJETO_COORDENACAO: _rule(4, 1),
     T.EXTENSAO_PROJETO_PARTICIPACAO: _rule(4, 2),
     T.EXTENSAO_CURSO_COORDENACAO: _rule(4, 3),
     T.EXTENSAO_CURSO_MINISTRANTE: _rule(4, 4, (4, 5)),
     T.EXTENSAO_EVENTO_COORDENACAO: _rule(4, 6),
-    T.EXTENSAO_EVENTO_MINISTRANTE: _rule(4, 7),
+    T.EXTENSAO_EVENTO_MINISTRANTE: Suggestion(None, (), _NO_ITEM_OTHER),
     T.PESQUISA_PROJETO_COORDENACAO: _rule(5, 1),
     T.PESQUISA_GRUPO_COORDENACAO: _rule(5, 2),
     T.PESQUISA_GRUPO_MEMBRO: _rule(5, 3),
@@ -87,19 +87,19 @@ _RULES: dict[T, Suggestion] = {
     T.LIVRO_SEM_PARECERISTAS: _rule(8, 2),
     T.CAPITULO_INTERNACIONAL: _rule(8, 3),
     T.CAPITULO_NACIONAL: _rule(8, 4),
-    T.ARTIGO_INTERNACIONAL_INDEXADO: _rule(8, 11, (8, 13)),
-    T.ARTIGO_NACIONAL_INDEXADO: _rule(8, 12, (8, 13)),
-    T.ARTIGO_NAO_INDEXADO: _rule(8, 13),
-    T.TRABALHO_COMPLETO_CONGRESSO: _rule(8, 23, (8, 12)),
-    T.COMUNICACAO_COM_RESUMO: _rule(8, 24),
-    T.COMUNICACAO_SEM_RESUMO: _rule(8, 25),
-    T.APRESENTACAO_TRABALHO_INTERNACIONAL: _rule(8, 26),
-    T.APRESENTACAO_TRABALHO_NACIONAL: _rule(8, 27),
-    T.PALESTRA: _rule(8, 28),
-    T.PATENTE_DEPOSITADA: _rule(8, 35),
-    T.PATENTE_CONCEDIDA: _rule(8, 36),
-    T.REGISTRO_SOFTWARE: _rule(8, 63),
-    T.CONSULTORIA_AD_HOC: _rule(8, 66),
+    T.ARTIGO_INTERNACIONAL_INDEXADO: _rule(8, 9, (8, 11)),
+    T.ARTIGO_NACIONAL_INDEXADO: _rule(8, 10, (8, 11)),
+    T.ARTIGO_NAO_INDEXADO: _rule(8, 11),
+    T.TRABALHO_COMPLETO_CONGRESSO: _rule(8, 19, (8, 10)),
+    T.COMUNICACAO_COM_RESUMO: _rule(8, 20),
+    T.COMUNICACAO_SEM_RESUMO: _rule(8, 21),
+    T.APRESENTACAO_TRABALHO_INTERNACIONAL: _rule(8, 22),
+    T.APRESENTACAO_TRABALHO_NACIONAL: _rule(8, 23),
+    T.PALESTRA: _rule(8, 24),
+    T.PATENTE_DEPOSITADA: _rule(8, 29),
+    T.PATENTE_CONCEDIDA: _rule(8, 30),
+    T.REGISTRO_SOFTWARE: _rule(8, 33),
+    T.CONSULTORIA_AD_HOC: _rule(8, 36),
     T.OUTRA: Suggestion(None, (), _NO_ITEM_OTHER),
 }
 

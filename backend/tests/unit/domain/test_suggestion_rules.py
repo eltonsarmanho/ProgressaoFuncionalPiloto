@@ -1,4 +1,4 @@
-"""CLS-02, CLS-03, CLS-04, CLS-10: taxonomy to scoring item, row by row from the design table."""
+"""CLS-02..04, CLS-10, MAP-01, MAP-02: taxonomy to scoring item, official table numbering."""
 
 import pytest
 
@@ -13,7 +13,8 @@ from app.domain.rules.suggestion_rules import (
 
 NO_ITEM = None
 
-# (taxonomy, principal, alternatives), transcribed from "Regras de sugestão" in design.md.
+# (taxonomy, principal, alternatives): "Regras de sugestão" of inteligencia-documental with the
+# numbering changes of the tabela-oficial design.
 DESIGN_TABLE = [
     (T.ORIENTACAO_POS_DOUTORADO, "II.1", []),
     (T.ORIENTACAO_DOUTORADO, "II.2", []),
@@ -36,15 +37,15 @@ DESIGN_TABLE = [
     (T.BANCA_CONCURSO_SUBSTITUTO, "III.5", []),
     (T.BANCA_CONCURSO_EFETIVO, "III.6", []),
     (T.BANCA_QUALIFICACAO, "III.7", []),
-    (T.BANCA_SELECAO_POS, "III.8", ["III.12"]),
-    (T.BANCA_SELECAO_BOLSAS, "III.9", ["III.12"]),
-    (T.BANCA_PROCESSO_SELETIVO, "III.11", ["III.12"]),
+    (T.BANCA_SELECAO_POS, "III.8", []),
+    (T.BANCA_SELECAO_BOLSAS, "III.9", []),
+    (T.BANCA_PROCESSO_SELETIVO, NO_ITEM, []),
     (T.EXTENSAO_PROJETO_COORDENACAO, "IV.1", []),
     (T.EXTENSAO_PROJETO_PARTICIPACAO, "IV.2", []),
     (T.EXTENSAO_CURSO_COORDENACAO, "IV.3", []),
     (T.EXTENSAO_CURSO_MINISTRANTE, "IV.4", ["IV.5"]),
     (T.EXTENSAO_EVENTO_COORDENACAO, "IV.6", []),
-    (T.EXTENSAO_EVENTO_MINISTRANTE, "IV.7", []),
+    (T.EXTENSAO_EVENTO_MINISTRANTE, NO_ITEM, []),
     (T.PESQUISA_PROJETO_COORDENACAO, "V.1", []),
     (T.PESQUISA_GRUPO_COORDENACAO, "V.2", []),
     (T.PESQUISA_GRUPO_MEMBRO, "V.3", []),
@@ -67,19 +68,19 @@ DESIGN_TABLE = [
     (T.LIVRO_SEM_PARECERISTAS, "VIII.2", []),
     (T.CAPITULO_INTERNACIONAL, "VIII.3", []),
     (T.CAPITULO_NACIONAL, "VIII.4", []),
-    (T.ARTIGO_INTERNACIONAL_INDEXADO, "VIII.11", ["VIII.13"]),
-    (T.ARTIGO_NACIONAL_INDEXADO, "VIII.12", ["VIII.13"]),
-    (T.ARTIGO_NAO_INDEXADO, "VIII.13", []),
-    (T.TRABALHO_COMPLETO_CONGRESSO, "VIII.23", ["VIII.12"]),
-    (T.COMUNICACAO_COM_RESUMO, "VIII.24", []),
-    (T.COMUNICACAO_SEM_RESUMO, "VIII.25", []),
-    (T.APRESENTACAO_TRABALHO_INTERNACIONAL, "VIII.26", []),
-    (T.APRESENTACAO_TRABALHO_NACIONAL, "VIII.27", []),
-    (T.PALESTRA, "VIII.28", []),
-    (T.PATENTE_DEPOSITADA, "VIII.35", []),
-    (T.PATENTE_CONCEDIDA, "VIII.36", []),
-    (T.REGISTRO_SOFTWARE, "VIII.63", []),
-    (T.CONSULTORIA_AD_HOC, "VIII.66", []),
+    (T.ARTIGO_INTERNACIONAL_INDEXADO, "VIII.9", ["VIII.11"]),
+    (T.ARTIGO_NACIONAL_INDEXADO, "VIII.10", ["VIII.11"]),
+    (T.ARTIGO_NAO_INDEXADO, "VIII.11", []),
+    (T.TRABALHO_COMPLETO_CONGRESSO, "VIII.19", ["VIII.10"]),
+    (T.COMUNICACAO_COM_RESUMO, "VIII.20", []),
+    (T.COMUNICACAO_SEM_RESUMO, "VIII.21", []),
+    (T.APRESENTACAO_TRABALHO_INTERNACIONAL, "VIII.22", []),
+    (T.APRESENTACAO_TRABALHO_NACIONAL, "VIII.23", []),
+    (T.PALESTRA, "VIII.24", []),
+    (T.PATENTE_DEPOSITADA, "VIII.29", []),
+    (T.PATENTE_CONCEDIDA, "VIII.30", []),
+    (T.REGISTRO_SOFTWARE, "VIII.33", []),
+    (T.CONSULTORIA_AD_HOC, "VIII.36", []),
     (T.OUTRA, NO_ITEM, []),
 ]
 
@@ -112,22 +113,33 @@ def test_every_rule_cites_its_source():
         assert suggest_item(taxonomy).source_note.strip() != ""
 
 
-def test_rule_with_item_cites_the_annex_group_and_item():
+def test_rule_with_item_cites_the_official_table_group_and_item():
     note = suggest_item(T.BANCA_TCC_GRADUACAO).source_note
-    assert note == "Res. 4.644/2015, Anexo I, Grupo III, item 4"
-    assert suggest_item(T.PALESTRA).source_note == "Res. 4.644/2015, Anexo I, Grupo VIII, item 28"
+    assert note == "Tabela oficial de pontuação da UFPA, Grupo III, item 4"
+    assert (
+        suggest_item(T.PALESTRA).source_note
+        == "Tabela oficial de pontuação da UFPA, Grupo VIII, item 24"
+    )
 
 
-@pytest.mark.parametrize("taxonomy", [T.COORIENTACAO_TCC_GRADUACAO, T.OUTRA])
+@pytest.mark.parametrize(
+    "taxonomy",
+    [
+        T.COORIENTACAO_TCC_GRADUACAO,
+        T.OUTRA,
+        T.BANCA_PROCESSO_SELETIVO,
+        T.EXTENSAO_EVENTO_MINISTRANTE,
+    ],
+)
 def test_taxonomy_without_item_has_no_principal_and_no_alternatives(taxonomy):
     suggestion = suggest_item(taxonomy)
     assert suggestion.principal is None
     assert suggestion.alternatives == ()
 
 
-def test_palestra_is_viii_28_without_alternatives():
+def test_palestra_is_viii_24_without_alternatives():
     suggestion = suggest_item(T.PALESTRA)
-    assert suggestion.principal == Item(8, 28)
+    assert suggestion.principal == Item(8, 24)
     assert suggestion.alternatives == ()
 
 
@@ -142,14 +154,14 @@ def test_discipline_in_graduation_is_i_1():
     suggestion = suggest_item(T.DISCIPLINA_MINISTRADA, level=Level.GRADUACAO)
     assert suggestion.principal == Item(1, 1)
     assert suggestion.alternatives == ()
-    assert suggestion.source_note == "Res. 4.644/2015, Anexo I, Grupo I, item 1"
+    assert suggestion.source_note == "Tabela oficial de pontuação da UFPA, Grupo I, item 1"
 
 
 def test_discipline_in_postgraduation_is_i_2():
     suggestion = suggest_item(T.DISCIPLINA_MINISTRADA, level=Level.POS_GRADUACAO)
     assert suggestion.principal == Item(1, 2)
     assert suggestion.alternatives == ()
-    assert suggestion.source_note == "Res. 4.644/2015, Anexo I, Grupo I, item 2"
+    assert suggestion.source_note == "Tabela oficial de pontuação da UFPA, Grupo I, item 2"
 
 
 def test_discipline_without_level_suggests_i_1_with_i_2_as_alternative():
@@ -193,3 +205,60 @@ def test_extension_course_with_empty_text_becomes_plain_course():
 def test_other_taxonomies_pass_through_unchanged(taxonomy):
     assert confirm_extension_course(taxonomy, "sem a palavra") == taxonomy
     assert confirm_extension_course(taxonomy, "curso de extensão") == taxonomy
+
+
+# MAP-01: the 13 Group VIII types that changed number, with the retained book and chapter rules.
+GROUP_VIII_RENUMBERED = {
+    T.ARTIGO_INTERNACIONAL_INDEXADO: (9, [11]),
+    T.ARTIGO_NACIONAL_INDEXADO: (10, [11]),
+    T.ARTIGO_NAO_INDEXADO: (11, []),
+    T.TRABALHO_COMPLETO_CONGRESSO: (19, [10]),
+    T.COMUNICACAO_COM_RESUMO: (20, []),
+    T.COMUNICACAO_SEM_RESUMO: (21, []),
+    T.APRESENTACAO_TRABALHO_INTERNACIONAL: (22, []),
+    T.APRESENTACAO_TRABALHO_NACIONAL: (23, []),
+    T.PALESTRA: (24, []),
+    T.PATENTE_DEPOSITADA: (29, []),
+    T.PATENTE_CONCEDIDA: (30, []),
+    T.REGISTRO_SOFTWARE: (33, []),
+    T.CONSULTORIA_AD_HOC: (36, []),
+}
+
+
+def test_the_thirteen_group_viii_types_use_the_official_numbers():
+    assert len(GROUP_VIII_RENUMBERED) == 13
+    for taxonomy, (number, alternatives) in GROUP_VIII_RENUMBERED.items():
+        suggestion = suggest_item(taxonomy)
+        assert suggestion.principal == Item(8, number), taxonomy
+        assert list(suggestion.alternatives) == [Item(8, n) for n in alternatives], taxonomy
+
+
+@pytest.mark.parametrize(
+    ("taxonomy", "number"),
+    [
+        (T.LIVRO_COM_PARECERISTAS, 1),
+        (T.LIVRO_SEM_PARECERISTAS, 2),
+        (T.CAPITULO_INTERNACIONAL, 3),
+        (T.CAPITULO_NACIONAL, 4),
+    ],
+)
+def test_books_and_chapters_stay_in_viii_1_to_viii_4(taxonomy, number):
+    assert suggest_item(taxonomy).principal == Item(8, number)
+
+
+# MAP-02: no suggestion points to an item the official table does not have (III.12, IV.7, III.11).
+@pytest.mark.parametrize("taxonomy", [t for t in T if t is not T.DISCIPLINA_MINISTRADA])
+def test_no_rule_points_to_the_removed_items(taxonomy):
+    suggestion = suggest_item(taxonomy)
+    used = {suggestion.principal, *suggestion.alternatives} - {None}
+    assert not used & {Item(3, 11), Item(3, 12), Item(4, 7)}
+
+
+def test_selection_board_types_have_no_alternative():
+    assert suggest_item(T.BANCA_SELECAO_POS).alternatives == ()
+    assert suggest_item(T.BANCA_SELECAO_BOLSAS).alternatives == ()
+
+
+def test_types_without_a_table_item_cite_the_official_table_as_the_reason():
+    for taxonomy in (T.BANCA_PROCESSO_SELETIVO, T.EXTENSAO_EVENTO_MINISTRANTE):
+        assert "tabela oficial" in suggest_item(taxonomy).source_note

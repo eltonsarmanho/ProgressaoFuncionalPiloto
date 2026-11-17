@@ -364,9 +364,9 @@ T19 → T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Os 13 tipos do Grupo VIII têm os itens novos (ex.: `PALESTRA` VIII.24; `ARTIGO_INTERNACIONAL_INDEXADO` VIII.9 com alternativa VIII.11; `REGISTRO_SOFTWARE` VIII.33)
-- [ ] `BANCA_PROCESSO_SELETIVO` e `EXTENSAO_EVENTO_MINISTRANTE` sem item; `BANCA_SELECAO_POS` e `BANCA_SELECAO_BOLSAS` sem alternativa III.12
-- [ ] Os demais tipos (Grupos II, III, IV, V, VI, VII e livros e capítulos) mantêm item e alternativas; Gate quick passa; 30+ testes
+- [x] Os 13 tipos do Grupo VIII têm os itens novos (ex.: `PALESTRA` VIII.24; `ARTIGO_INTERNACIONAL_INDEXADO` VIII.9 com alternativa VIII.11; `REGISTRO_SOFTWARE` VIII.33)
+- [x] `BANCA_PROCESSO_SELETIVO` e `EXTENSAO_EVENTO_MINISTRANTE` sem item; `BANCA_SELECAO_POS` e `BANCA_SELECAO_BOLSAS` sem alternativa III.12
+- [x] Os demais tipos (Grupos II, III, IV, V, VI, VII e livros e capítulos) mantêm item e alternativas; Gate quick passa; 30+ testes
 
 **Tests**: unit
 **Gate**: quick

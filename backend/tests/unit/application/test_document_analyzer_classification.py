@@ -91,7 +91,7 @@ def test_tcc_committee_declaration_suggests_item_iii_4_without_candidates():
     assert found.reasons == ()
     assert found.source is ActivitySource.SUGERIDA_IA
     assert initial_status(found.source) is ActivityStatus.AGUARDANDO_REVISAO
-    assert "Anexo I" in found.source_note and "Grupo III, item 4" in found.source_note
+    assert "Tabela oficial" in found.source_note and "Grupo III, item 4" in found.source_note
     assert found.quantity == Decimal(1)
     assert result.status is DocumentStatus.PROCESSADO
 
@@ -180,9 +180,9 @@ def test_internal_training_has_its_item_vii_10():
     assert (found.group_number, found.item_number) == (7, 10)
 
 
-def test_lecture_is_viii_28_without_alternatives():
+def test_lecture_is_viii_24_without_alternatives():
     found = analyze(payload(activity(taxonomy="PALESTRA"))).activities[0]
-    assert (found.group_number, found.item_number, found.candidates) == (8, 28, ())
+    assert (found.group_number, found.item_number, found.candidates) == (8, 24, ())
 
 
 # --- CLS-05: item missing from the process table ----------------------------------------------
