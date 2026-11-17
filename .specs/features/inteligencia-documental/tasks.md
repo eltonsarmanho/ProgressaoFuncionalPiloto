@@ -1807,11 +1807,11 @@ T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → 
 
 **Done when**:
 
-- [ ] Três meses de exercício dão quantidade 0 com `QUANTIDADE_ESTIMADA` (antes: 1)
-- [ ] Dois anos e meio dão 2; período maior que o interstício é recortado por ele
-- [ ] Sem uma das datas, quantidade 0 com o aviso
-- [ ] Itens que não são por ano seguem inalterados; o analisador passa o interstício
-- [ ] Gate full passa
+- [x] Três meses de exercício dão quantidade 0 com `QUANTIDADE_ESTIMADA` (antes: 1)
+- [x] Dois anos e meio dão 2; período maior que o interstício é recortado por ele
+- [x] Sem uma das datas, quantidade 0 com o aviso
+- [x] Itens que não são por ano seguem inalterados; o analisador passa o interstício
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

@@ -263,7 +263,7 @@ class DocumentAnalyzer:
         if suggestion.principal is None:
             run.alerts.append(DocAlert(DocAlertCode.SEM_ITEM_DE_PONTUACAO, None, index))
             return None
-        quantity = derive_quantity(taxonomy, activity)
+        quantity = derive_quantity(taxonomy, activity, interstice)
         run.alerts += [DocAlert(code, None, index) for code in quantity.warnings]
 
         in_table = _items_in_table(table_version)

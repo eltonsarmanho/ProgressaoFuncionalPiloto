@@ -10,6 +10,7 @@ from app.domain.entities.activity import Level
 from app.domain.entities.document import DocAlertCode
 from app.domain.entities.extraction import ExtractedActivity
 from app.domain.entities.extraction import TaxonomyCode as T
+from app.domain.rules.interstice import Interstice
 from app.domain.rules.quantity_rules import QuantityResult, derive_quantity
 
 D = Decimal
@@ -154,10 +155,11 @@ def test_discipline_without_level_or_period_leaves_them_empty():
 
 
 @pytest.mark.parametrize("taxonomy", PER_YEAR)
-def test_period_under_one_year_counts_as_one_year_with_the_estimate_warning(taxonomy):
+def test_period_under_one_year_gives_zero_years_with_the_estimate_warning(taxonomy):
+    # REAL-11: a few months of exercise never round up to a full year of "por ano de exercício"
     activity = extracted(taxonomy, start_date=date(2022, 8, 1), end_date=date(2023, 7, 31))
     result = derive_quantity(taxonomy, activity)
-    assert result.quantity == D(1)
+    assert result.quantity == D(0)
     assert result.warnings == (DocAlertCode.QUANTIDADE_ESTIMADA,)
 
 
@@ -174,11 +176,11 @@ def test_year_count_keeps_only_whole_years():
     assert derive_quantity(T.COLEGIADO_MEMBRO, activity).quantity == D(2)
 
 
-def test_exactly_twelve_months_is_one_year_and_one_day_short_is_still_one():
+def test_exactly_twelve_months_is_one_year_and_one_day_short_is_zero():
     exact = extracted(T.COLEGIADO_MEMBRO, start_date=date(2022, 8, 15), end_date=date(2023, 8, 15))
     short = extracted(T.COLEGIADO_MEMBRO, start_date=date(2022, 8, 15), end_date=date(2023, 8, 14))
     assert derive_quantity(T.COLEGIADO_MEMBRO, exact).quantity == D(1)
-    assert derive_quantity(T.COLEGIADO_MEMBRO, short).quantity == D(1)
+    assert derive_quantity(T.COLEGIADO_MEMBRO, short).quantity == D(0)
 
 
 def test_three_years_and_one_day_short_gives_two():
@@ -197,9 +199,10 @@ def test_three_years_and_one_day_short_gives_two():
         {"start_date": date(2024, 8, 1), "end_date": date(2022, 8, 1)},
     ],
 )
-def test_per_year_item_without_a_usable_period_counts_one_year_with_the_estimate_warning(fields):
+def test_per_year_item_without_a_usable_period_gives_zero_with_the_estimate_warning(fields):
+    # REAL-11: with no usable period the quantity stays 0 for the user to inform
     result = derive_quantity(T.PESQUISA_GRUPO_MEMBRO, extracted(T.PESQUISA_GRUPO_MEMBRO, **fields))
-    assert result.quantity == D(1)
+    assert result.quantity == D(0)
     assert result.warnings == (DocAlertCode.QUANTIDADE_ESTIMADA,)
 
 
@@ -211,3 +214,48 @@ def test_result_never_carries_points():
 def test_every_taxonomy_code_gets_a_result():
     for taxonomy in T:
         assert isinstance(derive_quantity(taxonomy, extracted(taxonomy)), QuantityResult)
+
+
+# --- REAL-11: years of exercise inside the interstice -------------------------------------------
+
+INTERSTICE = Interstice(date(2024, 11, 23), date(2026, 11, 23))
+
+
+def test_three_months_of_a_function_in_the_interstice_give_zero_with_the_warning():
+    # a designation from 09/08/2026 to the end of the interstice (real corpus shape)
+    activity = extracted(
+        T.FUNCAO_VICE_DIRETOR_FACULDADE, start_date=date(2026, 8, 9), end_date=date(2026, 11, 23)
+    )
+    result = derive_quantity(T.FUNCAO_VICE_DIRETOR_FACULDADE, activity, INTERSTICE)
+    assert result.quantity == D(0)
+    assert result.warnings == (DocAlertCode.QUANTIDADE_ESTIMADA,)
+
+
+def test_years_are_counted_inside_the_interstice_only():
+    # four years of mandate, of which exactly the two years of the interstice count
+    activity = extracted(
+        T.FUNCAO_DIRETOR_FACULDADE, start_date=date(2023, 8, 9), end_date=date(2027, 8, 9)
+    )
+    result = derive_quantity(T.FUNCAO_DIRETOR_FACULDADE, activity, INTERSTICE)
+    assert result.quantity == D(2)
+
+
+def test_a_period_wholly_outside_the_interstice_gives_zero():
+    activity = extracted(
+        T.COLEGIADO_MEMBRO, start_date=date(2020, 1, 1), end_date=date(2023, 1, 1)
+    )
+    result = derive_quantity(T.COLEGIADO_MEMBRO, activity, INTERSTICE)
+    assert result.quantity == D(0)
+    assert result.warnings == (DocAlertCode.QUANTIDADE_ESTIMADA,)
+
+
+def test_whole_years_inside_the_interstice_are_floored():
+    activity = extracted(
+        T.PESQUISA_GRUPO_MEMBRO, start_date=date(2025, 2, 1), end_date=date(2026, 11, 1)
+    )
+    assert derive_quantity(T.PESQUISA_GRUPO_MEMBRO, activity, INTERSTICE).quantity == D(1)
+
+
+def test_the_interstice_does_not_change_items_that_are_not_per_year():
+    activity = extracted(T.PALESTRA, event_date=date(2025, 3, 10))
+    assert derive_quantity(T.PALESTRA, activity, INTERSTICE).quantity == D(1)

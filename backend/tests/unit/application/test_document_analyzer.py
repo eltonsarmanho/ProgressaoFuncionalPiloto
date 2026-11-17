@@ -9,6 +9,7 @@ import pytest
 from app.domain.entities.document import DocAlertCode, DocumentStatus
 from app.domain.entities.extraction import DocumentType, TaxonomyCode
 from app.domain.repositories.ports import AiExtractionError
+from app.domain.rules.interstice import Interstice
 from app.domain.rules.upload_validation import FileKind
 from app.infrastructure.ai.schemas import validate_response
 from tests.unit.application.analyzer_fakes import (
@@ -308,6 +309,44 @@ def test_dismissal_clause_creates_no_activity_but_the_designation_does():
     dispensed = [a for a in result.alerts if a.code is DocAlertCode.CLAUSULA_DE_DISPENSA]
     assert [a.activity_index for a in dispensed] == [1]
     assert DocAlertCode.SEM_ITEM_DE_PONTUACAO not in codes(result)
+
+
+# --- yearly items count complete years of exercise inside the interstice (REAL-11) ---------
+
+INTERSTICE = Interstice(date(2024, 11, 23), date(2026, 11, 23))
+
+
+def designation(start, end, taxonomy="FUNCAO_VICE_DIRETOR_FACULDADE"):
+    return activity(
+        taxonomy=taxonomy, title=None, event_date=None, start_date=start, end_date=end,
+        evidence_text="DESIGNAR Fulana de Tal Exemplo",
+    )  # fmt: skip
+
+
+def test_three_months_of_exercise_do_not_become_a_full_year():
+    text = (
+        "PORTARIA. DESIGNAR Fulana de Tal Exemplo como Vice-Diretora da Faculdade, de "
+        "09/08/2026 a 23/11/2026."
+    )
+    raw = designation("2026-08-09", "2026-11-23")
+    result, _ = analyze(
+        payload(raw, document_type="PORTARIA"), text_page(1, text), interstice=INTERSTICE
+    )
+    [suggested] = result.activities
+    assert suggested.quantity == Decimal(0)
+    assert DocAlertCode.QUANTIDADE_ESTIMADA in codes(result)
+
+
+def test_exercise_years_are_counted_inside_the_interstice():
+    text = (
+        "PORTARIA. DESIGNAR Fulana de Tal Exemplo como Vice-Diretora da Faculdade, "
+        "de 09/08/2023 a 09/08/2027."
+    )
+    raw = designation("2023-08-09", "2027-08-09")
+    result, _ = analyze(
+        payload(raw, document_type="PORTARIA"), text_page(1, text), interstice=INTERSTICE
+    )
+    assert result.activities[0].quantity == Decimal(2)
 
 
 # --- invalid answers (EXT-09) -------------------------------------------------------------

@@ -8,6 +8,7 @@ from app.domain.entities.activity import Level
 from app.domain.entities.document import DocAlertCode
 from app.domain.entities.extraction import ExtractedActivity
 from app.domain.entities.extraction import TaxonomyCode as T
+from app.domain.rules.interstice import Interstice
 
 _HOUR_BASED = frozenset({T.ESTAGIO_CAPACITACAO})
 # One per document; the extracted hours are kept for the minimum course load check (MAP-04).
@@ -51,8 +52,28 @@ def _whole_years(start: date, end: date) -> int:
     return years
 
 
-def derive_quantity(taxonomy: T, extracted: ExtractedActivity) -> QuantityResult:
-    """Quantity, hours and Group I data for a taxonomy; per-year items carry an estimate warning."""
+def _exercise_years(extracted: ExtractedActivity, interstice: Interstice | None) -> int:
+    """Complete years of exercise, inside the interstice when given; 0 when unknown (REAL-11)."""
+    start, end = extracted.start_date, extracted.end_date
+    if start is None or end is None or end < start:
+        return 0
+    if interstice is not None:
+        start, end = max(start, interstice.start), min(end, interstice.end)
+        if end < start:
+            return 0
+    return _whole_years(start, end)
+
+
+def derive_quantity(
+    taxonomy: T, extracted: ExtractedActivity, interstice: Interstice | None = None
+) -> QuantityResult:
+    """Quantity, hours and Group I data for a taxonomy; per-year items carry an estimate warning.
+
+    A per-year item counts the complete years of the period inside the interstice, never
+    rounded up. With less than a year, or without both dates, the quantity is 0 and the
+    QUANTIDADE_ESTIMADA warning asks the user to inform it (the engine reads an empty quantity
+    as 1, so 0 is the value that does not inflate the potential).
+    """
     if taxonomy is T.DISCIPLINA_MINISTRADA:
         return QuantityResult(None, extracted.hours, extracted.level, extracted.academic_period, ())
     if taxonomy in _HOUR_BASED:
@@ -60,8 +81,6 @@ def derive_quantity(taxonomy: T, extracted: ExtractedActivity) -> QuantityResult
     if taxonomy in _PER_DOCUMENT_WITH_HOURS:
         return QuantityResult(Decimal(1), extracted.hours, None, None, ())
     if taxonomy in _PER_YEAR:
-        years = 1
-        if extracted.start_date and extracted.end_date:
-            years = max(1, _whole_years(extracted.start_date, extracted.end_date))
+        years = _exercise_years(extracted, interstice)
         return QuantityResult(Decimal(years), None, None, None, (DocAlertCode.QUANTIDADE_ESTIMADA,))
     return QuantityResult(Decimal(1), None, None, None, ())
