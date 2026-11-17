@@ -148,9 +148,9 @@ T51 → T52 → T53 → T54
 
 **Done when**:
 
-- [ ] A taxonomia tem exatamente os códigos da tabela de regras do design, incluindo `OUTRA`
-- [ ] `ExtractedActivity` guarda página, trecho e confiança
-- [ ] Gate quick passa; 4+ testes
+- [x] A taxonomia tem exatamente os códigos da tabela de regras do design, incluindo `OUTRA`
+- [x] `ExtractedActivity` guarda página, trecho e confiança
+- [x] Gate quick passa; 4+ testes
 
 **Tests**: unit
 **Gate**: quick
