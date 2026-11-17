@@ -190,3 +190,23 @@ def test_duplicate_name_clash_is_422_and_unknown_source_is_404(world, admin_uc):
     assert error.value.field == "name"
     with pytest.raises(NotFound):
         admin_uc.duplicate.execute(world.admin, uuid.uuid4(), "Qualquer")
+
+
+# ADM-02: with several versions, the copy takes the LATEST one (by start of validity)
+def test_duplicate_of_a_table_with_two_versions_copies_the_latest(world, admin_uc):
+    newer = admin_uc.create_version.execute(
+        world.admin,
+        world.fasi_version.table_id,
+        world.fasi_version.id,
+        date(2023, 6, 1),
+        None,
+        "Nova norma da FASI, 2023",
+    )
+
+    view = admin_uc.duplicate.execute(world.admin, world.fasi_version.table_id, "Cópia da última")
+
+    _, versions = stored(world, view.table.id)
+    [copy_version] = versions
+    assert copy_version.valid_from == date(2023, 6, 1)
+    assert copy_version.norm_reference == "Nova norma da FASI, 2023"
+    assert copy_version.id != newer.version.id
