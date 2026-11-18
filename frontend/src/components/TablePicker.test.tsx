@@ -70,33 +70,7 @@ describe("TablePicker", () => {
     expect(screen.queryByRole("button", { name: /Confirmar tabela/ })).not.toBeInTheDocument();
   });
 
-  it("TELA-06: tabela de outra unidade pede justificativa e exibe o 422 junto ao campo", async () => {
-    const { calls } = mockFetch({
-      "PUT /api/processes/p1/scoring/table": {
-        status: 422,
-        body: { detail: [{ field: "justificativa", message: "Justificativa obrigatória para tabela de outra unidade" }] },
-      },
-    });
-    const onChanged = vi.fn();
-    render(
-      <TablePicker
-        processId="p1"
-        choice={{ chosen: null, suggested: FASI, alerts: [] }}
-        tables={TABLES}
-        onChanged={onChanged}
-      />,
-    );
-    const user = userEvent.setup();
-    expect(screen.queryByLabelText("Justificativa (tabela de outra unidade)")).not.toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText("Escolher outra tabela"), "v-ifch");
-    await user.click(screen.getByRole("button", { name: "Confirmar tabela e calcular" }));
-    const msg = await screen.findByText("Justificativa obrigatória para tabela de outra unidade");
-    expect(msg).toHaveAttribute("id", "justificativa-error");
-    expect(JSON.parse(calls[0].init!.body as string)).toEqual({ version_id: "v-ifch" });
-    expect(onChanged).not.toHaveBeenCalled();
-  });
-
-  it("TELA-06: reenvia com a justificativa preenchida", async () => {
+  it("UIM-18: tabela de outra unidade confirma direto, sem campo de justificativa", async () => {
     const { calls } = mockFetch({
       "PUT /api/processes/p1/scoring/table": { status: 200, body: { chosen: IFCH, suggested: FASI, alerts: [] } },
     });
@@ -111,12 +85,29 @@ describe("TablePicker", () => {
     );
     const user = userEvent.setup();
     await user.selectOptions(screen.getByLabelText("Escolher outra tabela"), "v-ifch");
-    await user.type(screen.getByLabelText("Justificativa (tabela de outra unidade)"), "Docente cedido ao IFCH");
+    expect(screen.queryByLabelText(/Justificativa/)).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Confirmar tabela e calcular" }));
-    expect(JSON.parse(calls[0].init!.body as string)).toEqual({
-      version_id: "v-ifch",
-      justificativa: "Docente cedido ao IFCH",
-    });
+    expect(JSON.parse(calls[0].init!.body as string)).toEqual({ version_id: "v-ifch" });
     expect(onChanged).toHaveBeenCalledTimes(1);
+  });
+
+  it("UIM-18: um erro do servidor ao escolher a tabela aparece como alerta e não recarrega", async () => {
+    mockFetch({
+      "PUT /api/processes/p1/scoring/table": { status: 409, body: { detail: "O processo foi alterado por outro usuário; recarregue" } },
+    });
+    const onChanged = vi.fn();
+    render(
+      <TablePicker
+        processId="p1"
+        choice={{ chosen: null, suggested: FASI, alerts: [] }}
+        tables={TABLES}
+        onChanged={onChanged}
+      />,
+    );
+    const user = userEvent.setup();
+    await user.selectOptions(screen.getByLabelText("Escolher outra tabela"), "v-ifch");
+    await user.click(screen.getByRole("button", { name: "Confirmar tabela e calcular" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("O processo foi alterado por outro usuário; recarregue");
+    expect(onChanged).not.toHaveBeenCalled();
   });
 });

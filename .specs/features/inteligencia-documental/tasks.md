@@ -3819,10 +3819,10 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Escolher outra tabela não mostra campo de justificativa e o `PUT` da tabela vai sem `justificativa`
-- [ ] O botão de confirmar continua aparecendo só quando a tabela escolhida muda ou ainda não há tabela escolhida
-- [ ] Os testes da justificativa foram trocados pelos novos, sem enfraquecer a cobertura
-- [ ] Gate quick passa
+- [x] Escolher outra tabela não mostra campo de justificativa e o `PUT` da tabela vai sem `justificativa`
+- [x] O botão de confirmar continua aparecendo só quando a tabela escolhida muda ou ainda não há tabela escolhida
+- [x] Os testes da justificativa foram trocados pelos novos, sem enfraquecer a cobertura
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

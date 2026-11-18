@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { errorMessage, fieldErrors, request } from "../api/client";
+import { errorMessage, request } from "../api/client";
 import type { ChosenTable, ScoringTableInfo, TableChoice } from "../api/types";
 import { TABLE_STATUS_LABELS, formatDate } from "../labels";
-import { FieldError, errorProps } from "./FieldError";
 
 function TableCard({ title, table }: { title: string; table: ChosenTable }) {
   const { version } = table;
@@ -42,30 +41,20 @@ export function TablePicker({
   const { chosen, suggested } = choice;
   const shown = chosen ?? suggested;
   const [versionId, setVersionId] = useState(shown?.version.id ?? "");
-  const [justificativa, setJustificativa] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const options = tables.flatMap((t) => t.versions.map((v) => ({ id: v.id, text: `${t.name} · ${v.name}` })));
   const differs = versionId !== "" && versionId !== chosen?.version.id;
-  const askJustification = versionId !== (suggested?.version.id ?? "") || "justificativa" in errors;
 
   async function confirm() {
     setBusy(true);
-    setErrors({});
     setError(null);
     try {
-      await request("PUT", `/api/processes/${processId}/scoring/table`, {
-        version_id: versionId,
-        ...(justificativa.trim() ? { justificativa: justificativa.trim() } : {}),
-      });
-      setJustificativa("");
+      await request("PUT", `/api/processes/${processId}/scoring/table`, { version_id: versionId });
       onChanged();
     } catch (err) {
-      const byField = fieldErrors(err);
-      setErrors(byField);
-      if (Object.keys(byField).length === 0) setError(errorMessage(err));
+      setError(errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -92,27 +81,13 @@ export function TablePicker({
         </div>
       )}
 
-      {versionId !== "" && askJustification && (
-        <div className="field">
-          <label htmlFor="justificativa">Justificativa (tabela de outra unidade)</label>
-          <textarea
-            id="justificativa"
-            rows={2}
-            value={justificativa}
-            onChange={(e) => setJustificativa(e.target.value)}
-            {...errorProps("justificativa", errors)}
-          />
-          <FieldError id="justificativa-error" message={errors.justificativa} />
-        </div>
-      )}
-
       {error && (
         <p role="alert" className="error">
           {error}
         </p>
       )}
       {(!chosen || differs) && versionId !== "" && (
-        <button type="button" disabled={busy} onClick={() => void confirm()}>
+        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void confirm()}>
           {chosen ? "Trocar tabela e recalcular" : "Confirmar tabela e calcular"}
         </button>
       )}
