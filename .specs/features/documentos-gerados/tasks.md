@@ -1754,10 +1754,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Processo sem atividade `VALIDADA` recusa com `SEM_ATIVIDADES_VALIDADAS` e sem tabela escolhida com `TABELA_NAO_ESCOLHIDA`, sem criar linha
-- [ ] Segundo pedido igual com linha `GERANDO` responde 409 `GERACAO_EM_ANDAMENTO`; tipos diferentes coexistem; processo de outro docente responde 404
-- [ ] Evento de auditoria `CREATE` com `kind` e `state` e nenhum texto de documento
-- [ ] Gate full passa; 8+ testes
+- [x] Processo sem atividade `VALIDADA` recusa com `SEM_ATIVIDADES_VALIDADAS` e sem tabela escolhida com `TABELA_NAO_ESCOLHIDA`, sem criar linha
+- [x] Segundo pedido igual com linha `GERANDO` responde 409 `GERACAO_EM_ANDAMENTO`; tipos diferentes coexistem; processo de outro docente responde 404
+- [x] Evento de auditoria `CREATE` com `kind` e `state` e nenhum texto de documento
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full

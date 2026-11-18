@@ -306,7 +306,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | TAB-05 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
 | TAB-06 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
 | TAB-07 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
-| TAB-08 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | In Tasks |
+| TAB-08 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
 | CMP-01 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | CMP-02 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | CMP-03 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
@@ -348,8 +348,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VER-03 | P1: Versões imutáveis e download | Tasks | Implementing |
 | VER-04 | P1: Versões imutáveis e download | Tasks | Implementing |
 | VER-05 | P1: Versões imutáveis e download | Tasks | Implementing |
-| VER-06 | P1: Versões imutáveis e download | Tasks | In Tasks |
-| VER-07 | P1: Versões imutáveis e download | Tasks | In Tasks |
+| VER-06 | P1: Versões imutáveis e download | Tasks | Implementing |
+| VER-07 | P1: Versões imutáveis e download | Tasks | Implementing |
 | VER-08 | P1: Versões imutáveis e download | Tasks | Implementing |
 | VER-09 | P1: Versões imutáveis e download | Tasks | In Tasks |
 | UIG-01 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |

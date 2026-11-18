@@ -61,3 +61,8 @@ def link(world, activity, document, page=1) -> ActivityEvidence:
         uow.evidences.add(evidence)
         uow.commit()
     return evidence
+
+
+class FixedClock:
+    def now(self) -> datetime:
+        return MOMENT
