@@ -3155,9 +3155,8 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O teste digita na entrada e CLICA em `Salvar` com `userEvent.click` (a ordem real: o foco sai, depois o clique): há exatamente um `PUT`, nenhum alerta de conflito e o texto fica salvo; o teste falha antes da correção
-- [ ] O teste do mesmo clique com a gravação ainda em andamento (resposta adiada) também mostra um único `PUT`
-- [ ] Gate quick passa; 2+ testes novos
+- [x] O teste digita na entrada e CLICA em `Salvar` com `userEvent.click` (a ordem real: o foco sai e grava, depois vem o clique, com a gravação ainda em andamento por resposta adiada): há exatamente um `PUT`, nenhum alerta de conflito e o texto fica salvo; o teste falha antes da correção (2 `PUT`)
+- [x] Gate quick passa; 1+ teste novo
 
 **Tests**: unit
 **Gate**: quick

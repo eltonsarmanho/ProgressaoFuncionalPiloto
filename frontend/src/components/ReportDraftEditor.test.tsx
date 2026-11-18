@@ -127,6 +127,45 @@ describe("REL-07: editar e sair do campo grava a entrada", () => {
   });
 });
 
+describe("UIG-02, REL-07: o botão Salvar da entrada", () => {
+  it("o clique, que tira o foco da caixa e a grava, não grava de novo com a versão velha nem mostra conflito", async () => {
+    const stored: string[] = [];
+    const { state, fn, calls, user } = setup(draftView({ version: 7 }), {
+      [ENTRY_A]: (init) => {
+        const body = JSON.parse(String(init?.body));
+        // the server of the real system: a write with an old version is a conflict
+        if (body.expected_version !== state.view.version) {
+          return { status: 409, body: { detail: "Versão desatualizada", code: "VERSAO_DESATUALIZADA" } };
+        }
+        stored.push(body.text);
+        state.view = draftView({ version: 8 });
+        state.view.sections[0].entries[0] = { activity_id: ACT_A, text: body.text, source: "USUARIO", warnings: [] };
+        return { status: 200, body: { ...state.view } };
+      },
+    });
+    const box = await screen.findByLabelText("Texto de Algoritmos");
+    await user.clear(box);
+    await user.type(box, "Texto novo");
+
+    // the write that leaves the box starts and is still in flight when the click arrives
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const original = fn.getMockImplementation()!;
+    fn.mockImplementation(async (input, init) => {
+      if ((init?.method ?? "GET").toUpperCase() === "PUT") await gate;
+      return original(input, init);
+    });
+    await user.click(screen.getByRole("button", { name: "Salvar Algoritmos" }));
+    release();
+
+    await waitFor(() => expect(within(screen.getAllByRole("listitem")[0]).getByText("Editado")).toBeInTheDocument());
+    expect(calls.filter((c) => c.method === "PUT")).toHaveLength(1);
+    expect(stored).toEqual(["Texto novo"]);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Texto de Algoritmos")).toHaveValue("Texto novo");
+  });
+});
+
 describe("REL-07: o contador bloqueia acima de 20 000", () => {
   it("mostra o contador e não grava um texto acima do limite", async () => {
     const { calls } = setup();

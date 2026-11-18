@@ -34,6 +34,8 @@ export function ReportDraftEditor({ processId, readOnly = false }: { processId: 
 
   const [jobs, setJobs] = useState<Record<string, WordingJob>>({});
   const jobsRef = useRef<Record<string, WordingJob>>({});
+  /** The text of each box being saved: leaving the box and clicking Salvar are one save, not two. */
+  const saving = useRef(new Map<string, string>());
   const [reloads, setReloads] = useState(0);
   const load = () => setReloads((n) => n + 1);
 
@@ -127,6 +129,17 @@ export function ReportDraftEditor({ processId, readOnly = false }: { processId: 
     );
   }
 
+  /** Saves `text` of the box `key` unless that same text is already on its way to the server. */
+  async function saveOnce(key: string, text: string, path: string, body: unknown) {
+    if (saving.current.get(key) === text) return;
+    saving.current.set(key, text);
+    try {
+      await write("PUT", path, body, key);
+    } finally {
+      saving.current.delete(key);
+    }
+  }
+
   const byId = new Map(view.activities.map((a) => [a.id, a]));
   const itemName = (group: number | null, item: number | null) =>
     view.item_names.find((n) => n.group_number === group && n.item_number === item)?.name;
@@ -137,7 +150,7 @@ export function ReportDraftEditor({ processId, readOnly = false }: { processId: 
     if (text === undefined) return;
     if (text === entry.text) return forget(key);
     if (text.length > MAX_TEXT_LENGTH) return;
-    void write("PUT", `entries/${entry.activity_id}`, { expected_version: view!.version, text }, key);
+    void saveOnce(key, text, `entries/${entry.activity_id}`, { expected_version: view!.version, text });
   }
 
   function saveSection(section: DraftSection) {
@@ -146,7 +159,7 @@ export function ReportDraftEditor({ processId, readOnly = false }: { processId: 
     if (text === undefined) return;
     if (text === section.free_text) return forget(key);
     if (text.length > MAX_TEXT_LENGTH) return;
-    void write("PUT", `sections/${section.key}`, { expected_version: view!.version, free_text: text }, key);
+    void saveOnce(key, text, `sections/${section.key}`, { expected_version: view!.version, free_text: text });
   }
 
   function move(activityId: string, to: string) {
