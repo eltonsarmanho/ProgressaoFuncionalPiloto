@@ -2624,9 +2624,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Resposta com número inventado vira texto-modelo com `REDACAO_REJEITADA` e a fiel é aceita; indisponível termina `PRONTO` com `REDACAO_INDISPONIVEL`
-- [ ] O texto editado permanece depois de uma nova redação e é o que vai ao DOCX e ao PDF gerados
-- [ ] Gate full passa; 4+ testes
+- [x] Resposta com número inventado vira texto-modelo com `REDACAO_REJEITADA` e a fiel é aceita; indisponível termina `PRONTO` com `REDACAO_INDISPONIVEL`
+- [x] O texto editado permanece depois de uma nova redação e é o que vai ao DOCX e ao PDF gerados
+- [x] Gate full passa; 4+ testes
 
 **Tests**: integration
 **Gate**: full
