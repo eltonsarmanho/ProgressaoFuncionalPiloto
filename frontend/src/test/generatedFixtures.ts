@@ -5,6 +5,7 @@ import type {
   ReportDraftView,
   WordingJob,
 } from "../api/generated";
+import type { DocumentSummary } from "../api/types";
 
 /** Synthetic data of the Etapa 5 screens: nothing here comes from a real document. */
 export const ACT_A = "a0000000-0000-0000-0000-000000000001";
@@ -147,3 +148,30 @@ export function generated(over: Partial<GeneratedDocument> = {}): GeneratedDocum
 export function preview(over: Partial<ConclusionPreview> = {}): ConclusionPreview {
   return { files: 3, bytes: 5_242_880, artifacts: { TABELA: true, RELATORIO: true, COMPROVANTE: true }, ...over };
 }
+
+/** A document of the process as the list of the Etapa 2 sends it (only what the Etapa 5 screens read). */
+export function docSummary(id: string, name: string, pages: number, over: Partial<DocumentSummary> = {}): DocumentSummary {
+  return {
+    id,
+    process_id: "p1",
+    original_name: name,
+    mime: "application/pdf",
+    size_bytes: 1_048_576,
+    sha256: "c".repeat(64),
+    page_count: pages,
+    status: "PROCESSADO",
+    status_code: null,
+    manual_type: null,
+    manual_category: null,
+    suggested_type: null,
+    suggested_category: null,
+    confidence: "0.90",
+    uploaded_by: "u1",
+    uploaded_at: "2026-11-17T10:00:00Z",
+    updated_at: "2026-11-17T10:01:00Z",
+    version: 1,
+    ...over,
+  };
+}
+
+export const DOCUMENTS = [docSummary(DOC_1, "certificado-a.pdf", 8), docSummary(DOC_2, "declaracao-b.pdf", 3)];

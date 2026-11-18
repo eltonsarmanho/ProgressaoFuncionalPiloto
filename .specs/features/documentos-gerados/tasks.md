@@ -2859,9 +2859,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Reordenar duas páginas e remover uma, salvar e ver a ordem nova e a numeração prevista; acessível por teclado, sem arrastar e soltar
-- [ ] 409 recarrega e avisa; atividade não muda de item
-- [ ] Gate quick passa; 7+ testes
+- [x] Reordenar duas páginas e remover uma, salvar e ver a ordem nova e a numeração prevista; acessível por teclado, sem arrastar e soltar
+- [x] 409 recarrega e avisa; atividade não muda de item
+- [x] Gate quick passa; 7+ testes
 
 **Tests**: unit
 **Gate**: quick
