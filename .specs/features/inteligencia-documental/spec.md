@@ -353,6 +353,25 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ---
 
+### P1: Correções da quarta rodada de validação ⭐ MVP
+
+**User Story**: Como docente, quero que uma lista de rótulos ("Coordenador: ...", "Equipe: ...") não faça de um membro o coordenador, que "não indexada no Scopus" não valha como prova de indexação e que projetos de extensão com redação comum não caiam em revisão sem motivo, para conferir à mão só o que o sistema não consegue decidir.
+
+**Why P1**: A quarta verificação independente (`validation.md`, PASS com lacunas FT-28..FT-33) achou que a tolerância à quebra de linha da janela de coordenação (TER-03) abriu um falso positivo com rótulos de equipe (FT-28), que a negação com nome de base mantém a prova de indexação (FT-30), que a exigência de "extensão" na natureza (TER-04) recusa redações legítimas (FT-29), que a reunião de atividades repetidas junta variantes numeradas (FT-31) e que cinco mutantes de limite sobreviveram (FT-32). Entram como requisitos novos e não alteram os anteriores; a decisão de FT-31 sobre títulos genéricos fica com o usuário.
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. IF entre a palavra de papel de coordenação e o nome do docente está outra palavra de papel ("equipe", "pesquisador(a)(es)", "autor(a)(es)", "orientando(a)", além das já listadas) ou o nome completo de outra pessoa (duas ou mais palavras capitalizadas seguidas, que não são de instituição nem título) THEN the system SHALL não aceitar a coordenação de pesquisa (V.1, V.2), de modo que "Coordenador: Pedro Alves" seguido de "Equipe: Maria de Souza Lima" não confirma a Maria; WHERE o papel está no plural ("coordenadores", "coordenaram") the system SHALL não aplicar a guarda do nome de outra pessoa, e todos os casos aceitos por TER-03 SHALL continuar aceitos.
+2. IF o texto nega a indexação perto do nome de uma base ("não indexada no Scopus", "sem indexação, apenas Qualis", "not indexed in Scopus", "Scopus: não indexada") THEN the system SHALL não contar esse nome como prova de indexação, com a negação valendo só dentro da mesma oração (até o ponto, ponto e vírgula ou quebra de linha) e em janela curta de palavras; o nome de base sem negação por perto SHALL continuar valendo como prova.
+3. WHERE o texto nomeia um projeto, programa, ação ou atividade com "extensão" como natureza em redação comum ("Projeto Institucional de Extensão", "projeto de pesquisa e extensão", "projeto de ensino, pesquisa e extensão", "Extensão: projeto X", "atividade extensionista") the system SHALL confirmar o curso (VII.9) e o projeto (IV.1, IV.2); o nome de unidade e a lista de missões ("Ensino, Pesquisa e Extensão") sem natureza SHALL continuar sem confirmar.
+4. The system SHALL ter um teste por limite dos mutantes sobreviventes da quarta verificação: o limiar de 0,6 dos títulos repetidos (0,5 não reúne), o nome próprio de três letras ("Ana"/"Eva"), a palavra capitalizada de duas letras que não é nome, a razão de 0,8 da diferença de grafia e a palavra "vice" entre o nome e o papel de coordenação.
+5. IF dois títulos de atividades do mesmo documento diferem por um numeral ou uma letra isolada de cada lado ("Nível 1" e "Nível 2", "Turma A" e "Turma B", "Cálculo I" e "Cálculo II") THEN the system SHALL não reuni-los como atividade repetida; o numeral em um só dos títulos e a contenção de um título no outro sem numeral SHALL continuar reunindo.
+6. The system SHALL registrar em `validation.md` a contagem real de testes desmarcados (6, todos `maritalk_live`), a resolução da quinta rodada, e no `STATE.md` o estado do deploy e as decisões pendentes, entre elas a reunião de títulos genéricos por contenção (FT-31).
+
+**Independent Test**: "Projeto de pesquisa. Coordenador: Pedro Alves\nEquipe: Maria de Souza Lima" com o docente Maria de Souza Lima fica sem item; "Revista não indexada no Scopus" no artigo indexado cai em VIII.11 com `INDEXACAO_NAO_COMPROVADA`; "Projeto Institucional de Extensão Dados Abertos" mantém IV.2; "Curso de Python Nível 1" e "Nível 2" na mesma página ficam em duas atividades.
+
+---
+
 ## Edge Cases
 
 Edge cases are usually unwanted-behavior (IF/THEN) or boundary (WHEN) criteria:
@@ -500,12 +519,18 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | TER-09 | P1: Correções da terceira rodada de validação | Design | Verified |
 | TER-10 | P1: Correções da terceira rodada de validação | Design | Verified |
 | TER-11 | P1: Correções da terceira rodada de validação | Design | Verified |
+| QUA-01 | P1: Correções da quarta rodada de validação | Design | Implementing |
+| QUA-02 | P1: Correções da quarta rodada de validação | Design | Implementing |
+| QUA-03 | P1: Correções da quarta rodada de validação | Design | Implementing |
+| QUA-04 | P1: Correções da quarta rodada de validação | Design | Implementing |
+| QUA-05 | P1: Correções da quarta rodada de validação | Design | Implementing |
+| QUA-06 | P1: Correções da quarta rodada de validação | Design | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 128 total, 128 mapped to tasks, 0 unmapped
+**Coverage:** 134 total, 134 mapped to tasks, 0 unmapped
 
 ---
 

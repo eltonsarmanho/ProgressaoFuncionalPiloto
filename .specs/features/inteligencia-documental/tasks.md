@@ -134,6 +134,14 @@ Defeitos da terceira execução real (`corpus-reports/ANALISE.md`, local: D2 e D
 T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T105 → T106
 ```
 
+### Phase 15: Correções da quarta rodada
+
+Lacunas FT-28..FT-33 da quarta verificação (`validation.md`, PASS com lacunas), uma tarefa por lacuna, da mais grave à mais leve. Os testes usam só texto sintético; nenhum documento real, MariTalk, VM, push ou deploy. FT-31 recebe só a guarda de numerais (a decisão sobre títulos genéricos fica com o usuário). Fase maior que o orçamento por ser uma cadeia de correções independentes, ordenadas pela gravidade.
+
+```
+T107 → T108 → T109 → T110 → T111 → T112
+```
+
 ---
 
 ## Task Breakdown
@@ -2989,10 +2997,170 @@ T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T10
 
 ---
 
+### T107: Rótulo de equipe e nome de outra pessoa não confirmam coordenação
+
+**What**: `_OTHER_ROLE` ganha "equipe", "pesquisador(a)(es)", "autor(a)(es)", "orientando(a)"; o nome completo de outra pessoa (duas ou mais palavras capitalizadas seguidas, sem nome de instituição nem título) entre a palavra de papel e o docente recusa a coordenação, salvo papel no plural. Arquivos: `suggestion_rules.py` e testes.
+**Where**: `backend/app/domain/rules/suggestion_rules.py`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `professor_word_spans`, `_role_near_name`
+**Requirement**: QUA-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] "Coordenador: Pedro Alves" + "Equipe: Maria de Souza Lima" não confirma a Maria (V.1 e V.2); "Pesquisadores:", "Autores:" e "Orientando(a):" idem
+- [ ] Nome completo de outra pessoa entre o papel e o docente recusa; papel no plural, nome de instituição e título (Profa. Dra.) entre eles não recusam
+- [ ] Todos os testes de `test_research_coordination_window.py` e `test_research_coordination_role.py` continuam verdes
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(suggestions): refuse coordination across a team label or another full name`
+
+---
+
+### T108: Negação perto do nome da base cancela a prova de indexação
+
+**What**: A prova de indexação é procurada oração por oração (ponto, ponto e vírgula e quebra de linha separam); uma negação ("não", "sem", "not", "non" + indexada/indexação/indexed) retira da oração as palavras que a seguem numa janela curta e as que a precedem de perto. Arquivos: `suggestion_rules.py` e testes.
+**Where**: `backend/app/domain/rules/suggestion_rules.py`
+**Depends on**: T107
+**Reuses**: `_NOT_INDEXED`, `_INDEXING_EVIDENCE`
+**Requirement**: QUA-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] "não indexada no Scopus", "sem indexação, apenas Qualis B2", "not indexed in Scopus" e "Scopus: não indexada" não provam e caem em VIII.11
+- [ ] Cada nome de base sem negação por perto continua provando (casos de `test_article_indexing.py`)
+- [ ] Negação numa oração e base em outra: a base prova
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(suggestions): drop the index name that follows a negation`
+
+---
+
+### T109: Redação comum de projeto de extensão volta a confirmar
+
+**What**: `_EXTENSION_NATURE` aceita "projeto/programa institucional de extensão", "projeto de pesquisa e extensão", "projeto de ensino, pesquisa e extensão", "Extensão: projeto X" (fora de lista de missões) e "atividade extensionista"; nome de unidade e lista de missões sem natureza continuam recusados. Arquivos: `suggestion_rules.py` e testes.
+**Where**: `backend/app/domain/rules/suggestion_rules.py`
+**Depends on**: T108
+**Reuses**: `_EXTENSION_NATURE`, `_NATURE_NOUN`
+**Requirement**: QUA-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Cada redação listada confirma VII.9 (curso) e IV.1/IV.2 (projeto)
+- [ ] Os textos só com nome de unidade e "Ensino, Pesquisa e Extensão" sem natureza continuam sem confirmar (testes de TER-04 intactos)
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(suggestions): accept common wordings of an extension project`
+
+---
+
+### T110: Um teste por limite dos mutantes sobreviventes
+
+**What**: Testes fixam o limiar 0,6 dos títulos repetidos (0,5 não reúne), o nome de três letras, a palavra de duas letras que não é nome, a razão 0,8 da diferença de grafia e a palavra "vice"; o mutante S11 ("departamento" fora de `_UNIT_NOUN`) é equivalente e fica registrado no docstring do teste. Arquivos: testes de `title_similarity` e de coordenação.
+**Where**: `backend/tests/unit/domain/test_title_similarity.py`
+**Depends on**: T109
+**Reuses**: `repeated_titles`, `differ_by_proper_name`, `_role_near_name`
+**Requirement**: QUA-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Mutantes T02, T03, T04, T06 e S16 morrem (cópia de arquivo, comando no corpo do commit)
+- [ ] S11 registrado como equivalente
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `test(rules): pin the boundaries of the surviving mutants`
+
+---
+
+### T111: Variantes numeradas não são atividade repetida
+
+**What**: `repeated_titles` não reúne títulos que diferem por um numeral, numeral romano ou letra isolada de cada lado ("Nível 1"/"Nível 2", "Turma A"/"Turma B", "Cálculo I"/"Cálculo II"); numeral em só um dos lados e contenção sem numeral continuam reunindo. A reunião por título genérico contido em outro ("Banca de TCC" em "Banca de TCC de Ana Lima") não muda e vai ao usuário como decisão. Arquivos: `title_similarity.py` e testes.
+**Where**: `backend/app/domain/rules/title_similarity.py`
+**Depends on**: T110
+**Reuses**: `differ_by_proper_name`, `title_words`
+**Requirement**: QUA-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] As três variantes citadas ficam em atividades separadas, no nível do domínio e no analisador
+- [ ] "Curso de Python 2025" e "Curso de Python" ainda reúnem
+- [ ] Testes de TER-07 continuam verdes
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(documents): keep numbered variants apart when merging repeated titles`
+
+---
+
+### T112: Registro da quinta rodada e entrega
+
+**What**: `validation.md` corrige a contagem de testes desmarcados (6 `maritalk_live`), nota as decisões de FT-31 e o mutante equivalente S11, e traz a "Resolution (round 5)"; `spec.md` passa QUA-01..06 a Verified onde cabe; `STATE.md` atualiza o handoff (commit 9533966 no ar na VM, commits desta rodada precisam de novo deploy, PRs #1 a #3 no GitHub). Arquivos: `validation.md`, `spec.md`, `STATE.md`.
+**Where**: `.specs/features/inteligencia-documental/validation.md`
+**Depends on**: T111
+**Reuses**: Resolution (round 4)
+**Requirement**: QUA-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] A contagem de desmarcados está corrigida para 6 e a Resolution (round 5) lista commits, gate e decisões pendentes
+- [ ] O handoff do STATE.md traz o deploy atual e o que falta
+- [ ] `validate_spec.py`, `validate_tasks.py` e `validate_state.py` passam
+- [ ] Gate build passa
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `docs(specs): record the resolution of round 5 and the handoff`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11 → Phase 12 → Phase 13 → Phase 14
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11 → Phase 12 → Phase 13 → Phase 14 → Phase 15
 
 Phase 1:  T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 Phase 2:  T9 → T10 → T11 → T12 → T13 → T14 → T15
@@ -3008,4 +3176,5 @@ Phase 11:  T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 �
 Phase 12:  T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → T81
 Phase 13:  T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → T92 → T93 → T94 → T95
 Phase 14:  T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T105 → T106
+Phase 15:  T107 → T108 → T109 → T110 → T111 → T112
 ```
