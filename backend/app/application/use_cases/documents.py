@@ -28,9 +28,10 @@ from app.domain.entities.document import (
     can_transition,
 )
 from app.domain.entities.extraction import DocumentType, TaxonomyCode
+from app.domain.entities.generated import GenerationCode
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.user import User
-from app.domain.errors import Conflict, NotFound, StaleVersion, ValidationFailed
+from app.domain.errors import Conflict, Gone, NotFound, StaleVersion, ValidationFailed
 from app.domain.repositories.ports import (
     ActivityEvidence,
     Clock,
@@ -51,6 +52,7 @@ DOCUMENT_ENTITY = "document"
 EVIDENCE_ENTITY = "activity_evidence"
 PROCESS_NOT_FOUND = "Processo não encontrado"
 DOCUMENT_NOT_FOUND = "Documento não encontrado"
+FILE_DELETED_MESSAGE = "O arquivo deste documento foi excluído na conclusão do processo"
 OUTSIDE_INTERSTICE_MESSAGE = (
     "O documento está fora do interstício e não é processado nas próximas etapas"
 )
@@ -133,6 +135,12 @@ def document_audit_view(document: Document) -> dict:
         "sha256": document.sha256,
         "status": document.status,
     }
+
+
+def refuse_deleted_file(document: Document) -> None:
+    """The file and the page text of a document the conclusion purged are gone (DEL-12)."""
+    if document.file_deleted_at is not None:
+        raise Gone(GenerationCode.ARQUIVO_EXCLUIDO.value, FILE_DELETED_MESSAGE)
 
 
 def refuse_outside_interstice(document: Document) -> None:
@@ -333,6 +341,12 @@ class DocumentDetail:
     activities: tuple[LinkedActivity, ...]
 
     @property
+    def file_deleted(self) -> bool:
+        """The conclusion removed the file: the metadata and the links stay, the text does not
+        (DEL-06)."""
+        return self.document.file_deleted_at is not None
+
+    @property
     def alerts(self) -> tuple:
         return self.run.warnings if self.run else ()
 
@@ -348,7 +362,9 @@ class GetDocument(_DocumentUseCase):
             document = self._document(uow, actor, document_id)
             run = active_run(uow, document.id)
             pages = tuple(
-                p for p in uow.extractions.list_pages(document.id) if run and p.run_id == run.id
+                p
+                for p in uow.extractions.list_pages(document.id)
+                if run and p.run_id == run.id and document.file_deleted_at is None
             )
             by_activity: dict[UUID, list[ActivityEvidence]] = {}
             for evidence in uow.evidences.list_for_document(document.id):
@@ -460,6 +476,7 @@ class DownloadDocument(_DocumentUseCase):
         """The stored original, as attachment or inline (PDF and images only); audited (DOC-08)."""
         with self._uow_factory() as uow:
             document = self._document(uow, actor, document_id)
+            refuse_deleted_file(document)
             if inline and document.mime not in MIME_BY_KIND.values():
                 raise ValidationFailed("visualizar", "Só PDF e imagem podem ser visualizados")
             path = self._storage.path(document.process_id, document.internal_name)
@@ -499,8 +516,10 @@ class _NewRunUseCase(_DocumentUseCase):
         self._change_status = change_status
 
     def _restartable(self, uow: UnitOfWork, actor: User, document_id: UUID) -> Document:
-        """The document of a writable process that is not waiting or running (else 409)."""
+        """The document of a writable process that is not waiting or running (else 409); one whose
+        file was purged is gone (410), whatever the state of the process."""
         document = self._document(uow, actor, document_id)
+        refuse_deleted_file(document)
         self._writable(uow, actor, document.process_id)
         if not can_transition(document.status, DocumentStatus.PENDENTE):
             raise Conflict("O documento está na fila ou em processamento")

@@ -2285,9 +2285,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Arquivo e página de documento excluído respondem `Gone` com o código; reprocessar e substituir também; documento comum segue como antes
-- [ ] O detalhe de documento excluído mostra nome, tipo e páginas (metadados) e `arquivo_excluido: true`
-- [ ] Gate full passa; 7+ testes
+- [x] Arquivo e página de documento excluído respondem `Gone` com o código; reprocessar e substituir também; documento comum segue como antes
+- [x] O detalhe de documento excluído mostra nome, tipo e páginas (metadados) e `arquivo_excluido: true`
+- [x] Gate full passa; 7+ testes
 
 **Tests**: integration
 **Gate**: full
