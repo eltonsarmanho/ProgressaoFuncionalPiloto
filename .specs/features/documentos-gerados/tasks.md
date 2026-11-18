@@ -1255,9 +1255,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Permissões 0700 no diretório e 0600 no arquivo; o nome interno não leva o nome do docente
-- [ ] `commit` renomeia no mesmo diretório; `cleanup` remove `.tmp-*` e arquivos sem linha; nada é lido para a memória
-- [ ] Gate quick passa; 8+ testes
+- [x] Permissões 0700 no diretório e 0600 no arquivo; o nome interno não leva o nome do docente
+- [x] `commit` renomeia no mesmo diretório; `cleanup` remove `.tmp-*` e arquivos sem linha; nada é lido para a memória
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick

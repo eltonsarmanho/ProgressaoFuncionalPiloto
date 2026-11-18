@@ -1,6 +1,6 @@
 """Ports implemented by the infrastructure layer (AD-001)."""
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
@@ -632,6 +632,11 @@ class GeneratedFileStorage(Protocol):
 
     def free_bytes(self) -> int:
         """Free space of the volume that holds the files (ESPACO_INSUFICIENTE)."""
+        ...
+
+    def cleanup(self, referenced: Mapping[UUID, Collection[str]]) -> int:
+        """Removes the `.tmp-*` files and the stored files no row refers to (`referenced` maps a
+        process to the internal names that have a row); returns how many files went away."""
         ...
 
 
