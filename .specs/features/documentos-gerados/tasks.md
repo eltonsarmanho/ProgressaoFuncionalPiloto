@@ -1620,9 +1620,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Processo sintético de 3 grupos e 5 atividades (uma sem página, duas na mesma página): ordem, sumário, numeração contínua, remissão e alerta conferem e as páginas anexadas são idênticas às originais
-- [ ] Saída acima de 60 MB falha com `COMPROVANTE_GRANDE_DEMAIS` sem deixar arquivo parcial; original ausente falha com `ORIGINAL_INDISPONIVEL` citando documento e página
-- [ ] Gate quick passa; 10+ testes
+- [x] Processo sintético de 3 grupos e 5 atividades (uma sem página, duas na mesma página): ordem, sumário, numeração contínua, remissão e alerta conferem e as páginas anexadas são idênticas às originais
+- [x] Saída acima de 60 MB falha com `COMPROVANTE_GRANDE_DEMAIS` sem deixar arquivo parcial; original ausente falha com `ORIGINAL_INDISPONIVEL` citando documento e página
+- [x] Gate quick passa; 10+ testes
 
 **Tests**: unit
 **Gate**: quick

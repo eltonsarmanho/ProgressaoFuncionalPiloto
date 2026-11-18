@@ -612,12 +612,18 @@ class ComprovanteAssembler(Protocol):
     def assemble(
         self,
         plan: ComprovantePlan,
+        front: ComprovanteFront,
         resolver: Callable[[UUID], Path],
         target: Path,
         on_progress: Callable[[int, int], None] | None = None,
     ) -> AssemblyResult:
-        """Writes the PDF of the plan to `target`; `resolver` gives the path of the original of a
-        document. The original pages go in unchanged (CMP-02)."""
+        """Writes the PDF of the plan to `target`; `front` has the names the cover, the table of
+        contents and the separators write and `resolver` gives the path of the original of a
+        document. The original pages go in unchanged (CMP-02).
+
+        `on_progress(done, total)` is called after every page. Raises `ComprovanteRefused` with
+        `ORIGINAL_INDISPONIVEL`, `IMAGEM_GRANDE_DEMAIS` or `COMPROVANTE_GRANDE_DEMAIS`; no file
+        is left at `target` when it raises."""
         ...
 
 

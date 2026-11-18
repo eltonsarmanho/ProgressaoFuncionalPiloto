@@ -317,7 +317,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CMP-08 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | CMP-09 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | CMP-10 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
-| CMP-11 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-11 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | CMP-12 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | CMP-13 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | ARR-01 | P1: Arranjo manual do Comprovante | Tasks | Implementing |

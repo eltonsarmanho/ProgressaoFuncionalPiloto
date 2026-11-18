@@ -22,15 +22,16 @@ def noise_jpeg(width: int = 240, height: int = 320, seed: int = 1, quality: int 
 
 
 def source_pdf(
-    pages: int = 3, size: tuple[float, float] = A4, picture: bool = True
+    pages: int = 3, size: tuple[float, float] = A4, picture: bool = True, label: str = ""
 ) -> pymupdf.Document:
-    """Pages with a different text each (`Origem pagina N`) and, optionally, a picture each."""
+    """Pages with a different text each (`Origem <label>pagina N`) and, optionally, a picture
+    each."""
     doc = pymupdf.open()
     for number in range(1, pages + 1):
         page = doc.new_page(width=size[0], height=size[1])
         page.insert_textbox(
             pymupdf.Rect(40, 40, size[0] - 40, 120),
-            f"Origem pagina {number}\nTexto sintetico do documento de teste.",
+            f"Origem {label}pagina {number}\nTexto sintetico do documento de teste.",
             fontsize=12,
         )
         page.draw_rect(pymupdf.Rect(30, 30, size[0] - 30, size[1] - 30), color=(0, 0, 0), width=1)
