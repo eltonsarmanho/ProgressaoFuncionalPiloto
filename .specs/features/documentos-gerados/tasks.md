@@ -1384,9 +1384,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Os quatro TTF e o texto da licença estão em `fonts/`
-- [ ] PDF de teste com `Ação, Ñandú, Zoë, ç, ü, ª` extraído pelo PyMuPDF devolve exatamente o texto escrito e a fonte está embutida em subconjunto
-- [ ] Gate quick passa; 4+ testes
+- [x] Os quatro TTF e o texto da licença estão em `fonts/`
+- [x] PDF de teste com `Ação, Ñandú, Zoë, ç, ü, ª` extraído pelo PyMuPDF devolve exatamente o texto escrito e a fonte está embutida em subconjunto
+- [x] Gate quick passa; 4+ testes
 
 **Tests**: unit
 **Gate**: quick
