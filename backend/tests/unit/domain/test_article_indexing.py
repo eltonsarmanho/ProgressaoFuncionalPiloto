@@ -96,6 +96,36 @@ def test_without_an_indexing_evidence_the_indexed_item_falls_to_the_non_indexed_
     assert suggest_item(downgraded).principal == Item(8, 11)
 
 
+@pytest.mark.parametrize("taxonomy", INDEXED)
+@pytest.mark.parametrize(
+    "negation",
+    [
+        "Revista não indexada no Scopus.",
+        "Periódico sem indexação, apenas Qualis B2.",
+        "Journal not indexed in Scopus.",
+        "Esta revista não é indexada na Web of Science nem na SciELO.",
+        "Bases: Scopus: não indexada.",
+        "Qualis B2, sem indexação em bases internacionais.",
+    ],
+)
+def test_a_negation_next_to_an_index_name_is_not_proof_of_indexing(taxonomy, negation):
+    """QUA-02: "não indexada no Scopus" keeps no evidence of the Scopus (FT-30)."""
+    assert confirm_article_indexing(taxonomy, f"{ARTICLE} {negation}") is T.ARTIGO_NAO_INDEXADO
+
+
+@pytest.mark.parametrize("taxonomy", INDEXED)
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Indexada na Scopus. Não indexada na SciELO.",  # a name in another clause still proves
+        "Revista não indexada em bases gratuitas.\nFonte: Web of Science.",  # a line break ends
+        "Não indexada na SciELO; indexada na Scopus.",
+    ],
+)
+def test_an_index_name_outside_the_negated_clause_still_proves_indexing(taxonomy, text):
+    assert confirm_article_indexing(taxonomy, f"{ARTICLE} {text}") is taxonomy
+
+
 @pytest.mark.parametrize("taxonomy", [t for t in T if t not in INDEXED])
 def test_every_other_type_passes_through(taxonomy):
     assert confirm_article_indexing(taxonomy, ARTICLE) is taxonomy

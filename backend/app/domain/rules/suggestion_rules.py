@@ -172,9 +172,14 @@ def confirm_board_document(taxonomy: T, document_type: DocumentType, text: str) 
 
 
 _INDEXED_ARTICLES = frozenset({T.ARTIGO_INTERNACIONAL_INDEXADO, T.ARTIGO_NACIONAL_INDEXADO})
-_NOT_INDEXED = re.compile(
+_CLAUSE_END = re.compile(r"[.;\n]+")
+# "não indexada", "sem indexação", "not indexed", with the words around it that name what is
+# not indexed: up to 3 words before ("Scopus: não indexada") and 8 after ("não indexada no
+# Scopus", "sem indexação, apenas Qualis B2"), inside one clause (QUA-02).
+_NEGATED_INDEXING = re.compile(
+    r"(?:\b\w+\W+){0,3}"
     r"\b(?:nao|sem|not|non)[\s-]+(?:(?:e|is|are|foi|sao|esta|estao|being)\s+)?"
-    r"(?:indexad\w*|indexacao|indexed)\b"
+    r"(?:indexad\w*|indexacao|indexed)\b(?:\W+\w+){0,8}"
 )
 _INDEXING_EVIDENCE = re.compile(
     r"\b(?:scopus|web of science|wos|jcr|journal citation reports?|qualis|scielo|doaj|latindex|"
@@ -188,12 +193,16 @@ def confirm_article_indexing(taxonomy: T, text: str) -> T:
     The official table words them "revista indexada (ISSN) ... Qualis CAPES"; an ISSN alone
     proves nothing. Without a mention of a known index (Scopus, Web of Science, JCR, Qualis,
     SciELO, DOAJ, "indexado", "indexação") the article falls to the non-indexed item (VIII.11).
-    "Não indexada" and "sem indexação" are not evidence.
+    A negation ("não indexada", "sem indexação", "not indexed") takes away the words around it
+    in its clause, so "não indexada no Scopus" does not prove the Scopus (QUA-02).
     """
     if taxonomy not in _INDEXED_ARTICLES:
         return taxonomy
-    claimed = _NOT_INDEXED.sub(" ", normalize_title(text))
-    return taxonomy if _INDEXING_EVIDENCE.search(claimed) else T.ARTIGO_NAO_INDEXADO
+    for clause in _CLAUSE_END.split(text):
+        claimed = _NEGATED_INDEXING.sub(" ", normalize_title(clause))
+        if _INDEXING_EVIDENCE.search(claimed):
+            return taxonomy
+    return T.ARTIGO_NAO_INDEXADO
 
 
 _EXTENSION_PROJECTS = frozenset({T.EXTENSAO_PROJETO_COORDENACAO, T.EXTENSAO_PROJETO_PARTICIPACAO})

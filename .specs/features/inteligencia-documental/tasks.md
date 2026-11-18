@@ -3039,10 +3039,10 @@ T107 → T108 → T109 → T110 → T111 → T112
 
 **Done when**:
 
-- [ ] "não indexada no Scopus", "sem indexação, apenas Qualis B2", "not indexed in Scopus" e "Scopus: não indexada" não provam e caem em VIII.11
-- [ ] Cada nome de base sem negação por perto continua provando (casos de `test_article_indexing.py`)
-- [ ] Negação numa oração e base em outra: a base prova
-- [ ] Gate full passa
+- [x] "não indexada no Scopus", "sem indexação, apenas Qualis B2", "not indexed in Scopus" e "Scopus: não indexada" não provam e caem em VIII.11
+- [x] Cada nome de base sem negação por perto continua provando (casos de `test_article_indexing.py`)
+- [x] Negação numa oração e base em outra: a base prova
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full
