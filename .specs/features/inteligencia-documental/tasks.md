@@ -2874,9 +2874,9 @@ T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T10
 
 **Done when**:
 
-- [ ] Duas bancas do mesmo item e dia de títulos que diferem por um nome (Jaccard 0,82 a 0,87) não são duplicadas; com a diferença em palavra minúscula ou parecida (erro de OCR) continuam duplicadas
-- [ ] Título igual e texto igual continuam duplicados; a justificativa continua valendo
-- [ ] Gate full passa
+- [x] Duas bancas do mesmo item e dia de títulos que diferem por um nome (Jaccard 0,82 a 0,87) não são duplicadas; com a diferença em palavra minúscula ou parecida (erro de OCR) continuam duplicadas
+- [x] Título igual e texto igual continuam duplicados; a justificativa continua valendo
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

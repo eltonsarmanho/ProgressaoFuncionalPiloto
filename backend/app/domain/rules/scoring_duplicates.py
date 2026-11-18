@@ -1,24 +1,23 @@
 """Duplicate activity detection (VERIF-05..VERIF-07, SEG-04).
 
 Overlapping inclusive date ranges and the same normalized title, or, for the same item, titles
-whose sets of words are alike (Jaccard of 0.8 or more): the activity created later is reported
-as a duplicate, unless it carries a justification that it is distinct. The AI writes the title
-of a repeated certificate differently each time, so an exact comparison alone misses it.
+whose sets of words are alike (Jaccard of 0.8 or more) and do not differ by a proper name (the
+name of a student or of a board member makes another activity, TER-08): the activity created
+later is reported as a duplicate, unless it carries a justification that it is distinct. The AI
+writes the title of a repeated certificate differently each time, so an exact comparison alone
+misses it.
 Two activities of the same item and overlapping dates that come from two different documents
 with the same text (the same certificate saved as two files) are duplicates as well (SEG-05).
 Activities without dates never duplicate; rejected ones do not take part.
 """
 
 import hashlib
-import re
 from collections.abc import Iterable, Mapping, Sequence, Set
 from uuid import UUID
 
 from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.rules.scoring_periods import activity_interval, normalize_title
-
-SIMILAR_TITLE_JACCARD = 0.8
-
+from app.domain.rules.title_similarity import similar_titles
 
 ContentKey = tuple[UUID, str]  # (document id, hash of its normalized text)
 
@@ -42,15 +41,6 @@ def _creation_order(activity: Activity):
     return (activity.created_at is not None, activity.created_at, str(activity.id))
 
 
-def _words(title: str) -> frozenset[str]:
-    return frozenset(re.findall(r"[a-z0-9]+", normalize_title(title)))
-
-
-def _similar(one: frozenset[str], two: frozenset[str]) -> bool:
-    union = one | two
-    return bool(union) and len(one & two) / len(union) >= SIMILAR_TITLE_JACCARD
-
-
 def _same_item(one: Activity, two: Activity) -> bool:
     item = (one.group_number, one.item_number)
     return None not in item and item == (two.group_number, two.item_number)
@@ -68,7 +58,6 @@ def find_duplicates(
     ]
     ordered = sorted(dated, key=_creation_order)
     titles = {a.id: normalize_title(a.title) for a in ordered}
-    words = {a.id: _words(a.title) for a in ordered}
 
     duplicates: set[UUID] = set()
     for index, later in enumerate(ordered):
@@ -83,7 +72,7 @@ def find_duplicates(
             same_item = _same_item(earlier, later)
             if (
                 same_title
-                or (same_item and _similar(words[earlier.id], words[later.id]))
+                or (same_item and similar_titles(earlier.title, later.title))
                 or (
                     same_item
                     and _shares_content(contents.get(earlier.id, ()), contents.get(later.id, ()))
