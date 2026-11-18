@@ -2302,10 +2302,10 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 **Done when**:
 
-- [ ] "M. A. Souza" devolvido pela IA e texto sem o docente nem a forma abreviada: `DOCENTE_DIVERGENTE`
-- [ ] Texto com "M. A. Souza" e docente "Maria Aparecida de Souza": aceito; com o nome completo no texto: aceito
-- [ ] Homônimo "M. A. Souza" com docente "Marcos Antônio Souza" e texto com o nome completo de outra pessoa de mesmas iniciais: divergente quando o nome completo do docente não aparece
-- [ ] Gate full passa
+- [x] "M. A. Souza" devolvido pela IA e texto sem o docente nem a forma abreviada: `DOCENTE_DIVERGENTE`
+- [x] Texto com "M. A. Souza" e docente "Maria Aparecida de Souza": aceito; com o nome completo no texto: aceito
+- [x] Homônimo "M. A. Souza" com docente "Marcos Antônio Souza" e texto com o nome completo de outra pessoa de mesmas iniciais: divergente quando o nome completo do docente não aparece
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

@@ -396,7 +396,8 @@ def test_a_single_token_name_is_never_enough():
     ["M. A. Souza Exemplo", "EXEMPLO, M. A. S.", "Maria A. Souza Exemplo", "M. Exemplo"],
 )
 def test_abbreviated_name_with_the_same_initials_and_last_surname_is_the_professor(extracted):
-    assert same_person(extracted, PROFESSOR, None, "") is True
+    # VER-13: the abbreviated form must also be written in the page text
+    assert same_person(extracted, PROFESSOR, None, f"Participou da banca {extracted}.") is True
 
 
 @pytest.mark.parametrize(
@@ -404,7 +405,36 @@ def test_abbreviated_name_with_the_same_initials_and_last_surname_is_the_profess
     ["J. A. Exemplo", "M. A. Silva", "A. Exemplo", "M. B. Exemplo", "Exemplo"],
 )
 def test_abbreviation_with_other_initials_or_surname_is_not_the_professor(extracted):
-    assert same_person(extracted, PROFESSOR, None, "") is False
+    assert same_person(extracted, PROFESSOR, None, f"Participou da banca {extracted}.") is False
+
+
+# ---------- VER-13: an abbreviated AI name must not accept a homonym ----------
+
+HOMONYM_TEXT = "A banca teve Maria Aparecida Souza como presidente e Joao Lima como membro."
+MARCOS = "Marcos Antonio Souza"
+
+
+def test_abbreviated_name_that_is_not_in_the_text_and_without_the_full_name_is_a_homonym():
+    # "M. A. Souza" fits Marcos Antonio Souza by initials, but the text names Maria Aparecida
+    assert same_person("M. A. Souza", MARCOS, None, HOMONYM_TEXT) is False
+
+
+def test_abbreviated_name_written_in_the_text_is_the_professor():
+    text = f"{HOMONYM_TEXT} Assinam M. A. Souza e Joao Lima."
+    assert same_person("M. A. Souza", MARCOS, None, text) is True
+
+
+def test_abbreviated_name_is_the_professor_when_the_full_name_is_also_in_the_text():
+    text = f"{HOMONYM_TEXT} Participou tambem o professor Marcos Antonio Souza."
+    assert same_person("M. A. Souza", MARCOS, None, text) is True
+
+
+def test_abbreviated_name_in_the_text_with_the_wrong_initials_is_not_the_professor():
+    assert same_person("M. B. Souza", MARCOS, None, "Assina M. B. Souza.") is False
+
+
+def test_the_siape_in_the_text_still_identifies_the_professor_whatever_the_abbreviation():
+    assert same_person("M. A. Souza", MARCOS, "1234567", "SIAPE 1234567") is True
 
 
 # ---------- REAL-04: dates written in words ----------

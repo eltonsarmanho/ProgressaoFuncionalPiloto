@@ -229,6 +229,19 @@ def test_abbreviated_ai_name_of_the_professor_is_no_divergence():
     assert DocAlertCode.DOCENTE_DIVERGENTE not in codes(result)
 
 
+def test_abbreviated_ai_name_of_a_homonym_is_a_divergence():
+    # VER-13: "M. A. Souza" fits the initials of Marcos Antonio Souza, but the page names
+    # Maria Aparecida Souza and never the abbreviated form nor the professor
+    text = "A banca teve Maria Aparecida Souza como presidente, em 12 de marco de 2025."
+    result, _ = analyze(
+        payload(activity(), name="M. A. Souza"),
+        text_page(1, text),
+        professor="Marcos Antonio Souza",
+    )
+    assert DocAlertCode.DOCENTE_DIVERGENTE in codes(result)
+    assert result.status is DocumentStatus.REQUER_REVISAO
+
+
 # --- repeated activities of one document (REAL-07) --------------------------------------------
 
 

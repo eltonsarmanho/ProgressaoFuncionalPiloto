@@ -167,6 +167,14 @@ def professor_named_in_text(professor_name: str, text: str) -> bool:
     return False
 
 
+def _words_in_text(wanted: list[str], text: str) -> bool:
+    """True when the words appear one after the other in the text (the form as written)."""
+    words = _words(text)
+    return bool(wanted) and any(
+        words[i : i + len(wanted)] == wanted for i in range(len(words) - len(wanted) + 1)
+    )
+
+
 def _abbreviation_of(extracted_name: str, professor_name: str) -> bool:
     """"M. A. Souza" or "SOUZA, M. A." for "Maria Aparecida de Souza" (REAL-03).
 
@@ -197,14 +205,22 @@ def _abbreviation_of(extracted_name: str, professor_name: str) -> bool:
 def same_person(
     extracted_name: str | None, professor_name: str, siape: str | None, text: str
 ) -> bool:
-    """True when the names match by tokens (3+ letters), by abbreviation or the SIAPE is in text."""
+    """True when the names match by tokens (3+ letters), by abbreviation or the SIAPE is in text.
+
+    An abbreviated name ("M. A. Souza") fits every person with those initials, so it counts only
+    when the professor's full name is also in the text or the abbreviated form itself is written
+    in the text (VER-13).
+    """
     if extracted_name:
         extracted, professor = _tokens(extracted_name), _tokens(professor_name)
         if professor and professor <= extracted:
             return True
         if len(extracted) >= 2 and extracted <= professor:
             return True
-        if _abbreviation_of(extracted_name, professor_name):
+        if _abbreviation_of(extracted_name, professor_name) and (
+            professor_named_in_text(professor_name, text)
+            or _words_in_text(_words(extracted_name), text)
+        ):
             return True
     return bool(siape) and re.search(rf"(?<!\d){re.escape(siape)}(?!\d)", text) is not None
 
