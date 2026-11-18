@@ -20,7 +20,6 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from app.domain.rules.pt_format import format_interstice
 from app.domain.rules.table_document import GroupBand, PitHours, TableDocument
 from app.infrastructure.documents.pdf_styles import (
     FONT_REGULAR,
@@ -28,18 +27,23 @@ from app.infrastructure.documents.pdf_styles import (
     PdfStyles,
     build_styles,
 )
+from app.infrastructure.documents.table_text import (
+    ALERTS_HEADING,
+    COLUMNS,
+    PIT_COLUMNS,
+    PIT_HEADING,
+    PIT_TOTAL_LABEL,
+    TITLE,
+    alert_line,
+    band_subtotal,
+    band_title,
+    counters_line,
+    identification_lines,
+    total_line,
+)
 
 FONT_SIZE = 8
 MARGIN = 15 * mm
-COLUMNS = (
-    "Item",
-    "Atividade",
-    "Quantidade",
-    "Pontuação unitária",
-    "Total",
-    "Comprovante",
-    "Status",
-)
 _FIXED_WIDTHS = (38, None, 58, 68, 52, 82, 78)  # points; the activity column takes the rest
 _GREY = colors.Color(0.9, 0.9, 0.9)
 _LIGHT = colors.Color(0.96, 0.96, 0.96)
@@ -56,19 +60,9 @@ def _widths(total: float) -> list[float]:
 
 
 def _identification(document: TableDocument, styles: PdfStyles) -> list:
-    header = document.header
-    lines = (
-        f"Docente: {header.professor_name}",
-        f"Classe e nível atuais: {header.current_class}, nível {header.current_level}",
-        f"Classe e nível pretendidos: {header.target_class}, nível {header.target_level}",
-        f"Unidade: {header.unit_name}",
-        f"Interstício: {format_interstice(header.interstice)}",
-        f"Tabela de pontuação: {document.table_name}",
-        f"Referência normativa: {document.norm_reference}",
-    )
     return [
-        Paragraph("TABELA DE PONTUAÇÃO", styles.title),
-        *(_p(line, styles.body_left) for line in lines),
+        Paragraph(TITLE, styles.title),
+        *(_p(line, styles.body_left) for line in identification_lines(document)),
         Spacer(1, 8),
     ]
 
@@ -87,8 +81,8 @@ def _main_table(document: TableDocument, styles: PdfStyles, width: float) -> Tab
     def band_row(band: GroupBand) -> None:
         index = len(rows)
         rows.append(
-            [_p(f"{band.numeral}. {band.name}", styles.band), "", "", "",
-             _p(f"Subtotal: {band.subtotal}", styles.band), "", ""]
+            [_p(band_title(band), styles.band), "", "", "",
+             _p(band_subtotal(band), styles.band), "", ""]
         )  # fmt: skip
         commands.extend(
             [
@@ -108,7 +102,7 @@ def _main_table(document: TableDocument, styles: PdfStyles, width: float) -> Tab
             rows.append([_p(cell, styles.cell) for cell in cells])
 
     index = len(rows)
-    rows.append([_p(f"Pontuação geral: {document.total}", styles.band), "", "", "", "", "", ""])
+    rows.append([_p(total_line(document), styles.band), "", "", "", "", "", ""])
     commands.extend(
         [("SPAN", (0, index), (-1, index)), ("BACKGROUND", (0, index), (-1, index), _GREY)]
     )
@@ -118,21 +112,13 @@ def _main_table(document: TableDocument, styles: PdfStyles, width: float) -> Tab
 
 
 def _counters(document: TableDocument, styles: PdfStyles) -> Paragraph:
-    c = document.counters
-    parts = (
-        f"Atividades: {c.activities}",
-        f"Com comprovante: {c.with_evidence}",
-        f"Pendentes: {c.pending}",
-        f"Não pontuadas: {c.not_scored}",
-        f"Com divergências: {c.with_alerts}",
-    )
-    return _p("   |   ".join(parts), styles.body_left)
+    return _p(counters_line(document), styles.body_left)
 
 
 def _pit_section(pit: PitHours, styles: PdfStyles) -> list:
-    rows = [[_p("Período letivo", styles.cell_header), _p("Horas de PIT", styles.cell_header)]]
+    rows = [[_p(name, styles.cell_header) for name in PIT_COLUMNS]]
     rows += [[_p(p.label, styles.cell), _p(p.hours, styles.cell)] for p in pit.periods]
-    rows.append([_p("Total em horas", styles.band), _p(pit.total, styles.band)])
+    rows.append([_p(PIT_TOTAL_LABEL, styles.band), _p(pit.total, styles.band)])
     table = Table(rows, colWidths=[180, 90], hAlign="LEFT", repeatRows=1)
     table.setStyle(
         TableStyle(
@@ -148,7 +134,7 @@ def _pit_section(pit: PitHours, styles: PdfStyles) -> list:
         Spacer(1, 10),
         KeepTogether(
             [
-                _p("Horas de PIT por semestre (Grupo I, fora do total de pontos)", styles.heading),
+                _p(PIT_HEADING, styles.heading),
                 table,
             ]
         ),
@@ -158,11 +144,8 @@ def _pit_section(pit: PitHours, styles: PdfStyles) -> list:
 def _alerts(document: TableDocument, styles: PdfStyles) -> list:
     if not document.alerts:
         return []
-    items = [
-        _p(f"{a.subject}: {a.message}" if a.subject else a.message, styles.body_left)
-        for a in document.alerts
-    ]
-    return [Spacer(1, 10), _p("Alertas", styles.heading), *items]
+    items = [_p(alert_line(a), styles.body_left) for a in document.alerts]
+    return [Spacer(1, 10), _p(ALERTS_HEADING, styles.heading), *items]
 
 
 def write_table_pdf(document: TableDocument, target: Path) -> None:

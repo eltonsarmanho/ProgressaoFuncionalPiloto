@@ -1436,9 +1436,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O XML do DOCX tem 7 colunas, `tblHeader`, `tblGrid` com as larguras e `fldChar` de página; o texto lido de volta traz 211 e os mesmos subtotais e horas do PDF
-- [ ] Acentos e caracteres fora do latim básico saem corretos
-- [ ] Gate quick passa; 8+ testes
+- [x] O XML do DOCX tem 7 colunas, `tblHeader`, `tblGrid` com as larguras e `fldChar` de página; o texto lido de volta traz 211 e os mesmos subtotais e horas do PDF
+- [x] Acentos e caracteres fora do latim básico saem corretos
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
