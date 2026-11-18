@@ -993,9 +993,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Duas linhas `GERANDO` do mesmo processo e tipo: a segunda falha por violação do índice único; tipos diferentes coexistem
-- [ ] `UPDATE` de linha `PRONTO` ou `FALHOU` e `DELETE` de `generated_documents` falham; `UPDATE` e `DELETE` de `generated_files` falham; `GERANDO` para `PRONTO` funciona
-- [ ] `upgrade` e `downgrade` rodam em PostgreSQL real e o modelo ORM de `0004` segue íntegro; gate full passa; 8+ testes
+- [x] Duas linhas `GERANDO` do mesmo processo e tipo: a segunda falha por violação do índice único; tipos diferentes coexistem
+- [x] `UPDATE` de linha `PRONTO` ou `FALHOU` e `DELETE` de `generated_documents` falham; `UPDATE` e `DELETE` de `generated_files` falham; `GERANDO` para `PRONTO` funciona
+- [x] `upgrade` e `downgrade` rodam em PostgreSQL real e o modelo ORM de `0004` segue íntegro; gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full

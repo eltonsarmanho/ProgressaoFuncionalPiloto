@@ -32,6 +32,7 @@ from app.domain.entities.activity import ActivitySource, ActivityStatus, Level, 
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.career import Modality
 from app.domain.entities.document import DocumentStatus, RunStatus, TextMethod
+from app.domain.entities.generated import DocumentFormat, DocumentKind, GenerationState
 from app.domain.entities.process import ProcessStatus
 from app.domain.entities.professor import Titration, WorkRegime
 from app.domain.entities.scoring import ScoringMode, TableStatus
@@ -431,4 +432,61 @@ class ActivityEvidenceModel(Base):
         UUID(as_uuid=True), ForeignKey("extraction_runs.id", ondelete="SET NULL")
     )
     created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class GeneratedDocumentModel(Base):
+    """A generated version; a trigger refuses any change once it left GERANDO (VER-01)."""
+
+    __tablename__ = "generated_documents"
+    __table_args__ = (
+        UniqueConstraint(
+            "process_id", "kind", "version_number", name="uq_generated_documents_version"
+        ),
+        Index(
+            "uq_generated_documents_generating",
+            "process_id",
+            "kind",
+            unique=True,
+            postgresql_where=text("state = 'GERANDO'"),
+        ),
+        Index("ix_generated_documents_history", "process_id", "kind", text("requested_at DESC")),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    process_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_processes.id")
+    )
+    kind: Mapped[DocumentKind] = mapped_column(_enum(DocumentKind, "generated_kind"))
+    state: Mapped[GenerationState] = mapped_column(_enum(GenerationState, "generated_state"))
+    version_number: Mapped[int | None] = mapped_column(Integer)
+    requested_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    requested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(40))
+    error_message: Mapped[str | None] = mapped_column(String(300))
+    snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    alerts: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
+    plan_hash: Mapped[str | None] = mapped_column(CHAR(64))
+
+
+class GeneratedFileModel(Base):
+    """One file of a generated version; never updated or deleted (trigger)."""
+
+    __tablename__ = "generated_files"
+    __table_args__ = (
+        UniqueConstraint("generated_document_id", "format", name="uq_generated_files_format"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    generated_document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("generated_documents.id")
+    )
+    format: Mapped[DocumentFormat] = mapped_column(_enum(DocumentFormat, "generated_format"))
+    internal_name: Mapped[str] = mapped_column(String(64), unique=True)
+    sha256: Mapped[str] = mapped_column(CHAR(64))
+    size_bytes: Mapped[int] = mapped_column(BigInteger)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

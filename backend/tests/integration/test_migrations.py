@@ -36,6 +36,8 @@ TABLES = {
     "document_pages",
     "processing_jobs",
     "activity_evidences",
+    "generated_documents",
+    "generated_files",
 }
 
 

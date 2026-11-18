@@ -26,7 +26,7 @@ def test_unit_points_override_is_a_nullable_numeric_9_2_column(migrated_url):
 def test_downgrade_one_revision_drops_the_column_and_upgrade_restores_it(migrated_url):
     cfg = alembic_config(migrated_url)
     try:
-        command.downgrade(cfg, "-1")
+        command.downgrade(cfg, "0004")  # below 0005, whichever revision is the head
         assert _column(migrated_url) is None
     finally:
         command.upgrade(cfg, "head")
