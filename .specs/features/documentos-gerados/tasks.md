@@ -1968,9 +1968,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] `GET` não grava: duas leituras seguidas continuam sem linha em `report_drafts`; as atividades validadas chegam distribuídas pelo mapa de grupo para seção
-- [ ] Seção sem atividade vem listada como vazia; atividade nova depois da última edição gera `RASCUNHO_DESATUALIZADO`; fora do acesso, 404
-- [ ] Gate full passa; 6+ testes
+- [x] `GET` não grava: duas leituras seguidas continuam sem linha em `report_drafts`; as atividades validadas chegam distribuídas pelo mapa de grupo para seção
+- [x] Seção sem atividade vem listada como vazia; atividade nova depois da última edição gera `RASCUNHO_DESATUALIZADO`; fora do acesso, 404
+- [x] Gate full passa; 6+ testes
 
 **Tests**: integration
 **Gate**: full
