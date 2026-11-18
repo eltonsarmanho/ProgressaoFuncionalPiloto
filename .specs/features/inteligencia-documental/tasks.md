@@ -3790,12 +3790,12 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Os rótulos visíveis são Editar, Validar, Rejeitar e Manter como distinta, e o título da atividade só aparece no `aria-label` e no `title`
-- [ ] Validar e Rejeitar enviam `POST /api/activities/{id}/status` e Manter como distinta envia `POST /api/activities/{id}/distinct` sem `justificativa` e recarregam a pontuação
-- [ ] Editar e Nova atividade abrem `role="dialog"` e salvar fecha e recarrega
-- [ ] O teste estático confere as larguras curtas e o `text-align: justify` da tabela de pontuação só acima de 480 px, e os cartões de 360 px continuam
-- [ ] Os testes que exigiam a justificativa foram trocados pelos novos, sem enfraquecer a cobertura
-- [ ] Gate quick passa
+- [x] Os rótulos visíveis são Editar, Validar, Rejeitar e Manter como distinta, e o título da atividade só aparece no `aria-label` e no `title`
+- [x] Validar e Rejeitar enviam `POST /api/activities/{id}/status` e Manter como distinta envia `POST /api/activities/{id}/distinct` sem `justificativa` e recarregam a pontuação
+- [x] Editar e Nova atividade abrem `role="dialog"` e salvar fecha e recarrega
+- [x] O teste estático confere as larguras curtas e o `text-align: justify` da tabela de pontuação só acima de 480 px, e os cartões de 360 px continuam
+- [x] Os testes que exigiam a justificativa foram trocados pelos novos, sem enfraquecer a cobertura
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

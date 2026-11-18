@@ -571,79 +571,79 @@ fieldset.grid legend {
     white-space: nowrap;
   }
 
-  .doc-table th:nth-child(2) {
+  .doc-table thead th:nth-child(2) {
     width: 7rem;
   }
 
-  .doc-table th:nth-child(3) {
+  .doc-table thead th:nth-child(3) {
     width: 5rem;
   }
 
-  .doc-table th:nth-child(4) {
+  .doc-table thead th:nth-child(4) {
     width: 8rem;
   }
 
-  .doc-table th:nth-child(5) {
+  .doc-table thead th:nth-child(5) {
     width: 9rem;
   }
 
-  .doc-table th:nth-child(6) {
+  .doc-table thead th:nth-child(6) {
     width: 5.5rem;
   }
 
-  .doc-table th:nth-child(7) {
+  .doc-table thead th:nth-child(7) {
     width: 13rem;
   }
 
-  .review-table th:nth-child(1) {
+  .review-table thead th:nth-child(1) {
     width: 5rem;
   }
 
-  .review-table th:nth-child(3) {
+  .review-table thead th:nth-child(3) {
     width: 6rem;
   }
 
-  .review-table th:nth-child(4) {
+  .review-table thead th:nth-child(4) {
     width: 7rem;
   }
 
-  .review-table th:nth-child(6) {
+  .review-table thead th:nth-child(6) {
     width: 7.5rem;
   }
 
-  .review-table th:nth-child(7) {
+  .review-table thead th:nth-child(7) {
     width: 8.5rem;
   }
 
-  .review-table th:nth-child(8) {
+  .review-table thead th:nth-child(8) {
     width: 10rem;
   }
 
-  .score-table th:nth-child(1) {
+  .score-table thead th:nth-child(1) {
     width: 4rem;
   }
 
-  .score-table th:nth-child(2) {
+  .score-table thead th:nth-child(2) {
     width: 3.5rem;
   }
 
-  .score-table th:nth-child(4) {
+  .score-table thead th:nth-child(4) {
     width: 6rem;
   }
 
-  .score-table th:nth-child(5) {
+  .score-table thead th:nth-child(5) {
     width: 6rem;
   }
 
-  .score-table th:nth-child(6) {
+  .score-table thead th:nth-child(6) {
     width: 5.5rem;
   }
 
-  .score-table th:nth-child(7) {
+  .score-table thead th:nth-child(7) {
     width: 8rem;
   }
 
-  .score-table th:nth-child(8) {
+  .score-table thead th:nth-child(8) {
     width: 11rem;
   }
 }

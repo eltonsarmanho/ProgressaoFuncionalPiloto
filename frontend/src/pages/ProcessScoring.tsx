@@ -1,6 +1,6 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { errorMessage, fieldErrors, request } from "../api/client";
+import { errorMessage, request } from "../api/client";
 import type {
   Activity,
   Alert,
@@ -12,93 +12,13 @@ import type {
 } from "../api/types";
 import { ActivityForm } from "../components/ActivityForm";
 import { AlertList } from "../components/AlertList";
-import { FieldError, errorProps } from "../components/FieldError";
+import { Modal } from "../components/Modal";
 import { ScoringSummary } from "../components/ScoringSummary";
 import { ScoringTable } from "../components/ScoringTable";
 import { StepNav } from "../components/StepNav";
 import { TablePicker } from "../components/TablePicker";
 
-type Pending =
-  | { kind: "new" }
-  | { kind: "edit"; activity: Activity }
-  | { kind: "validate" | "reject" | "distinct"; activity: Activity };
-
-const ACTION_TITLES = {
-  validate: "Validar atividade",
-  reject: "Rejeitar atividade",
-  distinct: "Marcar como distinta",
-} as const;
-
-function JustifiedAction({
-  kind,
-  activity,
-  onDone,
-  onCancel,
-}: {
-  kind: "validate" | "reject" | "distinct";
-  activity: Activity;
-  onDone: () => void;
-  onCancel: () => void;
-}) {
-  const [justificativa, setJustificativa] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [error, setError] = useState<string | null>(null);
-
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    setError(null);
-    if (justificativa.trim() === "") {
-      setErrors({ justificativa: "Informe a justificativa." });
-      return;
-    }
-    setErrors({});
-    const base = { expected_version: activity.version, justificativa: justificativa.trim() };
-    try {
-      if (kind === "distinct") {
-        await request("POST", `/api/activities/${activity.id}/distinct`, base);
-      } else {
-        await request("POST", `/api/activities/${activity.id}/status`, {
-          ...base,
-          status: kind === "validate" ? "VALIDADA" : "REJEITADA",
-        });
-      }
-      onDone();
-    } catch (err) {
-      const byField = fieldErrors(err);
-      setErrors(byField);
-      if (Object.keys(byField).length === 0) setError(errorMessage(err));
-    }
-  }
-
-  return (
-    <form className="card" onSubmit={submit} noValidate aria-label={ACTION_TITLES[kind]}>
-      <h2>
-        {ACTION_TITLES[kind]}: {activity.title}
-      </h2>
-      <div className="field">
-        <label htmlFor="action-justificativa">Justificativa</label>
-        <textarea
-          id="action-justificativa"
-          rows={2}
-          value={justificativa}
-          onChange={(e) => setJustificativa(e.target.value)}
-          {...errorProps("justificativa", errors)}
-          aria-describedby={errors.justificativa ? "justificativa-error" : undefined}
-        />
-        <FieldError id="justificativa-error" message={errors.justificativa} />
-      </div>
-      {error && (
-        <p role="alert" className="error">
-          {error}
-        </p>
-      )}
-      <button type="submit">Confirmar</button>
-      <button type="button" className="link" onClick={onCancel}>
-        Cancelar
-      </button>
-    </form>
-  );
-}
+type Pending = { kind: "new" } | { kind: "edit"; activity: Activity };
 
 /** Etapa 4: loads the table choice, the result and the criteria; reloads after every change. */
 export function ProcessScoring() {
@@ -142,10 +62,30 @@ export function ProcessScoring() {
       .catch(() => setTables([]));
   }, []);
 
-  async function open(kind: "edit" | "validate" | "reject" | "distinct", row: ScoringRow) {
+  /** Loads the activity (the row has no version) before the edit form. */
+  async function edit(row: ScoringRow) {
     try {
       const activity = await request<Activity>("GET", `/api/activities/${row.activity_id}`);
-      setPending({ kind, activity });
+      setPending({ kind: "edit", activity });
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  }
+
+  /** UIM-20: validate, reject and keep-as-distinct act at once; no justification, no panel. */
+  async function act(kind: "validate" | "reject" | "distinct", row: ScoringRow) {
+    setError(null);
+    try {
+      const activity = await request<Activity>("GET", `/api/activities/${row.activity_id}`);
+      if (kind === "distinct") {
+        await request("POST", `/api/activities/${activity.id}/distinct`, { expected_version: activity.version });
+      } else {
+        await request("POST", `/api/activities/${activity.id}/status`, {
+          status: kind === "validate" ? "VALIDADA" : "REJEITADA",
+          expected_version: activity.version,
+        });
+      }
+      done();
     } catch (err) {
       setError(errorMessage(err));
     }
@@ -203,26 +143,50 @@ export function ProcessScoring() {
               group1TotalHours={result.group1_total_hours}
               actions={(row) => (
                 <div className="row-actions">
-                  <button type="button" className="link" onClick={() => void open("edit", row)}>
-                    Editar {row.title}
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    aria-label={`Editar ${row.title}`}
+                    title={`Editar ${row.title}`}
+                    onClick={() => void edit(row)}
+                  >
+                    Editar
                   </button>
-                  <button type="button" className="link" onClick={() => void open("validate", row)}>
-                    Validar {row.title}
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    aria-label={`Validar ${row.title}`}
+                    title={`Validar ${row.title}`}
+                    onClick={() => void act("validate", row)}
+                  >
+                    Validar
                   </button>
-                  <button type="button" className="link" onClick={() => void open("reject", row)}>
-                    Rejeitar {row.title}
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    aria-label={`Rejeitar ${row.title}`}
+                    title={`Rejeitar ${row.title}`}
+                    onClick={() => void act("reject", row)}
+                  >
+                    Rejeitar
                   </button>
-                  <button type="button" className="link" onClick={() => void open("distinct", row)}>
-                    Marcar como distinta {row.title}
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    aria-label={`Marcar como distinta ${row.title}`}
+                    title={`Marcar como distinta ${row.title}`}
+                    onClick={() => void act("distinct", row)}
+                  >
+                    Manter como distinta
                   </button>
                 </div>
               )}
             />
-            {!pending && (
-              <button type="button" onClick={() => setPending({ kind: "new" })}>
+            <div className="btn-row">
+              <button type="button" className="btn btn-primary" onClick={() => setPending({ kind: "new" })}>
                 Nova atividade
               </button>
-            )}
+            </div>
           </section>
 
           <section className="card" aria-labelledby="alerts-title">
@@ -233,26 +197,21 @@ export function ProcessScoring() {
       )}
 
       {pending?.kind === "new" && (
-        <ActivityForm processId={id} groups={version?.groups ?? []} onSaved={done} onCancel={() => setPending(null)} />
+        <Modal title="Nova atividade" onClose={() => setPending(null)}>
+          <ActivityForm processId={id} groups={version?.groups ?? []} onSaved={done} onCancel={() => setPending(null)} />
+        </Modal>
       )}
       {pending?.kind === "edit" && (
-        <ActivityForm
-          key={pending.activity.id}
-          processId={id}
-          groups={version?.groups ?? []}
-          activity={pending.activity}
-          onSaved={done}
-          onCancel={() => setPending(null)}
-        />
-      )}
-      {pending && pending.kind !== "new" && pending.kind !== "edit" && (
-        <JustifiedAction
-          key={`${pending.kind}-${pending.activity.id}`}
-          kind={pending.kind}
-          activity={pending.activity}
-          onDone={done}
-          onCancel={() => setPending(null)}
-        />
+        <Modal title="Editar atividade" onClose={() => setPending(null)}>
+          <ActivityForm
+            key={pending.activity.id}
+            processId={id}
+            groups={version?.groups ?? []}
+            activity={pending.activity}
+            onSaved={done}
+            onCancel={() => setPending(null)}
+          />
+        </Modal>
       )}
     </>
   );

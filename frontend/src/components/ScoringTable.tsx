@@ -15,6 +15,7 @@ const COLUMNS = [
 
 const PIT_LABEL = "horas (PIT)";
 const VALUE_COLUMN = 5;
+const TITLE_COLUMN = 2;
 
 type Props = {
   rows: ScoringRow[];
@@ -49,7 +50,11 @@ export function ScoringTable({ rows, subtotals, groupNames = GROUP_NAMES, group1
     return (
       <tr key={r.activity_id}>
         {cells.map((value, i) => (
-          <td key={COLUMNS[i]} data-label={inHours && i === VALUE_COLUMN ? PIT_LABEL : COLUMNS[i]}>
+          <td
+            key={COLUMNS[i]}
+            data-label={inHours && i === VALUE_COLUMN ? PIT_LABEL : COLUMNS[i]}
+            className={i === TITLE_COLUMN ? "text-block" : undefined}
+          >
             {value}
           </td>
         ))}
@@ -82,7 +87,7 @@ export function ScoringTable({ rows, subtotals, groupNames = GROUP_NAMES, group1
   );
 
   return (
-    <table className="scoring-table">
+    <table className="scoring-table wide-table score-table">
       <thead>
         <tr>
           {COLUMNS.map((c) => (

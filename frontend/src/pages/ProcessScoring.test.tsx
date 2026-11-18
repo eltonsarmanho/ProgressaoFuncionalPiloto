@@ -172,6 +172,7 @@ describe("ProcessScoring", () => {
     const user = userEvent.setup();
     await screen.findByText("Orientação de TCC", { selector: "td" });
     await user.click(screen.getByRole("button", { name: "Nova atividade" }));
+    expect(screen.getByRole("dialog", { name: "Nova atividade" })).toBeInTheDocument();
     await user.type(screen.getByLabelText("Título"), "Outra orientação");
     await user.selectOptions(screen.getByLabelText("Grupo"), "2");
     await user.selectOptions(screen.getByLabelText("Item"), "7");
@@ -203,6 +204,7 @@ describe("ProcessScoring", () => {
     renderPage();
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Editar Orientação de TCC" }));
+    expect(await screen.findByRole("dialog", { name: "Editar atividade" })).toBeInTheDocument();
     const quantidade = await screen.findByLabelText("Quantidade");
     await user.clear(quantidade);
     await user.type(quantidade, "5");
@@ -219,7 +221,22 @@ describe("ProcessScoring", () => {
     expect(JSON.parse(put.init!.body as string)).not.toHaveProperty("justificativa");
   });
 
-  it("validar e rejeitar chamam o endpoint de status com justificativa e expected_version", async () => {
+  it("UIM-20: os botões têm rótulo curto e o título da atividade só vai no aria-label e no title", async () => {
+    mockFetch(baseRoutes(() => result("40.00", [ROW])));
+    renderPage();
+    const row = (await screen.findByText("Orientação de TCC", { selector: "td" })).closest("tr")!;
+    const buttons = within(row).getAllByRole("button");
+    expect(buttons.map((b) => b.textContent)).toEqual(["Editar", "Validar", "Rejeitar", "Manter como distinta"]);
+    expect(buttons.map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Editar Orientação de TCC",
+      "Validar Orientação de TCC",
+      "Rejeitar Orientação de TCC",
+      "Marcar como distinta Orientação de TCC",
+    ]);
+    expect(buttons.map((b) => b.getAttribute("title"))).toEqual(buttons.map((b) => b.getAttribute("aria-label")));
+  });
+
+  it("UIM-20: validar e rejeitar agem na hora, sem justificativa nem painel, e recarregam a pontuação", async () => {
     const { calls } = mockFetch({
       ...baseRoutes(() => result("40.00", [ROW])),
       "GET /api/activities/a1": { status: 200, body: ACTIVITY },
@@ -228,22 +245,19 @@ describe("ProcessScoring", () => {
     renderPage();
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Rejeitar Orientação de TCC" }));
-    await user.click(await screen.findByRole("button", { name: "Confirmar" }));
-    expect(await screen.findByText("Informe a justificativa.")).toBeInTheDocument();
-    expect(calls.some((c) => c.method === "POST")).toBe(false);
-    await user.type(screen.getByLabelText("Justificativa"), "Sem comprovação");
-    await user.click(screen.getByRole("button", { name: "Confirmar" }));
-    await screen.findByRole("button", { name: "Nova atividade" });
+    await waitFor(() => expect(calls.filter((c) => c.path === "/api/processes/proc-1/scoring")).toHaveLength(2));
     const post = calls.find((c) => c.method === "POST")!;
     expect(post.path).toBe("/api/activities/a1/status");
-    expect(JSON.parse(post.init!.body as string)).toEqual({
-      status: "REJEITADA",
-      expected_version: 3,
-      justificativa: "Sem comprovação",
-    });
+    expect(JSON.parse(post.init!.body as string)).toEqual({ status: "REJEITADA", expected_version: 3 });
+    expect(screen.queryByLabelText("Justificativa")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Validar Orientação de TCC" }));
+    await waitFor(() => expect(calls.filter((c) => c.method === "POST")).toHaveLength(2));
+    expect(JSON.parse(calls.filter((c) => c.method === "POST")[1].init!.body as string)).toEqual({ status: "VALIDADA", expected_version: 3 });
   });
 
-  it("marcar como distinta chama o endpoint distinct com justificativa", async () => {
+  it("UIM-20: manter como distinta chama o endpoint distinct na hora, sem justificativa", async () => {
     const { calls } = mockFetch({
       ...baseRoutes(() => result("40.00", [ROW])),
       "GET /api/activities/a1": { status: 200, body: ACTIVITY },
@@ -252,12 +266,24 @@ describe("ProcessScoring", () => {
     renderPage();
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Marcar como distinta Orientação de TCC" }));
-    await user.type(await screen.findByLabelText("Justificativa"), "Turmas diferentes");
-    await user.click(screen.getByRole("button", { name: "Confirmar" }));
-    await screen.findByRole("button", { name: "Nova atividade" });
+    await waitFor(() => expect(calls.filter((c) => c.path === "/api/processes/proc-1/scoring")).toHaveLength(2));
     const post = calls.find((c) => c.method === "POST")!;
     expect(post.path).toBe("/api/activities/a1/distinct");
-    expect(JSON.parse(post.init!.body as string)).toEqual({ expected_version: 3, justificativa: "Turmas diferentes" });
+    expect(JSON.parse(post.init!.body as string)).toEqual({ expected_version: 3 });
+    expect(screen.queryByLabelText("Justificativa")).not.toBeInTheDocument();
+  });
+
+  it("UIM-20: o erro de uma ação aparece como alerta e a pontuação não recarrega", async () => {
+    const { calls } = mockFetch({
+      ...baseRoutes(() => result("40.00", [ROW])),
+      "GET /api/activities/a1": { status: 200, body: ACTIVITY },
+      "POST /api/activities/a1/status": { status: 409, body: { detail: "A atividade foi alterada por outro usuário; recarregue" } },
+    });
+    renderPage();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: "Validar Orientação de TCC" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("A atividade foi alterada por outro usuário; recarregue");
+    expect(calls.filter((c) => c.path === "/api/processes/proc-1/scoring")).toHaveLength(1);
   });
 
   it("TELA-06: sem tabela escolhida exibe a sugestão e pede confirmação antes de calcular", async () => {

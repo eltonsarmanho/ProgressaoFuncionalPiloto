@@ -59,7 +59,7 @@ describe("UIM-01 / UIM-02 / UIM-10 / UIM-19: tabelas legíveis e botões", () =>
     const wide = block("@media (min-width: 960px)");
     for (const table of ["doc-table", "review-table", "score-table"]) {
       expect(wide).toMatch(new RegExp(`\\.${table}\\b[^{}]*{[^}]*table-layout:\\s*fixed`));
-      expect(wide).toMatch(new RegExp(`\\.${table}\\s+th:nth-child\\(\\d\\)\\s*{[^}]*width:`));
+      expect(wide).toMatch(new RegExp(`\\.${table}\\s+thead\\s+th:nth-child\\(\\d\\)\\s*{[^}]*width:`));
     }
     expect(wide).toMatch(/\.doc-name\s*{[^}]*text-overflow:\s*ellipsis[^}]*white-space:\s*nowrap/);
   });
