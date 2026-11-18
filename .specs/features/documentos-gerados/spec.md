@@ -341,8 +341,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | REL-11 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
 | REL-12 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
 | REL-13 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| REL-14 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
-| REL-15 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-14 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
+| REL-15 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
 | VER-01 | P1: Versões imutáveis e download | Tasks | Implementing |
 | VER-02 | P1: Versões imutáveis e download | Tasks | Implementing |
 | VER-03 | P1: Versões imutáveis e download | Tasks | Implementing |

@@ -1125,9 +1125,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Segunda tarefa `GERANDO` da mesma seção levanta conflito; seção diferente passa
-- [ ] `recover_interrupted` fecha como `FALHOU/INTERROMPIDA` só a tarefa com `started_at` preenchido; `latest_by_section` devolve a mais recente por seção
-- [ ] Gate full passa; 7+ testes
+- [x] Segunda tarefa `GERANDO` da mesma seção levanta conflito; seção diferente passa
+- [x] `recover_interrupted` fecha como `FALHOU/INTERROMPIDA` só a tarefa com `started_at` preenchido; `latest_by_section` devolve a mais recente por seção
+- [x] Gate full passa; 7+ testes
 
 **Tests**: integration
 **Gate**: full

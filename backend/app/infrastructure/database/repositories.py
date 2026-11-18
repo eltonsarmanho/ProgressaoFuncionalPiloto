@@ -31,6 +31,7 @@ from app.domain.entities.generated import (
     GenerationAlertCode,
     GenerationCode,
     GenerationState,
+    WordingJob,
 )
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor
@@ -68,6 +69,7 @@ from app.infrastructure.database.models import (
     LoginAttemptModel,
     ProcessingJobModel,
     ProfessorModel,
+    ReportWordingJobModel,
     ScoringCriterionModel,
     ScoringGroupModel,
     ScoringTableModel,
@@ -1498,6 +1500,126 @@ class SqlGenerationRepository:
             newest.setdefault(m.kind, m)
         entities = self._to_entities(list(newest.values()))
         return {e.kind: e for e in entities}
+
+
+class SqlWordingJobRepository:
+    """Background requests to word one section of the report (REL-13 to REL-15)."""
+
+    def __init__(self, session: Session):
+        self._s = session
+
+    @staticmethod
+    def _to_entity(m: ReportWordingJobModel) -> WordingJob:
+        return WordingJob(
+            id=m.id,
+            process_id=m.process_id,
+            section_key=m.section_key,
+            state=m.state,
+            requested_by=m.requested_by,
+            requested_at=m.requested_at,
+            started_at=m.started_at,
+            finished_at=m.finished_at,
+            error_code=GenerationCode(m.error_code) if m.error_code else None,
+            warnings=_alerts_from_json(m.warnings, "reason"),
+        )
+
+    def add(self, job: WordingJob) -> None:
+        values = dict(
+            id=job.id,
+            process_id=job.process_id,
+            section_key=job.section_key,
+            state=job.state,
+            requested_by=job.requested_by,
+            requested_at=job.requested_at,
+            started_at=job.started_at,
+            finished_at=job.finished_at,
+            error_code=job.error_code.value if job.error_code else None,
+            warnings=_alerts_to_json(job.warnings, "reason") if job.warnings else None,
+        )
+        try:
+            with self._s.begin_nested():
+                self._s.execute(insert(ReportWordingJobModel).values(**values))
+        except IntegrityError as exc:
+            if _is_unique_violation(exc):
+                raise Conflict(
+                    "Já há uma redação em andamento nesta seção",
+                    GenerationCode.REDACAO_EM_ANDAMENTO.value,
+                ) from None
+            raise
+
+    def get(self, job_id: UUID) -> WordingJob | None:
+        m = self._s.get(ReportWordingJobModel, job_id, populate_existing=True)
+        return self._to_entity(m) if m else None
+
+    def claim_next(self, now: datetime) -> WordingJob | None:
+        m = self._s.scalars(
+            select(ReportWordingJobModel)
+            .where(
+                ReportWordingJobModel.state == GenerationState.GERANDO,
+                ReportWordingJobModel.started_at.is_(None),
+            )
+            .order_by(ReportWordingJobModel.requested_at, ReportWordingJobModel.id)
+            .limit(1)
+            .with_for_update(skip_locked=True)
+        ).first()
+        if m is None:
+            return None
+        m.started_at = now
+        self._s.flush()
+        return self._to_entity(m)
+
+    def finish(
+        self,
+        job_id: UUID,
+        now: datetime,
+        state: GenerationState,
+        error_code: GenerationCode | None = None,
+        warnings: Sequence[GenerationAlert] = (),
+    ) -> None:
+        rowcount = self._s.execute(
+            update(ReportWordingJobModel)
+            .where(
+                ReportWordingJobModel.id == job_id,
+                ReportWordingJobModel.state == GenerationState.GERANDO,
+            )
+            .values(
+                state=state,
+                finished_at=now,
+                error_code=error_code.value if error_code else None,
+                warnings=_alerts_to_json(warnings, "reason") if warnings else None,
+            )
+        ).rowcount
+        if rowcount == 0:
+            if self._s.get(ReportWordingJobModel, job_id) is None:
+                raise NotFound("Tarefa de redação não encontrada")
+            raise Conflict("A tarefa de redação já terminou")
+
+    def recover_interrupted(self, now: datetime) -> Sequence[WordingJob]:
+        models = self._s.scalars(
+            update(ReportWordingJobModel)
+            .where(
+                ReportWordingJobModel.state == GenerationState.GERANDO,
+                ReportWordingJobModel.started_at.is_not(None),
+            )
+            .values(
+                state=GenerationState.FALHOU,
+                finished_at=now,
+                error_code=GenerationCode.INTERROMPIDA.value,
+            )
+            .returning(ReportWordingJobModel)
+        ).all()
+        return [self._to_entity(m) for m in sorted(models, key=lambda m: (m.requested_at, m.id))]
+
+    def latest_by_section(self, process_id: UUID) -> dict[str, WordingJob]:
+        models = self._s.scalars(
+            select(ReportWordingJobModel)
+            .where(ReportWordingJobModel.process_id == process_id)
+            .order_by(ReportWordingJobModel.requested_at.desc(), ReportWordingJobModel.id)
+        ).all()
+        newest: dict[str, ReportWordingJobModel] = {}
+        for m in models:
+            newest.setdefault(m.section_key, m)
+        return {key: self._to_entity(m) for key, m in newest.items()}
 
 
 class SqlUnitOfWork:
