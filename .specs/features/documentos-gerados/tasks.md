@@ -375,9 +375,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] `DraftEntry` guarda `activity_id`, `text`, `source` e avisos; `source` só admite os três valores
-- [ ] `ReportTemplate` representa seção com `match`, `group_by`, `entry` e `order_items`; o rascunho é imutável por cópia (`replace`)
-- [ ] Gate quick passa; 5+ testes
+- [x] `DraftEntry` guarda `activity_id`, `text`, `source` e avisos; `source` só admite os três valores
+- [x] `ReportTemplate` representa seção com `match`, `group_by`, `entry` e `order_items`; o rascunho é imutável por cópia (`replace`)
+- [x] Gate quick passa; 5+ testes
 
 **Tests**: unit
 **Gate**: quick
