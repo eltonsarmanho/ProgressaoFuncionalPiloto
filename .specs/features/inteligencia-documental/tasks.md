@@ -3571,10 +3571,10 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Classificar abre `role="dialog"` com os campos Tipo e Categoria, e o painel inline deixa de existir
-- [ ] Salvar envia tipo, categoria e a versão, fecha a janela e chama `onChanged` uma vez
-- [ ] O 422 de `categoria` aparece no campo com a janela aberta; Esc fecha sem chamar a API
-- [ ] Gate quick passa
+- [x] Classificar abre `role="dialog"` com os campos Tipo e Categoria, e o painel inline deixa de existir
+- [x] Salvar envia tipo, categoria e a versão, fecha a janela e chama `onChanged` uma vez
+- [x] O 422 de `categoria` aparece no campo com a janela aberta; Esc fecha sem chamar a API
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

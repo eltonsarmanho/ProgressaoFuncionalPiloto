@@ -144,48 +144,54 @@ function ClassifyForm({ doc, onDone, onCancel }: { doc: DocumentSummary; onDone:
   }
 
   return (
-    <form className="card" onSubmit={submit} noValidate aria-label="Classificar documento">
-      <h3>Classificar documento: {doc.original_name}</h3>
+    <Modal title="Classificar documento" onClose={onCancel}>
+      <p>{doc.original_name}</p>
       <p className="muted">Sua classificação é guardada ao lado da sugestão da IA, que não é alterada.</p>
-      <div className="field">
-        <label htmlFor="classify-tipo">Tipo do documento</label>
-        <select id="classify-tipo" value={tipo} onChange={(e) => setTipo(e.target.value)} {...errorProps("tipo", errors)}>
-          <option value="">Selecione…</option>
-          {Object.entries(DOCUMENT_TYPE_LABELS).map(([code, label]) => (
-            <option key={code} value={code}>
-              {label}
-            </option>
-          ))}
-        </select>
-        <FieldError id="tipo-error" message={errors.tipo} />
-      </div>
-      <div className="field">
-        <label htmlFor="classify-categoria">Categoria da atividade</label>
-        <select
-          id="classify-categoria"
-          value={categoria}
-          onChange={(e) => setCategoria(e.target.value)}
-          {...errorProps("categoria", errors)}
-        >
-          <option value="">Selecione…</option>
-          {Object.entries(TAXONOMY_LABELS).map(([code, label]) => (
-            <option key={code} value={code}>
-              {label}
-            </option>
-          ))}
-        </select>
-        <FieldError id="categoria-error" message={errors.categoria} />
-      </div>
-      {error && (
-        <p role="alert" className="error">
-          {error}
-        </p>
-      )}
-      <button type="submit">Salvar classificação</button>
-      <button type="button" className="link" onClick={onCancel}>
-        Cancelar
-      </button>
-    </form>
+      <form onSubmit={submit} noValidate>
+        <div className="field">
+          <label htmlFor="classify-tipo">Tipo do documento</label>
+          <select id="classify-tipo" value={tipo} onChange={(e) => setTipo(e.target.value)} {...errorProps("tipo", errors)}>
+            <option value="">Selecione…</option>
+            {Object.entries(DOCUMENT_TYPE_LABELS).map(([code, label]) => (
+              <option key={code} value={code}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <FieldError id="tipo-error" message={errors.tipo} />
+        </div>
+        <div className="field">
+          <label htmlFor="classify-categoria">Categoria da atividade</label>
+          <select
+            id="classify-categoria"
+            value={categoria}
+            onChange={(e) => setCategoria(e.target.value)}
+            {...errorProps("categoria", errors)}
+          >
+            <option value="">Selecione…</option>
+            {Object.entries(TAXONOMY_LABELS).map(([code, label]) => (
+              <option key={code} value={code}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <FieldError id="categoria-error" message={errors.categoria} />
+        </div>
+        {error && (
+          <p role="alert" className="error">
+            {error}
+          </p>
+        )}
+        <div className="btn-row">
+          <button type="submit" className="btn btn-primary">
+            Salvar classificação
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

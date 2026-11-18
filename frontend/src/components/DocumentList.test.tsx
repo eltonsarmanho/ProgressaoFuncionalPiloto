@@ -193,7 +193,7 @@ describe("UIM-02 / UIM-03: ações por documento", () => {
     expect(onChanged).not.toHaveBeenCalled();
   });
 
-  it("classificar manualmente envia tipo, categoria e a versão, e mostra o erro 422 no campo", async () => {
+  it("classificar abre uma janela, envia tipo, categoria e a versão, mostra o 422 no campo e fecha ao salvar", async () => {
     let attempt = 0;
     const { calls, onChanged, user } = setup([doc({ suggested_type: null, suggested_category: null })], {
       "PUT /api/documents/d1/classification": () => {
@@ -204,14 +204,32 @@ describe("UIM-02 / UIM-03: ações por documento", () => {
       },
     });
     await user.click(screen.getByRole("button", { name: "Classificar declaracao-banca.pdf" }));
-    await user.selectOptions(screen.getByLabelText("Tipo do documento"), "CERTIFICADO");
-    await user.selectOptions(screen.getByLabelText("Categoria da atividade"), "PALESTRA");
-    await user.click(screen.getByRole("button", { name: "Salvar classificação" }));
-    expect(await screen.findByText("Categoria inválida")).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { name: "Classificar documento" });
+    expect(dialog).toHaveAttribute("aria-modal", "true");
 
-    await user.click(screen.getByRole("button", { name: "Salvar classificação" }));
+    await user.selectOptions(within(dialog).getByLabelText("Tipo do documento"), "CERTIFICADO");
+    await user.selectOptions(within(dialog).getByLabelText("Categoria da atividade"), "PALESTRA");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar classificação" }));
+    expect(await within(dialog).findByText("Categoria inválida")).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(onChanged).not.toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole("button", { name: "Salvar classificação" }));
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
     expect(JSON.parse(calls[1].init?.body as string)).toEqual({ tipo: "CERTIFICADO", categoria: "PALESTRA", expected_version: 3 });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("Esc fecha a janela de classificação sem chamar a API e devolve o foco ao botão", async () => {
+    const { calls, user } = setup([doc()]);
+    const opener = screen.getByRole("button", { name: "Classificar declaracao-banca.pdf" });
+    await user.click(opener);
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(calls).toHaveLength(0);
+    expect(opener).toHaveFocus();
   });
 });
 
