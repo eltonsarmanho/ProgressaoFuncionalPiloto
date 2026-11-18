@@ -2020,8 +2020,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Mover guarda a seção no rascunho e a geração a usa; seção inexistente responde 422; versão desatualizada, 409
-- [ ] Gate full passa; 4+ testes
+- [x] Mover guarda a seção no rascunho e a geração a usa; seção inexistente responde 422; versão desatualizada, 409
+- [x] Gate full passa; 4+ testes
 
 **Tests**: integration
 **Gate**: full

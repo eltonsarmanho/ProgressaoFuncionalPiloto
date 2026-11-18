@@ -27,6 +27,7 @@ from app.domain.rules.report_draft import (
     STALE_MESSAGE,
     ReportConfig,
     empty_sections,
+    move_entry,
     propose_draft,
     reconcile_draft,
 )
@@ -247,3 +248,24 @@ class SaveReportSection(_DraftEditUseCase):
             edit,
             check=lambda: _checked_length(free_text, "free_text"),
         )
+
+
+class MoveReportEntry(_DraftEditUseCase):
+    def execute(
+        self,
+        actor: User,
+        process_id: UUID,
+        activity_id: UUID,
+        section_key: str,
+        expected_version: int,
+    ) -> ReportDraft:
+        """The activity goes to the end of the section and the generation uses that choice
+        (REL-08). A section the template does not have is a 422; the rest is as in
+        SaveReportEntry."""
+
+        def edit(draft: ReportDraft, inputs: GenerationInputs, config: ReportConfig):
+            if config.template.section(section_key) is None:
+                raise ValidationFailed("section_key", "A seção não existe no modelo do Relatório")
+            return move_entry(draft, activity_id, section_key, inputs.activities, config.template)
+
+        return self._save(actor, process_id, expected_version, "MOVE", edit)

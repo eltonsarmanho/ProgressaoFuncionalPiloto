@@ -5,6 +5,7 @@ import dataclasses
 from app.application.services.generation_inputs import load_generation_inputs
 from app.application.use_cases.report_draft import (
     GetReportDraft,
+    MoveReportEntry,
     SaveReportEntry,
     SaveReportSection,
 )
@@ -22,6 +23,10 @@ def save_entry_uc(world) -> SaveReportEntry:
 
 def save_section_uc(world) -> SaveReportSection:
     return SaveReportSection(world.uow_factory, world.audit, world.policy, ReportConfigLoader())
+
+
+def move_uc(world) -> MoveReportEntry:
+    return MoveReportEntry(world.uow_factory, world.audit, world.policy, ReportConfigLoader())
 
 
 def set_status(world, status):
