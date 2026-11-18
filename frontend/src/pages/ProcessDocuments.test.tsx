@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setCsrfToken } from "../api/client";
 import type { DocumentDetail, DocumentSummary } from "../api/types";
@@ -27,6 +27,10 @@ const SCORING_ROUTES = {
   "GET /api/processes/p1/scoring/table": { status: 200, body: { chosen: null, suggested: null, alerts: [] } },
 };
 
+function LocationProbe() {
+  return <span data-testid="search">{useLocation().search}</span>;
+}
+
 function renderPage(routes: Parameters<typeof mockFetch>[0], path = "/processos/p1/documentos") {
   setCsrfToken("tok");
   const mock = mockFetch({ ...SCORING_ROUTES, ...routes });
@@ -35,6 +39,7 @@ function renderPage(routes: Parameters<typeof mockFetch>[0], path = "/processos/
       <Routes>
         <Route path="processos/:id/documentos" element={<ProcessDocuments />} />
       </Routes>
+      <LocationProbe />
     </MemoryRouter>,
   );
   return { ...mock, user: userEvent.setup() };
@@ -138,22 +143,57 @@ describe("TELA-04: ações recarregam a lista", () => {
     expect(calls.some((c) => c.method === "DELETE" && c.path === "/api/documents/d1")).toBe(true);
   });
 
-  it("visualizar abre o visualizador com o detalhe do documento", async () => {
+  it("visualizar abre o visualizador numa janela com o detalhe e põe ?documento= na URL", async () => {
     const { user } = renderPage({
       [LIST]: { status: 200, body: [doc()] },
       "GET /api/documents/d1": { status: 200, body: DETAIL },
     });
     await user.click(await screen.findByRole("button", { name: "Visualizar ata.pdf" }));
-    expect(await screen.findByText("Texto da ata")).toBeInTheDocument();
-    expect(screen.getByTitle("Documento ata.pdf")).toBeInTheDocument();
+
+    const dialog = await screen.findByRole("dialog", { name: "ata.pdf" });
+    expect(dialog).toHaveAttribute("aria-modal", "true");
+    expect(await within(dialog).findByText("Texto da ata")).toBeInTheDocument();
+    expect(within(dialog).getByTitle("Documento ata.pdf")).toBeInTheDocument();
+    expect(screen.getByTestId("search")).toHaveTextContent("?documento=d1");
   });
 
-  it("o link de um arquivo duplicado (?documento=) abre o visualizador do documento existente", async () => {
+  it("Fechar e Esc fecham a janela, tiram ?documento= da URL e devolvem o foco ao botão", async () => {
+    const { user } = renderPage({
+      [LIST]: { status: 200, body: [doc()] },
+      "GET /api/documents/d1": { status: 200, body: DETAIL },
+    });
+    const opener = await screen.findByRole("button", { name: "Visualizar ata.pdf" });
+
+    await user.click(opener);
+    await user.click(await screen.findByRole("button", { name: "Fechar" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByTestId("search")).toHaveTextContent("");
+    expect(opener).toHaveFocus();
+
+    await user.click(opener);
+    await screen.findByRole("dialog", { name: "ata.pdf" });
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByTestId("search").textContent).toBe("");
+  });
+
+  it("o link de um arquivo duplicado (?documento=) abre a janela do documento existente", async () => {
     renderPage(
       { [LIST]: { status: 200, body: [doc()] }, "GET /api/documents/d1": { status: 200, body: DETAIL } },
       "/processos/p1/documentos?documento=d1",
     );
-    expect(await screen.findByText("Texto da ata")).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog", { name: "ata.pdf" });
+    expect(await within(dialog).findByText("Texto da ata")).toBeInTheDocument();
+  });
+
+  it("um documento inexistente (404) no ?documento= não deixa janela aberta e limpa a URL", async () => {
+    renderPage(
+      { [LIST]: { status: 200, body: [doc()] }, "GET /api/documents/d9": { status: 404, body: { detail: "Documento não encontrado" } } },
+      "/processos/p1/documentos?documento=d9",
+    );
+    await screen.findByText("ata.pdf", { selector: "td" });
+    await waitFor(() => expect(screen.getByTestId("search").textContent).toBe(""));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
 

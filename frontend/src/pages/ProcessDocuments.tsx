@@ -5,6 +5,7 @@ import type { Activity, DocumentDetail, DocumentSummary, ScoringGroup, ScoringVe
 import { ActivityForm } from "../components/ActivityForm";
 import { DocumentList } from "../components/DocumentList";
 import { DocumentViewer } from "../components/DocumentViewer";
+import { Modal } from "../components/Modal";
 import { StepNav } from "../components/StepNav";
 import { UploadDropzone } from "../components/UploadDropzone";
 import { ACTIVE_DOCUMENT_STATUSES } from "../labels";
@@ -165,7 +166,11 @@ export function ProcessDocuments() {
       />
       {polling && <p className="muted">Há documentos em processamento; a lista é atualizada sozinha.</p>}
 
-      {detail && detail.id === viewId && <DocumentViewer doc={detail} onClose={() => setParams({})} />}
+      {detail && detail.id === viewId && (
+        <Modal title={detail.original_name} onClose={() => setParams({})}>
+          <DocumentViewer doc={detail} />
+        </Modal>
+      )}
 
       {creating && (
         <ActivityFromDocument

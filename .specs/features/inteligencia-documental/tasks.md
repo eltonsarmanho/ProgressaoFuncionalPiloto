@@ -3598,11 +3598,11 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Visualizar abre `role="dialog"` com o nome do arquivo e põe `?documento=<id>` na URL
-- [ ] Abrir a página com `?documento=<id>` abre a janela; Fechar e Esc removem o parâmetro
-- [ ] Documento inexistente (404) não deixa janela aberta
-- [ ] Os testes do `DocumentViewer` continuam verdes sem o painel inline
-- [ ] Gate quick passa
+- [x] Visualizar abre `role="dialog"` com o nome do arquivo e põe `?documento=<id>` na URL
+- [x] Abrir a página com `?documento=<id>` abre a janela; Fechar e Esc removem o parâmetro
+- [x] Documento inexistente (404) não deixa janela aberta
+- [x] Os testes do `DocumentViewer` continuam verdes sem o painel inline
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

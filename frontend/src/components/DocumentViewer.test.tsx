@@ -1,6 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { DocumentDetail } from "../api/types";
 import { DocumentViewer } from "./DocumentViewer";
 
@@ -46,7 +45,7 @@ function detail(over: Partial<DocumentDetail> = {}): DocumentDetail {
   };
 }
 
-const view = (d: DocumentDetail, onClose = vi.fn()) => render(<DocumentViewer doc={d} onClose={onClose} />);
+const view = (d: DocumentDetail) => render(<DocumentViewer doc={d} />);
 
 describe("TELA-04 / REV-01: visualizador", () => {
   it("mostra o PDF em linha pelo endpoint do arquivo", () => {
@@ -94,13 +93,11 @@ describe("TELA-04 / REV-01: visualizador", () => {
     expect(item).toHaveTextContent("ata-defesa.pdf, página 2");
   });
 
-  it("documento em processamento avisa e não mostra páginas; fechar chama onClose", async () => {
-    const onClose = vi.fn();
-    view(detail({ status: "PROCESSANDO", pages: [], run: null, alerts: [], activities: [] }), onClose);
+  it("documento em processamento avisa e não mostra páginas, e não traz botão de fechar próprio", () => {
+    view(detail({ status: "PROCESSANDO", pages: [], run: null, alerts: [], activities: [] }));
     expect(screen.getByText("Este documento ainda está sendo processado.")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Texto por página" })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Fechar visualizador" }));
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: /Fechar/ })).not.toBeInTheDocument();
   });
 });
 

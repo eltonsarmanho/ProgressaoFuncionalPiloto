@@ -29,19 +29,14 @@ function Original({ doc }: { doc: DocumentDetail }) {
 }
 
 /**
- * TELA-04 / REV-01: the stored file, the text of each page with its method and confidence, the
+ * TELA-04 / REV-01 / UIM-08: the stored file, the text of each page with its method and confidence, the
  * extracted JSON (read only), the alerts and the activities suggested from this document.
+ * The page shows it inside a `Modal`, which gives the title and the close button.
  */
-export function DocumentViewer({ doc, onClose }: { doc: DocumentDetail; onClose: () => void }) {
+export function DocumentViewer({ doc }: { doc: DocumentDetail }) {
   const processing = ACTIVE_DOCUMENT_STATUSES.includes(doc.status);
   return (
-    <section className="card" aria-labelledby="viewer-title">
-      <div className="page-head">
-        <h2 id="viewer-title">{doc.original_name}</h2>
-        <button type="button" className="link" onClick={onClose}>
-          Fechar visualizador
-        </button>
-      </div>
+    <div className="viewer">
       <p>
         Status: <strong>{DOCUMENT_STATUS_LABELS[doc.status]}</strong>
       </p>
@@ -127,6 +122,6 @@ export function DocumentViewer({ doc, onClose }: { doc: DocumentDetail; onClose:
           </ul>
         )}
       </section>
-    </section>
+    </div>
   );
 }
