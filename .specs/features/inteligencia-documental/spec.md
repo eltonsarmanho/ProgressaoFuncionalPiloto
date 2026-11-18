@@ -54,7 +54,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Palestra, conferência e mesa-redonda | VIII.24 na tabela oficial (era VIII.28 na numeração do Anexo I), sem alternativas | Decisão do usuário em 2026-11-17 pela descrição do item; o número mudou com a tabela oficial | y |
 | Curso concluído e treinamento | Curso de extensão (o documento diz "extensão"): VII.9. Outro curso concluído, treinamento e participação em evento: VII.10 | Decisão do usuário em 2026-11-17; o usuário escreveu VII.19, que não existe; aplicado VII.9 ("curso de extensão, com frequência e aproveitamento") | y |
 | Reprocessamento | Rejeita os rascunhos não editados da execução anterior e mantém as atividades validadas ou editadas | Evita lixo duplicado sem apagar trabalho humano | n |
-| Substituição e exclusão | Substituir apaga o arquivo anterior e a auditoria guarda nome e hash; excluir é física, com justificativa; as atividades ficam | Prompt pede preservar o original durante o processamento, não indefinidamente | n |
+| Substituição e exclusão | Substituir apaga o arquivo anterior e a auditoria guarda nome e hash; excluir é física, sem justificativa obrigatória (UIM-04); as atividades ficam | Prompt pede preservar o original durante o processamento, não indefinidamente | n |
 | Retenção | Sem expiração automática; os documentos ficam enquanto o usuário não os excluir | O processo não é excluído, só arquivado; política de retenção fica para a implantação | n |
 | Mesmo arquivo em vários processos | Permitido; duplicidade só dentro do mesmo processo | Uma portaria pode servir a interstícios diferentes | n |
 | Docente do documento | O nome extraído é comparado, normalizado, ao nome do docente ou à matrícula; divergência vira alerta | Evita pontuar documento de outra pessoa | n |
@@ -86,7 +86,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 7. IF já existe documento com o mesmo hash SHA-256 no mesmo processo THEN the system SHALL responder 409 com o identificador do documento existente, sem gravar o arquivo; the system SHALL permitir o mesmo arquivo em processos diferentes.
 8. WHEN o usuário baixa um documento THEN the system SHALL devolver o original com `Content-Disposition: attachment` e `X-Content-Type-Options: nosniff`; WHEN visualiza THEN the system SHALL devolver o arquivo em linha, apenas para PDF e imagem, com os mesmos controles de acesso.
 9. WHEN o usuário substitui um documento THEN the system SHALL validar o novo arquivo como no envio, gravá-lo sob o mesmo identificador, remover o arquivo anterior, reiniciar o processamento e registrar auditoria com nome e hash anterior e novo.
-10. WHEN o usuário exclui um documento THEN the system SHALL exigir justificativa, remover o arquivo e o texto extraído, remover as ligações com atividades, manter as atividades e registrar auditoria.
+10. WHEN o usuário exclui um documento THEN the system SHALL exigir justificativa, remover o arquivo e o texto extraído, remover as ligações com atividades, manter as atividades e registrar auditoria. *(Substituído por UIM-14, UIM-16 e UIM-17: a justificativa é opcional nas Etapas 2 e 3.)*
 11. WHEN o usuário define o tipo e a categoria do documento THEN the system SHALL gravar a classificação manual sem apagar a sugerida pela IA e registrar auditoria.
 12. IF o usuário não tem acesso ao processo THEN the system SHALL responder 404; WHILE o processo está `CONCLUIDO` ou `ARQUIVADO` the system SHALL recusar envio, substituição, exclusão e reprocessamento com 409.
 13. WHEN ocorre envio, download, substituição, exclusão, reprocessamento ou classificação manual THEN the system SHALL registrar evento de auditoria com usuário, data e hora UTC, documento e operação, sem gravar o conteúdo.
@@ -180,7 +180,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 1. WHEN a extração termina com atividades THEN the system SHALL criar as atividades pelo caso de uso de atividades da pontuação e vinculá-las ao documento, à página e a um trecho de até 300 caracteres de origem.
 2. The system SHALL permitir que um documento comprove várias atividades e que uma atividade tenha vários documentos, com um único vínculo por (atividade, documento, página).
-3. WHEN o usuário vincula manualmente a uma atividade um documento já vinculado a outra THEN the system SHALL exigir justificativa, com 422 no campo `justificativa`.
+3. WHEN o usuário vincula manualmente a uma atividade um documento já vinculado a outra THEN the system SHALL exigir justificativa, com 422 no campo `justificativa`. *(Substituído por UIM-14, UIM-16 e UIM-17: a justificativa é opcional nas Etapas 2 e 3.)*
 4. WHEN a atividade tem ao menos um documento vinculado THEN the system SHALL contá-la em `counters.with_evidence` e SHALL não emitir `SEM_COMPROVANTE`; IF não tem documento nem nota de comprovante THEN the system SHALL emitir `SEM_COMPROVANTE`.
 5. WHEN o usuário remove o vínculo de um documento com uma atividade THEN the system SHALL registrar auditoria e manter a atividade.
 6. WHILE duas atividades ligadas ao mesmo documento são consideradas a mesma pela regra de duplicidade da pontuação the system SHALL manter a exclusão do total já definida, sem dupla contagem.
@@ -198,9 +198,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 **Acceptance Criteria** (each line is one EARS pattern):
 
 1. WHEN o usuário abre um documento processado THEN the system SHALL devolver o texto por página com o método e a confiança, o JSON extraído em somente leitura, os alertas e as atividades sugeridas vinculadas.
-2. WHEN o usuário edita uma atividade sugerida THEN the system SHALL usar os endpoints de atividade da pontuação, com justificativa e auditoria, e SHALL manter intacto o JSON bruto da execução.
+2. WHEN o usuário edita uma atividade sugerida THEN the system SHALL usar os endpoints de atividade da pontuação, com justificativa e auditoria, e SHALL manter intacto o JSON bruto da execução. *(Substituído por UIM-14, UIM-16 e UIM-17: a justificativa é opcional nas Etapas 2 e 3.)*
 3. The system SHALL nunca validar uma atividade por conta própria; WHEN o usuário valida ou rejeita THEN the system SHALL usar o endpoint de status da pontuação.
-4. WHEN o usuário valida várias atividades selecionadas THEN the system SHALL exigir uma justificativa, aplicá-la a cada atividade e registrar um evento de auditoria por atividade.
+4. WHEN o usuário valida várias atividades selecionadas THEN the system SHALL exigir uma justificativa, aplicá-la a cada atividade e registrar um evento de auditoria por atividade. *(Substituído por UIM-14, UIM-16 e UIM-17: a justificativa é opcional nas Etapas 2 e 3.)*
 
 **Independent Test**: Corrigir o título de uma atividade sugerida, validá-la e ver o total mudar.
 
@@ -217,7 +217,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 1. WHEN o usuário abre um processo THEN the frontend SHALL habilitar as Etapas 2 e 3, mantendo as etapas 5 a 9 como "em breve".
 2. WHEN o usuário abre a Etapa 2 THEN the frontend SHALL oferecer envio múltiplo por arrastar e soltar e por seletor, e a lista dos documentos com nome, tipo, tamanho, status, categoria sugerida e confiança.
 3. WHILE há documento `PENDENTE` ou `PROCESSANDO` the frontend SHALL atualizar a lista a cada 3 segundos, sem recarregar a página.
-4. The frontend SHALL permitir visualizar, baixar, substituir, excluir (com justificativa), reprocessar e classificar manualmente cada documento.
+4. The frontend SHALL permitir visualizar, baixar, substituir, excluir (sem justificativa, UIM-03), reprocessar e classificar manualmente cada documento.
 5. IF o envio de um arquivo é recusado (422, 409 ou 429) THEN the frontend SHALL exibir o motivo ao lado desse arquivo, sem impedir os demais.
 6. WHEN o usuário abre a Etapa 3 THEN the frontend SHALL listar as atividades com origem, status, grupo e item, pontuação potencial e documentos vinculados (nome e página), com ações de validar, rejeitar, editar com justificativa, vincular documento e validar as selecionadas.
 7. WHILE um documento está `EXTRAIDO_SEM_IA` the frontend SHALL exibir o aviso de que a IA ficou indisponível e orientar o cadastro manual da atividade.
@@ -390,6 +390,45 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ---
 
+### P1: Rodada de interface das Etapas 2, 3 e 4 ⭐ MVP
+
+**User Story**: Como docente, quero que a lista de documentos, a de atividades e a de pontuação caibam na tela, com botões curtos que agem na hora, janelas para classificar, criar atividade, visualizar e editar, e a escolha de pontuar uma atividade de forma automática ou manual, para revisar o interstício sem decifrar tabelas espremidas nem justificar cada clique.
+
+**Why P1**: Os testes de uso das Etapas 2 e 3 mostraram tabelas ilegíveis (colunas com uma letra por linha, cada ação repetindo o nome inteiro do arquivo ou da atividade), justificativa pedida para excluir, validar e rejeitar, painéis abertos abaixo da tabela e um aviso de revisão que aparecia mesmo para documentos de confiança alta. Entram como requisitos novos; a pedido do usuário ("interação direta e precisa") UIM-03, UIM-04, UIM-13, UIM-14, UIM-16, UIM-17 e UIM-18 substituem a justificativa obrigatória que DOC-10 (excluir), TELA-04, VINC-03 (documento já ligado), REV-02 e REV-04 (editar e validar) e as regras de justificativa da feature `pontuacao` (ATV-08, ATV-09, itens candidatos, pontos manuais e atividades distintas) exigiam nas Etapas 2 e 3; a justificativa de alterar processo em andamento (Etapa 1) não muda. O sistema não passa a validar nada sozinho: toda validação continua sendo um clique do usuário (REV-03).
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. The frontend SHALL dimensionar as colunas da lista de documentos (Etapa 2) para que o texto caiba sem quebrar uma letra por linha: o nome trunca com reticências e traz o nome inteiro no atributo `title`, Tipo, Tamanho, Status e Confiança têm largura curta fixa e a coluna Ações coloca os botões lado a lado, quebrando de linha só quando falta espaço; abaixo de 480 px a tabela continua em cartões com `data-label` e sem rolagem horizontal.
+2. The frontend SHALL exibir as ações de cada documento como botões com rótulo curto (Visualizar, Baixar, Substituir, Excluir, Reprocessar, Classificar) nas variantes primário, secundário e perigo, com estado desabilitado, levando o nome do arquivo só no `aria-label` e no `title` ("Visualizar <nome>"); WHEN o usuário aciona Baixar THEN the frontend SHALL iniciar o download de `/api/documents/{id}/file?download=1` sem sair da página.
+3. WHEN o usuário aciona Substituir THEN the frontend SHALL abrir o seletor de arquivo e substituir o arquivo ao escolhê-lo; WHEN aciona Reprocessar THEN the frontend SHALL reprocessar na hora, com o botão desabilitado enquanto o documento está `PENDENTE` ou `PROCESSANDO`; WHEN aciona Excluir THEN the frontend SHALL pedir só a confirmação "Excluir <nome>? Esta ação não pode ser desfeita." com Excluir e Cancelar, sem campo de justificativa, e SHALL excluir e recarregar a lista ao confirmar.
+4. WHEN o usuário exclui um documento sem justificativa THEN the system SHALL excluir o arquivo, o texto e os vínculos e registrar o evento de auditoria sem justificativa (204), e WHERE a justificativa é enviada the system SHALL gravá-la no evento como antes.
+5. The frontend SHALL oferecer um componente de janela (`Modal`) acessível, com `role="dialog"`, `aria-modal="true"` e nome pelo título, que move o foco para dentro ao abrir, devolve o foco ao botão que a abriu ao fechar, fecha com a tecla Esc e com o botão Fechar, prende o foco enquanto aberta e não gera rolagem horizontal em 360 px.
+6. WHEN o usuário aciona Classificar THEN the frontend SHALL abrir o formulário de classificação numa janela e, ao salvar por `PUT /api/documents/{id}/classification`, SHALL fechá-la e recarregar a lista, exibindo o erro 422 junto do campo sem fechar a janela.
+7. WHEN o documento não produziu atividade utilizável (status `FALHOU`, `REQUER_REVISAO` ou `EXTRAIDO_SEM_IA` com problema, categoria sugerida `SEM_ITEM_DE_PONTUACAO` ou `activity_count` igual a 0) THEN the frontend SHALL exibir o botão Criar atividade na linha, que abre o formulário de atividade já ligado ao documento numa janela; WHEN a atividade é salva THEN the frontend SHALL vinculá-la à página do documento, fechar a janela e recarregar a lista; the system SHALL expor `activity_count` (atividades não rejeitadas ligadas ao documento) na listagem de documentos.
+8. WHEN o usuário aciona Visualizar THEN the frontend SHALL abrir o visualizador do documento numa janela, mantendo o estado `?documento=<id>` na URL (a janela abre ao carregar a URL e Fechar remove o parâmetro).
+9. IF a confiança do documento é de 0,70 ou mais e não há aviso real (falha, texto ilegível, docente divergente, categoria sem item) THEN the frontend SHALL não exibir aviso nem selo de revisão; WHERE a confiança é menor que 0,70 ou há aviso real the frontend SHALL exibir o aviso; the frontend SHALL trocar a frase de abertura da lista por uma que diga que as sugestões ainda são validadas na Etapa 3, que documentos abaixo de 70% ou com aviso merecem conferência e que reprocessar descarta os rascunhos não editados, sem alterar nenhuma pontuação nem validar nada sozinho.
+10. The frontend SHALL dimensionar as colunas da lista de atividades (Etapa 3) com larguras curtas para Selecionar, Origem, Status e Pontuação potencial e o espaço restante para Atividade e Grupo e item, e SHALL justificar (`text-align: justify` com hifenização) o texto corrido do título e da descrição do item, mantendo números e selos alinhados à esquerda ou ao centro; abaixo de 480 px a tabela continua em cartões sem rolagem horizontal.
+11. WHEN o usuário aciona Selecionar todas, ou o seletor do cabeçalho da coluna Selecionar, THEN the frontend SHALL selecionar só as atividades exibidas que ainda podem ser validadas (status `AGUARDANDO_REVISAO`) e mostrar a contagem; WHEN aciona Limpar seleção THEN the frontend SHALL desfazer a seleção; "Validar as selecionadas (N)" SHALL continuar usando o endpoint de validação em lote atômica.
+12. WHEN o usuário aciona "Validar todas com confiança a partir de 70%" THEN the frontend SHALL validar pelo endpoint de validação em lote atômica só as atividades sugeridas pela IA, aguardando revisão, sem candidatos de item, ligadas a documentos processados e todos com confiança de 0,70 ou mais, e SHALL informar quantas foram validadas, deixando as demais intocadas; IF nenhuma atividade atende THEN the frontend SHALL desabilitar o botão.
+13. The frontend SHALL exibir as ações de cada atividade (Validar, Rejeitar, Editar, Vincular) como botões de rótulo curto, com o título da atividade só no `aria-label` e no `title`; WHEN o usuário aciona Validar ou Rejeitar numa atividade sugerida THEN the frontend SHALL aplicar a mudança na hora, sem justificativa nem painel, e atualizar a linha; WHEN aciona Editar ou Vincular THEN the frontend SHALL abrir o formulário correspondente na janela, e salvar SHALL atualizar a lista.
+14. WHEN o usuário valida, rejeita, reabre ou marca como distinta uma atividade, ou valida atividades em lote, THEN the system SHALL aceitar a mudança sem justificativa e registrar a auditoria com a justificativa nula, e WHERE a justificativa é enviada the system SHALL gravá-la no evento; a validação em lote continua atômica.
+15. The system SHALL registrar em `validation.md` a "Resolution (round 7)" desta rodada de interface e as decisões que ficam com o usuário.
+
+16. WHEN o usuário altera o item, a quantidade, as horas ou os pontos de uma atividade, informa pontos manualmente, registra itens candidatos ou vincula a uma atividade um documento já ligado a outra THEN the system SHALL aceitar a operação sem justificativa (os endpoints seguem aceitando o campo `justificativa` e gravando-o quando enviado), registrar a auditoria com os valores anterior e novo e a justificativa nula, e manter o 409 do vínculo repetido.
+17. The frontend SHALL não exibir campo de justificativa em nenhuma ação das Etapas 2, 3 e 4 (excluir, substituir, classificar, validar, rejeitar, editar, vincular, validar em lote, criar atividade, manter como distinta, editar pontuação e escolher a tabela de outra unidade); a Etapa 1 SHALL permanecer como está.
+18. WHEN o usuário escolhe para o processo uma tabela de outra unidade acadêmica THEN the system SHALL aceitar a escolha sem justificativa (o campo segue aceito e gravado quando enviado), manter o alerta `TABELA_DE_OUTRA_UNIDADE` e registrar a auditoria com a justificativa nula; a justificativa de alterar processo em andamento (Etapa 1) SHALL continuar exigida.
+19. The frontend SHALL dimensionar as colunas da tabela de pontuação (Etapa 4) com larguras curtas para Grupo, Item, Quantidade, Pontuação unitária, Total e Status e o espaço restante para Atividade, justificar o texto corrido do título, e manter os cartões de 360 px sem rolagem horizontal.
+20. The frontend SHALL exibir as ações da tabela de pontuação (Editar, Validar, Rejeitar, Manter como distinta, Nova atividade) como botões de rótulo curto, com o título da atividade só no `aria-label` e no `title`; WHEN o usuário aciona Validar, Rejeitar ou Manter como distinta THEN the frontend SHALL aplicar na hora e recarregar a pontuação, e WHEN aciona Editar ou Nova atividade THEN the frontend SHALL abrir o formulário numa janela.
+21. WHEN o frontend pede a prévia da pontuação de uma atividade com valores novos THEN the system SHALL validar os valores como a edição (422 igual), calcular o resultado com o mesmo motor de pontuação sobre a atividade trocada em memória e devolver linhas, subtotais e total, sem gravar a atividade nem a auditoria; IF o item não aceita pontos manuais ou a linha é de horas de PIT THEN the system SHALL recusar `points_override` com 422.
+22. WHEN o usuário abre o editor de pontuação de uma atividade THEN the frontend SHALL oferecer o modo Automático (padrão), em que a mudança de quantidade, horas ou item atualiza a prévia com os pontos devolvidos pelo servidor, e o modo Manual, em que o usuário digita os pontos da atividade, disponível só para item de carga semanal fora das horas de PIT; WHERE o item não aceita pontos manuais THEN the frontend SHALL manter só o modo Automático com uma nota curta; the frontend SHALL não calcular pontos no navegador.
+23. WHEN a linha de pontuação está `PONTUADA` ou `POTENCIAL` THEN the frontend SHALL exibir o botão Editar pontuação, que abre o editor numa janela; WHERE a linha tem o alerta `PONTOS_AJUSTADOS_MANUALMENTE` the frontend SHALL exibir o selo Manual e o botão Voltar ao automático, que remove os pontos manuais; WHEN o usuário salva THEN the frontend SHALL atualizar as linhas, os subtotais e o total.
+
+**Independent Test (Etapa 4)**: Na tabela de pontuação, Editar pontuação numa atividade de carga semanal alterna entre Automática e Manual, mostra a prévia do servidor e, ao salvar, a linha ganha o selo Manual e o total muda; Voltar ao automático restaura o cálculo.
+
+**Independent Test**: Num documento de 360 px de largura com nome longo, a linha mostra os seis botões curtos lado a lado, Excluir pede só a confirmação, Classificar e Criar atividade abrem janelas que fecham com Esc, um documento com confiança 0,91 não mostra aviso, e na Etapa 3 "Selecionar todas" mais "Validar as selecionadas (N)" valida sem pedir justificativa.
+
+---
+
 ## Edge Cases
 
 Edge cases are usually unwanted-behavior (IF/THEN) or boundary (WHEN) criteria:
@@ -548,12 +587,35 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CER-03 | P1: Correções da sexta rodada de validação | Design | Implementing |
 | CER-04 | P1: Correções da sexta rodada de validação | Design | Implementing |
 | CER-05 | P1: Correções da sexta rodada de validação | Design | Implementing |
+| UIM-01 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-02 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-03 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-04 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-05 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-06 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-07 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-08 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-09 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-10 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-11 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-12 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-13 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-14 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-15 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-16 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-17 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-18 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-19 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-20 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-21 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-22 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-23 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 139 total, 139 mapped to tasks, 0 unmapped
+**Coverage:** 162 total, 162 mapped to tasks, 0 unmapped
 
 ---
 

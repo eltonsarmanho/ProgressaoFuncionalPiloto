@@ -150,6 +150,14 @@ Certificado em inglês de participação com carga horária que não pontuava (C
 T113 → T114 → T115 → T116 → T117
 ```
 
+### Phase 17: Rodada de interface das Etapas 2 e 3
+
+Tabelas legíveis, botões curtos que agem na hora, janelas para classificar, criar atividade, visualizar e editar, a regra de confiança de 70% e a validação em lote com seleção (UIM-01..15). Seis tarefas de backend abrem a fase (exclusão, validação, edição, vínculo e escolha de tabela sem justificativa, `activity_count` e a prévia da pontuação); as demais são do frontend. A justificativa deixa de ser exigida nas Etapas 2, 3 e 4 (UIM-14, UIM-16, UIM-17, UIM-18); a Etapa 1 não muda. A Etapa 4 ganha a mesma tabela legível, botões diretos e o editor de pontuação automática ou manual (UIM-19..23). Os testes usam só nomes e textos sintéticos; nenhum documento real, MariTalk, VM, push ou deploy. A confiança de uma atividade vem do documento ligado, pois a API não a expõe. Fase maior que o orçamento por ser uma cadeia de mudanças da mesma tela, ordenadas por dependência.
+
+```
+T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 → T127 → T128 → T129 → T130 → T131 → T132 → T133 → T134 → T135 → T136 → T137 → T138 → T139
+```
+
 ---
 
 ## Task Breakdown
@@ -3298,10 +3306,615 @@ T113 → T114 → T115 → T116 → T117
 
 ---
 
+### T118: Excluir documento sem justificativa
+
+**What**: `DeleteDocument` aceita a exclusão sem justificativa (204) e grava o evento de auditoria com a justificativa nula; a justificativa enviada continua gravada no evento do documento e nos desvínculos. Arquivos: `documents.py` (caso de uso) e testes de integração da exclusão.
+**Where**: `backend/app/application/use_cases/documents.py`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `DeleteDocument`, `AuditService.record`, `tests/integration/doc_usecases/test_replace_delete.py`
+**Requirement**: UIM-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `DELETE /api/documents/{id}` sem `justificativa` responde 204, remove arquivo, texto e vínculos e grava o evento `DELETE` com justificativa nula
+- [ ] Com `justificativa` o evento continua com o texto, e os desvínculos das evidências também
+- [ ] Os testes de exclusão existentes que esperavam 422 sem justificativa passam a esperar 204
+- [ ] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(documents): let a document be deleted without a justification`
+
+---
+
+### T119: Contagem de atividades por documento na listagem
+
+**What**: `EvidenceRepository.counts_for_documents` conta as atividades não rejeitadas ligadas a cada documento; `ListDocuments` devolve a contagem e `DocumentOut` expõe `activity_count` na listagem do processo (e `0` onde não há ligação); `DocumentSummary` do frontend ganha o campo. Arquivos: `ports.py`, `repositories.py`, `documents.py` (caso de uso e schema), `types.ts` e testes.
+**Where**: `backend/app/infrastructure/database/repositories.py`
+**Depends on**: T118
+**Reuses**: `counts_for_activities`, `DocumentOut`, `tests/integration/documents/test_repositories.py`
+**Requirement**: UIM-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O repositório conta cada atividade uma vez por documento, ignora as rejeitadas e devolve 0 para documento sem ligação
+- [ ] `GET /api/processes/{id}/documents` traz `activity_count` em cada documento (0, 1 e 2 em documentos de teste) e o detalhe do documento continua igual
+- [ ] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(documents): expose how many activities each document produced`
+
+---
+
+### T120: Validar, rejeitar e marcar como distinta sem justificativa
+
+**What**: `ChangeActivityStatus`, `BulkValidateActivities` e `MarkActivitiesDistinct` deixam de exigir justificativa (qualquer atividade, qualquer mudança de status, inclusive reabrir); a justificativa enviada continua gravada na auditoria e a ausente grava nula. Arquivos: `scoring.py` e testes de integração.
+**Where**: `backend/app/application/use_cases/scoring.py`
+**Depends on**: T119
+**Reuses**: `_require_justification`, `tests/integration/scoring/test_bulk_validate.py`
+**Requirement**: UIM-14
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Validar, rejeitar e reabrir uma atividade sem justificativa dão 200 e a auditoria do status fica com justificativa nula; com justificativa ela é gravada
+- [ ] O lote sem justificativa valida todas as atividades, continua atômico (uma de outro processo dá 404 e nenhuma é validada) e grava um evento por atividade
+- [ ] Marcar como distinta sem justificativa dá 200 e conta as duas atividades
+- [ ] Os testes que esperavam 422 por falta de justificativa nessas três ações passam a esperar sucesso e auditoria sem justificativa, sem perder as demais asserções
+- [ ] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(activities): make the justification optional for status changes and distinct marks`
+
+---
+
+### T121: Editar atividade, pontos manuais, candidatos e vínculo sem justificativa
+
+**What**: `UpdateActivity` (item, quantidade, horas, pontos), `CreateActivity` (pontos informados manualmente), `_validate_basics` (justificativa dos itens candidatos) e `LinkEvidence` (documento já ligado a outra atividade) deixam de exigir justificativa; o campo segue aceito nos schemas e gravado quando enviado, e a auditoria funciona sem ele. A tabela de outra unidade e o processo em andamento (Etapas 1 e 4) não mudam. Arquivos: `scoring.py`, `evidences.py` e testes de integração.
+**Where**: `backend/app/application/use_cases/evidences.py`
+**Depends on**: T120
+**Reuses**: `JUSTIFIED_FIELDS`, `candidates_need_justification`, `tests/integration/scoring/test_activity_update.py`
+**Requirement**: UIM-16
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Alterar item, quantidade, horas e pontos de uma atividade sem justificativa dá 200 e grava o evento de auditoria com os valores anterior e novo e justificativa nula
+- [ ] Criar atividade manual com pontos informados e com itens candidatos sem justificativa dá 201
+- [ ] Vincular a uma segunda atividade um documento já ligado, sem justificativa, dá 201 e mantém o 409 do vínculo repetido
+- [ ] A justificativa enviada continua gravada nos eventos; a tabela de outra unidade continua exigindo (Etapa 4)
+- [ ] Os testes que esperavam 422 por falta de justificativa passam a esperar sucesso, sem perder as demais asserções
+- [ ] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(activities): make the justification optional for edits, manual points, candidates and links`
+
+---
+
+### T122: Escolher tabela de outra unidade sem justificativa
+
+**What**: `ChooseProcessTable` deixa de exigir justificativa para a tabela de outra unidade acadêmica; o campo segue aceito e gravado quando enviado, o alerta `TABELA_DE_OUTRA_UNIDADE` continua e a auditoria funciona sem ele. O processo em andamento (Etapa 1) não muda. Arquivos: `scoring.py` e testes de integração.
+**Where**: `backend/app/application/use_cases/scoring.py`
+**Depends on**: T121
+**Reuses**: `ChooseProcessTable`, `tests/integration/scoring/test_table_choice.py`
+**Requirement**: UIM-18
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `PUT /api/processes/{id}/scoring/table` com a versão de outra unidade e sem `justificativa` responde 200, grava o evento de auditoria com justificativa nula e mantém o alerta `TABELA_DE_OUTRA_UNIDADE`
+- [ ] Com `justificativa` ela é gravada no evento
+- [ ] O teste que esperava 422 sem justificativa passa a esperar 200 e auditoria sem justificativa, sem perder as demais asserções
+- [ ] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(scoring): let a table of another unit be chosen without a justification`
+
+---
+
+### T123: Prévia da pontuação de uma atividade
+
+**What**: `POST /api/activities/{id}/scoring-preview` recebe os campos da atividade (os do `PUT`, sem a versão), valida como a edição (422 igual), troca a atividade em memória e devolve o resultado do mesmo motor de pontuação (`ProcessScoreOut`: linhas, subtotais e total), sem gravar nada nem auditar; o motor segue a única fonte do cálculo. Arquivos: `scoring.py` (caso de uso), `activities.py` (rota), `dependencies.py` e testes de integração.
+**Where**: `backend/app/application/use_cases/scoring.py`
+**Depends on**: T122
+**Reuses**: `CalculateProcessScore`, `normalize_activity`, `ProcessScoreOut`
+**Requirement**: UIM-21
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] A prévia com a quantidade ou os pontos manuais novos devolve a linha da atividade com os pontos e o total que o motor calcula, iguais aos de salvar e consultar `GET /api/processes/{id}/scoring`
+- [ ] Depois da prévia a atividade e o resultado de `GET /scoring` continuam como estavam e nenhum evento de auditoria foi gravado
+- [ ] Pontos manuais em item que não é de carga semanal e em linha de horas de PIT dão 422 no campo `points_override`, como a edição
+- [ ] Atividade de outro processo sem acesso dá 404 e sem sessão 401
+- [ ] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(scoring): preview the points of an activity before saving`
+
+---
+
+### T124: Componente Modal acessível
+
+**What**: Componente `Modal` com `role="dialog"`, `aria-modal`, título como nome, foco movido para dentro ao abrir e devolvido ao elemento que o abriu, Esc e botão Fechar, foco preso no Tab, rolagem do fundo travada e sem rolagem horizontal em 360 px (CSS). Arquivos: `Modal.tsx`, `Modal.test.tsx` e `styles.css`.
+**Where**: `frontend/src/components/Modal.tsx`
+**Depends on**: T123
+**Reuses**: `styles.css`, `@testing-library/user-event`
+**Requirement**: UIM-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O diálogo tem `role="dialog"`, `aria-modal="true"` e o nome do título, e o foco vai para dentro ao abrir
+- [ ] Esc e o botão Fechar chamam `onClose`; ao desmontar o foco volta ao botão que abriu
+- [ ] Tab e Shift+Tab no último e no primeiro elemento ficam dentro da janela
+- [ ] O CSS do corpo da janela usa `max-width: 100%` e rolagem vertical, sem largura fixa acima de 360 px
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(ui): add an accessible modal dialog`
+
+---
+
+### T125: Estilos dos botões e colunas das tabelas das Etapas 2 e 3
+
+**What**: Classes `.btn` com variantes primário, secundário e perigo e estado desabilitado, em cores de `styles.css`; colunas de `.doc-table` e `.review-table` com larguras curtas, nome com reticências, ações lado a lado e texto corrido justificado com hifenização na Etapa 3, valendo só acima de 480 px; os cartões de 360 px ficam como estão. Arquivos: `styles.css` e `styles.test.ts`.
+**Where**: `frontend/src/styles.css`
+**Depends on**: T124
+**Reuses**: `.scoring-table`, `.row-actions`, `styles.test.ts`
+**Requirement**: UIM-01, UIM-02, UIM-10
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O teste estático confere as variantes `.btn-primary`, `.btn-secondary` e `.btn-danger` e `.btn:disabled`
+- [ ] O teste estático confere a regra de reticências do nome (`text-overflow: ellipsis`) e `text-align: justify` com `hyphens: auto` na Etapa 3
+- [ ] As regras de largura de coluna ficam dentro de `@media (min-width: 481px)` e os testes estáticos de 360 px existentes continuam verdes
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `style(ui): size the table columns and add button variants`
+
+---
+
+### T126: Ações da lista de documentos como botões imediatos
+
+**What**: `DocumentList` mostra Visualizar, Baixar, Substituir, Excluir, Reprocessar e Classificar como botões `.btn` de rótulo curto com o nome só em `aria-label` e `title`; Baixar baixa `/api/documents/{id}/file?download=1`; Substituir e Reprocessar agem na hora; Excluir pede só a confirmação "Excluir <nome>? Esta ação não pode ser desfeita." numa `Modal`, sem justificativa, e recarrega. O nome na coluna Nome ganha `title`. Arquivos: `DocumentList.tsx`, `DocumentList.test.tsx`.
+**Where**: `frontend/src/components/DocumentList.tsx`
+**Depends on**: T125
+**Reuses**: `Modal`, `request`
+**Requirement**: UIM-02, UIM-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Os rótulos visíveis são os seis curtos e o nome do arquivo só aparece no `aria-label` e no `title`
+- [ ] Baixar dispara o download de `/api/documents/d1/file?download=1` sem navegar
+- [ ] Excluir sem campo de justificativa: a confirmação chama `DELETE /api/documents/d1` sem query e recarrega; Cancelar não chama a API
+- [ ] Reprocessar desabilitado em PENDENTE e PROCESSANDO; Substituir envia na hora
+- [ ] Os testes antigos da justificativa foram trocados pelos novos, sem enfraquecer a cobertura
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(documents): turn the document actions into immediate buttons`
+
+---
+
+### T127: Classificar documento em janela
+
+**What**: A classificação abre numa `Modal` (título "Classificar documento"), salva por `PUT /api/documents/{id}/classification`, fecha e recarrega; o 422 aparece junto do campo e a janela fica aberta. Arquivos: `DocumentList.tsx`, `DocumentList.test.tsx`.
+**Where**: `frontend/src/components/DocumentList.tsx`
+**Depends on**: T126
+**Reuses**: `Modal`, `ClassifyForm`
+**Requirement**: UIM-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Classificar abre `role="dialog"` com os campos Tipo e Categoria, e o painel inline deixa de existir
+- [ ] Salvar envia tipo, categoria e a versão, fecha a janela e chama `onChanged` uma vez
+- [ ] O 422 de `categoria` aparece no campo com a janela aberta; Esc fecha sem chamar a API
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(documents): classify a document in a modal`
+
+---
+
+### T128: Visualizador de documento em janela
+
+**What**: `ProcessDocuments` mostra o `DocumentViewer` numa `Modal`, aberta por Visualizar ou por `?documento=<id>` e fechada por Fechar ou Esc, que removem o parâmetro; o título do visualizador vira o título da janela. Arquivos: `ProcessDocuments.tsx`, `DocumentViewer.tsx` e seus testes.
+**Where**: `frontend/src/pages/ProcessDocuments.tsx`
+**Depends on**: T127
+**Reuses**: `Modal`, `DocumentViewer`
+**Requirement**: UIM-08
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Visualizar abre `role="dialog"` com o nome do arquivo e põe `?documento=<id>` na URL
+- [ ] Abrir a página com `?documento=<id>` abre a janela; Fechar e Esc removem o parâmetro
+- [ ] Documento inexistente (404) não deixa janela aberta
+- [ ] Os testes do `DocumentViewer` continuam verdes sem o painel inline
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(documents): show the viewer in a modal`
+
+---
+
+### T129: Formulário de atividade sem justificativa
+
+**What**: `ActivityForm` deixa de exibir e de exigir o campo de justificativa ao editar ou informar pontos manualmente e salva direto; nenhum campo de justificativa nas Etapas 2 e 3 (Etapa 4 não muda). Arquivos: `ActivityForm.tsx` e `ActivityForm.test.tsx`.
+**Where**: `frontend/src/components/ActivityForm.tsx`
+**Depends on**: T128
+**Reuses**: `ActivityForm`, `request`
+**Requirement**: UIM-17
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Editar uma atividade e informar pontos manuais não mostram campo de justificativa e enviam o `PUT` sem `justificativa`
+- [ ] O formulário não bloqueia o envio por falta de justificativa; o 422 de outros campos aparece junto do campo
+- [ ] Os testes que exigiam a justificativa foram trocados pelos novos, sem enfraquecer a cobertura
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(activities): drop the justification field from the activity form`
+
+---
+
+### T130: Criar atividade a partir do documento em janela
+
+**What**: `DocumentList` mostra o botão Criar atividade na linha quando o documento não produziu atividade utilizável (FALHOU, REQUER_REVISAO ou EXTRAIDO_SEM_IA com problema, categoria `SEM_ITEM_DE_PONTUACAO` ou `activity_count` 0); `ProcessDocuments` abre o `ActivityFromDocument` numa `Modal`, vincula a página, fecha e recarrega. Arquivos: `DocumentList.tsx`, `ProcessDocuments.tsx` e testes.
+**Where**: `frontend/src/components/DocumentList.tsx`
+**Depends on**: T129
+**Reuses**: `ActivityFromDocument`, `Modal`
+**Requirement**: UIM-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O botão aparece para os cinco casos e não aparece em documento processado com `activity_count` 1
+- [ ] O botão abre `role="dialog"` com o formulário de atividade; salvar cria a atividade, vincula a página, fecha a janela, mostra a mensagem e recarrega
+- [ ] O aviso `SEM_ITEM_DE_PONTUACAO` e o de IA indisponível continuam ao lado do documento
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(documents): create an activity from a document in a modal`
+
+---
+
+### T131: Regra de confiança de 70% e frase de abertura
+
+**What**: Documento com confiança de 0,70 ou mais e sem aviso real não mostra aviso nem selo de revisão (o selo Requer revisão sem código de aviso e confiança alta vira Processado); abaixo de 0,70 ou com aviso real o aviso aparece; a frase de abertura passa a dizer que as sugestões são validadas na Etapa 3, que documentos abaixo de 70% ou com aviso merecem conferência e que reprocessar descarta rascunhos não editados. Arquivos: `labels.ts`, `DocumentList.tsx` e testes.
+**Where**: `frontend/src/components/DocumentList.tsx`
+**Depends on**: T130
+**Reuses**: `LOW_CONFIDENCE`, `DOCUMENT_CODE_LABELS`
+**Requirement**: UIM-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Confiança 0,91 sem aviso: nenhum texto de baixa confiança, de revisão nem selo de revisão
+- [ ] Confiança 0,69 mostra o aviso; confiança 0,70 não mostra (limite)
+- [ ] DOCENTE_DIVERGENTE, TEXTO_ILEGIVEL e FALHOU mostram o aviso mesmo com confiança 0,95
+- [ ] A frase antiga "Tudo que a IA sugere precisa da sua revisão" some e a nova traz a Etapa 3, os 70% e o descarte dos rascunhos
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `fix(documents): warn only below 70 percent or with a real alert`
+
+---
+
+### T132: Ações da lista de atividades como botões diretos
+
+**What**: `ActivityReviewList` mostra Validar, Rejeitar, Editar e Vincular como botões `.btn` de rótulo curto, com o título só em `aria-label` e `title`; Validar e Rejeitar agem na hora sem justificativa nem painel e atualizam a lista; Editar e Vincular abrem o formulário numa `Modal`, sem campo de justificativa, e salvar atualiza a lista; o erro 422 de uma ação aparece como alerta da linha. Arquivos: `ActivityReviewList.tsx`, `ActivityReviewList.test.tsx`, `ProcessActivities.test.tsx`.
+**Where**: `frontend/src/components/ActivityReviewList.tsx`
+**Depends on**: T131
+**Reuses**: `Modal`, `ActivityForm`, `request`
+**Requirement**: UIM-13, UIM-17
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Validar envia `POST /api/activities/{id}/status` com `VALIDADA` e a versão, sem `justificativa`, e recarrega; Rejeitar igual com `REJEITADA`
+- [ ] Editar e Vincular abrem `role="dialog"`; salvar fecha e recarrega
+- [ ] O 422 do servidor aparece em alerta sem fechar nada
+- [ ] Os testes de justificativa dos painéis foram trocados pelos novos, sem enfraquecer a cobertura
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(activities): validate and reject suggestions with direct buttons`
+
+---
+
+### T133: Selecionar todas as atividades
+
+**What**: Botão Selecionar todas e caixa do cabeçalho selecionam só as atividades exibidas em `AGUARDANDO_REVISAO`; Limpar seleção desfaz; a contagem aparece e "Validar as selecionadas (N)" usa o endpoint em lote, agora sem justificativa. Arquivos: `ActivityReviewList.tsx` e teste.
+**Where**: `frontend/src/components/ActivityReviewList.tsx`
+**Depends on**: T132
+**Reuses**: `validate-batch`, `isValidatable`
+**Requirement**: UIM-11
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Selecionar todas marca só as aguardando revisão (as validadas e rejeitadas ficam sem marca) e mostra a contagem
+- [ ] A caixa do cabeçalho alterna entre selecionar e limpar; Limpar seleção zera a contagem e desabilita Validar as selecionadas
+- [ ] Validar as selecionadas envia só os ids marcados ao endpoint em lote, sem justificativa, e recarrega
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(activities): select all the activities awaiting review`
+
+---
+
+### T134: Validar todas com confiança a partir de 70%
+
+**What**: Botão "Validar todas com confiança a partir de 70%" valida pelo endpoint em lote as atividades sugeridas pela IA, aguardando revisão, sem candidatos, ligadas a documentos processados e todos com confiança de 0,70 ou mais (a confiança é a do documento ligado, porque a API não expõe confiança por atividade); mostra quantas foram validadas e deixa as demais; desabilitado quando nenhuma atende. Arquivos: `ActivityReviewList.tsx`, `ProcessActivities.tsx` e testes.
+**Where**: `frontend/src/components/ActivityReviewList.tsx`
+**Depends on**: T133
+**Reuses**: `DocumentSummary.confidence`, `LOW_CONFIDENCE`, `validate-batch`
+**Requirement**: UIM-12
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Com três atividades (confiança 0,91, 0,70 e 0,69) valida as duas primeiras numa só chamada e informa "2 atividades validadas"
+- [ ] Atividade manual, com candidatos, sem documento ou com documento FALHOU não entra; as demais continuam aguardando
+- [ ] Sem atividade elegível o botão fica desabilitado
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(activities): validate every suggestion with 70 percent confidence or more`
+
+---
+
+### T135: Tabela de pontuação: colunas e ações como botões diretos
+
+**What**: `ScoringTable` ganha a classe de colunas curtas (Grupo, Item, Quantidade, Pontuação unitária, Total e Status) e texto corrido justificado na Atividade; em `ProcessScoring` Editar, Validar, Rejeitar e Manter como distinta viram botões `.btn` de rótulo curto, o título só em `aria-label` e `title`; Validar, Rejeitar e Manter como distinta agem na hora sem justificativa nem painel; Editar e Nova atividade abrem o `ActivityForm` numa `Modal`. Arquivos: `ScoringTable.tsx`, `ProcessScoring.tsx`, `styles.css` e testes.
+**Where**: `frontend/src/pages/ProcessScoring.tsx`
+**Depends on**: T134
+**Reuses**: `Modal`, `.btn`, `ScoringTable`
+**Requirement**: UIM-19, UIM-20
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Os rótulos visíveis são Editar, Validar, Rejeitar e Manter como distinta, e o título da atividade só aparece no `aria-label` e no `title`
+- [ ] Validar e Rejeitar enviam `POST /api/activities/{id}/status` e Manter como distinta envia `POST /api/activities/{id}/distinct` sem `justificativa` e recarregam a pontuação
+- [ ] Editar e Nova atividade abrem `role="dialog"` e salvar fecha e recarrega
+- [ ] O teste estático confere as larguras curtas e o `text-align: justify` da tabela de pontuação só acima de 480 px, e os cartões de 360 px continuam
+- [ ] Os testes que exigiam a justificativa foram trocados pelos novos, sem enfraquecer a cobertura
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(scoring): turn the scoring actions into direct buttons and modals`
+
+---
+
+### T136: Escolha da tabela sem campo de justificativa
+
+**What**: `TablePicker` deixa de pedir a justificativa da tabela de outra unidade e confirma direto, mantendo o alerta da tabela de outra unidade. Arquivos: `TablePicker.tsx` e `TablePicker.test.tsx`.
+**Where**: `frontend/src/components/TablePicker.tsx`
+**Depends on**: T135
+**Reuses**: `TablePicker`
+**Requirement**: UIM-18
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Escolher outra tabela não mostra campo de justificativa e o `PUT` da tabela vai sem `justificativa`
+- [ ] O botão de confirmar continua aparecendo só quando a tabela escolhida muda ou ainda não há tabela escolhida
+- [ ] Os testes da justificativa foram trocados pelos novos, sem enfraquecer a cobertura
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(scoring): confirm the table choice without a justification field`
+
+---
+
+### T137: Editor de pontuação com modo automático e manual
+
+**What**: Componente `ScoreEditor` na `Modal`: alterna Automática (padrão; quantidade, horas e item recalculam, e a prévia de T123 mostra os pontos, o total e os alertas do motor com espera curta entre as digitações) e Manual (campo de pontos informados, só para item de carga semanal fora do PIT; nos demais modos e nas linhas de horas de PIT, só automático com uma nota curta); salvar envia o `PUT` da atividade e Voltar ao automático envia `points_override` nulo. Nada é calculado no frontend. Arquivos: `ScoreEditor.tsx` e `ScoreEditor.test.tsx`.
+**Where**: `frontend/src/components/ScoreEditor.tsx`
+**Depends on**: T136
+**Reuses**: `ActivityForm`, `scoring-preview`, `Modal`
+**Requirement**: UIM-22
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Em Automática, mudar a quantidade chama a prévia com o valor novo e mostra os pontos devolvidos pelo servidor, sem calcular no navegador
+- [ ] Em Manual, os pontos digitados vão na prévia e no `PUT` como `points_override`; Voltar ao automático envia `points_override` nulo
+- [ ] Em item que não é de carga semanal e em linha de horas de PIT, o modo Manual fica indisponível e a nota explica
+- [ ] O 422 de `points_override` aparece junto do campo e o editor não tem campo de justificativa
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(scoring): edit the points of an activity automatically or manually`
+
+---
+
+### T138: Editar pontuação na linha, selo Manual e totais atualizados
+
+**What**: `ScoringTable` mostra o botão Editar pontuação nas linhas PONTUADA e POTENCIAL, que abre o `ScoreEditor` numa `Modal`; a linha com o alerta `PONTOS_AJUSTADOS_MANUALMENTE` traz o selo Manual e o botão Voltar ao automático; salvar recarrega as linhas, os subtotais e o total. Arquivos: `ScoringTable.tsx`, `ProcessScoring.tsx` e testes.
+**Where**: `frontend/src/pages/ProcessScoring.tsx`
+**Depends on**: T137
+**Reuses**: `ScoreEditor`, `ScoringRow.alerts`
+**Requirement**: UIM-23
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Editar pontuação aparece em linha PONTUADA e POTENCIAL e não em NAO_PONTUADA
+- [ ] A linha com pontos manuais mostra o selo Manual e Voltar ao automático, que envia `points_override` nulo e recarrega
+- [ ] Salvar na janela atualiza o total e o subtotal exibidos com os valores do `GET /scoring` seguinte
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(scoring): add the edit points button and the manual badge to the rows`
+
+---
+
+### T139: Registro da sétima rodada e entrega
+
+**What**: `validation.md` traz a "Resolution (round 7)" da rodada de interface; `spec.md` passa UIM-01..23 a Implementing e lista as exigências de justificativa que UIM-04, UIM-14, UIM-16 e UIM-18 substituem; `STATE.md` registra o estado e as decisões pendentes. Arquivos: `validation.md`, `spec.md`, `STATE.md`.
+**Where**: `.specs/features/inteligencia-documental/validation.md`
+**Depends on**: T138
+**Reuses**: Resolution (round 6)
+**Requirement**: UIM-15
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] A Resolution (round 7) lista commits, gate e decisões pendentes
+- [ ] `validate_spec.py`, `validate_tasks.py` e `validate_state.py` passam
+- [ ] Gate build passa
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `docs(specs): record the resolution of round 7 and the handoff`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11 → Phase 12 → Phase 13 → Phase 14 → Phase 15 → Phase 16
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11 → Phase 12 → Phase 13 → Phase 14 → Phase 15 → Phase 16 → Phase 17
 
 Phase 1:  T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 Phase 2:  T9 → T10 → T11 → T12 → T13 → T14 → T15
@@ -3319,4 +3932,5 @@ Phase 13:  T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 �
 Phase 14:  T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T105 → T106
 Phase 15:  T107 → T108 → T109 → T110 → T111 → T112
 Phase 16:  T113 → T114 → T115 → T116 → T117
+Phase 17:  T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 → T127 → T128 → T129 → T130 → T131 → T132 → T133 → T134 → T135 → T136 → T137 → T138 → T139
 ```
