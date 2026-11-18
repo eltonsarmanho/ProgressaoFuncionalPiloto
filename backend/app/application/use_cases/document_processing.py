@@ -26,8 +26,8 @@ from app.application.services.document_analyzer import (
     SuggestedActivity,
 )
 from app.application.use_cases.documents import DOCUMENT_ENTITY, EVIDENCE_ENTITY
-from app.application.use_cases.scoring import ActivityData, CreateActivity
-from app.domain.entities.activity import Activity, ActivitySource
+from app.application.use_cases.scoring import ACTIVITY_ENTITY, ActivityData, CreateActivity
+from app.domain.entities.activity import Activity, ActivitySource, ActivityStatus
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.document import (
     DocAlertCode,
@@ -244,8 +244,54 @@ class ProcessDocument:
             uow.documents.update(
                 self._outcome(current, result), current.version
             )
+            if result.status_code == OUTSIDE_CODE:
+                self._reject_linked_activities(uow, current.id)
             uow.commit()
             return run
+
+    def _reject_linked_activities(self, uow: UnitOfWork, document_id: UUID) -> None:
+        """A document that turned out to be outside the interstice leaves the process (FORA-03).
+
+        Every activity linked only to it is rejected, whatever the user already did with it
+        (edited or validated); the row stays in the database with the audit reason. An activity
+        that also cites another document stays and loses only the link to this one. Already
+        rejected activities are left as they are. The system acts, so there is no user.
+        """
+        own = uow.evidences.list_for_document(document_id)
+        activity_ids = list(dict.fromkeys(e.activity_id for e in own))
+        links: dict[UUID, list[ActivityEvidence]] = {i: [] for i in activity_ids}
+        for evidence in uow.evidences.list_for_activities(activity_ids):
+            links[evidence.activity_id].append(evidence)
+        for activity_id, evidences in links.items():
+            activity = uow.activities.get(activity_id)
+            if activity is None or activity.status is ActivityStatus.REJEITADA:
+                continue
+            if all(e.document_id == document_id for e in evidences):
+                rejected = replace(activity, status=ActivityStatus.REJEITADA)
+                uow.activities.update(rejected, activity.version)
+                self._audit.record(
+                    uow,
+                    None,
+                    ACTIVITY_ENTITY,
+                    activity.id,
+                    AuditAction.STATUS,
+                    {"status": activity.status},
+                    {"status": rejected.status},
+                    OUTSIDE_CODE,
+                )
+                continue
+            for evidence in (e for e in evidences if e.document_id == document_id):
+                uow.evidences.remove(evidence.id)
+                self._audit.record(
+                    uow,
+                    None,
+                    EVIDENCE_ENTITY,
+                    evidence.id,
+                    AuditAction.UPDATE,
+                    {"activity_id": evidence.activity_id, "document_id": document_id},
+                    {"operation": "UNLINK"},
+                    OUTSIDE_CODE,
+                )
 
     @staticmethod
     def _outcome(document: Document, result: AnalysisResult) -> Document:

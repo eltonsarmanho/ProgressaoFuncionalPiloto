@@ -4085,7 +4085,7 @@ T141 → T142 → T143 → T144 → T145 → T146
 ### T146: Rejeitar as atividades de um documento que passa a ficar fora do interstício
 
 **What**: No reprocessamento, quando o documento passa a ter o alerta `DOCUMENTO_FORA_DO_INTERSTICIO`, rejeitar com auditoria todas as atividades ligadas só a ele, inclusive as editadas ou validadas; a atividade com evidência de outro documento permanece, sem a evidência do documento fora. Pontuação, listas das Etapas 3 e 4 e documentos gerados não mostram a atividade rejeitada. Arquivos: caso de uso de reprocessamento em `application/use_cases/documents.py` e seus testes; atualizar a nota de FORA-03 na spec e AD-018.
-**Where**: `backend/app/application/use_cases/documents.py`
+**Where**: `backend/app/application/use_cases/document_processing.py` (o resultado da leitura só existe no processamento em segundo plano, que grava o alerta; `documents.py` só ganha a documentação do reprocessamento)
 **Depends on**: T145
 **Reuses**: Regra de reprocessamento que rejeita os rascunhos sem edição (`documents.py` ~523-541), auditoria de rejeição
 **Requirement**: FORA-03, FORA-07
@@ -4097,12 +4097,12 @@ T141 → T142 → T143 → T144 → T145 → T146
 
 **Done when**:
 
-- [ ] Atividade validada ou editada ligada só ao documento que ficou fora é rejeitada com auditoria
-- [ ] Atividade com evidência de outro documento dentro do período permanece e perde só a evidência do documento fora
-- [ ] Reprocessar de novo com o interstício ampliado cria as atividades do documento sem duplicar as rejeitadas
-- [ ] A pontuação do processo não conta a atividade rejeitada
+- [x] Atividade validada ou editada ligada só ao documento que ficou fora é rejeitada com auditoria
+- [x] Atividade com evidência de outro documento dentro do período permanece e perde só a evidência do documento fora
+- [x] Reprocessar de novo com o interstício ampliado cria as atividades do documento sem duplicar as rejeitadas
+- [x] A pontuação do processo não conta a atividade rejeitada
 - [ ] FORA-03 passa a `Verified` depois do Verifier independente
-- [ ] Gate full passa
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

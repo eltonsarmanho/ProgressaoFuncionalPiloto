@@ -1,10 +1,17 @@
-"""FORA-01, FORA-05, FORA-07, FORA-09: ProcessDocument with a document outside the interstice."""
+"""FORA-01, FORA-03, FORA-05, FORA-07, FORA-09: ProcessDocument with a document outside the
+interstice, and what the reprocessing does to the activities that were already linked to it."""
 
 import dataclasses
 from datetime import date
 
+from app.application.services.generation_inputs import load_generation_inputs
+from app.application.use_cases.scoring import ActivityData
 from app.domain.entities.activity import ActivityStatus
+from app.domain.entities.audit import AuditAction
 from app.domain.entities.document import DocAlertCode, DocumentStatus, RunStatus
+from app.domain.rules.scoring_alerts import NotScoredReason
+from app.domain.rules.scoring_engine import RowStatus
+from tests.integration.doc_usecases.support import link
 from tests.integration.doc_usecases.test_process_document import (
     banca_payload,
     banca_text,
@@ -94,3 +101,184 @@ def test_reprocessing_after_narrowing_the_interstice_replaces_the_old_draft_and_
     assert found.document.status is DocumentStatus.PROCESSADO
     assert [a.status for a in found.activities] == [ActivityStatus.REJEITADA]
     assert found.evidences[0].run_id == found.runs[0].id  # the old draft only
+
+
+# --- FORA-03 (AD-018): the work already done on the activities of a document that became outside
+
+
+def validate(w, activity):
+    return w.change_status.execute(
+        w.docente, activity.id, ActivityStatus.VALIDADA, activity.version, None
+    )
+
+
+def activity_of(docs, document):
+    """The one activity the document's runs created."""
+    found = state(docs, document)
+    runs = {r.id for r in found.runs}
+    [created] = [a for a in found.activities if a.extraction_run_id in runs]
+    return created
+
+
+def stored(docs, activity_id):
+    with docs.world.uow_factory() as uow:
+        return uow.activities.get(activity_id)
+
+
+def audit_of(docs, entity, entity_id):
+    with docs.world.uow_factory() as uow:
+        return list(uow.audit.list_for(entity, str(entity_id)))
+
+
+def active_count(docs, document):
+    """What the Etapa 2 list shows as the activities of the document (the ones not rejected)."""
+    with docs.world.uow_factory() as uow:
+        return uow.evidences.counts_for_documents([document.id])[document.id]
+
+
+def test_a_validated_activity_linked_only_to_the_document_is_rejected_with_the_audit_reason(docs):
+    w = docs.world
+    document = process_banca(docs, "validada")
+    draft = activity_of(docs, document)
+    validate(w, draft)
+    set_interstice(docs, AFTER_THE_BANCA)
+
+    reprocess(docs, document)
+
+    assert stored(docs, draft.id).status is ActivityStatus.REJEITADA
+    assert state(docs, document).document.status_code == OUTSIDE
+    assert active_count(docs, document) == 0
+    rejection = audit_of(docs, "activity", draft.id)[-1]
+    assert rejection.action is AuditAction.STATUS
+    assert rejection.changes == {"status": {"before": "VALIDADA", "after": "REJEITADA"}}
+    assert rejection.justification == OUTSIDE
+    assert rejection.user_id is None
+
+
+def test_an_edited_activity_linked_only_to_the_document_is_rejected_too(docs):
+    w = docs.world
+    document = process_banca(docs, "editada")
+    draft = activity_of(docs, document)
+    edited = w.update.execute(
+        w.docente,
+        draft.id,
+        ActivityData(title="Editada pelo usuario", group_number=3, item_number=4),
+        draft.version,
+        None,
+    )
+    assert edited.status is ActivityStatus.AGUARDANDO_REVISAO and edited.version > 1
+    set_interstice(docs, AFTER_THE_BANCA)
+
+    reprocess(docs, document)
+
+    assert stored(docs, draft.id).status is ActivityStatus.REJEITADA
+    assert audit_of(docs, "activity", draft.id)[-1].justification == OUTSIDE
+
+
+def test_the_activities_of_other_documents_and_the_manual_ones_are_left_alone(docs):
+    w = docs.world
+    document = process_banca(docs, "alvo")
+    neighbour_document = process_banca(docs, "vizinho")
+    target = activity_of(docs, document)
+    neighbour = activity_of(docs, neighbour_document)
+    validate(w, neighbour)
+    manual = w.create.execute(w.docente, w.process.id, ActivityData(title="Manual"))
+    set_interstice(docs, AFTER_THE_BANCA)
+
+    reprocess(docs, document)
+
+    assert stored(docs, target.id).status is ActivityStatus.REJEITADA
+    assert stored(docs, neighbour.id).status is ActivityStatus.VALIDADA
+    assert stored(docs, manual.id).status is ActivityStatus.VALIDADA
+    assert all(e.justification != OUTSIDE for e in audit_of(docs, "activity", neighbour.id))
+    assert state(docs, neighbour_document).document.status_code is None
+
+
+def test_an_activity_with_evidence_from_another_document_stays_without_the_outside_evidence(docs):
+    w = docs.world
+    document = process_banca(docs, "fora-depois")
+    other = process_banca(docs, "continua")
+    shared = activity_of(docs, document)
+    validate(w, shared)
+    kept = link(w, shared, other, page=1, excerpt="outro trecho")
+    [outside_evidence] = state(docs, document).evidences
+    set_interstice(docs, AFTER_THE_BANCA)
+
+    reprocess(docs, document)
+
+    assert stored(docs, shared.id).status is ActivityStatus.VALIDADA
+    assert state(docs, document).evidences == []
+    with w.uow_factory() as uow:
+        assert [e.id for e in uow.evidences.list_for_activity(shared.id)] == [kept.id]
+    unlink = audit_of(docs, "activity_evidence", outside_evidence.id)[-1]
+    assert unlink.action is AuditAction.UPDATE
+    assert unlink.justification == OUTSIDE
+
+
+def test_reprocessing_again_with_a_wider_interstice_creates_the_activity_and_keeps_the_rejected(
+    docs,
+):
+    w = docs.world
+    document = process_banca(docs, "ampliada")
+    first = activity_of(docs, document)
+    validate(w, first)
+    set_interstice(docs, AFTER_THE_BANCA)
+    reprocess(docs, document)
+    set_interstice(docs, AROUND_THE_BANCA)
+
+    reprocess(docs, document)
+
+    found = state(docs, document)
+    assert found.document.status_code is None
+    assert stored(docs, first.id).status is ActivityStatus.REJEITADA
+    [fresh] = [a for a in found.activities if a.id != first.id]
+    assert fresh.status is ActivityStatus.AGUARDANDO_REVISAO
+    assert len(found.activities) == 2
+    assert active_count(docs, document) == 1
+
+
+def test_the_score_does_not_count_the_rejected_activity(official_chosen, docs):
+    w = official_chosen
+    document = process_banca(docs, "pontuada")
+    draft = activity_of(docs, document)
+    # the user moved the date into the interstice that will be set below
+    edited = w.update.execute(
+        w.docente,
+        draft.id,
+        ActivityData(
+            title=draft.title, group_number=3, item_number=4, event_date=date(2025, 5, 5)
+        ),
+        draft.version,
+        None,
+    )
+    validate(w, edited)
+    set_interstice(docs, AFTER_THE_BANCA)
+    before = w.calc.execute(w.docente, w.process.id)
+    assert before.result.total > 0
+
+    reprocess(docs, document)
+
+    after = w.calc.execute(w.docente, w.process.id)
+    [row] = after.result.rows
+    assert after.result.total == 0
+    assert row.status is RowStatus.NAO_PONTUADA
+    assert row.points == 0
+    assert row.reasons == (NotScoredReason.REJEITADA,)
+
+
+def test_the_generated_documents_do_not_read_the_rejected_activity_or_its_evidence(
+    official_chosen, docs
+):
+    w = official_chosen
+    document = process_banca(docs, "gerados")
+    draft = activity_of(docs, document)
+    validate(w, draft)
+    set_interstice(docs, AFTER_THE_BANCA)
+
+    reprocess(docs, document)
+
+    with w.uow_factory() as uow:
+        inputs = load_generation_inputs(uow, uow.processes.get(w.process.id))
+    assert inputs.activities == ()
+    assert inputs.evidences == ()
+    assert inputs.excluded == {"rejeitadas": 1}

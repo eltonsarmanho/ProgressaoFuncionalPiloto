@@ -196,3 +196,40 @@ def test_narrowing_the_interstice_and_reprocessing_retires_the_old_draft_without
         "NAO_PONTUADA",
         "0.00",
     )
+
+
+def test_a_validated_activity_leaves_every_stage_when_reprocessing_puts_its_document_outside(
+    case,  # noqa: F811
+):
+    client, headers, process = case
+    [current] = upload(client, headers, process, ("atual.pdf", text_pdf(CURRENT)))
+    drain(client)
+    [draft] = activities(client, process)
+    validated = client.post(
+        f"/api/activities/{draft['id']}/status",
+        json={"status": "VALIDADA", "expected_version": draft["version"]},
+        headers=headers,
+    )
+    assert validated.status_code == 200, validated.text
+    container = client.app.state.container
+    with container.uow_factory() as uow:  # the interstice moves past the document (2023)
+        stored = uow.processes.get(process["id"])
+        moved = replace(stored, start_date=date(2024, 11, 24), end_date=date(2026, 11, 23))
+        uow.processes.update(moved, stored.version)
+        uow.commit()
+
+    reprocessed = client.post(f"/api/documents/{current['id']}/reprocess", headers=headers)
+    assert reprocessed.status_code == 202
+    drain(client)
+
+    row = listed(client, process)["atual.pdf"]
+    assert (row["outside_interstice"], row["activity_count"]) == (True, 0)
+    [rejected] = activities(client, process)
+    assert rejected["status"] == "REJEITADA"
+    [scored] = score(client, process)["rows"]
+    assert (scored["activity_status"], scored["status"], scored["points"]) == (
+        "REJEITADA",
+        "NAO_PONTUADA",
+        "0.00",
+    )
+    assert score(client, process)["total"] == "0.00"

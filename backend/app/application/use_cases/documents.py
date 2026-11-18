@@ -541,7 +541,9 @@ class _NewRunUseCase(_DocumentUseCase):
 
     def _reject_untouched_drafts(self, actor: User, process_id: UUID, run_ids: list[UUID]) -> None:
         """Rejects the activities of the retired runs that are still `AGUARDANDO_REVISAO` and
-        were never edited (version 1); validated or edited ones stay (PIPE-09)."""
+        were never edited (version 1); validated or edited ones stay (PIPE-09), unless the new
+        reading puts the document outside the interstice: then `ProcessDocument` rejects them
+        too (FORA-03)."""
         with self._uow_factory() as uow:
             drafts = [
                 a
@@ -695,7 +697,8 @@ class ReprocessDocument(_NewRunUseCase):
     def execute(self, actor: User, document_id: UUID) -> Document:
         """Queues a new extraction and retires the previous one (PIPE-09).
 
-        Only the untouched drafts of the old run are rejected. Of two simultaneous requests the
+        Only the untouched drafts of the old run are rejected here (the worker rejects the rest if
+        the new reading is outside the interstice, FORA-03). Of two simultaneous requests the
         first stands: the second finds the document queued or hits the unique active job (409).
         """
         with self._uow_factory() as uow:
