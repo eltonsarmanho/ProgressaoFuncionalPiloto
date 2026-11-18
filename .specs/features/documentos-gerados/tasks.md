@@ -938,9 +938,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Sem Comprovante `PRONTO` a verificação recusa com `ARTEFATOS_PENDENTES` listando só `COMPROVANTE`; sem nenhum, lista os três na ordem Tabela, Relatório, Comprovante
-- [ ] Geração, redação ou processamento de documento em andamento recusa com `OPERACAO_EM_ANDAMENTO`
-- [ ] Gate quick passa; 8+ testes
+- [x] Sem Comprovante `PRONTO` a verificação recusa com `ARTEFATOS_PENDENTES` listando só `COMPROVANTE`; sem nenhum, lista os três na ordem Tabela, Relatório, Comprovante
+- [x] Geração, redação ou processamento de documento em andamento recusa com `OPERACAO_EM_ANDAMENTO`
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
