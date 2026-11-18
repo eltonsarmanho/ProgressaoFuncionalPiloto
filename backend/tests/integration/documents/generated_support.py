@@ -3,6 +3,12 @@
 import uuid
 from datetime import UTC, datetime
 
+from app.domain.entities.comprovante import (
+    ComprovanteLayout,
+    EvidenceKey,
+    LayoutActivity,
+    LayoutPage,
+)
 from app.domain.entities.generated import (
     DocumentFormat,
     DocumentKind,
@@ -66,3 +72,22 @@ def make_draft(process, sections=None, version=0) -> ReportDraft:
             ),
         )
     return ReportDraft(process.id, "ufpa-cppd", 1, tuple(sections), version)
+
+
+def make_layout(process, version=0) -> ComprovanteLayout:
+    first, second = uuid.uuid4(), uuid.uuid4()
+    doc_a, doc_b = uuid.uuid4(), uuid.uuid4()
+    return ComprovanteLayout(
+        process.id,
+        (
+            LayoutActivity(
+                first,
+                (LayoutPage(doc_a, 1), LayoutPage(doc_b, 3, "mesma página, outro curso")),
+                group_number=1,
+                item_number=1,
+            ),
+            LayoutActivity(second, (LayoutPage(doc_a, 2),), group_number=2, item_number=3),
+        ),
+        (EvidenceKey(first, doc_a, 1), EvidenceKey(second, doc_a, 2)),
+        version,
+    )

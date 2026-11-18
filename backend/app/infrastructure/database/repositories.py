@@ -16,6 +16,12 @@ from app.domain.entities.academic_unit import AcademicUnit
 from app.domain.entities.activity import Activity, ActivityStatus, Candidate
 from app.domain.entities.audit import AuditEvent
 from app.domain.entities.career import CareerClass, CareerVersion
+from app.domain.entities.comprovante import (
+    ComprovanteLayout,
+    EvidenceKey,
+    LayoutActivity,
+    LayoutPage,
+)
 from app.domain.entities.document import (
     Document,
     DocumentStatus,
@@ -61,6 +67,7 @@ from app.infrastructure.database.models import (
     AuditLogModel,
     CareerStructureModel,
     CareerVersionModel,
+    ComprovanteLayoutModel,
     DocumentModel,
     DocumentPageModel,
     ExtractionRunModel,
@@ -1829,6 +1836,112 @@ class SqlReportDraftRepository:
         m.content = _draft_to_content(tuple(apply(s) for s in sections))
         self._s.flush()
         return self._to_entity(m)
+
+
+def _layout_to_content(layout: ComprovanteLayout) -> dict[str, Any]:
+    return {
+        "activities": [
+            {
+                "activity_id": str(activity.activity_id),
+                "group_number": activity.group_number,
+                "item_number": activity.item_number,
+                "pages": [
+                    {
+                        "document_id": str(page.document_id),
+                        "page": page.page,
+                        "repeat_justification": page.repeat_justification,
+                    }
+                    for page in activity.pages
+                ],
+            }
+            for activity in layout.activities
+        ],
+        "base_evidence_keys": [
+            {"activity_id": str(k.activity_id), "document_id": str(k.document_id), "page": k.page}
+            for k in layout.base_evidence_keys
+        ],
+    }
+
+
+class SqlLayoutRepository:
+    """The saved arrangement of the Comprovante: one row per process, JSONB content."""
+
+    def __init__(self, session: Session):
+        self._s = session
+
+    @staticmethod
+    def _to_entity(m: ComprovanteLayoutModel) -> ComprovanteLayout:
+        content = m.content
+        return ComprovanteLayout(
+            process_id=m.process_id,
+            activities=tuple(
+                LayoutActivity(
+                    activity_id=UUID(a["activity_id"]),
+                    group_number=a["group_number"],
+                    item_number=a["item_number"],
+                    pages=tuple(
+                        LayoutPage(UUID(p["document_id"]), p["page"], p["repeat_justification"])
+                        for p in a["pages"]
+                    ),
+                )
+                for a in content["activities"]
+            ),
+            base_evidence_keys=tuple(
+                EvidenceKey(UUID(k["activity_id"]), UUID(k["document_id"]), k["page"])
+                for k in content["base_evidence_keys"]
+            ),
+            version=m.version,
+        )
+
+    def get(self, process_id: UUID) -> ComprovanteLayout | None:
+        m = self._s.scalars(
+            select(ComprovanteLayoutModel)
+            .where(ComprovanteLayoutModel.process_id == process_id)
+            .execution_options(populate_existing=True)
+        ).first()
+        return self._to_entity(m) if m else None
+
+    def create(
+        self, layout: ComprovanteLayout, user_id: UUID, expected_version: int
+    ) -> ComprovanteLayout:
+        if expected_version != 0:
+            raise StaleVersion("O arranjo ainda não foi salvo; recarregue")
+        try:
+            with self._s.begin_nested():
+                self._s.execute(
+                    insert(ComprovanteLayoutModel).values(
+                        id=uuid.uuid4(),
+                        process_id=layout.process_id,
+                        content=_layout_to_content(layout),
+                        version=1,
+                        updated_by=user_id,
+                    )
+                )
+        except IntegrityError as exc:
+            if _is_unique_violation(exc):
+                raise Conflict("O processo já tem um arranjo do Comprovante salvo") from None
+            raise
+        return replace(layout, version=1)
+
+    def update(
+        self, layout: ComprovanteLayout, user_id: UUID, expected_version: int
+    ) -> ComprovanteLayout:
+        m = self._s.scalars(
+            select(ComprovanteLayoutModel)
+            .where(ComprovanteLayoutModel.process_id == layout.process_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        ).first()
+        if m is None:
+            raise NotFound("Arranjo não encontrado")
+        if m.version != expected_version:
+            raise StaleVersion("O arranjo foi alterado por outro usuário; recarregue")
+        m.content = _layout_to_content(layout)
+        m.version += 1
+        m.updated_by = user_id
+        m.updated_at = func.now()
+        self._s.flush()
+        return replace(layout, version=m.version)
 
 
 class SqlUnitOfWork:

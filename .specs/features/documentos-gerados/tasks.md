@@ -1177,8 +1177,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] `expected_version` desatualizada levanta `StaleVersion` e não sobrescreve; `expected_version = 0` cria
-- [ ] Gate full passa; 5+ testes
+- [x] `expected_version` desatualizada levanta `StaleVersion` e não sobrescreve; `expected_version = 0` cria
+- [x] Gate full passa; 5+ testes
 
 **Tests**: integration
 **Gate**: full
