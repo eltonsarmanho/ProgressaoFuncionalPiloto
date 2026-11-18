@@ -81,12 +81,46 @@ describe("TELA-02: colunas da lista", () => {
   });
 });
 
-describe("TELA-04: ações por documento", () => {
-  it("visualizar chama onView e baixar aponta para o endpoint do arquivo", async () => {
+describe("UIM-02 / UIM-03: ações por documento", () => {
+  it("os botões têm rótulo curto e o nome do arquivo só vai no aria-label e no title", () => {
+    setup([doc()]);
+    const row = screen.getByText("declaracao-banca.pdf", { selector: "td" }).closest("tr")!;
+    const buttons = within(row).getAllByRole("button");
+
+    expect(buttons.map((b) => b.textContent)).toEqual([
+      "Visualizar",
+      "Baixar",
+      "Substituir",
+      "Excluir",
+      "Reprocessar",
+      "Classificar",
+    ]);
+    for (const button of buttons) {
+      expect(button).toHaveAttribute("aria-label", `${button.textContent} declaracao-banca.pdf`);
+      expect(button).toHaveAttribute("title", `${button.textContent} declaracao-banca.pdf`);
+    }
+    expect(within(row).queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.getByText("declaracao-banca.pdf", { selector: "td" })).toHaveAttribute("title", "declaracao-banca.pdf");
+  });
+
+  it("visualizar chama onView", async () => {
     const { onView, user } = setup([doc()]);
     await user.click(screen.getByRole("button", { name: "Visualizar declaracao-banca.pdf" }));
     expect(onView).toHaveBeenCalledWith(expect.objectContaining({ id: "d1" }));
-    expect(screen.getByRole("link", { name: "Baixar declaracao-banca.pdf" })).toHaveAttribute("href", "/api/documents/d1/file?download=1");
+  });
+
+  it("baixar inicia o download de /api/documents/:id/file?download=1 sem sair da página", async () => {
+    const clicked: string[] = [];
+    const spy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      clicked.push(`${this.getAttribute("href")}|${this.hasAttribute("download")}`);
+    });
+    const { calls, user } = setup([doc()]);
+
+    await user.click(screen.getByRole("button", { name: "Baixar declaracao-banca.pdf" }));
+
+    expect(clicked).toEqual(["/api/documents/d1/file?download=1|true"]);
+    expect(calls).toHaveLength(0);
+    spy.mockRestore();
   });
 
   it("reprocessar chama a API e recarrega; fica desabilitado enquanto o documento está pendente", async () => {
@@ -123,17 +157,40 @@ describe("TELA-04: ações por documento", () => {
     expect(onChanged).not.toHaveBeenCalled();
   });
 
-  it("excluir exige a justificativa antes de chamar a API e a envia no DELETE", async () => {
-    const { calls, onChanged, user } = setup([doc()], { "DELETE /api/documents/d1?justificativa=Enviado%20por%20engano": { status: 204 } });
+  it("excluir pede só a confirmação, sem justificativa, e exclui e recarrega", async () => {
+    const { calls, onChanged, user } = setup([doc()], { "DELETE /api/documents/d1": { status: 204 } });
     await user.click(screen.getByRole("button", { name: "Excluir declaracao-banca.pdf" }));
-    await user.click(screen.getByRole("button", { name: "Confirmar exclusão" }));
-    expect(await screen.findByText("Informe a justificativa da exclusão.")).toBeInTheDocument();
+
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText("Excluir declaracao-banca.pdf? Esta ação não pode ser desfeita.")).toBeInTheDocument();
+    expect(within(dialog).queryByRole("textbox")).not.toBeInTheDocument();
     expect(calls).toHaveLength(0);
 
-    await user.type(screen.getByLabelText("Justificativa da exclusão"), "Enviado por engano");
-    await user.click(screen.getByRole("button", { name: "Confirmar exclusão" }));
+    await user.click(within(dialog).getByRole("button", { name: "Excluir" }));
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
-    expect(calls[0].method).toBe("DELETE");
+    expect(calls.map((c) => `${c.method} ${c.path}`)).toEqual(["DELETE /api/documents/d1"]);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("cancelar a exclusão fecha a confirmação sem chamar a API", async () => {
+    const { calls, onChanged, user } = setup([doc()]);
+    await user.click(screen.getByRole("button", { name: "Excluir declaracao-banca.pdf" }));
+
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(calls).toHaveLength(0);
+    expect(onChanged).not.toHaveBeenCalled();
+  });
+
+  it("um erro ao excluir aparece na confirmação e a janela continua aberta", async () => {
+    const { onChanged, user } = setup([doc()], { "DELETE /api/documents/d1": { status: 409, body: { detail: "Processo encerrado" } } });
+    await user.click(screen.getByRole("button", { name: "Excluir declaracao-banca.pdf" }));
+
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Excluir" }));
+
+    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent("Processo encerrado");
+    expect(onChanged).not.toHaveBeenCalled();
   });
 
   it("classificar manualmente envia tipo, categoria e a versão, e mostra o erro 422 no campo", async () => {

@@ -3542,12 +3542,12 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Os rótulos visíveis são os seis curtos e o nome do arquivo só aparece no `aria-label` e no `title`
-- [ ] Baixar dispara o download de `/api/documents/d1/file?download=1` sem navegar
-- [ ] Excluir sem campo de justificativa: a confirmação chama `DELETE /api/documents/d1` sem query e recarrega; Cancelar não chama a API
-- [ ] Reprocessar desabilitado em PENDENTE e PROCESSANDO; Substituir envia na hora
-- [ ] Os testes antigos da justificativa foram trocados pelos novos, sem enfraquecer a cobertura
-- [ ] Gate quick passa
+- [x] Os rótulos visíveis são os seis curtos e o nome do arquivo só aparece no `aria-label` e no `title`
+- [x] Baixar dispara o download de `/api/documents/d1/file?download=1` sem navegar
+- [x] Excluir sem campo de justificativa: a confirmação chama `DELETE /api/documents/d1` sem query e recarrega; Cancelar não chama a API
+- [x] Reprocessar desabilitado em PENDENTE e PROCESSANDO; Substituir envia na hora
+- [x] Os testes antigos da justificativa foram trocados pelos novos, sem enfraquecer a cobertura
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

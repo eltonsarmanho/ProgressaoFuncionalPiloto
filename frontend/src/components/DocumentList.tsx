@@ -14,8 +14,19 @@ import {
   formatSize,
 } from "../labels";
 import { FieldError, errorProps } from "./FieldError";
+import { Modal } from "./Modal";
 
 type Panel = { kind: "delete" | "classify"; doc: DocumentSummary };
+
+/** UIM-02: the original file is fetched as a download, without leaving the page. */
+function download(doc: DocumentSummary) {
+  const link = document.createElement("a");
+  link.href = `/api/documents/${doc.id}/file?download=1`;
+  link.download = doc.original_name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
 type Notice = { tone: "error" | "ok"; text: string; existingId?: string };
 
 const COLUMNS = ["Nome", "Tipo", "Tamanho", "Status", "Categoria sugerida", "Confiança", "Ações"] as const;
@@ -64,56 +75,45 @@ function Confidence({ doc }: { doc: DocumentSummary }) {
   );
 }
 
-function DeleteForm({ doc, onDone, onCancel }: { doc: DocumentSummary; onDone: () => void; onCancel: () => void }) {
-  const [justificativa, setJustificativa] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+/** UIM-03: the only question before deleting; no justification. */
+function ConfirmDelete({ doc, onDone, onCancel }: { doc: DocumentSummary; onDone: () => void; onCancel: () => void }) {
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
+  async function confirm() {
     setError(null);
-    if (justificativa.trim() === "") {
-      setErrors({ justificativa: "Informe a justificativa da exclusão." });
-      return;
-    }
-    setErrors({});
+    setBusy(true);
     try {
-      await request("DELETE", `/api/documents/${doc.id}?justificativa=${encodeURIComponent(justificativa.trim())}`);
+      await request("DELETE", `/api/documents/${doc.id}`);
       onDone();
     } catch (err) {
-      const byField = fieldErrors(err);
-      setErrors(byField);
-      if (Object.keys(byField).length === 0) setError(errorMessage(err));
+      setError(errorMessage(err));
+      setBusy(false);
     }
   }
 
   return (
-    <form className="card" onSubmit={submit} noValidate aria-label="Excluir documento">
-      <h3>Excluir documento: {doc.original_name}</h3>
+    <Modal title="Excluir documento" onClose={onCancel}>
+      <p>
+        Excluir {doc.original_name}? Esta ação não pode ser desfeita.
+      </p>
       <p className="muted">
         O arquivo, o texto extraído e os vínculos são apagados. As atividades continuam, mas perdem este comprovante.
       </p>
-      <div className="field">
-        <label htmlFor="delete-justificativa">Justificativa da exclusão</label>
-        <textarea
-          id="delete-justificativa"
-          rows={2}
-          value={justificativa}
-          onChange={(e) => setJustificativa(e.target.value)}
-          {...errorProps("justificativa", errors)}
-        />
-        <FieldError id="justificativa-error" message={errors.justificativa} />
-      </div>
       {error && (
         <p role="alert" className="error">
           {error}
         </p>
       )}
-      <button type="submit">Confirmar exclusão</button>
-      <button type="button" className="link" onClick={onCancel}>
-        Cancelar
-      </button>
-    </form>
+      <div className="btn-row">
+        <button type="button" className="btn btn-danger" disabled={busy} onClick={() => void confirm()}>
+          Excluir
+        </button>
+        <button type="button" className="btn btn-secondary" onClick={onCancel}>
+          Cancelar
+        </button>
+      </div>
+    </Modal>
   );
 }
 
@@ -285,7 +285,7 @@ export function DocumentList({
       {documents.length === 0 ? (
         <p>Nenhum documento enviado neste processo.</p>
       ) : (
-        <table className="scoring-table doc-table">
+        <table className="scoring-table wide-table doc-table">
           <thead>
             <tr>
               {COLUMNS.map((c) => (
@@ -302,7 +302,9 @@ export function DocumentList({
               const busy = ACTIVE_DOCUMENT_STATUSES.includes(doc.status);
               return (
                 <tr key={doc.id}>
-                  <td data-label="Nome">{doc.original_name}</td>
+                  <td data-label="Nome" className="doc-name" title={doc.original_name}>
+                    {doc.original_name}
+                  </td>
                   <td data-label="Tipo">
                     {labelOf(DOCUMENT_TYPE_LABELS, type)}
                     {doc.manual_type && <small className="muted"> (informado por você)</small>}
@@ -327,28 +329,63 @@ export function DocumentList({
                   </td>
                   <td data-label="Ações">
                     <div className="row-actions">
-                      <button type="button" className="link" onClick={() => onView(doc)}>
-                        Visualizar {doc.original_name}
-                      </button>
-                      <a href={`/api/documents/${doc.id}/file?download=1`}>Baixar {doc.original_name}</a>
                       <button
                         type="button"
-                        className="link"
+                        className="btn btn-primary"
+                        aria-label={`Visualizar ${doc.original_name}`}
+                        title={`Visualizar ${doc.original_name}`}
+                        onClick={() => onView(doc)}
+                      >
+                        Visualizar
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        aria-label={`Baixar ${doc.original_name}`}
+                        title={`Baixar ${doc.original_name}`}
+                        onClick={() => download(doc)}
+                      >
+                        Baixar
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        aria-label={`Substituir ${doc.original_name}`}
+                        title={`Substituir ${doc.original_name}`}
                         onClick={() => {
                           replaceTarget.current = doc;
                           replaceInput.current?.click();
                         }}
                       >
-                        Substituir {doc.original_name}
+                        Substituir
                       </button>
-                      <button type="button" className="link" onClick={() => setPanel({ kind: "delete", doc })}>
-                        Excluir {doc.original_name}
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        aria-label={`Excluir ${doc.original_name}`}
+                        title={`Excluir ${doc.original_name}`}
+                        onClick={() => setPanel({ kind: "delete", doc })}
+                      >
+                        Excluir
                       </button>
-                      <button type="button" className="link" disabled={busy} onClick={() => void reprocess(doc)}>
-                        Reprocessar {doc.original_name}
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        aria-label={`Reprocessar ${doc.original_name}`}
+                        title={`Reprocessar ${doc.original_name}`}
+                        disabled={busy}
+                        onClick={() => void reprocess(doc)}
+                      >
+                        Reprocessar
                       </button>
-                      <button type="button" className="link" onClick={() => setPanel({ kind: "classify", doc })}>
-                        Classificar {doc.original_name}
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        aria-label={`Classificar ${doc.original_name}`}
+                        title={`Classificar ${doc.original_name}`}
+                        onClick={() => setPanel({ kind: "classify", doc })}
+                      >
+                        Classificar
                       </button>
                     </div>
                   </td>
@@ -359,7 +396,7 @@ export function DocumentList({
         </table>
       )}
       {panel?.kind === "delete" && (
-        <DeleteForm key={panel.doc.id} doc={panel.doc} onDone={done} onCancel={() => setPanel(null)} />
+        <ConfirmDelete key={panel.doc.id} doc={panel.doc} onDone={done} onCancel={() => setPanel(null)} />
       )}
       {panel?.kind === "classify" && (
         <ClassifyForm key={panel.doc.id} doc={panel.doc} onDone={done} onCancel={() => setPanel(null)} />

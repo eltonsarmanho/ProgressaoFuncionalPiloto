@@ -126,15 +126,16 @@ describe("TELA-04: ações recarregam a lista", () => {
     await waitFor(() => expect(listCalls(calls)).toBe(2));
   });
 
-  it("excluir com justificativa chama a API e recarrega a lista", async () => {
+  it("excluir sem justificativa chama a API e recarrega a lista", async () => {
     const { calls, user } = renderPage({
       [LIST]: { status: 200, body: [doc()] },
-      "DELETE /api/documents/d1?justificativa=Duplicado": { status: 204 },
+      "DELETE /api/documents/d1": { status: 204 },
     });
     await user.click(await screen.findByRole("button", { name: "Excluir ata.pdf" }));
-    await user.type(screen.getByLabelText("Justificativa da exclusão"), "Duplicado");
-    await user.click(screen.getByRole("button", { name: "Confirmar exclusão" }));
+    expect(screen.queryByLabelText("Justificativa da exclusão")).not.toBeInTheDocument();
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Excluir" }));
     await waitFor(() => expect(listCalls(calls)).toBe(2));
+    expect(calls.some((c) => c.method === "DELETE" && c.path === "/api/documents/d1")).toBe(true);
   });
 
   it("visualizar abre o visualizador com o detalhe do documento", async () => {
