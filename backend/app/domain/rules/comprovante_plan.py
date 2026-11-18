@@ -4,16 +4,23 @@ Pure functions over activities, links and document metadata: nothing here opens 
 arrangement is what the user orders; the plan is the numbered list of pages the PDF will have.
 """
 
+import math
 from collections.abc import Sequence
 from datetime import date
 from uuid import UUID
 
 from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.entities.comprovante import (
+    ActivityPageRef,
     ComprovanteLayout,
+    ComprovantePlan,
     EvidenceKey,
     LayoutActivity,
     LayoutPage,
+    PageKind,
+    PlanPage,
+    TocEntry,
+    TocLevel,
 )
 from app.domain.repositories.ports import ActivityEvidence
 
@@ -65,3 +72,96 @@ def derive_layout(
         ),
         base_evidence_keys=tuple(keys),
     )
+
+
+# A group and an item take one line of the table of contents, an activity two: its title and
+# where it comes from.
+GROUP_LINES = 1
+ITEM_LINES = 1
+ACTIVITY_LINES = 2
+
+
+def _arrange(
+    layout: ComprovanteLayout, activities: Sequence[Activity]
+) -> dict[int, dict[int, list[tuple[Activity, tuple[LayoutPage, ...]]]]]:
+    """Current validated activities by group and item, each with the pages the layout gives it.
+
+    Inside an item the order of the layout comes first; an activity the layout does not know
+    follows by its date, with no page. Layout entries of activities that are gone are dropped.
+    """
+    position = {a.activity_id: index for index, a in enumerate(layout.activities)}
+    pages = {a.activity_id: a.pages for a in layout.activities}
+    ordered = sorted(
+        eligible_activities(activities),
+        key=lambda a: (
+            a.group_number,
+            a.item_number,
+            position.get(a.id, len(position)),
+            _table_order(a),
+        ),
+    )
+    groups: dict[int, dict[int, list[tuple[Activity, tuple[LayoutPage, ...]]]]] = {}
+    for activity in ordered:
+        items = groups.setdefault(activity.group_number, {})
+        items.setdefault(activity.item_number, []).append((activity, pages.get(activity.id, ())))
+    return groups
+
+
+def plan_comprovante(
+    layout: ComprovanteLayout, activities: Sequence[Activity], toc_capacity: int
+) -> ComprovantePlan:
+    """The numbered pages of the Comprovante and its table of contents (CMP-01, CMP-02, CMP-04).
+
+    Cover, table of contents (`toc_capacity` lines a page), then one separator per group that
+    has an activity followed by the original pages. Only metadata is used: the plan exists
+    after the originals are gone, so the Tabela can still quote the numbers.
+    """
+    groups = _arrange(layout, activities)
+    lines = sum(
+        GROUP_LINES + sum(ITEM_LINES + ACTIVITY_LINES * len(found) for found in items.values())
+        for items in groups.values()
+    )
+    toc_pages = math.ceil(lines / toc_capacity)
+    pages = [PlanPage(PageKind.CAPA, 1)]
+    pages += [PlanPage(PageKind.SUMARIO, 2 + n) for n in range(toc_pages)]
+    toc: list[TocEntry] = []
+    for group_number, items in groups.items():
+        pages.append(PlanPage(PageKind.SEPARADOR, len(pages) + 1, group_number))
+        toc.append(TocEntry(TocLevel.GRUPO, group_number, first_page=len(pages)))
+        for item_number, found in items.items():
+            item_entry = len(toc)
+            toc.append(TocEntry(TocLevel.ITEM, group_number, item_number))
+            item_first = None
+            for activity, layout_pages in found:
+                refs = []
+                for layout_page in layout_pages:
+                    number = len(pages) + 1
+                    pages.append(
+                        PlanPage(
+                            PageKind.ORIGINAL,
+                            number,
+                            group_number,
+                            layout_page.document_id,
+                            layout_page.page,
+                        )
+                    )
+                    refs.append(ActivityPageRef(layout_page.document_id, layout_page.page, number))
+                    item_first = item_first or number
+                numbers = [r.comprovante_page for r in refs]
+                toc.append(
+                    TocEntry(
+                        TocLevel.ATIVIDADE,
+                        group_number,
+                        item_number,
+                        activity.id,
+                        activity.title,
+                        min(numbers, default=None),
+                        max(numbers, default=None),
+                        tuple(refs),
+                    )
+                )
+            toc[item_entry] = TocEntry(
+                TocLevel.ITEM, group_number, item_number, first_page=item_first
+            )
+    # The hash is set when the limits and the hash are added (T18).
+    return ComprovantePlan(tuple(pages), "", tuple(toc))

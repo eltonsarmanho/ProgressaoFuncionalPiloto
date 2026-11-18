@@ -613,10 +613,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Processo de 3 grupos e 5 atividades: capa na página 1, sumário com `ceil(linhas / capacidade)` páginas, um separador por grupo com atividade, originais na ordem do arranjo
-- [ ] O sumário traz para cada grupo, item e atividade o número da primeira página; cada entrada de atividade traz documento de origem, página e intervalo no Comprovante
-- [ ] Grupo sem atividade não gera separador (edge case)
-- [ ] Gate quick passa; 10+ testes
+- [x] Processo de 3 grupos e 5 atividades: capa na página 1, sumário com `ceil(linhas / capacidade)` páginas, um separador por grupo com atividade, originais na ordem do arranjo
+- [x] O sumário traz para cada grupo, item e atividade o número da primeira página; cada entrada de atividade traz documento de origem, página e intervalo no Comprovante
+- [x] Grupo sem atividade não gera separador (edge case)
+- [x] Gate quick passa; 10+ testes
 
 **Tests**: unit
 **Gate**: quick

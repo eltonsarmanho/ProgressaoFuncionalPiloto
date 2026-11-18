@@ -307,8 +307,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | TAB-06 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
 | TAB-07 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
 | TAB-08 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | In Tasks |
-| CMP-01 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
-| CMP-02 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-01 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
+| CMP-02 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | CMP-03 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
 | CMP-04 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | CMP-05 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |

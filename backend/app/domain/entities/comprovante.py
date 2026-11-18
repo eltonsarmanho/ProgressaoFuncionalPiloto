@@ -71,10 +71,44 @@ class PlanPage:
     source_page: int | None = None
 
 
+class TocLevel(StrEnum):
+    GRUPO = "GRUPO"
+    ITEM = "ITEM"
+    ATIVIDADE = "ATIVIDADE"
+
+
+@dataclass(frozen=True)
+class ActivityPageRef:
+    """A page of an activity: the source page and the page of the Comprovante it is in."""
+
+    document_id: UUID
+    source_page: int
+    comprovante_page: int
+
+
+@dataclass(frozen=True)
+class TocEntry:
+    """A line of the table of contents.
+
+    A group or an item has the number of its first page; the table gives it the name. An
+    activity has its title, the pages it comes from and the range it takes in the Comprovante.
+    """
+
+    level: TocLevel
+    group_number: int
+    item_number: int | None = None
+    activity_id: UUID | None = None
+    title: str = ""
+    first_page: int | None = None
+    last_page: int | None = None
+    sources: tuple[ActivityPageRef, ...] = ()
+
+
 @dataclass(frozen=True)
 class ComprovantePlan:
     pages: tuple[PlanPage, ...]
     plan_hash: str
+    toc: tuple[TocEntry, ...] = ()
 
     def __post_init__(self) -> None:
         if [p.number for p in self.pages] != list(range(1, len(self.pages) + 1)):
