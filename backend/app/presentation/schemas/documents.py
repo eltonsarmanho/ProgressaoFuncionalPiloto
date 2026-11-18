@@ -4,13 +4,13 @@
 The extracted JSON of a run is read only: no schema here accepts it back.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from app.application.use_cases.documents import DocumentDetail, UploadResult
+from app.application.use_cases.documents import DocumentDetail, ListedDocument, UploadResult
 from app.domain.entities.document import Document, DocumentStatus, PageText, TextMethod
 from app.domain.repositories.ports import ActivityEvidence
 from app.presentation.schemas.scoring import Money
@@ -42,13 +42,28 @@ class DocumentOut(BaseModel):
 
 
 class DocumentListItemOut(DocumentOut):
-    """A row of the process list: the document plus how many activities came from it."""
+    """A row of the process list: the document, how many activities came from it and, when it
+    is outside the interstice, the data of its warning (FORA-02)."""
 
     activity_count: int
+    outside_interstice: bool
+    document_date: date | None
+    document_date_precision: str | None  # "DAY" or "MONTH"
+    interstice_start: date | None
+    interstice_end: date | None
 
     @classmethod
-    def with_count(cls, d: Document, activity_count: int) -> "DocumentListItemOut":
-        return cls(**_document_fields(d), activity_count=activity_count)
+    def of_listed(cls, listed: ListedDocument) -> "DocumentListItemOut":
+        outside = listed.outside
+        return cls(
+            **_document_fields(listed.document),
+            activity_count=listed.activity_count,
+            outside_interstice=listed.document.outside_interstice,
+            document_date=outside.document_date if outside else None,
+            document_date_precision=outside.date_precision if outside else None,
+            interstice_start=outside.interstice_start if outside else None,
+            interstice_end=outside.interstice_end if outside else None,
+        )
 
 
 def _document_fields(d: Document) -> dict[str, Any]:
@@ -121,6 +136,7 @@ class DocAlertOut(BaseModel):
     code: str
     field: str | None
     activity_index: int | None
+    detail: dict[str, str] | None = None  # the date and interstice of the outside warning
 
 
 class EvidenceOut(BaseModel):

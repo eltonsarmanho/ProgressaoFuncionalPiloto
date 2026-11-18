@@ -634,13 +634,13 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | UIM-22 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
 | UIM-23 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
 | FORA-01 | P1: Documentos fora do interstício | Design | Implementing |
-| FORA-02 | P1: Documentos fora do interstício | Design | Pending |
-| FORA-03 | P1: Documentos fora do interstício | Design | Pending |
-| FORA-04 | P1: Documentos fora do interstício | Design | Pending |
+| FORA-02 | P1: Documentos fora do interstício | Design | Implementing |
+| FORA-03 | P1: Documentos fora do interstício | Design | Implementing |
+| FORA-04 | P1: Documentos fora do interstício | Design | Implementing |
 | FORA-05 | P1: Documentos fora do interstício | Design | Implementing |
 | FORA-06 | P1: Documentos fora do interstício | Design | Implementing |
 | FORA-07 | P1: Documentos fora do interstício | Design | Implementing |
-| FORA-08 | P1: Documentos fora do interstício | Design | Pending |
+| FORA-08 | P1: Documentos fora do interstício | Design | Implementing |
 | FORA-09 | P1: Documentos fora do interstício | Design | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`

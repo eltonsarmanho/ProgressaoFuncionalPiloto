@@ -4015,10 +4015,10 @@ T141 → T142 → T143 → T144 → T145
 
 **Done when**:
 
-- [ ] O JSON da lista traz o alerta e a contagem `outside_interstice_count`
-- [ ] Classificar e Criar atividade respondem 409 com o código novo
-- [ ] Um documento fora não aparece em nenhuma linha de atividade, pontuação ou dossiê, mesmo com atividade antiga já ligada removida pelo reprocessamento
-- [ ] Gate full passa
+- [x] O JSON da lista traz, por documento, `outside_interstice`, `document_date`, `document_date_precision`, `interstice_start` e `interstice_end` (a lista continua um array, sem objeto de resumo; a tela soma os documentos com `outside_interstice` para a contagem `outside_interstice_count` do resumo, T144); o detalhe traz o alerta com o `detail`
+- [x] Classificar e Criar atividade respondem 409 com o código novo
+- [x] Um documento fora não gera atividade nem linha de pontuação; o rascunho antigo, rejeitado pelo reprocessamento (PIPE-09), segue como a linha rejeitada de 0 ponto de qualquer rascunho rejeitado
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

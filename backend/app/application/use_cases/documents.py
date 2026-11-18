@@ -9,7 +9,7 @@ enum has no download or delete value.
 import uuid
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
-from datetime import timedelta
+from datetime import date, timedelta
 from pathlib import Path
 from uuid import UUID
 
@@ -19,6 +19,7 @@ from app.application.use_cases.scoring import ChangeActivityStatus
 from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.document import (
+    DocAlertCode,
     Document,
     DocumentStatus,
     ExtractionRun,
@@ -50,6 +51,9 @@ DOCUMENT_ENTITY = "document"
 EVIDENCE_ENTITY = "activity_evidence"
 PROCESS_NOT_FOUND = "Processo não encontrado"
 DOCUMENT_NOT_FOUND = "Documento não encontrado"
+OUTSIDE_INTERSTICE_MESSAGE = (
+    "O documento está fora do interstício e não é processado nas próximas etapas"
+)
 LIMIT_FIELD = "limite"
 FILE_FIELD = "arquivo"
 MIME_BY_KIND = {
@@ -129,6 +133,12 @@ def document_audit_view(document: Document) -> dict:
         "sha256": document.sha256,
         "status": document.status,
     }
+
+
+def refuse_outside_interstice(document: Document) -> None:
+    """Classifying or creating an activity from such a document is a 409 (FORA-04)."""
+    if document.outside_interstice:
+        raise Conflict(OUTSIDE_INTERSTICE_MESSAGE, DocAlertCode.DOCUMENTO_FORA_DO_INTERSTICIO.value)
 
 
 class _DocumentUseCase:
@@ -351,6 +361,43 @@ class GetDocument(_DocumentUseCase):
             return DocumentDetail(document, run, pages, tuple(linked))
 
 
+@dataclass(frozen=True)
+class OutsideInterstice:
+    """What the Etapa 2 warning says: the document date and the interstice it was judged by.
+
+    Read from the detail of the alert in the active run (written when the document was
+    processed), so it keeps the interstice that was current then (FORA-02, FORA-07).
+    """
+
+    document_date: date
+    date_precision: str  # "DAY" or "MONTH"
+    interstice_start: date
+    interstice_end: date
+
+
+@dataclass(frozen=True)
+class ListedDocument:
+    document: Document
+    activity_count: int
+    outside: OutsideInterstice | None
+
+
+def _outside_of(run: ExtractionRun | None) -> OutsideInterstice | None:
+    code = DocAlertCode.DOCUMENTO_FORA_DO_INTERSTICIO.value
+    for alert in run.warnings if run else ():
+        if not isinstance(alert, dict) or alert.get("code") != code:
+            continue
+        found = alert.get("detail")
+        if found:
+            return OutsideInterstice(
+                date.fromisoformat(found["document_date"]),
+                found["date_precision"],
+                date.fromisoformat(found["interstice_start"]),
+                date.fromisoformat(found["interstice_end"]),
+            )
+    return None
+
+
 class ListDocuments(_DocumentUseCase):
     def execute(
         self,
@@ -373,13 +420,21 @@ class ListDocuments(_DocumentUseCase):
         process_id: UUID,
         status: DocumentStatus | None = None,
         type: str | None = None,
-    ) -> list[tuple[Document, int]]:
-        """The same list, each document with the number of activities that cite it (UIM-07)."""
+    ) -> list[ListedDocument]:
+        """The same list, each document with the number of activities that cite it (UIM-07)
+        and, for one outside the interstice, the date and interstice of its warning (FORA-02)."""
         with self._uow_factory() as uow:
             self._readable(uow, actor, process_id)
             found = list(uow.documents.list_for_process(process_id, status, type))
             counts = uow.evidences.counts_for_documents([d.id for d in found])
-            return [(d, counts[d.id]) for d in found]
+            return [
+                ListedDocument(
+                    d,
+                    counts[d.id],
+                    _outside_of(active_run(uow, d.id)) if d.outside_interstice else None,
+                )
+                for d in found
+            ]
 
 
 @dataclass(frozen=True)
@@ -662,6 +717,7 @@ class ClassifyDocumentManually(_DocumentUseCase):
             document = self._document(uow, actor, document_id)
             self._writable(uow, actor, document.process_id)
             _check_version(document, expected_version)
+            refuse_outside_interstice(document)
             if document_type not in {t.value for t in DocumentType}:
                 raise ValidationFailed("tipo", "Tipo de documento inválido")
             if category not in {t.value for t in TaxonomyCode}:

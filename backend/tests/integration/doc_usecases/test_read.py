@@ -79,7 +79,10 @@ def test_list_with_counts_gives_the_number_of_activities_linked_to_each_document
 
     counted = read.list.execute_with_counts(w.docente, w.process.id)
 
-    assert {d.original_name: n for d, n in counted} == {"livre.pdf": 0, "ligado.pdf": 1}
+    assert {r.document.original_name: r.activity_count for r in counted} == {
+        "livre.pdf": 0,
+        "ligado.pdf": 1,
+    }
     assert read.list.execute_with_counts(w.docente, w.process.id, type="OUTRO") == []
     with pytest.raises(NotFound):
         read.list.execute_with_counts(w.other_docente, w.process.id)

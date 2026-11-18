@@ -12,7 +12,11 @@ from uuid import UUID
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
 from app.application.use_cases.document_processing import MAX_EXCERPT_CHARS
-from app.application.use_cases.documents import EVIDENCE_ENTITY, active_run
+from app.application.use_cases.documents import (
+    EVIDENCE_ENTITY,
+    active_run,
+    refuse_outside_interstice,
+)
 from app.domain.entities.activity import Activity
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.document import Document
@@ -105,6 +109,7 @@ class LinkEvidence(_EvidenceUseCase):
                 raise NotFound(DOCUMENT_NOT_FOUND)
             if document.process_id != activity.process_id:
                 raise ValidationFailed("documento", "O documento pertence a outro processo")
+            refuse_outside_interstice(document)
             if not 1 <= page <= document.page_count:
                 raise ValidationFailed("pagina", "Página fora do documento")
             justification = (justification or "").strip() or None

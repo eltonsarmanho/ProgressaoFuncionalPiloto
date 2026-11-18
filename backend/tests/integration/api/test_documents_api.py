@@ -31,7 +31,10 @@ DOCUMENT_KEYS = {
     "status_code", "manual_type", "manual_category", "suggested_type", "suggested_category",
     "confidence", "uploaded_by", "uploaded_at", "updated_at", "version",
 }  # fmt: skip
-LIST_KEYS = DOCUMENT_KEYS | {"activity_count"}
+LIST_KEYS = DOCUMENT_KEYS | {
+    "activity_count", "outside_interstice", "document_date", "document_date_precision",
+    "interstice_start", "interstice_end",
+}  # fmt: skip
 RESULT_KEYS = {
     "original_name", "status_code", "document", "existing_document_id", "field", "code", "message",
 }  # fmt: skip
@@ -454,7 +457,7 @@ def test_the_detail_has_pages_extracted_json_alerts_and_linked_activities(
     assert body["run"]["model"] == "sabia-4-br-sp"
     assert body["run"]["duration_ms"] == 1500
     assert body["run"]["raw_json"] == {"activities": [{"title": "T"}]}
-    assert body["alerts"] == list(warnings)
+    assert body["alerts"] == [{**warning, "detail": None} for warning in warnings]
     [linked] = body["activities"]
     assert linked["id"] == created["id"]
     assert linked["title"] == "Banca de TCC"

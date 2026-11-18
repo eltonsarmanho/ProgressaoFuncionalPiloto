@@ -97,7 +97,7 @@ async def list_documents(
         status,
         document_type.value if document_type else None,
     )
-    return [DocumentListItemOut.with_count(d, count) for d, count in found]
+    return [DocumentListItemOut.of_listed(listed) for listed in found]
 
 
 @router.get("/documents/{document_id}", response_model=DocumentDetailOut)

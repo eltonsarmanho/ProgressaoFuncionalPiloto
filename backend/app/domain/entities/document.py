@@ -95,6 +95,11 @@ class Document:
     # it from an entity, only `mark_file_deleted` does.
     file_deleted_at: datetime | None = None
 
+    @property
+    def outside_interstice(self) -> bool:
+        """Processed with every dated activity outside the interstice (FORA-01)."""
+        return self.status_code == DocAlertCode.DOCUMENTO_FORA_DO_INTERSTICIO.value
+
 
 @dataclass(frozen=True)
 class PageText:
