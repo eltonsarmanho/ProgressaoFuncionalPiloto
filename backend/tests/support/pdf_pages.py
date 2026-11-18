@@ -108,6 +108,19 @@ def write_image(path, fmt: str, size: tuple[int, int], dpi=None, mode: str = "RG
     return path.read_bytes()
 
 
+def write_marked_jpeg(path, orientation: int | None, size=(1200, 800), dpi=(150, 150)) -> bytes:
+    """A white JPEG with a red block in the top-left corner of the stored pixels and, when
+    `orientation` is given, that EXIF orientation (a phone photo): the block says where the
+    corner ends up once the picture is shown upright."""
+    image = Image.new("RGB", size, (255, 255, 255))
+    image.paste((255, 0, 0), (0, 0, size[0] // 4, size[1] // 4))
+    exif = Image.Exif()
+    if orientation is not None:
+        exif[0x0112] = orientation
+    image.save(path, format="JPEG", quality=95, dpi=dpi, exif=exif)
+    return path.read_bytes()
+
+
 def write_png_header_only(path, size: tuple[int, int]) -> None:
     """A PNG with a header of `size` and picture data that is not data: Pillow can read its
     dimensions, but nothing can decode it."""

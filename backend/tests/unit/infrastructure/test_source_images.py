@@ -14,10 +14,12 @@ from app.domain.entities.generated import GenerationAlertCode, GenerationCode
 from app.domain.rules.comprovante_plan import ComprovanteRefused
 from app.infrastructure.documents.source_pages import STRIP_HEIGHT, attach, attach_image
 from tests.support.pdf_pages import (
+    image_bytes,
     render,
     reopened,
     source_pdf,
     write_image,
+    write_marked_jpeg,
     write_png_header_only,
 )
 
@@ -50,6 +52,78 @@ def test_an_image_without_dpi_is_taken_as_150_dpi(tmp_path):
 
     assert sheet_size(attached_image(jpeg)[0]) == (720.0, 1008.0)
     assert sheet_size(attached_image(png)[0]) == (720.0, 1008.0)
+
+
+def corner_colors(page: pymupdf.Page) -> dict[str, tuple[int, int, int]]:
+    """The color near each corner of the picture area of the page (the strip is left out)."""
+    area = pymupdf.Rect(0, 0, page.rect.width, page.rect.height - STRIP_HEIGHT)
+    pixmap = page.get_pixmap(matrix=pymupdf.Matrix(1, 1), clip=area, alpha=False)
+    margin = 10
+
+    def at(x: float, y: float) -> tuple[int, int, int]:
+        return pixmap.pixel(int(x), int(y))[:3]
+
+    right, bottom = pixmap.width - margin, pixmap.height - margin
+    return {
+        "top-left": at(margin, margin),
+        "top-right": at(right, margin),
+        "bottom-left": at(margin, bottom),
+        "bottom-right": at(right, bottom),
+    }
+
+
+def red_corner(page: pymupdf.Page) -> str:
+    colors = corner_colors(page)
+    found = [name for name, (r, g, b) in colors.items() if r > 200 and g < 80 and b < 80]
+    assert len(found) == 1, colors
+    return found[0]
+
+
+@pytest.mark.parametrize(
+    ("orientation", "size", "corner"),
+    [
+        (6, (384.0, 576.0), "top-right"),  # rotated a quarter turn clockwise to show it upright
+        (3, (576.0, 384.0), "bottom-right"),  # half a turn
+        (8, (384.0, 576.0), "bottom-left"),  # a quarter turn counterclockwise
+        (1, (576.0, 384.0), "top-left"),  # already upright
+        (None, (576.0, 384.0), "top-left"),  # no EXIF at all
+    ],
+)
+def test_a_jpeg_with_an_exif_orientation_enters_upright_with_the_bytes_of_the_file(
+    tmp_path, orientation, size, corner
+):
+    path = tmp_path / "foto.jpg"
+    original = write_marked_jpeg(path, orientation)  # 1200 x 800 pixels at 150 dpi
+
+    out = attached_image(path)
+
+    assert sheet_size(out[0]) == size
+    assert red_corner(out[0]) == corner
+    assert image_bytes(out, 0) == [original]  # turned in the page, never recompressed
+
+
+def test_a_turned_jpeg_takes_its_page_size_from_the_dpi_of_each_displayed_axis(tmp_path):
+    # stored 1200 x 800 at 150 x 300 dpi; shown upright (orientation 6) it is 800 x 1200 pixels:
+    # the width is the stored height at 300 dpi, the height is the stored width at 150 dpi
+    path = tmp_path / "foto.jpg"
+    write_marked_jpeg(path, 6, dpi=(150, 300))
+
+    out = attached_image(path)
+
+    assert sheet_size(out[0]) == (192.0, 576.0)
+
+
+@pytest.mark.parametrize("orientation", [2, 4, 5, 7, 9], ids=lambda n: f"orientation-{n}")
+def test_a_mirrored_or_unknown_orientation_leaves_the_picture_as_stored(tmp_path, orientation):
+    # CMP-08: only the turns (3, 6, 8) are applied; a mirror cannot be done without decoding
+    path = tmp_path / "foto.jpg"
+    original = write_marked_jpeg(path, orientation)
+
+    out = attached_image(path)
+
+    assert sheet_size(out[0]) == (576.0, 384.0)
+    assert red_corner(out[0]) == "top-left"
+    assert image_bytes(out, 0) == [original]
 
 
 def test_a_huge_page_is_scaled_down_to_14400_points_on_the_longest_side(tmp_path):

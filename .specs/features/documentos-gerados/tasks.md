@@ -3446,10 +3446,10 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Um JPEG sintético com EXIF gerado em código, orientação 6, vira página em pé e a conferência por pixel mostra o marcador no canto certo; o mesmo para a orientação 3 (180 graus)
-- [ ] Com orientação 1 e sem EXIF, os bytes do JPEG na página são idênticos aos de origem (sem recompressão) e o teste de 40 megapixels segue sem decodificar
-- [ ] As páginas originais de PDF seguem idênticas por pixel (testes de CMP-03 passam sem mudança)
-- [ ] CMP-08 e o design registram a orientação; gate quick passa; 4+ testes novos
+- [x] Um JPEG sintético com EXIF gerado em código, orientação 6, vira página em pé e a conferência por pixel mostra o marcador no canto certo; o mesmo para a orientação 3 (180 graus)
+- [x] Com orientação 1 e sem EXIF, os bytes do JPEG na página são idênticos aos de origem (sem recompressão) e o teste de 40 megapixels segue sem decodificar
+- [x] As páginas originais de PDF seguem idênticas por pixel (testes de CMP-03 passam sem mudança)
+- [x] CMP-08 e o design registram a orientação; gate quick passa; 9 casos novos em 4 testes
 
 **Tests**: unit
 **Gate**: quick

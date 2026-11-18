@@ -131,6 +131,13 @@ def _image_page_points(width_px: int, height_px: int, dpi: tuple[float, float] |
     return width * scale, height * scale
 
 
+# EXIF orientation of a JPEG -> degrees clockwise that show it upright (CMP-08). The mirrored values
+# (2, 4, 5, 7, front cameras) are left as stored: a page cannot mirror a picture without
+# decoding it.
+_EXIF_ORIENTATION = 0x0112
+_EXIF_TURN = {3: 180, 6: 90, 8: 270}
+
+
 def attach_image(
     out: pymupdf.Document,
     path: Path,
@@ -143,19 +150,26 @@ def attach_image(
 
     Only the header is read to measure it; PyMuPDF embeds a JPEG with its own bytes, while a PNG
     is decoded whole, so a PNG above `png_max_megapixels` is refused before anything is decoded
-    (CMP-13).
+    (CMP-13). A JPEG whose EXIF orientation says it was shot on its side (3, 6 or 8) is turned in
+    the page, so it shows upright and its bytes are still the ones of the file.
     """
     with Image.open(path) as image:
         pixels = (image.width, image.height)
         is_png = image.format == "PNG"
         dpi = image.info.get("dpi")
+        # the JPEG header is enough to know how the camera held the phone; a PNG would be decoded
+        orientation = image.getexif().get(_EXIF_ORIENTATION) if image.format == "JPEG" else None
     if is_png and pixels[0] * pixels[1] > png_max_megapixels * 1_000_000:
         raise ComprovanteRefused(
             GenerationCode.IMAGEM_GRANDE_DEMAIS,
             f"A imagem tem mais de {png_max_megapixels} megapixels.",
             document_id,
         )
+    turn = _EXIF_TURN.get(orientation, 0)
+    if turn in (90, 270):  # the page is the picture turned on its side: width and height swap
+        pixels = (pixels[1], pixels[0])
+        dpi = (dpi[1], dpi[0]) if dpi else None
     width, height = _image_page_points(*pixels, dpi)
     sheet = out.new_page(width=width, height=height + STRIP_HEIGHT)
-    sheet.insert_image(pymupdf.Rect(0, 0, width, height), filename=str(path))
+    sheet.insert_image(pymupdf.Rect(0, 0, width, height), filename=str(path), rotate=-turn)
     _draw_strip(sheet, width, height, number)
