@@ -315,11 +315,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CMP-06 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | CMP-07 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | CMP-08 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
-| CMP-09 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
-| CMP-10 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-09 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
+| CMP-10 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | CMP-11 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
 | CMP-12 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
-| CMP-13 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-13 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | ARR-01 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
 | ARR-02 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
 | ARR-03 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
@@ -371,7 +371,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | DEL-08 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
 | DEL-09 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
 | DEL-10 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
-| DEL-11 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-11 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
 | DEL-12 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
 | DEL-13 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
 | DEL-14 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |

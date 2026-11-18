@@ -73,6 +73,21 @@ class PlanPage:
     source_page: int | None = None
 
 
+@dataclass(frozen=True)
+class SourceDocument:
+    """Metadata of a document of the process, all the plan needs to check its sources.
+
+    `pixels` is width times height of an image document, when known.
+    """
+
+    id: UUID
+    original_name: str
+    page_count: int
+    mime: str = "application/pdf"
+    pixels: int | None = None
+    file_deleted: bool = False
+
+
 class TocLevel(StrEnum):
     GRUPO = "GRUPO"
     ITEM = "ITEM"

@@ -5,6 +5,7 @@ from itertools import count
 from uuid import UUID, uuid4
 
 from app.domain.entities.activity import Activity, ActivityStatus
+from app.domain.entities.comprovante import SourceDocument
 from app.domain.repositories.ports import ActivityEvidence
 
 PROCESS_ID = uuid4()
@@ -38,3 +39,9 @@ def link(activity: Activity, document_id: UUID, page: int) -> ActivityEvidence:
         created_by=uuid4(),
         created_at=datetime(2025, 1, 1, tzinfo=UTC) + timedelta(minutes=next(_clock)),
     )
+
+
+def source(page_count: int = 10, **kwargs) -> SourceDocument:
+    defaults = {"id": uuid4(), "original_name": "documento.pdf", "page_count": page_count}
+    defaults.update(kwargs)
+    return SourceDocument(**defaults)

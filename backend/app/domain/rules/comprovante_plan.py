@@ -4,9 +4,12 @@ Pure functions over activities, links and document metadata: nothing here opens 
 arrangement is what the user orders; the plan is the numbered list of pages the PDF will have.
 """
 
+import json
 import math
 from collections.abc import Sequence
+from dataclasses import replace
 from datetime import date
+from hashlib import sha256
 from uuid import UUID
 
 from app.domain.entities.activity import Activity, ActivityStatus
@@ -20,13 +23,33 @@ from app.domain.entities.comprovante import (
     PageKind,
     PlanAlert,
     PlanPage,
+    SourceDocument,
     TocEntry,
     TocLevel,
 )
-from app.domain.entities.generated import GenerationAlertCode
+from app.domain.entities.generated import GenerationAlertCode, GenerationCode
+from app.domain.errors import GenerationRefused
 from app.domain.repositories.ports import ActivityEvidence
 
 NO_VOUCHER_NOTE = "Sem comprovante anexado"
+MAX_ATTACHED_PAGES = 400
+PNG_MAX_MEGAPIXELS = 12
+_PIXELS_PER_MEGAPIXEL = 1_000_000
+
+
+class ComprovanteRefused(GenerationRefused):
+    """The Comprovante cannot be built; names the document and page when one is to blame."""
+
+    def __init__(
+        self,
+        code: GenerationCode,
+        message: str,
+        document_id: UUID | None = None,
+        page: int | None = None,
+    ):
+        super().__init__(code, message)
+        self.document_id = document_id
+        self.page = page
 
 
 def eligible_activities(activities: Sequence[Activity]) -> list[Activity]:
@@ -205,5 +228,88 @@ def plan_comprovante(
             toc[item_entry] = TocEntry(
                 TocLevel.ITEM, group_number, item_number, first_page=item_first
             )
-    # The hash is set when the limits and the hash are added (T18).
-    return ComprovantePlan(tuple(pages), "", tuple(toc), tuple(alerts))
+    plan = ComprovantePlan(tuple(pages), "", tuple(toc), tuple(alerts))
+    return replace(plan, plan_hash=plan_hash(plan))
+
+
+def plan_hash(plan: ComprovantePlan) -> str:
+    """SHA-256 of the numbering of the plan as canonical JSON (CMP-04).
+
+    The same pages in the same order give the same hash; a new order, a removed page or a new
+    number changes it. Titles and justifications are left out: they never move a number.
+    """
+    numbering = {
+        "pages": [
+            [
+                page.kind.value,
+                page.number,
+                page.group_number,
+                None if page.document_id is None else str(page.document_id),
+                page.source_page,
+            ]
+            for page in plan.pages
+        ],
+        "toc": [
+            [
+                entry.level.value,
+                entry.group_number,
+                entry.item_number,
+                None if entry.activity_id is None else str(entry.activity_id),
+                entry.first_page,
+                entry.last_page,
+                [
+                    [str(ref.document_id), ref.source_page, ref.comprovante_page, ref.remission]
+                    for ref in entry.sources
+                ],
+            ]
+            for entry in plan.toc
+        ],
+    }
+    text = json.dumps(numbering, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return sha256(text.encode("utf-8")).hexdigest()
+
+
+def check_comprovante(
+    plan: ComprovantePlan,
+    documents: Sequence[SourceDocument],
+    *,
+    max_pages: int = MAX_ATTACHED_PAGES,
+    png_max_megapixels: int = PNG_MAX_MEGAPIXELS,
+) -> None:
+    """Refuse a Comprovante that cannot be built (CMP-09, CMP-10, CMP-13, DEL-11).
+
+    `documents` are all the documents of the process. The plan itself is always computable, so
+    the Tabela can quote its numbers even when the Comprovante is refused. The first problem
+    found is raised, in this order: a deleted original, a source that is not available, a PNG
+    that is too large, too many attached pages.
+    """
+    if any(document.file_deleted for document in documents):
+        raise ComprovanteRefused(
+            GenerationCode.ORIGINAIS_EXCLUIDOS,
+            "Os documentos de entrada deste processo foram excluídos.",
+        )
+    known = {document.id: document for document in documents}
+    attached = [page for page in plan.pages if page.kind is PageKind.ORIGINAL]
+    for page in attached:
+        document = known.get(page.document_id)
+        if document is None or not 1 <= page.source_page <= document.page_count:
+            raise ComprovanteRefused(
+                GenerationCode.ORIGINAL_INDISPONIVEL,
+                f"O documento {page.document_id} não tem a página {page.source_page}.",
+                page.document_id,
+                page.source_page,
+            )
+    limit = png_max_megapixels * _PIXELS_PER_MEGAPIXEL
+    for page in attached:
+        document = known[page.document_id]
+        if document.mime == "image/png" and document.pixels is not None and document.pixels > limit:
+            raise ComprovanteRefused(
+                GenerationCode.IMAGEM_GRANDE_DEMAIS,
+                f"A imagem {document.original_name} tem mais de {png_max_megapixels} megapixels.",
+                document.id,
+            )
+    if len(attached) > max_pages:
+        raise ComprovanteRefused(
+            GenerationCode.COMPROVANTE_GRANDE_DEMAIS,
+            f"O Comprovante teria {len(attached)} páginas anexadas; o limite é {max_pages}.",
+        )

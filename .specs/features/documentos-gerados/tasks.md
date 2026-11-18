@@ -667,12 +667,12 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] 400 páginas passam e 401 recusam com `COMPROVANTE_GRANDE_DEMAIS`; a remissão não conta como página anexada
-- [ ] Documento excluído do processo ou página fora de `1..page_count` vira `ORIGINAL_INDISPONIVEL` com documento e página
-- [ ] PNG de 12 megapixels passa, de 12 megapixels e 1 pixel recusa com `IMAGEM_GRANDE_DEMAIS` citando o documento; JPEG de 40 megapixels passa
-- [ ] Documento com `ARQUIVO_EXCLUIDO` recusa o Comprovante com `ORIGINAIS_EXCLUIDOS`, mas o plano da Tabela (só metadados) continua calculável
-- [ ] `plan_hash` é o mesmo para o mesmo plano e muda quando a ordem muda
-- [ ] Gate quick passa; 12+ testes
+- [x] 400 páginas passam e 401 recusam com `COMPROVANTE_GRANDE_DEMAIS`; a remissão não conta como página anexada
+- [x] Documento excluído do processo ou página fora de `1..page_count` vira `ORIGINAL_INDISPONIVEL` com documento e página
+- [x] PNG de 12 megapixels passa, de 12 megapixels e 1 pixel recusa com `IMAGEM_GRANDE_DEMAIS` citando o documento; JPEG de 40 megapixels passa
+- [x] Documento com `ARQUIVO_EXCLUIDO` recusa o Comprovante com `ORIGINAIS_EXCLUIDOS`, mas o plano da Tabela (só metadados) continua calculável
+- [x] `plan_hash` é o mesmo para o mesmo plano e muda quando a ordem muda
+- [x] Gate quick passa; 12+ testes
 
 **Tests**: unit
 **Gate**: quick
