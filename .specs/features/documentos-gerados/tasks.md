@@ -1939,10 +1939,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] A lista vem em ordem decrescente, em andamento primeiro, com estado, versão, alertas, arquivos e `size_bytes` de cada um
-- [ ] Baixar a versão 1 depois de mudar uma atividade devolve o arquivo original byte a byte, sem regerar; linha que não é `PRONTO` ou arquivo ausente responde 404; outro docente, 404
-- [ ] Em processo CONCLUIDO as versões continuam listadas e baixáveis
-- [ ] Gate full passa; 8+ testes
+- [x] A lista vem em ordem decrescente, em andamento primeiro, com estado, versão, alertas, arquivos e `size_bytes` de cada um
+- [x] Baixar a versão 1 depois de mudar uma atividade devolve o arquivo original byte a byte, sem regerar; linha que não é `PRONTO` ou arquivo ausente responde 404; outro docente, 404
+- [x] Em processo CONCLUIDO as versões continuam listadas e baixáveis
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full

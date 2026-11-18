@@ -58,7 +58,9 @@ from app.domain.rules.comprovante_plan import (
     check_comprovante,
     plan_comprovante,
 )
+from app.domain.rules.download_names import download_name
 from app.domain.rules.generation_snapshot import build_snapshot
+from app.domain.rules.interstice import Interstice
 from app.domain.rules.report_document import build_report_document
 from app.domain.rules.report_draft import (
     STALE,
@@ -747,3 +749,101 @@ class RecoverInterruptedGenerations:
             removed,
         )
         return len(generations) + len(jobs)
+
+
+GENERATED_NOT_FOUND = "Documento gerado não encontrado"
+CONTENT_TYPES = {
+    DocumentFormat.DOCX: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    DocumentFormat.PDF: "application/pdf",
+}
+
+
+@dataclass(frozen=True)
+class DownloadedGeneratedFile:
+    """The stored file of a version; `sha256` is the value of the `ETag` (VER-03)."""
+
+    path: Path
+    filename: str
+    content_type: str
+    sha256: str
+    size_bytes: int
+
+
+class _VersionUseCase(_ScoringUseCase):
+    def _generation(
+        self, uow: UnitOfWork, actor: User, generation_id: UUID
+    ) -> GeneratedDocument:
+        """The version, or NotFound when it does not exist or its process is out of reach."""
+        generation = uow.generations.get(generation_id)
+        if generation is None:
+            raise NotFound(GENERATED_NOT_FOUND)
+        self._readable(uow, actor, generation.process_id)
+        return generation
+
+
+class ListGeneratedDocuments(_VersionUseCase):
+    def execute(
+        self, actor: User, process_id: UUID, kind: DocumentKind | None = None
+    ) -> Sequence[GeneratedDocument]:
+        """The running ones first, then the others from the newest to the oldest (VER-09)."""
+        with self._uow_factory() as uow:
+            self._readable(uow, actor, process_id)
+            return uow.generations.list_for_process(process_id, kind)
+
+
+class GetGeneratedDocument(_VersionUseCase):
+    def execute(self, actor: User, generation_id: UUID) -> GeneratedDocument:
+        with self._uow_factory() as uow:
+            return self._generation(uow, actor, generation_id)
+
+
+class DownloadGeneratedFile(_VersionUseCase):
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        policy: AccessPolicy,
+        storage: GeneratedFileStorage,
+    ) -> None:
+        super().__init__(uow_factory, audit, policy)
+        self._storage = storage
+
+    def execute(
+        self, actor: User, generation_id: UUID, fmt: DocumentFormat
+    ) -> DownloadedGeneratedFile:
+        """The file as it was stored, never generated again; audited (VER-03).
+
+        A row that is not PRONTO, a format it does not have and a file gone from the volume are
+        all NotFound."""
+        with self._uow_factory() as uow:
+            generation = self._generation(uow, actor, generation_id)
+            stored = next((f for f in generation.files if f.format is fmt), None)
+            if generation.state is not GenerationState.PRONTO or stored is None:
+                raise NotFound(GENERATED_NOT_FOUND)
+            path = self._storage.path(generation.process_id, stored.internal_name)
+            if not path.is_file():
+                logger.error("generation_id=%s file missing from the storage", generation.id)
+                raise NotFound(GENERATED_NOT_FOUND)
+            process = uow.processes.get(generation.process_id)
+            self._audit.record(
+                uow,
+                actor.id,
+                GENERATED_ENTITY,
+                generation.id,
+                AuditAction.UPDATE,
+                {},
+                {"operation": "DOWNLOAD", "format": fmt},
+            )
+            uow.commit()
+            return DownloadedGeneratedFile(
+                path,
+                download_name(
+                    generation.kind,
+                    fmt,
+                    Interstice(process.start_date, process.end_date),
+                    generation.version_number,
+                ),
+                CONTENT_TYPES[fmt],
+                stored.sha256,
+                stored.size_bytes,
+            )
