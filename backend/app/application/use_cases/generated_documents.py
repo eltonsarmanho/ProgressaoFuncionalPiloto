@@ -302,6 +302,50 @@ def _numbering_alert(
     return [GenerationAlert(GenerationAlertCode.NUMERACAO_DIVERGENTE, _NUMBERING_TEXT[kind])]
 
 
+_FAILURE_MESSAGES: Mapping[GenerationCode, str] = {
+    GenerationCode.ORIGINAL_INDISPONIVEL: (
+        "Um documento de origem não está mais disponível no armazenamento."
+    ),
+    GenerationCode.COMPROVANTE_GRANDE_DEMAIS: (
+        "O Comprovante passa do limite de páginas ou de tamanho."
+    ),
+    GenerationCode.IMAGEM_GRANDE_DEMAIS: "Uma imagem de origem passa do limite de megapixels.",
+    GenerationCode.ORIGINAIS_EXCLUIDOS: "Os documentos de entrada deste processo foram excluídos.",
+    GenerationCode.TABELA_NAO_ESCOLHIDA: "O processo não tem tabela de pontuação escolhida.",
+    GenerationCode.ERRO_INTERNO: "Erro interno ao gerar o documento. Tente gerar de novo.",
+}
+
+
+class _Scratch:
+    """The files a run has written so far, to remove them when the run fails (VER-05)."""
+
+    def __init__(self, storage: GeneratedFileStorage, process_id: UUID) -> None:
+        self._storage = storage
+        self._process_id = process_id
+        self._temps: list[Path] = []
+        self._names: list[str] = []
+
+    def new_temp(self) -> Path:
+        path = self._storage.new_temp_path(self._process_id)
+        self._temps.append(path)
+        return path
+
+    def commit(self, temp: Path, extension: str) -> str:
+        name = self._storage.commit(self._process_id, temp, extension)
+        self._names.append(name)
+        return name
+
+    def discard(self) -> None:
+        """Removes the temporary files and the ones already renamed; never raises."""
+        for temp in self._temps:
+            temp.unlink(missing_ok=True)
+        for name in self._names:
+            try:
+                self._storage.delete(self._process_id, name)
+            except OSError:
+                logger.error("cleanup process_id=%s failed", self._process_id)
+
+
 def _unique(codes: Sequence[str]) -> list[str]:
     return list(dict.fromkeys(codes))
 
@@ -348,22 +392,38 @@ class RunGeneration:
         return True
 
     def execute(self, generation_id: UUID) -> None:
+        """Builds and stores the document of a claimed row. A failure at any point removes what
+        was written and closes the row as FALHOU, so the executor never has to (VER-05)."""
         started = time.monotonic()
         with self._uow_factory() as uow:
             generation = uow.generations.get(generation_id)
-            if generation is None:
-                raise NotFound("Geração não encontrada")
+        if generation is None:
+            raise NotFound("Geração não encontrada")
+        scratch = _Scratch(self._storage, generation.process_id)
+        try:
+            files, done = self._build_and_close(generation, scratch)
+        except Exception as error:
+            scratch.discard()
+            code = self._fail(generation, error)
+            self._log(generation, GenerationState.FALHOU, started, error_code=code)
+            return
+        self._log(generation, done.state, started, size=sum(f.size_bytes for f in files))
+
+    def _build_and_close(
+        self, generation: GeneratedDocument, scratch: _Scratch
+    ) -> tuple[list[GeneratedFile], GeneratedDocument]:
+        with self._uow_factory() as uow:
             process = uow.processes.get(generation.process_id)
             inputs = load_generation_inputs(uow, process)
             saved_draft = None
             if generation.kind is DocumentKind.RELATORIO:
                 saved_draft = uow.report_drafts.get(process.id)
             latest = uow.generations.latest_ready_by_kind(process.id)
-        produced = self._produce(generation, inputs, saved_draft, latest)
+        produced = self._produce(generation, inputs, saved_draft, latest, scratch)
         files = []
         for fmt, temp in produced.outputs:
             sha256, size = _digest(temp)
-            name = self._storage.commit(generation.process_id, temp, fmt.value.lower())
+            name = scratch.commit(temp, fmt.value.lower())
             files.append(GeneratedFile(fmt, name, sha256, size))
         with self._uow_factory() as uow:
             done = uow.generations.finish_ready(
@@ -391,13 +451,55 @@ class RunGeneration:
                 },
             )
             uow.commit()
+        return files, done
+
+    def _fail(self, generation: GeneratedDocument, error: Exception) -> GenerationCode:
+        """Closes the row as FALHOU with the code of the error and the fixed message of the code;
+        what is not a refusal is ERRO_INTERNO and never leaves its message anywhere."""
+        code = GenerationCode.ERRO_INTERNO
+        if isinstance(error, GenerationRefused) and error.code in _FAILURE_MESSAGES:
+            code = GenerationCode(error.code)
+        with self._uow_factory() as uow:
+            uow.generations.finish_failed(
+                generation.id, self._clock.now(), code, _FAILURE_MESSAGES[code]
+            )
+            self._audit.record(
+                uow,
+                None,
+                GENERATED_ENTITY,
+                generation.id,
+                AuditAction.STATUS,
+                {"state": GenerationState.GERANDO},
+                {"state": GenerationState.FALHOU, "error_code": code},
+            )
+            uow.commit()
+        if code is GenerationCode.ERRO_INTERNO:
+            logger.error(
+                "generation_id=%s kind=%s error_type=%s",
+                generation.id,
+                generation.kind.value,
+                type(error).__name__,
+            )
+        return code
+
+    @staticmethod
+    def _log(
+        generation: GeneratedDocument,
+        state: GenerationState,
+        started: float,
+        size: int = 0,
+        error_code: GenerationCode | None = None,
+    ) -> None:
+        """Identifiers, counts and codes only: nothing the documents say (observability)."""
         logger.info(
-            "generation_id=%s kind=%s state=%s duration_ms=%d size_bytes=%d peak_rss_mb=%d",
+            "generation_id=%s kind=%s state=%s duration_ms=%d size_bytes=%d error_code=%s "
+            "peak_rss_mb=%d",
             generation.id,
             generation.kind.value,
-            done.state.value,
+            state.value,
             (time.monotonic() - started) * 1000,
-            sum(f.size_bytes for f in files),
+            size,
+            error_code.value if error_code else "-",
             resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024,
         )
 
@@ -407,18 +509,20 @@ class RunGeneration:
         inputs: GenerationInputs,
         saved: ReportDraft | None,
         latest: Mapping[DocumentKind, GeneratedDocument],
+        scratch: _Scratch,
     ) -> _Produced:
         if generation.kind is DocumentKind.RELATORIO:
-            return self._report(generation, inputs, saved)
+            return self._report(generation, inputs, saved, scratch)
         if generation.kind is DocumentKind.COMPROVANTE:
-            return self._comprovante(generation, inputs, latest)
-        return self._table(generation, inputs, latest)
+            return self._comprovante(generation, inputs, latest, scratch)
+        return self._table(generation, inputs, latest, scratch)
 
     def _table(
         self,
         generation: GeneratedDocument,
         inputs: GenerationInputs,
         latest: Mapping[DocumentKind, GeneratedDocument],
+        scratch: _Scratch,
     ) -> _Produced:
         version = inputs.version
         if version is None:
@@ -442,7 +546,7 @@ class RunGeneration:
         )
         outputs = []
         for fmt in _FORMATS:
-            temp = self._storage.new_temp_path(generation.process_id)
+            temp = scratch.new_temp()
             outputs.append((fmt, temp))
             self._writer.write_table(model, fmt, temp)
         snapshot = build_snapshot(
@@ -459,7 +563,11 @@ class RunGeneration:
         return _Produced(outputs, snapshot, alerts, plan.plan_hash)
 
     def _report(
-        self, generation: GeneratedDocument, inputs: GenerationInputs, saved: ReportDraft | None
+        self,
+        generation: GeneratedDocument,
+        inputs: GenerationInputs,
+        saved: ReportDraft | None,
+        scratch: _Scratch,
     ) -> _Produced:
         """The report from the saved draft brought up to date, or from the proposal when nothing
         was saved; the draft itself is never written here (REL-09, REL-07)."""
@@ -487,7 +595,7 @@ class RunGeneration:
         model = build_report_document(config, inputs.header, draft, inputs.activities, item_names)
         outputs = []
         for fmt in _FORMATS:
-            temp = self._storage.new_temp_path(generation.process_id)
+            temp = scratch.new_temp()
             outputs.append((fmt, temp))
             self._writer.write_report(model, fmt, temp)
         report = {
@@ -528,6 +636,7 @@ class RunGeneration:
         generation: GeneratedDocument,
         inputs: GenerationInputs,
         latest: Mapping[DocumentKind, GeneratedDocument],
+        scratch: _Scratch,
     ) -> _Produced:
         """The PDF assembled from the plan, one original page at a time (CMP-01, CMP-11)."""
         version = inputs.version
@@ -559,7 +668,7 @@ class RunGeneration:
             if done % _PROGRESS_EVERY == 0 or done == total:
                 logger.debug("generation_id=%s pages=%d/%d", generation.id, done, total)
 
-        temp = self._storage.new_temp_path(generation.process_id)
+        temp = scratch.new_temp()
         result = self._assembler.assemble(plan, front, resolver, temp, on_progress)
         snapshot = build_snapshot(
             generation.kind,

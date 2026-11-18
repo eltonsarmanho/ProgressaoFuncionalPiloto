@@ -1886,10 +1886,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Original apagado depois do pedido: `FALHOU/ORIGINAL_INDISPONIVEL` com mensagem sem nome de pessoa e nenhum arquivo em `storage/generated`
-- [ ] Exceção simulada no segundo formato apaga o primeiro; o número de versão não é gasto e um novo pedido é aceito
-- [ ] Evento de auditoria `STATUS` com `error_code` e sem conteúdo; log sem texto de documento
-- [ ] Gate full passa; 6+ testes
+- [x] Original apagado depois do pedido: `FALHOU/ORIGINAL_INDISPONIVEL` com mensagem sem nome de pessoa e nenhum arquivo em `storage/generated`
+- [x] Exceção simulada no segundo formato apaga o primeiro; o número de versão não é gasto e um novo pedido é aceito
+- [x] Evento de auditoria `STATUS` com `error_code` e sem conteúdo; log sem texto de documento
+- [x] Gate full passa; 6+ testes
 
 **Tests**: integration
 **Gate**: full
