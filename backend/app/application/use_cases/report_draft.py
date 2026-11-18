@@ -5,6 +5,8 @@ Access follows the process (AccessPolicy): anything outside it is NotFound, neve
 events carry identifiers, states and codes only, never the text of an entry (AD-014).
 """
 
+import logging
+import time
 import uuid
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, replace
@@ -17,12 +19,23 @@ from app.application.use_cases.generated_documents import WORDING_ENTITY, _EditU
 from app.application.use_cases.scoring import _ScoringUseCase
 from app.domain.entities.activity import Activity
 from app.domain.entities.audit import AuditAction
-from app.domain.entities.generated import GenerationAlert, GenerationState, WordingJob
+from app.domain.entities.generated import (
+    GenerationAlert,
+    GenerationCode,
+    GenerationState,
+    WordingJob,
+)
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.report import DraftEntry, DraftSection, EntrySource, ReportDraft
 from app.domain.entities.user import User
 from app.domain.errors import NotFound, ValidationFailed
-from app.domain.repositories.ports import Clock, ReportConfigProvider, UnitOfWork
+from app.domain.repositories.ports import (
+    AiWritingError,
+    Clock,
+    ReportConfigProvider,
+    ReportWriter,
+    UnitOfWork,
+)
 from app.domain.rules.report_draft import (
     STALE,
     STALE_MESSAGE,
@@ -32,6 +45,14 @@ from app.domain.rules.report_draft import (
     propose_draft,
     reconcile_draft,
 )
+from app.domain.rules.report_wording import (
+    WordingApplied,
+    activities_to_word,
+    apply_wording,
+    build_wording_items,
+)
+
+logger = logging.getLogger("app.documents.wording")
 
 DRAFT_ENTITY = "report_draft"
 MAX_TEXT_LENGTH = 20_000
@@ -325,3 +346,136 @@ class ListWordingJobs(_ScoringUseCase):
         with self._uow_factory() as uow:
             self._readable(uow, actor, process_id)
             return uow.wording_jobs.latest_by_section(process_id)
+
+
+class RunWording:
+    """The executor side of a wording request: asks the AI for the entries of one section, checks
+    the answer and applies it to the draft without moving its version (REL-03 to REL-07, REL-15).
+
+    The AI is never inside a transaction: the inputs are read and the unit closed, the call is
+    made, and the result is applied in a new unit that locks the draft row.
+    """
+
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        clock: Clock,
+        report_config: ReportConfigProvider,
+        writer: ReportWriter,
+    ) -> None:
+        self._uow_factory = uow_factory
+        self._audit = audit
+        self._clock = clock
+        self._report_config = report_config
+        self._writer = writer
+
+    def run_next(self) -> bool:
+        """The runner of the executor: claims the oldest waiting job and runs it; False when
+        there is none."""
+        with self._uow_factory() as uow:
+            claimed = uow.wording_jobs.claim_next(self._clock.now())
+            uow.commit()
+        if claimed is None:
+            return False
+        self.execute(claimed.id)
+        return True
+
+    def execute(self, job_id: UUID) -> None:
+        """Words the section of a claimed job. Any unexpected failure closes the job as FALHOU
+        with `ERRO_INTERNO` and leaves the draft as it was; nothing the draft says is logged."""
+        started = time.monotonic()
+        with self._uow_factory() as uow:
+            job = uow.wording_jobs.get(job_id)
+        if job is None:
+            raise NotFound("Tarefa de redação não encontrada")
+        try:
+            applied = self._word(job)
+            self._close_ready(job, applied)
+        except Exception as error:
+            self._fail(job, error)
+            logger.error(
+                "wording_job_id=%s section=%s error_type=%s",
+                job.id,
+                job.section_key,
+                type(error).__name__,
+            )
+            return
+        logger.info(
+            "wording_job_id=%s section=%s state=%s duration_ms=%d",
+            job.id,
+            job.section_key,
+            GenerationState.PRONTO.value,
+            (time.monotonic() - started) * 1000,
+        )
+
+    def _word(self, job: WordingJob) -> WordingApplied:
+        with self._uow_factory() as uow:
+            process = uow.processes.get(job.process_id)
+            inputs = load_generation_inputs(uow, process)
+            draft = uow.report_drafts.get(job.process_id)
+        if draft is None:
+            raise NotFound("Rascunho não encontrado")
+        config = self._report_config.load()
+        spec = config.template.section(job.section_key)
+        if spec is None:
+            raise NotFound("Seção não encontrada")
+        vocabulary = replace(
+            config.vocabulary,
+            allowed_terms=(*config.vocabulary.allowed_terms, inputs.unit.name),
+        )
+        items = build_wording_items(
+            activities_to_word(draft, job.section_key, inputs.activities), inputs.version
+        )
+        results: dict[UUID, str] | None = {}
+        if items:
+            try:
+                results = dict(self._writer.draft(spec.title, items))
+            except AiWritingError:
+                results = None
+        return apply_wording(
+            draft,
+            job.section_key,
+            results,
+            template=config.template,
+            activities=inputs.activities,
+            items=items,
+            vocabulary=vocabulary,
+        )
+
+    def _close_ready(self, job: WordingJob, applied: WordingApplied) -> None:
+        section = next(s for s in applied.draft.sections if s.key == job.section_key)
+        with self._uow_factory() as uow:
+            uow.report_drafts.apply_wording_locked(job.process_id, section)
+            uow.wording_jobs.finish(
+                job.id, self._clock.now(), GenerationState.PRONTO, warnings=applied.warnings
+            )
+            self._audit.record(
+                uow,
+                None,
+                WORDING_ENTITY,
+                job.id,
+                AuditAction.STATUS,
+                {"state": GenerationState.GERANDO},
+                {
+                    "state": GenerationState.PRONTO,
+                    "warnings": [w.code for w in applied.warnings] or None,
+                },
+            )
+            uow.commit()
+
+    def _fail(self, job: WordingJob, error: Exception) -> None:
+        with self._uow_factory() as uow:
+            uow.wording_jobs.finish(
+                job.id, self._clock.now(), GenerationState.FALHOU, GenerationCode.ERRO_INTERNO
+            )
+            self._audit.record(
+                uow,
+                None,
+                WORDING_ENTITY,
+                job.id,
+                AuditAction.STATUS,
+                {"state": GenerationState.GERANDO},
+                {"state": GenerationState.FALHOU, "error_code": GenerationCode.ERRO_INTERNO},
+            )
+            uow.commit()

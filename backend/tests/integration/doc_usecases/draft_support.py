@@ -8,6 +8,7 @@ from app.application.use_cases.report_draft import (
     ListWordingJobs,
     MoveReportEntry,
     RequestSectionWording,
+    RunWording,
     SaveReportEntry,
     SaveReportSection,
 )
@@ -39,6 +40,33 @@ def request_wording_uc(world, clock) -> RequestSectionWording:
 
 def list_wording_uc(world) -> ListWordingJobs:
     return ListWordingJobs(world.uow_factory, world.audit, world.policy)
+
+
+def run_wording_uc(world, clock, writer) -> RunWording:
+    return RunWording(world.uow_factory, world.audit, clock, ReportConfigLoader(), writer)
+
+
+class FakeReportWriter:
+    """The AI of the tests: answers with the texts it was given by activity id, raises `error`
+    when told to, and runs `during` while the call is in flight."""
+
+    def __init__(self, answers=None, error=None, during=None):
+        self.answers = answers or {}
+        self.error = error
+        self.during = during
+        self.calls = []
+
+    def draft(self, section_title, items):
+        self.calls.append((section_title, list(items)))
+        if self.during is not None:
+            self.during()
+        if self.error is not None:
+            raise self.error
+        return {
+            i.activity_id: self.answers[i.activity_id]
+            for i in items
+            if i.activity_id in self.answers
+        }
 
 
 def set_status(world, status):

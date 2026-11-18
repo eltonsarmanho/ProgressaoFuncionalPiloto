@@ -2071,10 +2071,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Com a MariTalk simulada devolvendo um número inventado e outra resposta fiel: a primeira vira texto-modelo com `REDACAO_REJEITADA`, a segunda vira fonte `IA`; a tarefa termina em `PRONTO`
-- [ ] Indisponível, erro ou 60 s: texto-modelo, `REDACAO_INDISPONIVEL` e `PRONTO`; edição do usuário feita durante a tarefa permanece e a `version` do rascunho não muda
-- [ ] Exceção inesperada: `FALHOU/ERRO_INTERNO` e o rascunho fica como estava; auditoria `WORDING` sem texto
-- [ ] Gate full passa; 8+ testes
+- [x] Com a MariTalk simulada devolvendo um número inventado e outra resposta fiel: a primeira vira texto-modelo com `REDACAO_REJEITADA`, a segunda vira fonte `IA`; a tarefa termina em `PRONTO`
+- [x] Indisponível, erro ou 60 s: texto-modelo, `REDACAO_INDISPONIVEL` e `PRONTO`; edição do usuário feita durante a tarefa permanece e a `version` do rascunho não muda
+- [x] Exceção inesperada: `FALHOU/ERRO_INTERNO` e o rascunho fica como estava; auditoria `WORDING` sem texto
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full
