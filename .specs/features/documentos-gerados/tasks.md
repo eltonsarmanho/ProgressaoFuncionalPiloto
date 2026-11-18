@@ -3041,8 +3041,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O teste estático confere que nenhuma regra da etapa nova impõe largura mínima acima de 360 px nem rolagem horizontal da página
-- [ ] Gate build passa (lint, build e testes com `REQUIRE_DIST=1`)
+- [x] O teste estático confere que nenhuma regra da etapa nova impõe largura mínima acima de 360 px nem rolagem horizontal da página
+- [x] Gate build passa (lint, build e testes com `REQUIRE_DIST=1`)
 
 **Tests**: unit
 **Gate**: build

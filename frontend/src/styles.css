@@ -729,3 +729,151 @@ fieldset.grid legend {
   width: auto;
   margin: 0;
 }
+
+/* Etapa 5 · Documentos gerados (UIG-07): cartões empilhados, listas no lugar de tabelas, nada mais largo que 360 px. */
+.generated-block h2 {
+  margin-top: 0;
+}
+
+.generation-history,
+.generation-alerts,
+.report-entries,
+.layout-activities,
+.layout-pages {
+  margin: 0.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.generation-alerts {
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
+.generation-history li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.generation-history .row-actions {
+  margin-top: 0;
+}
+
+.dossier-list {
+  margin: 0.5rem 0;
+  padding-left: 1.75rem;
+}
+
+.dossier-list li {
+  margin-bottom: 0.35rem;
+}
+
+.disclosure {
+  margin-top: 0.75rem;
+}
+
+.disclosure-body {
+  margin-top: 0.75rem;
+}
+
+.report-editor textarea,
+.layout-editor textarea {
+  width: 100%;
+  max-width: 100%;
+  resize: vertical;
+}
+
+.report-section h3,
+.layout-group h3 {
+  margin-top: 0;
+  font-size: 1.05rem;
+}
+
+.report-entries > li {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.report-entry-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: center;
+}
+
+.report-entry-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+.report-entry-foot select {
+  width: auto;
+  max-width: 100%;
+  margin-top: 0;
+}
+
+.source-IA {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.source-USUARIO {
+  font-weight: 700;
+}
+
+.layout-item h4 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 1rem;
+}
+
+.layout-activities > li {
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.layout-activity-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: center;
+}
+
+.layout-activity-head .row-actions {
+  margin: 0 0 0 auto;
+}
+
+.layout-pages > li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  align-items: center;
+  padding: 0.25rem 0;
+}
+
+.layout-pages .row-actions {
+  margin: 0 0 0 auto;
+}
+
+@media (max-width: 480px) {
+  .layout-pages > li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .layout-pages .row-actions,
+  .layout-activity-head .row-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .report-entry-foot select {
+    width: 100%;
+  }
+}

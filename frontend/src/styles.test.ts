@@ -86,3 +86,91 @@ describe("UIM-01 / UIM-02 / UIM-10 / UIM-19: tabelas legíveis e botões", () =>
   });
 });
 
+
+describe("UIG-07: a Etapa 5 cabe em 360 px sem rolagem horizontal da página", () => {
+  const STEP_CLASSES = [
+    "generated-block",
+    "generation-history",
+    "generation-alerts",
+    "report-editor",
+    "report-section",
+    "report-entries",
+    "report-entry-",
+    "layout-editor",
+    "layout-group",
+    "layout-item",
+    "layout-activities",
+    "layout-activity-head",
+    "layout-pages",
+    "disclosure",
+    "dossier-list",
+  ];
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .map((m) => ({ selector: m[1].replace(/@media[^{]*$/, "").trim(), body: m[2] }))
+    .filter((r) => STEP_CLASSES.some((c) => r.selector.includes(`.${c}`)));
+
+  it("há regras para os blocos, o editor do Relatório, o arranjo e a ordem do dossiê", () => {
+    for (const c of STEP_CLASSES) {
+      expect(
+        rules.some((r) => r.selector.includes(`.${c}`)),
+        c,
+      ).toBe(true);
+    }
+  });
+
+  it("nenhuma regra da etapa impõe largura mínima ou fixa acima de 360 px", () => {
+    const wide = rules.flatMap((r) =>
+      [...r.body.matchAll(/(?:^|[\s;])(width|min-width|flex-basis)\s*:\s*([\d.]+)(px|rem|em)/g)]
+        .map((m) => ({ selector: r.selector, prop: m[1], px: toPx(m[2], m[3]) }))
+        .filter((d) => d.px > 360),
+    );
+    expect(wide).toEqual([]);
+  });
+
+  it("nenhuma regra da etapa força rolagem horizontal, tabela ou linha sem quebra", () => {
+    for (const r of rules) {
+      expect(r.body, r.selector).not.toMatch(/overflow(-x)?\s*:\s*(auto|scroll)/);
+      expect(r.body, r.selector).not.toMatch(/white-space\s*:\s*nowrap/);
+      expect(r.body, r.selector).not.toMatch(/display\s*:\s*(table|inline-table)|table-layout/);
+    }
+  });
+
+  it("as linhas de página, de rodapé de entrada e de histórico quebram em vez de estourar a largura", () => {
+    for (const selector of [".layout-pages > li", ".report-entry-foot", ".generation-history li", ".layout-activity-head"]) {
+      const rule = rules.find((r) => r.selector === selector);
+      expect(rule, selector).toBeDefined();
+      expect(rule!.body, selector).toMatch(/flex-wrap\s*:\s*wrap/);
+    }
+  });
+
+  it("os campos de texto do rascunho e do arranjo ocupam a largura do cartão e não passam dela", () => {
+    const rule = rules.find((r) => r.selector.includes(".report-editor textarea"));
+    expect(rule).toBeDefined();
+    expect(rule!.body).toMatch(/width\s*:\s*100%/);
+    expect(rule!.body).toMatch(/max-width\s*:\s*100%/);
+  });
+
+  it("abaixo de 480 px as páginas do arranjo viram uma lista empilhada, com os botões na largura toda", () => {
+    const narrow = [...css.matchAll(/@media\s*\(max-width:\s*480px\)\s*{([\s\S]*?)\n}\n/g)].map((m) => m[1]).join("\n");
+    expect(narrow).toMatch(/\.layout-pages\s*>\s*li\s*{[^}]*flex-direction:\s*column/);
+    expect(narrow).toMatch(/\.layout-pages\s+\.row-actions\s*[,{][^}]*width:\s*100%/);
+  });
+
+  it("a etapa usa listas e cartões, nunca tabelas (as tabelas viram listas)", async () => {
+    const sources = import.meta.glob(
+      [
+        "./components/GeneratedBlock.tsx",
+        "./components/ReportDraftEditor.tsx",
+        "./components/ComprovanteLayoutEditor.tsx",
+        "./components/DossierOrder.tsx",
+        "./components/ConcludeDialog.tsx",
+        "./pages/ProcessGenerated.tsx",
+      ],
+      { query: "?raw", import: "default", eager: true },
+    ) as Record<string, string>;
+    expect(Object.keys(sources)).toHaveLength(6);
+    for (const [file, text] of Object.entries(sources)) {
+      expect(text, file).not.toMatch(/<table/);
+    }
+  });
+});
