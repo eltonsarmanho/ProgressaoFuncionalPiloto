@@ -114,14 +114,11 @@ def test_choosing_saves_and_reports_pending_validation_alert(
     assert client.get(table_url(process)).json()["chosen"] == body["chosen"]
 
 
-def test_other_unit_table_needs_justification_then_alerts(client, admin, process, scoring_tables):
+def test_other_unit_table_needs_no_justification_and_alerts(client, admin, process, scoring_tables):
     _, headers = admin
 
-    refused = choose(client, headers, process, scoring_tables["OUTRA"])
-    accepted = choose(client, headers, process, scoring_tables["OUTRA"], justificativa="Sem tabela")
+    accepted = choose(client, headers, process, scoring_tables["OUTRA"])  # UIM-18
 
-    assert refused.status_code == 422
-    assert refused.json()["detail"][0]["field"] == "justificativa"
     assert accepted.status_code == 200
     assert alert_map(accepted.json()) == {"TABELA_DE_OUTRA_UNIDADE": "ALERTA"}
 

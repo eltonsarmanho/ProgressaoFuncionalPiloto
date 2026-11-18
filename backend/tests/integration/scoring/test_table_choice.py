@@ -92,12 +92,13 @@ def test_changing_table_audits_the_previous_version(world):
     assert stored_version_id(world, world.process) == world.other_version.id
 
 
-def test_other_unit_table_requires_justification_in_that_field(world):
-    with pytest.raises(ValidationFailed) as error:
-        world.choose.execute(world.admin, world.process.id, world.other_version.id, None, "  ")
+def test_other_unit_table_needs_no_justification_and_still_alerts(world):
+    """UIM-18: the justification is optional; the alert and the audit event stay."""
+    result = world.choose.execute(world.admin, world.process.id, world.other_version.id, None, "  ")
 
-    assert error.value.field == "justificativa"
-    assert stored_version_id(world, world.process) is None
+    assert codes(result) == {ScoringAlertCode.TABELA_DE_OUTRA_UNIDADE: Severity.ALERTA}
+    assert stored_version_id(world, world.process) == world.other_version.id
+    assert audit_events(world, world.process)[0].justification is None
 
 
 def test_other_unit_table_with_justification_alerts(world):

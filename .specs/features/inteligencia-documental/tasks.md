@@ -3431,10 +3431,10 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] `PUT /api/processes/{id}/scoring/table` com a versão de outra unidade e sem `justificativa` responde 200, grava o evento de auditoria com justificativa nula e mantém o alerta `TABELA_DE_OUTRA_UNIDADE`
-- [ ] Com `justificativa` ela é gravada no evento
-- [ ] O teste que esperava 422 sem justificativa passa a esperar 200 e auditoria sem justificativa, sem perder as demais asserções
-- [ ] Gate full passa
+- [x] `PUT /api/processes/{id}/scoring/table` com a versão de outra unidade e sem `justificativa` responde 200, grava o evento de auditoria com justificativa nula e mantém o alerta `TABELA_DE_OUTRA_UNIDADE`
+- [x] Com `justificativa` ela é gravada no evento
+- [x] O teste que esperava 422 sem justificativa passa a esperar 200 e auditoria sem justificativa, sem perder as demais asserções
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

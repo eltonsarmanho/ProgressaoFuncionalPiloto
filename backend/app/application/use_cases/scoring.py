@@ -168,14 +168,8 @@ class ChooseProcessTable(_ScoringUseCase):
             version = uow.scoring_tables.get_version(version_id)
             if version is None:
                 raise ValidationFailed("version_id", "Versão de tabela não encontrada")
-            professor = uow.professors.get(process.professor_id)
-            table = uow.scoring_tables.get_table(version.table_id)
+            # A table of another unit needs no justification (UIM-18); the alert stays.
             justification = (justification or "").strip() or None
-            if professor.unit_id not in (table.unit_ids if table else ()) and justification is None:
-                raise ValidationFailed(
-                    "justificativa",
-                    "Justificativa obrigatória para tabela de outra unidade acadêmica",
-                )
             if expected_version is not None and process.version != expected_version:
                 raise StaleVersion("O processo foi alterado por outro usuário; recarregue")
             uow.processes.set_scoring_table_version(process.id, version.id)
