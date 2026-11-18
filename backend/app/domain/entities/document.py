@@ -90,6 +90,9 @@ class Document:
     version: int = 1
     # Set by the database on every change; read only, so it takes no part in equality.
     updated_at: datetime | None = field(default=None, compare=False)
+    # Set once by the conclusion when the file is removed (DEL-05); the repository never writes
+    # it from an entity, only `mark_file_deleted` does.
+    file_deleted_at: datetime | None = None
 
 
 @dataclass(frozen=True)

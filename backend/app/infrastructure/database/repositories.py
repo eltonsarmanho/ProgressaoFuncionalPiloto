@@ -901,6 +901,7 @@ class SqlDocumentRepository:
             uploaded_at=m.uploaded_at,
             version=m.version,
             updated_at=m.updated_at,
+            file_deleted_at=m.file_deleted_at,
             **{f: getattr(m, f) for f in _DOCUMENT_FIELDS},
         )
 
@@ -969,6 +970,16 @@ class SqlDocumentRepository:
             .select_from(DocumentModel)
             .where(DocumentModel.process_id == process_id)
         )
+
+    def mark_file_deleted(self, document_id: UUID, now: datetime) -> None:
+        """Only goes from NULL to a date: a second mark keeps the first (DEL-05, DEL-06)."""
+        rowcount = self._s.execute(
+            update(DocumentModel)
+            .where(DocumentModel.id == document_id)
+            .values(file_deleted_at=func.coalesce(DocumentModel.file_deleted_at, now))
+        ).rowcount
+        if rowcount == 0:
+            raise NotFound("Documento não encontrado")
 
     def count_uploads_by_user_since(self, user_id: UUID, since: datetime) -> int:
         return self._s.scalar(
@@ -1040,6 +1051,11 @@ class SqlExtractionRepository:
                     text=page.text,
                 )
             )
+
+    def delete_pages(self, document_id: UUID) -> None:
+        self._s.execute(
+            delete(DocumentPageModel).where(DocumentPageModel.document_id == document_id)
+        )
 
     def list_pages(self, document_id: UUID) -> Sequence[PageText]:
         models = self._s.scalars(
@@ -1165,6 +1181,18 @@ class SqlJobRepository:
         ).first()
         return self._to_entity(m) if m else None
 
+    def active_for_process(self, process_id: UUID) -> Sequence[ProcessingJob]:
+        models = self._s.scalars(
+            select(ProcessingJobModel)
+            .join(DocumentModel, DocumentModel.id == ProcessingJobModel.document_id)
+            .where(
+                DocumentModel.process_id == process_id,
+                ProcessingJobModel.status.in_(_ACTIVE_JOB),
+            )
+            .order_by(ProcessingJobModel.created_at, ProcessingJobModel.id)
+        ).all()
+        return [self._to_entity(m) for m in models]
+
 
 class SqlEvidenceRepository:
     def __init__(self, session: Session):
@@ -1219,6 +1247,24 @@ class SqlEvidenceRepository:
             .order_by(ActivityEvidenceModel.created_at, ActivityEvidenceModel.id)
         ).all()
         return [self._to_entity(m) for m in models]
+
+    def list_for_activities(self, activity_ids: Sequence[UUID]) -> Sequence[ActivityEvidence]:
+        if not activity_ids:
+            return []
+        models = self._s.scalars(
+            select(ActivityEvidenceModel)
+            .where(ActivityEvidenceModel.activity_id.in_(activity_ids))
+            .order_by(ActivityEvidenceModel.created_at, ActivityEvidenceModel.id)
+        ).all()
+        return [self._to_entity(m) for m in models]
+
+    def clear_excerpts_for_document(self, document_id: UUID) -> None:
+        """The column is NOT NULL, so the excerpt becomes ''; document and page stay."""
+        self._s.execute(
+            update(ActivityEvidenceModel)
+            .where(ActivityEvidenceModel.document_id == document_id)
+            .values(excerpt="")
+        )
 
     def counts_for_activities(self, activity_ids: Sequence[UUID]) -> dict[UUID, int]:
         if not activity_ids:

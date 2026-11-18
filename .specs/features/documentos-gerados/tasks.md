@@ -1202,9 +1202,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Depois dos três métodos o documento mantém metadados e `file_deleted_at`, as páginas somem, o trecho vira `''` e `document_id` e `page_number` do vínculo ficam; repetir os métodos é inofensivo
-- [ ] `list_for_activities` devolve os vínculos de várias atividades numa só consulta
-- [ ] Gate full passa; 8+ testes
+- [x] Depois dos três métodos o documento mantém metadados e `file_deleted_at`, as páginas somem, o trecho vira `''` e `document_id` e `page_number` do vínculo ficam; repetir os métodos é inofensivo
+- [x] `list_for_activities` devolve os vínculos de várias atividades numa só consulta
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full
