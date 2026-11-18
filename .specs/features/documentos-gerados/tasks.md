@@ -1071,8 +1071,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Os Protocolos existem com as assinaturas do design (`claim_next`, `finish`, `recover_stuck`, `mark_file_deleted`, `delete_pages`, `clear_excerpts_for_document`, `list_for_activities`)
-- [ ] O teste de arquitetura segue verde; gate quick passa e nenhum teste existente quebra
+- [x] Os Protocolos existem com as assinaturas do design (`claim_next`, `finish`, `recover_stuck`, `mark_file_deleted`, `delete_pages`, `clear_excerpts_for_document`, `list_for_activities`)
+- [x] O teste de arquitetura segue verde; gate quick passa e nenhum teste existente quebra
 
 **Tests**: none
 **Gate**: quick

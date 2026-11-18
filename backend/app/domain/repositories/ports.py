@@ -1,6 +1,6 @@
 """Ports implemented by the infrastructure layer (AD-001)."""
 
-from collections.abc import Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
@@ -14,6 +14,7 @@ from app.domain.entities.academic_unit import AcademicUnit
 from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.entities.audit import AuditEvent
 from app.domain.entities.career import CareerVersion
+from app.domain.entities.comprovante import ComprovanteLayout, ComprovantePlan
 from app.domain.entities.document import (
     DocAlertCode,
     Document,
@@ -24,10 +25,24 @@ from app.domain.entities.document import (
     TextMethod,
 )
 from app.domain.entities.extraction import DocumentType
+from app.domain.entities.generated import (
+    DocumentFormat,
+    DocumentKind,
+    GeneratedDocument,
+    GeneratedFile,
+    GenerationAlert,
+    GenerationAlertCode,
+    GenerationCode,
+    GenerationState,
+    WordingJob,
+)
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor
+from app.domain.entities.report import DraftEntry, DraftSection, ReportDraft
 from app.domain.entities.scoring import ScoringCriterion, ScoringTableVersion
 from app.domain.entities.user import Session, User
+from app.domain.rules.report_wording import WordingItem
+from app.domain.rules.table_document import TableDocument
 from app.domain.rules.upload_validation import FileFacts, FileKind
 
 
@@ -275,6 +290,10 @@ class DocumentRepository(Protocol):
 
     def count_for_process(self, process_id: UUID) -> int: ...
 
+    def mark_file_deleted(self, document_id: UUID, now: datetime) -> None:
+        """Sets `file_deleted_at` (DEL-05); the first mark stays, so repeating it is harmless."""
+        ...
+
     def count_uploads_by_user_since(self, user_id: UUID, since: datetime) -> int: ...
 
 
@@ -290,6 +309,10 @@ class ExtractionRepository(Protocol):
         ...
 
     def list_pages(self, document_id: UUID) -> Sequence[PageText]: ...
+
+    def delete_pages(self, document_id: UUID) -> None:
+        """Drops the extracted text of every page of the document (DEL-05); runs stay."""
+        ...
 
 
 class JobRepository(Protocol):
@@ -320,6 +343,10 @@ class JobRepository(Protocol):
 
     def active_for_document(self, document_id: UUID) -> ProcessingJob | None: ...
 
+    def active_for_process(self, process_id: UUID) -> Sequence[ProcessingJob]:
+        """PENDENTE or PROCESSANDO jobs of the documents of the process (DEL-02)."""
+        ...
+
 
 class EvidenceRepository(Protocol):
     def add(self, evidence: ActivityEvidence) -> None: ...
@@ -340,6 +367,15 @@ class EvidenceRepository(Protocol):
         self, activity_ids: Sequence[UUID]
     ) -> dict[UUID, set[tuple[UUID, str]]]:
         """Per activity, the (document id, hash of the normalized page text) of its evidences."""
+        ...
+
+    def list_for_activities(self, activity_ids: Sequence[UUID]) -> Sequence[ActivityEvidence]:
+        """The links of several activities in one query, in creation order."""
+        ...
+
+    def clear_excerpts_for_document(self, document_id: UUID) -> None:
+        """Turns the excerpt of every link of the document into '' and keeps the page numbers
+        (DEL-05, DEL-06)."""
         ...
 
 
@@ -375,6 +411,230 @@ class AiExtractor(Protocol):
         ...
 
 
+class GenerationRepository(Protocol):
+    """Generated documents: one row per request, one numbered version per PRONTO (VER-01)."""
+
+    def add(self, generation: GeneratedDocument) -> None:
+        """Stores a GERANDO row. Raises `Conflict` with the code `GERACAO_EM_ANDAMENTO` when the
+        process already has one of the kind (VER-04)."""
+        ...
+
+    def get(self, generation_id: UUID) -> GeneratedDocument | None:
+        """The row with its files."""
+        ...
+
+    def list_for_process(
+        self, process_id: UUID, kind: DocumentKind | None = None
+    ) -> Sequence[GeneratedDocument]:
+        """GERANDO rows first, then the others from the newest request to the oldest."""
+        ...
+
+    def claim_next(self, now: datetime) -> GeneratedDocument | None:
+        """Oldest GERANDO row without `started_at`, marked started; two concurrent claims never
+        share one."""
+        ...
+
+    def finish_ready(
+        self,
+        generation_id: UUID,
+        now: datetime,
+        files: Sequence[GeneratedFile],
+        snapshot: dict[str, Any],
+        alerts: Sequence[GenerationAlert],
+        plan_hash: str | None = None,
+    ) -> GeneratedDocument:
+        """GERANDO to PRONTO with the next version number of the process and kind, the files, the
+        snapshot and the alerts (VER-01, VER-02)."""
+        ...
+
+    def finish_failed(
+        self, generation_id: UUID, now: datetime, error_code: GenerationCode, error_message: str
+    ) -> None:
+        """GERANDO to FALHOU; a failed row takes no version number (VER-05)."""
+        ...
+
+    def recover_interrupted(self, now: datetime) -> Sequence[GeneratedDocument]:
+        """Closes the GERANDO rows that had started as FALHOU with `INTERROMPIDA` and returns
+        them; a row not started yet stays in the queue (VER-08)."""
+        ...
+
+    def latest_ready_by_kind(self, process_id: UUID) -> dict[DocumentKind, GeneratedDocument]:
+        """The newest PRONTO version of each kind that has one."""
+        ...
+
+
+class WordingJobRepository(Protocol):
+    """Background requests to word one section of the report (REL-13 to REL-15)."""
+
+    def add(self, job: WordingJob) -> None:
+        """Stores a GERANDO job. Raises `Conflict` with the code `REDACAO_EM_ANDAMENTO` when the
+        section already has one (REL-13)."""
+        ...
+
+    def get(self, job_id: UUID) -> WordingJob | None: ...
+
+    def claim_next(self, now: datetime) -> WordingJob | None:
+        """Oldest GERANDO job without `started_at`, marked started."""
+        ...
+
+    def finish(
+        self,
+        job_id: UUID,
+        now: datetime,
+        state: GenerationState,
+        error_code: GenerationCode | None = None,
+        warnings: Sequence[GenerationAlert] = (),
+    ) -> None:
+        """GERANDO to PRONTO (with the warnings the section got) or to FALHOU (with the code)."""
+        ...
+
+    def recover_interrupted(self, now: datetime) -> Sequence[WordingJob]:
+        """Closes the GERANDO jobs that had started as FALHOU with `INTERROMPIDA` (REL-14)."""
+        ...
+
+    def latest_by_section(self, process_id: UUID) -> dict[str, WordingJob]:
+        """The newest job of each section that has one."""
+        ...
+
+
+class ReportDraftRepository(Protocol):
+    """The saved report draft, one per process. Every edit takes the `expected_version` the
+    user saw and raises `StaleVersion` when the stored one moved on (REL-07)."""
+
+    def get(self, process_id: UUID) -> ReportDraft | None: ...
+
+    def create(self, draft: ReportDraft, user_id: UUID, expected_version: int) -> ReportDraft:
+        """The first save: `expected_version` must be 0 (`StaleVersion` otherwise) and the
+        stored draft gets version 1. A second draft for the process raises `Conflict`."""
+        ...
+
+    def update_entry(
+        self, process_id: UUID, expected_version: int, entry: DraftEntry, user_id: UUID
+    ) -> ReportDraft:
+        """Replaces the entry of the same activity where it is; the version goes up by one."""
+        ...
+
+    def update_section(
+        self,
+        process_id: UUID,
+        expected_version: int,
+        section_key: str,
+        free_text: str,
+        user_id: UUID,
+    ) -> ReportDraft:
+        """Replaces the free text of the section; the version goes up by one."""
+        ...
+
+    def move_entry(
+        self,
+        process_id: UUID,
+        expected_version: int,
+        section_key: str,
+        entry: DraftEntry,
+        user_id: UUID,
+    ) -> ReportDraft:
+        """Takes the activity of `entry` out of its section and puts `entry` at the end of
+        `section_key`; the version goes up by one."""
+        ...
+
+    def apply_wording_locked(self, process_id: UUID, section: DraftSection) -> ReportDraft:
+        """Locks the row and replaces the entries of the section that are not from the user and
+        the warnings of the section with the ones in `section`. The version does not change, so
+        an edit in flight never conflicts with the wording (REL-07, REL-13)."""
+        ...
+
+
+class LayoutRepository(Protocol):
+    """The saved arrangement of the Comprovante, one per process (ARR-07)."""
+
+    def get(self, process_id: UUID) -> ComprovanteLayout | None: ...
+
+    def create(
+        self, layout: ComprovanteLayout, user_id: UUID, expected_version: int
+    ) -> ComprovanteLayout:
+        """The first save: `expected_version` must be 0 (`StaleVersion` otherwise); the stored
+        layout gets version 1. A second layout for the process raises `Conflict`."""
+        ...
+
+    def update(
+        self, layout: ComprovanteLayout, user_id: UUID, expected_version: int
+    ) -> ComprovanteLayout:
+        """Replaces the content when the stored version is `expected_version`; the version goes
+        up by one. `StaleVersion` leaves the stored layout as it was."""
+        ...
+
+
+@dataclass(frozen=True)
+class AssemblyResult:
+    """What the assembler wrote: pages, size and the alerts it found on the way."""
+
+    pages: int
+    size_bytes: int
+    alerts: tuple[GenerationAlert, ...] = ()
+
+
+class AiWritingError(Exception):
+    """The provider could not word the section; `code` is the alert of the section (REL-05)."""
+
+    def __init__(self, code: GenerationAlertCode) -> None:
+        super().__init__(code.value)
+        self.code = code
+
+
+class DocumentWriter(Protocol):
+    """Writes the Tabela and the Relatório from their models, to a path (never a stream)."""
+
+    def write_table(self, model: TableDocument, fmt: DocumentFormat, target: Path) -> None: ...
+
+    def write_report(self, model: Any, fmt: DocumentFormat, target: Path) -> None:
+        """`model` is the report model defined with the writers (header, identification and the
+        sections of the draft that go in the document)."""
+        ...
+
+
+class ComprovanteAssembler(Protocol):
+    def assemble(
+        self,
+        plan: ComprovantePlan,
+        resolver: Callable[[UUID], Path],
+        target: Path,
+        on_progress: Callable[[int, int], None] | None = None,
+    ) -> AssemblyResult:
+        """Writes the PDF of the plan to `target`; `resolver` gives the path of the original of a
+        document. The original pages go in unchanged (CMP-02)."""
+        ...
+
+
+class ReportWriter(Protocol):
+    """The AI that words the entries of one section (REL-03)."""
+
+    def draft(self, section_title: str, items: Sequence[WordingItem]) -> Mapping[UUID, str]:
+        """One text per item id. Raises `AiWritingError` when the provider refuses, answers out of
+        the schema or takes longer than its deadline."""
+        ...
+
+
+class GeneratedFileStorage(Protocol):
+    """Files of the generated documents; written to a temporary path and renamed, never loaded
+    into memory."""
+
+    def new_temp_path(self, process_id: UUID) -> Path:
+        """A fresh `.tmp-*` path inside the directory of the process."""
+        ...
+
+    def commit(self, process_id: UUID, temp: Path, extension: str) -> str:
+        """Renames the temporary file to a random name and returns the internal name."""
+        ...
+
+    def path(self, process_id: UUID, internal_name: str) -> Path: ...
+
+    def delete(self, process_id: UUID, internal_name: str) -> None: ...
+
+    def free_bytes(self) -> int:
+        """Free space of the volume that holds the files (ESPACO_INSUFICIENTE)."""
+        ...
+
+
 class UnitOfWork(Protocol):
     users: UserRepository
     sessions: SessionRepository
@@ -390,6 +650,10 @@ class UnitOfWork(Protocol):
     extractions: ExtractionRepository
     jobs: JobRepository
     evidences: EvidenceRepository
+    generations: GenerationRepository
+    wording_jobs: WordingJobRepository
+    report_drafts: ReportDraftRepository
+    comprovante_layouts: LayoutRepository
 
     def __enter__(self) -> Self: ...
 
