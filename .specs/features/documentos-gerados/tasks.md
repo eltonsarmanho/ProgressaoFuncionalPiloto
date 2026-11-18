@@ -2546,9 +2546,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] DOCX e PDF baixados trazem o total 211, os subtotais 52, 7, 62, 0, 30, 4 e 56 e as horas 24, 24, 24, 20 (92), iguais à resposta de `/scoring`
-- [ ] Sem atividade validada responde `SEM_ATIVIDADES_VALIDADAS`; sem tabela, `TABELA_NAO_ESCOLHIDA`
-- [ ] Gate full passa; 4+ testes
+- [x] DOCX e PDF baixados trazem o total 211, os subtotais 52, 7, 62, 0, 30, 4 e 56 e as horas 24, 24, 24, 20 (92), iguais à resposta de `/scoring`
+- [x] Sem atividade validada responde `SEM_ATIVIDADES_VALIDADAS`; sem tabela, `TABELA_NAO_ESCOLHIDA`
+- [x] Gate full passa; 4+ testes
 
 **Tests**: integration
 **Gate**: full
