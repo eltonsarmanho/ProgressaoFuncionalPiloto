@@ -346,7 +346,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VER-01 | P1: Versões imutáveis e download | Tasks | In Tasks |
 | VER-02 | P1: Versões imutáveis e download | Tasks | In Tasks |
 | VER-03 | P1: Versões imutáveis e download | Tasks | In Tasks |
-| VER-04 | P1: Versões imutáveis e download | Tasks | In Tasks |
+| VER-04 | P1: Versões imutáveis e download | Tasks | Implementing |
 | VER-05 | P1: Versões imutáveis e download | Tasks | In Tasks |
 | VER-06 | P1: Versões imutáveis e download | Tasks | In Tasks |
 | VER-07 | P1: Versões imutáveis e download | Tasks | In Tasks |
@@ -374,7 +374,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | DEL-11 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
 | DEL-12 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
 | DEL-13 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
-| DEL-14 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-14 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
 | DEL-15 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
 | ORD-01 | P2: Lembrete da ordem do dossiê | Tasks | In Tasks |
 | ORD-02 | P2: Lembrete da ordem do dossiê | Tasks | In Tasks |

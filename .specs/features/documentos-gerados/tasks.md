@@ -294,10 +294,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Rota de teste que levanta `GenerationRefused` responde 422 com `field`, `code` e `message`
-- [ ] Rota de teste que levanta `Gone` responde 410 e `Conflict` com código responde 409 com o código no corpo
-- [ ] Os erros existentes (404, 409 sem código, 422 de validação) respondem como antes
-- [ ] Gate full passa; 5+ testes
+- [x] Rota de teste que levanta `GenerationRefused` responde 422 com `field`, `code` e `message`
+- [x] Rota de teste que levanta `Gone` responde 410 e `Conflict` com código responde 409 com o código no corpo
+- [x] Os erros existentes (404, 409 sem código, 422 de validação) respondem como antes
+- [x] Gate full passa; 5+ testes
 
 **Tests**: integration
 **Gate**: full
