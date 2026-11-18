@@ -1331,8 +1331,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O carregador aceita o arquivo; o teste confere as 8 seções na ordem, o mapa de grupo para seção da spec e a lista de palavras proibidas
-- [ ] Gate quick passa; 5+ testes
+- [x] O carregador aceita o arquivo; o teste confere as 8 seções na ordem, o mapa de grupo para seção da spec e a lista de palavras proibidas
+- [x] Gate quick passa; 5+ testes
 
 **Tests**: unit
 **Gate**: quick
