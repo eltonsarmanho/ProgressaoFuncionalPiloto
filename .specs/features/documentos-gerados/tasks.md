@@ -803,10 +803,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Texto editado pelo usuário permanece idêntico depois de `reconcile_draft`
-- [ ] Mover atividade guarda a seção escolhida e o rascunho reconciliado a mantém lá
-- [ ] Atividade nova ou removida desde a última edição gera `RASCUNHO_DESATUALIZADO`
-- [ ] Gate quick passa; 8+ testes
+- [x] Texto editado pelo usuário permanece idêntico depois de `reconcile_draft`
+- [x] Mover atividade guarda a seção escolhida e o rascunho reconciliado a mantém lá
+- [x] Atividade nova ou removida desde a última edição gera `RASCUNHO_DESATUALIZADO`
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick

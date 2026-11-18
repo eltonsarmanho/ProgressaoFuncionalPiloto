@@ -7,10 +7,11 @@ order of the section; the writers read subtitles, periods and modalities from th
 
 import re
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from uuid import UUID
 
 from app.domain.entities.activity import Activity, PeriodPrecision
+from app.domain.entities.generated import GenerationAlert, GenerationAlertCode
 from app.domain.entities.report import (
     DraftEntry,
     DraftSection,
@@ -22,6 +23,7 @@ from app.domain.entities.report import (
     ReportTemplate,
     TemplateSection,
 )
+from app.domain.errors import NotFound
 from app.domain.rules.activity_order import eligible_activities, table_order
 from app.domain.rules.pt_format import format_date, format_decimal, format_hours, format_period
 from app.domain.rules.scoring_periods import is_start_only
@@ -204,3 +206,88 @@ def empty_sections(draft: ReportDraft) -> tuple[str, ...]:
 def document_sections(draft: ReportDraft) -> tuple[DraftSection, ...]:
     """The sections that go in the document: the empty ones are left out (REL-11)."""
     return tuple(s for s in draft.sections if not _is_empty(s))
+
+
+STALE = GenerationAlertCode.RASCUNHO_DESATUALIZADO
+STALE_MESSAGE = "Há atividades novas ou removidas desde a última edição do Relatório."
+
+
+def reconcile_draft(
+    draft: ReportDraft,
+    activities: Sequence[Activity],
+    template: ReportTemplate,
+    group_map: GroupMap,
+) -> ReportDraft:
+    """The saved draft brought up to date with the validated activities (REL-07, REL-08).
+
+    An activity the draft does not know goes to the end of its section; an entry of an activity
+    that is gone leaves; both make the section carry `RASCUNHO_DESATUALIZADO`. An entry stays in
+    the section where it is, so a moved activity stays moved. The text of an entry from the
+    template follows the activity; the text of the AI is kept and the text typed by the user is
+    never touched.
+    """
+    current = {a.id: a for a in eligible_activities(activities)}
+    known = {e.activity_id for s in draft.sections for e in s.entries}
+    arrivals: dict[str, list[Activity]] = {s.key: [] for s in draft.sections}
+    for activity in sorted((a for a in current.values() if a.id not in known), key=table_order):
+        target = group_target(group_map, activity)
+        if target is not None and target.section_key in arrivals:
+            arrivals[target.section_key].append(activity)
+
+    sections = []
+    for section in draft.sections:
+        spec = template.section(section.key)
+        kept = []
+        for entry in section.entries:
+            activity = current.get(entry.activity_id)
+            if activity is None:
+                continue
+            if entry.source is EntrySource.MODELO and spec is not None:
+                entry = replace(entry, text=template_text(spec.entry, activity))
+            kept.append(entry)
+        added = [_new_entry(spec, a) for a in arrivals[section.key]] if spec is not None else []
+        warnings = tuple(w for w in section.warnings if w.code is not STALE)
+        if added or len(kept) != len(section.entries):
+            warnings += (GenerationAlert(STALE, STALE_MESSAGE),)
+        sections.append(replace(section, entries=(*kept, *added), warnings=warnings))
+    return replace(draft, sections=tuple(sections))
+
+
+def move_entry(
+    draft: ReportDraft,
+    activity_id: UUID,
+    section_key: str,
+    activities: Sequence[Activity],
+    template: ReportTemplate,
+) -> ReportDraft:
+    """The draft with the activity at the end of the chosen section (REL-08).
+
+    The text typed by the user goes with it; any other text is written again from the template
+    of the new section.
+    """
+    entry = next(
+        (e for s in draft.sections for e in s.entries if e.activity_id == activity_id), None
+    )
+    if entry is None:
+        raise NotFound("Atividade não encontrada no rascunho")
+    target = template.section(section_key)
+    if target is None or all(s.key != section_key for s in draft.sections):
+        raise NotFound("Seção não encontrada")
+    if entry in next(s for s in draft.sections if s.key == section_key).entries:
+        return draft
+    if entry.source is not EntrySource.USUARIO:
+        activity = next((a for a in activities if a.id == activity_id), None)
+        if activity is None:
+            raise NotFound("Atividade não encontrada")
+        entry = _new_entry(target, activity)
+    sections = tuple(
+        replace(
+            s,
+            entries=(
+                *(e for e in s.entries if e.activity_id != activity_id),
+                *((entry,) if s.key == section_key else ()),
+            ),
+        )
+        for s in draft.sections
+    )
+    return replace(draft, sections=sections)
