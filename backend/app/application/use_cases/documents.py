@@ -569,13 +569,14 @@ class DeleteDocument(_DocumentUseCase):
         self._storage = storage
 
     def execute(self, actor: User, document_id: UUID, justification: str | None) -> None:
-        """Physical removal of file, text and links; the activities stay (DOC-10)."""
+        """Physical removal of file, text and links; the activities stay (DOC-10, UIM-04).
+
+        The justification is optional: stored in the audit events when sent, never required.
+        """
         with self._uow_factory() as uow:
             document = self._document(uow, actor, document_id)
             self._writable(uow, actor, document.process_id)
-            justification = (justification or "").strip()
-            if not justification:
-                raise ValidationFailed("justificativa", "Justificativa obrigatória para excluir")
+            justification = (justification or "").strip() or None
             for evidence in uow.evidences.list_for_document(document.id):
                 self._audit.record(
                     uow,

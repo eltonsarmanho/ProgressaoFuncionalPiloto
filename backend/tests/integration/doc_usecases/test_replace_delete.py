@@ -293,16 +293,26 @@ def test_failure_before_the_commit_keeps_the_old_file_and_drops_the_new_one(docs
 
 
 @pytest.mark.parametrize("justification", [None, "", "   "])
-def test_delete_without_justification_gives_422_and_deletes_nothing(docs, justification):
+def test_delete_without_justification_deletes_and_audits_without_one(docs, justification):
+    """UIM-04: the justification is optional; the audit event keeps working without it."""
     w = docs.world
-    document, _ = processed(docs, "sem-justificativa")
+    document, run = processed(docs, "sem-justificativa")
+    activity = draft_activity(w, w.process, "Atividade mantida", run=run)
+    evidence = link(w, activity, document)
 
-    with pytest.raises(ValidationFailed) as error:
-        docs.delete.execute(w.docente, document.id, justification)
+    docs.delete.execute(w.docente, document.id, justification)
 
-    assert error.value.field == "justificativa"
-    assert reload(docs, document.id) == document
-    assert docs.storage.path(w.process.id, document.internal_name).is_file()
+    with w.uow_factory() as uow:
+        assert uow.documents.get(document.id) is None
+        assert uow.evidences.list_for_document(document.id) == []
+        assert uow.activities.get(activity.id) is not None
+    assert not docs.storage.path(w.process.id, document.internal_name).exists()
+    *_, event = events(docs, "document", document.id)
+    assert event.changes["operation"]["after"] == "DELETE"
+    assert event.justification is None
+    [link_event] = events(docs, "activity_evidence", evidence.id)[-1:]
+    assert link_event.changes["operation"]["after"] == "UNLINK"
+    assert link_event.justification is None
 
 
 def test_delete_removes_file_text_and_links_but_keeps_the_activities(docs, stored_files):

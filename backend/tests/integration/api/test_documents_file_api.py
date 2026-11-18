@@ -277,17 +277,17 @@ def test_delete_is_204_removes_the_file_and_the_links_and_keeps_the_activity(
 
 
 @pytest.mark.parametrize("query", ["", "?justificativa=", "?justificativa=%20%20"])
-def test_delete_without_a_justification_is_422_on_justificativa_and_keeps_the_document(
+def test_delete_without_a_justification_is_204_and_removes_the_document(
     client, headers, process, tmp_path, query
 ):
+    """UIM-04: no justification needed; the file and the record are gone."""
     document = upload_one(client, headers, process, "sem-justificativa")
 
     response = client.delete(f"/api/documents/{document['id']}{query}", headers=headers)
 
-    assert response.status_code == 422
-    assert response.json()["detail"][0]["field"] == "justificativa"
-    assert len(stored_files(tmp_path)) == 1
-    assert client.get(f"/api/documents/{document['id']}").status_code == 200
+    assert response.status_code == 204
+    assert stored_files(tmp_path) == []
+    assert client.get(f"/api/documents/{document['id']}").status_code == 404
 
 
 def test_delete_needs_the_csrf_token_and_access(client, act_as, headers, process, reference):

@@ -3321,10 +3321,10 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] `DELETE /api/documents/{id}` sem `justificativa` responde 204, remove arquivo, texto e vínculos e grava o evento `DELETE` com justificativa nula
-- [ ] Com `justificativa` o evento continua com o texto, e os desvínculos das evidências também
-- [ ] Os testes de exclusão existentes que esperavam 422 sem justificativa passam a esperar 204
-- [ ] Gate full passa
+- [x] `DELETE /api/documents/{id}` sem `justificativa` responde 204, remove arquivo, texto e vínculos e grava o evento `DELETE` com justificativa nula
+- [x] Com `justificativa` o evento continua com o texto, e os desvínculos das evidências também
+- [x] Os testes de exclusão existentes que esperavam 422 sem justificativa passam a esperar 204
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full
