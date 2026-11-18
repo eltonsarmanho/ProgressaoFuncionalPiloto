@@ -55,7 +55,7 @@ const ROW = (id: string, points: string, status: ScoringRow["status"] = "POTENCI
 
 const DOCS = [{ id: "d1", original_name: "ata-defesa.pdf" }, { id: "d2", original_name: "portaria.pdf" }] as DocumentSummary[];
 
-function setup(activities: Activity[], routes: Parameters<typeof mockFetch>[0] = {}) {
+function setup(activities: Activity[], routes: Parameters<typeof mockFetch>[0] = {}, documents: DocumentSummary[] = DOCS) {
   setCsrfToken("tok");
   const mock = mockFetch(routes);
   const onChanged = vi.fn();
@@ -65,7 +65,7 @@ function setup(activities: Activity[], routes: Parameters<typeof mockFetch>[0] =
       activities={activities}
       rows={activities.map((a) => ROW(a.id, "4.00"))}
       groups={GROUPS}
-      documents={DOCS}
+      documents={documents}
       onChanged={onChanged}
     />,
   );
@@ -219,6 +219,14 @@ describe("VINC / UIM-16: vincular documento numa janela, sem justificativa", () 
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
     expect(body(calls[0].init)).toEqual({ document_id: "d2", page: 3 });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("FORA-03: o seletor não oferece o documento fora do interstício", async () => {
+    const docs = [...DOCS, { id: "d3", original_name: "antigo-2022.pdf", outside_interstice: true }] as DocumentSummary[];
+    const { user } = setup([activity()], {}, docs);
+    await user.click(screen.getByRole("button", { name: "Vincular documento a Banca de mestrado de Maria" }));
+    const options = within(within(screen.getByRole("dialog")).getByLabelText("Documento")).getAllByRole("option");
+    expect(options.map((o) => o.textContent)).toEqual(["Selecione…", "ata-defesa.pdf", "portaria.pdf"]);
   });
 
   it("o erro do servidor aparece na janela, que continua aberta", async () => {

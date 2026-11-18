@@ -63,11 +63,14 @@ function LinkForm({
           <label htmlFor="link-document">Documento</label>
           <select id="link-document" value={documentId} onChange={(e) => setDocumentId(e.target.value)} {...errorProps("document_id", errors)}>
             <option value="">Selecione…</option>
-            {documents.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.original_name}
-              </option>
-            ))}
+            {/* FORA-03: a document outside the interstice takes no part in Etapa 3; the API refuses the link (409). */}
+            {documents
+              .filter((d) => d.outside_interstice !== true)
+              .map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.original_name}
+                </option>
+              ))}
           </select>
           <FieldError id="document_id-error" message={errors.document_id} />
         </div>
