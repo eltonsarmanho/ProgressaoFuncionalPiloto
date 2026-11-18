@@ -479,8 +479,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Os seis nomes (três tipos, dois formatos onde existem) saem sem acento nem espaço e sem o nome do docente
-- [ ] Gate quick passa; 6+ testes
+- [x] Os seis nomes (três tipos, dois formatos onde existem) saem sem acento nem espaço e sem o nome do docente
+- [x] Gate quick passa; 6+ testes
 
 **Tests**: unit
 **Gate**: quick
