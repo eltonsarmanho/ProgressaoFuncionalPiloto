@@ -60,6 +60,7 @@ from app.domain.rules.suggestion_rules import (
     confirm_extension_project,
     confirm_research_coordination,
     is_dismissal_clause,
+    reclassify_participation_certificate,
     suggest_item,
 )
 from app.domain.rules.term_rules import add_months, parse_term_months
@@ -295,6 +296,13 @@ class DocumentAnalyzer:
         taxonomy = confirm_extension_course(taxonomy, document_text)
         taxonomy = confirm_extension_project(taxonomy, document_text)
         taxonomy = confirm_research_coordination(taxonomy, document_text, professor_name)
+        refused = taxonomy
+        taxonomy = reclassify_participation_certificate(
+            activity.taxonomy, refused, run.document_type, activity.hours
+        )
+        as_training = taxonomy is not refused
+        if as_training:
+            run.alerts.append(DocAlert(DocAlertCode.ENQUADRADO_COMO_CAPACITACAO, None, index))
         claimed = taxonomy
         taxonomy = confirm_article_indexing(taxonomy, document_text)
         unproven_indexing = taxonomy is not claimed
@@ -319,7 +327,7 @@ class DocumentAnalyzer:
         confidence = final_confidence(raw.confidence, grounded.grounded_ratio)
         crosses_limit = precision is PeriodPrecision.MONTH and period is PeriodState.PARCIAL
         open_ended = yearly and is_open_ended(activity)
-        flagged = crosses_limit or open_ended or unproven_indexing
+        flagged = crosses_limit or open_ended or unproven_indexing or as_training
         return SuggestedActivity(
             source_index=index,
             extracted=activity,

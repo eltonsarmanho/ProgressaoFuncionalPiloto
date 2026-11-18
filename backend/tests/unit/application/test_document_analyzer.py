@@ -381,9 +381,25 @@ def project_activity(**changes):
     return activity(**(base | changes))
 
 
-def test_certificate_of_a_project_without_the_word_extension_gets_no_item():
+def test_certificate_of_a_project_without_the_word_extension_is_a_short_course_with_hours():
+    """CER-02: with its 18 hours the certificate is VII.10, flagged; it was dropped before."""
     result, _ = analyze(
         payload(project_activity(), document_type="CERTIFICADO"), text_page(1, POLICY_BRIEF)
+    )
+    [suggested] = result.activities
+    assert (suggested.group_number, suggested.item_number) == (7, 10)
+    assert suggested.needs_review is True
+    assert codes(result, DocAlertCode.ENQUADRADO_COMO_CAPACITACAO) == [
+        DocAlertCode.ENQUADRADO_COMO_CAPACITACAO
+    ]
+    assert codes(result, DocAlertCode.SEM_ITEM_DE_PONTUACAO) == []
+    assert result.status is DocumentStatus.PROCESSADO
+
+
+def test_certificate_of_a_project_without_the_word_extension_and_hours_gets_no_item():
+    text = POLICY_BRIEF.replace(", com carga horaria de 18 horas", "")
+    result, _ = analyze(
+        payload(project_activity(hours=None), document_type="CERTIFICADO"), text_page(1, text)
     )
     assert result.activities == ()
     assert codes(result, DocAlertCode.SEM_ITEM_DE_PONTUACAO) == [DocAlertCode.SEM_ITEM_DE_PONTUACAO]

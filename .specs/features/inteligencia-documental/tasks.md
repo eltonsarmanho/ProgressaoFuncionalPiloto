@@ -3233,10 +3233,10 @@ T113 → T114 → T115 → T116 → T117
 
 **Done when**:
 
-- [ ] O texto em inglês gera uma só atividade em VII.10, `needs_review` verdadeiro, quantidade 1, carga horária 18 preservada, alerta `ENQUADRADO_COMO_CAPACITACAO` e sem `SEM_ITEM_DE_PONTUACAO`
-- [ ] Sem datas na atividade e "six weeks" no `term` não derivam data final nem criam datas
-- [ ] Coordenação real e extensão real mantêm a taxonomia e não geram o alerta; sem horas continua sem item
-- [ ] Gate full passa
+- [x] O texto em inglês gera uma só atividade em VII.10, `needs_review` verdadeiro, quantidade 1, carga horária 18 preservada, alerta `ENQUADRADO_COMO_CAPACITACAO` e sem `SEM_ITEM_DE_PONTUACAO`
+- [x] Sem datas na atividade e "six weeks" no `term` não derivam data final nem criam datas
+- [x] Coordenação real e extensão real mantêm a taxonomia e não geram o alerta; sem horas continua sem item
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

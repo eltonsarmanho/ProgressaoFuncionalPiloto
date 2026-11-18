@@ -13,12 +13,12 @@ from tests.unit.application.analyzer_fakes import (
 )
 
 
-def analyze(text):
+def analyze(text, hours=18):
     item = activity(
         taxonomy="PESQUISA_PROJETO_COORDENACAO",
         title="Policy Brief sobre Dados Abertos",
         event_date="2025-03-12",
-        hours=18,
+        hours=hours,
         evidence_text="participou do desenvolvimento de um policy brief",
     )
     ai = FakeAi(payload(item, document_type="CERTIFICADO"))
@@ -26,9 +26,24 @@ def analyze(text):
 
 
 def test_a_participation_certificate_creates_no_research_coordination():
+    """SEG-07 still holds (no V.1); CER-02 makes the certificate with hours VII.10 instead."""
     result = analyze(
         f"Certificamos que {PROFESSOR} participou do desenvolvimento de um policy brief "
         "sobre Dados Abertos, em 12 de março de 2025, com carga horária de 18 horas."
+    )
+    [found] = result.activities
+    assert (found.group_number, found.item_number) == (7, 10)
+    assert found.needs_review is True
+    assert [a.code for a in result.alerts if a.activity_index == 0] == [
+        DocAlertCode.ENQUADRADO_COMO_CAPACITACAO
+    ]
+
+
+def test_a_participation_certificate_without_hours_has_no_item():
+    result = analyze(
+        f"Certificamos que {PROFESSOR} participou do desenvolvimento de um policy brief "
+        "sobre Dados Abertos, em 12 de março de 2025.",
+        hours=None,
     )
     assert result.activities == ()
     assert [a.code for a in result.alerts if a.activity_index == 0] == [
