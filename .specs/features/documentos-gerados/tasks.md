@@ -2730,8 +2730,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Os tipos refletem os esquemas do backend e o `tsc -b` passa
-- [ ] Gate build passa
+- [x] Os tipos refletem os esquemas do backend e o `tsc -b` passa
+- [x] Gate build passa
 
 **Tests**: none
 **Gate**: build
