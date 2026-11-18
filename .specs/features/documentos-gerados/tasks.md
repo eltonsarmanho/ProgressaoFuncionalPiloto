@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Design**: `.specs/features/documentos-gerados/design.md`
 **Spec**: `.specs/features/documentos-gerados/spec.md`
-**Status**: Draft
+**Status**: Implementing
 
 Regras de execução desta feature: cada tarefa escreve primeiro os testes que derivam dos critérios de aceitação da spec e só então o código (os itens `Done when` começam pelo teste); nenhum teste, fixture ou commit leva dado pessoal real; `Documentos/` não é aberto por nenhuma tarefa, exceto a tarefa de contagem do corpus, e só com autorização do usuário; push, deploy, acesso à VM e chamada real à MariTalk exigem autorização explícita para cada ação (a tarefa de implantação só escreve uma nota).
 
@@ -215,9 +215,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] `pip install -r requirements.txt` roda sem compilador e `import docx, lxml, reportlab` funciona no `.venv`
-- [ ] A suíte inteira passa com reportlab 5.1.0; se algum teste falhar por causa dele, o pino cai para `reportlab==4.5.1` e o design registra a queda em Risks
-- [ ] Gate full passa; contagem de testes igual à anterior (nenhum teste removido)
+- [x] `pip install -r requirements.txt` roda sem compilador e `import docx, lxml, reportlab` funciona no `.venv`
+- [x] A suíte inteira passa com reportlab 5.1.0; se algum teste falhar por causa dele, o pino cai para `reportlab==4.5.1` e o design registra a queda em Risks
+- [x] Gate full passa; contagem de testes igual à anterior (nenhum teste removido)
 
 **Tests**: none
 **Gate**: full

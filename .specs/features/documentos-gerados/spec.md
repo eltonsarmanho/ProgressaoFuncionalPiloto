@@ -299,7 +299,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| TAB-01 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | In Tasks |
+| TAB-01 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
 | TAB-02 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | In Tasks |
 | TAB-03 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | In Tasks |
 | TAB-04 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | In Tasks |
