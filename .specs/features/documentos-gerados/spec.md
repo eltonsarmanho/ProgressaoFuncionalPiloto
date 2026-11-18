@@ -310,7 +310,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CMP-01 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
 | CMP-02 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
 | CMP-03 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
-| CMP-04 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-04 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | CMP-05 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
 | CMP-06 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
 | CMP-07 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
@@ -320,7 +320,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CMP-11 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
 | CMP-12 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
 | CMP-13 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
-| ARR-01 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
+| ARR-01 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
 | ARR-02 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
 | ARR-03 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
 | ARR-04 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |

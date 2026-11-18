@@ -1,0 +1,86 @@
+"""Layout (saved arrangement) and plan (numbered pages) of the Comprovante (ARR-01, CMP-04).
+
+The layout is what the user arranges; the plan is the ordered list of pages the document will
+have, computed from the layout and the process metadata only. Both are immutable.
+"""
+
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import NamedTuple
+from uuid import UUID
+
+
+class PageKind(StrEnum):
+    CAPA = "CAPA"
+    SUMARIO = "SUMARIO"
+    SEPARADOR = "SEPARADOR"
+    ORIGINAL = "ORIGINAL"
+
+
+class EvidenceKey(NamedTuple):
+    """An activity-page link: the arrangement remembers which ones it was built from."""
+
+    activity_id: UUID
+    document_id: UUID
+    page: int
+
+
+@dataclass(frozen=True)
+class LayoutPage:
+    document_id: UUID
+    page: int
+    repeat_justification: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.page < 1:
+            raise ValueError("page must be 1 or more")
+        if self.repeat_justification is not None and not self.repeat_justification.strip():
+            object.__setattr__(self, "repeat_justification", None)
+
+
+@dataclass(frozen=True)
+class LayoutActivity:
+    activity_id: UUID
+    pages: tuple[LayoutPage, ...] = ()
+
+
+@dataclass(frozen=True)
+class ComprovanteLayout:
+    """`version` 0 is an arrangement derived from the links and never saved."""
+
+    process_id: UUID
+    activities: tuple[LayoutActivity, ...]
+    base_evidence_keys: tuple[EvidenceKey, ...] = ()
+    version: int = 0
+
+
+@dataclass(frozen=True)
+class PlanPage:
+    kind: PageKind
+    number: int
+    group_number: int | None = None
+    document_id: UUID | None = None
+    source_page: int | None = None
+
+
+@dataclass(frozen=True)
+class ComprovantePlan:
+    pages: tuple[PlanPage, ...]
+    plan_hash: str
+
+    def __post_init__(self) -> None:
+        if [p.number for p in self.pages] != list(range(1, len(self.pages) + 1)):
+            raise ValueError("page numbers must continue from the cover, starting at 1")
+
+
+@dataclass(frozen=True)
+class Staleness:
+    """Why a saved layout no longer matches the current activities (ARR-08)."""
+
+    left_activity_ids: tuple[UUID, ...] = ()
+    moved_activity_ids: tuple[UUID, ...] = ()
+    new_link_activity_ids: tuple[UUID, ...] = ()
+
+    @property
+    def is_stale(self) -> bool:
+        return bool(self.left_activity_ids or self.moved_activity_ids or self.new_link_activity_ids)

@@ -401,9 +401,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] `LayoutPage(document_id, page, repeat_justification)` aceita justificativa vazia como `None` e recusa página menor que 1
-- [ ] `ComprovantePlan` guarda a lista ordenada de páginas com número e o `plan_hash`
-- [ ] Gate quick passa; 5+ testes
+- [x] `LayoutPage(document_id, page, repeat_justification)` aceita justificativa vazia como `None` e recusa página menor que 1
+- [x] `ComprovantePlan` guarda a lista ordenada de páginas com número e o `plan_hash`
+- [x] Gate quick passa; 5+ testes
 
 **Tests**: unit
 **Gate**: quick
