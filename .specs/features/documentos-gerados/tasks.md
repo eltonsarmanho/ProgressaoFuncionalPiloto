@@ -531,10 +531,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Total 211 e contagens idênticas às do resultado do motor
-- [ ] Horas de PIT 24, 24, 24 e 20 (total 92) em seção separada, sem somar aos pontos; sem essa tabela de horas a seção não existe
-- [ ] Limites aplicados, carga horária insuficiente e data final ausente aparecem com o texto do motor
-- [ ] Gate quick passa; 10+ testes
+- [x] Total 211 e contagens idênticas às do resultado do motor
+- [x] Horas de PIT 24, 24, 24 e 20 (total 92) em seção separada, sem somar aos pontos; sem essa tabela de horas a seção não existe
+- [x] Limites aplicados, carga horária insuficiente e data final ausente aparecem com o texto do motor
+- [x] Gate quick passa; 10+ testes
 
 **Tests**: unit
 **Gate**: quick

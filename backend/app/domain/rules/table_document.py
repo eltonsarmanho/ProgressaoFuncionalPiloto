@@ -1,4 +1,5 @@
-"""Content of the scoring table document: header, group bands and rows (TAB-02, TAB-03).
+"""Content of the scoring table document (TAB-02 to TAB-06): header, group bands, rows, totals,
+counters, PIT hours and alerts.
 
 Pure function of the scoring result: the document and the screen cannot disagree because the
 subtotals and the total are the engine's, never summed again here. The writers (DOCX, PDF) only
@@ -13,8 +14,16 @@ from uuid import UUID
 from app.domain.entities.activity import Activity
 from app.domain.entities.scoring import ScoringTableVersion
 from app.domain.rules.interstice import Interstice
-from app.domain.rules.pt_format import format_decimal
-from app.domain.rules.scoring_engine import RowStatus, ScoringResult, ScoringRow, is_pit_criterion
+from app.domain.rules.process_verification import Alert
+from app.domain.rules.pt_format import format_decimal, format_period
+from app.domain.rules.scoring_alerts import NotScoredReason
+from app.domain.rules.scoring_engine import (
+    Counters,
+    RowStatus,
+    ScoringResult,
+    ScoringRow,
+    is_pit_criterion,
+)
 
 NO_VOUCHER = "sem comprovante"
 EMPTY_CELL = "—"
@@ -23,6 +32,16 @@ _STATUS_TEXT = {
     RowStatus.PONTUADA: "Pontuada",
     RowStatus.POTENCIAL: "Potencial",
     RowStatus.NAO_PONTUADA: "Não pontuada",
+}
+# The words the scoring screen shows for each reason a row is not scored (`REASON_LABELS`).
+_REASON_TEXT = {
+    NotScoredReason.FORA_DO_INTERSTICIO: "Fora do interstício",
+    NotScoredReason.DUPLICIDADE: "Duplicidade",
+    NotScoredReason.SEM_ENQUADRAMENTO: "Sem enquadramento na tabela",
+    NotScoredReason.GRUPO_NAO_CONTA: "Grupo não conta no total",
+    NotScoredReason.SEM_TABELA: "Sem tabela escolhida",
+    NotScoredReason.REJEITADA: "Rejeitada",
+    NotScoredReason.CARGA_HORARIA_INSUFICIENTE: "Carga horária abaixo do mínimo do item",
 }
 _CENTS = Decimal("0.01")
 
@@ -66,11 +85,41 @@ class GroupBand:
 
 
 @dataclass(frozen=True)
+class PitPeriodHours:
+    label: str
+    hours: str
+
+
+@dataclass(frozen=True)
+class PitHours:
+    """Group I offers measured in hours: a section apart, never added to the points (TAB-05)."""
+
+    periods: tuple[PitPeriodHours, ...]
+    total: str
+
+
+@dataclass(frozen=True)
+class TableAlert:
+    """An alert or a reason of the scoring, with the words of the screen.
+
+    `subject` is the title of the activity it concerns; none for the alerts of the process.
+    """
+
+    code: str
+    message: str
+    subject: str | None = None
+
+
+@dataclass(frozen=True)
 class TableDocument:
     header: TableHeader
     table_name: str
     norm_reference: str
     bands: tuple[GroupBand, ...]
+    total: str
+    counters: Counters
+    pit_hours: PitHours | None
+    alerts: tuple[TableAlert, ...]
 
 
 def roman(group_number: int) -> str:
@@ -122,17 +171,52 @@ def _is_pit(version: ScoringTableVersion, row: ScoringRow) -> bool:
     return criterion is not None and is_pit_criterion(version, criterion)
 
 
+def _pit_hours(version: ScoringTableVersion, result: ScoringResult) -> PitHours | None:
+    """The section exists only when the version measures group I in PIT hours."""
+    has_pit = any(is_pit_criterion(version, c) for g in version.groups for c in g.criteria)
+    if not has_pit:
+        return None
+    periods = tuple(
+        PitPeriodHours(format_period(period), two_places(hours))
+        for period, hours in result.group1_hours_by_period.items()
+    )
+    return PitHours(periods, two_places(result.group1_total_hours))
+
+
+def _alerts(
+    result: ScoringResult, titles: Mapping[UUID, str], process_alerts: Sequence[Alert]
+) -> tuple[TableAlert, ...]:
+    """Alerts and reasons of the listed activities, then the limits of criteria and groups.
+
+    A limit on one activity is already one of its row alerts, so it is not listed again.
+    """
+    found: list[TableAlert] = []
+    for row in result.rows:
+        if row.activity_id not in titles:
+            continue
+        subject = titles[row.activity_id]
+        found += [TableAlert(a.code.value, a.message, subject) for a in row.alerts]
+        found += [TableAlert(r.value, _REASON_TEXT[r], subject) for r in row.reasons]
+    for adjustment in result.limit_adjustments:
+        if adjustment.scope != "ATIVIDADE":
+            found.append(TableAlert(adjustment.alert.code.value, adjustment.alert.message))
+    found += [TableAlert(a.code.value, a.message) for a in process_alerts]
+    return tuple(found)
+
+
 def build_table_document(
     header: TableHeader,
     version: ScoringTableVersion,
     result: ScoringResult,
     activities: Sequence[Activity],
     comprovante_numbers: Mapping[UUID, int],
+    process_alerts: Sequence[Alert] = (),
 ) -> TableDocument:
     """`activities` are the ones that go in the document; `comprovante_numbers` come from the plan.
 
     A group that counts in the total is a band, empty ones included. A group outside the total
-    (group I in hours) has no band.
+    (group I in hours) has no band; its hours are the `pit_hours` section. `process_alerts` are
+    the alerts of the process the screen shows beside the result.
     """
     titles = {a.id: a.title for a in activities}
     bands = tuple(
@@ -151,4 +235,8 @@ def build_table_document(
         table_name=version.name,
         norm_reference=version.norm_reference,
         bands=bands,
+        total=two_places(result.total),
+        counters=result.counters,
+        pit_hours=_pit_hours(version, result),
+        alerts=_alerts(result, titles, process_alerts),
     )
