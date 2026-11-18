@@ -1,3 +1,4 @@
+import type { GenerationAlertCode, GenerationCode, GenerationState } from "./api/generated";
 import type { DocumentStatus, Modality, ProcessStatus, Severity } from "./api/types";
 
 export const STATUS_LABELS: Record<ProcessStatus, string> = {
@@ -257,3 +258,49 @@ export function itemLabel(group: number | null, item: number | null): string {
   if (group == null) return "Sem enquadramento";
   return item == null ? roman(group) : `${roman(group)}.${item}`;
 }
+
+/* ---- Documentos gerados (Etapa 5) ---- */
+
+export const GENERATION_STATE_LABELS: Record<GenerationState, string> = {
+  GERANDO: "Gerando",
+  PRONTO: "Pronto",
+  FALHOU: "Falhou",
+};
+
+/** Refusals (422, 409, 410) and failures of a generation or a wording; one text for each code. */
+export const GENERATION_CODE_LABELS: Record<GenerationCode, string> = {
+  SEM_ATIVIDADES_VALIDADAS: "O processo não tem atividade validada. Valide ao menos uma na Etapa 3.",
+  TABELA_NAO_ESCOLHIDA: "Escolha a tabela de pontuação na Etapa 4 antes de gerar.",
+  ATIVIDADE_SEM_DESCRICAO: "Há atividade validada sem título e sem descrição. Preencha-a na Etapa 3.",
+  COMPROVANTE_GRANDE_DEMAIS: "O Comprovante passa de 400 páginas ou de 60 MB. Tire páginas do arranjo.",
+  IMAGEM_GRANDE_DEMAIS: "Há imagem PNG acima de 12 megapixels entre os documentos. Envie-a de novo como JPEG ou menor.",
+  ORIGINAL_INDISPONIVEL: "Um documento de origem não está mais disponível ou a página não existe mais.",
+  ORIGINAIS_EXCLUIDOS: "Os documentos de entrada foram excluídos: o Comprovante não pode mais ser gerado.",
+  INTERROMPIDA: "O servidor reiniciou durante o trabalho. Peça de novo.",
+  ESPACO_INSUFICIENTE: "Não há espaço livre suficiente no servidor para gerar o documento.",
+  ERRO_INTERNO: "Erro interno do servidor. Tente de novo.",
+  GERACAO_EM_ANDAMENTO: "Já há uma geração deste documento em andamento.",
+  REDACAO_EM_ANDAMENTO: "Já há uma redação desta seção em andamento.",
+  ARTEFATOS_PENDENTES: "Gere a Tabela, o Relatório e o Comprovante antes de concluir o processo.",
+  CONFIRMACAO_OBRIGATORIA: "Confirme a exclusão dos documentos de entrada para concluir.",
+  OPERACAO_EM_ANDAMENTO: "Há geração, redação ou leitura de documento em andamento. Espere terminar.",
+  CONCLUSAO_EXIGE_EXCLUSAO: "O processo só é concluído pela conclusão que exclui os documentos de entrada.",
+  ARQUIVO_EXCLUIDO: "O arquivo deste documento foi excluído na conclusão do processo.",
+  PAGINA_FORA_DO_DOCUMENTO: "A página indicada não existe no documento.",
+  VERSAO_DESATUALIZADA: "Os dados mudaram desde que você abriu a tela. A versão atual foi recarregada.",
+  PROCESSO_SOMENTE_LEITURA: "O processo está concluído ou arquivado e não aceita alterações.",
+};
+
+/** Alerts that travel with a result: the text the block of a document lists. */
+export const GENERATION_ALERT_LABELS: Record<GenerationAlertCode, string> = {
+  ATIVIDADE_SEM_COMPROVANTE: "Atividade sem comprovante anexado",
+  REDACAO_REJEITADA: "A redação da IA trazia dado que não está na atividade e foi recusada: ficou o texto-modelo",
+  REDACAO_INDISPONIVEL: "A IA não respondeu a tempo: ficou o texto-modelo",
+  ARRANJO_DESATUALIZADO: "O arranjo do Comprovante está desatualizado: as atividades mudaram depois que ele foi salvo",
+  NUMERACAO_DIVERGENTE: "A numeração do Comprovante mudou desde a última versão gerada: gere os dois de novo",
+  ATIVIDADES_FORA_DO_DOCUMENTO: "Há atividades que ficaram fora do documento",
+  PAGINA_REPETIDA_JUSTIFICADA: "Página repetida com justificativa",
+  PAGINA_RASTERIZADA: "Página convertida em imagem para manter o que se vê",
+  RASCUNHO_DESATUALIZADO: "O rascunho do Relatório está desatualizado: há atividades novas ou removidas",
+  EXCLUSAO_PARCIAL: "Nem todos os arquivos foram excluídos: tente de novo",
+};

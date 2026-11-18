@@ -2755,8 +2755,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Todo código e alerta do design tem rótulo em português; `labels.test` (ou teste novo) falha se um código do tipo ficar sem rótulo
-- [ ] Gate quick passa; 3+ testes
+- [x] Todo código e alerta do design tem rótulo em português; `labels.test` (ou teste novo) falha se um código do tipo ficar sem rótulo
+- [x] Gate quick passa; 3+ testes
 
 **Tests**: unit
 **Gate**: quick
