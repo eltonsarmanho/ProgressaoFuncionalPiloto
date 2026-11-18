@@ -3055,7 +3055,7 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 #### T109: Notas de implantação
 
-**What**: Registrar em `docs/deploy/vm.md` o que o deploy desta feature exige: pinos de `python-docx==1.2.0`, `lxml==6.1.3` e `reportlab==5.1.0` (queda para `reportlab==4.5.1`), fonte Liberation Serif no repositório, `client_max_body_size 120m` já em vigor, migração `0005`, volume `storage/generated` e o aviso de que a conclusão é irreversível e a VM não tem backup.
+**What**: Registrar em `docs/deploy/vm.md` o que o deploy desta feature exige: pinos de `python-docx==1.2.0`, `lxml==6.1.3` e `reportlab==5.1.0` (queda para `reportlab==4.5.1`), fonte Liberation Serif no repositório, `client_max_body_size 120m` já em vigor, migração `0006` (a 0005 já está no ar), volume `storage/generated` e o aviso de que a conclusão é irreversível e a VM não tem backup.
 **Where**: `docs/deploy/vm.md`
 **Depends on**: T31 (fase 7)
 **Reuses**: `docs/deploy/vm.md` (seções de migração e imagem)
