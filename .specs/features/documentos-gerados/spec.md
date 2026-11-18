@@ -299,91 +299,91 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| TAB-01 | P1: Tabela de Pontuação em DOCX e PDF | Design | Pending |
-| TAB-02 | P1: Tabela de Pontuação em DOCX e PDF | Design | Pending |
-| TAB-03 | P1: Tabela de Pontuação em DOCX e PDF | Design | Pending |
-| TAB-04 | P1: Tabela de Pontuação em DOCX e PDF | Design | Pending |
-| TAB-05 | P1: Tabela de Pontuação em DOCX e PDF | Design | Pending |
-| TAB-06 | P1: Tabela de Pontuação em DOCX e PDF | Design | Pending |
-| TAB-07 | P1: Tabela de Pontuação em DOCX e PDF | Design | Pending |
-| TAB-08 | P1: Tabela de Pontuação em DOCX e PDF | Design | Pending |
-| CMP-01 | P1: Comprovante de Documentos em PDF | Design | Pending |
-| CMP-02 | P1: Comprovante de Documentos em PDF | Design | Pending |
-| CMP-03 | P1: Comprovante de Documentos em PDF | Design | Pending |
-| CMP-04 | P1: Comprovante de Documentos em PDF | Design | Pending |
-| CMP-05 | P1: Comprovante de Documentos em PDF | Design | Pending |
-| CMP-06 | P1: Comprovante de Documentos em PDF | Design | Pending |
-| CMP-07 | P1: Comprovante de Documentos em PDF | Design | Pending |
-| CMP-08 | P1: Comprovante de Documentos em PDF | Design | Pending |
-| CMP-09 | P1: Comprovante de Documentos em PDF | Design | Pending |
-| CMP-10 | P1: Comprovante de Documentos em PDF | Design | Pending |
-| CMP-11 | P1: Comprovante de Documentos em PDF | Design | Pending |
-| CMP-12 | P1: Comprovante de Documentos em PDF | Design | Pending |
-| CMP-13 | P1: Comprovante de Documentos em PDF | Design | Pending |
-| ARR-01 | P1: Arranjo manual do Comprovante | Design | Pending |
-| ARR-02 | P1: Arranjo manual do Comprovante | Design | Pending |
-| ARR-03 | P1: Arranjo manual do Comprovante | Design | Pending |
-| ARR-04 | P1: Arranjo manual do Comprovante | Design | Pending |
-| ARR-05 | P1: Arranjo manual do Comprovante | Design | Pending |
-| ARR-06 | P1: Arranjo manual do Comprovante | Design | Pending |
-| ARR-07 | P1: Arranjo manual do Comprovante | Design | Pending |
-| ARR-08 | P1: Arranjo manual do Comprovante | Design | Pending |
-| REL-01 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| REL-02 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| REL-03 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| REL-04 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| REL-05 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| REL-06 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| REL-07 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| REL-08 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| REL-09 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| REL-10 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| REL-11 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| REL-12 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| REL-13 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| REL-14 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| REL-15 | P1: Relatório de Atividades em DOCX e PDF com revisão | Design | Pending |
-| VER-01 | P1: Versões imutáveis e download | Design | Pending |
-| VER-02 | P1: Versões imutáveis e download | Design | Pending |
-| VER-03 | P1: Versões imutáveis e download | Design | Pending |
-| VER-04 | P1: Versões imutáveis e download | Design | Pending |
-| VER-05 | P1: Versões imutáveis e download | Design | Pending |
-| VER-06 | P1: Versões imutáveis e download | Design | Pending |
-| VER-07 | P1: Versões imutáveis e download | Design | Pending |
-| VER-08 | P1: Versões imutáveis e download | Design | Pending |
-| VER-09 | P1: Versões imutáveis e download | Design | Pending |
-| UIG-01 | P1: Etapa 5, Documentos gerados, na interface | Design | Pending |
-| UIG-02 | P1: Etapa 5, Documentos gerados, na interface | Design | Pending |
-| UIG-03 | P1: Etapa 5, Documentos gerados, na interface | Design | Pending |
-| UIG-04 | P1: Etapa 5, Documentos gerados, na interface | Design | Pending |
-| UIG-05 | P1: Etapa 5, Documentos gerados, na interface | Design | Pending |
-| UIG-06 | P1: Etapa 5, Documentos gerados, na interface | Design | Pending |
-| UIG-07 | P1: Etapa 5, Documentos gerados, na interface | Design | Pending |
-| UIG-08 | P1: Etapa 5, Documentos gerados, na interface | Design | Pending |
-| UIG-09 | P1: Etapa 5, Documentos gerados, na interface | Design | Pending |
-| DEL-01 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| DEL-02 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| DEL-03 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| DEL-04 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| DEL-05 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| DEL-06 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| DEL-07 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| DEL-08 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| DEL-09 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| DEL-10 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| DEL-11 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| DEL-12 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| DEL-13 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| DEL-14 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| DEL-15 | P1: Concluir o processo e excluir os documentos de entrada | Design | Pending |
-| ORD-01 | P2: Lembrete da ordem do dossiê | - | Pending |
-| ORD-02 | P2: Lembrete da ordem do dossiê | - | Pending |
+| TAB-01 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | In Tasks |
+| TAB-02 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | In Tasks |
+| TAB-03 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | In Tasks |
+| TAB-04 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | In Tasks |
+| TAB-05 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | In Tasks |
+| TAB-06 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | In Tasks |
+| TAB-07 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | In Tasks |
+| TAB-08 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | In Tasks |
+| CMP-01 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-02 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-03 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-04 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-05 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-06 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-07 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-08 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-09 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-10 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-11 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-12 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| CMP-13 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
+| ARR-01 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
+| ARR-02 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
+| ARR-03 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
+| ARR-04 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
+| ARR-05 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
+| ARR-06 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
+| ARR-07 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
+| ARR-08 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
+| REL-01 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-02 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-03 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-04 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-05 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-06 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-07 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-08 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-09 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-10 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-11 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-12 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-13 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-14 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| REL-15 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | In Tasks |
+| VER-01 | P1: Versões imutáveis e download | Tasks | In Tasks |
+| VER-02 | P1: Versões imutáveis e download | Tasks | In Tasks |
+| VER-03 | P1: Versões imutáveis e download | Tasks | In Tasks |
+| VER-04 | P1: Versões imutáveis e download | Tasks | In Tasks |
+| VER-05 | P1: Versões imutáveis e download | Tasks | In Tasks |
+| VER-06 | P1: Versões imutáveis e download | Tasks | In Tasks |
+| VER-07 | P1: Versões imutáveis e download | Tasks | In Tasks |
+| VER-08 | P1: Versões imutáveis e download | Tasks | In Tasks |
+| VER-09 | P1: Versões imutáveis e download | Tasks | In Tasks |
+| UIG-01 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
+| UIG-02 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
+| UIG-03 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
+| UIG-04 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
+| UIG-05 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
+| UIG-06 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
+| UIG-07 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
+| UIG-08 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
+| UIG-09 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
+| DEL-01 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-02 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-03 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-04 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-05 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-06 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-07 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-08 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-09 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-10 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-11 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-12 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-13 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-14 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-15 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| ORD-01 | P2: Lembrete da ordem do dossiê | Tasks | In Tasks |
+| ORD-02 | P2: Lembrete da ordem do dossiê | Tasks | In Tasks |
 
 **ID format:** `[CATEGORY]-[NUMBER]` (e.g., `AUTH-01`, `CART-03`, `NOTIF-02`)
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 79 total, 0 mapped to tasks, 79 unmapped ⚠️ (esperado antes da fase Tasks)
+**Coverage:** 79 total, 79 mapped to tasks, 0 unmapped (tabela de cobertura em `tasks.md`)
 
 **Mapping notes:** the numbering of each requirement follows the order of the acceptance criteria inside its story (TAB-01 is criterion 1 of the Tabela story, CMP-05 is criterion 5 of the Comprovante story, and so on; the "Implicit-Requirement Dimensions" table refers to them by these IDs).
 
