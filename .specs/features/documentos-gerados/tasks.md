@@ -777,9 +777,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Atividade sem fonte do recurso, colaboradores ou número de portaria não ganha essas linhas nem valores inventados
-- [ ] Carga horária, período letivo e datas saem formatados em português
-- [ ] Gate quick passa; 8+ testes
+- [x] Atividade sem fonte do recurso, colaboradores ou número de portaria não ganha essas linhas nem valores inventados
+- [x] Carga horária, período letivo e datas saem formatados em português
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick

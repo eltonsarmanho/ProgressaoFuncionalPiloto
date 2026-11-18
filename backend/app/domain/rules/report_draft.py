@@ -5,15 +5,17 @@ for a section that gathers several groups, under which subtitle. The draft keeps
 order of the section; the writers read subtitles, periods and modalities from the activities.
 """
 
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from uuid import UUID
 
-from app.domain.entities.activity import Activity
+from app.domain.entities.activity import Activity, PeriodPrecision
 from app.domain.entities.report import (
     DraftEntry,
     DraftSection,
     EntrySource,
+    EntrySpec,
     GroupBy,
     MatchRule,
     ReportDraft,
@@ -21,6 +23,7 @@ from app.domain.entities.report import (
     TemplateSection,
 )
 from app.domain.rules.activity_order import eligible_activities, table_order
+from app.domain.rules.pt_format import format_date, format_decimal, format_hours, format_period
 from app.domain.rules.scoring_periods import is_start_only
 
 
@@ -54,8 +57,112 @@ def _sort_key(section: TemplateSection, activity: Activity):
     return base
 
 
-def _new_entry(activity: Activity) -> DraftEntry:
-    return DraftEntry(activity.id, activity.title, EntrySource.MODELO)
+_COURSE = re.compile(
+    r"\bcurso\s+(?:de|em|do|da)\s+(?P<name>[^,;.\n()]+)"
+    r"|\b(?P<degree>(?:licenciatura|bacharelado|tecnologia)\s+em\s+[^,;.\n()]+)",
+    re.IGNORECASE,
+)
+
+
+def _course(activity: Activity) -> str | None:
+    """The course named in the title or in the description; the activity does not store it."""
+    for text in (activity.title, activity.description):
+        found = _COURSE.search(text)
+        if found is not None:
+            name = (found.group("name") or found.group("degree")).split(" - ")[0].strip()
+            if name:
+                return name
+    return None
+
+
+def _day(value, precision: PeriodPrecision) -> str:
+    return value.strftime("%m/%Y") if precision is PeriodPrecision.MONTH else format_date(value)
+
+
+def _dates(activity: Activity) -> str | None:
+    precision = activity.period_precision
+    if activity.event_date is not None:
+        return _day(activity.event_date, precision)
+    start, end = activity.period_start, activity.period_end
+    if start is not None and end is not None:
+        return f"{_day(start, precision)} a {_day(end, precision)}"
+    if start is not None:
+        return f"desde {_day(start, precision)}"
+    if end is not None:
+        return f"até {_day(end, precision)}"
+    return None
+
+
+def activity_fields(activity: Activity) -> dict[str, str]:
+    """The markers an entry template can use, written in Portuguese; a marker without value is
+    left out. Fields the activity does not have (funding source, collaborators, ordinance) are
+    never here, so no template line can show them."""
+    candidates = {
+        "title": activity.title,
+        "description": activity.description,
+        "dates": _dates(activity),
+        "period": format_period(activity.academic_period) if activity.academic_period else None,
+        "hours": format_hours(activity.hours) if activity.hours is not None else None,
+        "course_hours": (
+            format_hours(activity.course_hours) if activity.course_hours is not None else None
+        ),
+        "quantity": format_decimal(activity.quantity) if activity.quantity is not None else None,
+        "course": _course(activity),
+    }
+    return {name: value.strip() for name, value in candidates.items() if value and value.strip()}
+
+
+_PIECE = re.compile(r"\[(?P<optional>[^\[\]]*)\]|\{(?P<marker>\w+)\}")
+_MARKER = re.compile(r"\{(\w+)\}")
+
+
+def _fill(text: str, values: Mapping[str, str]) -> tuple[str, bool]:
+    """The text with each marker written; False when a marker had no value."""
+    complete = True
+
+    def write(found: re.Match[str]) -> str:
+        nonlocal complete
+        value = values.get(found.group(1))
+        if value is None:
+            complete = False
+            return ""
+        return value
+
+    return _MARKER.sub(write, text), complete
+
+
+def _render(template: str, values: Mapping[str, str]) -> tuple[str, bool]:
+    """A template with markers; a `[...]` part is dropped when one of its markers has no value."""
+    complete = True
+
+    def write(found: re.Match[str]) -> str:
+        nonlocal complete
+        if found.group("optional") is not None:
+            text, filled = _fill(found.group("optional"), values)
+            return text if filled else ""
+        text, filled = _fill(found.group(0), values)
+        complete = complete and filled
+        return text
+
+    return _PIECE.sub(write, template), complete
+
+
+def template_text(entry_spec: EntrySpec, activity: Activity) -> str:
+    """The deterministic text of an entry (REL-12): the `line`, or one `Label: value` line per
+    field whose markers all have a value. Nothing outside the fields of the activity is written."""
+    values = activity_fields(activity)
+    if entry_spec.line is not None:
+        return _render(entry_spec.line, values)[0].strip()
+    lines = []
+    for label, template in entry_spec.fields:
+        text, complete = _render(template, values)
+        if complete and text.strip():
+            lines.append(f"{label}: {text.strip()}")
+    return "\n".join(lines)
+
+
+def _new_entry(section: TemplateSection, activity: Activity) -> DraftEntry:
+    return DraftEntry(activity.id, template_text(section.entry, activity), EntrySource.MODELO)
 
 
 def propose_draft(
@@ -76,7 +183,7 @@ def propose_draft(
             key=section.key,
             title=section.title,
             entries=tuple(
-                _new_entry(a)
+                _new_entry(section, a)
                 for a in sorted(by_section[section.key], key=lambda a: _sort_key(section, a))
             ),
         )
