@@ -2166,10 +2166,10 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 **Done when**:
 
-- [ ] IA falsa devolve `status: VALIDADA` e `points: 1000` como chaves extras: resposta recusada (`RESPOSTA_INVALIDA`), documento `REQUER_REVISAO`, nenhuma atividade
-- [ ] IA falsa devolve o tipo certo mas o texto manda usar VIII.1: o item da atividade é o da regra do tipo, nunca VIII.1, com origem `SUGERIDA_IA` e status `AGUARDANDO_REVISAO`
-- [ ] A atividade criada pelo processamento completo (PostgreSQL real) fica `SUGERIDA_IA`/`AGUARDANDO_REVISAO` com pontuação validada zero
-- [ ] Gate full passa
+- [x] IA falsa devolve `status: VALIDADA` e `points: 1000` como chaves extras: resposta recusada (`RESPOSTA_INVALIDA`), documento `REQUER_REVISAO`, nenhuma atividade
+- [x] IA falsa devolve o tipo certo mas o texto manda usar VIII.1: o item da atividade é o da regra do tipo, nunca VIII.1, com origem `SUGERIDA_IA` e status `AGUARDANDO_REVISAO`
+- [x] A atividade criada pelo processamento completo (PostgreSQL real) fica `SUGERIDA_IA`/`AGUARDANDO_REVISAO` com pontuação validada zero
+- [x] Gate full passa
 
 **Tests**: unit + integration
 **Gate**: full
