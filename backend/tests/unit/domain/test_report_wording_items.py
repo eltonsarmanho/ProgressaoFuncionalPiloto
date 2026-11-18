@@ -50,6 +50,15 @@ def test_the_payload_has_the_fields_of_the_activity_and_nothing_else():
     assert set(payload) == ALL_KEYS
 
 
+def test_a_course_named_in_the_title_does_not_become_a_field_of_the_payload():
+    activity = full_activity(title="Orientação no curso de Computação")
+
+    payload = payload_of(activity, official_like_table())
+
+    assert set(payload) == ALL_KEYS
+    assert payload["titulo"] == "Orientação no curso de Computação"
+
+
 def test_the_payload_values_are_the_formatted_fields_and_the_criterion_type():
     activity = full_activity()
 

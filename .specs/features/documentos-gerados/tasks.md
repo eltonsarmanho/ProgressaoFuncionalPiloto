@@ -3260,9 +3260,9 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Uma palavra nova de 5 letras e uma de 6 letras contam no limite de palavras novas (G10b morto)
-- [ ] O conjunto de chaves de cada atividade enviada à IA é exatamente `id, tipo, titulo, datas, carga_horaria, quantidade, descricao`, com um título que nomeia um curso (W09b morto)
-- [ ] Gate quick passa; 2+ testes novos
+- [x] Uma palavra nova de 5 letras e uma de 6 letras contam no limite de palavras novas (G10b morto)
+- [x] O conjunto de chaves de cada atividade enviada à IA é exatamente `id, tipo, titulo, datas, carga_horaria, quantidade, descricao`, com um título que nomeia um curso (W09b morto)
+- [x] Gate quick passa; 4 testes novos
 
 **Tests**: unit
 **Gate**: quick

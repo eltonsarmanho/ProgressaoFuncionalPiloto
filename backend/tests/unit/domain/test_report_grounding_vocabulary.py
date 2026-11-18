@@ -107,6 +107,20 @@ def test_short_words_the_fields_the_template_text_and_the_formal_vocabulary_are_
     assert check(wording, vocab=vocabulary(max_new_words=0)).accepted is True
 
 
+@pytest.mark.parametrize(
+    ("word", "counts"),
+    [("aula", False), ("turma", True), ("debate", True)],
+    ids=["4-letters", "5-letters", "6-letters"],
+)
+def test_a_new_word_counts_from_five_letters(word, counts):
+    wording = f"Orientação de Maria Oliveira no curso de Computação, {word}."
+
+    result = check(wording, vocab=vocabulary(max_new_words=0))
+
+    assert result.accepted is not counts
+    assert result.reasons == ((WordingReason.VOCABULARIO,) if counts else ())
+
+
 def test_a_new_word_repeated_counts_once():
     wording = "Orientação de Maria Oliveira. Mentoria, mentoria e mentoria."
 
