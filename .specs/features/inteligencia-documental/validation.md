@@ -398,3 +398,33 @@ All 72 requirements are covered by at least one cited test. Proposed `spec.md` s
 **Issues found**: G1 and G2 (availability), G3 (masking residuals), then G4-G11 (low).
 
 **Next steps**: implement FT for G1, G2, G3 (small, local), add the G4/G6 tests, re-run this verification (iteration 2 of 3), then run `validate_state.py`.
+
+---
+
+## Resolution (implementer, after the FAIL at `76022d5`)
+
+Fixes are tasks T71..T81 (phase 12, requirements VER-01..VER-13), each one atomic commit after its own gate. Build gate at the last task: backend `ruff` clean and 2869 tests passed (3 `maritalk_live` deselected); frontend `eslint` clean, 166 tests passed, `vite build` OK, `scripts/check_bundle_no_secrets.sh` clean on the new `dist`. The verdict line above is left for the next Verifier pass; the table is evidence for it.
+
+| Gap | Task / commit | Proof (tests) | State |
+| --- | ------------- | ------------- | ----- |
+| G1 PDF page size | T71 `56d89dc`, T72 `0704e97` | `test_file_inspector.py::test_pdf_page_size_feeds_the_upload_rules` (3000x3000 pt and A0 refused `PAGINA_GRANDE`, A1 and A4 accepted), `test_upload.py::test_rejected_files_give_422_on_arquivo_and_are_not_stored`, `test_render.py::test_rendering_a_3000_by_3000_pt_page_stays_inside_a_memory_budget` (peak 250 MB against 650 MB without the cap), `test_document_text_extractor.py::test_a_page_too_large_to_render_is_an_empty_illegible_page_and_the_document_goes_on` | Fixed |
+| G2 unbounded job retries | T73 `428160f` | `test_job_attempts.py::test_a_job_that_always_crashes_ends_failed_after_the_attempt_limit`, `::test_recovering_again_never_requeues_the_exhausted_job`, `::test_exhaustion_is_audited_without_document_content`, `::test_a_manual_reprocess_starts_a_new_job_with_the_counter_at_zero`, `test_repositories.py::test_recover_stuck_skips_a_job_at_the_attempt_limit_and_exhaust_stuck_fails_it` | Fixed |
+| G3 masking leaks | T74 `091df08` | `test_masking.py`: spaced CPF, CPF split by a line break, landline with spaces, landline without area code after a phone label, `CI nnnnnnn`, unlabeled `nn.nnn.nnn-n`, and the false-positive control (dates, hours, process, page, memo `CI 45/2025`, ISSN, SIAPE) | Fixed, with two limits below |
+| G4 prompt-injection test | T76 `8312a36` | `test_document_analyzer_injection.py` (extra keys refused, item from the rule table, no points or status), `test_injection_flow.py` (activity stays `SUGERIDA_IA`/`AGUARDANDO_REVISAO`, item III.4) | Fixed |
+| G5 bulk validation atomicity | T77 `eda7a26` | `test_bulk_validate.py::test_a_stale_version_at_the_end_of_the_batch_validates_none`; 404 tests unchanged | Fixed; a `REJEITADA` activity in the selection is still validated without a warning (decision for the user) |
+| G6 sensor FT-6 and FT-7 (M111, M112, F04) | T71 `56d89dc`, T75 `ee8f944` | `test_documents_limits_wiring.py` (both mutants die), `UploadDropzone.test.tsx` 429 fallback text (F04 dies) | Fixed |
+| G7 bundle without secrets | T75 `ee8f944` | `frontend/tests/bundle.test.ts` runs `scripts/check_bundle_no_secrets.sh` over `dist` and over planted bundles; documented in `docs/deploy/vm.md` | Fixed |
+| G8 month-only dates | T78 `91e44cf` | `test_grounding.py` (`month_only_dates`), `test_document_analyzer_classification.py` (kept as `DATA_PARCIAL`, whole month inside or outside the interstice, month crossing the limit goes to review), `test_process_document.py` (activity with month precision) | Fixed; the weak check of small hour values ("2" next to "página 2") is not addressed |
+| G9 nginx 413 | T79 `afdda2a` | `client.test.ts` and `UploadDropzone.test.tsx` (VER-11) | Fixed |
+| G10, G11 info | not done | - | Open: PIPE-02 and ACC-02 wording, `--fake-ai` documentation, timeout in the lock test, server nginx limit outside the repo |
+| Requested beyond the report: quantity by table unit | T80 `5193e0a` | `test_quantity_rules_units.py` reads every unit from `ufpa.json`; analyzer tests for two distinct and one repeated extension project | Fixed, behavior changes below |
+| Requested beyond the report: abbreviated homonym | T81 `9a23c28` | `test_grounding.py` and `test_document_analyzer.py` homonym cases | Fixed |
+
+Changes of behavior the Verifier should know:
+
+- T80: IV.1 and IV.2 ("por ação" in the table) are one action each instead of complete years. The same table check moved V.1 (research project) and VI.10 and VI.12 (commissions), all "por ano de exercício", from quantity 1 to complete years inside the interstice (0 with `QUANTIDADE_ESTIMADA` without both dates). Existing lists in `test_quantity_rules.py` were moved to match (`PER_YEAR`, `ONE_UNIT`); no assertion was weakened. VIII.36 stays per year although its table label is "por unidade" (the description says "ano/revista"); II.12 ("por aluno/ano") stays one per activity.
+- T74: a landline without area code is masked only after a phone label ("fone", "tel", "contato" and similar), because a bare `2345-2350` is a page range or an ISSN. A CPF-shaped group of numbers with spaces (`100 200 300 40`) is masked too; shape alone cannot tell it from a spaced CPF.
+- T73: `DocAlertCode.TENTATIVAS_ESGOTADAS` and `DATA_PARCIAL` are new codes (the pinned set in `test_document.py` grew from 13 to 15); `RecoverStuckJobs` now takes the audit service, the clock and the limit.
+- T81: an abbreviated AI name is accepted only with the full professor name or the abbreviated form in the page text; the old test passed an empty page text and was changed to write the form in the text.
+
+Lessons recorded in `.specs/LESSONS.md`: L-014 (bound the rendered pixel size of vector files at upload), L-015 (a stored retry counter that is never read is not a limit), L-016 (test settings wiring from the environment to the limits in use).

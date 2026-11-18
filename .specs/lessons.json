@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 14,
+  "next_id": 17,
   "lessons": [
     {
       "id": "L-001",
@@ -239,6 +239,60 @@
       ],
       "created": "2026-11-17T14:54:33Z",
       "last_seen": "2026-11-17T14:54:33Z"
+    },
+    {
+      "id": "L-014",
+      "key": "ac_gap::bound the rendered pixel size of user supplied vector files at upload not only the megapixels of raster images",
+      "text": "Bound the rendered pixel size of user-supplied vector files at upload, not only the megapixels of raster images",
+      "signal": "ac_gap",
+      "scope": "upload-validation",
+      "status": "candidate",
+      "features": [
+        "inteligencia-documental"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DOC-04; validation.md G1; backend/app/infrastructure/files/inspector.py:45 (upload-validation)"
+      ],
+      "created": "2026-11-18T00:46:05Z",
+      "last_seen": "2026-11-18T00:46:05Z"
+    },
+    {
+      "id": "L-015",
+      "key": "ac_gap::a retry counter that is stored but never read is not a retry limit test that a job past the limit ends failed and is never requeued",
+      "text": "A retry counter that is stored but never read is not a retry limit: test that a job past the limit ends failed and is never requeued",
+      "signal": "ac_gap",
+      "scope": "worker",
+      "status": "candidate",
+      "features": [
+        "inteligencia-documental"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PIPE-03; validation.md G2; backend/app/infrastructure/database/repositories.py:1093 (worker)"
+      ],
+      "created": "2026-11-18T00:46:05Z",
+      "last_seen": "2026-11-18T00:46:05Z"
+    },
+    {
+      "id": "L-016",
+      "key": "surviving_mutant::test settings wiring from the environment to the limits in use not only the limits object with its defaults",
+      "text": "Test settings wiring from the environment to the limits in use, not only the limits object with its defaults",
+      "signal": "surviving_mutant",
+      "scope": "config-wiring",
+      "status": "candidate",
+      "features": [
+        "inteligencia-documental"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M111, M112; backend/app/presentation/dependencies.py:184 (config-wiring)"
+      ],
+      "created": "2026-11-18T00:46:05Z",
+      "last_seen": "2026-11-18T00:46:05Z"
     }
   ]
 }

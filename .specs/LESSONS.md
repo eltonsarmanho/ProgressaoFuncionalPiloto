@@ -92,6 +92,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: SEL-02 M32 backend/app/application/use_cases/scoring.py:114 (scoring)
 - last seen: 2026-11-17T14:54:33Z
 
+### L-014 - Bound the rendered pixel size of user-supplied vector files at upload, not only the megapixels of raster images
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `upload-validation` · harmful: 0
+- features: inteligencia-documental
+- evidence: DOC-04; validation.md G1; backend/app/infrastructure/files/inspector.py:45 (upload-validation)
+- last seen: 2026-11-18T00:46:05Z
+
+### L-015 - A retry counter that is stored but never read is not a retry limit: test that a job past the limit ends failed and is never requeued
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `worker` · harmful: 0
+- features: inteligencia-documental
+- evidence: PIPE-03; validation.md G2; backend/app/infrastructure/database/repositories.py:1093 (worker)
+- last seen: 2026-11-18T00:46:05Z
+
+### L-016 - Test settings wiring from the environment to the limits in use, not only the limits object with its defaults
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `config-wiring` · harmful: 0
+- features: inteligencia-documental
+- evidence: M111, M112; backend/app/presentation/dependencies.py:184 (config-wiring)
+- last seen: 2026-11-18T00:46:05Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
