@@ -2952,9 +2952,9 @@ T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T10
 
 **Done when**:
 
-- [ ] O prompt traz `term`, "trecho literal" e a proibição de calcular a data final
-- [ ] Mutantes M02, M03 e C01 da terceira verificação morrem (cópia de arquivo, comando no corpo do commit)
-- [ ] Gate full passa
+- [x] O prompt traz `term`, "trecho literal" e a proibição de calcular a data final
+- [x] Mutantes M02, M03 e C01 da terceira verificação morrem (cópia de arquivo, comando no corpo do commit)
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full
