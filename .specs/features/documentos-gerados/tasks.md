@@ -2045,9 +2045,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O pedido responde na hora sem chamar a MariTalk, com a tarefa `GERANDO`; segundo pedido da mesma seção com `GERANDO` responde 409 `REDACAO_EM_ANDAMENTO` e outra seção é aceita
-- [ ] Processo somente leitura responde 409 `PROCESSO_SOMENTE_LEITURA`; `ListWordingJobs` devolve a tarefa mais recente por seção
-- [ ] Gate full passa; 7+ testes
+- [x] O pedido responde na hora sem chamar a MariTalk, com a tarefa `GERANDO`; segundo pedido da mesma seção com `GERANDO` responde 409 `REDACAO_EM_ANDAMENTO` e outra seção é aceita
+- [x] Processo somente leitura responde 409 `PROCESSO_SOMENTE_LEITURA`; `ListWordingJobs` devolve a tarefa mais recente por seção
+- [x] Gate full passa; 7+ testes
 
 **Tests**: integration
 **Gate**: full

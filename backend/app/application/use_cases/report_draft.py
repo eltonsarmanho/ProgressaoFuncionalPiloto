@@ -5,6 +5,7 @@ Access follows the process (AccessPolicy): anything outside it is NotFound, neve
 events carry identifiers, states and codes only, never the text of an entry (AD-014).
 """
 
+import uuid
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, replace
 from uuid import UUID
@@ -12,16 +13,16 @@ from uuid import UUID
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
 from app.application.services.generation_inputs import GenerationInputs, load_generation_inputs
-from app.application.use_cases.generated_documents import _EditUseCase
+from app.application.use_cases.generated_documents import WORDING_ENTITY, _EditUseCase
 from app.application.use_cases.scoring import _ScoringUseCase
 from app.domain.entities.activity import Activity
 from app.domain.entities.audit import AuditAction
-from app.domain.entities.generated import GenerationAlert
+from app.domain.entities.generated import GenerationAlert, GenerationState, WordingJob
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.report import DraftEntry, DraftSection, EntrySource, ReportDraft
 from app.domain.entities.user import User
 from app.domain.errors import NotFound, ValidationFailed
-from app.domain.repositories.ports import ReportConfigProvider, UnitOfWork
+from app.domain.repositories.ports import Clock, ReportConfigProvider, UnitOfWork
 from app.domain.rules.report_draft import (
     STALE,
     STALE_MESSAGE,
@@ -269,3 +270,58 @@ class MoveReportEntry(_DraftEditUseCase):
             return move_entry(draft, activity_id, section_key, inputs.activities, config.template)
 
         return self._save(actor, process_id, expected_version, "MOVE", edit)
+
+
+class RequestSectionWording(_EditUseCase):
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        policy: AccessPolicy,
+        clock: Clock,
+        report_config: ReportConfigProvider,
+    ) -> None:
+        super().__init__(uow_factory, audit, policy)
+        self._clock = clock
+        self._report_config = report_config
+
+    def execute(self, actor: User, process_id: UUID, section_key: str) -> WordingJob:
+        """Stores a GERANDO job for the executor to pick up and answers at once, without calling
+        the AI (REL-03). A draft that is only a proposal is saved first (version 1); a second
+        request for a section that is GERANDO is a 409 `REDACAO_EM_ANDAMENTO`, raised by the
+        repository without a race (REL-13)."""
+        with self._uow_factory() as uow:
+            process = self._editable(uow, actor, process_id)
+            current = _current(uow, process, self._report_config)
+            if current.config.template.section(section_key) is None:
+                raise NotFound("Seção não encontrada")
+            if current.saved is None:
+                uow.report_drafts.create(current.draft, actor.id, 0)
+            job = WordingJob(
+                id=uuid.uuid4(),
+                process_id=process.id,
+                section_key=section_key,
+                state=GenerationState.GERANDO,
+                requested_by=actor.id,
+                requested_at=self._clock.now(),
+            )
+            uow.wording_jobs.add(job)
+            self._audit.record(
+                uow,
+                actor.id,
+                WORDING_ENTITY,
+                job.id,
+                AuditAction.CREATE,
+                {},
+                {"section": section_key, "state": job.state},
+            )
+            uow.commit()
+            return job
+
+
+class ListWordingJobs(_ScoringUseCase):
+    def execute(self, actor: User, process_id: UUID) -> Mapping[str, WordingJob]:
+        """The newest job of each section that has one, for the screen to poll (UIG-08)."""
+        with self._uow_factory() as uow:
+            self._readable(uow, actor, process_id)
+            return uow.wording_jobs.latest_by_section(process_id)
