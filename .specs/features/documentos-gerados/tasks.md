@@ -964,10 +964,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Prévia conta só os documentos ainda com arquivo e soma `size_bytes`; processo sem documentos dá zero arquivos e zero bytes
-- [ ] Resultado com um pendente traz `EXCLUSAO_PARCIAL` e o processo continua EM_ANDAMENTO; sem pendente, o status vira CONCLUIDO
-- [ ] Repetir o resultado de um processo já concluído devolve zeros e o mesmo status (idempotência)
-- [ ] Gate quick passa; 8+ testes
+- [x] Prévia conta só os documentos ainda com arquivo e soma `size_bytes`; processo sem documentos dá zero arquivos e zero bytes
+- [x] Resultado com um pendente traz `EXCLUSAO_PARCIAL` e o processo continua EM_ANDAMENTO; sem pendente, o status vira CONCLUIDO
+- [x] Repetir o resultado de um processo já concluído devolve zeros e o mesmo status (idempotência)
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
