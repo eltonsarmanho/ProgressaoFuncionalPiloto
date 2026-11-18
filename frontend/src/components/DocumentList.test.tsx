@@ -389,6 +389,26 @@ describe("FORA-02 / FORA-04 / FORA-08 / FORA-09: documento fora do interstício"
     expect(screen.queryByRole("button", { name: /Criar atividade|Classificar|Substituir/ })).not.toBeInTheDocument();
   });
 
+  it("FORA-04: Excluir e Visualizar continuam habilitados na linha fora do período e agem ao clicar", async () => {
+    const { onView, user } = setup([outside()]);
+    const excluir = screen.getByRole("button", { name: "Excluir antigo.pdf" });
+    const visualizar = screen.getByRole("button", { name: "Visualizar antigo.pdf" });
+    expect(excluir).toBeEnabled();
+    expect(visualizar).toBeEnabled();
+    await user.click(visualizar);
+    expect(onView).toHaveBeenCalledTimes(1);
+    expect(onView.mock.calls[0][0]).toMatchObject({ id: "o" });
+    await user.click(excluir);
+    expect(screen.getByRole("dialog", { name: "Excluir documento" })).toBeInTheDocument();
+  });
+
+  it("FORA-02: sem as datas na resposta a faixa mostra o texto do alerta, sem data inventada", () => {
+    setup([outside({ document_date: null, interstice_start: null, interstice_end: null })]);
+    const banner = screen.getByText("Documento fora do interstício: não será processado nas próximas etapas");
+    expect(banner.closest("tr")).toHaveClass("doc-outside-banner");
+    expect(screen.queryByText(/Data do documento/)).not.toBeInTheDocument();
+  });
+
   it("Reprocessar continua chamando a API e recarrega a lista", async () => {
     const { calls, onChanged, user } = setup([outside()], {
       "POST /api/documents/o/reprocess": { status: 202, body: outside({ status: "PENDENTE" }) },
