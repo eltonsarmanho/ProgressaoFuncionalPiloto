@@ -3092,9 +3092,9 @@ T107 → T108 → T109 → T110 → T111 → T112
 
 **Done when**:
 
-- [ ] Mutantes T02, T03, T04, T06 e S16 morrem (cópia de arquivo, comando no corpo do commit)
-- [ ] S11 registrado como equivalente
-- [ ] Gate full passa
+- [x] Mutantes T02, T03, T04, T06 e S16 morrem (cópia de arquivo, comando no corpo do commit)
+- [x] S11 registrado como equivalente
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full
