@@ -376,8 +376,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | DEL-13 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
 | DEL-14 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
 | DEL-15 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
-| ORD-01 | P2: Lembrete da ordem do dossiê | Tasks | In Tasks |
-| ORD-02 | P2: Lembrete da ordem do dossiê | Tasks | In Tasks |
+| ORD-01 | P2: Lembrete da ordem do dossiê | Tasks | Implementing |
+| ORD-02 | P2: Lembrete da ordem do dossiê | Tasks | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]` (e.g., `AUTH-01`, `CART-03`, `NOTIF-02`)
 

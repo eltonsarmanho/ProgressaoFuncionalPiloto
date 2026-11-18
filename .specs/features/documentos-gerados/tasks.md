@@ -1356,9 +1356,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] A ordem do arquivo é a ordem do dossiê e só `RELATORIO`, `TABELA` e `COMPROVANTE` têm `generated_by`
-- [ ] A posição da Tabela de Pontuação fica marcada no design como a confirmar pelo usuário
-- [ ] Gate quick passa; 3+ testes
+- [x] A ordem do arquivo é a ordem do dossiê e só `RELATORIO`, `TABELA` e `COMPROVANTE` têm `generated_by`
+- [x] A posição da Tabela de Pontuação fica marcada no design como a confirmar pelo usuário
+- [x] Gate quick passa; 3+ testes
 
 **Tests**: unit
 **Gate**: quick
