@@ -2524,8 +2524,8 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 **Done when**:
 
-- [ ] "Maria Souza" para "Maria Aparecida de Souza" com texto que só traz "Maria Souza": `DOCENTE_DIVERGENTE`; com o nome completo no texto: aceito
-- [ ] Gate full passa
+- [x] "Maria Souza" para "Maria Aparecida de Souza" com texto que só traz "Maria Souza": `DOCENTE_DIVERGENTE`; com o nome completo no texto: aceito
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

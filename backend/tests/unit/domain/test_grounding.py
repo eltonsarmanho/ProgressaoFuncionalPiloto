@@ -202,9 +202,12 @@ def test_professor_name_contained_in_the_extracted_name_is_the_same_person():
     assert same_person("Ana Ficticia Lima Souza", "Ana Ficticia Lima", "1234567", "") is True
 
 
-def test_extracted_name_contained_in_the_professor_name_needs_two_tokens():
-    assert same_person("Ana Lima", "Ana Maria Lima", "1234567", "") is True
-    assert same_person("Lima", "Ana Maria Lima", "1234567", "") is False
+def test_extracted_name_contained_in_the_professor_name_needs_two_tokens_and_the_full_name():
+    # SEG-08: the partial name is accepted only with the whole name in the text
+    full = "Ana Maria Lima assinou a ata."
+    assert same_person("Ana Lima", "Ana Maria Lima", "1234567", full) is True
+    assert same_person("Ana Lima", "Ana Maria Lima", "1234567", "") is False
+    assert same_person("Lima", "Ana Maria Lima", "1234567", full) is False
 
 
 def test_case_accents_and_token_order_do_not_matter():

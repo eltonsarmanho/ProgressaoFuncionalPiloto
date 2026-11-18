@@ -180,6 +180,7 @@ def _abbreviation_of(extracted_name: str, professor_name: str) -> bool:
 
     The last surname must be equal and every given-name token must be the full name or the
     initial of the professor's given name at the same position.
+    At least one token must be an initial; names written in full are a partial name.
     """
     professor = [w for w in _words(professor_name) if w not in _PARTICLES]
     if len(professor) < 2:
@@ -196,6 +197,8 @@ def _abbreviation_of(extracted_name: str, professor_name: str) -> bool:
         return False
     if surname[0] != professor[-1] or len(surname[0]) < MIN_TOKEN_LENGTH:
         return False
+    if not any(len(token) == 1 for token in given):
+        return False  # no initial: a partial name, not an abbreviation (SEG-08)
     return all(
         token == professor[i] or (len(token) == 1 and token == professor[i][0])
         for i, token in enumerate(given)
@@ -207,16 +210,20 @@ def same_person(
 ) -> bool:
     """True when the names match by tokens (3+ letters), by abbreviation or the SIAPE is in text.
 
-    An abbreviated name ("M. A. Souza") fits every person with those initials, so it counts only
-    when the professor's full name is also in the text or the abbreviated form itself is written
-    in the text (VER-13).
+    A partial name (two or more of the professor's names) counts only when the professor's
+    whole name is in the text (SEG-08); the SIAPE in the text decides by itself. An abbreviated
+    name ("M. A. Souza") fits every person with those initials, so it counts only when the
+    professor's full name is also in the text or the abbreviated form itself is written in the
+    text (VER-13).
     """
     if extracted_name:
         extracted, professor = _tokens(extracted_name), _tokens(professor_name)
         if professor and professor <= extracted:
             return True
         if len(extracted) >= 2 and extracted <= professor:
-            return True
+            # a partial name fits other people too: the whole name must be in the text (SEG-08)
+            if professor_named_in_text(professor_name, text):
+                return True
         if _abbreviation_of(extracted_name, professor_name) and (
             professor_named_in_text(professor_name, text)
             or _words_in_text(_words(extracted_name), text)
