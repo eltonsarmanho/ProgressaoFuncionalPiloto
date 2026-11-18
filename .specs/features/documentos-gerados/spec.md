@@ -353,13 +353,13 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VER-08 | P1: Versões imutáveis e download | Tasks | Implementing |
 | VER-09 | P1: Versões imutáveis e download | Tasks | Implementing |
 | UIG-01 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Implementing |
-| UIG-02 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
+| UIG-02 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Implementing |
 | UIG-03 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
 | UIG-04 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
 | UIG-05 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
 | UIG-06 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Implementing |
 | UIG-07 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
-| UIG-08 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
+| UIG-08 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Implementing |
 | UIG-09 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
 | DEL-01 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
 | DEL-02 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |

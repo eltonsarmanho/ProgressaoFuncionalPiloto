@@ -20,6 +20,7 @@ from app.presentation.api import (
     health,
     processes,
     professors,
+    report_draft,
     scoring,
     scoring_tables,
     scoring_tables_admin,
@@ -81,4 +82,5 @@ def create_app(
     app.include_router(documents.router)
     app.include_router(evidences.router)
     app.include_router(generated_documents.router)
+    app.include_router(report_draft.router)
     return app

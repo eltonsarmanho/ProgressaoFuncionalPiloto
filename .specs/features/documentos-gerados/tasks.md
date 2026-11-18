@@ -2417,9 +2417,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O pedido de redação responde 202 sem esperar a MariTalk; segundo pedido da seção, 409 `REDACAO_EM_ANDAMENTO`; a consulta devolve o estado de cada seção
-- [ ] `PUT` com versão desatualizada responde 409 e com mais de 20 000 caracteres, 422; fora do acesso, 404
-- [ ] Gate full passa; 9+ testes
+- [x] O pedido de redação responde 202 sem esperar a MariTalk; segundo pedido da seção, 409 `REDACAO_EM_ANDAMENTO`; a consulta devolve o estado de cada seção
+- [x] `PUT` com versão desatualizada responde 409 e com mais de 20 000 caracteres, 422; fora do acesso, 404
+- [x] Gate full passa; 9+ testes
 
 **Tests**: integration
 **Gate**: full
