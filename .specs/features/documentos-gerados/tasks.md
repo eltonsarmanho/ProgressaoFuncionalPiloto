@@ -830,9 +830,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Número inventado (`120 horas` quando o campo diz 60) e data inventada são reprovados com `NUMERO` e `DATA`
-- [ ] Formatos fiéis em variações (`60h`, `sessenta horas`, `1º semestre de 2023`, `23 de novembro de 2024`) são aceitos
-- [ ] Gate quick passa; 14+ testes
+- [x] Número inventado (`120 horas` quando o campo diz 60) e data inventada são reprovados com `NUMERO` e `DATA`
+- [x] Formatos fiéis em variações (`60h`, `sessenta horas`, `1º semestre de 2023`, `23 de novembro de 2024`) são aceitos
+- [x] Gate quick passa; 14+ testes
 
 **Tests**: unit
 **Gate**: quick
