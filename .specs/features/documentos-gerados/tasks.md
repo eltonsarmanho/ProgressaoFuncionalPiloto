@@ -2124,10 +2124,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Acrescentar, remover e reordenar páginas e atividades dentro do item é guardado e a geração usa a nova ordem; o vínculo atividade-página permanece
-- [ ] Documento ou página fora do processo responde 404; mover atividade de item é recusado; versão desatualizada responde 409 sem sobrescrever o arranjo mais novo
-- [ ] Processo somente leitura responde 409 `PROCESSO_SOMENTE_LEITURA`; auditoria só com contagens
-- [ ] Gate full passa; 9+ testes
+- [x] Acrescentar, remover e reordenar páginas e atividades dentro do item é guardado e a geração usa a nova ordem; o vínculo atividade-página permanece
+- [x] Documento ou página fora do processo responde 404; mover atividade de item é recusado; versão desatualizada responde 409 sem sobrescrever o arranjo mais novo
+- [x] Processo somente leitura responde 409 `PROCESSO_SOMENTE_LEITURA`; auditoria só com contagens
+- [x] Gate full passa; 9+ testes
 
 **Tests**: integration
 **Gate**: full

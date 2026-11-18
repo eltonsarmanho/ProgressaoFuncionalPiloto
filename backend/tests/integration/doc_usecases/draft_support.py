@@ -3,7 +3,7 @@
 import dataclasses
 
 from app.application.services.generation_inputs import load_generation_inputs
-from app.application.use_cases.comprovante_layout import GetComprovanteLayout
+from app.application.use_cases.comprovante_layout import GetComprovanteLayout, SaveComprovanteLayout
 from app.application.use_cases.report_draft import (
     GetReportDraft,
     ListWordingJobs,
@@ -73,6 +73,10 @@ class FakeReportWriter:
 
 def get_layout_uc(world) -> GetComprovanteLayout:
     return GetComprovanteLayout(world.uow_factory, world.audit, world.policy, TOC_CAPACITY)
+
+
+def save_layout_uc(world) -> SaveComprovanteLayout:
+    return SaveComprovanteLayout(world.uow_factory, world.audit, world.policy)
 
 
 def save_current_layout(world):
