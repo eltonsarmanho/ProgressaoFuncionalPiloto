@@ -2964,9 +2964,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Com um tipo sem versão `PRONTO` o botão fica desligado e o tipo faltante aparece; o texto traz `N arquivos, X MB serão excluídos de forma irreversível`
-- [ ] Só envia `confirmar: true` depois de marcar a confirmação; `EXCLUSAO_PARCIAL` mostra quantos faltam e permite repetir; sucesso mostra o processo concluído e some o botão de gerar o Comprovante
-- [ ] Gate quick passa; 8+ testes
+- [x] Com um tipo sem versão `PRONTO` o botão fica desligado e o tipo faltante aparece; o texto traz `N arquivos, X MB serão excluídos de forma irreversível`
+- [x] Só envia `confirmar: true` depois de marcar a confirmação; `EXCLUSAO_PARCIAL` mostra quantos faltam e permite repetir; sucesso mostra o processo concluído e some o botão de gerar o Comprovante
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
