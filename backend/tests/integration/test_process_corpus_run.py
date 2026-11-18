@@ -204,7 +204,12 @@ class NoItemAi:
     """Lists three different coorientation activities, none with a scoring item."""
 
     def extract(self, document_type: DocumentType, text: str, professor_name=None) -> AiExtraction:
-        titles = ("Estudo Ficticio sobre Dados Abertos", "Estudo Ficticio", "Dados Abertos")
+        # TER-07: titles inside one another would be collapsed into one activity
+        titles = (
+            "Estudo Ficticio sobre Dados Abertos",
+            "Analise de Redes",
+            "Modelos de Aprendizado",
+        )
         items = [activity(taxonomy="COORIENTACAO_TCC_GRADUACAO", title=t) for t in titles]
         answer = payload(*items, name=synth.FAKE_PROFESSOR)
         return AiExtraction(raw_json=answer, model="fake-model", duration_ms=1)

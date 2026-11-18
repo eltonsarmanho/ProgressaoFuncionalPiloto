@@ -2887,7 +2887,7 @@ T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T10
 
 ### T103: Atividades repetidas do mesmo documento com título de OCR
 
-**What**: `_collapse_repeated` reúne, no mesmo documento, as atividades de mesma página, tipo e nível, datas iguais ou ausentes e títulos de Jaccard 0,6 ou mais ou um contendo o outro, com `ATIVIDADE_REPETIDA`; datas, páginas e títulos distintos e a guarda de nome próprio mantêm as atividades separadas. Arquivos: `document_analyzer.py` e testes.
+**What**: `_collapse_repeated` reúne, no mesmo documento, as atividades de mesma página, tipo e nível, datas iguais ou ausentes e títulos de Jaccard 0,6 ou mais ou um contendo o outro, com `ATIVIDADE_REPETIDA`; datas, páginas e títulos distintos, a guarda de nome próprio e as linhas de disciplinas (ofertas distintas) mantêm as atividades separadas. Arquivos: `document_analyzer.py` e testes.
 **Where**: `backend/app/application/services/document_analyzer.py`
 **Depends on**: T102
 **Reuses**: `title_similarity`, `_same_activity`
@@ -2900,9 +2900,9 @@ T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T10
 
 **Done when**:
 
-- [ ] "RPA na Gestao W A | Academica" e "RPA na Gestao Academica" (Jaccard 0,67, mesma página, tipo e datas) viram uma atividade e um `ATIVIDADE_REPETIDA`
-- [ ] Título que contém o outro reúne; datas diferentes, páginas diferentes e dois membros de banca de nomes diferentes não reúnem
-- [ ] Gate full passa
+- [x] "RPA na Gestao W A | Academica" e "RPA na Gestao Academica" (Jaccard 0,67, mesma página, tipo e datas) viram uma atividade e um `ATIVIDADE_REPETIDA`
+- [x] Título que contém o outro reúne; datas diferentes, páginas diferentes e dois membros de banca de nomes diferentes não reúnem
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

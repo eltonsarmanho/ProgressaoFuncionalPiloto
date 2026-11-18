@@ -14,6 +14,7 @@ from difflib import SequenceMatcher
 from app.domain.rules.scoring_periods import normalize_title
 
 SIMILAR_TITLE_JACCARD = 0.8
+REPEATED_TITLE_JACCARD = 0.6  # noisy copies of one activity inside one document
 MIN_NAME_LENGTH = 3
 TYPO_RATIO = 0.8  # two words this alike are one word written twice (OCR), not two names
 _WORD = re.compile(r"[^\W\d_]+|\d+")
@@ -60,3 +61,20 @@ def differ_by_proper_name(one: str, two: str) -> bool:
 def similar_titles(one: str, two: str, threshold: float = SIMILAR_TITLE_JACCARD) -> bool:
     """Alike by the Jaccard of the words, and not different by a proper name."""
     return jaccard(one, two) >= threshold and not differ_by_proper_name(one, two)
+
+
+def repeated_titles(one: str, two: str) -> bool:
+    """Two titles of one document that are the same activity written twice (TER-07).
+
+    A Jaccard of 0.6 or more, or the words of one title inside the other (OCR noise adds words
+    and breaks them), and no proper name on each side.
+    """
+    words_one, words_two = title_words(one), title_words(two)
+    if not words_one or not words_two:
+        return False
+    close = (
+        jaccard(one, two) >= REPEATED_TITLE_JACCARD
+        or words_one <= words_two
+        or words_two <= words_one
+    )
+    return close and not differ_by_proper_name(one, two)

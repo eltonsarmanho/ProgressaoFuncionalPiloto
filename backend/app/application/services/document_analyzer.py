@@ -64,6 +64,7 @@ from app.domain.rules.suggestion_rules import (
 )
 from app.domain.rules.term_rules import add_months, parse_term_months
 from app.domain.rules.text_quality import ocr_needs_review
+from app.domain.rules.title_similarity import repeated_titles
 from app.domain.rules.upload_validation import FileKind
 
 MAX_EXCERPT_CHARS = 300
@@ -371,19 +372,26 @@ def _end_from_term(activity: ExtractedActivity, partial: dict[str, DatePrecision
 
 
 def _same_activity(one: ExtractedActivity, two: ExtractedActivity) -> bool:
-    """Same page, type, level and normalized title, with equal, overlapping or absent dates.
+    """Same page, type and level, and the same activity written twice.
 
-    Compared as the AI answered, before grounding, so a date the page does not carry still
-    tells two activities apart (REAL-07).
+    Equal normalized titles with equal, overlapping or absent dates are the same activity.
+    Alike titles (OCR noise: Jaccard 0.6 or more, or one inside the other, and no proper name
+    on each side) are the same only with equal or absent dates; courses are never merged this
+    way, their lines are distinct offers (TER-07). Compared as the AI answered, before
+    grounding, so a date the page does not carry still tells two activities apart (REAL-07).
     """
     if (one.page, one.taxonomy, one.level) != (two.page, two.taxonomy, two.level):
         return False
     title_one, title_two = normalize_title(one.title or ""), normalize_title(two.title or "")
+    span_one, span_two = _interval(one), _interval(two)
     if title_one != title_two:
-        return False
+        if one.taxonomy is TaxonomyCode.DISCIPLINA_MINISTRADA:
+            return False
+        if span_one is not None and span_two is not None and span_one != span_two:
+            return False
+        return repeated_titles(one.title or "", two.title or "")
     if not title_one and normalize_title(one.evidence_text) != normalize_title(two.evidence_text):
         return False
-    span_one, span_two = _interval(one), _interval(two)
     if span_one is None or span_two is None:
         return True
     return span_one[0] <= span_two[1] and span_two[0] <= span_one[1]

@@ -281,7 +281,7 @@ def test_different_dates_that_do_not_overlap_stay_separate():
 
 
 def test_different_titles_items_or_pages_stay_separate():
-    other_title = activity(title="Estudo Ficticio")
+    other_title = activity(title="Analise de Redes Sociais")  # TER-07: "Estudo Ficticio" is inside
     other_item = activity(taxonomy="BANCA_MESTRADO")
     result, _ = analyze(payload(activity(), other_title, other_item))
     assert len(result.activities) == 3
