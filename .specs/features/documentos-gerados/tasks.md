@@ -1151,9 +1151,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] `expected_version` desatualizada levanta `StaleVersion`; a primeira gravação exige `expected_version = 0`; segundo create do mesmo processo levanta conflito
-- [ ] `apply_wording_locked` troca só entradas que continuam sem fonte `USUARIO` e não muda `version`
-- [ ] Gate full passa; 8+ testes
+- [x] `expected_version` desatualizada levanta `StaleVersion`; a primeira gravação exige `expected_version = 0`; segundo create do mesmo processo levanta conflito
+- [x] `apply_wording_locked` troca só entradas que continuam sem fonte `USUARIO` e não muda `version`
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full

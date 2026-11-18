@@ -1,8 +1,8 @@
 """SQLAlchemy implementations of the domain ports (AD-001)."""
 
 import uuid
-from collections.abc import Sequence
-from dataclasses import asdict
+from collections.abc import Callable, Sequence
+from dataclasses import asdict, replace
 from datetime import date, datetime
 from types import TracebackType
 from typing import Any, Self
@@ -35,6 +35,7 @@ from app.domain.entities.generated import (
 )
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor
+from app.domain.entities.report import DraftEntry, DraftSection, EntrySource, ReportDraft
 from app.domain.entities.scoring import (
     ScoringCriterion,
     ScoringGroup,
@@ -69,6 +70,7 @@ from app.infrastructure.database.models import (
     LoginAttemptModel,
     ProcessingJobModel,
     ProfessorModel,
+    ReportDraftModel,
     ReportWordingJobModel,
     ScoringCriterionModel,
     ScoringGroupModel,
@@ -1620,6 +1622,213 @@ class SqlWordingJobRepository:
         for m in models:
             newest.setdefault(m.section_key, m)
         return {key: self._to_entity(m) for key, m in newest.items()}
+
+
+def _draft_to_content(sections: Sequence[DraftSection]) -> dict[str, Any]:
+    return {
+        "sections": [
+            {
+                "key": section.key,
+                "title": section.title,
+                "free_text": section.free_text,
+                "warnings": _alerts_to_json(section.warnings, "reason"),
+                "entries": [
+                    {
+                        "activity_id": str(entry.activity_id),
+                        "text": entry.text,
+                        "source": entry.source.value,
+                        "warnings": _alerts_to_json(entry.warnings, "reason"),
+                    }
+                    for entry in section.entries
+                ],
+            }
+            for section in sections
+        ]
+    }
+
+
+def _draft_sections(content: dict[str, Any]) -> tuple[DraftSection, ...]:
+    return tuple(
+        DraftSection(
+            key=section["key"],
+            title=section["title"],
+            free_text=section["free_text"],
+            warnings=_alerts_from_json(section["warnings"], "reason"),
+            entries=tuple(
+                DraftEntry(
+                    activity_id=UUID(entry["activity_id"]),
+                    text=entry["text"],
+                    source=EntrySource(entry["source"]),
+                    warnings=_alerts_from_json(entry["warnings"], "reason"),
+                )
+                for entry in section["entries"]
+            ),
+        )
+        for section in content["sections"]
+    )
+
+
+class SqlReportDraftRepository:
+    """The saved report draft: one row per process, the sections in a JSONB column."""
+
+    def __init__(self, session: Session):
+        self._s = session
+
+    @staticmethod
+    def _to_entity(m: ReportDraftModel) -> ReportDraft:
+        return ReportDraft(
+            process_id=m.process_id,
+            template_id=m.template_id,
+            template_version=m.template_version,
+            sections=_draft_sections(m.content),
+            version=m.version,
+        )
+
+    def get(self, process_id: UUID) -> ReportDraft | None:
+        m = self._s.scalars(
+            select(ReportDraftModel)
+            .where(ReportDraftModel.process_id == process_id)
+            .execution_options(populate_existing=True)
+        ).first()
+        return self._to_entity(m) if m else None
+
+    def create(self, draft: ReportDraft, user_id: UUID, expected_version: int) -> ReportDraft:
+        if expected_version != 0:
+            raise StaleVersion("O rascunho ainda não foi salvo; recarregue")
+        try:
+            with self._s.begin_nested():
+                self._s.execute(
+                    insert(ReportDraftModel).values(
+                        id=uuid.uuid4(),
+                        process_id=draft.process_id,
+                        template_id=draft.template_id,
+                        template_version=draft.template_version,
+                        content=_draft_to_content(draft.sections),
+                        version=1,
+                        created_by=user_id,
+                        updated_by=user_id,
+                    )
+                )
+        except IntegrityError as exc:
+            if _is_unique_violation(exc):
+                raise Conflict("O processo já tem um rascunho do Relatório salvo") from None
+            raise
+        return replace(draft, version=1)
+
+    def _lock(self, process_id: UUID) -> ReportDraftModel:
+        """The row of the process, locked until the end of the transaction, with fresh values.
+
+        Every change takes the lock before it reads the content: the wording does not move the
+        version, so only the lock keeps an edit from writing over it.
+        """
+        m = self._s.scalars(
+            select(ReportDraftModel)
+            .where(ReportDraftModel.process_id == process_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        ).first()
+        if m is None:
+            raise NotFound("Rascunho não encontrado")
+        return m
+
+    def _edit(
+        self,
+        process_id: UUID,
+        expected_version: int,
+        user_id: UUID,
+        change: Callable[[tuple[DraftSection, ...]], tuple[DraftSection, ...]],
+    ) -> ReportDraft:
+        m = self._lock(process_id)
+        if m.version != expected_version:
+            raise StaleVersion("O rascunho foi alterado por outro usuário; recarregue")
+        sections = change(_draft_sections(m.content))
+        m.content = _draft_to_content(sections)
+        m.version += 1
+        m.updated_by = user_id
+        m.updated_at = func.now()
+        self._s.flush()
+        return self._to_entity(m)
+
+    def update_entry(
+        self, process_id: UUID, expected_version: int, entry: DraftEntry, user_id: UUID
+    ) -> ReportDraft:
+        def change(sections: tuple[DraftSection, ...]) -> tuple[DraftSection, ...]:
+            if all(e.activity_id != entry.activity_id for s in sections for e in s.entries):
+                raise NotFound("Atividade não encontrada no rascunho")
+            return tuple(
+                replace(
+                    s,
+                    entries=tuple(
+                        entry if e.activity_id == entry.activity_id else e for e in s.entries
+                    ),
+                )
+                for s in sections
+            )
+
+        return self._edit(process_id, expected_version, user_id, change)
+
+    def update_section(
+        self,
+        process_id: UUID,
+        expected_version: int,
+        section_key: str,
+        free_text: str,
+        user_id: UUID,
+    ) -> ReportDraft:
+        def change(sections: tuple[DraftSection, ...]) -> tuple[DraftSection, ...]:
+            if all(s.key != section_key for s in sections):
+                raise NotFound("Seção não encontrada")
+            return tuple(
+                replace(s, free_text=free_text) if s.key == section_key else s for s in sections
+            )
+
+        return self._edit(process_id, expected_version, user_id, change)
+
+    def move_entry(
+        self,
+        process_id: UUID,
+        expected_version: int,
+        section_key: str,
+        entry: DraftEntry,
+        user_id: UUID,
+    ) -> ReportDraft:
+        def change(sections: tuple[DraftSection, ...]) -> tuple[DraftSection, ...]:
+            if all(s.key != section_key for s in sections):
+                raise NotFound("Seção não encontrada")
+            if all(e.activity_id != entry.activity_id for s in sections for e in s.entries):
+                raise NotFound("Atividade não encontrada no rascunho")
+            return tuple(
+                replace(
+                    s,
+                    entries=(
+                        *(e for e in s.entries if e.activity_id != entry.activity_id),
+                        *((entry,) if s.key == section_key else ()),
+                    ),
+                )
+                for s in sections
+            )
+
+        return self._edit(process_id, expected_version, user_id, change)
+
+    def apply_wording_locked(self, process_id: UUID, section: DraftSection) -> ReportDraft:
+        m = self._lock(process_id)
+        sections = _draft_sections(m.content)
+        if all(s.key != section.key for s in sections):
+            raise NotFound("Seção não encontrada")
+        worded = {e.activity_id: e for e in section.entries}
+
+        def apply(current: DraftSection) -> DraftSection:
+            if current.key != section.key:
+                return current
+            entries = tuple(
+                worded.get(e.activity_id, e) if e.source is not EntrySource.USUARIO else e
+                for e in current.entries
+            )
+            return replace(current, entries=entries, warnings=section.warnings)
+
+        m.content = _draft_to_content(tuple(apply(s) for s in sections))
+        self._s.flush()
+        return self._to_entity(m)
 
 
 class SqlUnitOfWork:
