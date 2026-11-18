@@ -228,6 +228,59 @@ def test_put_with_justification_updates_and_bumps_version(client, headers, chose
     assert (response.json()["quantidade"], response.json()["version"]) == ("5.00", 2)
 
 
+def test_unit_points_override_round_trips_scores_and_clears_through_the_api(
+    client, headers, chosen
+):
+    created = create(client, headers, chosen, group_number=2, item_number=7, quantidade=3)
+    url = f"/api/activities/{created['id']}"
+    scoring_url = f"/api/processes/{chosen['id']}/scoring"
+
+    typed = client.put(
+        url,
+        json=body(group_number=2, item_number=7, quantidade=3, unit_points_override=2.5,
+                  expected_version=1),
+        headers=headers,
+    )  # fmt: skip
+    row = client.get(scoring_url).json()["rows"][0]
+
+    assert typed.status_code == 200
+    assert typed.json()["unit_points_override"] == "2.50"
+    assert (row["points"], row["unit_points"]) == ("7.50", "2.50")
+    assert [a["code"] for a in row["alerts"]].count("VALOR_UNITARIO_MANUAL") == 1
+
+    again = client.put(
+        url,
+        json=body(group_number=2, item_number=7, quantidade=4, unit_points_override=2.5,
+                  expected_version=2),
+        headers=headers,
+    )  # fmt: skip
+    assert client.get(scoring_url).json()["rows"][0]["points"] == "10.00"
+
+    cleared = client.put(
+        url,
+        json=body(group_number=2, item_number=7, quantidade=4, unit_points_override=None,
+                  expected_version=3),
+        headers=headers,
+    )  # fmt: skip
+    assert again.status_code == 200 and cleared.status_code == 200
+    assert cleared.json()["unit_points_override"] is None
+    assert client.get(scoring_url).json()["rows"][0]["points"] == "20.00"
+
+
+def test_unit_points_override_on_a_weekly_load_item_is_422_on_its_field(
+    client, headers, points_chosen
+):
+    payload = body(
+        unit_points_override=2, group_number=1, academic_period="2023.1", level="GRADUACAO",
+        horas=68,
+    )  # fmt: skip
+
+    field_error(
+        client.post(activities_url(points_chosen), json=payload, headers=headers),
+        "unit_points_override",
+    )
+
+
 def test_put_changing_scoring_inputs_without_justification_is_saved(client, headers, chosen):
     """UIM-16: changing the quantity needs no justification."""
     created = create(client, headers, chosen, group_number=2, item_number=7, quantidade=4)

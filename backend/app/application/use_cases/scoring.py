@@ -216,6 +216,7 @@ class ActivityData:
     course_hours: Decimal | None = None
     informed_points: Decimal | None = None
     points_override: Decimal | None = None
+    unit_points_override: Decimal | None = None
     evidence_note: str | None = None
     candidates: tuple[Candidate, ...] = ()
 
@@ -255,6 +256,7 @@ def _validate_basics(data: ActivityData) -> None:
     _range("course_hours", "CH da disciplina", data.course_hours)
     _range("informed_points", "Pontos informados", data.informed_points)
     _range("points_override", "Pontos informados", data.points_override)
+    _range("unit_points_override", "Valor unitário", data.unit_points_override)
     if data.period_start and data.period_end and data.period_end < data.period_start:
         raise ValidationFailed("period_end", "Fim do período anterior ao início")
 
@@ -302,6 +304,14 @@ def _check_criterion_inputs(data: ActivityData, version: ScoringTableVersion | N
         raise ValidationFailed(
             "points_override",
             "No Grupo I, as horas de PIT são calculadas da carga horária; não há pontos a informar",
+        )
+    if data.unit_points_override is not None and (
+        criterion is None
+        or criterion.mode not in (ScoringMode.POR_UNIDADE, ScoringMode.POR_BLOCO_DE_HORAS)
+    ):
+        raise ValidationFailed(
+            "unit_points_override",
+            "O valor unitário manual só se aplica a itens por unidade ou por bloco de horas",
         )
     if data.points_override is not None and (
         criterion is None or criterion.mode is not ScoringMode.CARGA_SEMANAL

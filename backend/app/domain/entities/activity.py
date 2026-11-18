@@ -58,6 +58,7 @@ class Activity:
     course_hours: Decimal | None = None
     informed_points: Decimal | None = None
     points_override: Decimal | None = None
+    unit_points_override: Decimal | None = None  # unit value typed by hand (UIM-21)
     evidence_note: str | None = None
     source: ActivitySource = ActivitySource.MANUAL
     status: ActivityStatus = ActivityStatus.VALIDADA

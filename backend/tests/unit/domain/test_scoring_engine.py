@@ -1,5 +1,6 @@
 """CALC-01, CALC-07..CALC-14 and VERIF-08: the deterministic scoring engine."""
 
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from itertools import count
@@ -348,6 +349,80 @@ def test_manual_points_on_weekly_load_raise_pontos_ajustados_manualmente():
 
     assert row_of(result, a).points == D("24")
     assert ScoringAlertCode.PONTOS_AJUSTADOS_MANUALMENTE in codes(result, a)
+
+
+# --- unit value typed by hand (UIM-21) ----------------------------------------------------
+
+
+def test_unit_points_override_replaces_the_table_value_per_unit():
+    a = act(quantity="3", unit_points_override=D("2.5"))
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    row = row_of(result, a)
+    assert row.points == D("7.5")
+    assert row.unit_points == D("2.5")
+    assert row.effective_quantity == D("3")
+    assert ScoringAlertCode.VALOR_UNITARIO_MANUAL in codes(result, a)
+    assert result.total == D("7.5")
+
+
+def test_unit_points_override_survives_a_quantity_change():
+    three = act(quantity="3", unit_points_override=D("2.5"))
+    four = replace(three, quantity=D("4"))
+
+    assert row_of(calculate(BASIC, [four], INTERSTICE), four).points == D("10")
+
+
+def test_unit_points_override_still_meets_the_criterion_cap():
+    version = table(group(3, per_unit(3, 1, "6", max_points="10")))
+    a = act(g=3, item=1, unit_points_override=D("8"))
+    b = act(g=3, item=1, unit_points_override=D("8"))
+
+    result = calculate(version, [a, b], INTERSTICE)
+
+    assert result.group_subtotals[3] == D("10")
+    assert (result.limit_adjustments[0].before, result.limit_adjustments[0].after) == (
+        D("16"),
+        D("10"),
+    )
+
+
+def test_unit_points_override_per_block_multiplies_the_blocks():
+    version = _fasi_miniature()
+    a = act(g=4, item=4, hours=D("10"), unit_points_override=D("2"))
+
+    row = row_of(calculate(version, [a], INTERSTICE), a)
+
+    assert row.points == D("6")  # floor(10 / 3) = 3 blocks x 2
+    assert row.unit_points == D("2")
+
+
+def test_without_the_override_the_table_value_and_no_manual_alert():
+    a = act(quantity="3")
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert row_of(result, a).points == D("30")
+    assert row_of(result, a).unit_points == D("10")
+    assert ScoringAlertCode.VALOR_UNITARIO_MANUAL not in codes(result, a)
+
+
+def test_unit_points_override_is_ignored_where_there_is_no_unit_value():
+    weekly = ScoringCriterion(
+        1, 1, "Aulas", "h", ScoringMode.CARGA_SEMANAL, weeks_per_semester=17, prep_ratio=D("1")
+    )
+    informed = ScoringCriterion(1, 3, "Avaliação", "pt", ScoringMode.VALOR_INFORMADO)
+    version = table(group(1, weekly, informed))
+    a = act(g=1, item=1, hours=D("68"), level=Level.GRADUACAO, unit_points_override=D("99"))
+    b = act(g=1, item=3, informed_points=D("8"), unit_points_override=D("99"))
+
+    result = calculate(version, [a, b], INTERSTICE)
+
+    assert row_of(result, a).points == D("8")  # 68 x 2 / 17
+    assert row_of(result, b).points == D("8")
+    assert ScoringAlertCode.VALOR_UNITARIO_MANUAL not in codes(result, a)
+    assert ScoringAlertCode.VALOR_UNITARIO_MANUAL not in codes(result, b)
 
 
 def test_row_alerts_carry_severity_message_and_norm_reference():

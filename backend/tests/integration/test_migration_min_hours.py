@@ -68,10 +68,10 @@ def test_min_hours_stores_a_value_and_null(engine):
     assert rows[without] is None
 
 
-def test_downgrade_one_revision_drops_the_column_and_upgrade_restores_it(migrated_url):
+def test_downgrade_below_0004_drops_the_column_and_upgrade_restores_it(migrated_url):
     cfg = alembic_config(migrated_url)
     try:
-        command.downgrade(cfg, "-1")
+        command.downgrade(cfg, "0003")  # below 0004, whichever revision is the head
         assert _column(migrated_url) is None
     finally:
         command.upgrade(cfg, "head")

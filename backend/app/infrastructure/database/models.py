@@ -298,6 +298,7 @@ class ActivityModel(Base):
     course_hours: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
     informed_points: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
     points_override: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
+    unit_points_override: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
     evidence_note: Mapped[str | None] = mapped_column(String(500))
     source: Mapped[ActivitySource] = mapped_column(_enum(ActivitySource, "activity_source"))
     status: Mapped[ActivityStatus] = mapped_column(_enum(ActivityStatus, "activity_status"))

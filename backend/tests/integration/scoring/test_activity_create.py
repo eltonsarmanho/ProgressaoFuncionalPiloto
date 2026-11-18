@@ -235,6 +235,57 @@ def test_points_override_only_for_weekly_load_criteria_and_without_needing_a_jus
     assert per_unit.value.field == "points_override"
 
 
+def test_unit_points_override_is_saved_audited_and_scored_by_the_engine(official_chosen):
+    """UIM-21: the typed unit value feeds the deterministic engine; no justification."""
+    world = official_chosen
+
+    activity = create(
+        world, group_number=2, item_number=7, quantity=D("3"), unit_points_override=D("2.5")
+    )
+
+    assert activity.unit_points_override == D("2.5")
+    with world.uow_factory() as uow:
+        [event] = uow.audit.list_for("activity", str(activity.id))
+        stored = uow.activities.get(activity.id)
+    assert event.justification is None
+    assert event.changes["unit_points_override"] == {"before": None, "after": "2.5"}
+    version = world.official_version
+    assert calculate(version, [stored], INTERSTICE).rows[0].points == D("7.5")
+
+
+@pytest.mark.parametrize(
+    "kw",
+    [
+        {"group_number": 2, "item_number": 7, "unit_points_override": D("-1")},
+        {"group_number": 2, "item_number": 7, "unit_points_override": D("10001")},
+        {"unit_points_override": D("2")},  # no item chosen
+        {"group_number": 2, "item_number": 99, "unit_points_override": D("2")},  # not in the table
+    ],
+)
+def test_unit_points_override_out_of_range_or_without_a_per_unit_item_is_422(official_chosen, kw):
+    assert field_of_failure(official_chosen, **kw) == "unit_points_override"
+
+
+def test_unit_points_override_is_refused_for_weekly_load_and_informed_value_items(points_chosen):
+    world = points_chosen
+    weekly = {
+        "group_number": 1,
+        "academic_period": "2023.1",
+        "level": Level.GRADUACAO,
+        "hours": D("68"),
+        "unit_points_override": D("2"),
+    }
+    informed = {
+        "group_number": 1,
+        "item_number": 3,
+        "informed_points": D("8"),
+        "unit_points_override": D("2"),
+    }
+
+    assert field_of_failure(world, **weekly) == "unit_points_override"
+    assert field_of_failure(world, **informed) == "unit_points_override"
+
+
 def test_points_override_needs_a_chosen_table(world):
     with pytest.raises(ValidationFailed) as error:
         world.create.execute(

@@ -117,6 +117,11 @@ def _limit_alert(label: str, before: Decimal, after: Decimal, version) -> Alert:
     return _row_alert(ScoringAlertCode.LIMITE_APLICADO, message, version)
 
 
+def _row_unit_points(criterion: ScoringCriterion, result) -> Decimal | None:
+    """The unit value shown in the row: the typed one when it was used (UIM-21)."""
+    return result.unit_points if result.unit_overridden else criterion.unit_points
+
+
 def has_evidence(activity: Activity, evidence_count: int) -> bool:
     """A linked document or a non-empty evidence note proves the activity (VINC-04)."""
     return evidence_count > 0 or bool((activity.evidence_note or "").strip())
@@ -216,6 +221,9 @@ def _evaluate(
     if not has_evidence(activity, evidence_count):
         message = "A atividade não tem documento vinculado nem nota de comprovante."
         alerts.append(_row_alert(ScoringAlertCode.SEM_COMPROVANTE, message, version))
+    if result.unit_overridden:
+        message = "Valor unitário informado manualmente substitui o valor da tabela."
+        alerts.append(_row_alert(ScoringAlertCode.VALOR_UNITARIO_MANUAL, message, version))
     if result.overridden:
         message = "Pontos informados manualmente substituem o cálculo da carga semanal."
         alerts.append(_row_alert(ScoringAlertCode.PONTOS_AJUSTADOS_MANUALMENTE, message, version))
@@ -243,7 +251,7 @@ def _evaluate(
             activity_id=activity.id,
             group_number=activity.group_number,
             item_number=activity.item_number,
-            unit_points=criterion.unit_points,
+            unit_points=_row_unit_points(criterion, result),
             effective_quantity=result.effective_quantity,
             formula_text=result.formula_text,
             points=ZERO,
@@ -256,7 +264,7 @@ def _evaluate(
         activity_id=activity.id,
         group_number=activity.group_number,
         item_number=activity.item_number,
-        unit_points=criterion.unit_points,
+        unit_points=_row_unit_points(criterion, result),
         effective_quantity=result.effective_quantity,
         formula_text=result.formula_text,
         points=result.points,

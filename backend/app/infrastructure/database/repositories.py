@@ -736,6 +736,7 @@ _ACTIVITY_FIELDS = (
     "course_hours",
     "informed_points",
     "points_override",
+    "unit_points_override",
     "evidence_note",
     "source",
     "status",

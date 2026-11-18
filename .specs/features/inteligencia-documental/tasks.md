@@ -3458,12 +3458,12 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Por unidade, quantidade 3 e valor unitário digitado 2,5 dão 7,5 pelo motor, e a linha traz o valor unitário digitado e o alerta `VALOR_UNITARIO_MANUAL`; por bloco de horas, blocos × valor digitado
-- [ ] O limite do critério (teto do item e do grupo) continua valendo sobre o valor digitado
-- [ ] Mudar a quantidade depois mantém o valor digitado; enviar o campo vazio volta ao valor da tabela e some o alerta
-- [ ] Carga semanal, valor informado, PIT e valor negativo ou acima de 10000 dão 422 em `unit_points_override`; sem justificativa em todos os casos
-- [ ] A auditoria da atividade registra o valor anterior e o novo, e a migração cria a coluna e desfaz
-- [ ] Gate full passa
+- [x] Por unidade, quantidade 3 e valor unitário digitado 2,5 dão 7,5 pelo motor, e a linha traz o valor unitário digitado e o alerta `VALOR_UNITARIO_MANUAL`; por bloco de horas, blocos × valor digitado
+- [x] O limite do critério (teto do item e do grupo) continua valendo sobre o valor digitado
+- [x] Mudar a quantidade depois mantém o valor digitado; enviar o campo vazio volta ao valor da tabela e some o alerta
+- [x] Carga semanal, valor informado, PIT e valor negativo ou acima de 10000 dão 422 em `unit_points_override`; sem justificativa em todos os casos
+- [x] A auditoria da atividade registra o valor anterior e o novo, e a migração cria a coluna e desfaz
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

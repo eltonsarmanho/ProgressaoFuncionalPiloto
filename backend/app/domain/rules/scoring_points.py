@@ -20,27 +20,42 @@ class ActivityPoints:
     formula_text: str
     overridden: bool = False  # points_override replaced the calculation
     limited_from: Decimal | None = None  # points before the criterion cap (VALOR_INFORMADO)
+    unit_points: Decimal | None = None  # the unit value used (the table's or the typed one)
+    unit_overridden: bool = False  # unit_points_override replaced the table's unit value
 
 
 def _fmt(value: Decimal) -> str:
     return format(value.normalize(), "f")
 
 
+def _unit_value(criterion: ScoringCriterion, activity: Activity) -> tuple[Decimal, bool]:
+    """The unit value of a per-unit or per-block criterion: the typed one wins (UIM-21)."""
+    if activity.unit_points_override is not None:
+        return activity.unit_points_override, True
+    return criterion.unit_points or ZERO, False
+
+
 def _per_unit(criterion: ScoringCriterion, activity: Activity) -> ActivityPoints:
     quantity = Decimal(1) if activity.quantity is None else activity.quantity
-    unit = criterion.unit_points or ZERO
-    return ActivityPoints(quantity * unit, quantity, f"{_fmt(quantity)} × {_fmt(unit)}")
+    unit, typed = _unit_value(criterion, activity)
+    return ActivityPoints(
+        quantity * unit,
+        quantity,
+        f"{_fmt(quantity)} × {_fmt(unit)}",
+        unit_points=unit,
+        unit_overridden=typed,
+    )
 
 
 def _per_block(criterion: ScoringCriterion, activity: Activity) -> ActivityPoints:
     hours = activity.hours or ZERO
-    unit = criterion.unit_points or ZERO
+    unit, typed = _unit_value(criterion, activity)
     size = criterion.hours_per_block
     if not size:
         return ActivityPoints(ZERO, ZERO, "bloco de horas não definido")
     blocks = (hours / size).to_integral_value(rounding=ROUND_FLOOR)
     text = f"{_fmt(hours)} h ÷ {_fmt(size)} h = {_fmt(blocks)} blocos × {_fmt(unit)}"
-    return ActivityPoints(blocks * unit, blocks, text)
+    return ActivityPoints(blocks * unit, blocks, text, unit_points=unit, unit_overridden=typed)
 
 
 def _weekly_load(criterion: ScoringCriterion, activity: Activity) -> ActivityPoints:

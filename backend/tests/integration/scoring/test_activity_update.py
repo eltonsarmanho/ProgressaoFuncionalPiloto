@@ -107,6 +107,59 @@ def test_points_override_change_needs_no_justification(points_chosen):
     assert event.justification is None
 
 
+def test_unit_points_override_survives_a_quantity_change_and_clears_when_empty(world, activity):
+    """UIM-21: the typed unit value stays after other edits; None goes back to the table."""
+    typed = world.update.execute(
+        world.admin,
+        activity.id,
+        as_data(activity, unit_points_override=D("2.5")),
+        activity.version,
+        None,
+    )
+    assert typed.unit_points_override == D("2.5")
+    event = events(world, activity)[-1]
+    assert event.changes == {"unit_points_override": {"before": None, "after": "2.5"}}
+    assert event.justification is None
+
+    more = world.update.execute(
+        world.admin, activity.id, as_data(typed, quantity=D("6")), typed.version, None
+    )
+    assert (more.quantity, more.unit_points_override) == (D("6"), D("2.5"))
+    assert calculate(world.official_version, [more], INTERSTICE).rows[0].points == D("15")
+
+    cleared = world.update.execute(
+        world.admin, activity.id, as_data(more, unit_points_override=None), more.version, None
+    )
+    assert cleared.unit_points_override is None
+    assert events(world, activity)[-1].changes == {
+        "unit_points_override": {"before": "2.5", "after": None}
+    }
+    assert calculate(world.official_version, [cleared], INTERSTICE).rows[0].points == D("30")
+
+
+def test_unit_points_override_is_refused_when_the_item_changes_to_one_without_unit_value(
+    world, activity
+):
+    typed = world.update.execute(
+        world.admin,
+        activity.id,
+        as_data(activity, unit_points_override=D("2.5")),
+        activity.version,
+        None,
+    )
+
+    with pytest.raises(ValidationFailed) as error:
+        world.update.execute(
+            world.admin,
+            activity.id,
+            as_data(typed, group_number=None, item_number=None),
+            typed.version,
+            None,
+        )
+
+    assert error.value.field == "unit_points_override"
+
+
 def test_justified_change_is_saved_and_audited_with_before_and_after(world, activity):
     updated = world.update.execute(
         world.secretaria,

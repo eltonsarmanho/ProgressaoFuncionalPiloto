@@ -68,6 +68,7 @@ class ActivityFields(BaseModel):
     course_hours: Decimal | None = None
     informed_points: Decimal | None = None
     points_override: Decimal | None = None
+    unit_points_override: Decimal | None = None
     evidence_note: str | None = None
     candidates: list[CandidateIn] = []
     justificativa: str | None = None
@@ -101,6 +102,7 @@ class ActivityFields(BaseModel):
             course_hours=self.course_hours,
             informed_points=self.informed_points,
             points_override=self.points_override,
+            unit_points_override=self.unit_points_override,
             evidence_note=self.evidence_note,
             candidates=tuple(
                 Candidate(c.group_number, c.item_number, c.justification) for c in self.candidates
@@ -162,6 +164,7 @@ class ActivityOut(BaseModel):
     course_hours: Money | None
     informed_points: Money | None
     points_override: Money | None
+    unit_points_override: Money | None
     evidence_note: str | None
     source: ActivitySource
     status: ActivityStatus
@@ -194,6 +197,7 @@ class ActivityOut(BaseModel):
             course_hours=a.course_hours,
             informed_points=a.informed_points,
             points_override=a.points_override,
+            unit_points_override=a.unit_points_override,
             evidence_note=a.evidence_note,
             source=a.source,
             status=a.status,
