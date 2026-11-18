@@ -226,7 +226,7 @@ Conferência de que o conteúdo original não muda (400 páginas e amostras de 5
 - **Armazenamento**: `LocalGeneratedStorage` em `storage/generated/{process_id}/{uuid4}.{docx|pdf}`, 0700/0600; `new_temp_path(process_id)` devolve `.tmp-{uuid}`; `commit(temp, ext) -> internal_name` por `os.replace` no mesmo diretório; nada é lido para a memória (o `FileStorage.save(bytes)` atual não serve para 60 MB)
 - **MariTalk**: `MariTalkClient` (extraído de `maritalk.py`: cabeçalho, mapeamento de status, modelo reserva) com um prazo total por chamada; `MariTalkReportWriter` implementa `ReportWriter.draft(section_title, items) -> Mapping[UUID, str]`, levanta `AiWritingError(code)` com `REDACAO_INDISPONIVEL`; `temperature` 0, `response_format` JSON estrito `{items: [{id, texto}]}`, `max_tokens` 4000, prazo de 60 s, sem repetição. A chamada acontece no runner de redação, nunca dentro de uma requisição HTTP
 - **Executor**: `DocumentWorker` recebe `runners: Sequence[Callable[[], bool]]`; `run_once` tenta primeiro a geração (o usuário espera por ela), depois a redação e por fim o OCR; `start()` chama os dois recuperadores. Um runner que levanta exceção fecha a linha como `FALHOU/ERRO_INTERNO`; o log leva só o tipo da exceção e os identificadores
-- **Banco**: modelos e repositórios `generations`, `wording_jobs`, `report_drafts`, `comprovante_layouts` na `UnitOfWork`; migração `0005_generated_documents.py` (também acrescenta `documents.file_deleted_at`)
+- **Banco**: modelos e repositórios `generations`, `wording_jobs`, `report_drafts`, `comprovante_layouts` na `UnitOfWork`; migração `0006_generated_documents.py` (também acrescenta `documents.file_deleted_at`)
 
 ### Presentation
 
@@ -318,7 +318,7 @@ Depois da conclusão: o plano do Comprovante e a Tabela continuam funcionando (s
 
 ## Data Models
 
-Migração `0005_generated_documents.py` (a última é a `0004`).
+Migração `0006_generated_documents.py` (a última é a `0004`).
 
 ```python
 # enums: generated_kind(TABELA, RELATORIO, COMPROVANTE), generated_state(GERANDO, PRONTO, FALHOU),

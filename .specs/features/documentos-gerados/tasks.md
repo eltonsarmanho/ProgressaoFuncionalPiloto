@@ -978,10 +978,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 ### Phase 7: Banco: migração, modelos e portas
 
-#### T30: Migração 0005: documentos gerados
+#### T30: Migração 0006: documentos gerados
 
 **What**: Enums `generated_kind`, `generated_state`, `generated_format`, tabelas `generated_documents` e `generated_files`, índice parcial único `(process_id, kind)` em `GERANDO`, índice de histórico e gatilhos de imutabilidade.
-**Where**: `backend/alembic/versions/0005_generated_documents.py`
+**Where**: `backend/alembic/versions/0006_generated_documents.py`
 **Depends on**: T6 (fase 2)
 **Reuses**: `0003_documents.py:90` (gatilho de `extraction_runs`)
 **Requirement**: VER-01, VER-04
@@ -1004,10 +1004,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 ---
 
-#### T31: Migração 0005: redação, rascunho, arranjo e marca de exclusão
+#### T31: Migração 0006: redação, rascunho, arranjo e marca de exclusão
 
 **What**: Tabelas `report_wording_jobs` (índice parcial único `(process_id, section_key)` em `GERANDO`), `report_drafts` e `comprovante_layouts` (unique por processo, JSONB e `version`) e a coluna `documents.file_deleted_at`.
-**Where**: `backend/alembic/versions/0005_generated_documents.py`
+**Where**: `backend/alembic/versions/0006_generated_documents.py`
 **Depends on**: T30
 **Reuses**: `0003_documents.py` (padrões de índice e FK)
 **Requirement**: REL-13, ARR-07, DEL-05, DEL-06
@@ -3068,7 +3068,7 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O texto lista a migração `0005_generated_documents`, as dependências novas, a fonte, o espaço do volume gerado e o ponto de retorno antes de aplicar
+- [ ] O texto lista a migração `0006_generated_documents`, as dependências novas, a fonte, o espaço do volume gerado e o ponto de retorno antes de aplicar
 - [ ] Nenhum push, deploy ou acesso à VM é feito por esta tarefa; ela só escreve a nota
 - [ ] Gate build passa
 
@@ -3294,8 +3294,8 @@ Verificado por `validate_tasks.py` (dentro de cada fase, cada seta do diagrama t
 | T27: Aplicação do resultado da redação | Domain (entities, rules) | unit | unit | ✅ OK |
 | T28: Verificação da conclusão | Domain (entities, rules) | unit | unit | ✅ OK |
 | T29: Prévia e resultado da exclusão | Domain (entities, rules) | unit | unit | ✅ OK |
-| T30: Migração 0005: documentos gerados | Repositories / migrations / worker | integration | integration | ✅ OK |
-| T31: Migração 0005: redação, rascunho, arranjo e marca de exclusão | Repositories / migrations / worker | integration | integration | ✅ OK |
+| T30: Migração 0006: documentos gerados | Repositories / migrations / worker | integration | integration | ✅ OK |
+| T31: Migração 0006: redação, rascunho, arranjo e marca de exclusão | Repositories / migrations / worker | integration | integration | ✅ OK |
 | T32: Modelos ORM das tabelas novas | Repositories / migrations / worker | integration | integration | ✅ OK |
 | T33: Portas e repositórios abstratos | Ports | none | none | ✅ OK |
 | T34: Repositório das gerações | Repositories / migrations / worker | integration | integration | ✅ OK |
