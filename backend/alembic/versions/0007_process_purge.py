@@ -1,4 +1,5 @@
-"""let the immutability triggers of generated documents pass a DELETE inside the process purge
+"""let the immutability triggers of generated documents pass a DELETE inside the process purge,
+and add the DELETE audit action
 
 Revision ID: 0007
 Revises: 0006
@@ -16,6 +17,8 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    # GP-D6: the audit trail records the deletion of a process.
+    op.execute("ALTER TYPE audit_action ADD VALUE IF NOT EXISTS 'DELETE'")
     # GP-D3: only the process deletion sets app.process_purge (SET LOCAL, so it ends with the
     # transaction). UPDATE stays blocked, and so does DELETE anywhere else.
     op.execute(
@@ -54,6 +57,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # PostgreSQL cannot drop a value from an enum; an unused 'DELETE' stays in audit_action.
     op.execute(
         """
         CREATE OR REPLACE FUNCTION generated_documents_immutable() RETURNS trigger AS $$

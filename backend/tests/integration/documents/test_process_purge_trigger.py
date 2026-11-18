@@ -1,4 +1,5 @@
-"""GP-D3: the immutability triggers let a DELETE through only inside the process purge (0007)."""
+"""GP-D3, GP-D6: the immutability triggers let a DELETE through only inside the process purge, and
+the audit trail has a DELETE action (migration 0007)."""
 
 import pytest
 from alembic import command
@@ -104,3 +105,23 @@ def test_downgrade_to_0006_restores_the_delete_block_and_upgrade_reopens_the_pur
         conn.execute(text(PURGE_ON))
         conn.execute(text("DELETE FROM generated_files WHERE id = :id"), {"id": file_id})
     assert _count(engine, "generated_files") == 0
+
+
+def test_the_audit_action_enum_has_delete_and_upgrade_after_downgrade_keeps_it(
+    engine, migrated_url
+):
+    def labels():
+        with engine.connect() as conn:
+            return set(
+                conn.execute(
+                    text("SELECT unnest(enum_range(NULL::audit_action))::text")
+                ).scalars()
+            )
+
+    assert labels() == {"CREATE", "UPDATE", "ARCHIVE", "STATUS", "DELETE"}
+    cfg = alembic_config(migrated_url)
+    try:
+        command.downgrade(cfg, "0006")
+    finally:
+        command.upgrade(cfg, "head")
+    assert "DELETE" in labels()

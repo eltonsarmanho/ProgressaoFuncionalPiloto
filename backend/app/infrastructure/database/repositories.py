@@ -2017,6 +2017,13 @@ class SqlProcessPurgeRepository:
         return select(model.id).where(model.process_id == process_id)
 
     def busy_reasons(self, process_id: UUID) -> list[BusyReason]:
+        # Locks the process row first: a dependent inserted from now on waits for this
+        # transaction, so what is checked here is what gets deleted.
+        self._s.execute(
+            select(FunctionalProcessModel.id)
+            .where(FunctionalProcessModel.id == process_id)
+            .with_for_update()
+        )
         reasons = []
         if self._s.scalar(
             select(
