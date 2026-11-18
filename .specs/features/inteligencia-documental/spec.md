@@ -489,17 +489,17 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SEG-10 | P1: Correções da segunda rodada de validação | Design | Implementing |
 | SEG-11 | P1: Correções da segunda rodada de validação | Design | Implementing |
 | SEG-12 | P1: Correções da segunda rodada de validação | Design | Implementing |
-| TER-01 | P1: Correções da terceira rodada de validação | Design | Implementing |
-| TER-02 | P1: Correções da terceira rodada de validação | Design | Implementing |
-| TER-03 | P1: Correções da terceira rodada de validação | Design | Implementing |
-| TER-04 | P1: Correções da terceira rodada de validação | Design | Implementing |
-| TER-05 | P1: Correções da terceira rodada de validação | Design | Implementing |
-| TER-06 | P1: Correções da terceira rodada de validação | Design | Implementing |
-| TER-07 | P1: Correções da terceira rodada de validação | Design | Implementing |
-| TER-08 | P1: Correções da terceira rodada de validação | Design | Implementing |
-| TER-09 | P1: Correções da terceira rodada de validação | Design | Implementing |
-| TER-10 | P1: Correções da terceira rodada de validação | Design | Implementing |
-| TER-11 | P1: Correções da terceira rodada de validação | Design | Implementing |
+| TER-01 | P1: Correções da terceira rodada de validação | Design | Verified |
+| TER-02 | P1: Correções da terceira rodada de validação | Design | Verified |
+| TER-03 | P1: Correções da terceira rodada de validação | Design | Verified |
+| TER-04 | P1: Correções da terceira rodada de validação | Design | Verified |
+| TER-05 | P1: Correções da terceira rodada de validação | Design | Verified |
+| TER-06 | P1: Correções da terceira rodada de validação | Design | Verified |
+| TER-07 | P1: Correções da terceira rodada de validação | Design | Verified |
+| TER-08 | P1: Correções da terceira rodada de validação | Design | Verified |
+| TER-09 | P1: Correções da terceira rodada de validação | Design | Verified |
+| TER-10 | P1: Correções da terceira rodada de validação | Design | Verified |
+| TER-11 | P1: Correções da terceira rodada de validação | Design | Verified |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 

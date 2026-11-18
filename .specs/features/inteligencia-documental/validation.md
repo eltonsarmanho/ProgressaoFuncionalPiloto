@@ -354,3 +354,102 @@ Third real-environment findings (D2 article indexing, D4 repeated activity in a 
 - D3 (date read with OCR noise), D5 (III.4 versus no item), D6 (line without item) and D7 (Vice `SEM_DATA`) of `ANALISE.md` are variation of the AI or data to review, not changed here.
 
 **Open decisions for the user**: the fractional-year rule for the Vice (about 3.5 months, 20 points a year); the policy for a partial professor name (D1: five documents of the professor go to review because the text carries only two of the three names); rejected activities in a bulk validation; the VIII.36 unit ("por unidade" in the table, "ano/revista" in its text); the quantity-0 policy (a yearly item with less than a complete year scores 0 and `QUANTIDADE_ESTIMADA`); whether a bare "por mais N anos" is a term.
+
+
+## Pass 4 (independent Verifier, HEAD 9533966)
+
+### Validation pass 4 - Phase 14 (T96-T106, TER-01..TER-11)
+
+Verifier: independent (author != verifier), tlc-spec-driven, evidence-or-zero. Diff range `0b6fe66..9533966` (HEAD `9533966`), worktree `/tmp/verify-pass4` (plus `/tmp/verify-pass4-mut` for mutants and `/tmp/verify-pass4-base` at `0b6fe66` for before/after probes; all removed at the end). Main tree untouched (porcelain identical: `requeriment.txt`, `test/`). No `Documentos/`, no `Modelos/` outputs, no MariTalk call, no push/deploy/VM. Probes used synthetic text only.
+
+## Verdict: PASS (no blocking finding; 1 medium and 4 low gaps, FT-28..FT-32)
+
+## Gate (HEAD `9533966`, worktree)
+
+| Gate | Result |
+| ---- | ------ |
+| `ruff check .` (backend) | All checks passed |
+| `pytest -q` (backend, main venv, `pythonpath=.` resolved to the worktree) | 3513 passed, 6 deselected, 0 failed, 302.76 s |
+| `test_scoring_golden.py` (211 points, `body["total"] == "211.00"`, `tests/integration/api/test_scoring_golden.py:115`) | 6 passed (also inside the full run) |
+| `npm run lint` | clean |
+| `npm run build` | built OK (`dist/assets/index-BN9QNOVB.js`) |
+| `REQUIRE_DIST=1 npm test -- --run` | 24 files, 183 passed, 0 skipped |
+| `validate_spec.py` / `validate_tasks.py` | 0 errors; 2 known warnings (T11, T95 `Tests: none`) |
+| Commit subjects T96-T106 (`check_commit.py`) | 11/11 ok |
+| tasks.md T96-T106 | 41 `[x]`, 0 `[ ]` |
+
+Note: the Resolution (round 4) says "3 deselected"; the real count is 6 (all `maritalk_live`, `pytest --collect-only -m maritalk_live` = 6/3519). See FT-33.
+
+## Per-requirement evidence
+
+| Req | Task / commit | Spec outcome | Evidence (code, test, my probe) | Result |
+| --- | ------------- | ------------ | -------------------------------- | ------ |
+| TER-01 | T96 `0de986b` | "e meio/meia", "meio ano" read in months; refuse two same-type values, split years/months, "1 ano e 12 meses", "mês e meio", >10 years, extension as sole value; first value wins over a later extension; 10 years and "mês" read | `term_rules.py` `_AMOUNT`, `_EXTENSION`, `_HALF_YEAR`, `_BETWEEN_YEARS_AND_MONTHS`. Probe (`parse_term_months`): "um ano e meio" 18, "dois anos e meio" 30, "meio ano" 6, "por 2 (dois) anos, prorrogável por mais 2 (dois) anos" 24, "1 ano e 12 meses" None, "um mês e meio" None, "prorrogável por mais 2 anos" None, "10 anos" 120, "11 anos" None, "1 mês" 1, "2 anos, depois 6 meses" None, "1,5 ano" None, "2 anos e 6 meses e meio" None. Tests `test_term_rules.py`, `test_document_analyzer_term.py` pass. 12/12 term mutants killed (N01-N12) | Verified |
+| TER-02 | T97 `470a93c` | creation-time dates reach the activity period and API; analyzer decides "por ano" by table unit | `test_documents_flow.py::test_the_end_date_derived_from_the_term_is_the_period_of_the_created_activity`, `test_document_analyzer_table_unit.py` (table version passed), `test_open_ended_period.py`; all green in the full run. Mutants E01-E09, Q2-Q4 (engine and period) killed | Verified |
+| TER-03 | T98 `8faee95` | role within 8 words of the name, same paragraph, line break allowed, other coordinator / "coordenado por" / participant only give no item | `suggestion_rules.py::_role_near_name`, `_coordination_positions`, `COORDINATION_WINDOW_WORDS = 8`. Probe: "coordenou" -> V.1; "coordenado por Maria" -> OUTRA; "Coordenador:\n Maria" -> V.1; "Maria, membro; coordenador: Pedro" -> OUTRA. Mutants S04-S10, S17 killed. Regression found (FT-28) | Verified with gap FT-28 |
+| TER-04 | T99 `78fe3e1` | unit names with "extensão" confirm neither VII.9 nor IV.1/IV.2; nature still confirms | `_EXTENSION_UNIT`, `_EXTENSION_NATURE`, `confirm_extension_project` now strips units then needs the nature wording. Probe: "Pró-Reitoria de Extensão certifica ... projeto" -> OUTRA; "Projeto de Extensão da Universidade Federal do Pará" -> kept; "Categoria: Extensão", "Programa de Extensão Universitária" kept. Mutants S12-S15, Q6 killed; S11 survives (near-equivalent). Narrower than before (FT-29) | Verified with gap FT-29 |
+| TER-05 | T100 `79d434c` | start-only "por ano" item (hand-entered too): quantity = min(typed, complete years in the interstice), no typed -> complete years, never raised, `DATA_FIM_AUSENTE` on the row, two no-item activities not the same item | `scoring_engine.py::_open_quantity` and `open_ended` branch (lines ~139-208), `scoring_periods.py::is_start_only/complete_years_inside/open_period_years`; `quantity_rules.py` now reuses `complete_years_*` (behavior-equivalent: checked in the diff, and `test_quantity_rules.py` + `test_document_analyzer.py` pass). Tests `test_open_ended_quantity_cap.py`, `ProcessScoring.test.tsx` label. Mutants E01-E09, Q1-Q4 killed (min->max, ZERO instead of years, non-yearly, alert off, month precision, interstice clip, event_date guard, `<=` boundary) | Verified |
+| TER-06 | T101 `36931de` | VIII.9/10 without proof of indexing -> VIII.11 + `INDEXACAO_NAO_COMPROVADA` + review; PT label | `suggestion_rules.py::confirm_article_indexing`, `document_analyzer.py` (alert, `flagged`), `DocAlertCode.INDEXACAO_NAO_COMPROVADA`, `labels.ts` `DOCUMENT_CODE_LABELS`. Probe: ISSN alone -> VIII.11; "não indexada" -> VIII.11; "Scopus", "SciELO", "DOAJ", "Web of Science" -> kept. Mutants S01-S03, S18, A03-A06, Q5 killed. Negation plus index name passes (FT-30) | Verified with gap FT-30 |
+| TER-07 | T103 `802f2ce` | same page/type/level, equal or absent dates, Jaccard >= 0.6 or containment -> one activity + `ATIVIDADE_REPETIDA`; distinct dates/pages/names apart; Grupo I never merged by similarity | `document_analyzer.py::_same_activity`, `title_similarity.py::repeated_titles`. Mutants T01, T07-T09, T12, T13, A01, A02 killed; T02 (threshold 0.5) survives. Over-merge of numbered variants (FT-31) | Verified with gap FT-31 |
+| TER-08 | T102 `ec4b062` | titles differing by a proper name on each side are not duplicates; exact equality and equal text still mark | `title_similarity.py::differ_by_proper_name/similar_titles`, used by `scoring_duplicates.py::find_duplicates`. Probe: "Banca de Mestrado de Ana Lima" vs "...Pedro Alves" (also upper-case) not similar; "João/Joana Silva" not similar. Mutants T05, T10, T11 killed; T03/T04/T06 survive (FT-32) | Verified |
+| TER-09 | T104 `0b292bf` | text under 50 normalized chars gets no content hash | `scoring_duplicates.py::has_readable_text` (`>= 50`), `repositories.py:1231-1233`; D10 `"\n".join`. Mutants D01-D04, R01 (integration `test_repositories.py`) killed | Verified |
+| TER-10 | T105 `83a8e1b` | prompt test pins literal `term` instruction and the ban on computing the end date | `tests/unit/infrastructure/test_maritalk_prompt.py` (4 tests; build the real request body, `maritalk.py:35` wording). No live call. (No app change: wording already present; the test pins it.) | Verified |
+| TER-11 | T106 `ac93123` | `REQUIRE_DIST` set only when not empty, `0`, `false` | `frontend/tests/require-dist.ts`, `bundle.test.ts:17`, `require-dist.test.ts` (13 values). Manual run without `dist`: `0`, `false`, empty -> 6 passed, 1 skipped; `1` -> bundle test FAILS. Mutants F1-F5 (drop `0`, `false`, `trim`, `toLowerCase`, empty guard) and F6 (raw `Boolean`) killed | Verified |
+
+## Regression hunt (areas touched)
+
+- term_rules: lookbehind now also excludes `,` ("2,5 anos" refused); a term preceded by "renov/prorrog/podendo ser" in the same text is cut and refused ("Portaria renovada em 2025, por 2 anos" -> None). Fail-safe, noted as info. A bare "por mais 2 anos" still reads 24 months (T82, open decision in Resolution).
+- suggestion_rules: coordination (FT-28), extension nature (FT-29), indexing (FT-30). "Vice-coordenadora Maria ..." still counts as coordination (pre-existing; "vice" guard only looks between name and role). "coordenado pela Profa. Maria" gives OUTRA (spec literal).
+- quantity_rules: refactor to `complete_years_*` is equivalent; kill tests exist (E06, E08, Q2, Q3).
+- scoring_engine: cap applies only to `yearly and is_start_only`; closed periods, event dates and non-yearly items untouched (tests + E03, E07).
+- article indexing guard: guard runs before `suggest_item`; `needs_review` includes it; alert persisted as string (no DB enum for codes).
+- duplicate title collapse: `DISCIPLINA_MINISTRADA` never merged by similarity; unequal known spans never merged (A01, A02).
+- content hash: only the repository path calls `content_hash`; guarded by `has_readable_text`.
+- REQUIRE_DIST and prompt: no regressions.
+- 211-point acceptance test: green.
+
+## Discrimination sensor (mutants applied in `/tmp/verify-pass4-mut`, file-level replace + restore, `tests/unit` per mutant, integration file for R01, vitest for F*)
+
+Result: backend 64/70 killed (6 survived); frontend 6/6 killed. Worktree restored and clean after each run.
+
+Killed: N01-N12, S01-S10, S12-S15, S17, S18, E01-E09, D01-D04, T01, T05, T07-T13, A01-A06, R01, Q1-Q7, F1-F6.
+
+Survivors:
+
+| Mutant | Change | Why it survives | Class |
+| ------ | ------ | --------------- | ----- |
+| T02 | `REPEATED_TITLE_JACCARD` 0.6 -> 0.5 | tests pin 0.6 (collapses) and 3/7 = 0.43 (does not), nothing between 0.43 and 0.6 | weak boundary (FT-32) |
+| T03 | `MIN_NAME_LENGTH` 3 -> 4 | no test with a three-letter proper name ("Ana", "Eva") | unpinned (FT-32) |
+| T04 | `MIN_NAME_LENGTH` 3 -> 2 | no test with a two-letter capitalized word that must not be a name | unpinned (FT-32) |
+| T06 | `TYPO_RATIO` 0.8 -> 0.7 | tests pin 0.9 side only (T05 killed) | weak boundary (FT-32) |
+| S16 | drop "vice" from `_OTHER_ROLE` | no test with "vice" between name and role | unpinned (FT-32) |
+| S11 | drop "departamento" from `_UNIT_NOUN` | near-equivalent: "Departamento de Extensão" never matches `_EXTENSION_NATURE` anyway | equivalent in practice |
+
+Clean-up: tests that pin a regex literal are not mirrored by the implementation; they assert spec-defined outcomes (18/30/6 months, 8-word window with 9 refused, 50 chars, 60 points instead of 90, Jaccard exactly 0.6).
+
+## Gaps
+
+| ID | Sev | Req | Finding | Fix |
+| -- | --- | --- | ------- | --- |
+| FT-28 | Medium | TER-03 | New false positive caused by the "line break inside the paragraph" rule. `confirm_research_coordination(PESQUISA_PROJETO_COORDENACAO, "Projeto de pesquisa. Coordenador: Pedro Alves\nEquipe: Maria de Souza Lima", "Maria de Souza Lima")` returns `PESQUISA_PROJETO_COORDENACAO`; at `0b6fe66` the same input returns `OUTRA` (the old split on `\n` separated them). "Equipe", "pesquisador(es)", "autor(es)" are not in `_OTHER_ROLE`, and another full name between the role and the professor is not a guard. The Resolution lists "another role word not on the list" as a known limit, but "equipe" is the most common one. Suggested V.1 points need human review of the item. | Add "equipe", "pesquisador*", "autor*", "orientando" to `_OTHER_ROLE`; consider refusing when another capitalized name sits between role and professor; add the test with `\nEquipe:`. Non-blocking: spec TER-03 mandates the line-break tolerance. |
+| FT-29 | Low | TER-04 | `confirm_extension_project` now needs one of the `_EXTENSION_NATURE` wordings. "Projeto Institucional de Extensão", "Projeto de pesquisa e extensão", "Projeto de ensino, pesquisa e extensão", "Extensão: projeto X", "Atividade extensionista" now give `OUTRA` (review) where before any "extensão" confirmed. Fail-safe (goes to review) but a loss in recall. | Decide with the user whether "institucional/pesquisa e/ensino, pesquisa e extensão" wordings are nature; add them to the regex or pin the refusal in a test. |
+| FT-30 | Low | TER-06 | Negation plus an index name counts as proof: "Revista não indexada no Scopus", "sem indexação, apenas Qualis B2", "not indexed in Scopus" keep VIII.9/10 (the `_NOT_INDEXED` strip removes only "não indexada", the name `Scopus` stays). Qualis alone (a classification, not an index) is proof by spec wording. | Strip the index name that follows the negation; or send these to review with the alert. Add the test. |
+| FT-31 | Low | TER-07 | Jaccard 0.6 or containment merges numbered or lettered variants and generic titles: "Curso de Python Nível 1" / "Nível 2" (0.67), "Ensino de Cálculo I Turma A" / "Turma B" (0.71), "Banca de TCC" inside "Banca de TCC de Ana Lima" collapse into one activity when page, type, level and dates agree or are absent. The merge is alerted (`ATIVIDADE_REPETIDA`), and spec TER-07 is literal, so this is spec precision. | Add a digit/roman-numeral/single-letter guard and a minimum word count for containment, or ask the user to accept. |
+| FT-32 | Low | TER-08/03 | Surviving mutants T02, T03, T04, T06, S16 (table above): boundaries of the proper-name guard (3-letter names, typo ratio 0.7-0.8), of the repeated-title threshold between 0.43 and 0.6 and the "vice" guard are unpinned. | Add one test per boundary (e.g. "Banca ... Ana Lima" vs "... Eva Lima"; Jaccard 0.5 not repeated). |
+| FT-33 | Info | docs | validation.md Resolution says "3 deselected"; the run deselects 6 (all `maritalk_live`), so the "cause not investigated" is just those 6 live tests. TER-01..11 are still `Implementing` in `spec.md:492-502` and should be `Verified`. A bare "por mais N anos" still reads 24 months, "Portaria renovada ... por 2 anos" is refused (fail-safe); "Vice-coordenadora" counts as coordination (pre-existing). | Correct the count; move TER-01..11 to Verified; decide the open items. |
+
+No blocking gap. Lessons to distill (not written; `.specs/lessons.json` untouched by instruction): (a) "tolerating a line break in a role window widens a label list into one paragraph; every other label word (Equipe, Pesquisadores) needs a pinned refusal"; (b) "a negation strip that leaves the object ('não indexada no Scopus') keeps the evidence it meant to remove"; (c) "a similarity threshold needs a test between the rejected and accepted values, and digits that tell variants apart".
+
+## Requirement traceability update (recommended, not applied)
+
+| Requirement | Previous | New |
+| ----------- | -------- | --- |
+| TER-01, 02, 05, 08, 09, 10, 11 | Implementing | Verified |
+| TER-03 | Implementing | Verified (FT-28 medium, fix task) |
+| TER-04 | Implementing | Verified (FT-29 low) |
+| TER-06 | Implementing | Verified (FT-30 low) |
+| TER-07 | Implementing | Verified (FT-31 low) |
+
+## Summary
+
+Overall: PASS. Gate green (ruff, pytest 3513, lint, build, vitest 183, 211-point test). 11/11 TER requirements match the spec outcome in code and tests; sensor 64/70 backend and 6/6 frontend mutants killed; survivors are boundary pins (FT-32). One medium regression (FT-28, coordination across a line break) and four low gaps. Next: fix task for FT-28, cheap pins for FT-32, correct the "3 deselected" note, then run `validate_state.py inteligencia-documental`.
