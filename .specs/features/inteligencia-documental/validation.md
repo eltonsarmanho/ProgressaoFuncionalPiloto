@@ -379,6 +379,30 @@ Pass-4 gaps FT-28..FT-33 became QUA-01..06 and tasks T107-T112 (Phase 15), each 
 - Known limit of T108: a contradictory text ("indexada na Scopus, não indexada no Qualis") keeps the Scopus when it comes more than 3 words before the negation, and loses it when it is closer.
 - Still open from round 4: the fractional-year rule for the Vice, the partial professor name (D1), rejected activities in a bulk validation, the VIII.36 unit, the quantity-0 policy, and whether a bare "por mais N anos" is a term.
 
+## Resolution (round 6)
+
+A one-page english certificate of participation that the user reported was not scored became CER-01..05 and tasks T113-T117 (Phase 16), each with one commit (`e08e95f` adds the specs). The cause had three links: `detect_document_type` knew only Portuguese markers and typed it `OUTRO`; the AI then read a research coordination or an extension project ("participant", 18 hours, term "six weeks (18 hours)"); the confirmations refused both, rightly (no coordination role, no extension nature), and the activity fell to `OUTRA` and was dropped. The user decided that such a certificate is a short course (VII.10). Tests use synthetic text only (an invented person and policy brief); no real document, `Documentos/`, MariTalk call, VM, push or deploy. The independent Verifier has not run on these commits; CER-01..05 stay `Implementing`.
+
+| Task | Commit | Closes | Proof |
+| ---- | ------ | ------ | ----- |
+| T113 | `00b9311` | CER-01 | `test_document_type.py`: "this is to cerfy" (dropped "ti" glyphs), "hereby certif...", "certificate of participation/completion/attendance", a bare "CERTIFICATE" as a title line or last word give `CERTIFICADO`; the bare word does not count in an article (article text with "certificate" in the body, ending in it or as a line), in a plain text sentence, and a portaria keeps its type. Dropping the article guard fails 2 tests |
+| T114 | `72f32be` | CER-02 (domain) | `test_participation_certificate.py`: `reclassify_participation_certificate` turns the four refused origins (V.1, V.2, IV.1, IV.2) into `CURSO_CONCLUIDO` only for a certificate with hours above 0; no hours, another document type, another taxonomy or a kept confirmation leave the result as it was. New `DocAlertCode.ENQUADRADO_COMO_CAPACITACAO` (19 codes), Portuguese label in `labels.ts`, frontend test in `DocumentViewer.test.tsx` |
+| T115 | `905c99b` | CER-02, CER-04 | `test_document_analyzer_english_certificate.py` (14 cases, fake AI): the english text gives one VII.10 activity, `needs_review` true, quantity 1, 18 hours kept, the alert on activity 0, no `SEM_ITEM_DE_PONTUACAO`, no date and no derived end from "six weeks"; real coordination and real extension nature (Portuguese wording) keep V.1 and IV.2; no hours, an invented workload and another document type keep no item. Removing the review flag fails 4 tests |
+| T116 | `84b6122` | CER-03 | `test_maritalk_prompt.py`: the prompt says the document may be in English and that fields are copied literally without translating, with and without the professor instruction. The prompt did not mention English before |
+| T117 | this commit | CER-05 | this section and the `STATE.md` handoff |
+
+**Existing tests changed (T115)**: `test_document_analyzer.py::test_certificate_of_a_project_without_the_word_extension_gets_no_item` and `test_document_analyzer_research_role.py::test_a_participation_certificate_creates_no_research_coordination` (SEG-07) expected no item for a certificate with 18 hours whose project nature or coordination role is missing. That is exactly the case CER-02 reclassifies, so both now expect VII.10 with `ENQUADRADO_COMO_CAPACITACAO` and `needs_review`; each keeps a variant without hours that still expects `SEM_ITEM_DE_PONTUACAO`. No test was weakened, skipped or deleted.
+
+**Gate** (HEAD `84b6122`): backend `ruff` clean, `pytest` 3751 passed, 3 deselected (`maritalk_live`; 6 in a checkout without `.env`), 0 failed, including the integration suite (840) and the 211-point acceptance test, unchanged and green; frontend `eslint` clean, `vite build` OK, `REQUIRE_DIST=1 vitest` 24 files, 184 passed, 0 skipped.
+
+**Decisions left for the user**
+- English wordings are still unknown to the confirmations: `confirm_research_coordination` reads "coordenador/coordenou/líder" and `confirm_extension_project` reads "projeto de extensão", so an english certificate that really says "coordinator of the research project" or "extension project" is refused like the participation one and, with hours, also lands in VII.10 flagged `ENQUADRADO_COMO_CAPACITACAO` for the human to correct. Whether to teach those rules the english words is open.
+- The reclassification needs hours above 0 grounded in the page; "six weeks" with no hours stays without an item.
+- The activity keeps no date: VII.10 has no period rule here, the existing treatment of undated activities applies (the user types the date).
+- Quantity is 1 per certificate (VII.10 is "no interstício", 2 points); the 18 hours stay on the extracted activity and are not used by the unit rule.
+- The bare word "CERTIFICATE" counts as a certificate only outside articles; a non-article english text that merely ends in "certificate" is typed as certificate.
+- Still open from round 5: generic-title containment (FT-31), the fractional-year rule for the Vice, the partial professor name (D1), rejected activities in a bulk validation, the VIII.36 unit, the quantity-0 policy, and whether a bare "por mais N anos" is a term.
+
 ## Pass 4 (independent Verifier, HEAD 9533966)
 
 ### Validation pass 4 - Phase 14 (T96-T106, TER-01..TER-11)

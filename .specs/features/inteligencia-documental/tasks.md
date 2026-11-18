@@ -3286,10 +3286,10 @@ T113 → T114 → T115 → T116 → T117
 
 **Done when**:
 
-- [ ] A Resolution (round 6) lista commits, gate e decisões pendentes
-- [ ] O handoff do STATE.md traz a linha da rodada 6 e o deploy pendente
-- [ ] `validate_spec.py`, `validate_tasks.py` e `validate_state.py` passam
-- [ ] Gate build passa
+- [x] A Resolution (round 6) lista commits, gate e decisões pendentes
+- [x] O handoff do STATE.md traz a linha da rodada 6 e o deploy pendente
+- [x] `validate_spec.py`, `validate_tasks.py` e `validate_state.py` passam
+- [x] Gate build passa
 
 **Tests**: none
 **Gate**: build
