@@ -12,6 +12,7 @@ from app.domain.rules.table_document import TableHeader, build_table_document
 from tests.unit.domain.scenario_211 import (
     INTERSTICE,
     activity,
+    item_capped_table,
     official_like_table,
     per_unit,
     scenario_result,
@@ -49,6 +50,17 @@ def test_the_total_of_the_211_scenario_is_the_engine_total():
 
     assert result.total == Decimal("211")
     assert document.total == "211,00"
+
+
+def test_the_total_is_the_engine_total_when_a_limit_cuts_the_rows():
+    ten = [activity(2, 7, "10", title="Muitas orientações")]
+
+    document, result = build(activities=ten, version=item_capped_table("40"))
+
+    assert result.total == Decimal("40")
+    assert document.bands[0].rows[0].points == "160,00"
+    assert document.bands[0].subtotal == "40,00"
+    assert document.total == "40,00"
 
 
 def test_the_counters_are_the_ones_of_the_engine_result():

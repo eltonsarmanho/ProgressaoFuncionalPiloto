@@ -4,6 +4,7 @@ Subtotals II to VIII of 52, 7, 62, 0, 30, 4 and 56, group I outside the total wi
 of 24, 24, 24 and 20 per academic period. Made-up names only.
 """
 
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from itertools import count
@@ -75,6 +76,16 @@ def official_like_table() -> ScoringTableVersion:
             group(8, per_unit(8, 9, "56")),
         ),
     )
+
+
+def item_capped_table(max_points: str = "40") -> ScoringTableVersion:
+    """The official-like table with item 7 of group II limited to `max_points`: ten orientations
+    score 160 in the rows and 40 in the subtotal of the engine."""
+    table = official_like_table()
+    group_two = table.groups[1]
+    capped = replace(group_two.criteria[1], max_points=D(max_points))
+    group_two = replace(group_two, criteria=(group_two.criteria[0], capped))
+    return replace(table, groups=(table.groups[0], group_two, *table.groups[2:]))
 
 
 def activity(group_number: int, item: int, quantity: str = "1", **kwargs) -> Activity:

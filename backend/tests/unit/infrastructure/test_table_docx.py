@@ -15,6 +15,8 @@ from tests.unit.infrastructure.table_support import (
     INTERSTICE_TEXT,
     PIT_HOURS,
     SUBTOTALS,
+    capped_table,
+    distinct_counters_table,
     long_table,
     scenario_table,
 )
@@ -165,6 +167,28 @@ def test_the_counters_the_voucher_text_and_the_status_are_written(tmp_path):
         "sem comprovante",
         "Pontuada",
         "II.3",
+    ):
+        assert part in text
+
+
+def test_the_total_and_the_subtotal_are_the_limited_ones_not_the_sum_of_the_rows(tmp_path):
+    text = text_of(write(tmp_path, capped_table()))
+
+    assert "160,00" in text  # the row of the ten orientations
+    assert "Pontuação geral: 40,00" in text
+    assert re.search(r"II\. [^:]*?Subtotal: 40,00", text)
+    assert "Pontuação geral: 160,00" not in text
+
+
+def test_each_counter_is_written_under_its_own_label(tmp_path):
+    text = text_of(write(tmp_path, distinct_counters_table()))
+
+    for part in (
+        "Atividades: 21",
+        "Com comprovante: 17",
+        "Pendentes: 5",
+        "Não pontuadas: 3",
+        "Com divergências: 2",
     ):
         assert part in text
 

@@ -7,11 +7,12 @@ import zipfile
 
 import pymupdf
 import pytest
+from docx import Document
 
 from app.application.services.generation_inputs import load_generation_inputs
 from app.domain.entities.activity import ActivityStatus
 from app.domain.entities.audit import AuditAction
-from app.domain.entities.comprovante import ComprovantePlan
+from app.domain.entities.comprovante import ComprovantePlan, TocLevel
 from app.domain.entities.generated import (
     DocumentFormat,
     DocumentKind,
@@ -25,6 +26,7 @@ from tests.integration.doc_usecases.generation_support import (
     add_document,
     add_scenario_211,
     link,
+    link_pages,
 )
 
 SUBTOTALS = ["52,00", "7,00", "62,00", "0,00", "30,00", "4,00", "56,00"]
@@ -158,6 +160,45 @@ def test_the_table_quotes_the_comprovante_numbers_and_keeps_the_plan_hash(gen):
     ]
     text = pdf_text(file_of(gen, done, DocumentFormat.PDF)[1])
     assert text.count("sem comprovante") == 1
+
+
+def voucher_cells(pdf_path, docx_path, title) -> tuple[str, str]:
+    """The text of the column Comprovante in the row of the activity, in the PDF and in the DOCX."""
+    with pymupdf.open(pdf_path) as pdf:
+        pdf_rows = [row for page in pdf for t in page.find_tables().tables for row in t.extract()]
+    [pdf_row] = [row for row in pdf_rows if row[1] and title in row[1].replace("\n", " ")]
+    [docx_row] = [
+        [cell.text for cell in row.cells]
+        for row in Document(str(docx_path)).tables[0].rows
+        if title in row.cells[1].text
+    ]
+    return pdf_row[5].strip(), docx_row[5].strip()
+
+
+def test_an_activity_of_several_pages_quotes_the_first_page_of_the_comprovante(gen):
+    # TAB-03: the spec is silent on which page of a multi-page activity the column quotes; the
+    # behavior is the first page of the activity in the Comprovante, and the range is in the
+    # table of contents of the Comprovante (CMP-04).
+    world = gen.world
+    several = add_activity(world, title="Em duas páginas", item_number=3)
+    document = add_document(world, page_count=4)
+    link_pages(world, several, document, [2, 3])
+
+    done = generate(gen)
+
+    with world.uow_factory() as uow:
+        inputs = load_generation_inputs(uow, uow.processes.get(world.process.id))
+        plan: ComprovantePlan = plan_comprovante(inputs.layout, inputs.activities, TOC_CAPACITY)
+    [entry] = [
+        e for e in plan.toc if e.level is TocLevel.ATIVIDADE and e.activity_id == several.id
+    ]
+    assert entry.last_page == entry.first_page + 1
+    pdf_cell, docx_cell = voucher_cells(
+        file_of(gen, done, DocumentFormat.PDF)[1],
+        file_of(gen, done, DocumentFormat.DOCX)[1],
+        "Em duas páginas",
+    )
+    assert (pdf_cell, docx_cell) == (str(entry.first_page), str(entry.first_page))
 
 
 def test_activities_left_out_are_counted_in_the_snapshot_and_alerted(gen):

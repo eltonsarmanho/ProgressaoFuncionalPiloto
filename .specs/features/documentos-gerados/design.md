@@ -460,6 +460,7 @@ Alertas do resultado (listados no bloco, em português, UIG-05): `ATIVIDADE_SEM_
 | Upload durante a conclusão | `ConcludeProcess` (novo), `backend/app/application/use_cases/documents.py` | Arquivo novo fica fora da exclusão | A transição relê os documentos na transação e responde `EXCLUSAO_PARCIAL`; teste de concorrência |
 | Pino de `reportlab==5.1.0` com 27 dias | `backend/requirements.txt` | Regressão numa versão jovem | Suíte roda no pino; queda para 4.5.1 se falhar |
 | Não testei o DOCX no Word | `table_docx.py`, `report_docx.py` | Diferença de layout no Word | Testes leem o XML (`tblHeader`, `tblGrid`, campos) e a abertura é conferida em LibreOffice em ambiente de desenvolvimento; a spec já aceita que PDF e DOCX divirjam na aparência |
+| A spec não diz que página a coluna `Comprovante` da Tabela cita para uma atividade de várias páginas (A-D3 de `verification-a.md`) | `backend/app/application/use_cases/generated_documents.py:539` | Leitor espera a faixa `7 a 8` e vê `7` | Mantido o comportamento: o número da primeira página da atividade no Comprovante; a faixa fica no sumário do Comprovante; fixado por `test_an_activity_of_several_pages_quotes_the_first_page_of_the_comprovante` (T117) |
 
 ---
 

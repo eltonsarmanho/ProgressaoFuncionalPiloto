@@ -3286,10 +3286,10 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Com o critério limitado a 40 pontos, `document.total == "40,00"` e o PDF e o DOCX trazem `Pontuação geral: 40,00` e `Subtotal: 40,00` (M50 morto)
-- [ ] As contagens com valores distintos aparecem certas no PDF e no DOCX (M64 morto)
-- [ ] A atividade com as páginas 7 e 8 mostra `7` na coluna `Comprovante` da Tabela gerada (M96 morto); a escolha fica registrada em Risks como lacuna da spec
-- [ ] Cada mutante é morto numa cópia isolada da árvore (comandos no corpo do commit); gate full passa; 4+ testes novos
+- [x] Com o critério limitado a 40 pontos, `document.total == "40,00"` e o PDF e o DOCX trazem `Pontuação geral: 40,00` e `Subtotal: 40,00` (M50 morto)
+- [x] As contagens com valores distintos aparecem certas no PDF e no DOCX (M64 morto)
+- [x] A atividade com as páginas 7 e 8 mostra `7` na coluna `Comprovante` da Tabela gerada (M96 morto); a escolha fica registrada em Risks como lacuna da spec
+- [x] Cada mutante é morto numa cópia isolada da árvore (comandos no corpo do commit); gate full passa; 6 testes novos
 
 **Tests**: integration
 **Gate**: full
