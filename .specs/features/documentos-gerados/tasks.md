@@ -504,10 +504,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Cabeçalho com docente, classe e nível atuais e pretendidos, unidade, interstício e nome e referência normativa da versão da tabela
-- [ ] Cenário de 211 pontos: sete faixas de grupo com os subtotais 52, 7, 62, 0, 30, 4 e 56; grupo sem atividade aparece com zero
-- [ ] Cada linha traz o número do comprovante vindo do plano ou `sem comprovante`; a ordem segue grupos e itens
-- [ ] Gate quick passa; 10+ testes
+- [x] Cabeçalho com docente, classe e nível atuais e pretendidos, unidade, interstício e nome e referência normativa da versão da tabela
+- [x] Cenário de 211 pontos: sete faixas de grupo com os subtotais 52, 7, 62, 0, 30, 4 e 56; grupo sem atividade aparece com zero
+- [x] Cada linha traz o número do comprovante vindo do plano ou `sem comprovante`; a ordem segue grupos e itens
+- [x] Gate quick passa; 10+ testes
 
 **Tests**: unit
 **Gate**: quick
