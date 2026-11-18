@@ -140,7 +140,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 3. WHEN o usuário remove uma página do arranjo THEN the system SHALL deixá-la fora do Comprovante, sem apagar o vínculo atividade-página nem o documento.  <!-- event-driven -->
 4. WHEN o usuário reordena atividades dentro de um item ou páginas dentro de uma atividade THEN the system SHALL guardar a nova ordem e usá-la na geração.  <!-- event-driven -->
 5. The system SHALL manter a ordem dos grupos e dos itens da tabela, sem permitir mover uma atividade para um item diferente do que a pontuação lhe deu.  <!-- ubiquitous -->
-6. IF o usuário indica um documento ou página que não pertence ao processo THEN the system SHALL responder 404.  <!-- unwanted-behavior -->
+6. IF o usuário indica um documento que não pertence ao processo ou que está fora do interstício THEN the system SHALL responder 404; IF indica uma página fora do intervalo do documento (de 1 ao número de páginas) THEN the system SHALL responder 422 com o código `PAGINA_FORA_DO_DOCUMENTO`.  <!-- unwanted-behavior -->
 7. WHEN o usuário salva o arranjo com uma versão desatualizada THEN the system SHALL responder 409, sem sobrescrever o arranjo mais novo (bloqueio otimista).  <!-- event-driven -->
 8. WHEN uma atividade é revalidada, rejeitada ou muda de item depois que o arranjo foi salvo THEN the system SHALL mostrar o arranjo com o aviso de que ele está desatualizado e usar, na geração, só as atividades atuais.  <!-- event-driven -->
 
@@ -256,7 +256,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 **Acceptance Criteria**:
 
-1. The system SHALL mostrar na etapa Documentos a lista ordenada do modelo de ordenamento (requerimento à CPPD, portaria da última progressão, declaração de pagamento de exercícios anteriores, e os demais itens do modelo), marcando quais o sistema gera.  <!-- ubiquitous -->
+1. The system SHALL mostrar na Etapa 5, "Documentos gerados", a lista ordenada do modelo de ordenamento (requerimento à CPPD, portaria da última progressão, declaração de pagamento de exercícios anteriores, e os demais itens do modelo), marcando quais o sistema gera.  <!-- ubiquitous -->
 2. The system SHALL ler a lista de um arquivo de configuração versionado e nunca de texto digitado no código da tela.  <!-- ubiquitous -->
 
 **Independent Test**: Abrir a etapa e ver a lista na ordem do arquivo de configuração, com os três documentos gerados marcados.

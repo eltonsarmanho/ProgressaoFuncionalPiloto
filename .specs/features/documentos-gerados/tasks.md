@@ -3408,7 +3408,7 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 #### T122: Alinhar a spec: ORD-01 e ARR-06
 
 **What**: Corrige B-D8 e A-D5 no texto da spec, mantendo os IDs: ORD-01 passa a dizer Etapa 5 (Documentos gerados) no lugar de `etapa Documentos` (que é o nome da Etapa 2); ARR-06 passa a dizer 422 `PAGINA_FORA_DO_DOCUMENTO` para página fora do intervalo do documento e 404 para documento desconhecido ou fora do interstício, como o código e o design.
-**Where**: `.specs/features/documentos-gerados/spec.md`
+**Where**: `.specs/features/documentos-gerados/spec.md`; também toca `.specs/features/documentos-gerados/design.md` (a linha de `SaveComprovanteLayout` dizia 404 para página)
 **Depends on**: T121
 **Reuses**: tabela de erros do design
 **Requirement**: ORD-01, ARR-06
@@ -3420,9 +3420,9 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O texto de ORD-01 e o de ARR-06 batem com o código e com o design
-- [ ] `validate_spec.py documentos-gerados` termina sem erro
-- [ ] Gate build passa
+- [x] O texto de ORD-01 e o de ARR-06 batem com o código e com o design
+- [x] `validate_spec.py documentos-gerados` termina sem erro
+- [x] Gate build passa
 
 **Tests**: none
 **Gate**: build
