@@ -8,6 +8,7 @@ import {
   formatDecimal,
   itemLabel,
 } from "../labels";
+import { isConfidentSuggestion } from "../trust";
 import { ActivityForm } from "./ActivityForm";
 import { FieldError, errorProps } from "./FieldError";
 import { Modal } from "./Modal";
@@ -132,6 +133,7 @@ export function ActivityReviewList({
   const allPicked = validatable.length > 0 && validatable.every((id) => selected.includes(id));
   const selectAll = () => setSelected(validatable);
   const clearSelection = () => setSelected([]);
+  const confident = activities.filter((a) => isConfidentSuggestion(a, rowOf.get(a.id), documents)).map((a) => a.id);
 
   /** UIM-13: validate and reject act at once; no justification, no panel. */
   async function changeStatus(activity: Activity, status: "VALIDADA" | "REJEITADA") {
@@ -151,13 +153,13 @@ export function ActivityReviewList({
   }
 
   /** REV-04: the atomic batch endpoint; one request for all the ids. */
-  async function validateBatch(ids: string[]) {
+  async function validateBatch(ids: string[], rest = "") {
     setNotice(null);
     setBusy(true);
     try {
       await request("POST", `/api/processes/${processId}/activities/validate-batch`, { activity_ids: ids });
       done();
-      setNotice({ tone: "ok", text: `${ids.length === 1 ? "1 atividade validada" : `${ids.length} atividades validadas`}.` });
+      setNotice({ tone: "ok", text: `${ids.length === 1 ? "1 atividade validada" : `${ids.length} atividades validadas`}.${rest}` });
     } catch (err) {
       setNotice({ tone: "error", text: errorMessage(err) });
     } finally {
@@ -208,7 +210,21 @@ export function ActivityReviewList({
             >
               Validar as selecionadas ({selected.length})
             </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={confident.length === 0 || busy}
+              title="Só sugestões da IA sem candidatos, sem aviso e de documentos lidos sem falha"
+              onClick={() => void validateBatch(confident, " As demais continuam aguardando a sua revisão.")}
+            >
+              Validar todas com confiança a partir de 70%
+            </button>
           </div>
+          <p className="muted">
+            {confident.length === 1
+              ? "1 atividade elegível para a validação por confiança."
+              : `${confident.length} atividades elegíveis para a validação por confiança.`}
+          </p>
           <p className="muted" aria-live="polite">
             {selected.length === 1 ? "1 atividade selecionada" : `${selected.length} atividades selecionadas`}
           </p>

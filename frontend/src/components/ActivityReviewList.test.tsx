@@ -294,3 +294,69 @@ describe("UIM-11: selecionar todas", () => {
     expect(screen.getByRole("button", { name: "Selecionar todas (0)" })).toBeDisabled();
   });
 });
+
+describe("UIM-12: validar todas com confiança a partir de 70%", () => {
+  const docs = (...items: [string, string, DocumentSummary["status"]?][]) =>
+    items.map(([id, confidence, status]) => ({ id, original_name: `${id}.pdf`, confidence, status: status ?? "PROCESSADO" })) as DocumentSummary[];
+  const linked = (id: string, title: string, doc: string, over: Partial<Activity> = {}) =>
+    activity({ id, title, evidences: [{ id: `e-${id}`, document_id: doc, document_name: `${doc}.pdf`, page: 1, excerpt: "" }], ...over });
+
+  function setupBulk(activities: Activity[], documents: DocumentSummary[], rowOver: Record<string, Partial<ScoringRow>> = {}) {
+    setCsrfToken("tok");
+    const mock = mockFetch({ "POST /api/processes/p1/activities/validate-batch": { status: 200, body: [{}, {}] } });
+    const onChanged = vi.fn();
+    render(
+      <ActivityReviewList
+        processId="p1"
+        activities={activities}
+        rows={activities.map((a) => ({ ...ROW(a.id, "4.00"), ...rowOver[a.id] }))}
+        groups={GROUPS}
+        documents={documents}
+        onChanged={onChanged}
+      />,
+    );
+    return { ...mock, onChanged, user: userEvent.setup() };
+  }
+  const BUTTON = "Validar todas com confiança a partir de 70%";
+
+  it("valida numa só chamada as de 0,91 e 0,70, deixa a de 0,69 e informa quantas foram validadas", async () => {
+    const activities = [linked("a1", "Alta", "d1"), linked("a2", "Limite", "d2"), linked("a3", "Baixa", "d3")];
+    const { calls, onChanged, user } = setupBulk(activities, docs(["d1", "0.91"], ["d2", "0.70"], ["d3", "0.69"]));
+
+    await user.click(screen.getByRole("button", { name: BUTTON }));
+
+    await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
+    expect(calls).toHaveLength(1);
+    expect(body(calls[0].init)).toEqual({ activity_ids: ["a1", "a2"] });
+    expect(screen.getByRole("status")).toHaveTextContent("2 atividades validadas");
+    expect(screen.getByRole("status")).toHaveTextContent("As demais continuam aguardando a sua revisão");
+  });
+
+  it("manual, com candidatos, sem documento, de documento falho ou com alerta na linha não entram", async () => {
+    const activities = [
+      linked("ok", "Entra", "d1"),
+      linked("man", "Manual", "d1", { source: "MANUAL" }),
+      linked("cand", "Candidatos", "d1", { candidates: [{ group_number: 4, item_number: 1, justification: "" }] }),
+      activity({ id: "sem", title: "Sem documento", evidences: [] }),
+      linked("fal", "Doc falho", "d4"),
+      linked("alt", "Com alerta", "d1"),
+      linked("val", "Já validada", "d1", { status: "VALIDADA" }),
+    ];
+    const alert = { code: "INTERSTICIO_PARCIAL", severity: "ALERTA" as const, message: "parcial", norm_reference: "" };
+    const { calls, user } = setupBulk(activities, docs(["d1", "0.95"], ["d4", "0.95", "FALHOU"]), { alt: { alerts: [alert] } });
+
+    await user.click(screen.getByRole("button", { name: BUTTON }));
+
+    await waitFor(() => expect(calls).toHaveLength(1));
+    expect(body(calls[0].init)).toEqual({ activity_ids: ["ok"] });
+  });
+
+  it("com vários documentos, vale o de menor confiança; sem atividade elegível o botão fica desabilitado", () => {
+    const two = [linked("a1", "Duas fontes", "d1", { evidences: [
+      { id: "e1", document_id: "d1", document_name: "d1.pdf", page: 1, excerpt: "" },
+      { id: "e2", document_id: "d2", document_name: "d2.pdf", page: 1, excerpt: "" },
+    ] })];
+    setupBulk(two, docs(["d1", "0.95"], ["d2", "0.60"]));
+    expect(screen.getByRole("button", { name: BUTTON })).toBeDisabled();
+  });
+});

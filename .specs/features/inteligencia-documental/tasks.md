@@ -3763,10 +3763,10 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Com três atividades (confiança 0,91, 0,70 e 0,69) valida as duas primeiras numa só chamada e informa "2 atividades validadas"
-- [ ] Atividade manual, com candidatos, sem documento ou com documento FALHOU não entra; as demais continuam aguardando
-- [ ] Sem atividade elegível o botão fica desabilitado
-- [ ] Gate quick passa
+- [x] Com três atividades (confiança 0,91, 0,70 e 0,69) valida as duas primeiras numa só chamada e informa "2 atividades validadas"
+- [x] Atividade manual, com candidatos, sem documento ou com documento FALHOU não entra; as demais continuam aguardando
+- [x] Sem atividade elegível o botão fica desabilitado
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick
