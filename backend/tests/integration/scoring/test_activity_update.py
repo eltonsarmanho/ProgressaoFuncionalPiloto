@@ -141,22 +141,26 @@ def test_update_applies_the_same_input_validation(world, activity):
     assert failing_field(error) == "quantidade"
 
 
-def test_status_change_requires_justification_and_is_audited(world, activity):
-    with pytest.raises(ValidationFailed) as error:
-        world.change_status.execute(
-            world.admin, activity.id, ActivityStatus.REJEITADA, activity.version, None
-        )
-    assert failing_field(error) == "justificativa"
-
+@pytest.mark.parametrize("justification", [None, "", "  "])
+def test_status_change_without_justification_is_audited_without_one(world, activity, justification):
+    """UIM-14: validating, rejecting and reopening need no justification."""
     changed = world.change_status.execute(
-        world.admin, activity.id, ActivityStatus.REJEITADA, activity.version, "Sem comprovante"
+        world.admin, activity.id, ActivityStatus.REJEITADA, activity.version, justification
     )
 
     assert changed.status is ActivityStatus.REJEITADA
     event = events(world, activity)[-1]
     assert event.action is AuditAction.STATUS
     assert event.changes == {"status": {"before": "VALIDADA", "after": "REJEITADA"}}
-    assert event.justification == "Sem comprovante"
+    assert event.justification is None
+
+
+def test_status_change_with_a_justification_stores_it_in_the_audit_event(world, activity):
+    world.change_status.execute(
+        world.admin, activity.id, ActivityStatus.REJEITADA, activity.version, "Sem comprovante"
+    )
+
+    assert events(world, activity)[-1].justification == "Sem comprovante"
 
 
 def test_rejected_back_to_pending_review_counts_as_pending(world, activity):
@@ -206,10 +210,6 @@ def test_distinct_mark_releases_the_duplicate_and_audits_the_justification(world
         NotScoredReason.DUPLICIDADE,
     )
 
-    with pytest.raises(ValidationFailed) as error:
-        world.mark_distinct.execute(world.admin, twin.id, twin.version, " ")
-    assert failing_field(error) == "justificativa"
-
     world.mark_distinct.execute(world.admin, twin.id, twin.version, "Outro aluno")
 
     with world.uow_factory() as uow:
@@ -220,6 +220,30 @@ def test_distinct_mark_releases_the_duplicate_and_audits_the_justification(world
     event = events(world, twin)[-1]
     assert event.justification == "Outro aluno"
     assert event.changes == {"distinct_justification": {"before": None, "after": "Outro aluno"}}
+
+
+@pytest.mark.parametrize("justification", [None, "", "  "])
+def test_distinct_mark_without_justification_still_releases_the_duplicate(
+    world, activity, justification
+):
+    """UIM-14: the mark itself is what counts both activities; the text is optional."""
+    twin = world.create.execute(
+        world.admin,
+        world.process.id,
+        ActivityData(
+            title="orientação de TCC", group_number=2, item_number=7, quantity=D("1"),
+            event_date=date(2023, 5, 10),
+        ),
+    )  # fmt: skip
+
+    marked = world.mark_distinct.execute(world.admin, twin.id, twin.version, justification)
+
+    with world.uow_factory() as uow:
+        both = uow.activities.list_for_process(world.process.id)
+    result = calculate(world.official_version, both, INTERSTICE)
+    assert [r.status for r in result.rows] == [RowStatus.PONTUADA, RowStatus.PONTUADA]
+    assert marked.distinct_justification == "Marcada como distinta pelo usuário"
+    assert events(world, twin)[-1].justification is None
 
 
 def test_only_the_chosen_candidate_item_scores(world, activity):

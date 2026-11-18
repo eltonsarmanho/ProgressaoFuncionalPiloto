@@ -199,6 +199,7 @@ MAX_EVIDENCE_NOTE = 500
 ACADEMIC_PERIOD = re.compile(r"^\d{4}\.\d$")
 ACTIVITY_ENTITY = "activity"
 ACTIVITY_NOT_FOUND = "Atividade não encontrada"
+DISTINCT_DEFAULT_TEXT = "Marcada como distinta pelo usuário"
 _ACTIVITY_AUDIT_EXCLUDED = {"id", "process_id", "created_by", "created_at", "updated_at", "version"}
 # Changing any of these on an existing activity needs a justification (ATV-08).
 JUSTIFIED_FIELDS = (
@@ -474,12 +475,13 @@ class ChangeActivityStatus(_ExistingActivityUseCase):
         expected_version: int,
         justification: str | None,
     ) -> Activity:
-        """REJEITADA back to AGUARDANDO_REVISAO is simply a new review round (ATV-09)."""
+        """REJEITADA back to AGUARDANDO_REVISAO is simply a new review round (ATV-09).
+
+        The justification is optional (UIM-14): audited when sent, never required.
+        """
         with self._uow_factory() as uow:
             current, _ = self._load(uow, actor, activity_id)
-            justification = _require_justification(
-                justification, "Justificativa obrigatória para mudar o status da atividade"
-            )
+            justification = (justification or "").strip() or None
             if target is current.status:
                 raise ValidationFailed("status", "A atividade já está neste status")
             self._check_version(current, expected_version)
@@ -507,7 +509,9 @@ class BulkValidateActivities(_ActivityUseCase):
         activity_ids: Sequence[UUID],
         justification: str | None,
     ) -> list[Activity]:
-        """Validates the selected activities with one justification and one audit event each.
+        """Validates the selected activities with one audit event each (UIM-14).
+
+        The justification is optional; when sent, it goes into every event.
 
         All or nothing, in one unit of work: an activity of another process (404) or a version
         changed by someone else (409) anywhere in the list validates none (REV-04, VER-09).
@@ -516,9 +520,7 @@ class BulkValidateActivities(_ActivityUseCase):
         """
         with self._uow_factory() as uow:
             self._writable(uow, actor, process_id)
-            justification = _require_justification(
-                justification, "Justificativa obrigatória para validar as atividades"
-            )
+            justification = (justification or "").strip() or None
             selected = []
             for activity_id in dict.fromkeys(activity_ids):
                 activity = uow.activities.get(activity_id)
@@ -552,11 +554,13 @@ class MarkActivitiesDistinct(_ExistingActivityUseCase):
         """Registers why this activity is not a duplicate of an earlier one (VERIF-06)."""
         with self._uow_factory() as uow:
             current, _ = self._load(uow, actor, activity_id)
-            justification = _require_justification(
-                justification, "Justificativa obrigatória para marcar a atividade como distinta"
-            )
+            justification = (justification or "").strip() or None
             self._check_version(current, expected_version)
-            updated = replace(current, distinct_justification=justification)
+            # The text is what marks the activity as distinct (the duplicate rule reads it),
+            # so a mark without one stores a neutral default (UIM-14).
+            updated = replace(
+                current, distinct_justification=justification or DISTINCT_DEFAULT_TEXT
+            )
             uow.activities.update(updated, expected_version)
             self._audit.record(
                 uow,
@@ -565,7 +569,7 @@ class MarkActivitiesDistinct(_ExistingActivityUseCase):
                 activity_id,
                 AuditAction.UPDATE,
                 {"distinct_justification": current.distinct_justification},
-                {"distinct_justification": justification},
+                {"distinct_justification": updated.distinct_justification},
                 justification,
             )
             uow.commit()

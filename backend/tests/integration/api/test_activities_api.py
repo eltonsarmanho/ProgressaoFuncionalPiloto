@@ -251,34 +251,41 @@ def test_put_requires_expected_version_and_detects_stale_writes(client, headers,
     assert client.get(url).json()["title"] == "Novo título"
 
 
-def test_status_change_needs_justification_and_valid_status(client, headers, chosen):
+def test_status_change_needs_no_justification_but_a_valid_status(client, headers, chosen):
     created = create(client, headers, chosen)
     url = f"/api/activities/{created['id']}/status"
 
-    no_reason = client.post(
-        url, json={"status": "REJEITADA", "expected_version": 1}, headers=headers
-    )
     bad_value = client.post(
         url,
         json={"status": "PENDENTE", "expected_version": 1, "justificativa": "x"},
         headers=headers,
     )
-    ok = client.post(
-        url,
-        json={"status": "REJEITADA", "expected_version": 1, "justificativa": "Erro"},
-        headers=headers,
+    no_reason = client.post(
+        url, json={"status": "REJEITADA", "expected_version": 1}, headers=headers
     )
-
-    field_error(no_reason, "justificativa")
-    field_error(bad_value, "status")
-    assert ok.status_code == 200
-    assert (ok.json()["status"], ok.json()["version"]) == ("REJEITADA", 2)
     stale = client.post(
         url,
         json={"status": "VALIDADA", "expected_version": 1, "justificativa": "x"},
         headers=headers,
     )
+
+    field_error(bad_value, "status")
+    assert no_reason.status_code == 200  # UIM-14: no justification needed
+    assert (no_reason.json()["status"], no_reason.json()["version"]) == ("REJEITADA", 2)
     assert stale.status_code == 409
+
+
+def test_status_change_still_accepts_and_audits_a_justification(client, headers, chosen):
+    created = create(client, headers, chosen)
+
+    ok = client.post(
+        f"/api/activities/{created['id']}/status",
+        json={"status": "REJEITADA", "expected_version": 1, "justificativa": "Erro"},
+        headers=headers,
+    )
+
+    assert ok.status_code == 200
+    assert ok.json()["status"] == "REJEITADA"
 
 
 def test_distinct_mark_releases_a_duplicate_in_the_result(client, headers, chosen):
@@ -296,15 +303,31 @@ def test_distinct_mark_releases_a_duplicate_in_the_result(client, headers, chose
     assert [r["reasons"] for r in client.get(scoring_url).json()["rows"]] == [[], ["DUPLICIDADE"]]
 
     url = f"/api/activities/{twin['id']}/distinct"
-    blank = client.post(url, json={"expected_version": 1, "justificativa": " "}, headers=headers)
     ok = client.post(
         url, json={"expected_version": 1, "justificativa": "Outro aluno"}, headers=headers
     )
 
-    field_error(blank, "justificativa")
     assert ok.status_code == 200
     assert ok.json()["distinct_justification"] == "Outro aluno"
     assert client.get(scoring_url).json()["total"] == "10.00"
+
+
+def test_distinct_mark_without_a_justification_also_releases_the_duplicate(
+    client, headers, chosen
+):
+    create(client, headers, chosen, group_number=2, item_number=7, quantidade=1)
+    twin = create(
+        client, headers, chosen, title=" ORIENTAÇÃO de tcc", group_number=2, item_number=7,
+        quantidade=1,
+    )  # fmt: skip
+
+    ok = client.post(
+        f"/api/activities/{twin['id']}/distinct", json={"expected_version": 1}, headers=headers
+    )
+
+    assert ok.status_code == 200
+    assert ok.json()["distinct_justification"] == "Marcada como distinta pelo usuário"
+    assert client.get(f"/api/processes/{chosen['id']}/scoring").json()["total"] == "10.00"
 
 
 @pytest.mark.parametrize("final", ["CONCLUIDO", "ARQUIVADO"])

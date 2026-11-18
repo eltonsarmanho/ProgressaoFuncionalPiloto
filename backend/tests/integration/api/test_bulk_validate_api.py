@@ -123,17 +123,17 @@ def test_an_unknown_activity_is_404_and_none_is_validated(client, admin, headers
 
 @pytest.mark.parametrize("body", [{}, {"justificativa": None}, {"justificativa": ""},
                                   {"justificativa": "   "}])  # fmt: skip
-def test_without_a_justification_it_is_422_on_justificativa_and_nothing_is_validated(
+def test_without_a_justification_it_is_200_and_the_activities_are_validated(
     client, admin, headers, chosen, body
 ):
+    """UIM-14: the batch needs no justification."""
     mine = draft(client, admin, chosen, "Minha")
 
     response = client.post(url(chosen), json={"activity_ids": [str(mine.id)], **body},
                            headers=headers)  # fmt: skip
 
-    assert response.status_code == 422
-    assert response.json()["detail"][0]["field"] == "justificativa"
-    assert status_of(client, mine) == "AGUARDANDO_REVISAO"
+    assert response.status_code == 200
+    assert status_of(client, mine) == "VALIDADA"
 
 
 def test_it_writes_one_audit_event_per_activity_with_the_justification(

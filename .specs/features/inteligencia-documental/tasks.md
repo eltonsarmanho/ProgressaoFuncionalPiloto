@@ -3374,11 +3374,11 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Validar, rejeitar e reabrir uma atividade sem justificativa dão 200 e a auditoria do status fica com justificativa nula; com justificativa ela é gravada
-- [ ] O lote sem justificativa valida todas as atividades, continua atômico (uma de outro processo dá 404 e nenhuma é validada) e grava um evento por atividade
-- [ ] Marcar como distinta sem justificativa dá 200 e conta as duas atividades
-- [ ] Os testes que esperavam 422 por falta de justificativa nessas três ações passam a esperar sucesso e auditoria sem justificativa, sem perder as demais asserções
-- [ ] Gate full passa
+- [x] Validar, rejeitar e reabrir uma atividade sem justificativa dão 200 e a auditoria do status fica com justificativa nula; com justificativa ela é gravada
+- [x] O lote sem justificativa valida todas as atividades, continua atômico (uma de outro processo dá 404 e nenhuma é validada) e grava um evento por atividade
+- [x] Marcar como distinta sem justificativa dá 200 e conta as duas atividades
+- [x] Os testes que esperavam 422 por falta de justificativa nessas três ações passam a esperar sucesso e auditoria sem justificativa, sem perder as demais asserções
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

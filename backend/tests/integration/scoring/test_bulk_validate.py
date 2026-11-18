@@ -10,7 +10,7 @@ from app.application.use_cases.scoring import ActivityData
 from app.domain.entities.activity import ActivitySource, ActivityStatus
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.process import ProcessStatus
-from app.domain.errors import Conflict, NotFound, StaleVersion, ValidationFailed
+from app.domain.errors import Conflict, NotFound, StaleVersion
 
 
 @pytest.fixture
@@ -59,14 +59,19 @@ def test_three_selected_drafts_become_validated_with_the_same_justification_and_
 
 
 @pytest.mark.parametrize("justification", [None, "", "   "])
-def test_without_a_justification_nothing_is_validated(world, bulk, justification):
+def test_without_a_justification_everything_is_validated_and_audited_without_one(
+    world, bulk, justification
+):
+    """UIM-14: the batch needs no justification; one audit event per activity stays."""
     drafts = [draft(world, "A"), draft(world, "B")]
 
-    with pytest.raises(ValidationFailed) as error:
-        bulk.execute(world.docente, world.process.id, [a.id for a in drafts], justification)
+    bulk.execute(world.docente, world.process.id, [a.id for a in drafts], justification)
 
-    assert error.value.field == "justificativa"
-    assert [reload(world, a).status for a in drafts] == [ActivityStatus.AGUARDANDO_REVISAO] * 2
+    for activity in drafts:
+        assert reload(world, activity).status is ActivityStatus.VALIDADA
+        _, status_event = audit_of(world, activity)
+        assert status_event.action is AuditAction.STATUS
+        assert status_event.justification is None
 
 
 def test_an_activity_of_another_process_gives_404_and_validates_none(world, bulk, add_process):
