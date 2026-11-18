@@ -454,8 +454,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] `Decimal('52.00')` vira `52,00`; `date(2024,11,23)` vira `23/11/2024`; `2023.1` vira `1º Período de 2023`
-- [ ] Gate quick passa; 8+ testes
+- [x] `Decimal('52.00')` vira `52,00`; `date(2024,11,23)` vira `23/11/2024`; `2023.1` vira `1º Período de 2023`
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
