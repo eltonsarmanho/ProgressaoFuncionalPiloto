@@ -101,6 +101,21 @@ def test_without_the_confirmation_it_is_422_and_nothing_is_removed(
     assert client.get(f"/api/processes/{stored.process['id']}").json()["status"] != "CONCLUIDO"
 
 
+def test_a_body_without_the_confirmation_field_is_refused_like_a_false_one(
+    client, stored, uow_factory, tmp_path
+):
+    add_all_ready(uow_factory, stored.process, stored.user)
+    body = {"expected_version": version_of(client, stored.process)}
+
+    response = client.post(conclusion_url(stored.process), json=body, headers=stored.headers)
+
+    assert response.status_code == 422
+    [detail] = response.json()["detail"]
+    assert (detail["field"], detail["code"]) == ("geracao", "CONFIRMACAO_OBRIGATORIA")
+    assert len(stored_files(tmp_path)) == 1
+    assert client.get(f"/api/processes/{stored.process['id']}").json()["status"] == "EM_ANDAMENTO"
+
+
 def test_a_missing_generated_document_is_422_with_the_kinds_that_are_missing(
     client, stored, uow_factory, tmp_path
 ):

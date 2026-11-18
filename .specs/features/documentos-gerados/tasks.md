@@ -3167,10 +3167,10 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 #### T113: Conclusão sem a confirmação é recusada
 
-**What**: Corrige B-D2 (R09): testes de API que mandam a conclusão sem o campo `confirmar` e com `confirmar` falso, e esperam 422 `CONFIRMACAO_OBRIGATORIA` sem excluir nada; mata o mutante que troca o padrão do campo para verdadeiro.
+**What**: Corrige B-D2 (R09): teste de API que manda a conclusão sem o campo `confirmar` (o de `confirmar` falso já existe e o caso de uso recebe o booleano explícito) e espera 422 `CONFIRMACAO_OBRIGATORIA` sem excluir nada; mata o mutante que troca o padrão do campo para verdadeiro.
 **Where**: `backend/tests/integration/api/test_conclusion_api.py`
 **Depends on**: T112
-**Reuses**: `test_conclusion_api.py` (corpo `expected_version` + `confirmar`); também toca: `backend/tests/integration/doc_usecases/test_conclude_process.py`
+**Reuses**: `test_conclusion_api.py` (corpo `expected_version` + `confirmar`)
 **Requirement**: DEL-04
 
 **Tools**:
@@ -3180,9 +3180,9 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Corpo só com `expected_version`: 422, `field` `geracao`, código `CONFIRMACAO_OBRIGATORIA`, o arquivo continua armazenado e o processo continua EM_ANDAMENTO; o mesmo com `confirmar: false`
-- [ ] O mutante `confirmar: bool = True` em `schemas/generated.py` é morto (comando no corpo do commit)
-- [ ] Gate full passa; 2+ testes novos
+- [x] Corpo só com `expected_version`: 422, `field` `geracao`, código `CONFIRMACAO_OBRIGATORIA`, o arquivo continua armazenado e o processo continua EM_ANDAMENTO (o caso `confirmar: false` já tem teste em `test_without_the_confirmation_it_is_422_and_nothing_is_removed`)
+- [x] O mutante `confirmar: bool = True` em `schemas/generated.py` é morto (comando no corpo do commit)
+- [x] Gate full passa; 1+ teste novo
 
 **Tests**: integration
 **Gate**: full
