@@ -1913,9 +1913,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Geração e redação iniciadas e interrompidas ficam `FALHOU/INTERROMPIDA`; a linha ainda não iniciada continua na fila e nenhuma é reenfileirada
-- [ ] Temporários e arquivo sem linha somem do armazenamento; texto do rascunho não é alterado
-- [ ] Gate full passa; 5+ testes
+- [x] Geração e redação iniciadas e interrompidas ficam `FALHOU/INTERROMPIDA`; a linha ainda não iniciada continua na fila e nenhuma é reenfileirada
+- [x] Temporários e arquivo sem linha somem do armazenamento; texto do rascunho não é alterado
+- [x] Gate full passa; 5+ testes
 
 **Tests**: integration
 **Gate**: full

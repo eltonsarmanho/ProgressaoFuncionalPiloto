@@ -686,3 +686,64 @@ class RunGeneration:
             + _numbering_alert(generation.kind, plan, latest)
         )
         return _Produced([(DocumentFormat.PDF, temp)], snapshot, alerts, plan.plan_hash)
+
+
+WORDING_ENTITY = "report_wording_job"
+
+
+class RecoverInterruptedGenerations:
+    """Run at startup, before the executor starts (VER-08, REL-14)."""
+
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        clock: Clock,
+        storage: GeneratedFileStorage,
+    ) -> None:
+        self._uow_factory = uow_factory
+        self._audit = audit
+        self._clock = clock
+        self._storage = storage
+
+    def execute(self) -> int:
+        """Closes the generations and the wordings a restart left GERANDO and started as FALHOU
+        with `INTERROMPIDA`, audited; a row not started stays in the queue and none is queued
+        again. Then removes the temporary files and the stored files no row refers to. Returns
+        how many rows were closed."""
+        with self._uow_factory() as uow:
+            now = self._clock.now()
+            generations = uow.generations.recover_interrupted(now)
+            jobs = uow.wording_jobs.recover_interrupted(now)
+            for entity, rows in ((GENERATED_ENTITY, generations), (WORDING_ENTITY, jobs)):
+                for row in rows:
+                    self._audit.record(
+                        uow,
+                        None,
+                        entity,
+                        row.id,
+                        AuditAction.STATUS,
+                        {"state": GenerationState.GERANDO},
+                        {
+                            "state": GenerationState.FALHOU,
+                            "error_code": GenerationCode.INTERROMPIDA,
+                        },
+                    )
+            uow.commit()
+        with self._uow_factory() as uow:
+            referenced = {
+                process.id: {
+                    f.internal_name
+                    for generation in uow.generations.list_for_process(process.id)
+                    for f in generation.files
+                }
+                for process in uow.processes.list()
+            }
+        removed = self._storage.cleanup(referenced)
+        logger.info(
+            "recovered_generations=%d recovered_wordings=%d removed_files=%d",
+            len(generations),
+            len(jobs),
+            removed,
+        )
+        return len(generations) + len(jobs)
