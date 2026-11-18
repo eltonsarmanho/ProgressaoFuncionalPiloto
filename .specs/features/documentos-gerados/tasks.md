@@ -1228,8 +1228,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Cada repositório é acessível por `uow.<nome>` e participa do commit e do rollback da mesma transação
-- [ ] Gate full passa; 3+ testes
+- [x] Cada repositório é acessível por `uow.<nome>` e participa do commit e do rollback da mesma transação
+- [x] Gate full passa; 3+ testes
 
 **Tests**: integration
 **Gate**: full

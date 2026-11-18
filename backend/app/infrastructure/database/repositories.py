@@ -2012,6 +2012,10 @@ class SqlUnitOfWork:
         self.extractions = SqlExtractionRepository(self._session)
         self.jobs = SqlJobRepository(self._session)
         self.evidences = SqlEvidenceRepository(self._session)
+        self.generations = SqlGenerationRepository(self._session)
+        self.wording_jobs = SqlWordingJobRepository(self._session)
+        self.report_drafts = SqlReportDraftRepository(self._session)
+        self.comprovante_layouts = SqlLayoutRepository(self._session)
         return self
 
     def __exit__(
