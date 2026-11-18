@@ -1,4 +1,4 @@
-import type { GenerationAlertCode, GenerationCode, GenerationState } from "./api/generated";
+import type { EntrySource, GenerationAlert, GenerationAlertCode, GenerationCode, GenerationState } from "./api/generated";
 import type { DocumentStatus, Modality, ProcessStatus, Severity } from "./api/types";
 
 export const STATUS_LABELS: Record<ProcessStatus, string> = {
@@ -304,3 +304,33 @@ export const GENERATION_ALERT_LABELS: Record<GenerationAlertCode, string> = {
   RASCUNHO_DESATUALIZADO: "O rascunho do Relatório está desatualizado: há atividades novas ou removidas",
   EXCLUSAO_PARCIAL: "Nem todos os arquivos foram excluídos: tente de novo",
 };
+
+/** The seal of an entry of the report: who wrote the text that is there now (REL-07). */
+export const ENTRY_SOURCE_LABELS: Record<EntrySource, string> = {
+  MODELO: "Texto-modelo",
+  IA: "Redigido pela IA",
+  USUARIO: "Editado",
+};
+
+/** Why the check of a wording refused the text of the AI; `REDACAO_REJEITADA` carries them in its message. */
+export const WORDING_REASON_LABELS: Record<string, string> = {
+  NUMERO: "número que não está na atividade",
+  DATA: "data que não está na atividade",
+  NOME: "nome que não está na atividade",
+  VOCABULARIO: "palavras fora do vocabulário permitido",
+  COMPRIMENTO: "texto longo demais",
+  PALAVRA_PROIBIDA: "palavra proibida",
+};
+
+/** The text of an alert of a draft or a generation: its label, plus the reasons of a refused wording. */
+export function alertText(alert: GenerationAlert): string {
+  const label = GENERATION_ALERT_LABELS[alert.code] ?? alert.code;
+  if (alert.code !== "REDACAO_REJEITADA" || !alert.message) return label;
+  const reasons = alert.message.split(",").map((r) => WORDING_REASON_LABELS[r.trim()] ?? r.trim());
+  return `${label} (${reasons.join(", ")})`;
+}
+
+/** "20000" -> "20 000": the counter of a text uses a non-breaking space. */
+export function formatCount(n: number): string {
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}

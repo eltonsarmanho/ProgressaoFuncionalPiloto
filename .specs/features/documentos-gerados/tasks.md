@@ -2807,9 +2807,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Editar e sair do campo grava a entrada com a versão e o selo passa a `editado`; 409 recarrega e avisa
-- [ ] Seção vazia aparece como vazia; mover atividade grava e a leva para a seção escolhida; contador bloqueia acima de 20 000
-- [ ] Gate quick passa; 8+ testes
+- [x] Editar e sair do campo grava a entrada com a versão e o selo passa a `editado`; 409 recarrega e avisa
+- [x] Seção vazia aparece como vazia; mover atividade grava e a leva para a seção escolhida; contador bloqueia acima de 20 000
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
