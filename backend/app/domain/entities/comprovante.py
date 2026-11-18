@@ -154,12 +154,23 @@ class ComprovantePlan:
 
 @dataclass(frozen=True)
 class Staleness:
-    """Why a saved layout no longer matches the current activities (ARR-08)."""
+    """Why a saved layout no longer matches the current activities (ARR-08).
+
+    `left`: activities of the layout that are no longer validated. `moved`: ones the scoring put
+    in another item. `new_link`: ones with a page link the layout was not built from. `joined`:
+    validated activities the layout does not have.
+    """
 
     left_activity_ids: tuple[UUID, ...] = ()
     moved_activity_ids: tuple[UUID, ...] = ()
     new_link_activity_ids: tuple[UUID, ...] = ()
+    joined_activity_ids: tuple[UUID, ...] = ()
 
     @property
     def is_stale(self) -> bool:
-        return bool(self.left_activity_ids or self.moved_activity_ids or self.new_link_activity_ids)
+        return bool(
+            self.left_activity_ids
+            or self.moved_activity_ids
+            or self.new_link_activity_ids
+            or self.joined_activity_ids
+        )

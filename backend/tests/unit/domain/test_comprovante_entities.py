@@ -130,3 +130,7 @@ def test_a_layout_activity_without_a_known_item_has_none():
         None,
         None,
     )
+
+
+def test_an_activity_that_joined_after_the_layout_makes_it_stale():
+    assert Staleness(joined_activity_ids=(uuid4(),)).is_stale is True

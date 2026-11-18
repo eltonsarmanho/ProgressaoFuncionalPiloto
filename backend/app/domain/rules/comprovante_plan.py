@@ -24,6 +24,7 @@ from app.domain.entities.comprovante import (
     PlanAlert,
     PlanPage,
     SourceDocument,
+    Staleness,
     TocEntry,
     TocLevel,
 )
@@ -313,3 +314,81 @@ def check_comprovante(
             GenerationCode.COMPROVANTE_GRANDE_DEMAIS,
             f"O Comprovante teria {len(attached)} páginas anexadas; o limite é {max_pages}.",
         )
+
+
+def layout_staleness(
+    layout: ComprovanteLayout,
+    activities: Sequence[Activity],
+    evidences: Sequence[ActivityEvidence],
+) -> Staleness:
+    """Whether a saved layout still matches the activities and links (ARR-08).
+
+    An activity of the layout that is no longer validated has left; one the scoring put in
+    another item has moved; one with a page link the layout was not built from has a new link;
+    a validated activity the layout does not have has joined. Ids follow the layout order
+    (table order for the ones that joined).
+    """
+    current = {a.id: a for a in eligible_activities(activities)}
+    arranged = {a.activity_id for a in layout.activities}
+    base = set(layout.base_evidence_keys)
+    linked = {
+        found.activity_id
+        for found in evidences
+        if EvidenceKey(found.activity_id, found.document_id, found.page_number) not in base
+    }
+    left, moved, new_link = [], [], []
+    for entry in layout.activities:
+        now = current.get(entry.activity_id)
+        if now is None:
+            left.append(entry.activity_id)
+        elif entry.group_number is not None and (entry.group_number, entry.item_number) != (
+            now.group_number,
+            now.item_number,
+        ):
+            moved.append(entry.activity_id)
+        if now is not None and entry.activity_id in linked:
+            new_link.append(entry.activity_id)
+    joined = [a.id for a in sorted(current.values(), key=_table_order) if a.id not in arranged]
+    return Staleness(tuple(left), tuple(moved), tuple(new_link), tuple(joined))
+
+
+def current_layout(
+    layout: ComprovanteLayout,
+    activities: Sequence[Activity],
+    evidences: Sequence[ActivityEvidence],
+) -> ComprovanteLayout:
+    """The layout the generation uses: only the current activities (ARR-08).
+
+    Activities that left are dropped, the saved order and pages are kept, the item of each is
+    the current one, and the validated activities the layout does not know follow with the
+    pages of their links.
+    """
+    current = {a.id: a for a in eligible_activities(activities)}
+    kept = tuple(
+        replace(entry, group_number=now.group_number, item_number=now.item_number)
+        for entry in layout.activities
+        if (now := current.get(entry.activity_id)) is not None
+    )
+    arranged = {entry.activity_id for entry in layout.activities}
+    newcomers = derive_layout(
+        layout.process_id, [a for a in current.values() if a.id not in arranged], evidences
+    )
+    return replace(layout, activities=kept + newcomers.activities)
+
+
+def invalid_entries(
+    layout: ComprovanteLayout, documents: Sequence[SourceDocument]
+) -> tuple[EvidenceKey, ...]:
+    """The pages of the layout that cannot be attached any more (ARR edge case, CMP-10).
+
+    Their document is no longer in the process, its file was deleted, or the page is past its
+    last page. The layout keeps them so the user sees and removes them.
+    """
+    known = {document.id: document for document in documents}
+    invalid = []
+    for entry in layout.activities:
+        for page in entry.pages:
+            document = known.get(page.document_id)
+            if document is None or document.file_deleted or page.page > document.page_count:
+                invalid.append(EvidenceKey(entry.activity_id, page.document_id, page.page))
+    return tuple(invalid)

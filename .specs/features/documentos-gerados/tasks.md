@@ -696,9 +696,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Atividade rejeitada depois do arranjo, mudança de item e vínculo novo marcam T19; arranjo igual às atividades atuais não marca
-- [ ] A geração usa só as atividades atuais; entrada de documento excluído é marcada inválida
-- [ ] Gate quick passa; 8+ testes
+- [x] Atividade rejeitada depois do arranjo, mudança de item e vínculo novo marcam T19; arranjo igual às atividades atuais não marca
+- [x] A geração usa só as atividades atuais; entrada de documento excluído é marcada inválida
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
