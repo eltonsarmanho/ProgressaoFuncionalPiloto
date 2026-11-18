@@ -4,10 +4,16 @@ straight in the database, with made-up names only."""
 import uuid
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from types import SimpleNamespace
 
+import pytest
+
+from app.application.use_cases.generated_documents import GenerationLimits, RequestGeneration
 from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.entities.document import DocAlertCode
 from app.domain.repositories.ports import ActivityEvidence
+from app.infrastructure.documents.front_matter import TOC_CAPACITY
+from app.infrastructure.storage.generated_storage import LocalGeneratedStorage
 from tests.integration.documents.factories import make_document
 
 MOMENT = datetime(2026, 11, 18, 9, 0, tzinfo=UTC)
@@ -63,6 +69,54 @@ def link(world, activity, document, page=1) -> ActivityEvidence:
     return evidence
 
 
-class FixedClock:
-    def now(self) -> datetime:
-        return MOMENT
+def build_request(world, docs, storage=None, limits=None) -> RequestGeneration:
+    return RequestGeneration(
+        world.uow_factory,
+        world.audit,
+        world.policy,
+        docs.clock,
+        storage or LocalGeneratedStorage(docs.storage_root),
+        docs.storage,
+        docs.inspector,
+        limits or GenerationLimits(),
+        TOC_CAPACITY,
+    )
+
+
+@pytest.fixture
+def gen(docs, official_chosen):
+    """The world of the document tests with the official table chosen, plus the generation use
+    cases bound to temporary storage."""
+    world = official_chosen
+    return SimpleNamespace(
+        world=world,
+        docs=docs,
+        clock=docs.clock,
+        originals=docs.storage,
+        generated=LocalGeneratedStorage(docs.storage_root),
+        request=lambda storage=None, limits=None: build_request(world, docs, storage, limits),
+    )
+
+
+def store_original(gen, process, content: bytes, ext: str = "pdf", **kwargs):
+    """A document row whose file is really in the originals storage."""
+    name = gen.originals.save(process.id, ext, content)
+    mime = {"pdf": "application/pdf", "png": "image/png", "jpg": "image/jpeg"}[ext]
+    return add_document(gen.world, process, internal_name=name, mime=mime, **kwargs)
+
+
+def link_pages(world, activity, document, pages) -> None:
+    """Links of several pages of one document to the activity, in one commit."""
+    with world.uow_factory() as uow:
+        for page in pages:
+            uow.evidences.add(
+                ActivityEvidence(
+                    id=uuid.uuid4(),
+                    activity_id=activity.id,
+                    document_id=document.id,
+                    page_number=page,
+                    excerpt="trecho",
+                    created_by=world.admin.id,
+                )
+            )
+        uow.commit()

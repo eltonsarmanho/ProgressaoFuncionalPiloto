@@ -1781,10 +1781,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Atividade validada sem descrição e sem título recusa o Relatório com `ATIVIDADE_SEM_DESCRICAO` e o `id` da atividade
-- [ ] Comprovante com 401 páginas, original ausente, PNG acima de 12 megapixels ou documento `ARQUIVO_EXCLUIDO` recusa com o código certo e sem criar linha; a Tabela de processo concluído é aceita
-- [ ] Menos de `generation_min_free_mb` livres recusa com `ESPACO_INSUFICIENTE`
-- [ ] Gate full passa; 8+ testes
+- [x] Atividade validada sem descrição e sem título recusa o Relatório com `ATIVIDADE_SEM_DESCRICAO` e o `id` da atividade
+- [x] Comprovante com 401 páginas, original ausente, PNG acima de 12 megapixels ou documento `ARQUIVO_EXCLUIDO` recusa com o código certo e sem criar linha; a Tabela de processo concluído é aceita
+- [x] Menos de `generation_min_free_mb` livres recusa com `ESPACO_INSUFICIENTE`
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full
