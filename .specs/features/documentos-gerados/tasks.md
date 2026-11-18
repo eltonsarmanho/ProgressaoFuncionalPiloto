@@ -2257,11 +2257,11 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Sem confirmação responde 422 `CONFIRMACAO_OBRIGATORIA`; sem os três `PRONTO`, 422 `ARTEFATOS_PENDENTES` com os tipos; com geração, redação ou OCR em curso, 409 `OPERACAO_EM_ANDAMENTO`; em todos nenhum arquivo é excluído
-- [ ] Com tudo pronto: arquivos excluídos, processo CONCLUIDO, `generated/` intacto e eventos `PURGE` e `STATUS` com contagens e sem nomes
-- [ ] Remoção que falha deixa o processo EM_ANDAMENTO com `EXCLUSAO_PARCIAL`, os já excluídos continuam, a repetição conclui; repetir num processo CONCLUIDO responde 200 sem alterar; documento enviado durante a conclusão impede a transição com `EXCLUSAO_PARCIAL`
-- [ ] Papel, acesso e versão como `ChangeProcessStatus`: fora do acesso 404, versão desatualizada 409, processo que não está EM_ANDAMENTO 409
-- [ ] Gate full passa; 14+ testes
+- [x] Sem confirmação responde 422 `CONFIRMACAO_OBRIGATORIA`; sem os três `PRONTO`, 422 `ARTEFATOS_PENDENTES` com os tipos; com geração, redação ou OCR em curso, 409 `OPERACAO_EM_ANDAMENTO`; em todos nenhum arquivo é excluído
+- [x] Com tudo pronto: arquivos excluídos, processo CONCLUIDO, `generated/` intacto e eventos `PURGE` e `STATUS` com contagens e sem nomes
+- [x] Remoção que falha deixa o processo EM_ANDAMENTO com `EXCLUSAO_PARCIAL`, os já excluídos continuam, a repetição conclui; repetir num processo CONCLUIDO responde 200 sem alterar; documento enviado durante a conclusão impede a transição com `EXCLUSAO_PARCIAL`
+- [x] Papel, acesso e versão como `ChangeProcessStatus`: fora do acesso 404, versão desatualizada 409, processo que não está EM_ANDAMENTO 409
+- [x] Gate full passa; 14+ testes
 
 **Tests**: integration
 **Gate**: full

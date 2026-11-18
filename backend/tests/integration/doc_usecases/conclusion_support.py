@@ -6,7 +6,13 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from app.domain.entities.document import PageText, TextMethod
-from app.domain.entities.generated import DocumentKind, GenerationCode, GenerationState
+from app.domain.entities.generated import (
+    DocumentFormat,
+    DocumentKind,
+    GeneratedFile,
+    GenerationCode,
+    GenerationState,
+)
 from tests.integration.doc_usecases.generation_support import (
     add_activity,
     add_document,
@@ -80,3 +86,24 @@ def add_generation(world, kind, state=GenerationState.PRONTO, process=None):
 def add_all_ready(world, process=None) -> None:
     for kind in DocumentKind:
         add_generation(world, kind, process=process)
+
+
+def add_stored_generation(gen, kind, content=b"gerado"):
+    """A PRONTO version of the kind whose PDF really is in the generated storage; returns the
+    internal name and the content."""
+    world = gen.world
+    temp = gen.generated.new_temp_path(world.process.id)
+    temp.write_bytes(content)
+    name = gen.generated.commit(world.process.id, temp, "pdf")
+    generation = make_generation(world.process, world.admin.id, kind)
+    with world.uow_factory() as uow:
+        uow.generations.add(generation)
+        uow.generations.finish_ready(
+            generation.id,
+            T0,
+            [GeneratedFile(DocumentFormat.PDF, name, "a" * 64, len(content))],
+            {"total": "1"},
+            (),
+        )
+        uow.commit()
+    return name, content
