@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from uuid import UUID
 
-from app.domain.entities.generated import GenerationAlert
+from app.domain.entities.generated import DocumentKind, GenerationAlert
 
 
 class EntrySource(StrEnum):
@@ -91,3 +91,43 @@ class ReportDraft:
     template_version: int
     sections: tuple[DraftSection, ...]
     version: int
+
+
+@dataclass(frozen=True)
+class PageSetup:
+    """Page of the report: A4 with the margins and the font of the institutional model."""
+
+    margin_left_mm: float
+    margin_right_mm: float
+    margin_top_mm: float
+    margin_bottom_mm: float
+    font_name: str
+    font_size_pt: float
+    size: str = "A4"
+
+
+@dataclass(frozen=True)
+class ReportLayout:
+    """What the template says about the document outside the sections.
+
+    `header_lines`, `title` and `identification` are texts with markers (`{unit_name}`,
+    `{professor_name}`, `{current_class}`, `{current_level}`, `{target_class}`, `{target_level}`,
+    `{interstice}`) that the document model fills; `body_heading` opens the sections.
+    """
+
+    page: PageSetup
+    header_lines: tuple[str, ...]
+    title: str
+    identification: tuple[str, ...]
+    body_heading: str
+    entry_style: str
+
+
+@dataclass(frozen=True)
+class DossierItem:
+    """One document of the dossier, in delivery order; `generated_by` is set for the ones the
+    system produces (ORD-01)."""
+
+    order: int
+    title: str
+    generated_by: DocumentKind | None = None

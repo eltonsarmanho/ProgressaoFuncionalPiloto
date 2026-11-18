@@ -1306,8 +1306,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Arquivo com JSON inválido, seção sem `key` ou `group_map` apontando para seção inexistente levanta erro com o nome do arquivo e do campo
-- [ ] Gate quick passa; 8+ testes
+- [x] Arquivo com JSON inválido, seção sem `key` ou `group_map` apontando para seção inexistente levanta erro com o nome do arquivo e do campo
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick

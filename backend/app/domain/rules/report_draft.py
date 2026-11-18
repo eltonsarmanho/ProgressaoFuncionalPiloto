@@ -20,12 +20,14 @@ from app.domain.entities.report import (
     GroupBy,
     MatchRule,
     ReportDraft,
+    ReportLayout,
     ReportTemplate,
     TemplateSection,
 )
 from app.domain.errors import NotFound
 from app.domain.rules.activity_order import eligible_activities, table_order
 from app.domain.rules.pt_format import format_date, format_decimal, format_hours, format_period
+from app.domain.rules.report_grounding import WordingVocabulary
 from app.domain.rules.scoring_periods import is_start_only
 
 
@@ -38,6 +40,22 @@ class GroupTarget:
 
 
 GroupMap = Mapping[MatchRule, GroupTarget]
+
+# The markers an entry template can use: the keys `activity_fields` can write.
+ENTRY_MARKERS = frozenset(
+    {"title", "description", "dates", "period", "hours", "course_hours", "quantity", "course"}
+)
+
+
+@dataclass(frozen=True)
+class ReportConfig:
+    """The report template as configuration: sections, group map, the conference vocabulary and
+    the layout of the document."""
+
+    template: ReportTemplate
+    group_map: GroupMap
+    vocabulary: WordingVocabulary
+    layout: ReportLayout
 
 
 def group_target(group_map: GroupMap, activity: Activity) -> GroupTarget | None:
