@@ -386,6 +386,54 @@ def test_certificate_of_a_project_that_says_extension_keeps_item_iv_2():
     assert (suggested.group_number, suggested.item_number) == (4, 2)
 
 
+# --- per-action items count one per distinct action (VER-12) -----------------------------
+
+TWO_PROJECTS = (
+    "CERTIFICADO. Certificamos que Fulana de Tal Exemplo participou do projeto de extensão "
+    "Alfa Ficticio de 01/02/2023 a 31/01/2025 e do projeto de extensão Beta Ficticio de "
+    "01/03/2023 a 28/02/2025."
+)
+
+
+def extension_project(title, start, end):
+    return activity(
+        taxonomy="EXTENSAO_PROJETO_PARTICIPACAO",
+        title=title,
+        event_date=None,
+        start_date=start,
+        end_date=end,
+        hours=None,
+        evidence_text=f"participou do projeto de extensão {title}",
+    )
+
+
+def test_two_distinct_extension_projects_count_one_action_each_not_years():
+    alfa = extension_project("Alfa Ficticio", "2023-02-01", "2025-01-31")
+    beta = extension_project("Beta Ficticio", "2023-03-01", "2025-02-28")
+
+    result, _ = analyze(
+        payload(alfa, beta, document_type="CERTIFICADO"),
+        text_page(1, TWO_PROJECTS),
+        interstice=INTERSTICE,
+    )
+
+    assert [a.quantity for a in result.activities] == [Decimal(1), Decimal(1)]
+    assert DocAlertCode.QUANTIDADE_ESTIMADA not in codes(result)
+
+
+def test_the_same_extension_project_listed_twice_counts_one_action():
+    alfa = extension_project("Alfa Ficticio", "2023-02-01", "2025-01-31")
+
+    result, _ = analyze(
+        payload(alfa, alfa, document_type="CERTIFICADO"),
+        text_page(1, TWO_PROJECTS),
+        interstice=INTERSTICE,
+    )
+
+    assert [a.quantity for a in result.activities] == [Decimal(1)]
+    assert codes(result, DocAlertCode.ATIVIDADE_REPETIDA) == [DocAlertCode.ATIVIDADE_REPETIDA]
+
+
 # --- seminar evaluation forms are not boards (REAL-18) -----------------------------------
 
 SEMINAR_FORM = (

@@ -2274,11 +2274,11 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 **Done when**:
 
-- [ ] Teste lê a unidade de cada item de `ufpa.json` e fixa a regra de quantidade ao tipo de unidade (ação, ano, hora)
-- [ ] Item por ação: duas atividades distintas contam duas ações; a mesma atividade repetida conta uma
-- [ ] Item por ano: só anos completos do período dentro do interstício (T63 segue válido)
-- [ ] Mudança de IV.1 e IV.2 descrita no corpo do commit
-- [ ] Gate full passa
+- [x] Teste lê a unidade de cada item de `ufpa.json` e fixa a regra de quantidade ao tipo de unidade (ação, ano, hora)
+- [x] Item por ação: duas atividades distintas contam duas ações; a mesma atividade repetida conta uma
+- [x] Item por ano: só anos completos do período dentro do interstício (T63 segue válido)
+- [x] Mudança de IV.1 e IV.2 descrita no corpo do commit
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

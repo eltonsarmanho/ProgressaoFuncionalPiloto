@@ -20,16 +20,21 @@ _PER_DOCUMENT_WITH_HOURS = frozenset(
         T.EXTENSAO_EVENTO_MINISTRANTE,
     }
 )
+# Items whose unit in the official table (`ufpa.json`) is "por ano ...". Every other taxonomy is
+# one per activity: "por ação" (IV.1 and IV.2 included), "por banca", "por aluno", "por unidade"
+# and "no interstício". The test `test_quantity_rules_units` pins both lists to the table.
 _PER_YEAR = frozenset(
     {
-        T.EXTENSAO_PROJETO_COORDENACAO,
-        T.EXTENSAO_PROJETO_PARTICIPACAO,
+        T.PESQUISA_PROJETO_COORDENACAO,
         T.PESQUISA_GRUPO_COORDENACAO,
         T.PESQUISA_GRUPO_MEMBRO,
         T.PESQUISA_BOLSA_PRODUTIVIDADE,
         T.FUNCAO_DIRETOR_FACULDADE,
         T.FUNCAO_VICE_DIRETOR_FACULDADE,
         T.FUNCAO_COORDENADOR_CURSO_GRADUACAO,
+        T.COMISSAO_ADMINISTRACAO_SUPERIOR,
+        T.COMISSAO_NDE_MEMBRO,
+        T.COMISSAO_UNIDADE,
         T.COLEGIADO_MEMBRO,
         T.CONSULTORIA_AD_HOC,
     }
@@ -68,6 +73,10 @@ def derive_quantity(
     taxonomy: T, extracted: ExtractedActivity, interstice: Interstice | None = None
 ) -> QuantityResult:
     """Quantity, hours and Group I data for a taxonomy; per-year items carry an estimate warning.
+
+    The quantity follows the unit of the item in the official table: one per action or per
+    document for "por ação" and the other per-event units (an extension project is one action,
+    whatever its length), hours for hour-based items (VER-12).
 
     A per-year item counts the complete years of the period inside the interstice, never
     rounded up. With less than a year, or without both dates, the quantity is 0 and the
