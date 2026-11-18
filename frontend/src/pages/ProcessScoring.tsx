@@ -10,15 +10,19 @@ import type {
   ScoringVersion,
   TableChoice,
 } from "../api/types";
+import { activityBody } from "../activityBody";
 import { ActivityForm } from "../components/ActivityForm";
 import { AlertList } from "../components/AlertList";
 import { Modal } from "../components/Modal";
+import { ScoreEditor } from "../components/ScoreEditor";
 import { ScoringSummary } from "../components/ScoringSummary";
 import { ScoringTable } from "../components/ScoringTable";
 import { StepNav } from "../components/StepNav";
 import { TablePicker } from "../components/TablePicker";
 
-type Pending = { kind: "new" } | { kind: "edit"; activity: Activity };
+type Pending = { kind: "new" } | { kind: "edit" | "points"; activity: Activity; pit?: boolean };
+
+const MANUAL_CODE = "VALOR_UNITARIO_MANUAL";
 
 /** Etapa 4: loads the table choice, the result and the criteria; reloads after every change. */
 export function ProcessScoring() {
@@ -62,11 +66,27 @@ export function ProcessScoring() {
       .catch(() => setTables([]));
   }, []);
 
-  /** Loads the activity (the row has no version) before the edit form. */
-  async function edit(row: ScoringRow) {
+  /** Loads the activity (the row has no version) before the edit form or the points editor. */
+  async function edit(kind: "edit" | "points", row: ScoringRow) {
     try {
       const activity = await request<Activity>("GET", `/api/activities/${row.activity_id}`);
-      setPending({ kind: "edit", activity });
+      setPending({ kind, activity, pit: row.pit_hours != null });
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  }
+
+  /** UIM-23: back to the table's unit value. */
+  async function clearManualValue(row: ScoringRow) {
+    setError(null);
+    try {
+      const activity = await request<Activity>("GET", `/api/activities/${row.activity_id}`);
+      await request("PUT", `/api/activities/${activity.id}`, {
+        ...activityBody(activity),
+        unit_points_override: null,
+        expected_version: activity.version,
+      });
+      done();
     } catch (err) {
       setError(errorMessage(err));
     }
@@ -148,10 +168,21 @@ export function ProcessScoring() {
                     className="btn btn-secondary"
                     aria-label={`Editar ${row.title}`}
                     title={`Editar ${row.title}`}
-                    onClick={() => void edit(row)}
+                    onClick={() => void edit("edit", row)}
                   >
                     Editar
                   </button>
+                  {(row.status === "PONTUADA" || row.status === "POTENCIAL") && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      aria-label={`Editar pontuação de ${row.title}`}
+                      title={`Editar pontuação de ${row.title}`}
+                      onClick={() => void edit("points", row)}
+                    >
+                      Editar pontuação
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="btn btn-primary"
@@ -179,6 +210,20 @@ export function ProcessScoring() {
                   >
                     Manter como distinta
                   </button>
+                  {row.alerts.some((a) => a.code === MANUAL_CODE) && (
+                    <>
+                      <span className="badge badge-pending">Manual</span>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        aria-label={`Usar valor da tabela em ${row.title}`}
+                        title={`Usar valor da tabela em ${row.title}`}
+                        onClick={() => void clearManualValue(row)}
+                      >
+                        Usar valor da tabela
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             />
@@ -199,6 +244,20 @@ export function ProcessScoring() {
       {pending?.kind === "new" && (
         <Modal title="Nova atividade" onClose={() => setPending(null)}>
           <ActivityForm processId={id} groups={version?.groups ?? []} onSaved={done} onCancel={() => setPending(null)} />
+        </Modal>
+      )}
+      {pending?.kind === "points" && (
+        <Modal title="Editar pontuação" onClose={() => setPending(null)}>
+          <ScoreEditor
+            key={pending.activity.id}
+            activity={pending.activity}
+            criterion={version?.groups
+              .find((g) => g.number === pending.activity.group_number)
+              ?.criteria.find((c) => c.item_number === pending.activity.item_number)}
+            pit={pending.pit ?? false}
+            onSaved={done}
+            onCancel={() => setPending(null)}
+          />
         </Modal>
       )}
       {pending?.kind === "edit" && (

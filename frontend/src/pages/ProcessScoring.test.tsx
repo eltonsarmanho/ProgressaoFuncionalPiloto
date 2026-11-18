@@ -226,14 +226,98 @@ describe("ProcessScoring", () => {
     renderPage();
     const row = (await screen.findByText("Orientação de TCC", { selector: "td" })).closest("tr")!;
     const buttons = within(row).getAllByRole("button");
-    expect(buttons.map((b) => b.textContent)).toEqual(["Editar", "Validar", "Rejeitar", "Manter como distinta"]);
+    expect(buttons.map((b) => b.textContent)).toEqual(["Editar", "Editar pontuação", "Validar", "Rejeitar", "Manter como distinta"]);
     expect(buttons.map((b) => b.getAttribute("aria-label"))).toEqual([
       "Editar Orientação de TCC",
+      "Editar pontuação de Orientação de TCC",
       "Validar Orientação de TCC",
       "Rejeitar Orientação de TCC",
       "Marcar como distinta Orientação de TCC",
     ]);
     expect(buttons.map((b) => b.getAttribute("title"))).toEqual(buttons.map((b) => b.getAttribute("aria-label")));
+  });
+
+  describe("UIM-23: editar pontuação (valor unitário manual)", () => {
+    const MANUAL_ALERT = { code: "VALOR_UNITARIO_MANUAL", severity: "ALERTA" as const, message: "Valor unitário informado manualmente", norm_reference: "Res. FASI 2022" };
+    const manualRow = { ...ROW, unit_points: "2.50", points: "10.00", alerts: [MANUAL_ALERT] };
+
+    it("a linha PONTUADA e a POTENCIAL oferecem Editar pontuação; a NAO_PONTUADA não", async () => {
+      mockFetch(baseRoutes(() => result("40.00", [
+        ROW,
+        { ...ROW, activity_id: "a2", title: "Potencial", status: "POTENCIAL" },
+        { ...ROW, activity_id: "a3", title: "Fora do período", status: "NAO_PONTUADA", reasons: ["FORA_DO_INTERSTICIO"] },
+      ])));
+      renderPage();
+      await screen.findByText("Orientação de TCC", { selector: "td" });
+      expect(screen.getByRole("button", { name: "Editar pontuação de Orientação de TCC" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Editar pontuação de Potencial" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Editar pontuação de Fora do período" })).not.toBeInTheDocument();
+    });
+
+    it("salvar o valor unitário na janela envia o PUT e recarrega as linhas, os subtotais e o total", async () => {
+      let total = "40.00";
+      const { calls } = mockFetch({
+        ...baseRoutes(() => result(total, [ROW])),
+        "GET /api/activities/a1": { status: 200, body: ACTIVITY },
+        "PUT /api/activities/a1": () => {
+          total = "10.00";
+          return { status: 200, body: { ...ACTIVITY, unit_points_override: "2.50", version: 4 } };
+        },
+      });
+      renderPage();
+      const user = userEvent.setup();
+      await user.click(await screen.findByRole("button", { name: "Editar pontuação de Orientação de TCC" }));
+      const dialog = await screen.findByRole("dialog", { name: "Editar pontuação" });
+      const field = within(dialog).getByLabelText("Valor unitário");
+      expect(field).toHaveValue(10);
+      await user.clear(field);
+      await user.type(field, "2.5");
+      await user.click(within(dialog).getByRole("button", { name: "Salvar valor" }));
+
+      await waitFor(() => expect(screen.getByText("Total geral", { selector: "dt" }).nextElementSibling).toHaveTextContent("10,00"));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(screen.getByText("Grupo II · Orientação", { selector: "dt" }).nextElementSibling).toHaveTextContent("10,00");
+      const put = calls.find((c) => c.method === "PUT")!;
+      expect(JSON.parse(put.init!.body as string)).toMatchObject({ unit_points_override: 2.5, quantidade: 4, expected_version: 3 });
+    });
+
+    it("a linha com valor manual mostra o selo Manual e Usar valor da tabela, que limpa o valor e recarrega", async () => {
+      let manual = true;
+      const { calls } = mockFetch({
+        ...baseRoutes(() => result(manual ? "10.00" : "40.00", [manual ? manualRow : ROW])),
+        "GET /api/activities/a1": { status: 200, body: { ...ACTIVITY, unit_points_override: "2.50" } },
+        "PUT /api/activities/a1": () => {
+          manual = false;
+          return { status: 200, body: ACTIVITY };
+        },
+      });
+      renderPage();
+      const user = userEvent.setup();
+      const row = (await screen.findByText("Orientação de TCC", { selector: "td" })).closest("tr")!;
+      expect(within(row).getByText("Manual")).toBeInTheDocument();
+
+      await user.click(within(row).getByRole("button", { name: "Usar valor da tabela em Orientação de TCC" }));
+
+      await waitFor(() => expect(screen.getByText("Total geral", { selector: "dt" }).nextElementSibling).toHaveTextContent("40,00"));
+      const put = calls.find((c) => c.method === "PUT")!;
+      expect(JSON.parse(put.init!.body as string).unit_points_override).toBeNull();
+      expect(screen.queryByText("Manual")).not.toBeInTheDocument();
+    });
+
+    it("o alerta do valor manual aparece na lista de alertas em português", async () => {
+      mockFetch(baseRoutes(() => result("10.00", [manualRow])));
+      renderPage();
+      const alerts = await screen.findByRole("region", { name: "Alerta (2)" });
+      expect(alerts).toHaveTextContent("Valor unitário informado por você: Orientação de TCC: Valor unitário informado manualmente");
+    });
+
+    it("linha sem valor manual não mostra o selo nem Usar valor da tabela", async () => {
+      mockFetch(baseRoutes(() => result("40.00", [ROW])));
+      renderPage();
+      await screen.findByText("Orientação de TCC", { selector: "td" });
+      expect(screen.queryByText("Manual")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Usar valor da tabela/ })).not.toBeInTheDocument();
+    });
   });
 
   it("UIM-20: validar e rejeitar agem na hora, sem justificativa nem painel, e recarregam a pontuação", async () => {

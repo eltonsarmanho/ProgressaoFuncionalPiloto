@@ -3874,10 +3874,10 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Editar pontuação aparece em linha PONTUADA e POTENCIAL e não em NAO_PONTUADA
-- [ ] A linha com o alerta `VALOR_UNITARIO_MANUAL` mostra o selo Manual e Usar valor da tabela, que limpa o valor e recarrega
-- [ ] Salvar na janela atualiza o total e o subtotal exibidos com os valores do `GET /scoring` seguinte
-- [ ] Gate quick passa
+- [x] Editar pontuação aparece em linha PONTUADA e POTENCIAL e não em NAO_PONTUADA
+- [x] A linha com o alerta `VALOR_UNITARIO_MANUAL` mostra o selo Manual e Usar valor da tabela, que limpa o valor e recarrega
+- [x] Salvar na janela atualiza o total e o subtotal exibidos com os valores do `GET /scoring` seguinte
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

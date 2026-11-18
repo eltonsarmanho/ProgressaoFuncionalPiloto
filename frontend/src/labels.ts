@@ -63,6 +63,7 @@ export const REASON_LABELS: Record<string, string> = {
 export const ALERT_CODE_LABELS: Record<string, string> = {
   CARGA_HORARIA_NAO_INFORMADA: "Carga horária não informada",
   DATA_FIM_AUSENTE: "Sem data final: quantidade limitada aos anos completos até o fim do interstício",
+  VALOR_UNITARIO_MANUAL: "Valor unitário informado por você",
 };
 
 export const MINIMUM_LABELS: Record<string, string> = {
