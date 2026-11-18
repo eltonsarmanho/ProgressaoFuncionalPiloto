@@ -1,6 +1,6 @@
 """Application settings loaded from environment variables (INFRA-06, INFRA-07)."""
 
-from pydantic import Field, SecretStr, ValidationError
+from pydantic import Field, SecretStr, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,6 +28,19 @@ class Settings(BaseSettings):
     max_job_attempts: int = 3
     ai_timeout_seconds: int = 60
     ai_max_tokens: int = 8000
+
+    generation_max_pages: int = Field(400, gt=0)
+    generation_max_output_mb: int = Field(60, gt=0)
+    generation_png_max_megapixels: int = Field(12, gt=0)
+    generation_min_free_mb: int = Field(200, gt=0)
+    wording_timeout_seconds: int = Field(60, gt=0)
+    report_template_id: str | None = None
+
+    @field_validator("report_template_id")
+    @classmethod
+    def _blank_template_id_is_unset(cls, value: str | None) -> str | None:
+        """An empty variable means the template the file marks as default."""
+        return (value or "").strip() or None
 
     @property
     def effective_maritalk_model(self) -> str:

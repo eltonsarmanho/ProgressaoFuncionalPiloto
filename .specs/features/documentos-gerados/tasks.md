@@ -1281,8 +1281,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Os padrões valem sem variável de ambiente e as variáveis `GENERATION_*` e `WORDING_TIMEOUT_SECONDS` os sobrescrevem; valor inválido derruba o carregamento com mensagem clara
-- [ ] Gate quick passa; 6+ testes
+- [x] Os padrões valem sem variável de ambiente e as variáveis `GENERATION_*` e `WORDING_TIMEOUT_SECONDS` os sobrescrevem; valor inválido derruba o carregamento com mensagem clara
+- [x] Gate quick passa; 6+ testes
 
 **Tests**: unit
 **Gate**: quick
