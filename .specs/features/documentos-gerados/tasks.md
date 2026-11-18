@@ -2493,9 +2493,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] `GET` devolve arquivos, bytes e o estado de cada tipo; `POST` sem `confirmar` responde 422 `CONFIRMACAO_OBRIGATORIA`; `ARTEFATOS_PENDENTES` responde 422; `OPERACAO_EM_ANDAMENTO` e versão desatualizada respondem 409; fora do acesso, 404
-- [ ] `POST` com tudo pronto responde 200 com `status`, `arquivos_removidos`, `arquivos_pendentes` e `bytes_liberados`
-- [ ] Gate full passa; 8+ testes
+- [x] `GET` devolve arquivos, bytes e o estado de cada tipo; `POST` sem `confirmar` responde 422 `CONFIRMACAO_OBRIGATORIA`; `ARTEFATOS_PENDENTES` responde 422; `OPERACAO_EM_ANDAMENTO` e versão desatualizada respondem 409; fora do acesso, 404
+- [x] `POST` com tudo pronto responde 200 com `status`, `arquivos_removidos`, `arquivos_pendentes` e `bytes_liberados`
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full

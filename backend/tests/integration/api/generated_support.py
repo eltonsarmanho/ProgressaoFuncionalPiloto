@@ -8,8 +8,10 @@ from types import SimpleNamespace
 
 import pytest
 
+from app.domain.entities.generated import DocumentKind
 from app.domain.repositories.ports import ActivityEvidence
 from tests.integration.documents.factories import make_document
+from tests.integration.documents.generated_support import T0, make_file, make_generation
 
 
 def process_url(process, tail: str) -> str:
@@ -97,6 +99,20 @@ def link_page(uow_factory, user, activity, document, page: int) -> None:
             )
         )
         uow.commit()
+
+
+def add_ready(uow_factory, process, user, kind) -> None:
+    """A PRONTO version of `kind` stored straight in the database (no file on the disk)."""
+    row = make_generation(SimpleNamespace(id=uuid.UUID(process["id"])), user.id, kind)
+    with uow_factory() as uow:
+        uow.generations.add(row)
+        uow.generations.finish_ready(row.id, T0, [make_file()], {"total": "1.00"}, ())
+        uow.commit()
+
+
+def add_all_ready(uow_factory, process, user) -> None:
+    for kind in DocumentKind:
+        add_ready(uow_factory, process, user, kind)
 
 
 def link_deleted_original(uow_factory, process, user, activity) -> None:
