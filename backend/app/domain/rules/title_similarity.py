@@ -18,6 +18,7 @@ REPEATED_TITLE_JACCARD = 0.6  # noisy copies of one activity inside one document
 MIN_NAME_LENGTH = 3
 TYPO_RATIO = 0.8  # two words this alike are one word written twice (OCR), not two names
 _WORD = re.compile(r"[^\W\d_]+|\d+")
+_ROMAN = re.compile(r"(?:I{1,3}|IV|VI{0,3}|IX|X{1,3})")
 
 
 def title_words(title: str) -> frozenset[str]:
@@ -58,6 +59,25 @@ def differ_by_proper_name(one: str, two: str) -> bool:
     )
 
 
+def _variant_marks(title: str) -> set[str]:
+    """Numerals, Roman numerals and lone capital letters of a title ("1", "III", "B")."""
+    return {
+        normalize_title(word)
+        for word in _WORD.findall(title)
+        if word.isdigit() or (word.isupper() and (len(word) == 1 or _ROMAN.fullmatch(word)))
+    }
+
+
+def differ_by_numeral(one: str, two: str) -> bool:
+    """True when each title has a numeral or lone letter that the other does not have.
+
+    "Nível 1" and "Nível 2", "Turma A" and "Turma B", "Cálculo I" and "Cálculo II" are variants
+    of a course, not two copies of it (QUA-05). A mark on one side only is OCR noise or a year.
+    """
+    words_one, words_two = title_words(one), title_words(two)
+    return bool(_variant_marks(one) - words_two and _variant_marks(two) - words_one)
+
+
 def similar_titles(one: str, two: str, threshold: float = SIMILAR_TITLE_JACCARD) -> bool:
     """Alike by the Jaccard of the words, and not different by a proper name."""
     return jaccard(one, two) >= threshold and not differ_by_proper_name(one, two)
@@ -67,7 +87,7 @@ def repeated_titles(one: str, two: str) -> bool:
     """Two titles of one document that are the same activity written twice (TER-07).
 
     A Jaccard of 0.6 or more, or the words of one title inside the other (OCR noise adds words
-    and breaks them), and no proper name on each side.
+    and breaks them), and no proper name or numeral on each side.
     """
     words_one, words_two = title_words(one), title_words(two)
     if not words_one or not words_two:
@@ -77,4 +97,4 @@ def repeated_titles(one: str, two: str) -> bool:
         or words_one <= words_two
         or words_two <= words_one
     )
-    return close and not differ_by_proper_name(one, two)
+    return close and not differ_by_proper_name(one, two) and not differ_by_numeral(one, two)

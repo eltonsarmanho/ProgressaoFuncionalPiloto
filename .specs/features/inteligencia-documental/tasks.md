@@ -3118,10 +3118,10 @@ T107 → T108 → T109 → T110 → T111 → T112
 
 **Done when**:
 
-- [ ] As três variantes citadas ficam em atividades separadas, no nível do domínio e no analisador
-- [ ] "Curso de Python 2025" e "Curso de Python" ainda reúnem
-- [ ] Testes de TER-07 continuam verdes
-- [ ] Gate full passa
+- [x] As três variantes citadas ficam em atividades separadas, no nível do domínio e no analisador
+- [x] "Curso de Python 2025" e "Curso de Python" ainda reúnem
+- [x] Testes de TER-07 continuam verdes
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

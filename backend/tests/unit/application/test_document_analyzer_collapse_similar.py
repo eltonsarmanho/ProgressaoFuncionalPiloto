@@ -160,3 +160,10 @@ def test_titles_with_a_jaccard_below_0_6_and_neither_inside_the_other_stay_apart
 def test_an_activity_without_a_title_is_not_merged_with_a_titled_one_by_similarity():
     result = analyze([lecture(None), lecture("RPA na Gestao Academica")])
     assert len(result.activities) == 2
+
+
+def test_numbered_variants_of_a_course_stay_two_activities():
+    """QUA-05 (FT-31): "Nível 1" and "Nível 2" have a Jaccard of 0.67 and are not one lecture."""
+    result = analyze([lecture("Palestra de Python Nível 1"), lecture("Palestra de Python Nível 2")])
+    assert len(result.activities) == 2
+    assert repeated(result) == []
