@@ -234,6 +234,10 @@ def test_marking_an_unknown_run_raises_not_found(uow_factory):
         uow.extractions.mark_run_status(uuid.uuid4(), RunStatus.SUBSTITUIDA)
 
 
+ONE = "pagina um do certificado de conclusao do curso de dados abertos"
+TWO = "pagina dois do certificado de conclusao do curso de dados abertos"
+
+
 def _page(document_id, run_id, number, text="texto", method=TextMethod.TEXTO, confidence=None):
     return PageText(document_id, run_id, number, method, len(text), confidence, text)
 
@@ -576,7 +580,7 @@ def test_content_keys_pair_each_activity_with_the_hash_of_its_documents_text(uow
     run = make_run(doc1.id)
     with uow_factory() as uow:
         uow.extractions.add_run(run)
-        pages = [_page(doc1.id, run.id, 2, "pagina dois"), _page(doc1.id, run.id, 1, "Pagina UM")]
+        pages = [_page(doc1.id, run.id, 2, TWO), _page(doc1.id, run.id, 1, ONE.upper())]
         uow.extractions.replace_pages(doc1.id, pages)
         uow.evidences.add(make_evidence(act1, doc1, user_id, page=1))
         uow.evidences.add(make_evidence(act1, doc1, user_id, page=2))
@@ -586,4 +590,22 @@ def test_content_keys_pair_each_activity_with_the_hash_of_its_documents_text(uow
     with uow_factory() as uow:
         keys = uow.evidences.content_keys_for_activities([act1.id, act2.id])
         assert uow.evidences.content_keys_for_activities([]) == {}
-    assert keys == {act1.id: {(doc1.id, content_hash(["pagina um", "pagina dois"]))}}
+    assert keys == {act1.id: {(doc1.id, content_hash([ONE, TWO]))}}
+
+
+def test_content_keys_skip_documents_without_readable_text(uow_factory, linked):
+    # TER-09: two unreadable files (all pages empty or a few characters) look identical
+    (act1, act2), (doc1, doc2), user_id = linked
+    run1, run2 = make_run(doc1.id), make_run(doc2.id)
+    with uow_factory() as uow:
+        uow.extractions.add_run(run1)
+        uow.extractions.add_run(run2)
+        empty = [_page(doc1.id, run1.id, 1, ""), _page(doc1.id, run1.id, 2, "  ")]
+        uow.extractions.replace_pages(doc1.id, empty)
+        uow.extractions.replace_pages(doc2.id, [_page(doc2.id, run2.id, 1, "x" * 49)])
+        uow.evidences.add(make_evidence(act1, doc1, user_id, page=1))
+        uow.evidences.add(make_evidence(act2, doc2, user_id, page=1))
+        uow.commit()
+
+    with uow_factory() as uow:
+        assert uow.evidences.content_keys_for_activities([act1.id, act2.id]) == {}

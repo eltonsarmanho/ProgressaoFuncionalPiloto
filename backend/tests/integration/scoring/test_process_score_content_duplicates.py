@@ -67,3 +67,19 @@ def test_two_activities_of_one_document_are_not_content_duplicates(official_chos
     result = score(world).result
 
     assert row(result, second).reasons == ()
+
+
+def test_documents_without_readable_text_are_not_content_duplicates(official_chosen):
+    world = official_chosen
+    # two unreadable files (OCR found nothing) are not "the same text" (TER-09)
+    doc_a = document_with_text(world, "", "")
+    doc_b = document_with_text(world, "", "")
+    first = add(world, "Curso de Dados Abertos concluido")
+    second = add(world, "Certificado de conclusao: dados abertos e governo digital")
+    link(world, first, doc_a)
+    link(world, second, doc_b)
+
+    result = score(world).result
+
+    assert row(result, first).reasons == ()
+    assert row(result, second).reasons == ()

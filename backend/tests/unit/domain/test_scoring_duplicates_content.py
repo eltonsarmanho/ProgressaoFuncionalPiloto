@@ -4,7 +4,12 @@ from datetime import UTC, date, datetime
 from uuid import uuid4
 
 from app.domain.entities.activity import Activity
-from app.domain.rules.scoring_duplicates import content_hash, find_duplicates
+from app.domain.rules.scoring_duplicates import (
+    MIN_READABLE_CHARS,
+    content_hash,
+    find_duplicates,
+    has_readable_text,
+)
 
 DAY = date(2025, 5, 10)
 
@@ -74,3 +79,18 @@ def test_without_contents_nothing_changes():
     older = activity("Oficina de dados abertos")
     newer = activity("Certificado de participacao no evento", created=2)
     assert find_duplicates([older, newer]) == set()
+
+
+def test_the_page_boundary_is_part_of_the_hash():
+    # D10: "ab" + "c" is not "a" + "bc"
+    assert content_hash(["ab", "c"]) != content_hash(["a", "bc"])
+
+
+def test_a_text_below_fifty_normalized_characters_is_not_readable():
+    assert MIN_READABLE_CHARS == 50
+    assert has_readable_text([]) is False
+    assert has_readable_text(["", "   ", "\n"]) is False
+    assert has_readable_text(["x" * 49]) is False
+    assert has_readable_text(["x" * 50]) is True
+    assert has_readable_text(["x" * 25, "y" * 25]) is True  # the pages add up
+    assert has_readable_text(["x" * 49 + "   \n  "]) is False  # spacing does not count

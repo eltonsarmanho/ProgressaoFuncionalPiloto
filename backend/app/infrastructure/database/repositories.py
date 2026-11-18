@@ -41,7 +41,7 @@ from app.domain.repositories.ports import (
     ProcessingJob,
     ScoringTableRecord,
 )
-from app.domain.rules.scoring_duplicates import content_hash
+from app.domain.rules.scoring_duplicates import content_hash, has_readable_text
 from app.infrastructure.database.models import (
     AcademicUnitModel,
     ActivityCandidateModel,
@@ -1227,7 +1227,11 @@ class SqlEvidenceRepository:
             .order_by(DocumentPageModel.document_id, DocumentPageModel.page_number)
         ):
             pages.setdefault(document_id, []).append(text)
-        hashes = {document_id: content_hash(texts) for document_id, texts in pages.items()}
+        hashes = {
+            document_id: content_hash(texts)
+            for document_id, texts in pages.items()
+            if has_readable_text(texts)
+        }
         keys: dict[UUID, set[tuple[UUID, str]]] = {}
         for activity_id, document_id in links:
             if document_id in hashes:

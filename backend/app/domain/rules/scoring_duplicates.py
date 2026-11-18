@@ -19,7 +19,18 @@ from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.rules.scoring_periods import activity_interval, normalize_title
 from app.domain.rules.title_similarity import similar_titles
 
+MIN_READABLE_CHARS = 50  # below this the text says nothing: two unreadable files look alike
+
 ContentKey = tuple[UUID, str]  # (document id, hash of its normalized text)
+
+
+def has_readable_text(pages: Sequence[str]) -> bool:
+    """Whether the normalized text has at least 50 characters (TER-09).
+
+    A document whose pages are empty or almost empty (the OCR found nothing) is never "the same
+    text" as another one, so it gets no content hash.
+    """
+    return sum(len(normalize_title(page)) for page in pages) >= MIN_READABLE_CHARS
 
 
 def content_hash(pages: Sequence[str]) -> str:

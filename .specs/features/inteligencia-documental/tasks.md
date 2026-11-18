@@ -2926,9 +2926,9 @@ T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T10
 
 **Done when**:
 
-- [ ] Dois documentos com texto vazio ou de menos de 50 caracteres não geram duplicidade; texto de 50 caracteres igual gera
-- [ ] "ab"+"c" e "a"+"bc" têm hashes diferentes (D10)
-- [ ] Gate full passa
+- [x] Dois documentos com texto vazio ou de menos de 50 caracteres não geram duplicidade; texto de 50 caracteres igual gera
+- [x] "ab"+"c" e "a"+"bc" têm hashes diferentes (D10)
+- [x] Gate full passa
 
 **Tests**: unit + integration
 **Gate**: full
