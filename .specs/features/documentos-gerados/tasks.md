@@ -241,10 +241,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Primeiro o teste de caracterização: com o cenário do `test_scoring_golden.py` a resposta de `/scoring` (total 211, subtotais 52, 7, 62, 0, 30, 4, 56, contadores) é fixada e passa antes da extração
-- [ ] Depois da extração o mesmo teste passa sem alteração e o caso de uso só chama `compute_process_score` depois de checar o acesso
-- [ ] Teste novo: `compute_process_score(uow, process)` devolve o mesmo resultado que a rota, sem receber ator
-- [ ] Gate full passa; 3+ testes novos e nenhum teste de pontuação alterado
+- [x] Primeiro o teste de caracterização: com o cenário do `test_scoring_golden.py` a resposta de `/scoring` (total 211, subtotais 52, 7, 62, 0, 30, 4, 56, contadores) é fixada e passa antes da extração
+- [x] Depois da extração o mesmo teste passa sem alteração e o caso de uso só chama `compute_process_score` depois de checar o acesso
+- [x] Teste novo: `compute_process_score(uow, process)` devolve o mesmo resultado que a rota, sem receber ator
+- [x] Gate full passa; 3+ testes novos e nenhum teste de pontuação alterado
 
 **Tests**: integration
 **Gate**: full

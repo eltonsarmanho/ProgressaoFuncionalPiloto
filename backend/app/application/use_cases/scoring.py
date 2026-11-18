@@ -614,44 +614,52 @@ def _without_table(activities: list[Activity], evidence_counts: dict[UUID, int])
     )
 
 
+def compute_process_score(uow: UnitOfWork, process: FunctionalProcess) -> ProcessScore:
+    """Computed on demand from the current data, never stored (AD-006).
+
+    Takes no actor: the caller checks access first (the screen use case) or runs on behalf of a
+    job whose request was already authorized (document generation).
+    """
+    state = table_state(uow, process)
+    activities = sorted(uow.activities.list_for_process(process.id), key=_listing_order)
+    ids = [a.id for a in activities]
+    evidence_counts = uow.evidences.counts_for_activities(ids)
+    contents = uow.evidences.content_keys_for_activities(ids)
+    if state.chosen is None:
+        no_table = MinimumComparison(MinimumStatus.NAO_DEFINIDO, None, ZERO)
+        return ProcessScore(
+            process.id,
+            None,
+            state.suggested,
+            _without_table(activities, evidence_counts),
+            tuple(activities),
+            state.alerts,
+            no_table,
+        )
+    version = state.chosen.version
+    interstice = Interstice(process.start_date, process.end_date)
+    result = calculate(version, activities, interstice, evidence_counts, contents)
+    professor = uow.professors.get(process.professor_id)
+    code = uow.career_versions.structure_code(professor.career_structure_id)
+    versions = uow.career_versions.list_versions(code) if code else []
+    career = select_version(versions, process.end_date)
+    context = ScoringContext(professor.work_regime, process.current_class, career, version)
+    return ProcessScore(
+        process.id,
+        state.chosen,
+        state.suggested,
+        result,
+        tuple(activities),
+        state.alerts + verify_scoring(context, result),
+        reference_minimum(version, process.current_class, career, result.total),
+    )
+
+
 class CalculateProcessScore(_ScoringUseCase):
     def execute(self, actor: User, process_id: UUID) -> ProcessScore:
-        """Computed on demand from the current data, never stored (AD-006)."""
         with self._uow_factory() as uow:
             process = self._readable(uow, actor, process_id)
-            state = table_state(uow, process)
-            activities = sorted(uow.activities.list_for_process(process.id), key=_listing_order)
-            ids = [a.id for a in activities]
-            evidence_counts = uow.evidences.counts_for_activities(ids)
-            contents = uow.evidences.content_keys_for_activities(ids)
-            if state.chosen is None:
-                no_table = MinimumComparison(MinimumStatus.NAO_DEFINIDO, None, ZERO)
-                return ProcessScore(
-                    process.id,
-                    None,
-                    state.suggested,
-                    _without_table(activities, evidence_counts),
-                    tuple(activities),
-                    state.alerts,
-                    no_table,
-                )
-            version = state.chosen.version
-            interstice = Interstice(process.start_date, process.end_date)
-            result = calculate(version, activities, interstice, evidence_counts, contents)
-            professor = uow.professors.get(process.professor_id)
-            code = uow.career_versions.structure_code(professor.career_structure_id)
-            versions = uow.career_versions.list_versions(code) if code else []
-            career = select_version(versions, process.end_date)
-            context = ScoringContext(professor.work_regime, process.current_class, career, version)
-            return ProcessScore(
-                process.id,
-                state.chosen,
-                state.suggested,
-                result,
-                tuple(activities),
-                state.alerts + verify_scoring(context, result),
-                reference_minimum(version, process.current_class, career, result.total),
-            )
+            return compute_process_score(uow, process)
 
 
 class GetActivity(_ScoringUseCase):
