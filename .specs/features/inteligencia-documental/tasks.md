@@ -2337,11 +2337,11 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 **Done when**:
 
-- [ ] Portaria sintética "Diretor, por 2 (dois) anos, a partir de 09/08/2024": `end_date == 2026-08-09`, alerta `DATA_FIM_DERIVADA` na atividade e período 2024-08-09 a 2026-08-09 gravado na atividade criada
-- [ ] "24 meses", "pelo período de um ano", "por dois anos" e "1 ano e 6 meses" são lidos; "3 (dois) anos", "por alguns anos" e prazo sem unidade não derivam data
-- [ ] Prazo que não consta na página: `term` anulado com `NAO_ENCONTRADO_NO_TEXTO` e nenhuma data derivada; início só com mês e ano: nenhuma derivação; data final já informada e aterrada: o prazo é ignorado
-- [ ] O esquema estrito e o prompt trazem `term`; resposta sem a chave é recusada (`RESPOSTA_INVALIDA`)
-- [ ] Gate full passa
+- [x] Portaria sintética "Diretor, por 2 (dois) anos, a partir de 09/08/2024": `end_date == 2026-08-09`, alerta `DATA_FIM_DERIVADA` na atividade e período 2024-08-09 a 2026-08-09 gravado na atividade criada
+- [x] "24 meses", "pelo período de um ano", "por dois anos" e "1 ano e 6 meses" são lidos; "3 (dois) anos", "por alguns anos" e prazo sem unidade não derivam data
+- [x] Prazo que não consta na página: `term` anulado com `NAO_ENCONTRADO_NO_TEXTO` e nenhuma data derivada; início só com mês e ano: nenhuma derivação; data final já informada e aterrada: o prazo é ignorado
+- [x] O esquema estrito e o prompt trazem `term`; resposta sem a chave é recusada (`RESPOSTA_INVALIDA`)
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

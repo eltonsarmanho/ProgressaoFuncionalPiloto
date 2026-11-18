@@ -102,7 +102,7 @@ def test_extracted_activity_data_fields_default_to_none():
         taxonomy=TaxonomyCode.OUTRA, page=1, evidence_text="", confidence=Decimal("0.5")
     )
     optional = {
-        "title", "role", "start_date", "end_date", "event_date",
+        "title", "role", "start_date", "end_date", "event_date", "term",
         "hours", "course_hours", "level", "academic_period", "identifier",
     }  # fmt: skip
     assert {f.name for f in fields(act)} == optional | {

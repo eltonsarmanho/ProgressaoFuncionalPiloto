@@ -105,6 +105,7 @@ class ExtractedActivity:
     start_date: date | None = None
     end_date: date | None = None
     event_date: date | None = None
+    term: str | None = None  # the duration as written ("por 2 anos"), never a computed date
     hours: Decimal | None = None
     course_hours: Decimal | None = None
     level: Level | None = None

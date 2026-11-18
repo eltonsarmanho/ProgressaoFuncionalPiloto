@@ -87,6 +87,7 @@ def activity(**changes) -> dict:
         "role": "membro",
         "start_date": None,
         "end_date": None,
+        "term": None,
         "event_date": "2025-03-12",
         "hours": None,
         "course_hours": None,

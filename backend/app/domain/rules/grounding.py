@@ -258,7 +258,7 @@ def ground(
     text = pages.get(extracted.page, "")
     precisions = precisions or {}
     checks: dict[str, bool] = {}
-    for name in ("title", "identifier"):
+    for name in ("title", "identifier", "term"):
         value = getattr(extracted, name)
         if value is not None:
             check = title_in_text if name == "title" else identifier_in_text

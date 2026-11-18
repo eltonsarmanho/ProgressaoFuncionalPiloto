@@ -453,7 +453,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VER-11 | P1: Correções da verificação independente | Design | Implementing |
 | VER-12 | P1: Correções da verificação independente | Design | Implementing |
 | VER-13 | P1: Correções da verificação independente | Design | Implementing |
-| SEG-01 | P1: Correções da segunda rodada de validação | Design | In Tasks |
+| SEG-01 | P1: Correções da segunda rodada de validação | Design | Implementing |
 | SEG-02 | P1: Correções da segunda rodada de validação | Design | In Tasks |
 | SEG-03 | P1: Correções da segunda rodada de validação | Design | In Tasks |
 | SEG-04 | P1: Correções da segunda rodada de validação | Design | In Tasks |

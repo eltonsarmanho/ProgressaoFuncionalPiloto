@@ -8,7 +8,7 @@ is looked up in the ORIGINAL (unmasked) text of the page it cites before it is k
 
 import re
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -36,6 +36,7 @@ from app.domain.repositories.ports import (
 from app.domain.rules.confidence import final_confidence, needs_review
 from app.domain.rules.document_type import detect_document_type
 from app.domain.rules.grounding import (
+    DatePrecision,
     ground,
     month_only_dates,
     professor_named_in_text,
@@ -54,6 +55,7 @@ from app.domain.rules.suggestion_rules import (
     is_dismissal_clause,
     suggest_item,
 )
+from app.domain.rules.term_rules import add_months, parse_term_months
 from app.domain.rules.text_quality import ocr_needs_review
 from app.domain.rules.upload_validation import FileKind
 
@@ -68,6 +70,7 @@ _ACTIVITY_KEYS = frozenset(
         "start_date",
         "end_date",
         "event_date",
+        "term",
         "hours",
         "course_hours",
         "level",
@@ -272,6 +275,10 @@ class DocumentAnalyzer:
         run.alerts += [DocAlert(DocAlertCode.DATA_PARCIAL, name, index) for name in partial]
         precision = PeriodPrecision.MONTH if partial else PeriodPrecision.DAY
         activity = grounded.activity
+        derived_end = _end_from_term(activity, partial)
+        if derived_end is not None:
+            activity = replace(activity, end_date=derived_end)
+            run.alerts.append(DocAlert(DocAlertCode.DATA_FIM_DERIVADA, "end_date", index))
         if is_dismissal_clause(activity.taxonomy, activity.evidence_text):
             run.alerts.append(DocAlert(DocAlertCode.CLAUSULA_DE_DISPENSA, None, index))
             return None
@@ -332,6 +339,18 @@ def _interval(activity: ExtractedActivity) -> tuple[date, date] | None:
         return activity.event_date, activity.event_date
     start, end = activity.start_date or activity.end_date, activity.end_date or activity.start_date
     return None if start is None or end is None else (start, end)
+
+
+def _end_from_term(activity: ExtractedActivity, partial: dict[str, DatePrecision]) -> date | None:
+    """The start plus the term written in the page, when both are certain (SEG-01).
+
+    Needs a start with its day, no end date and a term that reads as a number of months; a
+    month-only start or an unreadable term gives nothing, so no end date is ever invented.
+    """
+    if activity.start_date is None or activity.end_date is not None or activity.term is None:
+        return None
+    months = None if "start_date" in partial else parse_term_months(activity.term)
+    return None if months is None else add_months(activity.start_date, months)
 
 
 def _same_activity(one: ExtractedActivity, two: ExtractedActivity) -> bool:
@@ -493,7 +512,7 @@ def _parse_hours(value: Any) -> Decimal | None:
 def _parse_activity(raw: Any) -> ExtractedActivity:
     if not isinstance(raw, dict) or set(raw) != _ACTIVITY_KEYS:
         raise ValueError("activity")
-    texts = ("title", "role", "academic_period", "identifier")
+    texts = ("title", "role", "academic_period", "identifier", "term")
     if not all(_optional_text(raw[name]) for name in texts):
         raise ValueError("text")
     page, confidence = raw["page"], raw["confidence"]
@@ -513,6 +532,7 @@ def _parse_activity(raw: Any) -> ExtractedActivity:
         start_date=_parse_date(raw["start_date"]),
         end_date=_parse_date(raw["end_date"]),
         event_date=_parse_date(raw["event_date"]),
+        term=raw["term"],
         hours=_parse_hours(raw["hours"]),
         course_hours=_parse_hours(raw["course_hours"]),
         level=None if level is None else Level(level),

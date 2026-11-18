@@ -35,6 +35,14 @@ _ACTIVITY_FIELDS: tuple[tuple[str, Schema], ...] = (
     ("role", {"type": ["string", "null"], "description": "Papel do docente, como membro."}),
     ("start_date", {"type": ["string", "null"], "description": "Início, AAAA-MM-DD."}),
     ("end_date", {"type": ["string", "null"], "description": "Fim, AAAA-MM-DD."}),
+    (
+        "term",
+        {
+            "type": ["string", "null"],
+            "description": "Prazo de duração escrito no texto, copiado literalmente, como "
+            "'por 2 (dois) anos' ou '24 meses'; nunca uma data calculada.",
+        },
+    ),
     ("event_date", {"type": ["string", "null"], "description": "Data do evento, AAAA-MM-DD."}),
     ("hours", {"type": ["number", "null"], "description": "Carga horária do docente em horas."}),
     ("course_hours", {"type": ["number", "null"], "description": "Carga horária total do curso."}),
