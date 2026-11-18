@@ -233,6 +233,26 @@ function twoFilledSections(): ReportDraftView {
   return view;
 }
 
+describe("UIG-02, REL-04: a redação recusada aparece uma vez", () => {
+  it("com o aviso na entrada, o aviso da seção não repete a mesma frase", async () => {
+    const view = draftView();
+    view.sections[0].warnings = [{ code: "REDACAO_REJEITADA", message: "NUMERO" }];
+    view.sections[0].entries[1].warnings = [{ code: "REDACAO_REJEITADA", message: "NUMERO" }];
+    setup(view);
+    const s = await screen.findByRole("region", { name: /1\.1/ });
+    expect(within(s).getAllByText(/foi recusada: ficou o texto-modelo/)).toHaveLength(1);
+    expect(within(within(s).getAllByRole("listitem")[1]).getByText(/foi recusada/)).toBeInTheDocument();
+  });
+
+  it("sem aviso em nenhuma entrada, o aviso da seção continua aparecendo", async () => {
+    const view = draftView();
+    view.sections[0].warnings = [{ code: "REDACAO_REJEITADA", message: "NUMERO" }];
+    setup(view);
+    const s = await screen.findByRole("region", { name: /1\.1/ });
+    expect(within(s).getAllByText(/foi recusada: ficou o texto-modelo/)).toHaveLength(1);
+  });
+});
+
 describe("UIG-08, REL-03: redação por seção em segundo plano", () => {
   it("pedir a redação mostra GERANDO na seção, desliga o botão e relê a versão do rascunho", async () => {
     const { state, calls, user } = setup(twoFilledSections(), {
@@ -333,7 +353,7 @@ describe("UIG-08, REL-03: redação por seção em segundo plano", () => {
     state.view = done;
     state.jobs = [job({ state: "PRONTO" })];
     await act(() => vi.advanceTimersByTimeAsync(3000));
-    expect(await screen.findByText("A IA não respondeu a tempo: ficou o texto-modelo")).toBeInTheDocument();
+    expect(await screen.findByText("A IA não está disponível agora: ficou o texto-modelo")).toBeInTheDocument();
     expect(screen.getByText(/foi recusada: ficou o texto-modelo \(data que não está na atividade\)/)).toBeInTheDocument();
   });
 });

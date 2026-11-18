@@ -3,7 +3,7 @@ import { request } from "../api/client";
 import type { DocumentKind, GeneratedDocument } from "../api/generated";
 import { generationErrorMessage, isConflict } from "../generationErrors";
 import { usePolling } from "../hooks/usePolling";
-import { DOCUMENT_KIND_LABELS, GENERATION_CODE_LABELS, GENERATION_STATE_LABELS, alertText, formatDay, formatSize } from "../labels";
+import { DOCUMENT_KIND_LABELS, GENERATION_CODE_LABELS, GENERATION_STATE_LABELS, alertDetail, alertText, formatDay, formatSize } from "../labels";
 
 /**
  * UIG-01, UIG-04, UIG-05, UIG-06, VER-09: the block of one generated document. The warning of the
@@ -103,7 +103,7 @@ export function GeneratedBlock({
           {ready[0].alerts.map((alert, i) => (
             <li key={`${alert.code}-${i}`} className="sev-ALERTA">
               {alertText(alert)}
-              {alert.message && alert.code !== "REDACAO_REJEITADA" && <small className="muted">{`: ${alert.message}`}</small>}
+              {alertDetail(alert) && <small className="muted">{`: ${alertDetail(alert)}`}</small>}
             </li>
           ))}
         </ul>

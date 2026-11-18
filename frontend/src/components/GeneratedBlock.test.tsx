@@ -135,6 +135,18 @@ describe("UIG-05: falha e alertas em português", () => {
     expect(items[1]).toHaveTextContent("Página convertida em imagem para manter o que se vê");
   });
 
+  it("o alerta de atividades fora do documento diz o rótulo uma vez, seguido das contagens", async () => {
+    setup([
+      generated({
+        alerts: [{ code: "ATIVIDADES_FORA_DO_DOCUMENTO", message: "Atividades fora do documento: 1 sem enquadramento." }],
+      }),
+    ]);
+    const alerts = await screen.findByRole("list", { name: "Alertas da geração" });
+    expect(within(alerts).getByRole("listitem")).toHaveTextContent(
+      /^Há atividades que ficaram fora do documento: 1 sem enquadramento\.$/,
+    );
+  });
+
   it("uma recusa 422 mostra a mensagem do servidor", async () => {
     const { user } = setup([], {
       [ASK]: { status: 422, body: { detail: [{ field: "geracao", code: "SEM_ATIVIDADES_VALIDADAS", message: "Nenhuma atividade validada." }] } },

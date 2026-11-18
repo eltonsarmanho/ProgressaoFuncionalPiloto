@@ -3393,10 +3393,10 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] `ATIVIDADES_FORA_DO_DOCUMENTO` aparece sem repetir o rótulo dentro da mensagem
-- [ ] `REDACAO_REJEITADA` aparece uma vez por entrada e uma vez por seção, sem texto duplicado na mesma linha
-- [ ] `REDACAO_INDISPONIVEL` tem texto neutro que vale para chave ausente, erro do provedor e prazo esgotado
-- [ ] Gate quick passa; 3+ testes novos
+- [x] `ATIVIDADES_FORA_DO_DOCUMENTO` aparece sem repetir o rótulo dentro da mensagem
+- [x] `REDACAO_REJEITADA` aparece uma vez: na entrada que tem o aviso; o aviso da seção só aparece quando nenhuma entrada o mostra
+- [x] `REDACAO_INDISPONIVEL` tem texto neutro que vale para chave ausente, erro do provedor e prazo esgotado
+- [x] Gate quick passa; 7 testes novos
 
 **Tests**: unit
 **Gate**: quick

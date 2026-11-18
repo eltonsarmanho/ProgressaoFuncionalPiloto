@@ -186,6 +186,8 @@ export function ReportDraftEditor({ processId, readOnly = false }: { processId: 
         const sText = typed[sKey] ?? section.free_text;
         const wording = jobs[section.key];
         const generating = wording?.state === "GERANDO";
+        // the refused wording is said on the entry that has it; the section line only when no entry says it
+        const entryRefused = section.entries.some((e) => e.warnings.some((w) => w.code === "REDACAO_REJEITADA"));
         return (
           <section key={section.key} className="card report-section" aria-labelledby={headingId}>
             <h3 id={headingId}>
@@ -212,11 +214,13 @@ export function ReportDraftEditor({ processId, readOnly = false }: { processId: 
                 </button>
               </div>
             )}
-            {section.warnings.map((warning, i) => (
-              <p key={`${warning.code}-${i}`} className="doc-warning sev-ALERTA">
-                {alertText(warning)}
-              </p>
-            ))}
+            {section.warnings
+              .filter((warning) => warning.code !== "REDACAO_REJEITADA" || !entryRefused)
+              .map((warning, i) => (
+                <p key={`${warning.code}-${i}`} className="doc-warning sev-ALERTA">
+                  {alertText(warning)}
+                </p>
+              ))}
             {section.entries.length > 0 && (
               <ul className="report-entries">
                 {section.entries.map((entry) => {

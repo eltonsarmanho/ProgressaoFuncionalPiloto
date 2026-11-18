@@ -295,7 +295,7 @@ export const GENERATION_CODE_LABELS: Record<GenerationCode, string> = {
 export const GENERATION_ALERT_LABELS: Record<GenerationAlertCode, string> = {
   ATIVIDADE_SEM_COMPROVANTE: "Atividade sem comprovante anexado",
   REDACAO_REJEITADA: "A redação da IA trazia dado que não está na atividade e foi recusada: ficou o texto-modelo",
-  REDACAO_INDISPONIVEL: "A IA não respondeu a tempo: ficou o texto-modelo",
+  REDACAO_INDISPONIVEL: "A IA não está disponível agora: ficou o texto-modelo",
   ARRANJO_DESATUALIZADO: "O arranjo do Comprovante está desatualizado: as atividades mudaram depois que ele foi salvo",
   NUMERACAO_DIVERGENTE: "A numeração do Comprovante mudou desde a última versão gerada: gere os dois de novo",
   ATIVIDADES_FORA_DO_DOCUMENTO: "Há atividades que ficaram fora do documento",
@@ -328,6 +328,17 @@ export function alertText(alert: GenerationAlert): string {
   if (alert.code !== "REDACAO_REJEITADA" || !alert.message) return label;
   const reasons = alert.message.split(",").map((r) => WORDING_REASON_LABELS[r.trim()] ?? r.trim());
   return `${label} (${reasons.join(", ")})`;
+}
+
+/**
+ * What an alert says beyond its label, or "" when there is nothing to add: the refused wording already
+ * carries its reasons in the label, and the left-out count starts by repeating the label.
+ */
+export function alertDetail(alert: GenerationAlert): string {
+  if (alert.code === "REDACAO_REJEITADA") return "";
+  const message = alert.message ?? "";
+  if (alert.code === "ATIVIDADES_FORA_DO_DOCUMENTO") return message.replace(/^Atividades fora do documento:\s*/i, "");
+  return message;
 }
 
 /** "20000" -> "20 000": the counter of a text uses a non-breaking space. */
