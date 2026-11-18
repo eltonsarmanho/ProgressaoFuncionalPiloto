@@ -3068,9 +3068,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O texto lista a migração `0006_generated_documents`, as dependências novas, a fonte, o espaço do volume gerado e o ponto de retorno antes de aplicar
-- [ ] Nenhum push, deploy ou acesso à VM é feito por esta tarefa; ela só escreve a nota
-- [ ] Gate build passa
+- [x] O texto lista a migração `0006_generated_documents`, as dependências novas, a fonte, o espaço do volume gerado e o ponto de retorno antes de aplicar
+- [x] Nenhum push, deploy ou acesso à VM é feito por esta tarefa; ela só escreve a nota
+- [x] Gate build passa
 
 **Tests**: none
 **Gate**: build

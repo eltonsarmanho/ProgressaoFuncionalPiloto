@@ -36,6 +36,8 @@ O arquivo de ajustes da VM está em `deploy/docker-compose.vm.yml` e vai para `/
 
 Trocar as etiquetas das imagens para as da versão anterior (`docker tag progressao-funcional-backend:<versao-anterior> progressao-funcional-backend:latest`), restaurar o banco do dump se houve migração, e `docker compose up -d --no-build`.
 
+Para a versão dos documentos gerados: o dump anterior (`progressao-pre-documentos-gerados-<data>.sql.gz`) é o caminho seguro, porque o `downgrade` da `0007` não retira o valor `DELETE` de `audit_action` e o da `0006` apaga as tabelas de documentos gerados. Restaurar o dump deixa órfãos os arquivos em `storage/generated/` (inofensivos; remover à mão depois). Não voltar de versão depois de uma conclusão real sem ler o aviso de irreversibilidade em "Deploy dos documentos gerados".
+
 ## Limite de envio (nginx do servidor)
 
 O envio de documentos aceita até 120 MB por requisição (DOC-03) e 20 MB por arquivo. O nginx do projeto (`nginx/nginx.conf`) já usa `client_max_body_size 120m`. O nginx do servidor, que fica na frente dele e não faz parte deste repositório, tem de aceitar o mesmo tamanho: no bloco `server` (ou no `location /`) da configuração do site `progressao` no nginx do servidor, definir
@@ -45,6 +47,69 @@ client_max_body_size 120m;
 ```
 
 e aplicar com `nginx -t && systemctl reload nginx`. Sem isso, o nginx do servidor responde 413 acima do valor dele (1 MB por padrão) antes de a requisição chegar ao projeto. Conferir depois enviando um corpo de 25 MB (não pode dar 413) e outro de 121 MB (tem de dar 413).
+
+## Deploy dos documentos gerados (feature `documentos-gerados`)
+
+Esta seção diz o que a versão com a Etapa 5 (Tabela, Relatório e Comprovante, mais a conclusão do processo) exige além do procedimento de "Atualizar para uma versão nova". Ela só descreve; nenhum passo daqui foi executado e o deploy continua dependendo da autorização do usuário.
+
+### Antes do deploy
+
+Estado da VM: migração `0005` no ar (`unit_points_override`), imagens de `b58e276`. O `alembic upgrade head` do `docker-entrypoint.sh` aplica, em ordem, o que a imagem nova trouxer:
+
+| Ordem | Migração | Feature | O que faz |
+| --- | --- | --- | --- |
+| 1 | `0006_generated_documents` | `documentos-gerados` | Cria os tipos `generated_kind`, `generated_state` e `generated_format`, as tabelas `generated_documents`, `generated_files`, `report_wording_jobs`, `report_drafts` e `comprovante_layouts`, os índices parciais de uma geração e uma redação por vez, os gatilhos que tornam a versão gerada imutável e a coluna `documents.file_deleted_at` (marca de arquivo de entrada excluído) |
+| 2 | `0007_process_purge` | `gestao-processos` (excluir processo) | Acrescenta o valor `DELETE` a `audit_action` e troca a função dos gatilhos de `generated_documents` e `generated_files` para deixar passar o `DELETE` só dentro da exclusão de um processo (`app.process_purge`) |
+
+As duas migrações estão commitadas e a `0007` depende da `0006`. Elas entram na VM juntas se a imagem for construída de um commit que contém `b88b178` (o `HEAD` de `feat/inteligencia-documental` contém); construída de um commit anterior a ele, só a `0006` entra. Decidir o commit antes de construir e dizer ao usuário que a `0007` e a exclusão de processo (backend) vêm junto; a tela de arquivar e excluir do Painel (tarefas T5 e T6 de `gestao-processos`) não estava commitada quando esta nota foi escrita. Nenhuma das duas migrações usa dados reais nem reescreve linhas existentes; `ALTER TYPE ... ADD VALUE` da `0007` não pode ser desfeito (ver "Voltar à versão anterior").
+
+Dependências novas em `backend/requirements.txt` (já fixadas, imagem cresce cerca de 24 MB, sem pacote `apt`): `python-docx==1.2.0`, `lxml==6.1.3`, `reportlab==5.1.0` e `charset-normalizer==3.5.2` (exigido pelo reportlab). O `reportlab==5.1.0` é jovem; se a suíte falhar nele, o plano do design é cair para `reportlab==4.5.1`, que tem a mesma API usada. `docker build` precisa baixar as rodas (`lxml` tem roda para `python:3.12-slim`; não instala compilador).
+
+Fonte: o PDF usa Liberation Serif (Regular, Bold, Italic e BoldItalic, SIL OFL 1.1, cerca de 1,5 MB) versionada em `backend/app/infrastructure/documents/fonts/`, com o texto da licença (`OFL.txt`). Como o `Dockerfile` faz `COPY app ./app` e o `backend/.dockerignore` só exclui `.venv`, `tests` e caches, as fontes entram na imagem sem passo novo; a imagem `python:3.12-slim` não tem fontes do sistema. Depois de construir, conferir: `docker run --rm --entrypoint ls progressao-funcional-backend:latest /app/app/infrastructure/documents/fonts` deve listar as quatro `.ttf`.
+
+Limite de envio: o nginx do projeto já usa `client_max_body_size 120m` (`nginx/nginx.conf`) e a seção "Limite de envio" acima já cobre o do servidor. Nada novo a configurar; os downloads gerados usam `GET` e não dependem desse limite.
+
+Volume e espaço: os arquivos gerados ficam em `/app/storage/generated/<id do processo>/<uuid>.<docx|pdf>` (diretórios 0700, arquivos 0600), no mesmo volume nomeado `storage` que já guarda os documentos de entrada; não há volume novo nem mudança em `docker-compose.yml`. O diretório `generated` é criado pelo backend (usuário `app`, uid 10001) na primeira geração.
+
+| Item | Valor | Onde está |
+| --- | --- | --- |
+| Tabela e Relatório (DOCX e PDF) | dezenas de KB cada | 0,13 s e pico de 32 MB para 140 linhas (design) |
+| Comprovante | até 60 MB por versão e até 400 páginas anexadas; acima disso responde `COMPROVANTE_GRANDE_DEMAIS` | `generation_max_output_mb` (60) e `generation_max_pages` (400) |
+| PNG de entrada | até 12 megapixels; acima, `IMAGEM_GRANDE_DEMAIS` | `generation_png_max_megapixels` |
+| Espaço livre mínimo para aceitar um pedido | 200 MB; abaixo, 422 `ESPACO_INSUFICIENTE` | `generation_min_free_mb` (200) |
+| Retenção | nenhuma: toda versão `PRONTO` fica no disco; versão `FALHOU` não deixa arquivo | AD-012 |
+| Memória do Comprovante de 400 páginas | pico de 74 MB acima da linha de base, medido; o `mem_limit` de 384 MB do `backend` não muda | design |
+
+Estimativa de uso: um processo com um Comprovante regerado 3 vezes ocupa até 180 MB só nele; o espaço dos documentos de entrada (até 20 MB por arquivo) vem somado até a conclusão do processo, que os libera. Antes do deploy, anotar a linha de base: `df -h /var/lib/docker` e `docker exec progressao-funcional-backend-1 df -h /app/storage` (o volume divide o disco da VM com os outros projetos). Esses limites são variáveis de `Settings` (`GENERATION_MIN_FREE_MB` e as demais), mas o `docker-compose.yml` não as repassa ao contêiner: valem os padrões acima, e mudá-los exige acrescentar a variável em `environment` do `backend` (ou no `docker-compose.override.yml` da VM), o que é outro deploy.
+
+### Ponto de retorno antes de aplicar
+
+Fazer antes de carregar as imagens novas (mesma sequência dos passos 3 e 4 de "Atualizar para uma versão nova"):
+
+1. Etiquetar as imagens em uso: `docker tag $(docker inspect -f '{{.Image}}' progressao-funcional-backend-1) progressao-funcional-backend:docs-pre` e o mesmo para o `frontend` (trocar `docs-pre` por um nome com o commit, como nas etiquetas `round5-d6dca43`).
+2. `docker exec dashboard_db pg_dump -U <superusuario> -d progressao | gzip > backups/progressao-pre-documentos-gerados-<data>.sql.gz`, e conferir que o arquivo não está vazio (`gzip -t` e `ls -l`).
+3. Copiar `docker-compose.override.yml` e `.env` da versão atual para `backups/` (sem imprimir o conteúdo).
+4. Só então carregar as imagens (`docker save ... | gzip | ssh ... 'gunzip | docker load'`), copiar os arquivos, rodar `docker compose up -d --no-build` e, em seguida, `docker compose restart nginx` (o nginx do projeto guarda o endereço antigo do contêiner do backend) e conferir `GET /api/health`.
+
+O pacote do frontend continua passando por `scripts/check_bundle_no_secrets.sh` antes do envio, e a imagem é construída com variáveis de ambiente de mentira (a MariTalk só existe no `.env` da VM).
+
+### Depois do deploy: roteiro de fumaça
+
+Usar só dados sintéticos (docente com SIAPE fictício, PDF sintético; nunca `Documentos/` nem `Modelos/`). Anotar os ids e apagar ao final.
+
+1. `GET /api/health` responde 200, o login funciona e `docker logs progressao-funcional-backend-1` não mostra erro de migração (`alembic` deve terminar em `0007`, ou em `0006` se a `0007` não entrou).
+2. Num processo sintético A com um interstício e ao menos uma atividade validada com pontos: na Etapa 5, gerar a Tabela, o Relatório e o Comprovante, esperar os três irem a `PRONTO` e baixar cada arquivo (DOCX e PDF). Conferir que o PDF da Tabela abre com acentos corretos (a fonte Liberation Serif embutida), que o número de páginas do Comprovante bate com o sumário e que o histórico mostra o tamanho de cada versão.
+3. Pedir uma segunda geração da Tabela e conferir a versão 2 (a 1 continua no histórico e no disco).
+4. No volume: `docker exec progressao-funcional-backend-1 ls -l /app/storage/generated` mostra o diretório do processo A com modo `drwx------` e dono `app`; `df -h` confere o espaço usado contra a linha de base.
+5. Conclusão, num processo sintético B (não no A, para manter um exemplo com os originais): gerar os três documentos, abrir "Concluir e excluir documentos de entrada", conferir a prévia (número de arquivos e MB), marcar a confirmação e concluir. Esperado: o processo vira `CONCLUIDO` e somente leitura, os arquivos de entrada do B somem do volume, os documentos de entrada aparecem como arquivo excluído, os três documentos gerados continuam baixando, e pedir o Comprovante de novo responde `ORIGINAIS_EXCLUIDOS`.
+6. Se a `0007` entrou: excluir o processo B pela API (`DELETE /api/processes/{id}`) ou pelo Painel, se a tela estiver no ar, e conferir que o diretório `generated/<id>` e as linhas dele saem e que a auditoria registra `DELETE`. Apagar também o A.
+
+### Avisos
+
+- **A conclusão é irreversível e a VM não tem backup dos arquivos de entrada.** O `pg_dump` guarda o banco, não o volume `storage`: depois de concluir um processo, os PDFs, as imagens e o texto das páginas dele só existem no computador do docente. Restaurar o dump anterior à conclusão traz de volta a linha do documento sem `file_deleted_at`, mas não o arquivo. Dizer isso ao docente antes de a primeira conclusão real acontecer (a tela já mostra a confirmação "irreversível" com o número de arquivos e o espaço).
+- Os arquivos de `generated/` também não têm backup. Se o disco for perdido, as versões geradas somem; a Tabela e o Relatório podem ser regerados enquanto os dados existirem, o Comprovante não depois da conclusão.
+- A conclusão não apaga o JSON estruturado das extrações nem os documentos gerados (AD-015).
+- Enquanto houver geração ou redação em andamento, a conclusão responde `OPERACAO_EM_ANDAMENTO`; um reinício do backend leva a geração que estava `GERANDO` a `FALHOU` com o código `INTERROMPIDA`, e o usuário pede de novo (AD-012); isso vale também para o `docker compose up -d` do próprio deploy.
 
 ## Memória do OCR (limite de 384 MB do `backend`)
 
