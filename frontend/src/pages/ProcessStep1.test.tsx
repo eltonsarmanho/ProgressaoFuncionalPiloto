@@ -128,7 +128,7 @@ describe("ProcessStep1", () => {
     });
   });
 
-  it("UI-04 / TELA-01: exibe as 9 etapas com a Etapa 1 ativa, as etapas 2, 3 e 4 habilitadas e as etapas 5–9 desabilitadas e rotuladas 'em breve'", async () => {
+  it("UI-04 / TELA-01: exibe as 9 etapas com a Etapa 1 ativa, as etapas 2 a 5 habilitadas e as etapas 6–9 desabilitadas e rotuladas 'em breve'", async () => {
     mockFetch({
       "GET /api/units": { status: 200, body: UNITS },
       "GET /api/professors": { status: 200, body: PROFESSORS },
@@ -154,8 +154,12 @@ describe("ProcessStep1", () => {
     expect(steps[3]).not.toHaveTextContent("em breve");
     expect(steps[3]).not.toHaveAttribute("aria-disabled");
     expect(steps[3]).not.toHaveAttribute("aria-current");
+    expect(steps[4]).toHaveTextContent("Etapa 5");
+    expect(steps[4]).toHaveTextContent("Documentos gerados");
+    expect(steps[4]).not.toHaveTextContent("em breve");
+    expect(steps[4]).not.toHaveAttribute("aria-disabled");
     steps.forEach((step, i) => {
-      if (i < 4) return;
+      if (i < 5) return;
       expect(step).toHaveTextContent(`Etapa ${i + 1}`);
       expect(step).toHaveTextContent("em breve");
       expect(step).toHaveAttribute("aria-disabled", "true");

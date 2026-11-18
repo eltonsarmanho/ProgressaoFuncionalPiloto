@@ -7,6 +7,7 @@ const STEP_TITLES: Record<number, string> = {
   2: "Documentos",
   3: "Atividades",
   4: "Pontuação",
+  5: "Documentos gerados",
 };
 
 function stepPath(step: number, processId?: string): string | null {
@@ -15,12 +16,13 @@ function stepPath(step: number, processId?: string): string | null {
   if (step === 2) return `/processos/${processId}/documentos`;
   if (step === 3) return `/processos/${processId}/atividades`;
   if (step === 4) return `/processos/${processId}/pontuacao`;
+  if (step === 5) return `/processos/${processId}/gerados`;
   return null;
 }
 
 /** UI-04 / TELA-01: nine steps; only the enabled ones (default: step 1) are available. */
 export function StepNav({
-  enabled = [1, 2, 3, 4],
+  enabled = [1, 2, 3, 4, 5],
   current = 1,
   processId,
 }: {

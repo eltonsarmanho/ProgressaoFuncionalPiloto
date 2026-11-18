@@ -62,3 +62,16 @@ describe("UI-01: rotas protegidas", () => {
     expect(screen.getByTestId("location")).toHaveTextContent(/^\/$/);
   });
 });
+
+describe("UIG-01: rota da Etapa 5", () => {
+  it("abre a página Documentos gerados em /processos/:id/gerados", async () => {
+    mockFetch({ "GET /api/auth/me": { status: 200, body: ME } });
+    renderAt("/processos/p1/gerados");
+    expect(await screen.findByRole("heading", { name: "Etapa 5 · Documentos gerados" })).toBeInTheDocument();
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/processos\/p1\/gerados$/);
+    expect(screen.getByRole("link", { name: "Etapa 4 · Pontuação" })).toHaveAttribute(
+      "href",
+      "/processos/p1/pontuacao",
+    );
+  });
+});

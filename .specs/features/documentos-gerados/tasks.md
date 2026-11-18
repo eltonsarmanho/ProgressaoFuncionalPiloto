@@ -2780,8 +2780,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O menu mostra a Etapa 5 com o título certo e a Etapa 4 segue como Pontuação; a rota abre a página da etapa
-- [ ] Gate quick passa; 4+ testes
+- [x] O menu mostra a Etapa 5 com o título certo e a Etapa 4 segue como Pontuação; a rota abre a página da etapa
+- [x] Gate quick passa; 4+ testes
 
 **Tests**: unit
 **Gate**: quick
