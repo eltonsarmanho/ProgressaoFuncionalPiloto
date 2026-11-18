@@ -3736,10 +3736,10 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Selecionar todas marca só as aguardando revisão (as validadas e rejeitadas ficam sem marca) e mostra a contagem
-- [ ] A caixa do cabeçalho alterna entre selecionar e limpar; Limpar seleção zera a contagem e desabilita Validar as selecionadas
-- [ ] Validar as selecionadas envia só os ids marcados ao endpoint em lote, sem justificativa, e recarrega
-- [ ] Gate quick passa
+- [x] Selecionar todas marca só as aguardando revisão (as validadas e rejeitadas ficam sem marca) e mostra a contagem
+- [x] A caixa do cabeçalho alterna entre selecionar e limpar; Limpar seleção zera a contagem e desabilita Validar as selecionadas
+- [x] Validar as selecionadas envia só os ids marcados ao endpoint em lote, sem justificativa, e recarrega
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

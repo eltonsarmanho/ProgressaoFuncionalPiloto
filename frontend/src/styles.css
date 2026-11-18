@@ -680,3 +680,17 @@ fieldset.grid legend {
     color: var(--muted);
   }
 }
+
+.check-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  align-items: flex-start;
+  margin: 0;
+  font-weight: 600;
+}
+
+.check-head input {
+  width: auto;
+  margin: 0;
+}

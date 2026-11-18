@@ -238,3 +238,59 @@ describe("REV-04 / UIM-11: validar as selecionadas", () => {
     expect(screen.getByRole("status")).toHaveTextContent("2 atividades validadas");
   });
 });
+
+describe("UIM-11: selecionar todas", () => {
+  const MIXED = () => [
+    activity({ id: "a1", title: "Primeira" }),
+    activity({ id: "a2", title: "Validada", status: "VALIDADA" }),
+    activity({ id: "a3", title: "Rejeitada", status: "REJEITADA" }),
+    activity({ id: "a4", title: "Quarta" }),
+  ];
+
+  it("Selecionar todas marca só as atividades aguardando revisão e mostra a contagem", async () => {
+    const { user } = setup(MIXED());
+    await user.click(screen.getByRole("button", { name: "Selecionar todas (2)" }));
+
+    expect(screen.getByLabelText("Selecionar Primeira")).toBeChecked();
+    expect(screen.getByLabelText("Selecionar Quarta")).toBeChecked();
+    expect(screen.getByLabelText("Selecionar Validada")).not.toBeChecked();
+    expect(screen.getByLabelText("Selecionar Rejeitada")).not.toBeChecked();
+    expect(screen.getByText("2 atividades selecionadas")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Validar as selecionadas (2)" })).toBeEnabled();
+  });
+
+  it("a caixa do cabeçalho alterna entre selecionar todas e limpar, e Limpar seleção zera tudo", async () => {
+    const { user } = setup(MIXED());
+    const header = screen.getByRole("checkbox", { name: "Selecionar todas as atividades que aguardam revisão" });
+
+    await user.click(header);
+    expect(header).toBeChecked();
+    expect(screen.getByLabelText("Selecionar Primeira")).toBeChecked();
+
+    await user.click(header);
+    expect(header).not.toBeChecked();
+    expect(screen.getByLabelText("Selecionar Primeira")).not.toBeChecked();
+
+    await user.click(screen.getByRole("button", { name: "Selecionar todas (2)" }));
+    await user.click(screen.getByRole("button", { name: "Limpar seleção" }));
+    expect(screen.getByLabelText("Selecionar Quarta")).not.toBeChecked();
+    expect(screen.getByRole("button", { name: "Validar as selecionadas (0)" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Limpar seleção" })).toBeDisabled();
+  });
+
+  it("Validar as selecionadas depois de Selecionar todas envia só os ids que aguardam revisão", async () => {
+    const { calls, onChanged, user } = setup(MIXED(), {
+      "POST /api/processes/p1/activities/validate-batch": { status: 200, body: [{}, {}] },
+    });
+    await user.click(screen.getByRole("button", { name: "Selecionar todas (2)" }));
+    await user.click(screen.getByRole("button", { name: "Validar as selecionadas (2)" }));
+
+    await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
+    expect(body(calls[0].init)).toEqual({ activity_ids: ["a1", "a4"] });
+  });
+
+  it("sem atividade aguardando revisão, Selecionar todas fica desabilitado", () => {
+    setup([activity({ status: "VALIDADA" })]);
+    expect(screen.getByRole("button", { name: "Selecionar todas (0)" })).toBeDisabled();
+  });
+});

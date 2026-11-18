@@ -127,6 +127,12 @@ export function ActivityReviewList({
   const toggle = (id: string) =>
     setSelected((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]));
 
+  /** UIM-11: only the rows shown that still await review can be picked all at once. */
+  const validatable = activities.filter((a) => a.status === "AGUARDANDO_REVISAO").map((a) => a.id);
+  const allPicked = validatable.length > 0 && validatable.every((id) => selected.includes(id));
+  const selectAll = () => setSelected(validatable);
+  const clearSelection = () => setSelected([]);
+
   /** UIM-13: validate and reject act at once; no justification, no panel. */
   async function changeStatus(activity: Activity, status: "VALIDADA" | "REJEITADA") {
     setNotice(null);
@@ -188,6 +194,12 @@ export function ActivityReviewList({
       ) : (
         <>
           <div className="btn-row">
+            <button type="button" className="btn btn-secondary" disabled={validatable.length === 0} onClick={selectAll}>
+              Selecionar todas ({validatable.length})
+            </button>
+            <button type="button" className="btn btn-secondary" disabled={selected.length === 0} onClick={clearSelection}>
+              Limpar seleção
+            </button>
             <button
               type="button"
               className="btn btn-primary"
@@ -197,12 +209,28 @@ export function ActivityReviewList({
               Validar as selecionadas ({selected.length})
             </button>
           </div>
+          <p className="muted" aria-live="polite">
+            {selected.length === 1 ? "1 atividade selecionada" : `${selected.length} atividades selecionadas`}
+          </p>
           <table className="scoring-table wide-table review-table">
             <thead>
               <tr>
                 {COLUMNS.map((c) => (
                   <th key={c} scope="col">
-                    {c}
+                    {c === "Selecionar" ? (
+                      <label className="check-head">
+                        <input
+                          type="checkbox"
+                          aria-label="Selecionar todas as atividades que aguardam revisão"
+                          checked={allPicked}
+                          disabled={validatable.length === 0}
+                          onChange={() => (allPicked ? clearSelection() : selectAll())}
+                        />
+                        <span>{c}</span>
+                      </label>
+                    ) : (
+                      c
+                    )}
                   </th>
                 ))}
               </tr>
