@@ -1860,9 +1860,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Processo sintético: PDF final com a numeração do plano, `plan_hash` no instantâneo e alerta `ATIVIDADE_SEM_COMPROVANTE`
-- [ ] Tabela e Comprovante gerados com o mesmo arranjo têm o mesmo `plan_hash`; depois de mudar o arranjo, o `NUMERACAO_DIVERGENTE` aparece
-- [ ] Gate full passa; 5+ testes
+- [x] Processo sintético: PDF final com a numeração do plano, `plan_hash` no instantâneo e alerta `ATIVIDADE_SEM_COMPROVANTE`
+- [x] Tabela e Comprovante gerados com o mesmo arranjo têm o mesmo `plan_hash`; depois de mudar o arranjo, o `NUMERACAO_DIVERGENTE` aparece
+- [x] Gate full passa; 5+ testes
 
 **Tests**: integration
 **Gate**: full

@@ -10,7 +10,7 @@ import logging
 import resource
 import time
 import uuid
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -44,6 +44,8 @@ from app.domain.entities.user import User
 from app.domain.errors import GenerationRefused, NotFound
 from app.domain.repositories.ports import (
     Clock,
+    ComprovanteAssembler,
+    ComprovanteFront,
     DocumentWriter,
     FileInspector,
     FileStorage,
@@ -228,6 +230,7 @@ _LEFT_OUT_LABELS = {
 }
 _FORMATS = (DocumentFormat.DOCX, DocumentFormat.PDF)
 _CHUNK = 1024 * 1024
+_PROGRESS_EVERY = 50
 
 
 @dataclass
@@ -276,6 +279,29 @@ def _layout_snapshot(layout: ComprovanteLayout, plan: ComprovantePlan) -> dict[s
     return {"plan_hash": plan.plan_hash, "entries": entries}
 
 
+_OTHER_KIND = {
+    DocumentKind.TABELA: DocumentKind.COMPROVANTE,
+    DocumentKind.COMPROVANTE: DocumentKind.TABELA,
+}
+_NUMBERING_TEXT = {
+    DocumentKind.TABELA: "O Comprovante mais recente foi numerado de outro modo que esta Tabela.",
+    DocumentKind.COMPROVANTE: (
+        "A Tabela de Pontuação mais recente cita uma numeração diferente deste Comprovante."
+    ),
+}
+
+
+def _numbering_alert(
+    kind: DocumentKind, plan: ComprovantePlan, latest: Mapping[DocumentKind, GeneratedDocument]
+) -> list[GenerationAlert]:
+    """The Tabela cites page numbers of the Comprovante: when the latest version of the other
+    document was numbered from another plan, the two disagree (NUMERACAO_DIVERGENTE)."""
+    other = latest.get(_OTHER_KIND[kind])
+    if other is None or other.plan_hash == plan.plan_hash:
+        return []
+    return [GenerationAlert(GenerationAlertCode.NUMERACAO_DIVERGENTE, _NUMBERING_TEXT[kind])]
+
+
 def _unique(codes: Sequence[str]) -> list[str]:
     return list(dict.fromkeys(codes))
 
@@ -291,7 +317,11 @@ class RunGeneration:
         clock: Clock,
         storage: GeneratedFileStorage,
         writer: DocumentWriter,
+        assembler: ComprovanteAssembler,
         report_config: ReportConfigProvider,
+        originals: FileStorage,
+        inspector: FileInspector,
+        limits: GenerationLimits,
         toc_capacity: int,
     ) -> None:
         self._uow_factory = uow_factory
@@ -299,7 +329,11 @@ class RunGeneration:
         self._clock = clock
         self._storage = storage
         self._writer = writer
+        self._assembler = assembler
         self._report_config = report_config
+        self._originals = originals
+        self._inspector = inspector
+        self._limits = limits
         self._toc_capacity = toc_capacity
 
     def run_next(self) -> bool:
@@ -324,7 +358,8 @@ class RunGeneration:
             saved_draft = None
             if generation.kind is DocumentKind.RELATORIO:
                 saved_draft = uow.report_drafts.get(process.id)
-        produced = self._produce(generation, inputs, saved_draft)
+            latest = uow.generations.latest_ready_by_kind(process.id)
+        produced = self._produce(generation, inputs, saved_draft, latest)
         files = []
         for fmt, temp in produced.outputs:
             sha256, size = _digest(temp)
@@ -367,13 +402,24 @@ class RunGeneration:
         )
 
     def _produce(
-        self, generation: GeneratedDocument, inputs: GenerationInputs, saved: ReportDraft | None
+        self,
+        generation: GeneratedDocument,
+        inputs: GenerationInputs,
+        saved: ReportDraft | None,
+        latest: Mapping[DocumentKind, GeneratedDocument],
     ) -> _Produced:
         if generation.kind is DocumentKind.RELATORIO:
             return self._report(generation, inputs, saved)
-        return self._table(generation, inputs)
+        if generation.kind is DocumentKind.COMPROVANTE:
+            return self._comprovante(generation, inputs, latest)
+        return self._table(generation, inputs, latest)
 
-    def _table(self, generation: GeneratedDocument, inputs: GenerationInputs) -> _Produced:
+    def _table(
+        self,
+        generation: GeneratedDocument,
+        inputs: GenerationInputs,
+        latest: Mapping[DocumentKind, GeneratedDocument],
+    ) -> _Produced:
         version = inputs.version
         if version is None:
             raise GenerationRefused(
@@ -409,7 +455,8 @@ class RunGeneration:
             alerts=_unique([a.code for a in model.alerts]),
             layout=_layout_snapshot(inputs.layout, plan),
         )
-        return _Produced(outputs, snapshot, _left_out_alert(inputs), plan.plan_hash)
+        alerts = _left_out_alert(inputs) + _numbering_alert(generation.kind, plan, latest)
+        return _Produced(outputs, snapshot, alerts, plan.plan_hash)
 
     def _report(
         self, generation: GeneratedDocument, inputs: GenerationInputs, saved: ReportDraft | None
@@ -475,3 +522,58 @@ class RunGeneration:
         if any(w.code is STALE for section in draft.sections for w in section.warnings):
             alerts.append(GenerationAlert(STALE, STALE_MESSAGE))
         return _Produced(outputs, snapshot, alerts)
+
+    def _comprovante(
+        self,
+        generation: GeneratedDocument,
+        inputs: GenerationInputs,
+        latest: Mapping[DocumentKind, GeneratedDocument],
+    ) -> _Produced:
+        """The PDF assembled from the plan, one original page at a time (CMP-01, CMP-11)."""
+        version = inputs.version
+        if version is None:
+            raise GenerationRefused(
+                GenerationCode.TABELA_NAO_ESCOLHIDA,
+                "Escolha a tabela de pontuação do processo antes de gerar.",
+            )
+        plan = checked_comprovante_plan(
+            inputs, self._originals, self._inspector, self._limits, self._toc_capacity
+        )
+        front = ComprovanteFront(
+            header=inputs.header,
+            table_name=version.name,
+            group_names={g.number: g.name for g in version.groups},
+            item_names={
+                (c.group_number, c.item_number): c.description
+                for g in version.groups
+                for c in g.criteria
+            },
+            document_names={d.id: d.original_name for d in inputs.documents},
+        )
+        names = {d.id: d.internal_name for d in inputs.documents}
+
+        def resolver(document_id: UUID) -> Path:
+            return self._originals.path(generation.process_id, names[document_id])
+
+        def on_progress(done: int, total: int) -> None:
+            if done % _PROGRESS_EVERY == 0 or done == total:
+                logger.debug("generation_id=%s pages=%d/%d", generation.id, done, total)
+
+        temp = self._storage.new_temp_path(generation.process_id)
+        result = self._assembler.assemble(plan, front, resolver, temp, on_progress)
+        snapshot = build_snapshot(
+            generation.kind,
+            version,
+            inputs.interstice,
+            inputs.score.result,
+            inputs.activities,
+            excluded=inputs.excluded,
+            alerts=_unique([a.code for a in inputs.score.alerts]),
+            layout=_layout_snapshot(inputs.layout, plan),
+        )
+        alerts = (
+            list(result.alerts)
+            + _left_out_alert(inputs)
+            + _numbering_alert(generation.kind, plan, latest)
+        )
+        return _Produced([(DocumentFormat.PDF, temp)], snapshot, alerts, plan.plan_hash)
