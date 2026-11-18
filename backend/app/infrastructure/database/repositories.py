@@ -54,9 +54,13 @@ from app.domain.repositories.ports import (
     DEFAULT_MAX_JOB_ATTEMPTS,
     EXHAUSTED_CODE,
     ActivityEvidence,
+    BusyReason,
     JobStatus,
+    ProcessDeletionCounts,
     ProcessingJob,
     ScoringTableRecord,
+    StoredFile,
+    StoredFileArea,
 )
 from app.domain.rules.scoring_duplicates import content_hash, has_readable_text
 from app.infrastructure.database.models import (
@@ -1999,6 +2003,107 @@ class SqlLayoutRepository:
         return replace(layout, version=m.version)
 
 
+class SqlProcessPurgeRepository:
+    """Deletes a process and everything below it in one transaction (GP-D2, GP-D3).
+
+    The generated documents refuse any DELETE by trigger; `SET LOCAL app.process_purge` opens the
+    exception for this transaction only (migration 0007).
+    """
+
+    def __init__(self, session: Session):
+        self._s = session
+
+    def _ids(self, model: Any, process_id: UUID):
+        return select(model.id).where(model.process_id == process_id)
+
+    def busy_reasons(self, process_id: UUID) -> list[BusyReason]:
+        reasons = []
+        if self._s.scalar(
+            select(
+                exists()
+                .where(
+                    ProcessingJobModel.document_id.in_(self._ids(DocumentModel, process_id)),
+                    ProcessingJobModel.status.in_(_ACTIVE_JOB),
+                )
+            )
+        ):
+            reasons.append(BusyReason.DOCUMENTO_PROCESSANDO)
+        if self._s.scalar(
+            select(
+                exists().where(
+                    GeneratedDocumentModel.process_id == process_id,
+                    GeneratedDocumentModel.state == GenerationState.GERANDO,
+                )
+            )
+        ):
+            reasons.append(BusyReason.GERACAO_EM_ANDAMENTO)
+        if self._s.scalar(
+            select(
+                exists().where(
+                    ReportWordingJobModel.process_id == process_id,
+                    ReportWordingJobModel.state == GenerationState.GERANDO,
+                )
+            )
+        ):
+            reasons.append(BusyReason.REDACAO_EM_ANDAMENTO)
+        return reasons
+
+    def _count(self, model: Any, process_id: UUID) -> int:
+        return self._s.scalar(
+            select(func.count()).select_from(model).where(model.process_id == process_id)
+        )
+
+    def counts(self, process_id: UUID) -> ProcessDeletionCounts:
+        return ProcessDeletionCounts(
+            documents=self._count(DocumentModel, process_id),
+            activities=self._count(ActivityModel, process_id),
+            generated_documents=self._count(GeneratedDocumentModel, process_id),
+        )
+
+    def delete_all(self, process_id: UUID) -> list[StoredFile]:
+        # The row lock makes a concurrent insert of a dependent wait (and then fail) instead of
+        # slipping in between the checks and the deletes.
+        locked = self._s.scalar(
+            select(FunctionalProcessModel.id)
+            .where(FunctionalProcessModel.id == process_id)
+            .with_for_update()
+        )
+        if locked is None:
+            raise NotFound("Processo não encontrado")
+        stored = [
+            StoredFile(StoredFileArea.INPUT, process_id, name, document_id)
+            for document_id, name in self._s.execute(
+                select(DocumentModel.id, DocumentModel.internal_name).where(
+                    DocumentModel.process_id == process_id,
+                    DocumentModel.file_deleted_at.is_(None),
+                )
+            )
+        ]
+        generated = self._ids(GeneratedDocumentModel, process_id)
+        stored += [
+            StoredFile(StoredFileArea.GENERATED, process_id, name, generation_id)
+            for generation_id, name in self._s.execute(
+                select(GeneratedFileModel.generated_document_id, GeneratedFileModel.internal_name)
+                .where(GeneratedFileModel.generated_document_id.in_(generated))
+            )
+        ]
+        self._s.execute(select(func.set_config("app.process_purge", "on", True)))
+        for statement in (
+            delete(ReportWordingJobModel).where(ReportWordingJobModel.process_id == process_id),
+            delete(ComprovanteLayoutModel).where(ComprovanteLayoutModel.process_id == process_id),
+            delete(ReportDraftModel).where(ReportDraftModel.process_id == process_id),
+            delete(GeneratedFileModel).where(GeneratedFileModel.generated_document_id.in_(generated)),
+            delete(GeneratedDocumentModel).where(GeneratedDocumentModel.process_id == process_id),
+            # Candidates and evidences go by cascade.
+            delete(ActivityModel).where(ActivityModel.process_id == process_id),
+            # Runs, pages and jobs go by cascade.
+            delete(DocumentModel).where(DocumentModel.process_id == process_id),
+            delete(FunctionalProcessModel).where(FunctionalProcessModel.id == process_id),
+        ):
+            self._s.execute(statement)
+        return stored
+
+
 class SqlUnitOfWork:
     """One SQLAlchemy session per unit of work; rolls back unless committed."""
 
@@ -2025,6 +2130,7 @@ class SqlUnitOfWork:
         self.wording_jobs = SqlWordingJobRepository(self._session)
         self.report_drafts = SqlReportDraftRepository(self._session)
         self.comprovante_layouts = SqlLayoutRepository(self._session)
+        self.process_purge = SqlProcessPurgeRepository(self._session)
         return self
 
     def __exit__(

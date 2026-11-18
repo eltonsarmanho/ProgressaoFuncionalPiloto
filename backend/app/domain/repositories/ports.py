@@ -684,6 +684,55 @@ class GeneratedFileStorage(Protocol):
         ...
 
 
+class StoredFileArea(StrEnum):
+    INPUT = "INPUT"
+    GENERATED = "GENERATED"
+
+
+@dataclass(frozen=True)
+class StoredFile:
+    """A file on disk that belongs to a process, to be removed after its rows are gone."""
+
+    area: StoredFileArea
+    process_id: UUID
+    internal_name: str
+    owner_id: UUID  # the document or generated document that held it; only for logs
+
+
+class BusyReason(StrEnum):
+    """Work in progress that stops a process from being deleted (GP-DEL-07)."""
+
+    DOCUMENTO_PROCESSANDO = "DOCUMENTO_PROCESSANDO"
+    GERACAO_EM_ANDAMENTO = "GERACAO_EM_ANDAMENTO"
+    REDACAO_EM_ANDAMENTO = "REDACAO_EM_ANDAMENTO"
+
+
+@dataclass(frozen=True)
+class ProcessDeletionCounts:
+    """What a deletion removes, as numbers only (GP-D7)."""
+
+    documents: int
+    activities: int
+    generated_documents: int
+
+
+class ProcessPurgeRepository(Protocol):
+    """Deletion of a whole process with everything that depends on it (GP-D2)."""
+
+    def busy_reasons(self, process_id: UUID) -> Sequence[BusyReason]:
+        """Work in progress for the process: a queued or running extraction, a generation or a
+        wording. Empty when nothing runs."""
+        ...
+
+    def counts(self, process_id: UUID) -> ProcessDeletionCounts: ...
+
+    def delete_all(self, process_id: UUID) -> Sequence[StoredFile]:
+        """Deletes the process and every dependent in the open transaction (never commits) and
+        returns the files to remove from the disk after the commit. Raises `NotFound` when the
+        process does not exist."""
+        ...
+
+
 class UnitOfWork(Protocol):
     users: UserRepository
     sessions: SessionRepository
@@ -703,6 +752,7 @@ class UnitOfWork(Protocol):
     wording_jobs: WordingJobRepository
     report_drafts: ReportDraftRepository
     comprovante_layouts: LayoutRepository
+    process_purge: ProcessPurgeRepository
 
     def __enter__(self) -> Self: ...
 
