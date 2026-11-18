@@ -156,6 +156,7 @@ Tabelas legíveis, botões curtos que agem na hora, janelas para classificar, cr
 
 ```
 T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 → T127 → T128 → T129 → T130 → T131 → T132 → T133 → T134 → T135 → T136 → T137 → T138 → T139 → T140
+Phase 18:  T141 → T142 → T143 → T144 → T145
 ```
 
 ---
@@ -3937,12 +3938,155 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Commit**: `docs(specs): record the resolution of round 7 and the handoff`
 
+### Phase 18: Documentos fora do interstício
+
+Regra de negócio pedida em 2026-11-18: o documento cujas atividades datadas caem todas fora do interstício aparece na Etapa 2 com aviso destacado e não segue para as Etapas 3, 4 e 5 (FORA-01..09). Cinco tarefas encadeadas: regra pura, analisador, API, tela e registro.
+
+```
+T141 → T142 → T143 → T144 → T145
+```
+
+### T141: Regra pura do documento fora do interstício
+
+**What**: Regra pura `document_outside_interstice(period_states)` que devolve verdadeiro quando há ao menos uma atividade com data e todas as atividades com data estão em `FORA`; falso com alguma `DENTRO` ou `PARCIAL` e falso sem nenhuma data utilizável. Novo `DocAlertCode.DOCUMENTO_FORA_DO_INTERSTICIO` (o alerta é guardado como texto, sem migração se o campo já é livre; se há restrição no banco, a migração entra neste mesmo commit). Arquivos: regra em `domain/rules`, entidade `document.py`.
+**Where**: `backend/app/domain/rules/document_period.py`
+**Depends on**: T140
+**Reuses**: `PeriodState` e `_period_state` de `document_analyzer.py`
+**Requirement**: FORA-01, FORA-05, FORA-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Todas `FORA` com ao menos uma data → fora; `FORA` e `DENTRO` → dentro; `FORA` e `PARCIAL` → dentro; lista vazia ou sem data → dentro
+- [ ] O alerta novo existe e é aceito por quem lê e grava `DocAlertCode`
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(domain): judge whether a document is outside the interstice`
+
+---
+
+### T142: O analisador não cria atividades de documento fora do interstício
+
+**What**: No `document_analyzer`, depois de calcular o estado de período de cada atividade, aplicar a regra: quando o documento está fora, não criar atividade nenhuma, gravar o alerta `DOCUMENTO_FORA_DO_INTERSTICIO` com as datas do interstício e marcar o documento `PROCESSADO` sem `REQUER_REVISAO`. Reprocessar reavalia com o interstício vigente, retirando o alerta e criando as atividades quando o documento passa a estar dentro. O documento não conta como pendente de revisão nem como erro.
+**Where**: `backend/app/application/services/document_analyzer.py`
+**Depends on**: T141
+**Reuses**: Teste do analisador com IA falsa
+**Requirement**: FORA-01, FORA-05, FORA-06, FORA-07, FORA-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Documento com todas as atividades de 2022 e interstício 2024-2026 não cria atividade e traz o alerta, `PROCESSADO`, sem `REQUER_REVISAO`
+- [ ] Documento com uma atividade dentro e outra fora cria as duas, e a de fora segue `FORA_DO_INTERSTICIO`
+- [ ] Reprocessar depois de ampliar o interstício apaga o alerta e cria a atividade
+- [ ] Atividades já ligadas ao documento fora são tratadas como no reprocessamento atual (substituídas pelo resultado novo)
+- [ ] Gate quick passa
+
+**Tests**: unit + integration
+**Gate**: quick
+
+**Commit**: `feat(documents): keep documents outside the interstice out of the next steps`
+
+---
+
+### T143: API: alerta, contagem e bloqueio de Classificar e Criar atividade
+
+**What**: A lista de documentos devolve o alerta e as datas do interstício, e o resumo traz a contagem de documentos fora do interstício; Classificar e Criar atividade sobre documento com o alerta respondem 409 `DOCUMENTO_FORA_DO_INTERSTICIO`. Etapas 3, 4 e 5 não recebem nada desse documento (teste de que atividades, pontuação, Tabela, Relatório e Comprovante não o citam).
+**Where**: `backend/app/presentation/api/documents.py`
+**Depends on**: T142
+**Reuses**: Esquemas de `documents` e testes de API
+**Requirement**: FORA-02, FORA-03, FORA-04, FORA-08
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O JSON da lista traz o alerta e a contagem `outside_interstice_count`
+- [ ] Classificar e Criar atividade respondem 409 com o código novo
+- [ ] Um documento fora não aparece em nenhuma linha de atividade, pontuação ou dossiê, mesmo com atividade antiga já ligada removida pelo reprocessamento
+- [ ] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(api): list and guard documents outside the interstice`
+
+---
+
+### T144: Etapa 2: aviso destacado e botões do documento fora do interstício
+
+**What**: A linha do documento com o alerta mostra uma faixa de alerta com o texto "Fora do interstício (dd/mm/aaaa a dd/mm/aaaa): não será processado nas próximas etapas", sem Classificar nem Criar atividade, com Visualizar, Baixar, Reprocessar e Excluir; o resumo da lista mostra a contagem; o documento não conta como pendente de revisão. Rótulo novo em `labels.ts`, estilo no `styles.css`, tudo sem campo de justificativa.
+**Where**: `frontend/src/components/DocumentList.tsx`
+**Depends on**: T143
+**Reuses**: `DocumentList`, `labels.ts`, `styles.css` e os testes da Etapa 2
+**Requirement**: FORA-02, FORA-04, FORA-08, FORA-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] A faixa aparece com as datas do interstício e a cor de alerta; documentos dentro do período não a mostram
+- [ ] Classificar e Criar atividade não aparecem nessa linha
+- [ ] O resumo mostra "N fora do interstício" e o documento não entra em "pendentes de revisão"
+- [ ] Nenhum campo de justificativa
+- [ ] Gate quick passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(ui): flag documents outside the interstice on step 2`
+
+---
+
+### T145: Registro da regra: CLAUDE.md, STATE e validação
+
+**What**: `CLAUDE.md` na raiz traz as regras de negócio do projeto, incluindo a do documento fora do interstício; `spec.md` passa FORA-01..09 a Implementing; `STATE.md` registra a decisão e a suposição não confirmada (reavaliar só ao reprocessar, sem exceção manual); `validation.md` registra a rodada. Verificação independente da regra com mutantes no analisador e na tela.
+**Where**: `CLAUDE.md`
+**Depends on**: T144
+**Reuses**: Resolution (round 7)
+**Requirement**: FORA-01, FORA-02, FORA-03, FORA-04, FORA-05, FORA-06, FORA-07, FORA-08, FORA-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `CLAUDE.md` descreve a regra e os limites já fixados (pontuação determinística, IA só sugere, documentos reais nunca versionados)
+- [ ] `validate_spec.py`, `validate_tasks.py` e `validate_state.py` passam
+- [ ] Gate build passa
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `docs(specs): record the documents outside the interstice rule`
+
+---
+
 ---
 
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11 → Phase 12 → Phase 13 → Phase 14 → Phase 15 → Phase 16 → Phase 17
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11 → Phase 12 → Phase 13 → Phase 14 → Phase 15 → Phase 16 → Phase 17 → Phase 18
 
 Phase 1:  T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 Phase 2:  T9 → T10 → T11 → T12 → T13 → T14 → T15
@@ -3961,4 +4105,5 @@ Phase 14:  T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T
 Phase 15:  T107 → T108 → T109 → T110 → T111 → T112
 Phase 16:  T113 → T114 → T115 → T116 → T117
 Phase 17:  T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 → T127 → T128 → T129 → T130 → T131 → T132 → T133 → T134 → T135 → T136 → T137 → T138 → T139 → T140
+Phase 18:  T141 → T142 → T143 → T144 → T145
 ```

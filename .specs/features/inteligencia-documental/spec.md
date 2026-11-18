@@ -41,6 +41,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Assumption / decision | Chosen default  | Rationale | Confirmed? |
 | --------------------- | --------------- | --------- | ---------- |
 | Modelo da IA | O modelo configurado em `MARITALK_MODEL` no `.env` (hoje `sabiazinho-4`); com a variável vazia, `sabia-4-br-sp`; em erro de modelo, uma nova tentativa com `sabia-4-br-sp` | Decisão do usuário em 2026-11-17, que revisa a anterior (padrão `sabia-4-br-sp`). Risco aceito: o modelo configurado pode processar fora do Brasil; mitigado pelo mascaramento de identificadores e por `MARITALK_MODEL=sabia-4-br-sp` quando se quiser processamento nacional | y |
+| Regra do documento fora do interstício (FORA-01..09) | O documento fica fora das etapas seguintes só quando todas as atividades com data caem fora do interstício; a data do documento é a das atividades extraídas (a IA já as extrai e o texto as comprova); a reavaliação acontece ao reprocessar, não sozinha quando o interstício muda na Etapa 1; sem exceção manual para incluir o documento | Pedido do usuário em 2026-11-18 ("documentos fora do interstício devem aparecer na Etapa 2 com aviso destacado e não ser processados nas próximas etapas"); a interpretação por atividades evita descartar um documento com uma atividade dentro do período e mantém o Reprocessar já existente como único gatilho | n |
 | Mascaramento antes da IA | CPF, RG, e-mail e telefone viram marcadores; nomes e matrícula SIAPE seguem | Decisão do usuário em 2026-11-17 (LGPD: enviar só o necessário) | y |
 | Executor em segundo plano | Executor no próprio processo do backend, uma tarefa por vez, com tarefas e estados no banco; evolui para Celery e Redis depois | Prompt, seção 18: primeira versão com processamento assíncrono e controle de tarefas; a VM tem 1 CPU | n |
 | Limites de envio | 20 MB por arquivo, 120 MB por requisição, 100 páginas, 100 megapixels, 200 documentos por processo, 60 envios por minuto por usuário | Valores razoáveis para a VM e para os documentos reais (maior artigo: 12 páginas); ajustáveis por configuração | n |
@@ -429,6 +430,28 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ---
 
+### P1: Documentos fora do interstício ⭐ MVP
+
+**User Story**: Como docente, quero ver na Etapa 2 os documentos cuja data está fora do interstício informado na Etapa 1, com um aviso destacado de que não seguirão para as próximas etapas, para saber por que eles não geram atividade nem pontos.
+
+**Why P1**: Regra de negócio pedida pelo usuário em 2026-11-18: o processo só considera o que aconteceu dentro do interstício. Hoje a atividade fora do período vira linha "Fora do interstício" na Etapa 3 e na pontuação (SUG-09); a regra nova tira o documento inteiro das etapas seguintes e deixa só o aviso na Etapa 2.
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. WHEN um documento é processado e todas as atividades extraídas que têm data estão fora do interstício do processo (estado de período `FORA`, pela mesma verificação de SUG-09 e DATA-10) THEN the system SHALL marcar o documento com o alerta `DOCUMENTO_FORA_DO_INTERSTICIO` e SHALL não criar atividade nenhuma a partir dele.
+2. WHILE um documento traz o alerta `DOCUMENTO_FORA_DO_INTERSTICIO` the system SHALL mostrá-lo na lista da Etapa 2 com um aviso destacado (faixa de cor de alerta na linha, não um selo discreto) com o texto "Fora do interstício (dd/mm/aaaa a dd/mm/aaaa): não será processado nas próximas etapas", com as datas do interstício do processo.
+3. WHILE um documento traz o alerta `DOCUMENTO_FORA_DO_INTERSTICIO` the system SHALL excluí-lo das Etapas 3, 4 e 5: nenhuma atividade, linha de pontuação, linha da Tabela, entrada do Relatório nem página do Comprovante vem dele.
+4. WHILE um documento traz o alerta `DOCUMENTO_FORA_DO_INTERSTICIO` the system SHALL mantê-lo com Visualizar, Baixar, Reprocessar e Excluir, e SHALL não oferecer Classificar nem Criar atividade para ele.
+5. WHERE ao menos uma atividade do documento está dentro do interstício ou o cruza (`DENTRO` ou `PARCIAL`) the system SHALL processar o documento normalmente, e as atividades fora do período seguem a regra de SUG-09 (`FORA_DO_INTERSTICIO` na sugestão).
+6. WHERE nenhuma atividade extraída do documento tem data utilizável the system SHALL não aplicar esta regra e SHALL manter o fluxo normal do documento.
+7. WHEN o usuário reprocessa um documento THEN the system SHALL reavaliar esta regra com o interstício vigente do processo, retirando o alerta e criando as atividades quando o documento passa a estar dentro do período, ou aplicando o alerta no caso contrário.
+8. The system SHALL contar na Etapa 2 quantos documentos estão fora do interstício e SHALL mostrar essa contagem no resumo da lista.
+9. The system SHALL não contar o documento com o alerta `DOCUMENTO_FORA_DO_INTERSTICIO` como pendente de revisão nem como erro (ele não bloqueia o avanço da Etapa 2 para a Etapa 3).
+
+**Independent Test**: Num processo com interstício de 23/11/2024 a 23/11/2026, um certificado de 10/03/2022 aparece na Etapa 2 com a faixa de aviso e o texto do interstício, não gera atividade na Etapa 3, não aparece na pontuação, e um certificado de 15/05/2025 do mesmo lote gera atividade normalmente; mudar o interstício para incluir 2022 e reprocessar o certificado faz o aviso sumir e a atividade aparecer.
+
+---
+
 ## Edge Cases
 
 Edge cases are usually unwanted-behavior (IF/THEN) or boundary (WHEN) criteria:
@@ -610,12 +633,21 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | UIM-21 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
 | UIM-22 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
 | UIM-23 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| FORA-01 | P1: Documentos fora do interstício | Design | Pending |
+| FORA-02 | P1: Documentos fora do interstício | Design | Pending |
+| FORA-03 | P1: Documentos fora do interstício | Design | Pending |
+| FORA-04 | P1: Documentos fora do interstício | Design | Pending |
+| FORA-05 | P1: Documentos fora do interstício | Design | Pending |
+| FORA-06 | P1: Documentos fora do interstício | Design | Pending |
+| FORA-07 | P1: Documentos fora do interstício | Design | Pending |
+| FORA-08 | P1: Documentos fora do interstício | Design | Pending |
+| FORA-09 | P1: Documentos fora do interstício | Design | Pending |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 162 total, 162 mapped to tasks, 0 unmapped
+**Coverage:** 171 total, 162 mapped to tasks, 9 unmapped ⚠️ (FORA-01..09 entram na Phase 18)
 
 ---
 
