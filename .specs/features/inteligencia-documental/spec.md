@@ -587,29 +587,29 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CER-03 | P1: Correções da sexta rodada de validação | Design | Implementing |
 | CER-04 | P1: Correções da sexta rodada de validação | Design | Implementing |
 | CER-05 | P1: Correções da sexta rodada de validação | Design | Implementing |
-| UIM-01 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-02 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-03 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-04 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-05 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-06 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-07 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-08 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-09 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-10 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-11 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-12 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-13 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-14 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-15 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-16 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-17 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-18 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-19 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-20 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-21 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-22 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
-| UIM-23 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | In Tasks |
+| UIM-01 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-02 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-03 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-04 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-05 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-06 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-07 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-08 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-09 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-10 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-11 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-12 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-13 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-14 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-15 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-16 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-17 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-18 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-19 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-20 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-21 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-22 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
+| UIM-23 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 

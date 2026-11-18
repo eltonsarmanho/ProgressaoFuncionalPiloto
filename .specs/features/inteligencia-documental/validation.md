@@ -403,6 +403,61 @@ A one-page english certificate of participation that the user reported was not s
 - The bare word "CERTIFICATE" counts as a certificate only outside articles; a non-article english text that merely ends in "certificate" is typed as certificate.
 - Still open from round 5: generic-title containment (FT-31), the fractional-year rule for the Vice, the partial professor name (D1), rejected activities in a bulk validation, the VIII.36 unit, the quantity-0 policy, and whether a bare "por mais N anos" is a term.
 
+## Resolution (round 7)
+
+The interface round of stages 2, 3 and 4 became UIM-01..23 and tasks T118-T140 (Phase 17), each task one commit (`227f786` adds the specs, `f71e576` simplifies the scoring editor after the user's clarification). The user's brief: readable tables, short buttons that act at once, modals, no justification field in stages 2 to 4, the 70 percent confidence rule, bulk validation and a manual way to score an activity.
+
+| Task | Commit | Closes | Proof |
+| ---- | ------ | ------ | ----- |
+| T118 | `5281541` | UIM-04 | `test_replace_delete.py` and `test_documents_file_api.py`: delete without `justificativa` gives 204 and the audit events (document and unlinks) have `justification is None`; with it, the text is kept |
+| T119 | `c161216` | UIM-07 (API) | `test_repositories.py`, `test_read.py`, `test_documents_api.py`: `activity_count` counts distinct not-rejected activities per document, 0 when none |
+| T120 | `417b4f8` | UIM-14 | status change, bulk validation and the distinct mark need no justification; a distinct mark without text stores "Marcada como distinta pelo usuário" because the duplicate rule reads that text |
+| T121 | `daa7cfb` | UIM-16 | edits of item, quantity, hours and points, manual points, candidate items and the link of a document already linked elsewhere need no justification; audit before/after kept |
+| T122 | `42de275` | UIM-18 (API) | `ChooseProcessTable` accepts another unit's table without justification; `TABELA_DE_OUTRA_UNIDADE` stays |
+| T123 | `782cdc3` | UIM-21 | new `activities.unit_points_override` (migration 0005): the engine uses the typed unit value in per-unit and per-block items under the same limits, `VALOR_UNITARIO_MANUAL` alert, 422 in weekly-load, informed-value and PIT items and outside 0..10000 |
+| T124 | `a64fd37` | UIM-05 | `Modal.test.tsx`: role, `aria-modal`, name, focus in and restored, Esc, Fechar, Tab trap |
+| T125 | `5adbb06` | UIM-01, 02, 10, 19 (CSS) | `styles.test.ts`: variants, fixed short columns, ellipsis, justified text, cards below 960 px |
+| T126 | `1e7e33b` | UIM-02, 03 | `DocumentList.test.tsx`: short labels with the name only in aria-label and title, Baixar, immediate Substituir and Reprocessar, delete confirmation without justification |
+| T127 | `33898db` | UIM-06 | classification in a modal, 422 beside the field |
+| T128 | `094766d` | UIM-08 | `ProcessDocuments.test.tsx`: viewer in a modal, `?documento=` kept, Fechar and Esc clear it |
+| T129 | `68be221` | UIM-17 | `ActivityForm` without the justification field |
+| T130 | `3801e7f` | UIM-07 | Criar atividade button for failed, review, no-AI, no-item and `activity_count` 0 documents; modal; page linked |
+| T131 | `9e3a48b` | UIM-09 | no warning at 0.70 or more without a real alert, warning at 0.69, new intro sentence |
+| T132 | `50a7367` | UIM-13 | stage 3 buttons, immediate validate and reject, edit and link in modals |
+| T133 | `2ced9d3` | UIM-11 | select all (only awaiting review), header checkbox, clear selection, count |
+| T134 | `1994aea` | UIM-12 | bulk validation by confidence through the atomic batch endpoint |
+| T135 | `5d69873` | UIM-19, 20 | stage 4 columns and direct buttons, modals |
+| T136 | `41fa752` | UIM-18 | `TablePicker` without the justification field |
+| T137 | `8e4525e` | UIM-22 | `ScoreEditor`: one field, unit value, saved through the activity PUT |
+| T138 | `c8a0526` | UIM-23 | Editar pontuação, Manual badge, Usar valor da tabela, totals reloaded |
+| T139 | `afabf24` | UIM-01, 02, 03, 05, 10, 12, 17, 19, 21, 23 | tests that kill the surviving mutants of the independent verification below |
+| T140 | this commit | UIM-15 | this section and the `STATE.md` handoff |
+
+**Independent verification (Phase 17)**: a fresh sub-agent mapped UIM-01..23 to test assertions and injected 32 faults in a scratch worktree: 26 killed, 7 survived (the substitution picker, the button variant, the `text-block` and `wide-table` classes, the modal width, the no-item guard of the bulk validation and the scroll lock). T139 adds a test for each and the survivors were re-checked on file copies: they die. It also flagged weak negative assertions of the justification field (exact-label queries) and the lack of an explicit 0 and 10000 test of the unit value: both fixed in T139. Remaining weakness: the layout (columns, ellipsis, 360 px) is proven only by static CSS tests and markup class tests, as before (the 360 px test was already static); a browser smoke test would close it.
+
+**Gate** (HEAD `afabf24`): frontend `eslint` clean, `tsc` and `vite build` OK, `REQUIRE_DIST=1 vitest` 236 passed (26 files); backend `ruff` clean and `pytest` 3783 passed, 3 deselected (`maritalk_live`), 0 failed. `test_worker.py::test_a_database_error_while_claiming_does_not_kill_the_thread` is timing-based and failed in two earlier full runs made while other agents also used the machine and the database; it passes 8 of 8 alone, 3 times in a row, and in this last full run, and does not touch this round's code.
+
+**Rules relaxed (justification no longer required in stages 2, 3 and 4; the field is still accepted and stored when an API client sends it)**
+- `DeleteDocument` (`documents.py`): justification was required to delete a document (DOC-10, 422 on `justificativa`).
+- `ChangeActivityStatus` (`scoring.py`): required to validate, reject or reopen an activity (ATV-09).
+- `BulkValidateActivities` (`scoring.py`): required for the batch (REV-04).
+- `MarkActivitiesDistinct` (`scoring.py`): required for the distinct mark (VERIF-06); now a default text is stored when none is sent.
+- `UpdateActivity` (`scoring.py`): required to change group, item, quantity, hours, informed points or manual points (ATV-08).
+- `CreateActivity` (`scoring.py`): required to create with manual points (`points_override`) and, for manual activities, for each candidate item (ATV-12).
+- `LinkEvidence` (`evidences.py`): required to link a document already linked to another activity (VINC-03).
+- `ChooseProcessTable` (`scoring.py`): required to choose a table of another unit (Etapa 4; the alert stays).
+- Not changed: altering a process in progress (Etapa 1, `processes.py`), the justifications of the scoring admin and the automatic justification of a reprocess.
+- Frontend: no justification field in the delete confirmation, the classification, the activity form, validate, reject, link, bulk validation, the distinct mark and the table choice.
+
+**Decisions left for the user**
+- Stage 4 "Manter como distinta" (the old "Marcar como distinta"): the distinct mark still needs a text in the database because the duplicate rule reads it; a mark made by the button stores "Marcada como distinta pelo usuário". Say if the rule should read a flag instead.
+- Bulk validation by confidence: the API keeps no confidence per activity, so the document's confidence is used (all cited documents read without failure at 0.70 or more) and an activity with candidate items, no item, no document, a scoring alert or a not-scored row stays out. Exposing the analyzer's `needs_review` per activity would be the exact rule; it is computed but not stored today.
+- The manual score is a unit value and works only in per-unit and per-block items; weekly-load items keep their manual points in "Editar", informed-value items keep their informed points, and PIT hours stay automatic. Extending the unit value to those modes needs a rule per mode.
+- The "Criar atividade" button treats `FALHOU`, `REQUER_REVISAO`, `EXTRAIDO_SEM_IA`, "sem item de pontuação" and `activity_count` 0 as "no usable activity" (a rejected activity does not count); a `REQUER_REVISAO` document that already has activities still shows it.
+- Documents with status `REQUER_REVISAO` and no status code (professor name mismatch) show "Requer revisão: abra o documento e confira os avisos" even with confidence above 70 percent, since the status is a real alert.
+- Tables below 960 px wide turn into cards (not only below 480 px) so the columns never squeeze the text.
+- Deploy: this round adds migration 0005 (`activities.unit_points_override`); the VM needs `alembic upgrade head` with the new image.
+
 ## Pass 4 (independent Verifier, HEAD 9533966)
 
 ### Validation pass 4 - Phase 14 (T96-T106, TER-01..TER-11)

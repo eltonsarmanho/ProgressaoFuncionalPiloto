@@ -3928,9 +3928,9 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] A Resolution (round 7) lista commits, gate e decisões pendentes
-- [ ] `validate_spec.py`, `validate_tasks.py` e `validate_state.py` passam
-- [ ] Gate build passa
+- [x] A Resolution (round 7) lista commits, gate e decisões pendentes
+- [x] `validate_spec.py`, `validate_tasks.py` e `validate_state.py` passam
+- [x] Gate build passa
 
 **Tests**: none
 **Gate**: build
