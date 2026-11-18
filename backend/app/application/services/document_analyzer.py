@@ -57,6 +57,7 @@ from app.domain.rules.suggestion_rules import (
     confirm_board_document,
     confirm_extension_course,
     confirm_extension_project,
+    confirm_research_coordination,
     is_dismissal_clause,
     suggest_item,
 )
@@ -234,7 +235,7 @@ class DocumentAnalyzer:
         document_text = _join(run.pages)
         for index, raw in _collapse_repeated(payload.activities, run.alerts):
             suggested = self._suggest(
-                run, index, raw, original, document_text, interstice, table_version
+                run, index, raw, original, document_text, professor_name, interstice, table_version
             )
             if suggested is not None:
                 run.activities.append(suggested)
@@ -269,6 +270,7 @@ class DocumentAnalyzer:
         raw: ExtractedActivity,
         pages: dict[int, str],
         document_text: str,
+        professor_name: str,
         interstice: Interstice | None,
         table_version: ScoringTableVersion | None,
     ) -> SuggestedActivity | None:
@@ -290,6 +292,7 @@ class DocumentAnalyzer:
         taxonomy = confirm_board_document(activity.taxonomy, run.document_type, document_text)
         taxonomy = confirm_extension_course(taxonomy, document_text)
         taxonomy = confirm_extension_project(taxonomy, document_text)
+        taxonomy = confirm_research_coordination(taxonomy, document_text, professor_name)
         suggestion = suggest_item(taxonomy, activity.level)
         if suggestion.principal is None:
             run.alerts.append(DocAlert(DocAlertCode.SEM_ITEM_DE_PONTUACAO, None, index))

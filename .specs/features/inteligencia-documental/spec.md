@@ -459,7 +459,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SEG-04 | P1: Correções da segunda rodada de validação | Design | Implementing |
 | SEG-05 | P1: Correções da segunda rodada de validação | Design | Implementing |
 | SEG-06 | P1: Correções da segunda rodada de validação | Design | Implementing |
-| SEG-07 | P1: Correções da segunda rodada de validação | Design | In Tasks |
+| SEG-07 | P1: Correções da segunda rodada de validação | Design | Implementing |
 | SEG-08 | P1: Correções da segunda rodada de validação | Design | In Tasks |
 | SEG-09 | P1: Correções da segunda rodada de validação | Design | In Tasks |
 | SEG-10 | P1: Correções da segunda rodada de validação | Design | In Tasks |

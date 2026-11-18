@@ -2498,9 +2498,9 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 **Done when**:
 
-- [ ] Certificado de participação de 18 horas com `PESQUISA_PROJETO_COORDENACAO`: `SEM_ITEM_DE_PONTUACAO`, nenhuma atividade V.1
-- [ ] "coordenadora do projeto de pesquisa" com o nome do docente na frase: V.1 mantido; coordenação de outra pessoa e docente só listado como membro: sem item
-- [ ] Gate full passa
+- [x] Certificado de participação de 18 horas com `PESQUISA_PROJETO_COORDENACAO`: `SEM_ITEM_DE_PONTUACAO`, nenhuma atividade V.1
+- [x] "coordenadora do projeto de pesquisa" com o nome do docente na frase: V.1 mantido; coordenação de outra pessoa e docente só listado como membro: sem item
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

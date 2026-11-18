@@ -7,6 +7,7 @@ from app.domain.entities.activity import Level
 from app.domain.entities.extraction import DocumentType
 from app.domain.entities.extraction import TaxonomyCode as T
 from app.domain.rules.document_type import is_seminar_evaluation_form
+from app.domain.rules.grounding import professor_named_in_text
 from app.domain.rules.scoring_periods import normalize_title
 
 _ROMAN = {1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI", 7: "VII", 8: "VIII"}
@@ -176,6 +177,32 @@ def confirm_extension_project(taxonomy: T, text: str) -> T:
     if taxonomy in _EXTENSION_PROJECTS and not _EXTENSION_WORDING.search(normalize_title(text)):
         return T.OUTRA
     return taxonomy
+
+
+_RESEARCH_COORDINATION = frozenset({T.PESQUISA_PROJETO_COORDENACAO, T.PESQUISA_GRUPO_COORDENACAO})
+_TITLE_ABBREVIATION = re.compile(r"\b(prof\w*|dra?|sra?|ma|ms)\.", re.IGNORECASE)
+_COORDINATOR = re.compile(r"\b(?:coordena\w*|lider(?:es)?|lideranca)\b")
+_COORDINATED_BY = re.compile(r"\bcoordenad[oa]s?\s+(?:pel[oa]s?|por)\b")
+_RESEARCH_WORDS = re.compile(r"\b(?:pesquisa|projeto|grupo)\b")
+
+
+def confirm_research_coordination(taxonomy: T, text: str, professor_name: str) -> T:
+    """Coordination of a research project or group needs the role in the text (SEG-07).
+
+    One sentence must name the professor and a coordination word ("coordenadora", "coordena",
+    "líder"), and the document must speak of a research project or group. "Coordenado por
+    Fulano" does not make the professor the coordinator. A participation certificate that the
+    AI took for coordination has no scoring item (`OUTRA`): the human review decides.
+    """
+    if taxonomy not in _RESEARCH_COORDINATION:
+        return taxonomy
+    if not _RESEARCH_WORDS.search(normalize_title(text)):
+        return T.OUTRA
+    for sentence in re.split(r"[.;\n]+", _TITLE_ABBREVIATION.sub(r"\1", text)):
+        role = _COORDINATED_BY.sub(" ", normalize_title(sentence))
+        if _COORDINATOR.search(role) and professor_named_in_text(professor_name, sentence):
+            return taxonomy
+    return T.OUTRA
 
 
 _DISMISSAL_TAXONOMIES = frozenset(
