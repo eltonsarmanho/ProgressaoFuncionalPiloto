@@ -35,6 +35,7 @@ class DocumentOut(BaseModel):
     uploaded_at: datetime | None
     updated_at: datetime | None
     version: int
+    arquivo_excluido: bool  # the conclusion removed the input file (DEL-12)
 
     @classmethod
     def of(cls, d: Document) -> "DocumentOut":
@@ -67,7 +68,8 @@ class DocumentListItemOut(DocumentOut):
 
 
 def _document_fields(d: Document) -> dict[str, Any]:
-    return {name: getattr(d, name) for name in DocumentOut.model_fields}
+    fields = {name: getattr(d, name) for name in DocumentOut.model_fields if hasattr(d, name)}
+    return {**fields, "arquivo_excluido": d.file_deleted_at is not None}
 
 
 class ClassificationIn(BaseModel):

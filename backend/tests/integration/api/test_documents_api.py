@@ -30,7 +30,7 @@ from tests.support.process_status import conclude_for_test
 DOCUMENT_KEYS = {
     "id", "process_id", "original_name", "mime", "size_bytes", "sha256", "page_count", "status",
     "status_code", "manual_type", "manual_category", "suggested_type", "suggested_category",
-    "confidence", "uploaded_by", "uploaded_at", "updated_at", "version",
+    "confidence", "uploaded_by", "uploaded_at", "updated_at", "version", "arquivo_excluido",
 }  # fmt: skip
 LIST_KEYS = DOCUMENT_KEYS | {
     "activity_count", "outside_interstice", "document_date", "document_date_precision",

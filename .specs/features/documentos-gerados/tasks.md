@@ -2519,8 +2519,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Listagem e detalhe trazem `arquivo_excluido`; `GET /documents/{id}/file` e a página de documento excluído respondem 410 com `field`, `code` e `message`
-- [ ] Documento comum responde como antes; gate full passa; 5+ testes
+- [x] Listagem e detalhe trazem `arquivo_excluido`; `GET /documents/{id}/file` e a página de documento excluído respondem 410 com `field`, `code` e `message`
+- [x] Documento comum responde como antes; gate full passa; 5+ testes
 
 **Tests**: integration
 **Gate**: full
