@@ -14,6 +14,7 @@ from app.presentation.api import (
     activities,
     auth,
     career,
+    comprovante_layout,
     documents,
     evidences,
     generated_documents,
@@ -83,4 +84,5 @@ def create_app(
     app.include_router(evidences.router)
     app.include_router(generated_documents.router)
     app.include_router(report_draft.router)
+    app.include_router(comprovante_layout.router)
     return app

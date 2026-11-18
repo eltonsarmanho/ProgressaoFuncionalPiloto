@@ -2443,8 +2443,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] `GET` devolve `saved`, `version`, T19, `invalid` e `plan` com a numeração prevista; `PUT` desatualizado responde 409 `VERSAO_DESATUALIZADA`; documento de outro processo, 404
-- [ ] Gate full passa; 7+ testes
+- [x] `GET` devolve `saved`, `version`, T19, `invalid` e `plan` com a numeração prevista; `PUT` desatualizado responde 409 `VERSAO_DESATUALIZADA`; documento de outro processo, 404
+- [x] Gate full passa; 7+ testes
 
 **Tests**: integration
 **Gate**: full

@@ -73,6 +73,32 @@ def sha256(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 
 
+def add_document_row(uow_factory, process, user, pages: int = 3, **fields):
+    """A document of the process, with `pages` pages and no file, inserted straight."""
+    document = make_document(
+        SimpleNamespace(id=uuid.UUID(process["id"])), user.id, page_count=pages, **fields
+    )
+    with uow_factory() as uow:
+        uow.documents.add(document)
+        uow.commit()
+    return document
+
+
+def link_page(uow_factory, user, activity, document, page: int) -> None:
+    with uow_factory() as uow:
+        uow.evidences.add(
+            ActivityEvidence(
+                id=uuid.uuid4(),
+                activity_id=uuid.UUID(activity["id"]),
+                document_id=document.id,
+                page_number=page,
+                excerpt="trecho",
+                created_by=user.id,
+            )
+        )
+        uow.commit()
+
+
 def link_deleted_original(uow_factory, process, user, activity) -> None:
     """A document of the process whose file the conclusion removed, linked to the activity."""
     document = make_document(SimpleNamespace(id=uuid.UUID(process["id"])), user.id)
