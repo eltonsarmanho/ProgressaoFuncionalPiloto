@@ -15,7 +15,11 @@ from app.application.use_cases import document_processing, documents
 from app.infrastructure.files.inspector import PillowFileInspector
 from app.infrastructure.storage.local_storage import LocalFileStorage
 from tests.integration.documents.factories import make_document
-from tests.integration.scoring.conftest import add_process, world  # noqa: F401  (fixtures)
+from tests.integration.scoring.conftest import (  # noqa: F401  (fixtures)
+    add_process,
+    official_chosen,
+    world,
+)
 from tests.unit.application.analyzer_fakes import StepClock
 
 START = datetime(2026, 11, 17, 9, 0, tzinfo=UTC)

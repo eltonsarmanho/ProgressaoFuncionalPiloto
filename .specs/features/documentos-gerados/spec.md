@@ -357,7 +357,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | UIG-03 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
 | UIG-04 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
 | UIG-05 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
-| UIG-06 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
+| UIG-06 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Implementing |
 | UIG-07 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
 | UIG-08 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
 | UIG-09 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |

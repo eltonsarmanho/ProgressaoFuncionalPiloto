@@ -1728,9 +1728,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Atividades `AGUARDANDO_REVISAO` e `REJEITADA` ficam fora e são contadas por motivo; a pontuação vem de `compute_process_score`
-- [ ] A leitura não deixa transação aberta depois de devolver o resultado
-- [ ] Gate full passa; 6+ testes
+- [x] Atividades `AGUARDANDO_REVISAO` e `REJEITADA` ficam fora e são contadas por motivo; a pontuação vem de `compute_process_score`
+- [x] A leitura não deixa transação aberta depois de devolver o resultado
+- [x] Gate full passa; 6+ testes
 
 **Tests**: integration
 **Gate**: full

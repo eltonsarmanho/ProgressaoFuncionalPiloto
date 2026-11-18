@@ -1,0 +1,128 @@
+"""What a generated document reads from the process (TAB-01, TAB-02, UIG-06).
+
+Everything is read in the unit of work the caller opened and comes back as plain tuples, so the
+caller can close the unit and render without a database connection.
+
+A document flagged outside the interstice creates no activity and is not part of any generated
+document: its links and its pages are left out here, so the Tabela, the Relatório and the
+Comprovante never carry it (FORA-01).
+"""
+
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, replace
+from uuid import UUID
+
+from app.application.use_cases.scoring import ProcessScore, compute_process_score
+from app.domain.entities.academic_unit import AcademicUnit
+from app.domain.entities.activity import Activity, ActivityStatus
+from app.domain.entities.comprovante import ComprovanteLayout
+from app.domain.entities.document import Document
+from app.domain.entities.process import FunctionalProcess
+from app.domain.entities.professor import Professor
+from app.domain.entities.scoring import ScoringTableVersion
+from app.domain.errors import NotFound
+from app.domain.repositories.ports import ActivityEvidence, UnitOfWork
+from app.domain.rules.activity_order import eligible_activities, table_order
+from app.domain.rules.comprovante_plan import current_layout, derive_layout
+from app.domain.rules.interstice import Interstice
+from app.domain.rules.table_document import TableHeader
+
+# Reasons an activity stays out of the documents, as the keys of `GenerationInputs.excluded`.
+PENDING = "pendentes"
+REJECTED = "rejeitadas"
+UNCLASSIFIED = "sem_enquadramento"
+
+
+@dataclass(frozen=True)
+class GenerationInputs:
+    """`activities` are the validated ones with group and item, in the order of the table;
+    `excluded` counts the others by reason. `evidences`, `documents` and `layout` leave out the
+    documents flagged outside the interstice."""
+
+    process: FunctionalProcess
+    professor: Professor
+    unit: AcademicUnit
+    score: ProcessScore
+    activities: tuple[Activity, ...]
+    excluded: Mapping[str, int]
+    evidences: tuple[ActivityEvidence, ...]
+    documents: tuple[Document, ...]
+    layout: ComprovanteLayout
+
+    @property
+    def version(self) -> ScoringTableVersion | None:
+        return self.score.chosen.version if self.score.chosen is not None else None
+
+    @property
+    def interstice(self) -> Interstice:
+        return Interstice(self.process.start_date, self.process.end_date)
+
+    @property
+    def header(self) -> TableHeader:
+        return TableHeader(
+            professor_name=self.professor.full_name,
+            current_class=self.process.current_class,
+            current_level=self.process.current_level,
+            target_class=self.process.target_class,
+            target_level=self.process.target_level,
+            unit_name=self.unit.name,
+            interstice=self.interstice,
+        )
+
+
+def _excluded(activities: Sequence[Activity]) -> dict[str, int]:
+    """The activities that do not go in, by reason; a reason with none is not listed."""
+    counts = {PENDING: 0, REJECTED: 0, UNCLASSIFIED: 0}
+    for activity in activities:
+        if activity.status is ActivityStatus.AGUARDANDO_REVISAO:
+            counts[PENDING] += 1
+        elif activity.status is ActivityStatus.REJEITADA:
+            counts[REJECTED] += 1
+        elif activity.group_number is None or activity.item_number is None:
+            counts[UNCLASSIFIED] += 1
+    return {reason: count for reason, count in counts.items() if count}
+
+
+def _without_documents(layout: ComprovanteLayout, ignored: set[UUID]) -> ComprovanteLayout:
+    """The layout with the pages of the given documents taken out, as the user would have."""
+    return replace(
+        layout,
+        activities=tuple(
+            replace(entry, pages=tuple(p for p in entry.pages if p.document_id not in ignored))
+            for entry in layout.activities
+        ),
+    )
+
+
+def load_generation_inputs(uow: UnitOfWork, process: FunctionalProcess) -> GenerationInputs:
+    """The process as the generation sees it now; the score is `compute_process_score` (AD-006)."""
+    score = compute_process_score(uow, process)
+    professor = uow.professors.get(process.professor_id)
+    unit = uow.units.get(process.unit_id)
+    if professor is None or unit is None:
+        raise NotFound("Docente ou unidade do processo não encontrado")
+    activities = sorted(eligible_activities(score.activities), key=table_order)
+    documents = uow.documents.list_for_process(process.id)
+    ignored = {d.id for d in documents if d.outside_interstice}
+    evidences = tuple(
+        e
+        for e in uow.evidences.list_for_activities([a.id for a in activities])
+        if e.document_id not in ignored
+    )
+    saved = uow.comprovante_layouts.get(process.id)
+    layout = (
+        derive_layout(process.id, activities, evidences)
+        if saved is None
+        else current_layout(_without_documents(saved, ignored), activities, evidences)
+    )
+    return GenerationInputs(
+        process=process,
+        professor=professor,
+        unit=unit,
+        score=score,
+        activities=tuple(activities),
+        excluded=_excluded(score.activities),
+        evidences=evidences,
+        documents=tuple(d for d in documents if d.id not in ignored),
+        layout=layout,
+    )
