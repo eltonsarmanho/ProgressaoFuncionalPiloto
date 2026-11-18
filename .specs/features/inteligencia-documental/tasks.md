@@ -4002,7 +4002,7 @@ T141 → T142 → T143 → T144 → T145
 
 ### T143: API: alerta, contagem e bloqueio de Classificar e Criar atividade
 
-**What**: A lista de documentos devolve o alerta e as datas do interstício, e o resumo traz a contagem de documentos fora do interstício; Classificar e Criar atividade sobre documento com o alerta respondem 409 `DOCUMENTO_FORA_DO_INTERSTICIO`. Etapas 3, 4 e 5 não recebem nada desse documento (teste de que atividades, pontuação, Tabela, Relatório e Comprovante não o citam).
+**What**: A lista de documentos devolve o alerta, a data extraída do documento e as datas do interstício, e o resumo traz a contagem de documentos fora do interstício; Classificar e Criar atividade sobre documento com o alerta respondem 409 `DOCUMENTO_FORA_DO_INTERSTICIO`. Etapas 3, 4 e 5 não recebem nada desse documento (teste de que atividades, pontuação, Tabela, Relatório e Comprovante não o citam).
 **Where**: `backend/app/presentation/api/documents.py`
 **Depends on**: T142
 **Reuses**: Esquemas de `documents` e testes de API
@@ -4029,7 +4029,7 @@ T141 → T142 → T143 → T144 → T145
 
 ### T144: Etapa 2: aviso destacado e botões do documento fora do interstício
 
-**What**: A linha do documento com o alerta mostra uma faixa de alerta com o texto "Fora do interstício (dd/mm/aaaa a dd/mm/aaaa): não será processado nas próximas etapas", sem Classificar nem Criar atividade, com Visualizar, Baixar, Reprocessar e Excluir; o resumo da lista mostra a contagem; o documento não conta como pendente de revisão. Rótulo novo em `labels.ts`, estilo no `styles.css`, tudo sem campo de justificativa.
+**What**: A linha do documento com o alerta mostra uma faixa de alerta com o texto "Data do documento dd/mm/aaaa, fora do interstício (dd/mm/aaaa a dd/mm/aaaa): não será processado nas próximas etapas", sem Classificar nem Criar atividade, com Visualizar, Baixar, Reprocessar e Excluir; o resumo da lista mostra a contagem; o documento não conta como pendente de revisão. Rótulo novo em `labels.ts`, estilo no `styles.css`, tudo sem campo de justificativa.
 **Where**: `frontend/src/components/DocumentList.tsx`
 **Depends on**: T143
 **Reuses**: `DocumentList`, `labels.ts`, `styles.css` e os testes da Etapa 2
@@ -4042,7 +4042,7 @@ T141 → T142 → T143 → T144 → T145
 
 **Done when**:
 
-- [ ] A faixa aparece com as datas do interstício e a cor de alerta; documentos dentro do período não a mostram
+- [ ] A faixa aparece com a data do documento, as datas do interstício e a cor de alerta; documentos dentro do período não a mostram
 - [ ] Classificar e Criar atividade não aparecem nessa linha
 - [ ] O resumo mostra "N fora do interstício" e o documento não entra em "pendentes de revisão"
 - [ ] Nenhum campo de justificativa
