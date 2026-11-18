@@ -3846,11 +3846,11 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Salvar envia o `PUT` da atividade com `unit_points_override` igual ao digitado e os demais campos como estavam, sem `justificativa`
-- [ ] Usar valor da tabela envia o campo vazio; o 422 de `unit_points_override` aparece junto do campo
-- [ ] Em item de carga semanal, de valor informado e em linha de PIT aparece a nota e não há campo
-- [ ] Editar a atividade pelo `ActivityForm` mantém o valor digitado no corpo enviado
-- [ ] Gate quick passa
+- [x] Salvar envia o `PUT` da atividade com `unit_points_override` igual ao digitado e os demais campos como estavam, sem `justificativa`
+- [x] Usar valor da tabela envia o campo vazio; o 422 de `unit_points_override` aparece junto do campo
+- [x] Em item de carga semanal, de valor informado e em linha de PIT aparece a nota e não há campo
+- [x] Editar a atividade pelo `ActivityForm` mantém o valor digitado no corpo enviado
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

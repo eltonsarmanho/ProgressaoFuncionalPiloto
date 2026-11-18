@@ -155,6 +155,23 @@ describe("ActivityForm", () => {
     expect(onSaved).toHaveBeenCalledWith({ ...SAVED, version: 4 });
   });
 
+  it("UIM-21/22: editar mantém o valor unitário digitado e os itens candidatos que o formulário não mostra", async () => {
+    const { calls } = mockFetch({ "PUT /api/activities/a1": { status: 200, body: { ...SAVED, version: 4 } } });
+    const candidates = [{ group_number: 4, item_number: 1, justification: "" }];
+    render(
+      <ActivityForm
+        processId="p1"
+        groups={GROUPS}
+        activity={{ ...SAVED, unit_points_override: "2.50", candidates }}
+        onSaved={vi.fn()}
+      />,
+    );
+    await userEvent.setup().click(screen.getByRole("button", { name: "Salvar atividade" }));
+    const body = JSON.parse(calls[0].init!.body as string);
+    expect(body.unit_points_override).toBe(2.5);
+    expect(body.candidates).toEqual(candidates);
+  });
+
   it("TELA-05: 422 mostra a mensagem junto ao campo indicado", async () => {
     mockFetch({
       "POST /api/processes/p1/activities": {

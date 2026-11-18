@@ -204,6 +204,8 @@ export type Activity = {
   course_hours: string | null;
   informed_points: string | null;
   points_override: string | null;
+  /** Unit value typed by hand instead of the table's (per-unit and per-block items). */
+  unit_points_override?: string | null;
   evidence_note: string | null;
   source: string;
   status: ActivityStatus;

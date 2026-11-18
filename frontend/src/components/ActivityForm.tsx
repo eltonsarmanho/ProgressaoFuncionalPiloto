@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { preservedFields } from "../activityBody";
 import { errorMessage, fieldErrors, request } from "../api/client";
 import type { Activity, ScoringGroup, ScoringMode } from "../api/types";
 import { GROUP_NAMES, roman } from "../labels";
@@ -106,6 +107,7 @@ export function ActivityForm({
       const saved = activity
         ? await request<Activity>("PUT", `/api/activities/${activity.id}`, {
             ...body,
+            ...preservedFields(activity),
             expected_version: activity.version,
           })
         : await request<Activity>("POST", `/api/processes/${processId}/activities`, body);
