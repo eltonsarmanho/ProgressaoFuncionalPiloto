@@ -12,6 +12,7 @@ from app.application.services.audit_service import AuditService
 from app.application.use_cases.units import require_active_unit
 from app.domain.entities.audit import AuditAction, AuditEvent
 from app.domain.entities.career import Modality
+from app.domain.entities.generated import GenerationCode
 from app.domain.entities.process import FunctionalProcess, ProcessStatus, can_transition
 from app.domain.entities.user import Role, User
 from app.domain.errors import Conflict, Forbidden, NotFound, StaleVersion, ValidationFailed
@@ -189,6 +190,26 @@ class UpdateProcess(_ProcessUseCase):
             return evaluate(uow, uow.processes.get(process.id))
 
 
+def is_process_owner(process: FunctionalProcess, actor: User) -> bool:
+    """"Dono" (spec Assumptions): the DOCENTE linked to the professor, or the creator."""
+    return process.created_by == actor.id or (
+        actor.professor_id is not None and actor.professor_id == process.professor_id
+    )
+
+
+def check_status_change(
+    current: FunctionalProcess, actor: User, target: ProcessStatus, expected_version: int
+) -> None:
+    """Raises unless the actor may move the process to `target` now (PROC-12, DEL-15): the table
+    of transitions with the roles, then the expected version. Shared by the generic status
+    change and by the conclusion."""
+    if not can_transition(current.status, target, actor.role, is_process_owner(current, actor)):
+        if target is ProcessStatus.ARQUIVADO and current.status is not target:
+            raise Forbidden("Apenas ADMIN ou o dono do processo podem arquivá-lo")
+        raise Conflict(f"Transição de status não permitida: {current.status} -> {target}")
+    _check_version(current, expected_version)
+
+
 class ChangeProcessStatus(_ProcessUseCase):
     def execute(
         self,
@@ -200,15 +221,12 @@ class ChangeProcessStatus(_ProcessUseCase):
     ) -> ProcessResult:
         with self._uow_factory() as uow:
             current = self._readable(uow, actor, process_id)
-            # "Dono" (spec Assumptions): the DOCENTE linked to the professor, or the creator.
-            is_owner = current.created_by == actor.id or (
-                actor.professor_id is not None and actor.professor_id == current.professor_id
-            )
-            if not can_transition(current.status, target, actor.role, is_owner):
-                if target is ProcessStatus.ARQUIVADO and current.status is not target:
-                    raise Forbidden("Apenas ADMIN ou o dono do processo podem arquivá-lo")
-                raise Conflict(f"Transição de status não permitida: {current.status} -> {target}")
-            _check_version(current, expected_version)
+            if target is ProcessStatus.CONCLUIDO:
+                raise Conflict(
+                    "Concluir o processo exclui os documentos de entrada: use a conclusão",
+                    code=GenerationCode.CONCLUSAO_EXIGE_EXCLUSAO.value,
+                )
+            check_status_change(current, actor, target, expected_version)
             process = replace(current, status=target)
             uow.processes.update(process, expected_version)
             self._audit.record(

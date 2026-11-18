@@ -165,6 +165,20 @@ def test_transition_outside_table_returns_409(
     assert response.status_code == 409
 
 
+def test_concluido_through_the_status_route_is_409_with_the_conclusion_code(
+    client, secretaria, process
+):
+    _, headers = secretaria
+    set_status(client, headers, process["id"], "EM_ANDAMENTO", 1)
+
+    response = set_status(client, headers, process["id"], "CONCLUIDO", 2)
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "CONCLUSAO_EXIGE_EXCLUSAO"
+    stored = client.get(f"/api/processes/{process['id']}").json()
+    assert (stored["status"], stored["version"]) == ("EM_ANDAMENTO", 2)
+
+
 def test_status_change_with_stale_version_returns_409(client, secretaria, process):
     _, headers = secretaria
 

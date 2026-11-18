@@ -2178,9 +2178,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] `POST /status` com `CONCLUIDO` responde 409 com o código `CONCLUSAO_EXIGE_EXCLUSAO` e o processo não muda; RASCUNHO para EM_ANDAMENTO e ARQUIVADO seguem como antes
-- [ ] Teste novo da função compartilhada: transição, dono e `expected_version`
-- [ ] Gate full passa; 5+ testes novos
+- [x] `POST /status` com `CONCLUIDO` responde 409 com o código `CONCLUSAO_EXIGE_EXCLUSAO` e o processo não muda; RASCUNHO para EM_ANDAMENTO e ARQUIVADO seguem como antes
+- [x] Teste novo da função compartilhada: transição, dono e `expected_version`
+- [x] Gate full passa; 5+ testes novos
 
 **Tests**: integration
 **Gate**: full

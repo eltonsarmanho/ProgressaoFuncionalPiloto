@@ -375,7 +375,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | DEL-12 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
 | DEL-13 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
 | DEL-14 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-15 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-15 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
 | ORD-01 | P2: Lembrete da ordem do dossiê | Tasks | Implementing |
 | ORD-02 | P2: Lembrete da ordem do dossiê | Tasks | Implementing |
 
