@@ -2650,10 +2650,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Depois da conclusão `uploads/{process_id}` não tem arquivo, `generated/` está intacto, o espaço informado é igual ao removido, o processo é CONCLUIDO e o Comprovante responde `ORIGINAIS_EXCLUIDOS`
-- [ ] Visualizar uma página responde 410 `ARQUIVO_EXCLUIDO`; Tabela e Relatório geram de novo e todas as versões baixam byte a byte
-- [ ] Com um arquivo travado: `EXCLUSAO_PARCIAL`, processo EM_ANDAMENTO e a segunda tentativa conclui
-- [ ] Gate full passa; 4+ testes
+- [x] Depois da conclusão `uploads/{process_id}` não tem arquivo, `generated/` está intacto, o espaço informado é igual ao removido, o processo é CONCLUIDO e o Comprovante responde `ORIGINAIS_EXCLUIDOS`
+- [x] Visualizar uma página responde 410 `ARQUIVO_EXCLUIDO`; Tabela e Relatório geram de novo e todas as versões baixam byte a byte
+- [x] Com um arquivo travado: `EXCLUSAO_PARCIAL`, processo EM_ANDAMENTO e a segunda tentativa conclui
+- [x] Gate full passa; 4+ testes
 
 **Tests**: integration
 **Gate**: full
