@@ -56,6 +56,34 @@ class PdfCanvas(Canvas):
         super().__init__(*args, **kwargs)
 
 
+class NumberedCanvas(PdfCanvas):
+    """Writes `Página N de M` at the foot of every page; M is only known at the end, so the pages
+    are kept until `save` (a second pass over the pages, never over the content)."""
+
+    FOOTER_SIZE = 8
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._saved_pages: list[dict] = []
+
+    def showPage(self) -> None:  # noqa: N802 (reportlab API)
+        self._saved_pages.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self) -> None:
+        total = len(self._saved_pages)
+        for state in self._saved_pages:
+            self.__dict__.update(state)
+            self._draw_footer(total)
+            super().showPage()
+        super().save()
+
+    def _draw_footer(self, total: int) -> None:
+        width = self._pagesize[0]
+        self.setFont(FONT_REGULAR, self.FOOTER_SIZE)
+        self.drawCentredString(width / 2, 12 * mm, f"Página {self._pageNumber} de {total}")
+
+
 @dataclass(frozen=True)
 class PageMargins:
     """Margins in points."""

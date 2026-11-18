@@ -1410,9 +1410,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] PDF do cenário de 211 pontos: o texto extraído traz 211, os subtotais 52, 7, 62, 0, 30, 4 e 56 e as horas 24, 24, 24, 20 (92)
-- [ ] O cabeçalho da tabela repete em cada página (1000 linhas) e o rodapé numera `Página N de M`; acentos corretos
-- [ ] Gate quick passa; 8+ testes
+- [x] PDF do cenário de 211 pontos: o texto extraído traz 211, os subtotais 52, 7, 62, 0, 30, 4 e 56 e as horas 24, 24, 24, 20 (92)
+- [x] O cabeçalho da tabela repete em cada página (1000 linhas) e o rodapé numera `Página N de M`; acentos corretos
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
