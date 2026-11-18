@@ -84,8 +84,21 @@ describe("UIM-05: janela acessível", () => {
     expect(salvar).toHaveFocus();
   });
 
-  it("o CSS da janela rola na vertical e não fixa largura acima de 360 px", () => {
-    expect(css).toMatch(/\.modal\s*{[^}]*max-width:\s*[\d.]+rem[^}]*max-height:[^}]*overflow-y:\s*auto/);
+  it("a rolagem do fundo fica travada enquanto a janela está aberta e é restaurada ao fechar", async () => {
+    const user = userEvent.setup();
+    render(<Host />);
+    expect(document.body.style.overflow).toBe("");
+    await user.click(screen.getByRole("button", { name: "Abrir" }));
+    expect(document.body.style.overflow).toBe("hidden");
+    await user.keyboard("{Escape}");
+    expect(document.body.style.overflow).toBe("");
+  });
+
+  it("o CSS da janela rola na vertical, ocupa no máximo 44rem e não fixa largura em px", () => {
+    const rule = css.match(/\.modal\s*{([^}]*)}/)![1];
+    expect(Number(rule.match(/max-width:\s*([\d.]+)rem/)![1])).toBeLessThanOrEqual(44);
+    expect(rule).toMatch(/(^|[\s;])width:\s*100%/);
+    expect(rule).toMatch(/max-height:[^;]+;\s*overflow-y:\s*auto/);
     expect(css).toMatch(/\.modal-backdrop\s*{[^}]*position:\s*fixed[^}]*inset:\s*0/);
   });
 });

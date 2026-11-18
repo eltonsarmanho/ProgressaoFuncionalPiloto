@@ -266,6 +266,15 @@ def test_unit_points_override_out_of_range_or_without_a_per_unit_item_is_422(off
     assert field_of_failure(official_chosen, **kw) == "unit_points_override"
 
 
+@pytest.mark.parametrize("value", [D("0"), D("10000")])
+def test_unit_points_override_accepts_the_range_limits(official_chosen, value):
+    activity = create(
+        official_chosen, group_number=2, item_number=7, quantity=D("1"), unit_points_override=value
+    )
+
+    assert activity.unit_points_override == value
+
+
 def test_unit_points_override_is_refused_for_weekly_load_and_informed_value_items(points_chosen):
     world = points_chosen
     weekly = {

@@ -155,7 +155,7 @@ T113 → T114 → T115 → T116 → T117
 Tabelas legíveis, botões curtos que agem na hora, janelas para classificar, criar atividade, visualizar e editar, a regra de confiança de 70% e a validação em lote com seleção (UIM-01..15). Seis tarefas de backend abrem a fase (exclusão, validação, edição, vínculo e escolha de tabela sem justificativa, `activity_count` e o valor unitário manual da atividade); as demais são do frontend. A justificativa deixa de ser exigida nas Etapas 2, 3 e 4 (UIM-14, UIM-16, UIM-17, UIM-18); a Etapa 1 não muda. A Etapa 4 ganha a mesma tabela legível, botões diretos e o editor do valor unitário manual (UIM-19..23). Os testes usam só nomes e textos sintéticos; nenhum documento real, MariTalk, VM, push ou deploy. A confiança de uma atividade vem do documento ligado, pois a API não a expõe. Fase maior que o orçamento por ser uma cadeia de mudanças da mesma tela, ordenadas por dependência.
 
 ```
-T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 → T127 → T128 → T129 → T130 → T131 → T132 → T133 → T134 → T135 → T136 → T137 → T138 → T139
+T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 → T127 → T128 → T129 → T130 → T131 → T132 → T133 → T134 → T135 → T136 → T137 → T138 → T139 → T140
 ```
 
 ---
@@ -3886,11 +3886,38 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 ---
 
-### T139: Registro da sétima rodada e entrega
+### T139: Testes dos mutantes sobreviventes da rodada de interface
+
+**What**: A verificação independente da Phase 17 deixou sobreviver sete mutantes (classe `wide-table` e `text-block` nas tabelas, variante dos botões, Substituir que não abre o seletor, `group_number` vazio na validação por confiança, trava de rolagem e `max-width` da janela). Testes de marcação, de variantes, do seletor, da trava, das guardas da validação por confiança e de que nenhuma janela das Etapas 2 a 4 traz campo de justificativa, mais os limites 0 e 10000 do valor unitário e o 422 pela API. Arquivos: testes do frontend e `test_activity_create.py`, `test_activities_api.py`.
+**Where**: `frontend/src/components/DocumentList.test.tsx`
+**Depends on**: T138
+**Reuses**: Verifier da Phase 17
+**Requirement**: UIM-01, UIM-02, UIM-03, UIM-05, UIM-10, UIM-12, UIM-17, UIM-19, UIM-21, UIM-23
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Os mutantes M8, M9, M13, M14, M19, M23 e M25 do relatório morrem (cópia isolada, comando no corpo do commit)
+- [x] Os valores 0 e 10000 do valor unitário são aceitos e 10001 dá 422 em `unit_points_override` pela API
+- [x] As consultas negativas de justificativa usam `/justificativa/i` nas Etapas 2, 3 e 4
+- [x] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `test(ui): pin the surviving mutants of the interface round`
+
+---
+
+### T140: Registro da sétima rodada e entrega
 
 **What**: `validation.md` traz a "Resolution (round 7)" da rodada de interface; `spec.md` passa UIM-01..23 a Implementing e lista as exigências de justificativa que UIM-04, UIM-14, UIM-16 e UIM-18 substituem; `STATE.md` registra o estado e as decisões pendentes. Arquivos: `validation.md`, `spec.md`, `STATE.md`.
 **Where**: `.specs/features/inteligencia-documental/validation.md`
-**Depends on**: T138
+**Depends on**: T139
 **Reuses**: Resolution (round 6)
 **Requirement**: UIM-15
 
@@ -3933,5 +3960,5 @@ Phase 13:  T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 �
 Phase 14:  T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T105 → T106
 Phase 15:  T107 → T108 → T109 → T110 → T111 → T112
 Phase 16:  T113 → T114 → T115 → T116 → T117
-Phase 17:  T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 → T127 → T128 → T129 → T130 → T131 → T132 → T133 → T134 → T135 → T136 → T137 → T138 → T139
+Phase 17:  T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 → T127 → T128 → T129 → T130 → T131 → T132 → T133 → T134 → T135 → T136 → T137 → T138 → T139 → T140
 ```

@@ -267,6 +267,15 @@ def test_unit_points_override_round_trips_scores_and_clears_through_the_api(
     assert client.get(scoring_url).json()["rows"][0]["points"] == "20.00"
 
 
+@pytest.mark.parametrize("value", [-0.01, 10000.01])
+def test_unit_points_override_out_of_range_is_422_on_its_field(client, headers, chosen, value):
+    payload = body(group_number=2, item_number=7, quantidade=1, unit_points_override=value)
+
+    field_error(
+        client.post(activities_url(chosen), json=payload, headers=headers), "unit_points_override"
+    )
+
+
 def test_unit_points_override_on_a_weekly_load_item_is_422_on_its_field(
     client, headers, points_chosen
 ):

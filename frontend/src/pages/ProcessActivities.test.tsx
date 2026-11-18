@@ -94,7 +94,7 @@ describe("TELA-06: página da Etapa 3", () => {
       "PUT /api/activities/a1": { status: 200, body: activity({ title: "Banca corrigida" }) },
     });
     await user.click(await screen.findByRole("button", { name: "Editar Banca de mestrado" }));
-    expect(screen.queryByLabelText("Justificativa da alteração")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/justificativa/i)).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
     await waitFor(() => expect(count(calls, LIST)).toBe(2));
   });

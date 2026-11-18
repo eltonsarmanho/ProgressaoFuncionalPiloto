@@ -212,6 +212,7 @@ describe("TELA-09: criar atividade a partir do documento", () => {
     await user.click(screen.getByRole("button", { name: "Criar atividade de ata.pdf" }));
 
     const section = screen.getByRole("dialog", { name: "Criar atividade a partir do documento" });
+    expect(within(section).queryByLabelText(/justificativa/i)).not.toBeInTheDocument();
     expect(within(section).getByText("ata.pdf")).toBeInTheDocument();
     await user.clear(within(section).getByLabelText("Página do documento de origem"));
     await user.type(within(section).getByLabelText("Página do documento de origem"), "2");

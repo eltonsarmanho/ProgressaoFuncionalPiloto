@@ -134,6 +134,16 @@ describe("TELA-06: lista de revisão", () => {
   });
 });
 
+describe("UIM-10: colunas e texto justificado", () => {
+  it("a tabela leva as classes das regras de coluna e o título e o item levam o texto justificado", () => {
+    setup([activity()]);
+    expect(screen.getByRole("table")).toHaveClass("wide-table", "review-table");
+    const row = screen.getByText("Banca de mestrado de Maria", { selector: "td" }).closest("tr")!;
+    expect(within(row).getByText("Banca de mestrado de Maria", { selector: "td" })).toHaveClass("text-block");
+    expect(row.querySelector("td[data-label='Grupo e item']")).toHaveClass("text-block");
+  });
+});
+
 describe("UIM-13: botões curtos de ação", () => {
   it("os rótulos visíveis são curtos e o título da atividade só vai no aria-label e no title", () => {
     setup([activity()]);
@@ -157,7 +167,7 @@ describe("REV-03 / UIM-13: validar e rejeitar na hora", () => {
     await user.click(screen.getByRole("button", { name: "Validar Banca de mestrado de Maria" }));
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
     expect(body(calls[0].init)).toEqual({ status: "VALIDADA", expected_version: 4 });
-    expect(screen.queryByLabelText("Justificativa")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/justificativa/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
@@ -187,7 +197,7 @@ describe("REV-02: editar sem justificativa (UIM-17)", () => {
     const title = screen.getByLabelText("Título");
     await user.clear(title);
     await user.type(title, "Banca corrigida");
-    expect(screen.queryByLabelText("Justificativa da alteração")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/justificativa/i)).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
     expect(body(calls[0].init)).toMatchObject({ title: "Banca corrigida", expected_version: 4 });
@@ -233,7 +243,7 @@ describe("REV-04 / UIM-11: validar as selecionadas", () => {
     await user.click(screen.getByLabelText("Selecionar Terceira"));
     await user.click(screen.getByRole("button", { name: "Validar as selecionadas (2)" }));
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
-    expect(screen.queryByLabelText("Justificativa")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/justificativa/i)).not.toBeInTheDocument();
     expect(body(calls[0].init)).toEqual({ activity_ids: ["a1", "a3"] });
     expect(screen.getByRole("status")).toHaveTextContent("2 atividades validadas");
   });
@@ -349,6 +359,20 @@ describe("UIM-12: validar todas com confiança a partir de 70%", () => {
 
     await waitFor(() => expect(calls).toHaveLength(1));
     expect(body(calls[0].init)).toEqual({ activity_ids: ["ok"] });
+  });
+
+  it("sem item (grupo vazio) ou com documento revisado, sem IA ou sem confiança não entram", () => {
+    const activities = [
+      linked("sem-grupo", "Sem grupo", "d1", { group_number: null, item_number: null }),
+      linked("rev", "Doc em revisão", "d2"),
+      linked("ia", "Doc sem IA", "d3"),
+      linked("nul", "Doc sem confiança", "d4"),
+    ];
+    setupBulk(activities, docs(["d1", "0.95"], ["d2", "0.95", "REQUER_REVISAO"], ["d3", "0.95", "EXTRAIDO_SEM_IA"]).concat([
+      { id: "d4", original_name: "d4.pdf", confidence: null, status: "PROCESSADO" } as DocumentSummary,
+    ]));
+    expect(screen.getByRole("button", { name: BUTTON })).toBeDisabled();
+    expect(screen.getByText("0 atividades elegíveis para a validação por confiança.")).toBeInTheDocument();
   });
 
   it("com vários documentos, vale o de menor confiança; sem atividade elegível o botão fica desabilitado", () => {

@@ -208,7 +208,7 @@ describe("ProcessScoring", () => {
     const quantidade = await screen.findByLabelText("Quantidade");
     await user.clear(quantidade);
     await user.type(quantidade, "5");
-    expect(screen.queryByLabelText("Justificativa da alteração")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/justificativa/i)).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
     await waitFor(() =>
       expect(screen.getByText("Total geral", { selector: "dt" }).nextElementSibling).toHaveTextContent("50,00"),
@@ -295,6 +295,7 @@ describe("ProcessScoring", () => {
       const user = userEvent.setup();
       const row = (await screen.findByText("Orientação de TCC", { selector: "td" })).closest("tr")!;
       expect(within(row).getByText("Manual")).toBeInTheDocument();
+      expect(row.querySelector("td[data-label='Pontuação unitária']")).toHaveTextContent("2,50");
 
       await user.click(within(row).getByRole("button", { name: "Usar valor da tabela em Orientação de TCC" }));
 
@@ -333,7 +334,7 @@ describe("ProcessScoring", () => {
     const post = calls.find((c) => c.method === "POST")!;
     expect(post.path).toBe("/api/activities/a1/status");
     expect(JSON.parse(post.init!.body as string)).toEqual({ status: "REJEITADA", expected_version: 3 });
-    expect(screen.queryByLabelText("Justificativa")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/justificativa/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Validar Orientação de TCC" }));
@@ -354,7 +355,7 @@ describe("ProcessScoring", () => {
     const post = calls.find((c) => c.method === "POST")!;
     expect(post.path).toBe("/api/activities/a1/distinct");
     expect(JSON.parse(post.init!.body as string)).toEqual({ expected_version: 3 });
-    expect(screen.queryByLabelText("Justificativa")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/justificativa/i)).not.toBeInTheDocument();
   });
 
   it("UIM-20: o erro de uma ação aparece como alerta e a pontuação não recarrega", async () => {

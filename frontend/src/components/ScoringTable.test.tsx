@@ -183,4 +183,10 @@ describe("ScoringTable", () => {
       expect(screen.getByText("Curso curto").closest("tr")).toHaveTextContent("Carga horária abaixo do mínimo do item");
     });
   });
+
+  it("UIM-19: a tabela leva as classes das regras de coluna e o título da atividade o texto justificado", () => {
+    render(<ScoringTable rows={[row({})]} subtotals={SUBTOTALS} />);
+    expect(screen.getByRole("table")).toHaveClass("wide-table", "score-table");
+    expect(screen.getByText("Palestra", { selector: "td" })).toHaveClass("text-block");
+  });
 });

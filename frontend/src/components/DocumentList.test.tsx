@@ -103,6 +103,26 @@ describe("UIM-02 / UIM-03: ações por documento", () => {
     expect(screen.getByText("declaracao-banca.pdf", { selector: "td" })).toHaveAttribute("title", "declaracao-banca.pdf");
   });
 
+  it("UIM-01 / UIM-02: a tabela e a célula do nome levam as classes das regras de coluna e os botões as variantes", () => {
+    setup([doc()]);
+    expect(screen.getByRole("table")).toHaveClass("wide-table", "doc-table");
+    expect(screen.getByText("declaracao-banca.pdf", { selector: "td" })).toHaveClass("doc-name");
+    const variant = (name: string) => screen.getByRole("button", { name: `${name} declaracao-banca.pdf` }).className;
+    expect(variant("Visualizar")).toContain("btn-primary");
+    expect(variant("Excluir")).toContain("btn-danger");
+    for (const name of ["Baixar", "Substituir", "Reprocessar", "Classificar"]) {
+      expect(variant(name)).toContain("btn-secondary");
+    }
+  });
+
+  it("UIM-03: Substituir abre o seletor de arquivo (clica o campo de arquivo)", async () => {
+    const spy = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(() => {});
+    const { user } = setup([doc()]);
+    await user.click(screen.getByRole("button", { name: "Substituir declaracao-banca.pdf" }));
+    expect(spy.mock.instances.some((el) => (el as HTMLInputElement).type === "file")).toBe(true);
+    spy.mockRestore();
+  });
+
   it("visualizar chama onView", async () => {
     const { onView, user } = setup([doc()]);
     await user.click(screen.getByRole("button", { name: "Visualizar declaracao-banca.pdf" }));
@@ -164,6 +184,7 @@ describe("UIM-02 / UIM-03: ações por documento", () => {
     const dialog = screen.getByRole("dialog");
     expect(within(dialog).getByText("Excluir declaracao-banca.pdf? Esta ação não pode ser desfeita.")).toBeInTheDocument();
     expect(within(dialog).queryByRole("textbox")).not.toBeInTheDocument();
+    expect(within(dialog).queryByLabelText(/justificativa/i)).not.toBeInTheDocument();
     expect(calls).toHaveLength(0);
 
     await user.click(within(dialog).getByRole("button", { name: "Excluir" }));
@@ -206,6 +227,7 @@ describe("UIM-02 / UIM-03: ações por documento", () => {
     await user.click(screen.getByRole("button", { name: "Classificar declaracao-banca.pdf" }));
     const dialog = screen.getByRole("dialog", { name: "Classificar documento" });
     expect(dialog).toHaveAttribute("aria-modal", "true");
+    expect(within(dialog).queryByLabelText(/justificativa/i)).not.toBeInTheDocument();
 
     await user.selectOptions(within(dialog).getByLabelText("Tipo do documento"), "CERTIFICADO");
     await user.selectOptions(within(dialog).getByLabelText("Categoria da atividade"), "PALESTRA");
