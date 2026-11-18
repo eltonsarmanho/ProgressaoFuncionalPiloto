@@ -242,7 +242,7 @@ def build_container(
         storage=storage,
         inspector=inspector,
         process_document=ProcessDocument(uow_factory, audit, storage, analyzer, create_activity),
-        recover_stuck_jobs=RecoverStuckJobs(uow_factory),
+        recover_stuck_jobs=RecoverStuckJobs(uow_factory, audit, clock, settings.max_job_attempts),
         upload_documents=UploadDocuments(
             uow_factory, audit, policy, storage, inspector, clock, limits
         ),

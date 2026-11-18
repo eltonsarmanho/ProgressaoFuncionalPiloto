@@ -172,6 +172,10 @@ class AuditRepository(Protocol):
     def list_for(self, entity: str, entity_id: str) -> Sequence[AuditEvent]: ...
 
 
+DEFAULT_MAX_JOB_ATTEMPTS = 3
+EXHAUSTED_CODE = "TENTATIVAS_ESGOTADAS"
+
+
 class JobStatus(StrEnum):
     PENDENTE = "PENDENTE"
     PROCESSANDO = "PROCESSANDO"
@@ -301,8 +305,17 @@ class JobRepository(Protocol):
         self, job_id: UUID, status: JobStatus, now: datetime, error_code: str | None = None
     ) -> None: ...
 
-    def recover_stuck(self) -> int:
-        """Puts PROCESSANDO jobs back to PENDENTE and returns how many (PIPE-03)."""
+    def recover_stuck(self, max_attempts: int = DEFAULT_MAX_JOB_ATTEMPTS) -> int:
+        """Puts PROCESSANDO jobs back to PENDENTE and returns how many (PIPE-03).
+
+        A job that was already claimed `max_attempts` times is left alone: it is closed by
+        `exhaust_stuck`, never requeued (VER-04).
+        """
+        ...
+
+    def exhaust_stuck(self, max_attempts: int, now: datetime) -> list[ProcessingJob]:
+        """Closes the PROCESSANDO jobs claimed `max_attempts` times or more as FALHOU with the
+        code TENTATIVAS_ESGOTADAS and returns them (VER-04)."""
         ...
 
     def active_for_document(self, document_id: UUID) -> ProcessingJob | None: ...

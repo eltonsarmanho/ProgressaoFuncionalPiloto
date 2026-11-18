@@ -25,7 +25,7 @@ from app.application.services.document_analyzer import (
     DocumentAnalyzer,
     SuggestedActivity,
 )
-from app.application.use_cases.documents import EVIDENCE_ENTITY
+from app.application.use_cases.documents import DOCUMENT_ENTITY, EVIDENCE_ENTITY
 from app.application.use_cases.scoring import ActivityData, CreateActivity
 from app.domain.entities.activity import Activity, ActivitySource
 from app.domain.entities.audit import AuditAction
@@ -44,7 +44,9 @@ from app.domain.entities.scoring import ScoringTableVersion
 from app.domain.entities.user import User
 from app.domain.errors import NotFound, ValidationFailed
 from app.domain.repositories.ports import (
+    DEFAULT_MAX_JOB_ATTEMPTS,
     ActivityEvidence,
+    Clock,
     FileStorage,
     JobStatus,
     UnitOfWork,
@@ -343,13 +345,53 @@ class ProcessDocument:
 
 
 class RecoverStuckJobs:
-    def __init__(self, uow_factory: Callable[[], UnitOfWork]):
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        clock: Clock,
+        max_attempts: int = DEFAULT_MAX_JOB_ATTEMPTS,
+    ):
         self._uow_factory = uow_factory
+        self._audit = audit
+        self._clock = clock
+        self._max_attempts = max_attempts
 
     def execute(self) -> int:
-        """Puts the jobs left PROCESSANDO by a restart back to PENDENTE; run it at startup."""
+        """Run at startup: puts the jobs a restart left PROCESSANDO back to PENDENTE.
+
+        A job already claimed `max_attempts` times is closed instead: job FALHOU and document
+        FALHOU with `TENTATIVAS_ESGOTADAS`, audited, never requeued (VER-04). Returns how many
+        jobs went back to the queue.
+        """
         with self._uow_factory() as uow:
-            recovered = uow.jobs.recover_stuck()
+            exhausted = uow.jobs.exhaust_stuck(self._max_attempts, self._clock.now())
+            for job in exhausted:
+                self._fail_document(uow, job.document_id)
+            recovered = uow.jobs.recover_stuck(self._max_attempts)
             uow.commit()
-        logger.info("recovered_jobs=%d", recovered)
+        logger.info("recovered_jobs=%d exhausted_jobs=%d", recovered, len(exhausted))
         return recovered
+
+    def _fail_document(self, uow: UnitOfWork, document_id: UUID) -> None:
+        document = uow.documents.get(document_id)
+        if document is None or document.status not in (
+            DocumentStatus.PENDENTE,
+            DocumentStatus.PROCESSANDO,
+        ):
+            return
+        failed = replace(
+            document,
+            status=DocumentStatus.FALHOU,
+            status_code=DocAlertCode.TENTATIVAS_ESGOTADAS.value,
+        )
+        uow.documents.update(failed, document.version)
+        self._audit.record(
+            uow,
+            None,
+            DOCUMENT_ENTITY,
+            document.id,
+            AuditAction.STATUS,
+            {"status": document.status, "status_code": document.status_code},
+            {"status": failed.status, "status_code": failed.status_code},
+        )

@@ -26,7 +26,7 @@ def build_worker(docs, process_document=None, poll_seconds=0.05):
     return DocumentWorker(
         w.uow_factory,
         process_document,
-        RecoverStuckJobs(w.uow_factory),
+        RecoverStuckJobs(w.uow_factory, docs.audit, docs.clock),
         docs.clock,
         poll_seconds=poll_seconds,
     )
@@ -187,7 +187,7 @@ def test_a_database_error_while_claiming_does_not_kill_the_thread(docs):
     worker = DocumentWorker(
         flaky_factory,
         process_document,
-        RecoverStuckJobs(real_factory),
+        RecoverStuckJobs(real_factory, docs.audit, docs.clock),
         docs.clock,
         poll_seconds=0.05,
     )

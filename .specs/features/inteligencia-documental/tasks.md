@@ -2071,7 +2071,7 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 ### T73: Tentativas das tarefas limitadas
 
-**What**: Configuração `MAX_JOB_ATTEMPTS` (3); `claim_next` e `recover_stuck` encerram a tarefa que já usou as tentativas como `FALHOU`/`TENTATIVAS_ESGOTADAS` (documento `FALHOU` com o alerta, auditoria) em vez de recolocá-la; reprocessar cria tarefa nova com o contador zerado. Arquivos: `config.py`, `document.py`, `ports.py`, `repositories.py`, `document_processing.py`, `worker.py`, `dependencies.py`.
+**What**: Configuração `MAX_JOB_ATTEMPTS` (3); a recuperação da partida (`exhaust_stuck` e `recover_stuck`) encerra a tarefa `PROCESSANDO` que já usou as tentativas como `FALHOU`/`TENTATIVAS_ESGOTADAS` (documento `FALHOU` com o alerta, auditoria) em vez de recolocá-la; `RecoverStuckJobs` recebe auditoria, relógio e o limite; reprocessar cria tarefa nova com o contador zerado. Arquivos: `config.py`, `document.py`, `ports.py`, `repositories.py`, `document_processing.py`, `worker.py`, `dependencies.py`.
 **Where**: `backend/app/infrastructure/database/repositories.py`
 **Depends on**: T72
 **Reuses**: `SqlProcessingJobRepository`, `RecoverStuckJobs`, `ProcessDocument`
@@ -2084,11 +2084,11 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 **Done when**:
 
-- [ ] Tarefa com `attempts` igual ao máximo e `PROCESSANDO` na partida termina `FALHOU`/`TENTATIVAS_ESGOTADAS` e não volta a `PENDENTE` (PostgreSQL real)
-- [ ] O documento fica `FALHOU` com o alerta `TENTATIVAS_ESGOTADAS` e há evento de auditoria, sem conteúdo do documento
-- [ ] Abaixo do máximo a recuperação segue recolocando em `PENDENTE`; o limite vem de `MAX_JOB_ATTEMPTS`
-- [ ] Reprocessar um documento `FALHOU` por tentativas cria tarefa com `attempts` 0 e o worker a processa
-- [ ] Gate full passa
+- [x] Tarefa com `attempts` igual ao máximo e `PROCESSANDO` na partida termina `FALHOU`/`TENTATIVAS_ESGOTADAS` e não volta a `PENDENTE` (PostgreSQL real)
+- [x] O documento fica `FALHOU` com o alerta `TENTATIVAS_ESGOTADAS` e há evento de auditoria, sem conteúdo do documento
+- [x] Abaixo do máximo a recuperação segue recolocando em `PENDENTE`; o limite vem de `MAX_JOB_ATTEMPTS`
+- [x] Reprocessar um documento `FALHOU` por tentativas cria tarefa com `attempts` 0 e o worker a processa
+- [x] Gate full passa
 
 **Tests**: unit + integration
 **Gate**: full

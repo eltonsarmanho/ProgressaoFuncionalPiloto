@@ -49,8 +49,9 @@ def test_alert_codes_are_the_design_names_plus_those_of_the_real_validation():
         "QUANTIDADE_ESTIMADA",
         "ATIVIDADE_REPETIDA",  # REAL-07
         "CLAUSULA_DE_DISPENSA",  # REAL-10
+        "TENTATIVAS_ESGOTADAS",  # VER-04
     }
-    assert len(DocAlertCode) == 13
+    assert len(DocAlertCode) == 14
 
 
 def test_pending_goes_to_processing():

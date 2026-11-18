@@ -289,7 +289,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 1. IF uma página de PDF, desenhada a 300 dpi, tem mais pixels que o limite `MAX_MEGAPIXELS` (100 por padrão) THEN the system SHALL recusar o arquivo com 422 no campo `arquivo` e código `PAGINA_GRANDE`, sem gravá-lo; the system SHALL aceitar páginas A1 e menores.
 2. WHEN o OCR desenha uma página de PDF THEN the system SHALL nunca alocar mais de 50 megapixels, reduzindo a resolução abaixo de 300 dpi quando preciso; IF a página exige menos de 72 dpi para caber THEN the system SHALL marcar a página como ilegível (texto vazio, método `OCR`, confiança 0) e SHALL continuar o documento sem derrubar o processo.
 3. The system SHALL levar `MAX_PAGES` e `MAX_MEGAPIXELS` do ambiente até o inspetor de arquivos e aos limites de envio (teste de ponta a ponta da configuração).
-4. WHEN uma tarefa de processamento já foi reivindicada `MAX_JOB_ATTEMPTS` vezes (3 por padrão) e volta a ser reivindicada ou recuperada na partida THEN the system SHALL encerrá-la como `FALHOU` com o código `TENTATIVAS_ESGOTADAS`, SHALL marcar o documento `FALHOU` com o alerta `TENTATIVAS_ESGOTADAS`, SHALL registrar auditoria e SHALL nunca recolocá-la em `PENDENTE`; WHEN o usuário reprocessa o documento THEN the system SHALL começar uma tarefa nova com o contador zerado.
+4. WHEN a recuperação da partida encontra `PROCESSANDO` uma tarefa de processamento já reivindicada `MAX_JOB_ATTEMPTS` vezes (3 por padrão) THEN the system SHALL encerrá-la como `FALHOU` com o código `TENTATIVAS_ESGOTADAS`, SHALL marcar o documento `FALHOU` com o alerta `TENTATIVAS_ESGOTADAS`, SHALL registrar auditoria e SHALL nunca recolocá-la em `PENDENTE`; WHEN o usuário reprocessa o documento THEN the system SHALL começar uma tarefa nova com o contador zerado.
 5. The system SHALL mascarar antes de enviar à IA: CPF com espaços ("123 456 789 00"), CPF dividido por quebra de linha, telefone fixo sem DDD (com hífen ou espaço), "CI" seguido do número, e RG sem rótulo no formato "nn.nnn.nnn-n"; the system SHALL manter datas, horas, números de processo, números de página e a matrícula SIAPE rotulada.
 6. WHEN o envio responde 429 sem mensagem THEN the frontend SHALL exibir o texto padrão de excesso de envios ao lado do arquivo.
 7. The system SHALL ter um teste automatizado que falha se o pacote de produção do frontend (`frontend/dist`) contiver a string `MARITALK` ou um token com forma de chave.
@@ -418,7 +418,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VER-01 | P1: Correções da verificação independente | Design | Implementing |
 | VER-02 | P1: Correções da verificação independente | Design | Implementing |
 | VER-03 | P1: Correções da verificação independente | Design | Implementing |
-| VER-04 | P1: Correções da verificação independente | Design | In Tasks |
+| VER-04 | P1: Correções da verificação independente | Design | Implementing |
 | VER-05 | P1: Correções da verificação independente | Design | In Tasks |
 | VER-06 | P1: Correções da verificação independente | Design | In Tasks |
 | VER-07 | P1: Correções da verificação independente | Design | In Tasks |

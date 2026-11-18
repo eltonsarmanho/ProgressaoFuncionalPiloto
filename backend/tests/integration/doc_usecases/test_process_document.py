@@ -509,7 +509,8 @@ def test_stuck_jobs_go_back_to_pending_and_are_processed_after_the_restart(docs)
         assert uow.jobs.active_for_document(document.id).status is JobStatus.PROCESSANDO
         assert uow.documents.get(document.id).status is DocumentStatus.PROCESSANDO
 
-    recovered = document_processing.RecoverStuckJobs(w.uow_factory).execute()
+    recover = document_processing.RecoverStuckJobs(w.uow_factory, docs.audit, docs.clock)
+    recovered = recover.execute()
 
     assert recovered == 1
     with w.uow_factory() as uow:
@@ -524,7 +525,8 @@ def test_recovering_with_nothing_stuck_changes_nothing(docs):
     w = docs.world
     submit(docs, "nada")
 
-    assert document_processing.RecoverStuckJobs(w.uow_factory).execute() == 0
+    recover = document_processing.RecoverStuckJobs(w.uow_factory, docs.audit, docs.clock)
+    assert recover.execute() == 0
 
 
 def test_document_deleted_while_it_is_processed_is_dropped_quietly(docs):

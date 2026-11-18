@@ -34,6 +34,8 @@ from app.domain.entities.user import Session as UserSession
 from app.domain.entities.user import User
 from app.domain.errors import Conflict, NotFound, StaleVersion
 from app.domain.repositories.ports import (
+    DEFAULT_MAX_JOB_ATTEMPTS,
+    EXHAUSTED_CODE,
     ActivityEvidence,
     JobStatus,
     ProcessingJob,
@@ -1108,12 +1110,27 @@ class SqlJobRepository:
         if rowcount == 0:
             raise NotFound("Tarefa não encontrada")
 
-    def recover_stuck(self) -> int:
+    def recover_stuck(self, max_attempts: int = DEFAULT_MAX_JOB_ATTEMPTS) -> int:
         return self._s.execute(
             update(ProcessingJobModel)
-            .where(ProcessingJobModel.status == JobStatus.PROCESSANDO)
+            .where(
+                ProcessingJobModel.status == JobStatus.PROCESSANDO,
+                ProcessingJobModel.attempts < max_attempts,
+            )
             .values(status=JobStatus.PENDENTE, started_at=None)
         ).rowcount
+
+    def exhaust_stuck(self, max_attempts: int, now: datetime) -> list[ProcessingJob]:
+        rows = self._s.scalars(
+            update(ProcessingJobModel)
+            .where(
+                ProcessingJobModel.status == JobStatus.PROCESSANDO,
+                ProcessingJobModel.attempts >= max_attempts,
+            )
+            .values(status=JobStatus.FALHOU, finished_at=now, error_code=EXHAUSTED_CODE)
+            .returning(ProcessingJobModel)
+        ).all()
+        return [self._to_entity(m) for m in rows]
 
     def active_for_document(self, document_id: UUID) -> ProcessingJob | None:
         m = self._s.scalars(

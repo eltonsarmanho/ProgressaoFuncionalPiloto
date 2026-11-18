@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     max_megapixels: int = 100
     max_documents_per_process: int = 200
     max_uploads_per_minute: int = 60
+    max_job_attempts: int = 3
     ai_timeout_seconds: int = 60
     ai_max_tokens: int = 8000
 

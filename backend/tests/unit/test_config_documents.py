@@ -24,6 +24,7 @@ ENV_NAMES = [
     "MAX_MEGAPIXELS",
     "MAX_DOCUMENTS_PER_PROCESS",
     "MAX_UPLOADS_PER_MINUTE",
+    "MAX_JOB_ATTEMPTS",
     "AI_TIMEOUT_SECONDS",
     "AI_MAX_TOKENS",
 ]
@@ -48,6 +49,7 @@ def test_limits_have_the_defaults_of_the_spec():
     assert settings.max_megapixels == 100
     assert settings.max_documents_per_process == 200
     assert settings.max_uploads_per_minute == 60
+    assert settings.max_job_attempts == 3
 
 
 def test_storage_worker_and_ai_defaults():
@@ -68,6 +70,7 @@ def test_every_setting_is_read_from_its_snake_case_environment_name(monkeypatch)
         "MAX_MEGAPIXELS": "50",
         "MAX_DOCUMENTS_PER_PROCESS": "7",
         "MAX_UPLOADS_PER_MINUTE": "3",
+        "MAX_JOB_ATTEMPTS": "5",
         "AI_TIMEOUT_SECONDS": "15",
         "AI_MAX_TOKENS": "4000",
     }
@@ -84,6 +87,7 @@ def test_every_setting_is_read_from_its_snake_case_environment_name(monkeypatch)
     assert settings.max_megapixels == 50
     assert settings.max_documents_per_process == 7
     assert settings.max_uploads_per_minute == 3
+    assert settings.max_job_attempts == 5
     assert settings.ai_timeout_seconds == 15
     assert settings.ai_max_tokens == 4000
 

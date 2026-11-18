@@ -431,6 +431,45 @@ def test_recover_stuck_puts_processing_jobs_back_to_pending(uow_factory, three_d
         assert uow.jobs.recover_stuck() == 0
 
 
+def test_recover_stuck_skips_a_job_at_the_attempt_limit_and_exhaust_stuck_fails_it(
+    uow_factory, three_documents
+):
+    tired = make_job(three_documents[0].id, created_at=NOW - timedelta(minutes=2))
+    fresh = make_job(three_documents[1].id, created_at=NOW - timedelta(minutes=1))
+    with uow_factory() as uow:
+        uow.jobs.add(tired)
+        uow.jobs.add(fresh)
+        uow.commit()
+    for _ in range(3):  # the oldest job is claimed three times
+        with uow_factory() as uow:
+            uow.jobs.claim_next(NOW)
+            uow.commit()
+            uow.jobs.recover_stuck(max_attempts=99)
+            uow.commit()
+    with uow_factory() as uow:
+        assert uow.jobs.claim_next(NOW).id == tired.id  # claimed a fourth time: attempts == 4
+        uow.commit()
+        assert uow.jobs.claim_next(NOW).id == fresh.id  # attempts == 1
+        uow.commit()
+
+    with uow_factory() as uow:
+        exhausted = uow.jobs.exhaust_stuck(max_attempts=3, now=NOW)
+        recovered = uow.jobs.recover_stuck(max_attempts=3)
+        uow.commit()
+
+    assert [job.id for job in exhausted] == [tired.id]
+    assert recovered == 1
+    with uow_factory() as uow:
+        failed = uow.jobs.get(tired.id)
+        assert (failed.status, failed.error_code, failed.finished_at) == (
+            JobStatus.FALHOU,
+            "TENTATIVAS_ESGOTADAS",
+            NOW,
+        )
+        assert uow.jobs.get(fresh.id).status is JobStatus.PENDENTE
+        assert uow.jobs.exhaust_stuck(max_attempts=3, now=NOW) == []
+
+
 # --- evidences -------------------------------------------------------------------------------
 
 
