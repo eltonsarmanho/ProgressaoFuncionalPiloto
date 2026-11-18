@@ -295,3 +295,49 @@ def test_ocr_timeout_on_the_extra_pass_keeps_the_text_layer(clock, write):
 
     assert result.pages[0].method is TextMethod.TEXTO
     assert result.timed_out is False
+
+
+# --- VER-02: a page too large to draw fails the page, not the process --------------------------
+
+
+def test_a_page_too_large_to_render_is_an_empty_illegible_page_and_the_document_goes_on(
+    clock, write
+):
+    import pymupdf
+
+    doc = pymupdf.open()
+    doc.new_page(width=14400, height=14400)  # needs under 72 dpi: refused
+    page = doc.new_page()
+    page.insert_text((50, 80), TEXT_PAGE, fontsize=12)
+    ocr = FakeOcr()
+
+    result = extractor(clock, ocr).extract(write(doc.tobytes(), "enorme.pdf"), FileKind.PDF)
+
+    first, second = result.pages
+    assert (first.method, first.text, first.ocr_confidence) == (TextMethod.OCR, "", Decimal(0))
+    assert first.char_count == 0
+    assert second.method is TextMethod.TEXTO
+    assert ocr.calls == []
+    assert result.timed_out is False
+
+
+def test_a_thin_text_layer_page_too_large_to_render_keeps_its_text_layer(clock, write):
+    import io
+
+    import pymupdf
+    from PIL import Image
+
+    pixel = io.BytesIO()
+    Image.new("L", (4, 4), 200).save(pixel, format="PNG")
+    doc = pymupdf.open()
+    page = doc.new_page(width=14400, height=14400)
+    page.insert_image(page.rect, stream=pixel.getvalue())  # the picture covers the whole page
+    page.insert_text((50, 80), TEXT_PAGE, fontsize=12)
+    ocr = FakeOcr()
+
+    result = extractor(clock, ocr).extract(write(doc.tobytes(), "enorme.pdf"), FileKind.PDF)
+
+    [only] = result.pages
+    assert only.method is TextMethod.TEXTO
+    assert "banca" in only.text
+    assert ocr.calls == []

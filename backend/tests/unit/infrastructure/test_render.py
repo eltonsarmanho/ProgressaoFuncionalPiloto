@@ -1,9 +1,20 @@
 """PIPE-06: 300 dpi rendering and grayscale preprocessing, for PDF pages and images."""
 
+import subprocess
+import sys
+import textwrap
+from pathlib import Path
+
 import pytest
 from PIL import Image
 
-from app.infrastructure.ocr.render import load_image, preprocess, render_page
+from app.infrastructure.ocr.render import (
+    MAX_RENDER_MEGAPIXELS,
+    PageTooLarge,
+    load_image,
+    preprocess,
+    render_page,
+)
 from tests.support import synthetic_docs as docs
 
 A4_AT_300_DPI = (2480, 3508)
@@ -78,3 +89,54 @@ def test_preprocess_does_not_change_its_input():
     preprocess(source)
     assert source.mode == "RGB"
     assert source.getpixel((0, 0)) == (10, 20, 30)
+
+
+# --- VER-02: the render never allocates above the cap ----------------------------------------
+
+
+def test_the_render_cap_is_50_megapixels():
+    assert MAX_RENDER_MEGAPIXELS == 50
+
+
+def test_a_page_above_the_cap_is_drawn_at_a_lower_resolution(write):
+    path = write(docs.pdf_with_page_size(3000, 3000), "grande.pdf")
+    image = render_page(path, 1)
+    assert 40_000_000 < image.width * image.height <= 50_000_000
+
+
+def test_a_page_at_300_dpi_below_the_cap_keeps_300_dpi(write):
+    path = write(docs.pdf_with_page_size(1684, 2384), "a1.pdf")  # 70 MP at 300 dpi
+    scaled = render_page(path, 1)
+    assert scaled.width * scaled.height <= 50_000_000
+    a3 = render_page(write(docs.pdf_with_page_size(842, 1191), "a3.pdf"), 1)
+    assert abs(a3.width - 3508) <= 2
+
+
+def test_a_page_that_would_need_under_72_dpi_is_refused(write):
+    path = write(docs.pdf_with_page_size(14400, 14400), "enorme.pdf")
+    with pytest.raises(PageTooLarge):
+        render_page(path, 1)
+
+
+def test_rendering_a_3000_by_3000_pt_page_stays_inside_a_memory_budget(write):
+    path = write(docs.pdf_with_page_size(3000, 3000), "grande.pdf")
+    script = textwrap.dedent(
+        """
+        import sys
+        from pathlib import Path
+        from app.infrastructure.ocr.render import render_page
+        render_page(Path(sys.argv[1]), 1)
+        # VmHWM is this process only (ru_maxrss would carry the parent's size over the fork)
+        for line in Path("/proc/self/status").read_text().splitlines():
+            if line.startswith("VmHWM:"):
+                print(line.split()[1])
+        """
+    )
+    done = subprocess.run(
+        [sys.executable, "-c", script, str(path)], capture_output=True,
+        text=True,
+        check=True,
+        cwd=Path(__file__).resolve().parents[3],
+    )
+    peak_mb = int(done.stdout.strip()) / 1024
+    assert peak_mb < 330  # the unbounded render of 156 MP needed more than 600 MB

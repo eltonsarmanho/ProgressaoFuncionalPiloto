@@ -416,7 +416,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | REAL-19 | P1: Correções da validação real | Design | Implementing |
 | REAL-20 | P1: Correções da validação real | Design | Implementing |
 | VER-01 | P1: Correções da verificação independente | Design | Implementing |
-| VER-02 | P1: Correções da verificação independente | Design | In Tasks |
+| VER-02 | P1: Correções da verificação independente | Design | Implementing |
 | VER-03 | P1: Correções da verificação independente | Design | Implementing |
 | VER-04 | P1: Correções da verificação independente | Design | In Tasks |
 | VER-05 | P1: Correções da verificação independente | Design | In Tasks |

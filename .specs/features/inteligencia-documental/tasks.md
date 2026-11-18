@@ -2057,10 +2057,10 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 **Done when**:
 
-- [ ] Página 3000x3000 pt é desenhada com no máximo 50 megapixels (resolução reduzida); A4 segue a 300 dpi
-- [ ] Página de 14400x14400 pt levanta `PageTooLarge` e o extrator devolve a página com texto vazio, método `OCR` e confiança 0, sem exceção
-- [ ] Teste de memória: o desenho da página 3000x3000 pt num processo com limite de espaço de endereço termina sem `MemoryError`
-- [ ] Gate full passa
+- [x] Página 3000x3000 pt é desenhada com no máximo 50 megapixels (resolução reduzida); A4 segue a 300 dpi
+- [x] Página de 14400x14400 pt levanta `PageTooLarge` e o extrator devolve a página com texto vazio, método `OCR` e confiança 0, sem exceção
+- [x] Teste de memória: o desenho da página 3000x3000 pt num processo com limite de espaço de endereço termina sem `MemoryError`
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

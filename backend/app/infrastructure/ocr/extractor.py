@@ -25,7 +25,7 @@ from app.domain.rules.text_quality import (
 )
 from app.domain.rules.upload_validation import FileKind
 from app.infrastructure.ocr.pdf_text import extract_pdf_page, image_coverage, pdf_page_count
-from app.infrastructure.ocr.render import load_image, render_page
+from app.infrastructure.ocr.render import PageTooLarge, load_image, render_page
 from app.infrastructure.ocr.tesseract import PAGE_TIMEOUT_SECONDS, OcrResult, ocr_image
 
 DOCUMENT_TIMEOUT_SECONDS = 600
@@ -74,7 +74,11 @@ class DocumentTextExtractor:
         page = _page(number, TextMethod.TEXTO, layer, None)
         if not is_text_layer_thin(layer, image_coverage(path, number)):
             return page
-        ocr_page = self._ocr_page(render_page(path, number), number, started)
+        try:
+            image = render_page(path, number)
+        except PageTooLarge:
+            return page
+        ocr_page = self._ocr_page(image, number, started)
         if ocr_page is None or ocr_page.ocr_confidence is None:
             return page
         if ocr_page.ocr_confidence < MIN_OCR_CONFIDENCE or _useful(ocr_page.text) <= _useful(layer):
@@ -90,7 +94,12 @@ class DocumentTextExtractor:
             if is_text_layer_usable(layer):
                 pages.append(self._layer_or_ocr(path, number, layer, started))
                 continue
-            page = self._ocr_page(render_page(path, number), number, started)
+            try:
+                image = render_page(path, number)
+            except PageTooLarge:  # the page fails, the document goes on (VER-02)
+                pages.append(_page(number, TextMethod.OCR, "", Decimal(0)))
+                continue
+            page = self._ocr_page(image, number, started)
             if page is None:
                 return TextExtraction(tuple(pages), timed_out=True)
             pages.append(page)
