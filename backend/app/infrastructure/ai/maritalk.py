@@ -104,11 +104,15 @@ class MariTalkClient:
         *,
         max_tokens: int | None = None,
         deadline_seconds: float | None = None,
+        retries: bool = True,
     ) -> ChatResult:
         """The JSON object of the answer; raises `ChatError` when it cannot be obtained.
 
-        `deadline_seconds` bounds the whole call, repetitions and waits included.
+        `deadline_seconds` bounds the whole call, repetitions and waits included. With `retries`
+        off nothing is repeated after an error, a transient status or an answer cut short; only
+        the switch to the fallback model of AD-005 remains.
         """
+        waits = len(RETRY_SLEEP_SECONDS) if retries else 0
         if not self._base or self._key is None:
             raise ChatError(ChatFailure.UNAVAILABLE)
         started = self._monotonic()
@@ -127,7 +131,7 @@ class MariTalkClient:
                 response = self._post(body, self._time_left(started, deadline_seconds))
             except httpx.HTTPError:
                 transient_retries = self._wait_or_give_up(
-                    transient_retries, started, deadline_seconds
+                    transient_retries, started, deadline_seconds, waits
                 )
                 continue
             status = response.status_code
@@ -137,14 +141,14 @@ class MariTalkClient:
                 if parsed is not None:
                     duration_ms = int((self._monotonic() - started) * 1000)
                     return ChatResult(content=parsed, model=model, duration_ms=duration_ms)
-                if used_budget_retry:
+                if used_budget_retry or not retries:
                     raise ChatError(ChatFailure.INVALID_RESPONSE) from None
                 used_budget_retry, budget = True, budget * 2
             elif status in (401, 403):
                 raise ChatError(ChatFailure.CREDENTIAL_REFUSED) from None
             elif status in _TRANSIENT_STATUSES or status >= 500:
                 transient_retries = self._wait_or_give_up(
-                    transient_retries, started, deadline_seconds
+                    transient_retries, started, deadline_seconds, waits
                 )
             elif (
                 status in _MODEL_ERROR_STATUSES
@@ -164,9 +168,12 @@ class MariTalkClient:
             raise ChatError(ChatFailure.UNAVAILABLE) from None
         return left
 
-    def _wait_or_give_up(self, retries_done: int, started: float, deadline: float | None) -> int:
-        """Sleep before the next retry (2 s, then 6 s); give up after two or past the deadline."""
-        if retries_done >= len(RETRY_SLEEP_SECONDS):
+    def _wait_or_give_up(
+        self, retries_done: int, started: float, deadline: float | None, allowed: int
+    ) -> int:
+        """Sleep before the next retry (2 s, then 6 s); give up after `allowed` retries or past
+        the deadline."""
+        if retries_done >= allowed:
             raise ChatError(ChatFailure.UNAVAILABLE) from None
         delay = RETRY_SLEEP_SECONDS[retries_done]
         if deadline is not None and self._monotonic() - started + delay >= deadline:

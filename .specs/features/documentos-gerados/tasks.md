@@ -1700,9 +1700,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Com transporte simulado: resposta válida devolve os textos por `id`; erro HTTP, JSON fora do schema e prazo de 60 s levantam `REDACAO_INDISPONIVEL`
-- [ ] O corpo enviado só contém os campos do item (nenhum texto de página nem nome do docente) e o prompt proíbe objetivos, resultados e metodologias
-- [ ] Gate quick passa; 8+ testes
+- [x] Com transporte simulado: resposta válida devolve os textos por `id`; erro HTTP, JSON fora do schema e prazo de 60 s levantam `REDACAO_INDISPONIVEL`
+- [x] O corpo enviado só contém os campos do item (nenhum texto de página nem nome do docente) e o prompt proíbe objetivos, resultados e metodologias
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
