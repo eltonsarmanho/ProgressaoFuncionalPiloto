@@ -138,9 +138,20 @@ _EXTENSION_UNIT = re.compile(
     rf"|\buniversidade(?:[\s,\-:/.]+(?!{_NATURE_NOUN}\b)[a-z]+){{0,6}}[\s,\-:/.]+extensao\b"
     r"(?:\s+universitaria\b)?"
 )
+_MISSIONS = r"(?:ensino|pesquisa|inovacao|cultura|ciencia|tecnologia)"
+# "atividades de ensino, pesquisa e extensão" is how a university lists its missions, so the
+# generic nouns "atividade" and "ação" do not take part in the wording with a list.
+_NAMED_NOUN = r"(?:cursos?|minicursos?|programas?|projetos?|eventos?|oficinas?)"
+# "extensão" as the nature of the activity, in the wordings the documents use (TER-04, QUA-03):
+# "projeto de extensão", "projeto institucional de extensão", "projeto de pesquisa e extensão",
+# "projeto de ensino, pesquisa e extensão", "Extensão: projeto X", "atividade extensionista" and
+# a category field. "Ensino, Pesquisa e Extensão" alone is a list of missions, not a nature.
 _EXTENSION_NATURE = re.compile(
-    rf"\b{_NATURE_NOUN}\s+(?:de|em)\s+extensao\b"
+    rf"\b{_NATURE_NOUN}(?:\s+institucional)?\s+(?:de|em)\s+extensao\b"
+    rf"|\b{_NAMED_NOUN}\s+(?:de|em)\s+(?:{_MISSIONS}(?:\s*,\s*|\s+e\s+)){{1,3}}extensao\b"
     r"|\bextensao\s+universitaria\b"
+    rf"|\b{_NATURE_NOUN}\s+extensionistas?\b"
+    rf"|(?<!\be )(?<!, )\bextensao\s*:\s*{_NATURE_NOUN}\b"
     r"|\b(?:categoria|natureza|tipo|modalidade|classificacao)(?:\s+d[aeo]s?\s+\w+)?\s*[:\-]?\s*"
     r"extensao\b"
 )

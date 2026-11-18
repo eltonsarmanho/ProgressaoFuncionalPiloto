@@ -3066,9 +3066,9 @@ T107 → T108 → T109 → T110 → T111 → T112
 
 **Done when**:
 
-- [ ] Cada redação listada confirma VII.9 (curso) e IV.1/IV.2 (projeto)
-- [ ] Os textos só com nome de unidade e "Ensino, Pesquisa e Extensão" sem natureza continuam sem confirmar (testes de TER-04 intactos)
-- [ ] Gate full passa
+- [x] Cada redação listada confirma VII.9 (curso) e IV.1/IV.2 (projeto)
+- [x] Os textos só com nome de unidade e "Ensino, Pesquisa e Extensão" sem natureza continuam sem confirmar (testes de TER-04 intactos)
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full
