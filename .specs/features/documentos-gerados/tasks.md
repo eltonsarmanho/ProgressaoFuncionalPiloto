@@ -3499,9 +3499,9 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Cada limitação tem uma linha em Risks com o ID do relatório (`verification-a.md` ou `verification-b.md`)
-- [ ] B-D3 e B-D9 aparecem como `decisão pendente do usuário`, sem mudança de código
-- [ ] Gate build passa
+- [x] Cada limitação tem uma linha em Risks com o ID do relatório (`verification-a.md` ou `verification-b.md`)
+- [x] B-D3 e B-D9 aparecem como `decisão pendente do usuário`, sem mudança de código
+- [x] Gate build passa
 
 **Tests**: none
 **Gate**: build
