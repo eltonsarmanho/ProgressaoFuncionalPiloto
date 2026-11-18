@@ -2677,8 +2677,8 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 **Done when**:
 
-- [ ] O documento traz os números antes e depois e a recomendação do limite
-- [ ] Gate build passa
+- [x] O documento traz os números antes e depois e a recomendação do limite
+- [x] Gate build passa
 
 **Tests**: none
 **Gate**: build

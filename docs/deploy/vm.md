@@ -46,6 +46,23 @@ client_max_body_size 120m;
 
 e aplicar com `nginx -t && systemctl reload nginx`. Sem isso, o nginx do servidor responde 413 acima do valor dele (1 MB por padrão) antes de a requisição chegar ao projeto. Conferir depois enviando um corpo de 25 MB (não pode dar 413) e outro de 121 MB (tem de dar 413).
 
+## Memória do OCR (limite de 384 MB do `backend`)
+
+Medida em 2026-11-17 dentro de `docker run -m 384m --memory-swap 384m`, com a imagem do backend (Tesseract `por`) e PDFs sintéticos só de imagem (cada página é um PNG A4 a 300 dpi). O pico é o `memory.peak` do cgroup do contêiner, que inclui a geração do PDF de teste.
+
+| Páginas escaneadas | Antes, só a extração | Depois, só a extração | Antes, com a aplicação | Depois, com a aplicação |
+| --- | --- | --- | --- | --- |
+| 1 | 148 MB | 135 MB | não medido | não medido |
+| 10 | 297 MB | 139 MB | 342 MB | 191 MB |
+| 25 | OOM | 139 MB | OOM | não medido |
+| 100 (limite de envio) | OOM | 139 MB | não medido | 186 MB |
+
+OOM: o contêiner foi morto por falta de memória antes de terminar. "Com a aplicação" importa `app.main` (FastAPI, SQLAlchemy e o restante) antes da extração, como no processo do backend.
+
+Causa: o MuPDF guarda toda imagem decodificada num cache global de até 256 MB (cerca de 17 MB por página A4 escaneada), que o processo não devolvia; com 12 páginas de OCR o pico real chegou a 427 MB (execução 2 do corpus). Correção: `render_page` esvazia o cache (`pymupdf.TOOLS.store_shrink(100)`) e fecha as imagens intermediárias depois de cada página; o Tesseract já roda com uma thread (`OMP_THREAD_LIMIT=1`) e a extração já lê uma página por vez. O teste `backend/tests/unit/infrastructure/test_ocr_memory.py` limita o crescimento da memória em 10 páginas (40 MB; antes da correção o crescimento era de cerca de 150 MB).
+
+O pior caso sintético (191 MB) fica abaixo de 320 MB, então não há motivo para subir o `mem_limit` do `backend`. A medida não inclui requisições simultâneas da API nem as conexões com o banco; se o contêiner passar a ser morto por falta de memória com tráfego real, subir o limite para 512 MB (a VM tem cerca de 1,5 GB livres). Para repetir a medida: construir a imagem (`docker build backend`), montar `backend/app` e `backend/tests` em `/app/app` e `/app/tests` e rodar um script que gere o PDF com `tests.support.synthetic_docs.pdf_scanned`, extraia com `DocumentTextExtractor` e leia `/sys/fs/cgroup/memory.peak`.
+
 ## Pontos de atenção
 
 - O backend depende da rede e do contêiner do `dashboard`. Se o projeto `dashboard` recriar a rede `dashboard_app_network`, o backend perde o banco até ser reiniciado.
