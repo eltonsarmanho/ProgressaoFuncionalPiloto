@@ -410,15 +410,17 @@ export function DocumentList({
                               Substituir
                             </button>
                           )}
-                          <button
-                            type="button"
-                            className="btn btn-danger"
-                            aria-label={`Excluir ${doc.original_name}`}
-                            title={`Excluir ${doc.original_name}`}
-                            onClick={() => setPanel({ kind: "delete", doc })}
-                          >
-                            Excluir
-                          </button>
+                          {!deleted && (
+                            <button
+                              type="button"
+                              className="btn btn-danger"
+                              aria-label={`Excluir ${doc.original_name}`}
+                              title={`Excluir ${doc.original_name}`}
+                              onClick={() => setPanel({ kind: "delete", doc })}
+                            >
+                              Excluir
+                            </button>
+                          )}
                           {!deleted && (
                             <button
                               type="button"
@@ -442,7 +444,7 @@ export function DocumentList({
                               Criar atividade
                             </button>
                           )}
-                          {!outside && (
+                          {!outside && !deleted && (
                             <button
                               type="button"
                               className="btn btn-secondary"

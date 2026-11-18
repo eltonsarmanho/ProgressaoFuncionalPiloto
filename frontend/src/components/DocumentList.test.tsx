@@ -470,10 +470,19 @@ describe("DEL-12: documento com o arquivo excluído na conclusão", () => {
     expect(screen.queryByRole("button", { name: /Reprocessar certificado-antigo\.pdf/ })).not.toBeInTheDocument();
   });
 
+  it("não oferece excluir nem classificar: o servidor recusa as duas no processo concluído", () => {
+    setup([gone()]);
+    expect(screen.queryByRole("button", { name: /Excluir certificado-antigo\.pdf/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Classificar certificado-antigo\.pdf/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Criar atividade de certificado-antigo\.pdf/ })).not.toBeInTheDocument();
+  });
+
   it("o documento com arquivo continua com visualizar e baixar", () => {
     setup([gone(), doc()]);
     expect(screen.getByRole("button", { name: "Visualizar declaracao-banca.pdf" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Baixar declaracao-banca.pdf" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Excluir declaracao-banca.pdf" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Classificar declaracao-banca.pdf" })).toBeInTheDocument();
     expect(screen.getAllByText("Arquivo excluído")).toHaveLength(1);
   });
 });

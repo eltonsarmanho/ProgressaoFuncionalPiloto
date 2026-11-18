@@ -3193,7 +3193,7 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 #### T114: Etapa 2 sem Excluir e Classificar em documento excluído
 
-**What**: Corrige B-D4: depois da conclusão, a lista de documentos da Etapa 2 não oferece `Excluir` nem `Classificar` (nem outra ação sobre arquivo) no documento marcado como arquivo excluído, e também não as oferece num processo somente leitura.
+**What**: Corrige B-D4: depois da conclusão, a lista de documentos da Etapa 2 não oferece `Excluir` nem `Classificar` (nem outra ação sobre arquivo) no documento marcado como arquivo excluído. A lista não recebe o status do processo, então o marcador do documento é o critério; num processo ainda EM_ANDAMENTO com conclusão parcial os documentos já excluídos também perdem os dois botões.
 **Where**: `frontend/src/components/DocumentList.tsx`
 **Depends on**: T106 (fase 20), T113
 **Reuses**: `DocumentList.test.tsx` (caso DEL-12); também toca: `frontend/src/components/DocumentList.test.tsx`
@@ -3206,9 +3206,9 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O teste de documento com o arquivo excluído confere que `Excluir` e `Classificar` não aparecem, junto das ações que já não apareciam (Visualizar, Baixar, Substituir, Reprocessar)
-- [ ] Um documento com arquivo continua com as ações (o teste existente segue passando)
-- [ ] Gate quick passa; 2+ testes novos
+- [x] O teste de documento com o arquivo excluído confere que `Excluir` e `Classificar` não aparecem, junto das ações que já não apareciam (Visualizar, Baixar, Substituir, Reprocessar)
+- [x] Um documento com arquivo continua com as ações, `Excluir` e `Classificar` incluídas
+- [x] Gate quick passa; 1+ teste novo
 
 **Tests**: unit
 **Gate**: quick
