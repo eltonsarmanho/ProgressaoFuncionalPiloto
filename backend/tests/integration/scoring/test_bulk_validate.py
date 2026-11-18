@@ -10,7 +10,7 @@ from app.application.use_cases.scoring import ActivityData
 from app.domain.entities.activity import ActivitySource, ActivityStatus
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.process import ProcessStatus
-from app.domain.errors import Conflict, NotFound, ValidationFailed
+from app.domain.errors import Conflict, NotFound, StaleVersion, ValidationFailed
 
 
 @pytest.fixture
@@ -161,3 +161,72 @@ def test_closed_process_gives_409(world, bulk, add_process, status):
         bulk.execute(world.admin, process.id, [pending.id], "Conferi")
 
     assert reload(world, pending).status is ActivityStatus.AGUARDANDO_REVISAO
+
+
+# --- VER-09: all or nothing -------------------------------------------------------------------
+
+
+class _RacingActivities:
+    """Activity repository that runs `race` just before the first update goes through."""
+
+    def __init__(self, inner, race, state):
+        self._inner, self._race, self._state = inner, race, state
+
+    def update(self, activity, expected_version):
+        if not self._state["raced"]:
+            self._state["raced"] = True
+            self._race()
+        return self._inner.update(activity, expected_version)
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+class _RacingUow:
+    def __init__(self, real, race, state):
+        self._real, self._race, self._state = real, race, state
+
+    def __enter__(self):
+        self._real.__enter__()
+        return self
+
+    def __exit__(self, *exc):
+        return self._real.__exit__(*exc)
+
+    @property
+    def activities(self):
+        return _RacingActivities(self._real.activities, self._race, self._state)
+
+    def __getattr__(self, name):
+        return getattr(self._real, name)
+
+
+def racing_factory(world, race):
+    state = {"raced": False}
+    return lambda: _RacingUow(world.uow_factory(), race, state)
+
+
+def edit_elsewhere(world, activity):
+    """Another user saves the activity (its version moves on) while the batch is running."""
+    with world.uow_factory() as uow:
+        current = uow.activities.get(activity.id)
+        uow.activities.update(dataclasses.replace(current, title="Editada"), current.version)
+        uow.commit()
+
+
+def test_a_stale_version_at_the_end_of_the_batch_validates_none(world):
+    drafts = [draft(world, f"Sugerida {n}") for n in range(3)]
+    batch = scoring.BulkValidateActivities(
+        racing_factory(world, lambda: edit_elsewhere(world, drafts[2])), world.audit, world.policy
+    )
+
+    with pytest.raises(StaleVersion):
+        batch.execute(world.docente, world.process.id, [a.id for a in drafts], "Conferi")
+
+    for activity in drafts:
+        assert reload(world, activity).status is ActivityStatus.AGUARDANDO_REVISAO
+    assert [len(audit_of(world, a)) for a in drafts] == [1, 1, 1]  # only their creation
+
+
+def test_a_stale_version_is_a_conflict_409_not_a_404(world):
+    assert issubclass(StaleVersion, Conflict)

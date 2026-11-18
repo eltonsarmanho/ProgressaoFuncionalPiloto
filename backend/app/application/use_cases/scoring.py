@@ -509,7 +509,8 @@ class BulkValidateActivities(_ActivityUseCase):
     ) -> list[Activity]:
         """Validates the selected activities with one justification and one audit event each.
 
-        Every activity must belong to the process, otherwise nothing is validated (REV-04).
+        All or nothing, in one unit of work: an activity of another process (404) or a version
+        changed by someone else (409) anywhere in the list validates none (REV-04, VER-09).
         The ones already validated are left alone. A validation only happens here, on an
         explicit call (REV-03).
         """
@@ -524,13 +525,24 @@ class BulkValidateActivities(_ActivityUseCase):
                 if activity is None or activity.process_id != process_id:
                     raise NotFound(ACTIVITY_NOT_FOUND)
                 selected.append(activity)
-        change = ChangeActivityStatus(self._uow_factory, self._audit, self._policy)
-        return [
-            change.execute(actor, a.id, ActivityStatus.VALIDADA, a.version, justification)
-            if a.status is not ActivityStatus.VALIDADA
-            else a
-            for a in selected
-        ]
+            for current in selected:
+                if current.status is ActivityStatus.VALIDADA:
+                    continue
+                uow.activities.update(
+                    replace(current, status=ActivityStatus.VALIDADA), current.version
+                )
+                self._audit.record(
+                    uow,
+                    actor.id,
+                    ACTIVITY_ENTITY,
+                    current.id,
+                    AuditAction.STATUS,
+                    {"status": current.status},
+                    {"status": ActivityStatus.VALIDADA},
+                    justification,
+                )
+            uow.commit()
+            return [uow.activities.get(a.id) for a in selected]
 
 
 class MarkActivitiesDistinct(_ExistingActivityUseCase):

@@ -2193,10 +2193,10 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 **Done when**:
 
-- [ ] Lote com a última atividade desatualizada: 409 e nenhuma atividade validada nem auditada (PostgreSQL real)
-- [ ] Lote com um identificador de outro processo no meio: 404 e nenhuma validada
-- [ ] Lote válido: todas validadas, um evento de auditoria por atividade, uma só confirmação
-- [ ] Gate full passa
+- [x] Lote com a última atividade desatualizada: 409 e nenhuma atividade validada nem auditada (PostgreSQL real)
+- [x] Lote com um identificador de outro processo no meio: 404 e nenhuma validada
+- [x] Lote válido: todas validadas, um evento de auditoria por atividade, uma só confirmação
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full
@@ -2234,7 +2234,7 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 ### T79: Mensagem do limite de envio (413)
 
-**What**: O cliente HTTP do frontend trata 413 sem corpo JSON e a área de envio mostra "O arquivo ou o conjunto excede o limite de envio". Arquivos: `client.ts`, `UploadDropzone.tsx` e seus testes.
+**What**: O cliente HTTP do frontend trata 413 sem corpo JSON e a área de envio mostra "O arquivo ou o conjunto excede o limite de envio". Também dá rótulo em português aos códigos novos `TENTATIVAS_ESGOTADAS` e `DATA_PARCIAL` (`labels.ts`). Arquivos: `client.ts`, `UploadDropzone.tsx` e seus testes.
 **Where**: `frontend/src/api/client.ts`
 **Depends on**: T78
 **Reuses**: `apiClient`
@@ -2249,6 +2249,7 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 - [ ] Resposta 413 com corpo HTML mostra a mensagem de limite e não "não foi possível conectar"
 - [ ] Erro de rede de verdade segue mostrando a mensagem de conexão
+- [ ] Documento `FALHOU` com `TENTATIVAS_ESGOTADAS` mostra o rótulo em português
 - [ ] Gate full e build do frontend passam
 
 **Tests**: unit (frontend)
