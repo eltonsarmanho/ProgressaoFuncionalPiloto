@@ -2419,10 +2419,10 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 **Done when**:
 
-- [ ] Dois títulos de 56 e 72 caracteres com Jaccard 0,88, mesmo item e mesma data: o segundo é `DUPLICIDADE`
-- [ ] Jaccard 0,79 (abaixo do limite), item diferente, datas disjuntas ou sem data: não duplicam
-- [ ] Atividade com `distinct_justification` não é marcada
-- [ ] Gate full passa
+- [x] Dois títulos de 56 e 72 caracteres com Jaccard 0,88, mesmo item e mesma data: o segundo é `DUPLICIDADE`
+- [x] Jaccard 0,79 (abaixo do limite), item diferente, datas disjuntas ou sem data: não duplicam
+- [x] Atividade com `distinct_justification` não é marcada
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full
