@@ -1515,9 +1515,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O sumário tem exatamente as páginas previstas pelo plano com 1, `capacidade` e `capacidade + 1` linhas
-- [ ] Cada entrada traz o número da primeira página; capa, sumário e separadores imprimem o próprio número no rodapé (menos a capa)
-- [ ] Gate quick passa; 8+ testes
+- [x] O sumário tem exatamente as páginas previstas pelo plano com 1, `capacidade` e `capacidade + 1` linhas
+- [x] Cada entrada traz o número da primeira página; capa, sumário e separadores imprimem o próprio número no rodapé (menos a capa)
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick

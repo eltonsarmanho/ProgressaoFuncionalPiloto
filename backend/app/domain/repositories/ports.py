@@ -42,7 +42,7 @@ from app.domain.entities.report import DraftEntry, DraftSection, ReportDocument,
 from app.domain.entities.scoring import ScoringCriterion, ScoringTableVersion
 from app.domain.entities.user import Session, User
 from app.domain.rules.report_wording import WordingItem
-from app.domain.rules.table_document import TableDocument
+from app.domain.rules.table_document import TableDocument, TableHeader
 from app.domain.rules.upload_validation import FileFacts, FileKind
 
 
@@ -562,6 +562,22 @@ class LayoutRepository(Protocol):
         """Replaces the content when the stored version is `expected_version`; the version goes
         up by one. `StaleVersion` leaves the stored layout as it was."""
         ...
+
+
+@dataclass(frozen=True)
+class ComprovanteFront:
+    """What the cover, the table of contents and the separators say besides the numbers of the
+    plan: who the process is about, the names of the table and of the original files (CMP-01).
+
+    `group_names` is by group number and `item_names` by (group, item) number, as the table of
+    the chosen version names them; `document_names` is by document id.
+    """
+
+    header: TableHeader
+    table_name: str
+    group_names: Mapping[int, str]
+    item_names: Mapping[tuple[int, int], str] = field(default_factory=dict)
+    document_names: Mapping[UUID, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
