@@ -3328,9 +3328,9 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 #### T119: Montador e ligação dos limites (F6, F9)
 
 **What**: Corrige F6 e F9 (B04, B05, B06, M37, B41): teste de ligação de `GENERATION_MAX_PAGES`, `GENERATION_MAX_OUTPUT_MB` e `GENERATION_PNG_MAX_MEGAPIXELS` até os limites do pedido e do montador; testes do montador com falha depois de um ponto de salvamento (alvo ausente) e com original cifrado (`ORIGINAL_INDISPONIVEL`).
-**Where**: `backend/tests/unit/infrastructure/test_comprovante_assembler.py`
+**Where**: `backend/tests/integration/api/test_generation_limits_wiring.py`
 **Depends on**: T118
-**Reuses**: `test_request_refusals.py`, `test_comprovante_assembler.py`; também toca: `backend/tests/integration/doc_usecases/test_request_refusals.py`
+**Reuses**: `test_documents_limits_wiring.py`, `test_comprovante_assembler.py`; também toca: `backend/tests/unit/infrastructure/test_comprovante_assembler.py`
 **Requirement**: CMP-09, CMP-10, CMP-13
 
 **Tools**:
@@ -3340,10 +3340,10 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Um ambiente com cada uma das três variáveis alteradas muda o limite que recusa o pedido e o que recusa a montagem (B04, B05, B06 mortos)
-- [ ] A falha depois do ponto de salvamento do montador deixa o alvo ausente sem depender do descarte externo (M37 morto)
-- [ ] O original cifrado resulta em `ORIGINAL_INDISPONIVEL` (B41 morto)
-- [ ] Cada mutante é morto numa cópia isolada da árvore (comandos no corpo do commit); gate full passa; 4+ testes novos
+- [x] Um ambiente com cada uma das três variáveis alteradas muda o limite que recusa o pedido e o que recusa a montagem (B04, B05, B06 mortos)
+- [x] A falha depois do ponto de salvamento do montador deixa o alvo ausente sem depender do descarte externo (M37 morto)
+- [x] O original cifrado resulta em `ORIGINAL_INDISPONIVEL` (B41 morto)
+- [x] Cada mutante é morto numa cópia isolada da árvore (comandos no corpo do commit); gate full passa; 5 testes novos
 
 **Tests**: integration
 **Gate**: full

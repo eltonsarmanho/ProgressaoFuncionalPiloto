@@ -239,6 +239,46 @@ def test_a_resolver_that_cannot_find_the_document_is_the_same_failure(tmp_path):
     assert not (tmp_path / "saida.pdf").exists()
 
 
+def test_a_failure_after_a_saved_checkpoint_leaves_no_target_behind(tmp_path):
+    # 60 originals of a 59-page document: the last page fails after two checkpoints were written
+    spec = [(1, 1, f"Atividade {n}", [(0, 1 + n)]) for n in range(60)]
+    process = build(tmp_path, spec, doc_pages=(59,), picture=False)
+    target = tmp_path / "saida.pdf"
+    written = []
+
+    def watch(done, total):
+        if done == 30 and target.exists():
+            written.append(done)  # a partial file was on disk while the pages were built
+
+    with pytest.raises(ComprovanteRefused) as refused:
+        assemble(process, target, on_progress=watch)
+
+    assert written == [30]
+    assert refused.value.code is GenerationCode.ORIGINAL_INDISPONIVEL
+    assert not target.exists()
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["original_0.pdf"]
+
+
+def test_an_encrypted_original_is_an_unavailable_original(tmp_path):
+    process = build(tmp_path, [(1, 1, "Cifrada", [(0, 1)])], doc_pages=(2,))
+    [(document_id, path)] = process.docs.items()
+    with pymupdf.open(path) as plain:
+        plain.save(
+            tmp_path / "cifrado.pdf",
+            encryption=pymupdf.PDF_ENCRYPT_AES_256,
+            user_pw="segredo",
+            owner_pw="dono",
+        )
+    (tmp_path / "cifrado.pdf").replace(path)
+
+    with pytest.raises(ComprovanteRefused) as refused:
+        assemble(process, tmp_path / "saida.pdf")
+
+    assert refused.value.code is GenerationCode.ORIGINAL_INDISPONIVEL
+    assert refused.value.document_id == document_id
+    assert not (tmp_path / "saida.pdf").exists()
+
+
 def test_a_page_past_the_end_of_the_original_fails_with_the_page(tmp_path):
     process = build(tmp_path, [(1, 1, "Fora", [(1, 9)])])  # document B has 4 pages
 
