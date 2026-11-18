@@ -123,15 +123,23 @@ def suggest_item(taxonomy: T, level: Level | None = None) -> Suggestion:
 
 
 # "extensão" inside the name of an institutional unit says who issued the document, not what
-# the course is: "Pró-Reitoria de Extensão", "Coordenadoria de Extensão", "PROEX".
-_EXTENSION_UNIT = re.compile(
-    r"\b(?:pro[- ]?reit\w+|diretoria|coordenadoria|coordenacao|centro|nucleo|secretaria|"
+# the activity is: "Pró-Reitoria de Extensão", "Coordenadoria de Ações de Extensão", "PROEX",
+# "Universidade Federal ... Extensão" (SEG-06, TER-04).
+_UNIT_NOUN = (
+    r"(?:pro[- ]?reit\w+|diretoria|coordenadoria|coordenacao|centro|nucleo|secretaria|instituto|"
     r"departamento|setor|assessoria|divisao|gerencia|superintendencia)"
-    r"\s+(?:adjunta\s+)?(?:de|da|do)\s+extensao\b|\bproex\b"
+)
+_NATURE_NOUN = (
+    r"(?:cursos?|minicursos?|atividades?|acao|acoes|programas?|projetos?|eventos?|oficinas?)"
+)
+_EXTENSION_UNIT = re.compile(
+    rf"\b{_UNIT_NOUN}(?:\s+(?:adjunta|de|da|do|e|pesquisa|acoes))*\s+(?:de|da|do)\s+extensao\b"
+    r"|\bproex\b(?:[\s\-/:,]+(?:ufpa[\s\-/:,]+)?extensao(?:\s+universitaria)?\b)?"
+    rf"|\buniversidade(?:[\s,\-:/.]+(?!{_NATURE_NOUN}\b)[a-z]+){{0,6}}[\s,\-:/.]+extensao\b"
+    r"(?:\s+universitaria\b)?"
 )
 _EXTENSION_NATURE = re.compile(
-    r"\b(?:cursos?|minicursos?|atividades?|acao|acoes|programas?|projetos?|eventos?|oficinas?)"
-    r"\s+(?:de|em)\s+extensao\b"
+    rf"\b{_NATURE_NOUN}\s+(?:de|em)\s+extensao\b"
     r"|\bextensao\s+universitaria\b"
     r"|\b(?:categoria|natureza|tipo|modalidade|classificacao)(?:\s+d[aeo]s?\s+\w+)?\s*[:\-]?\s*"
     r"extensao\b"
@@ -170,15 +178,18 @@ _PAPIM_WORDING = re.compile(r"\bpapim\b|intervencao metodologica")
 def confirm_extension_project(taxonomy: T, text: str) -> T:
     """A project or program counts as extension only when the document says so (REAL-12).
 
-    The accepted wording is "extensão"; for the coordination item IV.1 also the table's own
-    ("PAPIM", "intervenção metodológica"), which only that item names in the official table
-    (SEG-09). Without it the activity has no scoring item (`OUTRA`): the human review decides,
-    and no IV.1 or IV.2 points are suggested for a project that may be research.
+    "Extensão" must name the nature of the activity ("projeto, programa, ação ou atividade de
+    extensão", "Categoria: Extensão"), as for the course (TER-04); the name of a unit
+    ("Pró-Reitoria de Extensão", "PROEX") does not count. For the coordination item IV.1 also
+    the table's own wording ("PAPIM", "intervenção metodológica") counts, which only that item
+    names in the official table (SEG-09). Without it the activity has no scoring item
+    (`OUTRA`): the human review decides, and no IV.1 or IV.2 points are suggested for a
+    project that may be research.
     """
     if taxonomy not in _EXTENSION_PROJECTS:
         return taxonomy
     normalized = normalize_title(text)
-    if "extensao" in normalized:
+    if _EXTENSION_NATURE.search(_EXTENSION_UNIT.sub(" ", normalized)):
         return taxonomy
     if taxonomy is T.EXTENSAO_PROJETO_COORDENACAO and _PAPIM_WORDING.search(normalized):
         return taxonomy

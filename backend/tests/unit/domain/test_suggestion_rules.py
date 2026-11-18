@@ -333,7 +333,7 @@ def test_project_without_the_extension_wording_has_no_scoring_item(taxonomy):
     [
         "Projeto de Extensão Dados Abertos",
         "PROJETO DE EXTENSAO DADOS ABERTOS",
-        "Pró-Reitoria de Extensão certifica a participação no projeto",
+        "Programa de Extensão Cidadania Digital",
     ],
 )
 def test_project_with_the_extension_wording_keeps_its_type(taxonomy, text):
