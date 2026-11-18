@@ -558,10 +558,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O instantâneo da Tabela do cenário de 211 contém identificador e nome da versão da tabela, total, subtotais e lista de atividades
-- [ ] A chave `layout` (Tabela e Comprovante) e `report` (Relatório) só aparecem no tipo correspondente
-- [ ] O dicionário é serializável em JSON e estável (mesma entrada, mesma saída)
-- [ ] Gate quick passa; 6+ testes
+- [x] O instantâneo da Tabela do cenário de 211 contém identificador e nome da versão da tabela, total, subtotais e lista de atividades
+- [x] A chave `layout` (Tabela e Comprovante) e `report` (Relatório) só aparecem no tipo correspondente
+- [x] O dicionário é serializável em JSON e estável (mesma entrada, mesma saída)
+- [x] Gate quick passa; 6+ testes
 
 **Tests**: unit
 **Gate**: quick
