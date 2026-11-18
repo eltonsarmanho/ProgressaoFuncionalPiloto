@@ -307,7 +307,7 @@ def test_extension_course_without_the_word_falls_to_vii_10():
     assert (found.group_number, found.item_number) == (7, 10)
 
 
-@pytest.mark.parametrize("word", ["de extensão universitária", "de EXTENSAO"])
+@pytest.mark.parametrize("word", ["de extensão universitária", "(curso de EXTENSAO)"])
 def test_extension_course_with_the_word_is_vii_9(word):
     item, text = certificate(word)
     found = analyze(payload(item), text).activities[0]

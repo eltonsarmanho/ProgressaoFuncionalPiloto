@@ -121,11 +121,33 @@ def suggest_item(taxonomy: T, level: Level | None = None) -> Suggestion:
     return _RULES[taxonomy]
 
 
+# "extensão" inside the name of an institutional unit says who issued the document, not what
+# the course is: "Pró-Reitoria de Extensão", "Coordenadoria de Extensão", "PROEX".
+_EXTENSION_UNIT = re.compile(
+    r"\b(?:pro[- ]?reit\w+|diretoria|coordenadoria|coordenacao|centro|nucleo|secretaria|"
+    r"departamento|setor|assessoria|divisao|gerencia|superintendencia)"
+    r"\s+(?:adjunta\s+)?(?:de|da|do)\s+extensao\b|\bproex\b"
+)
+_EXTENSION_NATURE = re.compile(
+    r"\b(?:cursos?|minicursos?|atividades?|acao|acoes|programas?|projetos?|eventos?|oficinas?)"
+    r"\s+(?:de|em)\s+extensao\b"
+    r"|\bextensao\s+universitaria\b"
+    r"|\b(?:categoria|natureza|tipo|modalidade|classificacao)(?:\s+d[aeo]s?\s+\w+)?\s*[:\-]?\s*"
+    r"extensao\b"
+)
+
+
 def confirm_extension_course(taxonomy: T, text: str) -> T:
-    """A course counts as extension only when the document says "extensão" (CLS-10)."""
-    if taxonomy is T.CURSO_EXTENSAO_CONCLUIDO and "extensao" not in normalize_title(text):
-        return T.CURSO_CONCLUIDO
-    return taxonomy
+    """A course counts as extension only when "extensão" names its nature (CLS-10, SEG-06).
+
+    Accepted: "curso/atividade/ação/programa/projeto/evento de extensão" and a category field
+    ("Categoria: Extensão"). The word inside the name of a unit ("Pró-Reitoria de Extensão",
+    "PROEX") or in a list of missions does not count; the course is then a training (VII.10).
+    """
+    if taxonomy is not T.CURSO_EXTENSAO_CONCLUIDO:
+        return taxonomy
+    body = _EXTENSION_UNIT.sub(" ", normalize_title(text))
+    return taxonomy if _EXTENSION_NATURE.search(body) else T.CURSO_CONCLUIDO
 
 
 def confirm_board_document(taxonomy: T, document_type: DocumentType, text: str) -> T:

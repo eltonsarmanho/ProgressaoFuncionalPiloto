@@ -2472,9 +2472,9 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 **Done when**:
 
-- [ ] "entre a Pró-Reitoria de Extensão e as faculdades" sem outro contexto: VII.10
-- [ ] "curso de extensão", "atividade de extensão", "ação de extensão", "Categoria: Extensão" e "programa de extensão": VII.9, mesmo com a Pró-Reitoria no cabeçalho
-- [ ] Gate full passa
+- [x] "entre a Pró-Reitoria de Extensão e as faculdades" sem outro contexto: VII.10
+- [x] "curso de extensão", "atividade de extensão", "ação de extensão", "Categoria: Extensão" e "programa de extensão": VII.9, mesmo com a Pró-Reitoria no cabeçalho
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full
