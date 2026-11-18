@@ -3088,6 +3088,8 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 #### T110: Contagem local de páginas com rotação e recorte
 
+**Status**: adiada, aguarda autorização do usuário (a tarefa lê o corpus real em `Documentos/`, que nenhum agente abre sem pedido explícito). Nenhuma caixa abaixo foi marcada; o Verificador independente rodou sem ela (`validation.md`, "Residual risks").
+
 **What**: Rodar, a pedido explícito do usuário, um script local fora do repositório sobre o corpus real para contar as páginas com rotação e CropBox menor que a MediaBox, e registrar só a contagem no design.
 **Where**: `.specs/features/documentos-gerados/design.md`
 **Depends on**: T109, T53 (fase 11)
@@ -3127,9 +3129,9 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Cada AC da spec tem evidência e o relatório traz o resultado do sensor; falhas viram tarefas de correção (no máximo 3 iterações)
-- [ ] `validate_state.py documentos-gerados` termina sem erro; a spec marca os requisitos como `Verified`
-- [ ] Gate build passa
+- [x] Cada AC da spec tem evidência e o relatório traz o resultado do sensor; falhas viram tarefas de correção (no máximo 3 iterações)
+- [x] `validate_state.py documentos-gerados` termina sem erro; a spec marca os requisitos como `Verified` (77 de 79; CMP-01 e REL-12 seguem `Implementing`, ver `validation.md`)
+- [x] Gate build passa
 
 **Tests**: none
 **Gate**: build

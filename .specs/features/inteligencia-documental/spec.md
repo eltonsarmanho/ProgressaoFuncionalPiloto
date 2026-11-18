@@ -635,7 +635,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | UIM-23 | P1: Rodada de interface das Etapas 2, 3 e 4 | Design | Implementing |
 | FORA-01 | P1: Documentos fora do interstício | Design | Verified |
 | FORA-02 | P1: Documentos fora do interstício | Design | Verified |
-| FORA-03 | P1: Documentos fora do interstício | Design | Implementing |
+| FORA-03 | P1: Documentos fora do interstício | Design | Verified |
 | FORA-04 | P1: Documentos fora do interstício | Design | Verified |
 | FORA-05 | P1: Documentos fora do interstício | Design | Verified |
 | FORA-06 | P1: Documentos fora do interstício | Design | Verified |
@@ -647,9 +647,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**FORA-03 note:** volta a `Implementing`: o usuário decidiu em 2026-11-18 (AD-019) que as atividades já editadas ou validadas de um documento que passa a ficar fora do interstício também saem das Etapas 3 a 5 (T146). T146 está implementada (o processamento rejeita, com auditoria `DOCUMENTO_FORA_DO_INTERSTICIO`, as atividades ligadas só ao documento; a que tem evidência de outro documento perde só a evidência do documento fora); FORA-03 continua `Implementing` até o Verificador independente passar de novo.
+**FORA-03 note:** `Verified` em 2026-11-18. O usuário decidiu (AD-019) que as atividades já editadas ou validadas de um documento que passa a ficar fora do interstício também saem das Etapas 3 a 5 (T146); o processamento rejeita, com auditoria `DOCUMENTO_FORA_DO_INTERSTICIO`, as atividades ligadas só ao documento, e a que tem evidência de outro documento perde só a evidência do documento fora. O Verificador independente B de `documentos-gerados` aprovou (`.specs/features/documentos-gerados/verification-b.md`, seção FORA: `test_process_outside_interstice.py:148-284`, execução real no navegador, mutantes T01 a T11 todos mortos); o resumo está em `.specs/features/documentos-gerados/validation.md`. FORA-07 (reavaliação ao reprocessar) já estava `Verified` e foi reconferido pelo mesmo relatório.
 
-**Coverage:** 171 total, 171 mapped to tasks, 0 unmapped (FORA-01..09 na Phase 18, T141-T145)
+**Coverage:** 171 total, 171 mapped to tasks, 0 unmapped (FORA-01..09 na Phase 18, T141-T146); FORA-01..09 `Verified` (FORA-03 e FORA-07 pelo `verification-b.md` de `documentos-gerados`)
 
 ---
 

@@ -4101,7 +4101,7 @@ T141 → T142 → T143 → T144 → T145 → T146
 - [x] Atividade com evidência de outro documento dentro do período permanece e perde só a evidência do documento fora
 - [x] Reprocessar de novo com o interstício ampliado cria as atividades do documento sem duplicar as rejeitadas
 - [x] A pontuação do processo não conta a atividade rejeitada
-- [ ] FORA-03 passa a `Verified` depois do Verifier independente
+- [x] FORA-03 passa a `Verified` depois do Verifier independente (evidência: `.specs/features/documentos-gerados/verification-b.md`, seção FORA, PASS em 2026-11-18)
 - [x] Gate full passa
 
 **Tests**: integration

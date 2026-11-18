@@ -299,91 +299,96 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| TAB-01 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
-| TAB-02 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
-| TAB-03 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
-| TAB-04 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
-| TAB-05 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
-| TAB-06 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
-| TAB-07 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
-| TAB-08 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Implementing |
+| TAB-01 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Verified |
+| TAB-02 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Verified |
+| TAB-03 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Verified |
+| TAB-04 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Verified |
+| TAB-05 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Verified |
+| TAB-06 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Verified |
+| TAB-07 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Verified |
+| TAB-08 | P1: Tabela de Pontuação em DOCX e PDF | Tasks | Verified |
 | CMP-01 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
-| CMP-02 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
-| CMP-03 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
-| CMP-04 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
-| CMP-05 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
-| CMP-06 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
-| CMP-07 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
-| CMP-08 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
-| CMP-09 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
-| CMP-10 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
-| CMP-11 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
-| CMP-12 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
-| CMP-13 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
-| ARR-01 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
-| ARR-02 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
-| ARR-03 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
-| ARR-04 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
-| ARR-05 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
-| ARR-06 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
-| ARR-07 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
-| ARR-08 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
-| REL-01 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| REL-02 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| REL-03 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| REL-04 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| REL-05 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| REL-06 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| REL-07 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| REL-08 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| REL-09 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| REL-10 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| REL-11 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
+| CMP-02 | P1: Comprovante de Documentos em PDF | Tasks | Verified |
+| CMP-03 | P1: Comprovante de Documentos em PDF | Tasks | Verified |
+| CMP-04 | P1: Comprovante de Documentos em PDF | Tasks | Verified |
+| CMP-05 | P1: Comprovante de Documentos em PDF | Tasks | Verified |
+| CMP-06 | P1: Comprovante de Documentos em PDF | Tasks | Verified |
+| CMP-07 | P1: Comprovante de Documentos em PDF | Tasks | Verified |
+| CMP-08 | P1: Comprovante de Documentos em PDF | Tasks | Verified |
+| CMP-09 | P1: Comprovante de Documentos em PDF | Tasks | Verified |
+| CMP-10 | P1: Comprovante de Documentos em PDF | Tasks | Verified |
+| CMP-11 | P1: Comprovante de Documentos em PDF | Tasks | Verified |
+| CMP-12 | P1: Comprovante de Documentos em PDF | Tasks | Verified |
+| CMP-13 | P1: Comprovante de Documentos em PDF | Tasks | Verified |
+| ARR-01 | P1: Arranjo manual do Comprovante | Tasks | Verified |
+| ARR-02 | P1: Arranjo manual do Comprovante | Tasks | Verified |
+| ARR-03 | P1: Arranjo manual do Comprovante | Tasks | Verified |
+| ARR-04 | P1: Arranjo manual do Comprovante | Tasks | Verified |
+| ARR-05 | P1: Arranjo manual do Comprovante | Tasks | Verified |
+| ARR-06 | P1: Arranjo manual do Comprovante | Tasks | Verified |
+| ARR-07 | P1: Arranjo manual do Comprovante | Tasks | Verified |
+| ARR-08 | P1: Arranjo manual do Comprovante | Tasks | Verified |
+| REL-01 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Verified |
+| REL-02 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Verified |
+| REL-03 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Verified |
+| REL-04 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Verified |
+| REL-05 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Verified |
+| REL-06 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Verified |
+| REL-07 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Verified |
+| REL-08 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Verified |
+| REL-09 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Verified |
+| REL-10 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Verified |
+| REL-11 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Verified |
 | REL-12 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| REL-13 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| REL-14 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| REL-15 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |
-| VER-01 | P1: Versões imutáveis e download | Tasks | Implementing |
-| VER-02 | P1: Versões imutáveis e download | Tasks | Implementing |
-| VER-03 | P1: Versões imutáveis e download | Tasks | Implementing |
-| VER-04 | P1: Versões imutáveis e download | Tasks | Implementing |
-| VER-05 | P1: Versões imutáveis e download | Tasks | Implementing |
-| VER-06 | P1: Versões imutáveis e download | Tasks | Implementing |
-| VER-07 | P1: Versões imutáveis e download | Tasks | Implementing |
-| VER-08 | P1: Versões imutáveis e download | Tasks | Implementing |
-| VER-09 | P1: Versões imutáveis e download | Tasks | Implementing |
-| UIG-01 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Implementing |
-| UIG-02 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Implementing |
-| UIG-03 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Implementing |
-| UIG-04 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
-| UIG-05 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
-| UIG-06 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Implementing |
-| UIG-07 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
-| UIG-08 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Implementing |
-| UIG-09 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
-| DEL-01 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-02 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-03 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-04 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-05 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-06 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-07 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-08 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-09 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-10 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-11 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-12 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-13 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-14 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| DEL-15 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
-| ORD-01 | P2: Lembrete da ordem do dossiê | Tasks | Implementing |
-| ORD-02 | P2: Lembrete da ordem do dossiê | Tasks | Implementing |
+| REL-13 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Verified |
+| REL-14 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Verified |
+| REL-15 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Verified |
+| VER-01 | P1: Versões imutáveis e download | Tasks | Verified |
+| VER-02 | P1: Versões imutáveis e download | Tasks | Verified |
+| VER-03 | P1: Versões imutáveis e download | Tasks | Verified |
+| VER-04 | P1: Versões imutáveis e download | Tasks | Verified |
+| VER-05 | P1: Versões imutáveis e download | Tasks | Verified |
+| VER-06 | P1: Versões imutáveis e download | Tasks | Verified |
+| VER-07 | P1: Versões imutáveis e download | Tasks | Verified |
+| VER-08 | P1: Versões imutáveis e download | Tasks | Verified |
+| VER-09 | P1: Versões imutáveis e download | Tasks | Verified |
+| UIG-01 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Verified |
+| UIG-02 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Verified |
+| UIG-03 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Verified |
+| UIG-04 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Verified |
+| UIG-05 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Verified |
+| UIG-06 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Verified |
+| UIG-07 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Verified |
+| UIG-08 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Verified |
+| UIG-09 | P1: Etapa 5, Documentos gerados, na interface | Tasks | Verified |
+| DEL-01 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| DEL-02 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| DEL-03 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| DEL-04 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| DEL-05 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| DEL-06 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| DEL-07 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| DEL-08 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| DEL-09 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| DEL-10 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| DEL-11 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| DEL-12 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| DEL-13 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| DEL-14 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| DEL-15 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Verified |
+| ORD-01 | P2: Lembrete da ordem do dossiê | Tasks | Verified |
+| ORD-02 | P2: Lembrete da ordem do dossiê | Tasks | Verified |
 
 **ID format:** `[CATEGORY]-[NUMBER]` (e.g., `AUTH-01`, `CART-03`, `NOTIF-02`)
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
 **Coverage:** 79 total, 79 mapped to tasks, 0 unmapped (tabela de cobertura em `tasks.md`)
+
+**Verification (2026-11-18, `validation.md`, PASS):** 77 `Verified`, 2 `Implementing`, 0 `Needs Fix`. Por família: TAB 8/8, ARR 8/8, VER 9/9, UIG 9/9, DEL 15/15, ORD 2/2, CMP 12/13, REL 14/15.
+- **CMP-01** fica `Implementing` (parcial): o título do **item** só aparece no sumário do Comprovante e sai cortado com reticências em cerca de 85 caracteres (A-D4 de `verification-a.md`); limitação aceita em Risks do design, mas o texto do critério ("o título do grupo e do item com a nomenclatura da tabela") não foi alinhado. Passa a `Verified` quando o usuário decidir alinhar o critério ou mostrar o título inteiro.
+- **REL-12** fica `Implementing` (parcial): a conferência determinística aceita um nome próprio inventado em minúsculas com até 3 palavras novas e uma afirmação invertida (B-D3 de `verification-b.md`); limite conhecido do design (AD-014); decisão do usuário pendente.
+- **ARR-06** passou a `Verified` depois que a T122 alinhou o texto ao código (422 `PAGINA_FORA_DO_DOCUMENTO` para página fora do documento, 404 para documento desconhecido). **ORD-01** idem (Etapa 5, "Documentos gerados"). **DEL-12** está `Verified` com uma imprecisão de redação aberta (não há rota de página; ver `validation.md`, "Spec-precision gaps").
 
 **Mapping notes:** the numbering of each requirement follows the order of the acceptance criteria inside its story (TAB-01 is criterion 1 of the Tabela story, CMP-05 is criterion 5 of the Comprovante story, and so on; the "Implicit-Requirement Dimensions" table refers to them by these IDs).
 
