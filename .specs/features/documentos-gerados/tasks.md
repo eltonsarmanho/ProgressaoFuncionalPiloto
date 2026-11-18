@@ -1046,8 +1046,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] `Base.metadata` concorda com a migração (o teste de esquema existente passa) e cada modelo grava e lê uma linha de exemplo
-- [ ] Gate full passa; 4+ testes
+- [x] `Base.metadata` concorda com a migração (o teste de esquema existente passa) e cada modelo grava e lê uma linha de exemplo
+- [x] Gate full passa; 4+ testes
 
 **Tests**: integration
 **Gate**: full
