@@ -6,12 +6,14 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from app.domain.entities.document import PageText, TextMethod
+from app.domain.entities.generated import DocumentKind, GenerationCode, GenerationState
 from tests.integration.doc_usecases.generation_support import (
     add_activity,
     add_document,
     link,
 )
 from tests.integration.documents.factories import make_run
+from tests.integration.documents.generated_support import T0, make_file, make_generation
 
 CONTENT = b"%PDF-1.4 conteudo sintetico "
 
@@ -59,3 +61,22 @@ def state_of(gen, document) -> SimpleNamespace:
             links=[(e.page_number, e.excerpt) for e in evidences],
             file_exists=file_of(gen, document).exists(),
         )
+
+
+def add_generation(world, kind, state=GenerationState.PRONTO, process=None):
+    """A version of the kind in the given state: PRONTO gets a number and a file."""
+    process = process or world.process
+    generation = make_generation(process, world.admin.id, kind)
+    with world.uow_factory() as uow:
+        uow.generations.add(generation)
+        if state is GenerationState.PRONTO:
+            uow.generations.finish_ready(generation.id, T0, [make_file()], {"total": "1"}, ())
+        elif state is GenerationState.FALHOU:
+            uow.generations.finish_failed(generation.id, T0, GenerationCode.ERRO_INTERNO, "erro")
+        uow.commit()
+    return generation
+
+
+def add_all_ready(world, process=None) -> None:
+    for kind in DocumentKind:
+        add_generation(world, kind, process=process)

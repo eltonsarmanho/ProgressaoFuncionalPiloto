@@ -2231,9 +2231,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] A prévia do cenário com 3 documentos informa 3 arquivos e a soma dos tamanhos e marca cada tipo; fora do acesso responde 404
-- [ ] Depois da conclusão informa zero arquivos e zero bytes
-- [ ] Gate full passa; 5+ testes
+- [x] A prévia do cenário com 3 documentos informa 3 arquivos e a soma dos tamanhos e marca cada tipo; fora do acesso responde 404
+- [x] Depois da conclusão informa zero arquivos e zero bytes
+- [x] Gate full passa; 5+ testes
 
 **Tests**: integration
 **Gate**: full
