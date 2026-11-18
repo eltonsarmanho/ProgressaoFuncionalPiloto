@@ -1,27 +1,37 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { setCsrfToken } from "../api/client";
-import type { ReportDraftView } from "../api/generated";
+import type { ReportDraftView, WordingJob } from "../api/generated";
 import { mockFetch } from "../test/fetchMock";
-import { ACT_A, ACT_B, draftView } from "../test/generatedFixtures";
+import { ACT_A, ACT_B, draftView, job } from "../test/generatedFixtures";
 import { ReportDraftEditor } from "./ReportDraftEditor";
 
 const GET = "GET /api/processes/p1/report-draft";
+const WORDING = "GET /api/processes/p1/report-draft/wording";
 const ENTRY_A = `PUT /api/processes/p1/report-draft/entries/${ACT_A}`;
 
-/** The draft the server holds: a write changes it and the next GET returns the new one. */
-function server(initial: ReportDraftView = draftView()) {
-  const state = { view: initial };
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+/** The draft and the wording jobs the server holds: a write changes them and the next GET returns the new ones. */
+function server(initial: ReportDraftView = draftView(), jobs: WordingJob[] = []) {
+  const state: { view: ReportDraftView; jobs: WordingJob[] } = { view: initial, jobs };
   const routes: Parameters<typeof mockFetch>[0] = {
     [GET]: () => ({ status: 200, body: state.view }),
+    [WORDING]: () => ({ status: 200, body: state.jobs }),
   };
   return { state, routes };
 }
 
-function setup(initial: ReportDraftView = draftView(), extra: Parameters<typeof mockFetch>[0] = {}) {
+function setup(
+  initial: ReportDraftView = draftView(),
+  extra: Parameters<typeof mockFetch>[0] = {},
+  jobs: WordingJob[] = [],
+) {
   setCsrfToken("tok");
-  const srv = server(initial);
+  const srv = server(initial, jobs);
   const mock = mockFetch({ ...srv.routes, ...extra });
   render(<ReportDraftEditor processId="p1" />);
   return { ...mock, ...srv, user: userEvent.setup() };
@@ -110,7 +120,7 @@ describe("REL-07: editar e sair do campo grava a entrada", () => {
     await user.type(box, "!");
     await user.tab();
     expect(await screen.findByRole("alert")).toHaveTextContent("Os dados mudaram desde que você abriu a tela");
-    expect(calls.filter((c) => c.method === "GET")).toHaveLength(2);
+    expect(calls.filter((c) => `${c.method} ${c.path}` === GET)).toHaveLength(2);
     expect(screen.getByLabelText("Texto de Algoritmos")).toHaveValue("Disciplina Algoritmos, 60 h.!");
     // the next save carries the version that was reloaded
     expect(screen.getByRole("button", { name: "Salvar Algoritmos" })).toBeEnabled();
@@ -168,5 +178,123 @@ describe("REL-07: o texto livre da seção", () => {
       expected_version: 4,
       free_text: "Projeto de pesquisa digitado",
     });
+  });
+});
+
+const ASK = "POST /api/processes/p1/report-draft/sections/1.1/wording";
+const count = (calls: { method: string; path: string }[], key: string) =>
+  calls.filter((c) => `${c.method} ${c.path}` === key).length;
+
+/** Two sections that both have an activity, so both can be worded. */
+function twoFilledSections(): ReportDraftView {
+  const view = draftView();
+  view.sections[1].entries = [{ activity_id: "a0000000-0000-0000-0000-000000000003", text: "Projeto Beta.", source: "MODELO", warnings: [] }];
+  view.empty_sections = [];
+  view.activities.push({ id: "a0000000-0000-0000-0000-000000000003", title: "Beta", group_number: 5, item_number: 1, event_date: null, academic_period: null });
+  return view;
+}
+
+describe("UIG-08, REL-03: redação por seção em segundo plano", () => {
+  it("pedir a redação mostra GERANDO na seção, desliga o botão e relê a versão do rascunho", async () => {
+    const { state, calls, user } = setup(twoFilledSections(), {
+      [ASK]: () => {
+        state.view = { ...twoFilledSections(), version: 1 };
+        state.jobs = [job()];
+        return { status: 202, body: job() };
+      },
+    });
+    const s = await screen.findByRole("region", { name: /1\.1/ });
+    await user.click(within(s).getByRole("button", { name: "Pedir redação de 1.1" }));
+    expect(await within(s).findByText("Gerando a redação…")).toBeInTheDocument();
+    expect(within(s).getByRole("button", { name: "Pedir redação de 1.1" })).toBeDisabled();
+    await waitFor(() => expect(count(calls, GET)).toBe(2));
+    expect(count(calls, ASK)).toBe(1);
+  });
+
+  it("consulta a cada 3 s até PRONTO e recarrega o texto da seção", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const { state, calls } = setup(twoFilledSections(), {}, [job()]);
+    expect(await screen.findByText("Gerando a redação…")).toBeInTheDocument();
+    expect(count(calls, WORDING)).toBe(1);
+
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    expect(count(calls, WORDING)).toBe(2);
+    expect(screen.getByLabelText("Texto de Algoritmos")).toHaveValue("Disciplina Algoritmos, 60 h.");
+
+    const done = twoFilledSections();
+    done.sections[0].entries[0] = { activity_id: ACT_A, text: "Ministrou a disciplina Algoritmos, 60 h.", source: "IA", warnings: [] };
+    state.view = done;
+    state.jobs = [job({ state: "PRONTO", finished_at: "2026-11-18T10:00:09Z" })];
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    await waitFor(() => expect(screen.getByLabelText("Texto de Algoritmos")).toHaveValue("Ministrou a disciplina Algoritmos, 60 h."));
+    expect(screen.queryByText("Gerando a redação…")).not.toBeInTheDocument();
+
+    const before = count(calls, WORDING);
+    await act(() => vi.advanceTimersByTimeAsync(9000));
+    expect(count(calls, WORDING)).toBe(before);
+  });
+
+  it("ao terminar, o que foi digitado e não salvo em outra seção continua na caixa", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const { state } = setup(twoFilledSections(), {}, [job()]);
+    await screen.findByText("Gerando a redação…");
+    const other = screen.getByLabelText("Texto de Beta");
+    fireEvent.change(other, { target: { value: "Projeto Beta, ainda digitando" } });
+
+    state.jobs = [job({ state: "PRONTO" })];
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    await waitFor(() => expect(screen.queryByText("Gerando a redação…")).not.toBeInTheDocument());
+    expect(screen.getByLabelText("Texto de Beta")).toHaveValue("Projeto Beta, ainda digitando");
+  });
+
+  it("enquanto uma seção gera, as demais seções seguem editáveis e com o botão ligado", async () => {
+    setup(twoFilledSections(), {}, [job()]);
+    await screen.findByText("Gerando a redação…");
+    expect(screen.getByRole("button", { name: "Pedir redação de 1.1" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Pedir redação de 2" })).toBeEnabled();
+    expect(screen.getByLabelText("Texto de Beta")).toBeEnabled();
+    expect(screen.getByLabelText("Texto livre da seção 2")).toBeEnabled();
+  });
+
+  it("409 REDACAO_EM_ANDAMENTO mostra a mensagem em português", async () => {
+    const { user } = setup(twoFilledSections(), {
+      [ASK]: { status: 409, body: { detail: "Redação em andamento", code: "REDACAO_EM_ANDAMENTO" } },
+    });
+    await user.click(await screen.findByRole("button", { name: "Pedir redação de 1.1" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Já há uma redação desta seção em andamento.");
+  });
+
+  it("FALHOU mostra o aviso com o motivo e permite pedir de novo", async () => {
+    const { state, calls, user } = setup(
+      twoFilledSections(),
+      {
+        [ASK]: () => {
+          state.jobs = [job({ id: "j2" })];
+          return { status: 202, body: job({ id: "j2" }) };
+        },
+      },
+      [job({ state: "FALHOU", error_code: "INTERROMPIDA" })],
+    );
+    const s = await screen.findByRole("region", { name: /1\.1/ });
+    expect(await within(s).findByText(/A redação falhou: O servidor reiniciou durante o trabalho/)).toBeInTheDocument();
+    const button = within(s).getByRole("button", { name: "Pedir redação de 1.1" });
+    expect(button).toBeEnabled();
+    await user.click(button);
+    expect(await within(s).findByText("Gerando a redação…")).toBeInTheDocument();
+    expect(count(calls, ASK)).toBe(1);
+  });
+
+  it("REDACAO_INDISPONIVEL e REDACAO_REJEITADA, que chegam com a seção recarregada, saem em português", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const { state } = setup(twoFilledSections(), {}, [job()]);
+    await screen.findByText("Gerando a redação…");
+    const done = twoFilledSections();
+    done.sections[0].warnings = [{ code: "REDACAO_INDISPONIVEL", message: "" }];
+    done.sections[0].entries[1].warnings = [{ code: "REDACAO_REJEITADA", message: "DATA" }];
+    state.view = done;
+    state.jobs = [job({ state: "PRONTO" })];
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    expect(await screen.findByText("A IA não respondeu a tempo: ficou o texto-modelo")).toBeInTheDocument();
+    expect(screen.getByText(/foi recusada: ficou o texto-modelo \(data que não está na atividade\)/)).toBeInTheDocument();
   });
 });

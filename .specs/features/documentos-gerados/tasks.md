@@ -2833,9 +2833,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Com a API simulada: pedir mostra GERANDO, a consulta de 3 s mostra PRONTO e o texto da seção é recarregado sem perder o que foi digitado e não salvo nas outras seções
-- [ ] O botão fica desligado enquanto a seção gera; 409 `REDACAO_EM_ANDAMENTO` mostra a mensagem; `FALHOU` mostra o aviso e permite pedir de novo
-- [ ] Gate quick passa; 7+ testes
+- [x] Com a API simulada: pedir mostra GERANDO, a consulta de 3 s mostra PRONTO e o texto da seção é recarregado sem perder o que foi digitado e não salvo nas outras seções
+- [x] O botão fica desligado enquanto a seção gera; 409 `REDACAO_EM_ANDAMENTO` mostra a mensagem; `FALHOU` mostra o aviso e permite pedir de novo
+- [x] Gate quick passa; 7+ testes
 
 **Tests**: unit
 **Gate**: quick
