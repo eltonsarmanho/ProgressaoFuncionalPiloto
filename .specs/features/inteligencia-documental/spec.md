@@ -647,7 +647,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**FORA-03 note:** volta a `Implementing`: o usuário decidiu em 2026-11-18 (AD-018) que as atividades já editadas ou validadas de um documento que passa a ficar fora do interstício também saem das Etapas 3 a 5 (T146). T146 está implementada (o processamento rejeita, com auditoria `DOCUMENTO_FORA_DO_INTERSTICIO`, as atividades ligadas só ao documento; a que tem evidência de outro documento perde só a evidência do documento fora); FORA-03 continua `Implementing` até o Verificador independente passar de novo.
+**FORA-03 note:** volta a `Implementing`: o usuário decidiu em 2026-11-18 (AD-019) que as atividades já editadas ou validadas de um documento que passa a ficar fora do interstício também saem das Etapas 3 a 5 (T146). T146 está implementada (o processamento rejeita, com auditoria `DOCUMENTO_FORA_DO_INTERSTICIO`, as atividades ligadas só ao documento; a que tem evidência de outro documento perde só a evidência do documento fora); FORA-03 continua `Implementing` até o Verificador independente passar de novo.
 
 **Coverage:** 171 total, 171 mapped to tasks, 0 unmapped (FORA-01..09 na Phase 18, T141-T145)
 
