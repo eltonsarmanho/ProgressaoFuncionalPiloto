@@ -1488,8 +1488,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O texto extraído do PDF tem as mesmas seções, na mesma ordem e com o mesmo texto do DOCX do mesmo modelo
-- [ ] Gate quick passa; 6+ testes
+- [x] O texto extraído do PDF tem as mesmas seções, na mesma ordem e com o mesmo texto do DOCX do mesmo modelo
+- [x] Gate quick passa; 6+ testes
 
 **Tests**: unit
 **Gate**: quick

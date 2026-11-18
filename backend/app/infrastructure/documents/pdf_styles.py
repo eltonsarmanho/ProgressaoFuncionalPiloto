@@ -110,6 +110,7 @@ class PdfStyles:
     body: ParagraphStyle
     body_left: ParagraphStyle
     bullet: ParagraphStyle
+    bullet_tight: ParagraphStyle
     title: ParagraphStyle
     heading: ParagraphStyle
     subheading: ParagraphStyle
@@ -121,7 +122,13 @@ class PdfStyles:
 
 def _style(name: str, size: float, font: str = FONT_REGULAR, **kwargs) -> ParagraphStyle:
     return ParagraphStyle(
-        name, fontName=font, fontSize=size, leading=size * LEADING_FACTOR, **kwargs
+        name,
+        fontName=font,
+        fontSize=size,
+        leading=size * LEADING_FACTOR,
+        bulletFontName=FONT_REGULAR,  # the default would be Helvetica, which is not embedded
+        bulletFontSize=size,
+        **kwargs,
     )
 
 
@@ -132,7 +139,19 @@ def build_styles(font_size: float) -> PdfStyles:
         body=_style("body", font_size, alignment=TA_JUSTIFY, spaceAfter=font_size / 2),
         body_left=_style("body_left", font_size, alignment=TA_LEFT),
         bullet=_style(
-            "bullet", font_size, alignment=TA_JUSTIFY, leftIndent=font_size * 1.5, bulletIndent=0
+            "bullet",
+            font_size,
+            alignment=TA_JUSTIFY,
+            leftIndent=font_size * 1.5,
+            bulletIndent=0,
+            spaceAfter=font_size / 3,
+        ),
+        bullet_tight=_style(
+            "bullet_tight",
+            font_size,
+            alignment=TA_JUSTIFY,
+            leftIndent=font_size * 1.5,
+            bulletIndent=0,
         ),
         title=_style("title", font_size + 3, FONT_BOLD, alignment=TA_CENTER, spaceAfter=font_size),
         heading=_style(

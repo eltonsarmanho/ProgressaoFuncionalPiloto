@@ -13,7 +13,8 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Mm, Pt
 
 from app.domain.entities.report import DocumentSection, ReportDocument
-from app.infrastructure.documents.docx_support import add_page_footer, set_default_font, xml_safe
+from app.infrastructure.documents.docx_support import add_page_footer, set_default_font
+from app.infrastructure.documents.text_safety import xml_safe
 
 _SPACE_AFTER_PT = 4
 _BULLET_TEXT_INDENT = Mm(6.35)  # where the text of a `List Bullet` paragraph starts

@@ -16,12 +16,7 @@ from docx.oxml import OxmlElement
 from docx.shared import Mm, Pt
 
 from app.domain.rules.table_document import TableDocument
-from app.infrastructure.documents.docx_support import (
-    add_page_footer,
-    set_default_font,
-    shade,
-    xml_safe,
-)
+from app.infrastructure.documents.docx_support import add_page_footer, set_default_font, shade
 from app.infrastructure.documents.table_text import (
     ALERTS_HEADING,
     COLUMNS,
@@ -36,6 +31,7 @@ from app.infrastructure.documents.table_text import (
     identification_lines,
     total_line,
 )
+from app.infrastructure.documents.text_safety import xml_safe
 
 FONT_NAME = "Times New Roman"
 FONT_SIZE = 8

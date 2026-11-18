@@ -1,7 +1,5 @@
-"""Helpers shared by the DOCX writers: safe text, the default font, shading and the footer with
-the page fields (`Página N de M`)."""
-
-import re
+"""Helpers shared by the DOCX writers: the default font, shading and the footer with the page
+fields (`Página N de M`)."""
 
 from docx.document import Document as DocxDocument
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -10,13 +8,7 @@ from docx.oxml.ns import qn
 from docx.shared import Pt
 from docx.text.paragraph import Paragraph
 
-# XML 1.0 has no place for these control characters; python-docx refuses them.
-_ILLEGAL_XML = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f￾￿]")
 _FOOTER_SIZE = 8
-
-
-def xml_safe(text: str) -> str:
-    return _ILLEGAL_XML.sub("", text)
 
 
 def set_default_font(
