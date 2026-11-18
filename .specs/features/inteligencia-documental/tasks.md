@@ -2220,10 +2220,10 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 **Done when**:
 
-- [ ] "maio de 2026" no texto e data 2026-05-01 da IA: data mantida, `DATA_PARCIAL`, sem inventar o dia
-- [ ] Mês inteiro dentro do interstício: sem `FORA_DO_INTERSTICIO`; mês inteiro fora: `FORA_DO_INTERSTICIO`; mês que cruza o limite: só `DATA_PARCIAL`, atividade em revisão
-- [ ] Dia inventado para texto só com mês segue anulado com `NAO_ENCONTRADO_NO_TEXTO`
-- [ ] Gate full passa
+- [x] "maio de 2026" no texto e data 2026-05-01 da IA: data mantida, `DATA_PARCIAL`, sem inventar o dia
+- [x] Mês inteiro dentro do interstício: sem `FORA_DO_INTERSTICIO`; mês inteiro fora: `FORA_DO_INTERSTICIO`; mês que cruza o limite: só `DATA_PARCIAL`, atividade em revisão
+- [x] Dia inventado para texto só com mês segue anulado com `NAO_ENCONTRADO_NO_TEXTO`
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

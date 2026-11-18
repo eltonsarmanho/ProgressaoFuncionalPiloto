@@ -10,7 +10,7 @@ import pytest
 from app.application.services.document_analyzer import DocumentAnalyzer
 from app.application.use_cases import document_processing
 from app.application.use_cases.scoring import ActivityData
-from app.domain.entities.activity import ActivitySource, ActivityStatus
+from app.domain.entities.activity import ActivitySource, ActivityStatus, PeriodPrecision
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.document import DocAlertCode, DocumentStatus, RunStatus, TextMethod
 from app.domain.errors import NotFound
@@ -123,6 +123,21 @@ def test_banca_document_becomes_a_processed_document_with_a_draft_activity(docs)
     assert created.candidates == ()
     [run] = found.runs
     assert created.extraction_run_id == run.id
+
+
+def test_a_month_only_date_becomes_an_activity_with_month_precision(docs):
+    w = docs.world
+    text = banca_text(w).replace("12 de marco de 2023", "marco de 2023")
+    answer = payload(activity(event_date="2023-03-01"), name=w.professor.full_name)
+    document = process_banca(docs, "mes", ai=FakeAi(answer), text=text)
+
+    found = state(docs, document)
+
+    [created] = found.activities
+    assert created.period_precision is PeriodPrecision.MONTH
+    assert created.event_date == date(2023, 3, 1)
+    [run] = found.runs
+    assert {"code": "DATA_PARCIAL", "field": "event_date", "activity_index": 0} in run.warnings
 
 
 def test_the_draft_is_linked_to_document_page_and_excerpt(docs):

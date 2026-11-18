@@ -14,6 +14,7 @@ from app.domain.rules.grounding import (
     ground,
     hours_in_text,
     identifier_in_text,
+    month_only_dates,
     name_in_text,
     professor_named_in_text,
     same_person,
@@ -545,3 +546,36 @@ def test_hours_with_leading_zeros_are_found(text):
 @pytest.mark.parametrize("text", ["108 horas", "carga de 0,8 horas", "1.008 horas", "80 horas"])
 def test_leading_zero_tolerance_does_not_match_other_numbers(text):
     assert hours_in_text(Decimal(8), text) is False
+
+
+# ---------- VER-10: dates written with month and year only ----------
+
+
+def test_a_first_of_month_date_for_a_month_only_text_is_a_month_precision_field():
+    item = activity(event_date=date(2026, 5, 1))
+    assert month_only_dates(item, {1: "Evento realizado em maio de 2026, em Belém."}) == {
+        "event_date": D.MONTH
+    }
+
+
+@pytest.mark.parametrize("text", ["Evento em 01/05/2026.", "Evento em 1º de maio de 2026."])
+def test_a_date_whose_day_is_in_the_text_stays_day_precision(text):
+    assert month_only_dates(activity(event_date=date(2026, 5, 1)), {1: text}) == {}
+
+
+def test_a_day_invented_for_a_month_only_text_is_not_a_month_precision_field():
+    item = activity(event_date=date(2026, 5, 15))
+    page = {1: "Evento realizado em maio de 2026."}
+    assert month_only_dates(item, page) == {}
+    assert ground(item, page).activity.event_date is None  # still nulled: never invent a day
+
+
+def test_a_month_that_is_not_in_the_text_is_not_a_month_precision_field():
+    item = activity(event_date=date(2026, 5, 1))
+    assert month_only_dates(item, {1: "Evento em junho de 2026."}) == {}
+
+
+def test_period_boundaries_are_month_precision_independently():
+    item = activity(start_date=date(2022, 5, 1), end_date=date(2022, 9, 1))
+    page = {1: "Período: Mai/22 a Set/22"}
+    assert month_only_dates(item, page) == {"start_date": D.MONTH, "end_date": D.MONTH}

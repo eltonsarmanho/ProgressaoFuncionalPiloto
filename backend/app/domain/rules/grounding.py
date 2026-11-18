@@ -209,6 +209,26 @@ def same_person(
     return bool(siape) and re.search(rf"(?<!\d){re.escape(siape)}(?!\d)", text) is not None
 
 
+def month_only_dates(
+    extracted: ExtractedActivity, pages: Mapping[int, str]
+) -> dict[str, DatePrecision]:
+    """Date fields the page writes with month and year only (VER-10): field -> MONTH.
+
+    A field qualifies when the AI gave the first day of the month, that day is not in the text
+    but the month and year are. Any other day for a month-only text is invented: it does not
+    qualify and `ground` nulls it. Never invents a day.
+    """
+    text = pages.get(extracted.page, "")
+    partial: dict[str, DatePrecision] = {}
+    for name in _DATE_FIELDS:
+        value = getattr(extracted, name)
+        if value is None or value.day != 1:
+            continue
+        if not date_in_text(value, text) and date_in_text(value, text, DatePrecision.MONTH):
+            partial[name] = DatePrecision.MONTH
+    return partial
+
+
 def ground(
     extracted: ExtractedActivity,
     pages: Mapping[int, str],

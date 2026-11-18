@@ -111,6 +111,7 @@ def _activity_data(suggested: SuggestedActivity) -> ActivityData:
         hours=suggested.hours,
         course_hours=suggested.course_hours,
         candidates=suggested.candidates,
+        period_precision=suggested.period_precision,
     )
 
 

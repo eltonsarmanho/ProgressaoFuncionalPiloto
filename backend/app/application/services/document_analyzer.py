@@ -15,7 +15,13 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
-from app.domain.entities.activity import Activity, ActivitySource, Candidate, Level
+from app.domain.entities.activity import (
+    Activity,
+    ActivitySource,
+    Candidate,
+    Level,
+    PeriodPrecision,
+)
 from app.domain.entities.document import DocAlertCode, DocumentStatus, TextMethod
 from app.domain.entities.extraction import DocumentType, ExtractedActivity, TaxonomyCode
 from app.domain.entities.scoring import ScoringTableVersion
@@ -29,7 +35,12 @@ from app.domain.repositories.ports import (
 )
 from app.domain.rules.confidence import final_confidence, needs_review
 from app.domain.rules.document_type import detect_document_type
-from app.domain.rules.grounding import ground, professor_named_in_text, same_person
+from app.domain.rules.grounding import (
+    ground,
+    month_only_dates,
+    professor_named_in_text,
+    same_person,
+)
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.masking import mask_identifiers
 from app.domain.rules.quantity_rules import derive_quantity
@@ -110,6 +121,7 @@ class SuggestedActivity:
     reasons: tuple[NotScoredReason, ...]
     source_note: str
     source: ActivitySource = ActivitySource.SUGERIDA_IA
+    period_precision: PeriodPrecision = PeriodPrecision.DAY
 
 
 @dataclass(frozen=True)
@@ -253,9 +265,12 @@ class DocumentAnalyzer:
         table_version: ScoringTableVersion | None,
     ) -> SuggestedActivity | None:
         """Ground, classify and size one activity; None when its type has no scoring item."""
-        grounded = ground(raw, pages)
+        partial = month_only_dates(raw, pages)
+        grounded = ground(raw, pages, partial)
         for warning in grounded.warnings:
             run.alerts.append(DocAlert(warning.code, warning.field, index))
+        run.alerts += [DocAlert(DocAlertCode.DATA_PARCIAL, name, index) for name in partial]
+        precision = PeriodPrecision.MONTH if partial else PeriodPrecision.DAY
         activity = grounded.activity
         if is_dismissal_clause(activity.taxonomy, activity.evidence_text):
             run.alerts.append(DocAlert(DocAlertCode.CLAUSULA_DE_DISPENSA, None, index))
@@ -275,9 +290,11 @@ class DocumentAnalyzer:
         reasons: list[NotScoredReason] = []
         if principal is None:
             reasons.append(NotScoredReason.SEM_ENQUADRAMENTO)
-        if _outside_interstice(activity, interstice):
+        period = _period_state(activity, interstice, precision)
+        if period is PeriodState.FORA:
             reasons.append(NotScoredReason.FORA_DO_INTERSTICIO)
         confidence = final_confidence(raw.confidence, grounded.grounded_ratio)
+        crosses_limit = precision is PeriodPrecision.MONTH and period is PeriodState.PARCIAL
         return SuggestedActivity(
             source_index=index,
             extracted=activity,
@@ -285,7 +302,7 @@ class DocumentAnalyzer:
             page=activity.page,
             excerpt=_excerpt(activity.evidence_text, pages.get(activity.page, "")),
             confidence=confidence,
-            needs_review=needs_review(confidence),
+            needs_review=needs_review(confidence) or crosses_limit,
             group_number=principal.group if principal else None,
             item_number=principal.item if principal else None,
             candidates=tuple(
@@ -300,6 +317,7 @@ class DocumentAnalyzer:
             academic_period=quantity.academic_period,
             reasons=tuple(reasons),
             source_note=suggestion.source_note,
+            period_precision=precision,
         )
 
 
@@ -414,9 +432,12 @@ def _items_in_table(table_version: ScoringTableVersion | None) -> Callable[[Item
     return exists
 
 
-def _outside_interstice(activity: ExtractedActivity, interstice: Interstice | None) -> bool:
+def _period_state(
+    activity: ExtractedActivity, interstice: Interstice | None, precision: PeriodPrecision
+) -> PeriodState | None:
+    """The period of the activity against the interstice; a month precision uses whole months."""
     if interstice is None:
-        return False
+        return None
     placeholder = UUID(int=0)
     probe = Activity(
         id=placeholder,
@@ -426,8 +447,9 @@ def _outside_interstice(activity: ExtractedActivity, interstice: Interstice | No
         event_date=activity.event_date,
         period_start=activity.start_date,
         period_end=activity.end_date,
+        period_precision=precision,
     )
-    return evaluate_period(probe, interstice) is PeriodState.FORA
+    return evaluate_period(probe, interstice)
 
 
 def _excerpt(evidence_text: str, page_text: str) -> str:

@@ -5,7 +5,13 @@ from decimal import Decimal
 
 import pytest
 
-from app.domain.entities.activity import ActivitySource, ActivityStatus, Level, initial_status
+from app.domain.entities.activity import (
+    ActivitySource,
+    ActivityStatus,
+    Level,
+    PeriodPrecision,
+    initial_status,
+)
 from app.domain.entities.document import DocAlertCode, DocumentStatus
 from app.domain.entities.extraction import TaxonomyCode
 from app.domain.entities.scoring import (
@@ -365,3 +371,78 @@ def test_confidence_and_review_flag_survive_classification():
     found = analyze(payload(activity(confidence=0.5))).activities[0]
     assert found.confidence == Decimal("0.50")
     assert found.needs_review is True
+
+
+# --- VER-10: a date with month and year only is kept as a partial month ----------------------
+
+MONTH_TEXT = (
+    "DECLARACAO DE BANCA EXAMINADORA\n"
+    "Declaramos que Fulana de Tal Exemplo, matricula SIAPE 0000000, participou como membro da "
+    "banca examinadora do trabalho de conclusao de curso Estudo Ficticio sobre Dados Abertos, "
+    "realizada em marco de 2025, na Faculdade Exemplo de Testes."
+)
+
+
+def month_only(**changes):
+    return payload(activity(event_date="2025-03-01", **changes))
+
+
+def test_a_month_only_date_is_kept_marked_partial_and_not_nulled():
+    result = analyze(month_only(), MONTH_TEXT)
+
+    found = result.activities[0]
+    assert found.extracted.event_date == date(2025, 3, 1)
+    assert found.period_precision is PeriodPrecision.MONTH
+    assert [(a.code, a.field) for a in result.alerts if a.field] == [
+        (DocAlertCode.DATA_PARCIAL, "event_date")
+    ]
+    assert DocAlertCode.NAO_ENCONTRADO_NO_TEXTO not in [a.code for a in result.alerts]
+
+
+def test_a_day_invented_for_a_month_only_text_is_still_nulled_and_not_partial():
+    result = analyze(payload(activity(event_date="2025-03-15")), MONTH_TEXT)
+
+    assert result.activities[0].extracted.event_date is None
+    assert result.activities[0].period_precision is PeriodPrecision.DAY
+    codes = [(a.code, a.field) for a in result.alerts if a.field]
+    assert codes == [(DocAlertCode.NAO_ENCONTRADO_NO_TEXTO, "event_date")]
+
+
+def test_a_day_precision_date_stays_day_precision_without_the_partial_alert():
+    result = analyze(payload(activity()))  # 12 de marco de 2025 in the default text
+
+    assert result.activities[0].period_precision is PeriodPrecision.DAY
+    assert DocAlertCode.DATA_PARCIAL not in [a.code for a in result.alerts]
+
+
+def test_a_month_inside_the_interstice_uses_the_whole_month_and_is_not_flagged():
+    inside = Interstice(date(2024, 11, 23), date(2026, 11, 23))
+
+    found = analyze(month_only(), MONTH_TEXT, interstice=inside).activities[0]
+
+    assert found.reasons == ()
+    assert found.needs_review is False
+
+
+def test_a_month_entirely_outside_the_interstice_is_flagged():
+    outside = Interstice(date(2026, 1, 1), date(2027, 1, 1))
+
+    found = analyze(month_only(), MONTH_TEXT, interstice=outside).activities[0]
+
+    assert found.reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
+
+
+@pytest.mark.parametrize(
+    "interstice",
+    [
+        Interstice(date(2025, 3, 15), date(2027, 3, 15)),  # starts in the middle of the month
+        Interstice(date(2023, 3, 1), date(2025, 3, 15)),  # ends in the middle of the month
+    ],
+)
+def test_a_month_crossing_the_interstice_limit_is_left_for_review_without_fora(interstice):
+    result = analyze(month_only(), MONTH_TEXT, interstice=interstice)
+
+    found = result.activities[0]
+    assert NotScoredReason.FORA_DO_INTERSTICIO not in found.reasons
+    assert found.needs_review is True
+    assert (DocAlertCode.DATA_PARCIAL, "event_date") in [(a.code, a.field) for a in result.alerts]
