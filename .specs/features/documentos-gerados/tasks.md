@@ -751,9 +751,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Grupo I.1 vai a 1.1 e I.2 a 1.2 por período letivo; II a 1.3; III e VII a 6 com os subtítulos; IV a 3; V a 2; VI a 4; VIII a 6; a seção 5 recebe só o que for movido
-- [ ] Seção sem atividade é marcada vazia e fica fora do documento
-- [ ] Gate quick passa; 10+ testes
+- [x] Grupo I.1 vai a 1.1 e I.2 a 1.2 por período letivo; II a 1.3; III e VII a 6 com os subtítulos; IV a 3; V a 2; VI a 4; VIII a 6; a seção 5 recebe só o que for movido
+- [x] Seção sem atividade é marcada vazia e fica fora do documento
+- [x] Gate quick passa; 10+ testes
 
 **Tests**: unit
 **Gate**: quick

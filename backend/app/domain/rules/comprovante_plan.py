@@ -8,11 +8,10 @@ import json
 import math
 from collections.abc import Sequence
 from dataclasses import replace
-from datetime import date
 from hashlib import sha256
 from uuid import UUID
 
-from app.domain.entities.activity import Activity, ActivityStatus
+from app.domain.entities.activity import Activity
 from app.domain.entities.comprovante import (
     ActivityPageRef,
     ComprovanteLayout,
@@ -31,6 +30,7 @@ from app.domain.entities.comprovante import (
 from app.domain.entities.generated import GenerationAlertCode, GenerationCode
 from app.domain.errors import GenerationRefused, NotFound, ValidationFailed
 from app.domain.repositories.ports import ActivityEvidence
+from app.domain.rules.activity_order import eligible_activities, table_order
 
 NO_VOUCHER_NOTE = "Sem comprovante anexado"
 MAX_ATTACHED_PAGES = 400
@@ -53,30 +53,6 @@ class ComprovanteRefused(GenerationRefused):
         self.page = page
 
 
-def eligible_activities(activities: Sequence[Activity]) -> list[Activity]:
-    """The activities that go in the Comprovante: validated, with group and item."""
-    return [
-        a
-        for a in activities
-        if a.status is ActivityStatus.VALIDADA
-        and a.group_number is not None
-        and a.item_number is not None
-    ]
-
-
-def _table_order(activity: Activity):
-    """Group, item, then the date of the activity (undated last) and its creation."""
-    day = activity.event_date or activity.period_start or activity.period_end
-    return (
-        activity.group_number,
-        activity.item_number,
-        day is None,
-        day or date.min,
-        activity.created_at is None,
-        activity.created_at,
-    )
-
-
 def derive_layout(
     process_id: UUID, activities: Sequence[Activity], evidences: Sequence[ActivityEvidence]
 ) -> ComprovanteLayout:
@@ -85,7 +61,7 @@ def derive_layout(
     Groups and items follow the table; inside an item activities follow their date; the pages
     of an activity follow the order of its links.
     """
-    arranged = sorted(eligible_activities(activities), key=_table_order)
+    arranged = sorted(eligible_activities(activities), key=table_order)
     pages: dict[UUID, list[LayoutPage]] = {a.id: [] for a in arranged}
     keys: list[EvidenceKey] = []
     for found in evidences:
@@ -125,7 +101,7 @@ def _arrange(
             a.group_number,
             a.item_number,
             position.get(a.id, len(position)),
-            _table_order(a),
+            table_order(a),
         ),
     )
     groups: dict[int, dict[int, list[tuple[Activity, tuple[LayoutPage, ...]]]]] = {}
@@ -348,7 +324,7 @@ def layout_staleness(
             moved.append(entry.activity_id)
         if now is not None and entry.activity_id in linked:
             new_link.append(entry.activity_id)
-    joined = [a.id for a in sorted(current.values(), key=_table_order) if a.id not in arranged]
+    joined = [a.id for a in sorted(current.values(), key=table_order) if a.id not in arranged]
     return Staleness(tuple(left), tuple(moved), tuple(new_link), tuple(joined))
 
 
