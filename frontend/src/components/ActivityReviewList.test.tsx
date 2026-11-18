@@ -134,37 +134,46 @@ describe("TELA-06: lista de revisão", () => {
   });
 });
 
-describe("REV-03: validar e rejeitar", () => {
-  it("validar exige justificativa e envia o status VALIDADA com a versão esperada", async () => {
+describe("UIM-13: botões curtos de ação", () => {
+  it("os rótulos visíveis são curtos e o título da atividade só vai no aria-label e no title", () => {
+    setup([activity()]);
+    const row = screen.getByText("Banca de mestrado de Maria", { selector: "td" }).closest("tr")!;
+    const buttons = within(row).getAllByRole("button");
+
+    expect(buttons.map((b) => b.textContent)).toEqual(["Validar", "Rejeitar", "Editar", "Vincular"]);
+    expect(buttons.map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Validar Banca de mestrado de Maria",
+      "Rejeitar Banca de mestrado de Maria",
+      "Editar Banca de mestrado de Maria",
+      "Vincular documento a Banca de mestrado de Maria",
+    ]);
+    expect(buttons.map((b) => b.getAttribute("title"))).toEqual(buttons.map((b) => b.getAttribute("aria-label")));
+  });
+});
+
+describe("REV-03 / UIM-13: validar e rejeitar na hora", () => {
+  it("validar envia VALIDADA com a versão esperada, sem justificativa e sem painel, e recarrega", async () => {
     const { calls, onChanged, user } = setup([activity()], { "POST /api/activities/a1/status": { status: 200, body: activity({ status: "VALIDADA" }) } });
     await user.click(screen.getByRole("button", { name: "Validar Banca de mestrado de Maria" }));
-    await user.click(screen.getByRole("button", { name: "Confirmar validação" }));
-    expect(await screen.findByText("Informe a justificativa.")).toBeInTheDocument();
-    expect(calls).toHaveLength(0);
-
-    await user.type(screen.getByLabelText("Justificativa"), "Conferi com a ata");
-    await user.click(screen.getByRole("button", { name: "Confirmar validação" }));
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
-    expect(body(calls[0].init)).toEqual({ status: "VALIDADA", expected_version: 4, justificativa: "Conferi com a ata" });
+    expect(body(calls[0].init)).toEqual({ status: "VALIDADA", expected_version: 4 });
+    expect(screen.queryByLabelText("Justificativa")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("rejeitar envia REJEITADA; atividade já validada não oferece validar de novo", async () => {
+  it("rejeitar envia REJEITADA na hora; atividade já validada não oferece validar de novo", async () => {
     const { calls, onChanged, user } = setup([activity(), activity({ id: "a2", title: "Outra", status: "VALIDADA" })], {
       "POST /api/activities/a1/status": { status: 200, body: activity({ status: "REJEITADA" }) },
     });
     expect(screen.getByRole("button", { name: "Validar Outra" })).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "Rejeitar Banca de mestrado de Maria" }));
-    await user.type(screen.getByLabelText("Justificativa"), "Não é minha banca");
-    await user.click(screen.getByRole("button", { name: "Confirmar rejeição" }));
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
-    expect(body(calls[0].init).status).toBe("REJEITADA");
+    expect(body(calls[0].init)).toEqual({ status: "REJEITADA", expected_version: 4 });
   });
 
   it("erro 409 de versão desatualizada aparece como alerta e não recarrega", async () => {
     const { onChanged, user } = setup([activity()], { "POST /api/activities/a1/status": { status: 409, body: { detail: "A atividade foi alterada; recarregue" } } });
     await user.click(screen.getByRole("button", { name: "Validar Banca de mestrado de Maria" }));
-    await user.type(screen.getByLabelText("Justificativa"), "ok");
-    await user.click(screen.getByRole("button", { name: "Confirmar validação" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("A atividade foi alterada; recarregue");
     expect(onChanged).not.toHaveBeenCalled();
   });
@@ -174,6 +183,7 @@ describe("REV-02: editar sem justificativa (UIM-17)", () => {
   it("abre o formulário de edição, sem campo de justificativa, e recarrega após salvar", async () => {
     const { calls, onChanged, user } = setup([activity()], { "PUT /api/activities/a1": { status: 200, body: activity({ title: "Banca corrigida" }) } });
     await user.click(screen.getByRole("button", { name: "Editar Banca de mestrado de Maria" }));
+    expect(screen.getByRole("dialog", { name: "Editar atividade" })).toBeInTheDocument();
     const title = screen.getByLabelText("Título");
     await user.clear(title);
     await user.type(title, "Banca corrigida");
@@ -182,48 +192,49 @@ describe("REV-02: editar sem justificativa (UIM-17)", () => {
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
     expect(body(calls[0].init)).toMatchObject({ title: "Banca corrigida", expected_version: 4 });
     expect(body(calls[0].init)).not.toHaveProperty("justificativa");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
 
-describe("VINC: vincular documento", () => {
-  it("envia o documento e a página e recarrega", async () => {
+describe("VINC / UIM-16: vincular documento numa janela, sem justificativa", () => {
+  it("envia o documento e a página, sem justificativa, fecha a janela e recarrega", async () => {
     const { calls, onChanged, user } = setup([activity()], { "POST /api/activities/a1/evidences": { status: 201, body: { id: "e9" } } });
     await user.click(screen.getByRole("button", { name: "Vincular documento a Banca de mestrado de Maria" }));
-    await user.selectOptions(screen.getByLabelText("Documento"), "d2");
-    await user.clear(screen.getByLabelText("Página do documento"));
-    await user.type(screen.getByLabelText("Página do documento"), "3");
-    await user.click(screen.getByRole("button", { name: "Vincular" }));
+    const dialog = screen.getByRole("dialog", { name: "Vincular documento" });
+    expect(within(dialog).queryByLabelText(/Justificativa/)).not.toBeInTheDocument();
+    await user.selectOptions(within(dialog).getByLabelText("Documento"), "d2");
+    await user.clear(within(dialog).getByLabelText("Página do documento"));
+    await user.type(within(dialog).getByLabelText("Página do documento"), "3");
+    await user.click(within(dialog).getByRole("button", { name: "Vincular" }));
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
     expect(body(calls[0].init)).toEqual({ document_id: "d2", page: 3 });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("documento já ligado a outra atividade: o 422 pede a justificativa no campo", async () => {
-    const { user } = setup([activity()], {
-      "POST /api/activities/a1/evidences": { status: 422, body: { detail: [{ field: "justificativa", message: "Justificativa obrigatória: o documento já está ligado a outra atividade" }] } },
+  it("o erro do servidor aparece na janela, que continua aberta", async () => {
+    const { onChanged, user } = setup([activity()], {
+      "POST /api/activities/a1/evidences": { status: 409, body: { detail: "Esta página já está ligada a esta atividade" } },
     });
     await user.click(screen.getByRole("button", { name: "Vincular documento a Banca de mestrado de Maria" }));
     await user.selectOptions(screen.getByLabelText("Documento"), "d1");
-    await user.click(screen.getByRole("button", { name: "Vincular" }));
-    expect(await screen.findByText("Justificativa obrigatória: o documento já está ligado a outra atividade")).toBeInTheDocument();
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Vincular" }));
+    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent("Esta página já está ligada a esta atividade");
+    expect(onChanged).not.toHaveBeenCalled();
   });
 });
 
-describe("REV-04: validar as selecionadas", () => {
-  it("o botão só habilita com seleção; uma justificativa vale para todas e a rota em lote recebe os ids", async () => {
+describe("REV-04 / UIM-11: validar as selecionadas", () => {
+  it("o botão só habilita com seleção; a rota em lote recebe os ids, sem justificativa, e a contagem é informada", async () => {
     const { calls, onChanged, user } = setup([activity(), activity({ id: "a2", title: "Segunda" }), activity({ id: "a3", title: "Terceira" })], {
-      "POST /api/processes/p1/activities/validate-batch": { status: 200, body: [] },
+      "POST /api/processes/p1/activities/validate-batch": { status: 200, body: [{}, {}] },
     });
     expect(screen.getByRole("button", { name: "Validar as selecionadas (0)" })).toBeDisabled();
     await user.click(screen.getByLabelText("Selecionar Banca de mestrado de Maria"));
     await user.click(screen.getByLabelText("Selecionar Terceira"));
     await user.click(screen.getByRole("button", { name: "Validar as selecionadas (2)" }));
-    await user.click(screen.getByRole("button", { name: "Confirmar validação em lote" }));
-    expect(await screen.findByText("Informe a justificativa.")).toBeInTheDocument();
-    expect(calls).toHaveLength(0);
-
-    await user.type(screen.getByLabelText("Justificativa"), "Revisei todas");
-    await user.click(screen.getByRole("button", { name: "Confirmar validação em lote" }));
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
-    expect(body(calls[0].init)).toEqual({ activity_ids: ["a1", "a3"], justificativa: "Revisei todas" });
+    expect(screen.queryByLabelText("Justificativa")).not.toBeInTheDocument();
+    expect(body(calls[0].init)).toEqual({ activity_ids: ["a1", "a3"] });
+    expect(screen.getByRole("status")).toHaveTextContent("2 atividades validadas");
   });
 });

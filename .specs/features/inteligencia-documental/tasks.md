@@ -3708,11 +3708,11 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Validar envia `POST /api/activities/{id}/status` com `VALIDADA` e a versão, sem `justificativa`, e recarrega; Rejeitar igual com `REJEITADA`
-- [ ] Editar e Vincular abrem `role="dialog"`; salvar fecha e recarrega
-- [ ] O 422 do servidor aparece em alerta sem fechar nada
-- [ ] Os testes de justificativa dos painéis foram trocados pelos novos, sem enfraquecer a cobertura
-- [ ] Gate quick passa
+- [x] Validar envia `POST /api/activities/{id}/status` com `VALIDADA` e a versão, sem `justificativa`, e recarrega; Rejeitar igual com `REJEITADA`
+- [x] Editar e Vincular abrem `role="dialog"`; salvar fecha e recarrega
+- [x] O 422 do servidor aparece em alerta sem fechar nada
+- [x] Os testes de justificativa dos painéis foram trocados pelos novos, sem enfraquecer a cobertura
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

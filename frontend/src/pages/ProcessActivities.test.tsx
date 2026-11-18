@@ -75,8 +75,6 @@ describe("TELA-06: página da Etapa 3", () => {
       },
     });
     await user.click(await screen.findByRole("button", { name: "Validar Banca de mestrado" }));
-    await user.type(screen.getByLabelText("Justificativa"), "Conferido");
-    await user.click(screen.getByRole("button", { name: "Confirmar validação" }));
     await waitFor(() => expect(screen.getByText("Validada")).toBeInTheDocument());
     expect(count(calls, LIST)).toBe(2);
   });
@@ -87,8 +85,6 @@ describe("TELA-06: página da Etapa 3", () => {
       "POST /api/activities/a1/status": { status: 200, body: activity({ status: "REJEITADA" }) },
     });
     await user.click(await screen.findByRole("button", { name: "Rejeitar Banca de mestrado" }));
-    await user.type(screen.getByLabelText("Justificativa"), "Não é minha");
-    await user.click(screen.getByRole("button", { name: "Confirmar rejeição" }));
     await waitFor(() => expect(count(calls, LIST)).toBe(2));
   });
 
@@ -103,7 +99,7 @@ describe("TELA-06: página da Etapa 3", () => {
     await waitFor(() => expect(count(calls, LIST)).toBe(2));
   });
 
-  it("validar as selecionadas chama a rota em lote com os ids e uma justificativa, e recarrega", async () => {
+  it("validar as selecionadas chama a rota em lote só com os ids, sem justificativa, e recarrega", async () => {
     const { calls, user } = renderPage({
       [LIST]: { status: 200, body: [activity(), activity({ id: "a2", title: "Segunda banca" })] },
       "POST /api/processes/p1/activities/validate-batch": { status: 200, body: [] },
@@ -111,11 +107,9 @@ describe("TELA-06: página da Etapa 3", () => {
     await user.click(await screen.findByLabelText("Selecionar Banca de mestrado"));
     await user.click(screen.getByLabelText("Selecionar Segunda banca"));
     await user.click(screen.getByRole("button", { name: "Validar as selecionadas (2)" }));
-    await user.type(screen.getByLabelText("Justificativa"), "Revisei as duas");
-    await user.click(screen.getByRole("button", { name: "Confirmar validação em lote" }));
 
     await waitFor(() => expect(count(calls, LIST)).toBe(2));
     const batch = calls.find((c) => c.path === "/api/processes/p1/activities/validate-batch")!;
-    expect(JSON.parse(batch.init?.body as string)).toEqual({ activity_ids: ["a1", "a2"], justificativa: "Revisei as duas" });
+    expect(JSON.parse(batch.init?.body as string)).toEqual({ activity_ids: ["a1", "a2"] });
   });
 });

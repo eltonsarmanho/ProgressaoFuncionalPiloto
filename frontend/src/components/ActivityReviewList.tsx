@@ -10,75 +10,12 @@ import {
 } from "../labels";
 import { ActivityForm } from "./ActivityForm";
 import { FieldError, errorProps } from "./FieldError";
+import { Modal } from "./Modal";
 
-type Panel =
-  | { kind: "validate" | "reject" | "edit" | "link"; activity: Activity }
-  | { kind: "batch" };
+type Panel = { kind: "edit" | "link"; activity: Activity };
+type Notice = { tone: "error" | "ok"; text: string };
 
 const COLUMNS = ["Selecionar", "Atividade", "Origem", "Status", "Grupo e item", "Pontuação potencial", "Documentos", "Ações"] as const;
-
-/** One justification, then `submit`; 422 on `justificativa` is shown at the field, anything else as an alert. */
-function JustificationForm({
-  title,
-  confirmLabel,
-  note,
-  submit,
-  onCancel,
-}: {
-  title: string;
-  confirmLabel: string;
-  note?: string;
-  submit: (justificativa: string) => Promise<void>;
-  onCancel: () => void;
-}) {
-  const [justificativa, setJustificativa] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [error, setError] = useState<string | null>(null);
-
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
-    setError(null);
-    if (justificativa.trim() === "") {
-      setErrors({ justificativa: "Informe a justificativa." });
-      return;
-    }
-    setErrors({});
-    try {
-      await submit(justificativa.trim());
-    } catch (err) {
-      const byField = fieldErrors(err);
-      setErrors(byField);
-      if (Object.keys(byField).length === 0) setError(errorMessage(err));
-    }
-  }
-
-  return (
-    <form className="card" onSubmit={onSubmit} noValidate aria-label={title}>
-      <h3>{title}</h3>
-      {note && <p className="muted">{note}</p>}
-      <div className="field">
-        <label htmlFor="review-justificativa">Justificativa</label>
-        <textarea
-          id="review-justificativa"
-          rows={2}
-          value={justificativa}
-          onChange={(e) => setJustificativa(e.target.value)}
-          {...errorProps("justificativa", errors)}
-        />
-        <FieldError id="justificativa-error" message={errors.justificativa} />
-      </div>
-      {error && (
-        <p role="alert" className="error">
-          {error}
-        </p>
-      )}
-      <button type="submit">{confirmLabel}</button>
-      <button type="button" className="link" onClick={onCancel}>
-        Cancelar
-      </button>
-    </form>
-  );
-}
 
 function LinkForm({
   activity,
@@ -93,7 +30,6 @@ function LinkForm({
 }) {
   const [documentId, setDocumentId] = useState("");
   const [page, setPage] = useState("1");
-  const [justificativa, setJustificativa] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
@@ -109,7 +45,6 @@ function LinkForm({
       await request("POST", `/api/activities/${activity.id}/evidences`, {
         document_id: documentId,
         page: Number(page),
-        ...(justificativa.trim() !== "" ? { justificativa: justificativa.trim() } : {}),
       });
       onDone();
     } catch (err) {
@@ -120,46 +55,41 @@ function LinkForm({
   }
 
   return (
-    <form className="card" onSubmit={onSubmit} noValidate aria-label="Vincular documento">
-      <h3>Vincular documento: {activity.title}</h3>
-      <div className="field">
-        <label htmlFor="link-document">Documento</label>
-        <select id="link-document" value={documentId} onChange={(e) => setDocumentId(e.target.value)} {...errorProps("document_id", errors)}>
-          <option value="">Selecione…</option>
-          {documents.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.original_name}
-            </option>
-          ))}
-        </select>
-        <FieldError id="document_id-error" message={errors.document_id} />
-      </div>
-      <div className="field">
-        <label htmlFor="link-page">Página do documento</label>
-        <input id="link-page" type="number" min={1} value={page} onChange={(e) => setPage(e.target.value)} {...errorProps("page", errors)} />
-        <FieldError id="page-error" message={errors.page} />
-      </div>
-      <div className="field">
-        <label htmlFor="link-justificativa">Justificativa (obrigatória se o documento já está ligado a outra atividade)</label>
-        <textarea
-          id="link-justificativa"
-          rows={2}
-          value={justificativa}
-          onChange={(e) => setJustificativa(e.target.value)}
-          {...errorProps("justificativa", errors)}
-        />
-        <FieldError id="justificativa-error" message={errors.justificativa} />
-      </div>
-      {error && (
-        <p role="alert" className="error">
-          {error}
-        </p>
-      )}
-      <button type="submit">Vincular</button>
-      <button type="button" className="link" onClick={onCancel}>
-        Cancelar
-      </button>
-    </form>
+    <Modal title="Vincular documento" onClose={onCancel}>
+      <p>{activity.title}</p>
+      <form onSubmit={onSubmit} noValidate>
+        <div className="field">
+          <label htmlFor="link-document">Documento</label>
+          <select id="link-document" value={documentId} onChange={(e) => setDocumentId(e.target.value)} {...errorProps("document_id", errors)}>
+            <option value="">Selecione…</option>
+            {documents.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.original_name}
+              </option>
+            ))}
+          </select>
+          <FieldError id="document_id-error" message={errors.document_id} />
+        </div>
+        <div className="field">
+          <label htmlFor="link-page">Página do documento</label>
+          <input id="link-page" type="number" min={1} value={page} onChange={(e) => setPage(e.target.value)} {...errorProps("page", errors)} />
+          <FieldError id="page-error" message={errors.page} />
+        </div>
+        {error && (
+          <p role="alert" className="error">
+            {error}
+          </p>
+        )}
+        <div className="btn-row">
+          <button type="submit" className="btn btn-primary">
+            Vincular
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 
@@ -185,6 +115,8 @@ export function ActivityReviewList({
 }) {
   const [panel, setPanel] = useState<Panel | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const [busy, setBusy] = useState(false);
   const rowOf = new Map(rows.map((r) => [r.activity_id, r]));
 
   const done = () => {
@@ -195,14 +127,37 @@ export function ActivityReviewList({
   const toggle = (id: string) =>
     setSelected((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]));
 
-  const changeStatus = (activity: Activity, status: "VALIDADA" | "REJEITADA") => async (justificativa: string) => {
-    await request("POST", `/api/activities/${activity.id}/status`, {
-      status,
-      expected_version: activity.version,
-      justificativa,
-    });
-    done();
-  };
+  /** UIM-13: validate and reject act at once; no justification, no panel. */
+  async function changeStatus(activity: Activity, status: "VALIDADA" | "REJEITADA") {
+    setNotice(null);
+    setBusy(true);
+    try {
+      await request("POST", `/api/activities/${activity.id}/status`, {
+        status,
+        expected_version: activity.version,
+      });
+      done();
+    } catch (err) {
+      setNotice({ tone: "error", text: `${activity.title}: ${errorMessage(err)}` });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** REV-04: the atomic batch endpoint; one request for all the ids. */
+  async function validateBatch(ids: string[]) {
+    setNotice(null);
+    setBusy(true);
+    try {
+      await request("POST", `/api/processes/${processId}/activities/validate-batch`, { activity_ids: ids });
+      done();
+      setNotice({ tone: "ok", text: `${ids.length === 1 ? "1 atividade validada" : `${ids.length} atividades validadas`}.` });
+    } catch (err) {
+      setNotice({ tone: "error", text: errorMessage(err) });
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function potential(activity: Activity): string {
     const row = rowOf.get(activity.id);
@@ -221,14 +176,28 @@ export function ActivityReviewList({
       <p className="review-note">
         Atividades sugeridas pela IA aguardam a sua revisão: nada é validado sem você.
       </p>
+      <div aria-live="polite">
+        {notice && (
+          <p role={notice.tone === "error" ? "alert" : "status"} className={notice.tone === "error" ? "error" : undefined}>
+            {notice.text}
+          </p>
+        )}
+      </div>
       {activities.length === 0 ? (
         <p>Nenhuma atividade neste processo.</p>
       ) : (
         <>
-          <button type="button" disabled={selected.length === 0} onClick={() => setPanel({ kind: "batch" })}>
-            Validar as selecionadas ({selected.length})
-          </button>
-          <table className="scoring-table review-table">
+          <div className="btn-row">
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={selected.length === 0 || busy}
+              onClick={() => void validateBatch(selected)}
+            >
+              Validar as selecionadas ({selected.length})
+            </button>
+          </div>
+          <table className="scoring-table wide-table review-table">
             <thead>
               <tr>
                 {COLUMNS.map((c) => (
@@ -251,14 +220,16 @@ export function ActivityReviewList({
                         onChange={() => toggle(a.id)}
                       />
                     </td>
-                    <td data-label="Atividade">{a.title}</td>
+                    <td data-label="Atividade" className="text-block">
+                      {a.title}
+                    </td>
                     <td data-label="Origem">{ACTIVITY_SOURCE_LABELS[a.source] ?? a.source}</td>
                     <td data-label="Status">
                       <span className={a.status === "AGUARDANDO_REVISAO" ? "badge badge-pending" : "badge"}>
                         {ACTIVITY_STATUS_LABELS[a.status] ?? a.status}
                       </span>
                     </td>
-                    <td data-label="Grupo e item">
+                    <td data-label="Grupo e item" className="text-block">
                       {itemLabel(a.group_number, a.item_number)}
                       {criterion && <small className="muted"> · {criterion.description}</small>}
                     </td>
@@ -281,17 +252,43 @@ export function ActivityReviewList({
                     </td>
                     <td data-label="Ações">
                       <div className="row-actions">
-                        <button type="button" className="link" disabled={a.status === "VALIDADA"} onClick={() => setPanel({ kind: "validate", activity: a })}>
-                          Validar {a.title}
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          aria-label={`Validar ${a.title}`}
+                          title={`Validar ${a.title}`}
+                          disabled={a.status === "VALIDADA" || busy}
+                          onClick={() => void changeStatus(a, "VALIDADA")}
+                        >
+                          Validar
                         </button>
-                        <button type="button" className="link" disabled={a.status === "REJEITADA"} onClick={() => setPanel({ kind: "reject", activity: a })}>
-                          Rejeitar {a.title}
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          aria-label={`Rejeitar ${a.title}`}
+                          title={`Rejeitar ${a.title}`}
+                          disabled={a.status === "REJEITADA" || busy}
+                          onClick={() => void changeStatus(a, "REJEITADA")}
+                        >
+                          Rejeitar
                         </button>
-                        <button type="button" className="link" onClick={() => setPanel({ kind: "edit", activity: a })}>
-                          Editar {a.title}
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          aria-label={`Editar ${a.title}`}
+                          title={`Editar ${a.title}`}
+                          onClick={() => setPanel({ kind: "edit", activity: a })}
+                        >
+                          Editar
                         </button>
-                        <button type="button" className="link" onClick={() => setPanel({ kind: "link", activity: a })}>
-                          Vincular documento a {a.title}
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          aria-label={`Vincular documento a ${a.title}`}
+                          title={`Vincular documento a ${a.title}`}
+                          onClick={() => setPanel({ kind: "link", activity: a })}
+                        >
+                          Vincular
                         </button>
                       </div>
                     </td>
@@ -303,50 +300,17 @@ export function ActivityReviewList({
         </>
       )}
 
-      {panel?.kind === "validate" && (
-        <JustificationForm
-          key={`validate-${panel.activity.id}`}
-          title="Validar atividade"
-          confirmLabel="Confirmar validação"
-          note={`Você confirma que revisou os dados de “${panel.activity.title}”.`}
-          submit={changeStatus(panel.activity, "VALIDADA")}
-          onCancel={() => setPanel(null)}
-        />
-      )}
-      {panel?.kind === "reject" && (
-        <JustificationForm
-          key={`reject-${panel.activity.id}`}
-          title="Rejeitar atividade"
-          confirmLabel="Confirmar rejeição"
-          note={`A atividade “${panel.activity.title}” deixa de contar na pontuação.`}
-          submit={changeStatus(panel.activity, "REJEITADA")}
-          onCancel={() => setPanel(null)}
-        />
-      )}
-      {panel?.kind === "batch" && (
-        <JustificationForm
-          title="Validar as atividades selecionadas"
-          confirmLabel="Confirmar validação em lote"
-          note={`A mesma justificativa vale para as ${selected.length} atividades selecionadas; cada uma gera o seu registro de auditoria.`}
-          submit={async (justificativa) => {
-            await request("POST", `/api/processes/${processId}/activities/validate-batch`, {
-              activity_ids: selected,
-              justificativa,
-            });
-            done();
-          }}
-          onCancel={() => setPanel(null)}
-        />
-      )}
       {panel?.kind === "edit" && (
-        <ActivityForm
-          key={`edit-${panel.activity.id}`}
-          processId={processId}
-          groups={groups}
-          activity={panel.activity}
-          onSaved={done}
-          onCancel={() => setPanel(null)}
-        />
+        <Modal title="Editar atividade" onClose={() => setPanel(null)}>
+          <ActivityForm
+            key={`edit-${panel.activity.id}`}
+            processId={processId}
+            groups={groups}
+            activity={panel.activity}
+            onSaved={done}
+            onCancel={() => setPanel(null)}
+          />
+        </Modal>
       )}
       {panel?.kind === "link" && (
         <LinkForm key={`link-${panel.activity.id}`} activity={panel.activity} documents={documents} onDone={done} onCancel={() => setPanel(null)} />
