@@ -1,4 +1,4 @@
-import type { EntrySource, GenerationAlert, GenerationAlertCode, GenerationCode, GenerationState } from "./api/generated";
+import type { DocumentKind, EntrySource, GenerationAlert, GenerationAlertCode, GenerationCode, GenerationState } from "./api/generated";
 import type { DocumentStatus, Modality, ProcessStatus, Severity } from "./api/types";
 
 export const STATUS_LABELS: Record<ProcessStatus, string> = {
@@ -333,4 +333,18 @@ export function alertText(alert: GenerationAlert): string {
 /** "20000" -> "20 000": the counter of a text uses a non-breaking space. */
 export function formatCount(n: number): string {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+/** The three documents the system generates (Etapa 5). */
+export const DOCUMENT_KIND_LABELS: Record<DocumentKind, string> = {
+  TABELA: "Tabela de Pontuação",
+  RELATORIO: "Relatório de Atividades",
+  COMPROVANTE: "Comprovante de Documentos",
+};
+
+/** An instant of the server (ISO, UTC) as the day it was in the browser's time zone: "18/11/2026". */
+export function formatDay(iso: string): string {
+  const when = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(when.getDate())}/${pad(when.getMonth() + 1)}/${when.getFullYear()}`;
 }

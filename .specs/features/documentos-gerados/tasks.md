@@ -2913,9 +2913,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Gerar mostra GERANDO, depois PRONTO e os links de download em cada formato com o tamanho; `FALHOU` mostra o código em português e permite tentar de novo
-- [ ] Aviso `N atividades ficam de fora` antes do botão; alertas da geração listados
-- [ ] Gate quick passa; 9+ testes
+- [x] Gerar mostra GERANDO, depois PRONTO e os links de download em cada formato com o tamanho; `FALHOU` mostra o código em português e permite tentar de novo
+- [x] Aviso `N atividades ficam de fora` antes do botão; alertas da geração listados
+- [x] Gate quick passa; 9+ testes
 
 **Tests**: unit
 **Gate**: quick
