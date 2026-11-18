@@ -329,6 +329,30 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ---
 
+### P1: Correções da terceira rodada de validação ⭐ MVP
+
+**User Story**: Como docente, quero que o prazo "um ano e meio" não vire um ano, que "coordenou" conte como coordenação, que um artigo só valha 25 pontos com a indexação provada no texto e que atividades distintas ou repetidas sejam tratadas como são, para não conferir à mão o que o sistema deveria ter recusado.
+
+**Why P1**: A terceira execução real sobre os 45 documentos (`corpus-reports/ANALISE.md`, local: D2 artigo indexado sem prova, D4 atividade repetida no documento) e a terceira verificação independente (`validation.md`, PASS com lacunas FT-19..FT-27) acharam: prazo "e meio" lido como número inteiro e dois prazos somados, verbos de coordenação no passado ignorados e a janela de "a poucas palavras" sem medida, nome de unidade de extensão sem teste, atividade manual por ano com início só valendo mais do que o interstício comporta, artigo de 25 pontos escolhido pela IA sem prova de indexação, atividade repetida de título com ruído de OCR não reunida, títulos que diferem por um nome próprio marcados como duplicados, hash de texto vazio igual entre documentos e o `REQUIRE_DIST=0` contado como definido. Entram como requisitos novos e não alteram os anteriores.
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. WHEN o texto do prazo traz "e meio" ou "e meia" ("um ano e meio", "dois anos e meio"), "meio ano" ou meses por extenso THEN the system SHALL ler o prazo em meses (18, 30, 6); IF o texto traz mais de um valor do mesmo tipo, anos e meses que não estão juntos ("1 ano e 12 meses", "2 anos, depois 6 meses"), mês e meio, mais de dez anos ou uma prorrogação ("prorrogável por mais 2 anos") como único valor THEN the system SHALL não ler prazo e SHALL não derivar data final; WHEN o primeiro valor do texto é o prazo e a prorrogação vem depois dele THEN the system SHALL ler só o primeiro; dez anos exatos e o singular "mês" SHALL ser lidos.
+2. The system SHALL ter testes que fixam que a data de início e a data final derivada de uma atividade criada pela IA chegam ao período da atividade e à API, e que o analisador, com a tabela oficial, decide o item por ano pela unidade da tabela e não pela taxonomia.
+3. IF o texto traz coordenação, coordenador, coordenou, lidera, líder ou "responsável pelo projeto" THEN the system SHALL aceitar a coordenação de pesquisa (V.1, V.2) somente se o nome do docente e a palavra de papel estão a no máximo 8 palavras um do outro no mesmo período do texto, com quebras de linha permitidas dentro do parágrafo; outro coordenador, "coordenado por" e o docente só como participante SHALL dar atividade sem item.
+4. IF o nome de uma unidade traz "extensão" (Coordenadoria de Ações de Extensão, Diretoria, Pró-Reitoria, Centro, Núcleo, Departamento ou Instituto de Extensão, PROEX, "Universidade ... Extensão") THEN the system SHALL não confirmar com ele nem um curso de extensão (VII.9) nem um projeto de extensão (IV.1, IV.2), que exigem "extensão" na natureza da atividade.
+5. WHERE o item é por ano e a atividade tem só a data de início, sem data final e sem prazo, inclusive a cadastrada à mão, the system SHALL pontuar a quantidade como o menor valor entre a quantidade informada e os anos completos do período dentro do interstício (sem quantidade informada, os anos completos), SHALL nunca aumentar a quantidade informada e SHALL emitir `DATA_FIM_AUSENTE` na linha; duas atividades sem item SHALL não ser tratadas como do mesmo item.
+6. IF o item sugerido é o de artigo em periódico indexado (VIII.9, VIII.10) e o texto do documento não traz prova de indexação (Scopus, Web of Science, JCR, Qualis, SciELO, DOAJ, "indexado" ou "indexação") THEN the system SHALL trocar o item pelo de artigo não indexado (VIII.11), SHALL emitir `INDEXACAO_NAO_COMPROVADA` e SHALL deixar a atividade para revisão; o rótulo do aviso SHALL aparecer em português.
+7. WHEN duas atividades do mesmo documento têm a mesma página, o mesmo tipo e nível, datas iguais ou ausentes e títulos de Jaccard 0,6 ou mais, ou um título contendo o outro THEN the system SHALL criar uma só e registrar `ATIVIDADE_REPETIDA`; atividades de datas, páginas ou títulos distintos, ou de títulos que diferem por um nome próprio, SHALL continuar separadas.
+8. WHEN dois títulos do mesmo item diferem por um nome próprio de cada lado (palavra capitalizada de três letras ou mais sem correspondente parecido no outro título) THEN the system SHALL não marcá-los como duplicados pela similaridade de palavras; a igualdade exata e o texto igual continuam marcando.
+9. IF o texto normalizado de um documento tem menos de 50 caracteres THEN the system SHALL não calcular o hash de conteúdo desse documento, de modo que dois documentos ilegíveis nunca contem como o mesmo texto.
+10. The system SHALL ter teste do prompt do sistema que fixa a instrução de devolver o trecho literal do prazo em `term` e a proibição de calcular a data final.
+11. The system SHALL tratar `REQUIRE_DIST` como definido somente quando o valor é diferente de vazio, `0` e `false`, no teste de varredura do pacote do frontend.
+
+**Independent Test**: Texto sintético "Diretor, por um ano e meio, a partir de 09/08/2024" gera fim 2026-02-09 com `DATA_FIM_DERIVADA`; atividade manual do item VI.6 com início em 2020 e quantidade 3 vale 2 anos no interstício 2024-11-23 a 2026-11-23; artigo sem "Scopus" no texto fica no item VIII.11 com `INDEXACAO_NAO_COMPROVADA`.
+
+---
+
 ## Edge Cases
 
 Edge cases are usually unwanted-behavior (IF/THEN) or boundary (WHEN) criteria:
@@ -465,12 +489,23 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SEG-10 | P1: Correções da segunda rodada de validação | Design | Implementing |
 | SEG-11 | P1: Correções da segunda rodada de validação | Design | Implementing |
 | SEG-12 | P1: Correções da segunda rodada de validação | Design | Implementing |
+| TER-01 | P1: Correções da terceira rodada de validação | Design | Implementing |
+| TER-02 | P1: Correções da terceira rodada de validação | Design | Implementing |
+| TER-03 | P1: Correções da terceira rodada de validação | Design | Implementing |
+| TER-04 | P1: Correções da terceira rodada de validação | Design | Implementing |
+| TER-05 | P1: Correções da terceira rodada de validação | Design | Implementing |
+| TER-06 | P1: Correções da terceira rodada de validação | Design | Implementing |
+| TER-07 | P1: Correções da terceira rodada de validação | Design | Implementing |
+| TER-08 | P1: Correções da terceira rodada de validação | Design | Implementing |
+| TER-09 | P1: Correções da terceira rodada de validação | Design | Implementing |
+| TER-10 | P1: Correções da terceira rodada de validação | Design | Implementing |
+| TER-11 | P1: Correções da terceira rodada de validação | Design | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 117 total, 117 mapped to tasks, 0 unmapped
+**Coverage:** 128 total, 128 mapped to tasks, 0 unmapped
 
 ---
 

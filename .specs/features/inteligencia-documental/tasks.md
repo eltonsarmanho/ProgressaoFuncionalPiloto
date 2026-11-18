@@ -126,6 +126,14 @@ Defeitos da segunda execução real (`corpus-reports/ANALISE.md`, local) e lacun
 T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → T92 → T93 → T94 → T95
 ```
 
+### Phase 14: Correções da terceira rodada
+
+Defeitos da terceira execução real (`corpus-reports/ANALISE.md`, local: D2 e D4) e lacunas FT-19..FT-27 da terceira verificação (`validation.md`), uma tarefa por lacuna, da mais grave à mais leve. Os testes usam só texto sintético; nenhum documento real, MariTalk, VM, push ou deploy. Fase maior que o orçamento por ser uma cadeia de correções independentes, ordenadas pela gravidade. A guarda de nome próprio (T102) vem antes da reunião de atividades repetidas (T103) porque esta reutiliza aquela.
+
+```
+T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T105 → T106
+```
+
 ---
 
 ## Task Breakdown
@@ -2687,10 +2695,304 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 ---
 
+### T96: Prazo "e meio" e prazos ambíguos
+
+**What**: `parse_term_months` lê "e meio" e "e meia" ("um ano e meio" = 18 meses, "dois anos e meio" = 30), "meio ano" e "seis meses"; recusa dois valores do mesmo tipo, anos e meses separados, "1 ano e 12 meses", mês e meio e a prorrogação como único valor ("prorrogável por mais 2 anos"); lê só o prazo que vem antes da prorrogação; aceita dez anos exatos e o singular "mês". Arquivos: `term_rules.py`, `test_term_rules.py` e `test_document_analyzer_term.py`.
+**Where**: `backend/app/domain/rules/term_rules.py`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `numerals_from_words`, `normalize_title`
+**Requirement**: TER-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] "um ano e meio" = 18 e "dois anos e meio" = 30 meses; "meio ano" = 6; no analisador "por um ano e meio" a partir de 09/08/2024 deriva 2026-02-09
+- [ ] "por 2 (dois) anos, prorrogável por mais 2 (dois) anos" = 24 meses; "prorrogável por mais 2 anos" sozinho, "2 anos e depois 6 meses", "1 ano e 12 meses", "um mês e meio" e "10 anos e 1 mês" não derivam
+- [ ] Dez anos exatos e "1 mês" são lidos; "2,5 anos" não é lido
+- [ ] Mutantes N02, N03, N04, N06, N09 e N10 da terceira verificação morrem (cópia de arquivo, comando no corpo do commit)
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(documents): read "e meio" terms and refuse ambiguous terms`
+
+---
+
+### T97: Período da atividade criada e unidade da tabela no analisador
+
+**What**: Fixa por teste que `period_start` e `period_end` (a data final derivada) chegam à atividade criada por `process_document` e à API, e que o analisador, com a `table_version` oficial, decide o item por ano pela unidade da tabela (VI.6 por ano, item por ação sem período aberto, taxonomia fora da lista com unidade por ano). Arquivos: testes de `document_analyzer` e de `doc_usecases`.
+**Where**: `backend/tests/unit/application/test_document_analyzer_table_unit.py`
+**Depends on**: T96
+**Reuses**: Fixtures `analyzer_fakes`, `ufpa.json` e `process_document`
+**Requirement**: TER-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Atividade criada da portaria com prazo tem `period_start == 2024-08-09` e `period_end == 2026-08-09`, e a API devolve as duas datas
+- [ ] Com a tabela oficial, VI.6 sem data final fica aberto com `DATA_FIM_AUSENTE` e revisão; um item por ação com só o início não vai para revisão e não ganha `DATA_FIM_AUSENTE`; um item por ano fora da lista de taxonomias também é aberto
+- [ ] Mutantes PE01, PE02, A05, A14, A06 e A08 da terceira verificação morrem (cópia de arquivo, comando no corpo do commit)
+- [ ] Gate full passa
+
+**Tests**: unit + integration
+**Gate**: full
+
+**Commit**: `test(documents): pin the derived period and the table unit path`
+
+---
+
+### T98: Papel de coordenação a poucas palavras do nome
+
+**What**: `confirm_research_coordination` reconhece "coordenou", "coordenador(a)", "coordena", "lidera", "liderou", "líder" e "responsável pelo projeto", e exige o nome do docente e a palavra de papel a no máximo 8 palavras um do outro no mesmo período do texto (parágrafo; quebra de linha dentro dele é permitida). Arquivos: `grounding.py` (posições do nome), `suggestion_rules.py` e testes.
+**Where**: `backend/app/domain/rules/suggestion_rules.py`
+**Depends on**: T97
+**Reuses**: `professor_named_in_text`, `normalize_title`
+**Requirement**: TER-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Cada palavra de papel mantém V.1 com o nome a até 8 palavras; 9 palavras de distância dão sem item; a quebra de linha dentro do parágrafo não separa nome e papel
+- [ ] Outro coordenador, "coordenado por" e o docente só participante dão sem item
+- [ ] "Coordenadoria" não é papel; texto sem "pesquisa", "projeto" ou "grupo" dá sem item (mutante U07)
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(suggestions): read coordination verbs near the professor name`
+
+---
+
+### T99: Nome de unidade de extensão não confirma curso nem projeto
+
+**What**: A retirada do nome de unidade (Coordenadoria de Ações de Extensão, Diretoria, Pró-Reitoria, Centro, Núcleo, Departamento e Instituto de Extensão, PROEX, "Universidade ... Extensão") vale para o curso de extensão (VII.9) e para o projeto de extensão (IV.1, IV.2), que passam a exigir "extensão" na natureza da atividade. Arquivos: `suggestion_rules.py` e testes.
+**Where**: `backend/app/domain/rules/suggestion_rules.py`
+**Depends on**: T98
+**Reuses**: `_EXTENSION_UNIT`, `_EXTENSION_NATURE`
+**Requirement**: TER-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Cada nome de unidade da lista, sozinho, não confirma VII.9 nem IV.1/IV.2; com "curso de extensão" ou "projeto de extensão" no texto confirma
+- [ ] Mutantes U01 e U02 da terceira verificação morrem (cópia de arquivo, comando no corpo do commit)
+- [ ] O teste que fixava o aceite de IV.2 por "Pró-Reitoria de Extensão" é substituído pelo novo requisito (mudança declarada no corpo do commit)
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(suggestions): ignore extension unit names for courses and projects`
+
+---
+
+### T100: Quantidade de atividade por ano sem data final limitada pelo intersticio
+
+**What**: No motor de pontuação, a atividade de item por ano com só a data de início (inclusive a cadastrada à mão) pontua com a quantidade `min(informada, anos completos no intersticio)` (sem quantidade informada, os anos completos) e ganha o alerta `DATA_FIM_AUSENTE`; duas atividades sem item não são o mesmo item (D04). Decisão registrada em `spec.md` (TER-05) e AD-010. Arquivos: `scoring_periods.py`, `quantity_rules.py`, `scoring_engine.py`, `scoring_alerts.py`, `labels.ts` e testes.
+**Where**: `backend/app/domain/rules/scoring_engine.py`
+**Depends on**: T99
+**Reuses**: `_exercise_years`, `evaluate_period`, `ALERT_CODE_LABELS`
+**Requirement**: TER-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] VI.6 com início em 2020 e quantidade 3 no intersticio 2024-11-23 a 2026-11-23 vale 2 anos (60 pontos), não 90; quantidade 1 continua 1; sem quantidade vale os anos completos
+- [ ] Período fechado, evento datado e item que não é por ano não mudam; a linha traz `DATA_FIM_AUSENTE` só no período aberto
+- [ ] Duas atividades sem grupo e item de títulos diferentes e datas iguais não são duplicadas (D04)
+- [ ] O rótulo em português do alerta aparece na lista de pontuação
+- [ ] Gate build passa (backend e frontend)
+
+**Tests**: unit + unit (frontend)
+**Gate**: build
+
+**Commit**: `fix(scoring): cap the open ended yearly quantity at the interstice years`
+
+---
+
+### T101: Artigo indexado só com prova de indexação
+
+**What**: `confirm_article_indexing` mantém VIII.9 e VIII.10 só se o texto traz prova de indexação (Scopus, Web of Science, JCR, Qualis, SciELO, DOAJ, "indexado", "indexação"); sem ela troca para VIII.11, emite `INDEXACAO_NAO_COMPROVADA` e deixa a atividade em revisão; rótulo em português. Arquivos: `suggestion_rules.py`, `document.py`, `document_analyzer.py`, `labels.ts` e testes.
+**Where**: `backend/app/domain/rules/suggestion_rules.py`
+**Depends on**: T100
+**Reuses**: `confirm_extension_course`, `DOCUMENT_CODE_LABELS`
+**Requirement**: TER-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Artigo sintético com "Scopus" ou "Qualis A1" mantém o item; sem prova vira VIII.11 com `INDEXACAO_NAO_COMPROVADA` e revisão; "não indexado" não é prova
+- [ ] As descrições de VIII.9, VIII.10 e VIII.11 em `ufpa.json` são lidas pelo teste e a regra só vale para os itens que exigem indexação
+- [ ] O rótulo do aviso tem teste no frontend
+- [ ] Gate build passa (backend e frontend)
+
+**Tests**: unit + unit (frontend)
+**Gate**: build
+
+**Commit**: `fix(suggestions): require indexing evidence for the indexed article items`
+
+---
+
+### T102: Títulos que diferem por um nome próprio não são duplicados
+
+**What**: `find_duplicates` não marca como duplicados dois títulos do mesmo item de Jaccard 0,8 ou mais que diferem por uma palavra capitalizada de cada lado, sem correspondente parecido no outro título (nome de aluno ou de membro de banca); igualdade exata e texto igual continuam marcando. Regra num módulo de domínio reutilizável (`title_similarity.py`). Arquivos: `title_similarity.py`, `scoring_duplicates.py` e testes.
+**Where**: `backend/app/domain/rules/title_similarity.py`
+**Depends on**: T101
+**Reuses**: `scoring_duplicates._similar`
+**Requirement**: TER-08
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Duas bancas do mesmo item e dia de títulos que diferem por um nome (Jaccard 0,82 a 0,87) não são duplicadas; com a diferença em palavra minúscula ou parecida (erro de OCR) continuam duplicadas
+- [ ] Título igual e texto igual continuam duplicados; a justificativa continua valendo
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(scoring): keep titles that differ by a proper name apart`
+
+---
+
+### T103: Atividades repetidas do mesmo documento com título de OCR
+
+**What**: `_collapse_repeated` reúne, no mesmo documento, as atividades de mesma página, tipo e nível, datas iguais ou ausentes e títulos de Jaccard 0,6 ou mais ou um contendo o outro, com `ATIVIDADE_REPETIDA`; datas, páginas e títulos distintos e a guarda de nome próprio mantêm as atividades separadas. Arquivos: `document_analyzer.py` e testes.
+**Where**: `backend/app/application/services/document_analyzer.py`
+**Depends on**: T102
+**Reuses**: `title_similarity`, `_same_activity`
+**Requirement**: TER-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] "RPA na Gestao W A | Academica" e "RPA na Gestao Academica" (Jaccard 0,67, mesma página, tipo e datas) viram uma atividade e um `ATIVIDADE_REPETIDA`
+- [ ] Título que contém o outro reúne; datas diferentes, páginas diferentes e dois membros de banca de nomes diferentes não reúnem
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(documents): collapse noisy duplicate titles of one document`
+
+---
+
+### T104: Hash de texto vazio não iguala documentos
+
+**What**: `content_hash` e a consulta de chaves de conteúdo ignoram o documento cujo texto normalizado tem menos de 50 caracteres; a fronteira de página entra no hash por separador que o texto não contém (D10). Arquivos: `scoring_duplicates.py`, `repositories.py` e testes.
+**Where**: `backend/app/domain/rules/scoring_duplicates.py`
+**Depends on**: T103
+**Reuses**: `content_hash`, `content_keys_for_activities`
+**Requirement**: TER-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Dois documentos com texto vazio ou de menos de 50 caracteres não geram duplicidade; texto de 50 caracteres igual gera
+- [ ] "ab"+"c" e "a"+"bc" têm hashes diferentes (D10)
+- [ ] Gate full passa
+
+**Tests**: unit + integration
+**Gate**: full
+
+**Commit**: `fix(scoring): do not match documents without readable text`
+
+---
+
+### T105: Prompt do prazo fixado por teste
+
+**What**: Teste do prompt do sistema: nomeia o campo `term`, manda devolver o trecho literal e proíbe calcular a data final (M02, M03, C01). Arquivos: teste de `maritalk`.
+**Where**: `backend/tests/unit/infrastructure/test_maritalk_prompt.py`
+**Depends on**: T104
+**Reuses**: `SYSTEM_PROMPT` de `maritalk.py`
+**Requirement**: TER-10
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O prompt traz `term`, "trecho literal" e a proibição de calcular a data final
+- [ ] Mutantes M02, M03 e C01 da terceira verificação morrem (cópia de arquivo, comando no corpo do commit)
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `test(ai): pin the prompt wording about the literal term`
+
+---
+
+### T106: REQUIRE_DIST=0 não conta como definido
+
+**What**: O teste de varredura trata `REQUIRE_DIST` ausente, vazio, `0` e `false` como não definido; corrige a nota "3 deselected" e o título de T94 em `validation.md`. Arquivos: `bundle.test.ts` e `validation.md`.
+**Where**: `frontend/tests/bundle.test.ts`
+**Depends on**: T105
+**Reuses**: `REQUIRE_DIST` de T91
+**Requirement**: TER-11
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `REQUIRE_DIST=0` sem `dist` pula; `REQUIRE_DIST=1` sem `dist` falha
+- [ ] O parser da variável é função testada com valores `1`, `true`, `0`, `false`, vazio e ausente
+- [ ] Gate build passa
+
+**Tests**: unit (frontend)
+**Gate**: build
+
+**Commit**: `test(frontend): treat require dist zero as not set`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11 → Phase 12 → Phase 13
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11 → Phase 12 → Phase 13 → Phase 14
 
 Phase 1:  T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 Phase 2:  T9 → T10 → T11 → T12 → T13 → T14 → T15
@@ -2705,4 +3007,5 @@ Phase 10:  T51 → T52 → T53 → T54
 Phase 11:  T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → T65 → T66 → T67 → T68 → T69 → T70
 Phase 12:  T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → T81
 Phase 13:  T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → T92 → T93 → T94 → T95
+Phase 14:  T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T105 → T106
 ```
