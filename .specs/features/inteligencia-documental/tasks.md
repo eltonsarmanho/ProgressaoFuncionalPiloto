@@ -2575,9 +2575,9 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 **Done when**:
 
-- [ ] Sem `dist` e com `REQUIRE_DIST=1`: o teste falha com mensagem clara; sem `REQUIRE_DIST`, pula como antes
-- [ ] A linha do Build gate de `tasks.md` gera o pacote antes dos testes
-- [ ] Gate build do frontend passa na ordem nova
+- [x] Sem `dist` e com `REQUIRE_DIST=1`: o teste falha com mensagem clara; sem `REQUIRE_DIST`, pula como antes
+- [x] A linha do Build gate de `tasks.md` gera o pacote antes dos testes
+- [x] Gate build do frontend passa na ordem nova
 
 **Tests**: unit (frontend)
 **Gate**: build

@@ -12,6 +12,9 @@ import { afterEach, describe, expect, it } from "vitest";
 const SCRIPT = resolve(import.meta.dirname, "../../scripts/check_bundle_no_secrets.sh");
 const DIST = resolve(import.meta.dirname, "../dist");
 
+// The Build gate builds first and sets REQUIRE_DIST=1: then a missing dist fails instead of skipping.
+const REQUIRE_DIST = Boolean(process.env.REQUIRE_DIST);
+
 const scan = (dir: string) => spawnSync("bash", [SCRIPT, dir], { encoding: "utf8" });
 
 const created: string[] = [];
@@ -24,7 +27,8 @@ function bundleWith(content: string): string {
 afterEach(() => created.splice(0).forEach((dir) => rmSync(dir, { recursive: true, force: true })));
 
 describe("pacote de produção sem segredos", () => {
-  it.skipIf(!existsSync(DIST))("o pacote em dist (npm run build) não contém MARITALK nem token de chave", () => {
+  it.skipIf(!REQUIRE_DIST && !existsSync(DIST))("o pacote em dist (npm run build) não contém MARITALK nem token de chave", () => {
+    expect(existsSync(DIST), "frontend/dist não existe: rode npm run build antes (REQUIRE_DIST está definido)").toBe(true);
     const outcome = scan(DIST);
     expect(outcome.stderr).toBe("");
     expect(outcome.status).toBe(0);
