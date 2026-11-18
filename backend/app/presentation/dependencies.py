@@ -31,7 +31,9 @@ from app.application.use_cases.evidences import LinkEvidence, ListEvidences, Unl
 from app.application.use_cases.processes import (
     ChangeProcessStatus,
     CreateProcess,
+    DeleteProcess,
     GetProcess,
+    GetProcessDeletePreview,
     GetProcessHistory,
     ListProcesses,
     UpdateProcess,
@@ -86,6 +88,7 @@ from app.infrastructure.files.inspector import PillowFileInspector
 from app.infrastructure.ocr.extractor import DocumentTextExtractor
 from app.infrastructure.security import tokens
 from app.infrastructure.security.argon2_hasher import Argon2PasswordHasher
+from app.infrastructure.storage.generated_storage import LocalGeneratedStorage
 from app.infrastructure.storage.local_storage import LocalFileStorage
 
 
@@ -114,6 +117,8 @@ class Container:
     list_processes: ListProcesses
     update_process: UpdateProcess
     change_process_status: ChangeProcessStatus
+    delete_process: DeleteProcess
+    process_delete_preview: GetProcessDeletePreview
     process_history: GetProcessHistory
     list_career_versions: ListCareerVersions
     create_career_version: CreateCareerVersion
@@ -215,6 +220,10 @@ def build_container(
         list_processes=ListProcesses(uow_factory, audit, policy),
         update_process=UpdateProcess(uow_factory, audit, policy),
         change_process_status=ChangeProcessStatus(uow_factory, audit, policy),
+        delete_process=DeleteProcess(
+            uow_factory, audit, policy, storage, LocalGeneratedStorage(settings.storage_dir)
+        ),
+        process_delete_preview=GetProcessDeletePreview(uow_factory, audit, policy),
         process_history=GetProcessHistory(uow_factory, audit, policy),
         list_career_versions=ListCareerVersions(uow_factory),
         create_career_version=CreateCareerVersion(uow_factory, audit),

@@ -119,9 +119,18 @@ class ProcessOut(ProcessCreate):
         )
 
 
+class DeletePreviewOut(BaseModel):
+    """What a deletion removes: numbers only, no personal data."""
+
+    documents: int
+    activities: int
+    generated_documents: int
+
+
 class ProcessSummary(BaseModel):
     id: UUID
     status: ProcessStatus
+    version: int
     professor_id: UUID
     professor_name: str
     unit_id: UUID
@@ -140,6 +149,7 @@ class ProcessSummary(BaseModel):
         return cls(
             id=p.id,
             status=p.status,
+            version=p.version,
             professor_id=p.professor_id,
             professor_name=r.professor_name,
             unit_id=p.unit_id,
