@@ -2710,11 +2710,11 @@ T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T10
 
 **Done when**:
 
-- [ ] "um ano e meio" = 18 e "dois anos e meio" = 30 meses; "meio ano" = 6; no analisador "por um ano e meio" a partir de 09/08/2024 deriva 2026-02-09
-- [ ] "por 2 (dois) anos, prorrogável por mais 2 (dois) anos" = 24 meses; "prorrogável por mais 2 anos" sozinho, "2 anos e depois 6 meses", "1 ano e 12 meses", "um mês e meio" e "10 anos e 1 mês" não derivam
-- [ ] Dez anos exatos e "1 mês" são lidos; "2,5 anos" não é lido
-- [ ] Mutantes N02, N03, N04, N06, N09 e N10 da terceira verificação morrem (cópia de arquivo, comando no corpo do commit)
-- [ ] Gate full passa
+- [x] "um ano e meio" = 18 e "dois anos e meio" = 30 meses; "meio ano" = 6; no analisador "por um ano e meio" a partir de 09/08/2024 deriva 2026-02-09
+- [x] "por 2 (dois) anos, prorrogável por mais 2 (dois) anos" = 24 meses; "prorrogável por mais 2 anos" sozinho, "2 anos e depois 6 meses", "1 ano e 12 meses", "um mês e meio" e "10 anos e 1 mês" não derivam
+- [x] Dez anos exatos e "1 mês" são lidos; "2,5 anos" não é lido
+- [x] Mutantes N02, N03, N04, N06, N09 e N10 da terceira verificação morrem (cópia de arquivo, comando no corpo do commit)
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

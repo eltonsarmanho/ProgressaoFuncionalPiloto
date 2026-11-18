@@ -77,6 +77,35 @@ def test_other_wordings_of_the_term_are_read(term, end):
     assert suggested.extracted.end_date == end
 
 
+@pytest.mark.parametrize(
+    ("term", "end"),
+    [
+        ("por um ano e meio", date(2026, 2, 9)),
+        ("por dois anos e meio", date(2027, 2, 9)),
+        ("por meio ano", date(2025, 2, 9)),
+        ("por 2 (dois) anos, prorrogavel por mais 2 (dois) anos", date(2026, 8, 9)),
+    ],
+)
+def test_a_half_and_an_extension_after_the_term_are_read_as_written(term, end):
+    text = PORTARIA.replace(TERM, term)
+    result = analyze(director(term=term), text)
+    [suggested] = result.activities
+    assert suggested.extracted.end_date == end
+    assert alerts(result, DocAlertCode.DATA_FIM_DERIVADA) == [("end_date", 0)]
+
+
+@pytest.mark.parametrize(
+    "term",
+    ["prorrogavel por mais 2 (dois) anos", "por 1 ano e 12 meses", "por 1 mes e meio"],
+)
+def test_an_ambiguous_term_derives_no_end_date(term):
+    text = PORTARIA.replace(TERM, term)
+    result = analyze(director(term=term), text)
+    assert result.activities[0].extracted.end_date is None
+    assert alerts(result, DocAlertCode.DATA_FIM_DERIVADA) == []
+    assert (DocAlertCode.DATA_FIM_AUSENTE, 0) in [(a.code, a.activity_index) for a in result.alerts]
+
+
 def test_a_term_that_is_not_in_the_page_is_nulled_and_derives_nothing():
     result = analyze(director(term="por 5 (cinco) anos"))
     [suggested] = result.activities
