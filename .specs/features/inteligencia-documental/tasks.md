@@ -3961,9 +3961,9 @@ T141 → T142 → T143 → T144 → T145
 
 **Done when**:
 
-- [ ] Todas `FORA` com ao menos uma data → fora; `FORA` e `DENTRO` → dentro; `FORA` e `PARCIAL` → dentro; lista vazia ou sem data → dentro
-- [ ] O alerta novo existe e é aceito por quem lê e grava `DocAlertCode`
-- [ ] Gate quick passa
+- [x] Todas `FORA` com ao menos uma data → fora; `FORA` e `DENTRO` → dentro; `FORA` e `PARCIAL` → dentro; lista vazia ou sem data → dentro
+- [x] O alerta novo existe e é aceito por quem lê e grava `DocAlertCode`
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

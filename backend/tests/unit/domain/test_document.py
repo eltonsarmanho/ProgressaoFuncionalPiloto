@@ -55,8 +55,9 @@ def test_alert_codes_are_the_design_names_plus_those_of_the_real_validation():
         "DATA_FIM_AUSENTE",  # SEG-02
         "INDEXACAO_NAO_COMPROVADA",  # TER-06
         "ENQUADRADO_COMO_CAPACITACAO",  # CER-02
+        "DOCUMENTO_FORA_DO_INTERSTICIO",  # FORA-01
     }
-    assert len(DocAlertCode) == 19
+    assert len(DocAlertCode) == 20
 
 
 def test_pending_goes_to_processing():

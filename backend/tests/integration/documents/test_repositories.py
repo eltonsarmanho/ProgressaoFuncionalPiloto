@@ -9,6 +9,7 @@ from sqlalchemy import text
 
 from app.domain.entities.activity import ActivityStatus
 from app.domain.entities.document import (
+    DocAlertCode,
     DocumentStatus,
     PageText,
     RunStatus,
@@ -55,6 +56,28 @@ def test_document_round_trip(uow_factory, process, base):
         loaded = uow.documents.get(document.id)
 
     assert loaded == document
+
+
+def test_the_outside_interstice_alert_is_stored_on_the_document_and_in_the_run(
+    uow_factory, process, base
+):
+    code = DocAlertCode.DOCUMENTO_FORA_DO_INTERSTICIO.value
+    document = make_document(
+        process, base["admin"].id, status=DocumentStatus.PROCESSADO, status_code=code
+    )
+    add_documents(uow_factory, document)
+    alert = {"code": code, "field": None, "activity_index": None}
+    run = make_run(document.id, warnings=(alert,))
+    with uow_factory() as uow:
+        uow.extractions.add_run(run)
+        uow.commit()
+
+    with uow_factory() as uow:
+        loaded = uow.documents.get(document.id)
+        [stored] = uow.extractions.list_runs(document.id)
+
+    assert (loaded.status, loaded.status_code) == (DocumentStatus.PROCESSADO, code)
+    assert stored.warnings == (alert,)
 
 
 def test_get_unknown_document_returns_none(uow_factory):
