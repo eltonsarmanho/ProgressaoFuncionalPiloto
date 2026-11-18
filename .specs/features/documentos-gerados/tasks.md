@@ -321,9 +321,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Os testes existentes do extrator (`test_maritalk_prompt.py` e vizinhos) passam sem alteração depois da extração
-- [ ] Teste novo: `MariTalkClient.chat(...)` repete uma vez com o modelo reserva quando o erro é de modelo e respeita o prazo total informado
-- [ ] Gate quick passa; 3+ testes novos
+- [x] Os testes existentes do extrator (`test_maritalk_prompt.py` e vizinhos) passam sem alteração depois da extração
+- [x] Teste novo: `MariTalkClient.chat(...)` repete uma vez com o modelo reserva quando o erro é de modelo e respeita o prazo total informado
+- [x] Gate quick passa; 3+ testes novos
 
 **Tests**: unit
 **Gate**: quick
