@@ -3313,10 +3313,10 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] A página girada com recorte menor só na largura e só na altura é rasterizada a 200 dpi com o alerta `PAGINA_RASTERIZADA` (M29 morto); o JPEG da página rasterizada tem qualidade 92 medida pela tabela de quantização (M28 morto)
-- [ ] O sumário mostra `Comprovante p. N` para uma página única e `p. N a M` só para várias (M41 morto)
-- [ ] A origem do sumário traz a página de origem quando ela difere do número do Comprovante (M43 morto)
-- [ ] Cada mutante é morto numa cópia isolada da árvore (comandos no corpo do commit); gate quick passa; 4+ testes novos
+- [x] A página girada com recorte menor só na largura e só na altura é rasterizada a 200 dpi com o alerta `PAGINA_RASTERIZADA` (M29 morto); o JPEG da página rasterizada tem qualidade 92 medida pela tabela de quantização (M28 morto); o recorte em um só eixo vale para a largura e para a altura
+- [x] O sumário mostra `Comprovante p. N` para uma página única e `p. N a M` só para várias (M41 morto)
+- [x] A origem do sumário traz a página de origem quando ela difere do número do Comprovante (M43 morto)
+- [x] Cada mutante é morto numa cópia isolada da árvore (comandos no corpo do commit); gate quick passa; 4 testes novos
 
 **Tests**: unit
 **Gate**: quick

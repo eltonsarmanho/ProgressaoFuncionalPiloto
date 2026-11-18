@@ -128,6 +128,19 @@ def test_an_activity_takes_two_lines_with_its_origin_and_pages(tmp_path):
     assert shown[start + 1] == f"{origin} - Comprovante p. {first} a {first + 1}"
 
 
+def test_an_activity_of_one_page_says_one_page_and_names_the_source_page_apart(tmp_path):
+    activity = make_activity(1, 1, title="Aula de Álgebra")
+    document_id = uuid4()
+    plan = plan_for([activity], attached_links(activity, document_id, [9]))
+    pdf = render(tmp_path, plan, {document_id: "declaracao.pdf"})
+
+    shown = rows(pdf[1])
+    start = next(i for i, line in enumerate(shown) if line.startswith("Aula de Álgebra"))
+    first = plan.toc[-1].first_page
+    assert first != 9  # the number in the Comprovante is not the page of the source document
+    assert shown[start + 1] == f"origem: declaracao.pdf, p. 9 - Comprovante p. {first}"
+
+
 def test_a_remission_and_an_activity_without_pages_are_written(tmp_path):
     one, two, none = make_activity(1, 1), make_activity(1, 1), make_activity(1, 1)
     document_id = uuid4()

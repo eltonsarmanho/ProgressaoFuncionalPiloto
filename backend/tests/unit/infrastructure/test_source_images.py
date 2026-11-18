@@ -1,5 +1,6 @@
 """CMP-08, CMP-12, CMP-13: images and rasterized pages as original pages of the Comprovante."""
 
+import io
 import subprocess
 import sys
 from pathlib import Path
@@ -7,6 +8,7 @@ from uuid import uuid4
 
 import pymupdf
 import pytest
+from PIL import Image
 
 from app.domain.entities.generated import GenerationAlertCode, GenerationCode
 from app.domain.rules.comprovante_plan import ComprovanteRefused
@@ -146,6 +148,44 @@ def test_the_rasterized_page_keeps_what_is_visible():
     assert len(drawn) == len(seen)
     mean_gap = sum(abs(a - b) for a, b in zip(drawn, seen, strict=True)) / len(seen)
     assert mean_gap < 4  # JPEG 92 noise only; a lost or shifted picture is far above this
+
+
+def jpeg_tables(data: bytes) -> dict:
+    return dict(Image.open(io.BytesIO(data)).quantization)
+
+
+def test_the_rasterized_page_is_a_jpeg_of_quality_92():
+    src = cropped_and_rotated()
+    out = pymupdf.open()
+    attach(out, src, 0, 6)
+    out = reopened(out)
+    stored = out.extract_image(out[0].get_images(full=True)[0][0])["image"]
+
+    reference = io.BytesIO()
+    Image.new("RGB", (16, 16)).save(reference, "JPEG", quality=92)
+
+    assert jpeg_tables(stored) == jpeg_tables(reference.getvalue())
+
+
+@pytest.mark.parametrize(
+    "crop", [pymupdf.Rect(40, 0, 500, 842), pymupdf.Rect(0, 60, 595, 700)], ids=["width", "height"]
+)
+def test_a_rotated_page_cropped_in_one_axis_only_is_rasterized_and_keeps_what_is_visible(crop):
+    doc = source_pdf(pages=1)
+    doc[0].set_cropbox(crop)
+    doc[0].set_rotation(90)
+    src = reopened(doc)
+    out = pymupdf.open()
+
+    alert = attach(out, src, 0, 6)
+    out = reopened(out)
+    zoom = 200 / 72
+    area = pymupdf.Rect(0, 0, out[0].rect.width, out[0].rect.height - STRIP_HEIGHT)
+    drawn, seen = render(out[0], clip=area, zoom=zoom), render(src[0], zoom=zoom)
+
+    assert alert is not None and alert.code is GenerationAlertCode.PAGINA_RASTERIZADA
+    assert len(drawn) == len(seen)
+    assert sum(abs(a - b) for a, b in zip(drawn, seen, strict=True)) / len(seen) < 4
 
 
 def test_a_rotated_page_without_a_crop_and_a_crop_without_rotation_stay_vector():
