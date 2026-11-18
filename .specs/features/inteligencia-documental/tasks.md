@@ -2139,10 +2139,10 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 **Done when**:
 
-- [ ] 429 sem `message` mostra o texto padrão de excesso de envios ao lado do arquivo (mata F04)
-- [ ] O teste do pacote falha quando `frontend/dist` traz `MARITALK` ou token com forma de chave e passa no pacote limpo; sem `dist` ele é pulado com motivo explícito, e o script de CI exige o `dist`
-- [ ] O script sai com código diferente de zero num diretório com a string proibida (teste do script)
-- [ ] Gate full e build do frontend passam
+- [x] 429 sem `message` mostra o texto padrão de excesso de envios ao lado do arquivo (mata F04)
+- [x] O teste do pacote falha quando `frontend/dist` traz `MARITALK` ou token com forma de chave e passa no pacote limpo; sem `dist` ele é pulado com motivo explícito, e o script de CI exige o `dist`
+- [x] O script sai com código diferente de zero num diretório com a string proibida (teste do script)
+- [x] Gate full e build do frontend passam
 
 **Tests**: unit (frontend) + script
 **Gate**: build

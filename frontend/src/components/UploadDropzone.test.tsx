@@ -113,6 +113,15 @@ describe("TELA-05: resultado por arquivo", () => {
     expect(onUploaded).not.toHaveBeenCalled();
   });
 
+  it("429 sem mensagem mostra o texto padrão de excesso de envios ao lado do arquivo", async () => {
+    const { user } = setup({ [POST]: { status: 207, body: [result({ original_name: "z.pdf", status_code: 429 })] } });
+    await user.upload(screen.getByLabelText(/Selecionar arquivos/), pdf("z.pdf"));
+
+    expect(await screen.findByRole("listitem")).toHaveTextContent(
+      "z.pdf: Muitos envios em pouco tempo. Aguarde um minuto e envie de novo.",
+    );
+  });
+
   it("422 de limite de documentos aparece ao lado do arquivo", async () => {
     const { user } = setup({
       [POST]: { status: 207, body: [result({ original_name: "w.pdf", status_code: 422, field: "limite", message: "O processo já tem 200 documentos" })] },
