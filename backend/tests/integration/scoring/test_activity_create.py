@@ -199,7 +199,9 @@ def test_owner_docente_and_unit_secretaria_may_create(world):
         assert create(world, actor=actor).process_id == world.process.id
 
 
-def test_points_override_only_for_weekly_load_criteria_and_with_justification(points_chosen):
+def test_points_override_only_for_weekly_load_criteria_and_without_needing_a_justification(
+    points_chosen,
+):
     world = points_chosen
     weekly = {
         "group_number": 1,
@@ -216,9 +218,13 @@ def test_points_override_only_for_weekly_load_criteria_and_with_justification(po
     assert event.justification == "Declaração"
     assert event.changes["points_override"] == {"before": None, "after": "24"}
 
-    with pytest.raises(ValidationFailed) as no_reason:
-        world.create.execute(world.admin, world.process.id, data(**weekly))
-    assert no_reason.value.field == "justificativa"
+    # UIM-16: no justification needed; the audit event simply has none
+    without = world.create.execute(world.admin, world.process.id, data(**weekly))
+    assert without.points_override == D("24")
+    with world.uow_factory() as uow:
+        [event_without] = uow.audit.list_for("activity", str(without.id))
+    assert event_without.justification is None
+    assert event_without.changes["points_override"] == {"before": None, "after": "24"}
     with pytest.raises(ValidationFailed) as per_unit:
         world.create.execute(
             world.admin,
@@ -241,13 +247,16 @@ def test_points_override_needs_a_chosen_table(world):
     assert error.value.field == "points_override"
 
 
-def test_candidate_items_are_saved_with_their_justification(official_chosen):
+def test_candidate_items_are_saved_with_or_without_a_justification(official_chosen):
+    """UIM-16: the justification of a candidate item is optional."""
     candidate = Candidate(4, 2, "Também se enquadra em extensão")
+    bare = Candidate(5, 1, "")
 
-    activity = create(official_chosen, group_number=3, item_number=2, candidates=(candidate,))
+    activity = create(
+        official_chosen, group_number=3, item_number=2, candidates=(candidate, bare)
+    )
 
-    assert activity.candidates == (candidate,)
-    assert field_of_failure(official_chosen, candidates=(Candidate(4, 2, " "),)) == "candidates"
+    assert activity.candidates == (candidate, bare)
 
 
 def test_group_one_student_evaluation_item_keeps_informed_points(points_chosen):

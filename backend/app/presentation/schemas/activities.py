@@ -48,7 +48,7 @@ class CandidateIn(BaseModel):
 
     group_number: int
     item_number: int
-    justification: str
+    justification: str = ""
 
 
 class ActivityFields(BaseModel):

@@ -61,18 +61,24 @@ def failing_field(error) -> str:
         {"informed_points": D("3")},
     ],
 )
-def test_changing_scoring_inputs_without_justification_is_422(world, activity, changes):
-    with pytest.raises(ValidationFailed) as error:
-        world.update.execute(
-            world.admin, activity.id, as_data(activity, **changes), activity.version, "  "
-        )
+def test_changing_scoring_inputs_without_justification_is_saved_and_audited(
+    world, activity, changes
+):
+    """UIM-16: item, quantity, hours and points change without a justification."""
+    updated = world.update.execute(
+        world.admin, activity.id, as_data(activity, **changes), activity.version, "  "
+    )
 
-    assert failing_field(error) == "justificativa"
-    with world.uow_factory() as uow:
-        assert uow.activities.get(activity.id).version == activity.version
+    assert updated.version == activity.version + 1
+    for field, value in changes.items():
+        assert getattr(updated, field) == value
+    event = events(world, activity)[-1]
+    assert event.action is AuditAction.UPDATE
+    assert event.justification is None
+    assert set(event.changes) == set(changes)
 
 
-def test_points_override_change_needs_justification(points_chosen):
+def test_points_override_change_needs_no_justification(points_chosen):
     world = points_chosen
     activity = world.create.execute(
         world.admin,
@@ -87,16 +93,18 @@ def test_points_override_change_needs_justification(points_chosen):
         ),
     )
 
-    with pytest.raises(ValidationFailed) as error:
-        world.update.execute(
-            world.admin,
-            activity.id,
-            as_data(activity, points_override=D("24")),
-            activity.version,
-            None,
-        )
+    updated = world.update.execute(
+        world.admin,
+        activity.id,
+        as_data(activity, points_override=D("24")),
+        activity.version,
+        None,
+    )
 
-    assert failing_field(error) == "justificativa"
+    assert updated.points_override == D("24")
+    event = events(world, activity)[-1]
+    assert event.changes["points_override"] == {"before": None, "after": "24"}
+    assert event.justification is None
 
 
 def test_justified_change_is_saved_and_audited_with_before_and_after(world, activity):

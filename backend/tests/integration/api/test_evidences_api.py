@@ -119,24 +119,21 @@ def test_an_activity_created_through_the_api_starts_without_evidences(client, he
 # --- VINC-03: a document already linked to another activity --------------------------------
 
 
-def test_linking_a_document_already_linked_elsewhere_needs_a_justification(
+def test_linking_a_document_already_linked_elsewhere_needs_no_justification(
     client, headers, process, two_page_document
 ):
     first = new_activity(client, headers, process, "Primeira")
     second = new_activity(client, headers, process, "Segunda")
     assert link(client, headers, first, two_page_document).status_code == 201
 
-    refused = link(client, headers, second, two_page_document)
-    blank = link(client, headers, second, two_page_document, justificativa="   ")
-    accepted = link(
-        client, headers, second, two_page_document, justificativa="O mesmo documento comprova"
+    plain = link(client, headers, second, two_page_document)  # UIM-16: no justification
+    with_reason = link(
+        client, headers, second, two_page_document, page=2, justificativa="O mesmo documento"
     )
 
-    assert refused.status_code == 422
-    assert refused.json()["detail"][0]["field"] == "justificativa"
-    assert blank.status_code == 422
-    assert accepted.status_code == 201
-    assert len(client.get(f"/api/activities/{second['id']}").json()["evidences"]) == 1
+    assert plain.status_code == 201
+    assert with_reason.status_code == 201
+    assert len(client.get(f"/api/activities/{second['id']}").json()["evidences"]) == 2
 
 
 def test_the_same_activity_document_and_page_twice_is_409(

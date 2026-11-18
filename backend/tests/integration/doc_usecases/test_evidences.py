@@ -85,20 +85,22 @@ def test_same_activity_document_and_page_twice_gives_409_and_other_pages_are_fin
 
 
 @pytest.mark.parametrize("justification", [None, "", "   "])
-def test_linking_a_document_already_linked_elsewhere_needs_a_justification(
+def test_linking_a_document_already_linked_elsewhere_needs_no_justification(
     docs, ev, justification
 ):
+    """UIM-16: VINC-03 relaxed; the link is stored and audited without a justification."""
     w = docs.world
     document = two_page_doc(docs, "compartilhado")
     first = draft_activity(w, w.process, "Primeira")
     second = draft_activity(w, w.process, "Segunda")
     link(w, first, document)
 
-    with pytest.raises(ValidationFailed) as error:
-        ev.link.execute(w.docente, second.id, document.id, 1, justification)
+    evidence = ev.link.execute(w.docente, second.id, document.id, 1, justification)
 
-    assert error.value.field == "justificativa"
-    assert [e.activity_id for e in stored_links(docs, document)] == [first.id]
+    assert {e.activity_id for e in stored_links(docs, document)} == {first.id, second.id}
+    [event] = events(docs, evidence.id)
+    assert event.action is AuditAction.CREATE
+    assert event.justification is None
 
 
 def test_justified_link_is_stored_and_audited_with_the_justification(docs, ev):

@@ -91,8 +91,9 @@ class LinkEvidence(_EvidenceUseCase):
     ) -> ActivityEvidence:
         """Links an activity to a page of a document of the same process.
 
-        A document already linked to ANOTHER activity needs a justification (VINC-03); the
-        same (activity, document, page) twice is a Conflict (VINC-02).
+        The justification is optional, also for a document already linked to ANOTHER activity
+        (VINC-03 relaxed by UIM-16); the same (activity, document, page) twice is a Conflict
+        (VINC-02).
         """
         with self._uow_factory() as uow:
             activity = self._activity(uow, actor, activity_id)
@@ -107,14 +108,6 @@ class LinkEvidence(_EvidenceUseCase):
             if not 1 <= page <= document.page_count:
                 raise ValidationFailed("pagina", "Página fora do documento")
             justification = (justification or "").strip() or None
-            linked_elsewhere = any(
-                e.activity_id != activity.id for e in uow.evidences.list_for_document(document.id)
-            )
-            if linked_elsewhere and justification is None:
-                raise ValidationFailed(
-                    "justificativa",
-                    "Justificativa obrigatória: o documento já comprova outra atividade",
-                )
             evidence = ActivityEvidence(
                 id=uuid.uuid4(),
                 activity_id=activity.id,

@@ -151,16 +151,16 @@ def test_invalid_inputs_are_422_with_the_field_name(client, headers, chosen, cha
     field_error(client.post(activities_url(chosen), json=body(**changes), headers=headers), field)
 
 
-def test_points_override_without_justification_is_422_on_justificativa(
-    client, headers, points_chosen
-):
+def test_points_override_without_justification_is_saved(client, headers, points_chosen):
+    """UIM-16: manual points need no justification."""
     payload = body(
         points_override=5, group_number=1, academic_period="2023.1", level="GRADUACAO", horas=68
     )
 
-    field_error(
-        client.post(activities_url(points_chosen), json=payload, headers=headers), "justificativa"
-    )
+    response = client.post(activities_url(points_chosen), json=payload, headers=headers)
+
+    assert response.status_code == 201
+    assert response.json()["points_override"] == "5.00"
 
 
 def test_points_override_with_justification_is_saved_for_weekly_load(
@@ -228,13 +228,16 @@ def test_put_with_justification_updates_and_bumps_version(client, headers, chose
     assert (response.json()["quantidade"], response.json()["version"]) == ("5.00", 2)
 
 
-def test_put_changing_scoring_inputs_without_justification_is_422(client, headers, chosen):
+def test_put_changing_scoring_inputs_without_justification_is_saved(client, headers, chosen):
+    """UIM-16: changing the quantity needs no justification."""
     created = create(client, headers, chosen, group_number=2, item_number=7, quantidade=4)
     url = f"/api/activities/{created['id']}"
     payload = body(group_number=2, item_number=7, quantidade=5, expected_version=1)
 
-    field_error(client.put(url, json=payload, headers=headers), "justificativa")
-    assert client.get(url).json()["quantidade"] == "4.00"
+    response = client.put(url, json=payload, headers=headers)
+
+    assert response.status_code == 200
+    assert client.get(url).json()["quantidade"] == "5.00"
 
 
 def test_put_requires_expected_version_and_detects_stale_writes(client, headers, chosen):

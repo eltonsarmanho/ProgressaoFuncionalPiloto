@@ -3402,12 +3402,12 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Alterar item, quantidade, horas e pontos de uma atividade sem justificativa dá 200 e grava o evento de auditoria com os valores anterior e novo e justificativa nula
-- [ ] Criar atividade manual com pontos informados e com itens candidatos sem justificativa dá 201
-- [ ] Vincular a uma segunda atividade um documento já ligado, sem justificativa, dá 201 e mantém o 409 do vínculo repetido
-- [ ] A justificativa enviada continua gravada nos eventos; a tabela de outra unidade continua exigindo (Etapa 4)
-- [ ] Os testes que esperavam 422 por falta de justificativa passam a esperar sucesso, sem perder as demais asserções
-- [ ] Gate full passa
+- [x] Alterar item, quantidade, horas e pontos de uma atividade sem justificativa dá 200 e grava o evento de auditoria com os valores anterior e novo e justificativa nula
+- [x] Criar atividade manual com pontos informados e com itens candidatos sem justificativa dá 201
+- [x] Vincular a uma segunda atividade um documento já ligado, sem justificativa, dá 201 e mantém o 409 do vínculo repetido
+- [x] A justificativa enviada continua gravada nos eventos; a tabela de outra unidade continua exigindo (Etapa 4)
+- [x] Os testes que esperavam 422 por falta de justificativa passam a esperar sucesso, sem perder as demais asserções
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

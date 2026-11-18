@@ -201,15 +201,6 @@ ACTIVITY_ENTITY = "activity"
 ACTIVITY_NOT_FOUND = "Atividade não encontrada"
 DISTINCT_DEFAULT_TEXT = "Marcada como distinta pelo usuário"
 _ACTIVITY_AUDIT_EXCLUDED = {"id", "process_id", "created_by", "created_at", "updated_at", "version"}
-# Changing any of these on an existing activity needs a justification (ATV-08).
-JUSTIFIED_FIELDS = (
-    "group_number",
-    "item_number",
-    "quantity",
-    "hours",
-    "informed_points",
-    "points_override",
-)
 
 
 @dataclass(frozen=True)
@@ -252,7 +243,7 @@ def _range(field: str, label: str, value: Decimal | None) -> None:
         raise ValidationFailed(field, f"{label} deve estar entre 0 e 10000")
 
 
-def _validate_basics(data: ActivityData, candidates_need_justification: bool = True) -> None:
+def _validate_basics(data: ActivityData) -> None:
     if not data.title.strip():
         raise ValidationFailed("title", "Título é obrigatório")
     if len(data.title) > MAX_TITLE:
@@ -272,9 +263,6 @@ def _validate_basics(data: ActivityData, candidates_need_justification: bool = T
     _range("points_override", "Pontos informados", data.points_override)
     if data.period_start and data.period_end and data.period_end < data.period_start:
         raise ValidationFailed("period_end", "Fim do período anterior ao início")
-    for candidate in data.candidates:
-        if candidates_need_justification and not candidate.justification.strip():
-            raise ValidationFailed("candidates", "Item candidato exige justificativa da escolha")
 
 
 def _apply_group1(data: ActivityData, version: ScoringTableVersion | None) -> ActivityData:
@@ -330,12 +318,8 @@ def _check_criterion_inputs(data: ActivityData, version: ScoringTableVersion | N
         )
 
 
-def normalize_activity(
-    data: ActivityData,
-    version: ScoringTableVersion | None,
-    candidates_need_justification: bool = True,
-) -> ActivityData:
-    _validate_basics(data, candidates_need_justification)
+def normalize_activity(data: ActivityData, version: ScoringTableVersion | None) -> ActivityData:
+    _validate_basics(data)
     data = _apply_group1(replace(data, title=data.title.strip()), version)
     _check_criterion_inputs(data, version)
     return data
@@ -367,21 +351,12 @@ class CreateActivity(_ActivityUseCase):
         """`source` and `extraction_run_id` are not reachable from the public API; the document
         processing passes them (ATV-03, PIPE-09).
 
-        A suggestion may carry candidate items without a justification: the user gives one
-        when confirming the choice (CLS-04). A manual entry always needs it.
+        The justification is optional everywhere (UIM-16): audited when sent, never required.
         """
         with self._uow_factory() as uow:
             process = self._writable(uow, actor, process_id)
-            data = normalize_activity(
-                data,
-                self._chosen_version(uow, process),
-                candidates_need_justification=source is ActivitySource.MANUAL,
-            )
+            data = normalize_activity(data, self._chosen_version(uow, process))
             justification = (justification or "").strip() or None
-            if data.points_override is not None and justification is None:
-                raise ValidationFailed(
-                    "justificativa", "Justificativa obrigatória ao informar pontos manualmente"
-                )
             activity = Activity(
                 id=uuid.uuid4(),
                 process_id=process.id,
@@ -425,13 +400,6 @@ class _ExistingActivityUseCase(_ActivityUseCase):
             raise StaleVersion("A atividade foi alterada por outro usuário; recarregue")
 
 
-def _require_justification(justification: str | None, message: str) -> str:
-    justification = (justification or "").strip()
-    if not justification:
-        raise ValidationFailed("justificativa", message)
-    return justification
-
-
 class UpdateActivity(_ExistingActivityUseCase):
     def execute(
         self,
@@ -445,11 +413,6 @@ class UpdateActivity(_ExistingActivityUseCase):
             current, process = self._load(uow, actor, activity_id)
             data = normalize_activity(data, self._chosen_version(uow, process))
             updated = replace(current, **_fields(data))
-            if any(getattr(updated, f) != getattr(current, f) for f in JUSTIFIED_FIELDS):
-                justification = _require_justification(
-                    justification,
-                    "Justificativa obrigatória ao alterar item, quantidade, horas ou pontos",
-                )
             self._check_version(current, expected_version)
             uow.activities.update(updated, expected_version)
             self._audit.record(
