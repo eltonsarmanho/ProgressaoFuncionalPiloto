@@ -258,3 +258,59 @@ def test_banca_declaration_that_names_an_advisor_before_the_participation_is_a_b
 
 def test_orientation_declaration_that_mentions_a_banca_afterwards_stays_an_orientation_one():
     assert detect_document_type(DECLARACAO_ORIENTACAO_COM_BANCA_DEPOIS) is T.DECLARACAO_ORIENTACAO
+
+
+# CER-01: certificates written in English (invented person and policy brief). The PDF text of
+# the real case lost the "ti" glyphs ("cerfy", "parcipated") and "CERTIFICATE" comes last.
+CERTIFICATE_EN_LOST_GLYPHS = """
+This is to cerfy, for all due purposes, that Maria Exemplo Silva, from the Universidade
+Federal Exemplar, parcipated in the development of the policy brief "Open Data for Cities",
+dedicang six weeks (18 hours) to this acvity as part of the iniaves of the Example Chair on
+Open Data.
+Chair Coordinator
+CERTIFICATE
+"""
+
+CERTIFICATE_EN_SAME_LINE_ENDING = (
+    "Maria Exemplo Silva took part in the policy brief Open Data for Cities, 18 hours. "
+    "Chair Coordinator CERTIFICATE"
+)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        CERTIFICATE_EN_LOST_GLYPHS,
+        CERTIFICATE_EN_SAME_LINE_ENDING,
+        "This is to certify that Maria Exemplo Silva attended the workshop, 8 hours.",
+        "THIS IS TO CERTIFY THAT Maria Exemplo Silva attended the workshop.",
+        "We hereby certify that Maria Exemplo Silva completed the course, 20 hours.",
+        "The committee is hereby certifying the attendance of Maria Exemplo Silva, 4 hours.",
+        "Certificate of Participation\nMaria Exemplo Silva, workshop on open data, 6 hours.",
+        "Certificate of completion awarded to Maria Exemplo Silva for the course on data.",
+        "Maria Exemplo Silva received this certificate of attendance for the 2025 seminar.",
+        "Maria Exemplo Silva, workshop on open data, 6 hours.\nCERTIFICATE\nChair Coordinator",
+    ],
+)
+def test_english_certificates_are_certificates(text):
+    assert detect_document_type(text) is T.CERTIFICADO
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        # "certificate" inside running text of an article stays an article
+        (ARTIGO_EN + "\nThe server sends a certificate to the client.", T.ARTIGO),
+        (ARTIGO_EN + "\nOnly the signed certificate", T.ARTIGO),
+        (ARTIGO_EN + "\nCERTIFICATE\nReferences", T.ARTIGO),
+        # a bare word inside a sentence of a plain text is not a certificate
+        ("The certificate expired last week and nobody renewed it.", T.OUTRO),
+        ("Relatório com o certificate pinning descrito no capítulo 3.", T.OUTRO),
+        # the portaria keeps its type
+        (PORTARIA, T.PORTARIA),
+    ],
+)
+def test_english_certificate_wording_does_not_turn_other_documents_into_certificates(
+    text, expected
+):
+    assert detect_document_type(text) is expected

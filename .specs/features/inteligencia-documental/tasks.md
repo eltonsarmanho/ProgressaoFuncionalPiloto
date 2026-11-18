@@ -3180,9 +3180,9 @@ T113 → T114 → T115 → T116 → T117
 
 **Done when**:
 
-- [ ] O texto sintético do certificado em inglês, com "cerfy" e "parcipated", e os demais marcadores listados dão `CERTIFICADO`
-- [ ] Artigo com "certificate" no corpo, artigo terminado em "certificate", portaria e os testes de tipo existentes continuam com o tipo anterior
-- [ ] Gate full passa
+- [x] O texto sintético do certificado em inglês, com "cerfy" e "parcipated", e os demais marcadores listados dão `CERTIFICADO`
+- [x] Artigo com "certificate" no corpo, artigo terminado em "certificate", portaria e os testes de tipo existentes continuam com o tipo anterior
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

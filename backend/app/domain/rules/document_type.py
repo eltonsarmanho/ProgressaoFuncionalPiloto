@@ -1,7 +1,8 @@
 """Document type by keywords, which picks the extraction schema (EXT-09).
 
 The text is normalized (lowercase, accent-free). The first matching rule wins: software
-registration, defense minutes, declarations, certificates, ordinances, articles.
+registration, defense minutes, declarations, certificates (Portuguese, then English), ordinances,
+articles.
 """
 
 import re
@@ -26,6 +27,14 @@ _DECLARO = re.compile(r"\bdeclar(?:amos|o)\b")
 _DISCIPLINAS = re.compile(r"componentes? curriculares?|\bch docente\b")
 _ATA = re.compile(r"\bata\b")
 _CERTIFICA = re.compile(r"\bcertificamos\b|\bcertifica que\b|\b(?:esse|este) certificado\b")
+# English certificates (CER-01). The phrases are strong; the text layer may have lost the "ti"
+# glyphs ("this is to cerfy"), so the verb is read by its first letters.
+_CERTIFICA_EN = re.compile(
+    r"\bthis is to cer\w{2,}|\bhereby cer\w{2,}"
+    r"|\bcertificate of (?:participation|completion|attendance)\b"
+)
+# the bare word "certificate" counts only as a title line or as the last word of the text
+_CERTIFICATE_LINE = re.compile(r"^\s*certificate\s*$", re.IGNORECASE | re.MULTILINE)
 _PORTARIA_BODY = re.compile(r"\bresolve\b|\bdesignar\b|\bdesignado\b|\bdesigna\b|\bconsiderar\b")
 _EVALUATION_FORM = re.compile(
     r"\b(?:ficha|formulario|folha)\s+de\s+avaliacao\b|\bavaliacao\s+d[oe]s?\s+seminarios?\b"
@@ -44,6 +53,20 @@ _ARTICLE_WEAK_MARKERS = (
     re.compile(r"\bintroducao\b|\bintroduction\b"),
     re.compile(r"\breferencias\b|\breferences\b"),
 )
+
+
+def _is_article(norm: str) -> bool:
+    strong = sum(1 for marker in _ARTICLE_MARKERS if marker.search(norm))
+    weak = sum(1 for marker in _ARTICLE_WEAK_MARKERS if marker.search(norm))
+    return strong >= 2 or (strong >= 1 and weak >= 1)
+
+
+def _is_english_certificate(text: str, norm: str) -> bool:
+    """English wording of a certificate; the bare word needs a text that is not an article."""
+    if _CERTIFICA_EN.search(norm):
+        return True
+    bare = _CERTIFICATE_LINE.search(text) is not None or norm.endswith("certificate")
+    return bare and not _is_article(norm)
 
 
 def _declaration_type(text: str) -> DocumentType | None:
@@ -88,10 +111,8 @@ def detect_document_type(text: str) -> DocumentType:
         return declaration
     if _CERTIFICA.search(norm) or re.search(r"\bcertificado\b", norm[:_HEADER_CHARS]):
         return DocumentType.CERTIFICADO
+    if _is_english_certificate(text, norm):
+        return DocumentType.CERTIFICADO
     if "portaria" in norm[:_PORTARIA_HEADER_CHARS] and _PORTARIA_BODY.search(norm):
         return DocumentType.PORTARIA
-    strong = sum(1 for marker in _ARTICLE_MARKERS if marker.search(norm))
-    weak = sum(1 for marker in _ARTICLE_WEAK_MARKERS if marker.search(norm))
-    if strong >= 2 or (strong >= 1 and weak >= 1):
-        return DocumentType.ARTIGO
-    return DocumentType.OUTRO
+    return DocumentType.ARTIGO if _is_article(norm) else DocumentType.OUTRO
