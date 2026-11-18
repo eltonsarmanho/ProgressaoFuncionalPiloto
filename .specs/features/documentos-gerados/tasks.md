@@ -1646,9 +1646,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O pico do subprocesso fica abaixo de 320 MB com 400 páginas de 224 KB, a saída tem 411 páginas e a numeração das 411 confere
-- [ ] O teste tem marca própria (`memory`) para rodar à parte, mas roda no gate full
-- [ ] Gate full passa; 2+ testes
+- [x] O pico do subprocesso fica abaixo de 320 MB com 400 páginas de 224 KB, a saída tem 411 páginas e a numeração das 411 confere
+- [x] O teste tem marca própria (`memory`) para rodar à parte, mas roda no gate full
+- [x] Gate full passa; 2+ testes
 
 **Tests**: integration
 **Gate**: full

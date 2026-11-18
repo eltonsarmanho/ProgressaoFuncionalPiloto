@@ -90,13 +90,15 @@ def test_a_jpeg_of_40_megapixels_enters_without_being_decoded(tmp_path):
     path = tmp_path / "grande.jpg"
     write_image(path, "JPEG", (8000, 5000), dpi=300)
     script = (
-        "import resource, pymupdf\n"
+        "import pymupdf\n"
         "from app.infrastructure.documents.source_pages import attach_image\n"
+        "def hwm():\n"
+        "    lines = open('/proc/self/status').read().splitlines()\n"
+        "    return int(next(x for x in lines if x.startswith('VmHWM:')).split()[1])\n"
         "out = pymupdf.open()\n"
-        "before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss\n"
+        "before = hwm()\n"
         f"attach_image(out, {str(path)!r}, 3)\n"
-        "after = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss\n"
-        "print((after - before) // 1024, len(out))\n"
+        "print((hwm() - before) // 1024, len(out))\n"
     )
 
     done = subprocess.run(

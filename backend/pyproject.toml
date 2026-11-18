@@ -10,6 +10,7 @@ addopts = "-ra -m 'not maritalk_live'"
 markers = [
     "integration: requires PostgreSQL (AD-004)",
     "maritalk_live: calls the real MariTalk API; opt-in with RUN_LIVE_MARITALK=1 (ACC-04)",
+    "memory: measures the peak memory of a heavy operation in its own process (CMP-11)",
 ]
 
 [tool.ruff]
