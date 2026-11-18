@@ -2365,8 +2365,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Os esquemas serializam os objetos de domínio sem dados pessoais nem caminho de arquivo e rejeitam campos extras no corpo
-- [ ] Gate quick passa; 5+ testes
+- [x] Os esquemas serializam os objetos de domínio sem dados pessoais nem caminho de arquivo e rejeitam campos extras no corpo
+- [x] Gate quick passa; 5+ testes
 
 **Tests**: unit
 **Gate**: quick
