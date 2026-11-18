@@ -74,6 +74,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: X6 backend/app/application/use_cases/career.py:89 (CARR-08) (career-versions)
 - last seen: 2026-11-17T03:07:40Z
 
+### L-011 - Test a date-driven selection with data where the start date and the end date select different candidates, so the date actually used is observable.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `scoring` · harmful: 0
+- features: pontuacao
+- evidence: M31 backend/app/application/use_cases/scoring.py:112 (scoring)
+- last seen: 2026-11-17T14:54:33Z
+
+### L-012 - When a rule says latest version, test it with at least two versions so the latest and the first differ.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `scoring-admin` · harmful: 0
+- features: pontuacao
+- evidence: M56 backend/app/application/use_cases/scoring_admin.py:136 (scoring-admin)
+- last seen: 2026-11-17T14:54:33Z
+
+### L-013 - When a selection rule can match several candidates, the spec must define the tie-break and a test must assert it.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `scoring` · harmful: 0
+- features: pontuacao
+- evidence: SEL-02 M32 backend/app/application/use_cases/scoring.py:114 (scoring)
+- last seen: 2026-11-17T14:54:33Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

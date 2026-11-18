@@ -1,0 +1,624 @@
+"""Scoring table catalog (TAB-08) and administration (ADM-01..11) use cases.
+
+Every administration write is ADMIN-only and audited (entities `scoring_table` and
+`scoring_version`) in the same transaction as the change.
+"""
+
+import copy
+import uuid
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass, replace
+from datetime import date, timedelta
+from decimal import Decimal
+from uuid import UUID
+
+from app.application.services.audit_service import AuditService
+from app.application.services.criteria_csv import CsvError, parse_criteria_csv
+from app.application.use_cases.users import require_admin
+from app.domain.entities.audit import AuditAction, AuditEvent
+from app.domain.entities.scoring import (
+    ScoringCriterion,
+    ScoringGroup,
+    ScoringMode,
+    ScoringTableVersion,
+    TableStatus,
+)
+from app.domain.entities.user import User
+from app.domain.errors import Conflict, DomainError, NotFound, ValidationFailed
+from app.domain.repositories.ports import ScoringTableRecord, UnitOfWork
+
+TABLE_ENTITY = "scoring_table"
+VERSION_ENTITY = "scoring_version"
+_ROMAN = ("I", "II", "III", "IV", "V", "VI", "VII", "VIII")
+
+
+@dataclass(frozen=True)
+class VersionView:
+    version: ScoringTableVersion
+    in_use: bool
+
+
+@dataclass(frozen=True)
+class TableView:
+    table: ScoringTableRecord
+    versions: list[VersionView]
+
+
+def _views(uow: UnitOfWork, versions) -> list[VersionView]:
+    return [VersionView(v, uow.scoring_tables.version_in_use(v.id)) for v in versions]
+
+
+class ListScoringTables:
+    def __init__(self, uow_factory: Callable[[], UnitOfWork]):
+        self._uow_factory = uow_factory
+
+    def execute(self) -> list[TableView]:
+        with self._uow_factory() as uow:
+            return [
+                TableView(t, _views(uow, uow.scoring_tables.list_versions(t.id)))
+                for t in uow.scoring_tables.list_tables()
+            ]
+
+
+class ListTableVersions:
+    def __init__(self, uow_factory: Callable[[], UnitOfWork]):
+        self._uow_factory = uow_factory
+
+    def execute(self, table_id: UUID) -> list[VersionView]:
+        with self._uow_factory() as uow:
+            if uow.scoring_tables.get_table(table_id) is None:
+                raise NotFound("Tabela de pontuação não encontrada")
+            return _views(uow, uow.scoring_tables.list_versions(table_id))
+
+
+class GetScoringVersion:
+    def __init__(self, uow_factory: Callable[[], UnitOfWork]):
+        self._uow_factory = uow_factory
+
+    def execute(self, version_id: UUID) -> VersionView:
+        with self._uow_factory() as uow:
+            version = uow.scoring_tables.get_version(version_id)
+            if version is None:
+                raise NotFound("Versão da tabela de pontuação não encontrada")
+            return _views(uow, [version])[0]
+
+
+def _audit_table(table: ScoringTableRecord) -> dict:
+    return {"name": table.name, "unit_ids": list(table.unit_ids)}
+
+
+def _audit_version(v: ScoringTableVersion) -> dict:
+    return {
+        "table_id": v.table_id,
+        "name": v.name,
+        "valid_from": v.valid_from,
+        "valid_to": v.valid_to,
+        "norm_reference": v.norm_reference,
+        "status": v.status,
+    }
+
+
+def _check_name(uow: UnitOfWork, name: str) -> str:
+    name = name.strip()
+    if not name:
+        raise ValidationFailed("name", "Nome da tabela é obrigatório")
+    if any(t.name.casefold() == name.casefold() for t in uow.scoring_tables.list_tables()):
+        raise ValidationFailed("name", "Já existe uma tabela com este nome")
+    return name
+
+
+def _check_units(uow: UnitOfWork, unit_ids: Sequence[UUID]) -> tuple[UUID, ...]:
+    unique = tuple(dict.fromkeys(unit_ids))
+    for unit_id in unique:
+        if uow.units.get(unit_id) is None:
+            raise ValidationFailed("unit_ids", "Unidade acadêmica não encontrada")
+    return unique
+
+
+def check_validity(valid_from: date, valid_to: date | None, norm_reference: str) -> str:
+    reference = norm_reference.strip()
+    if not reference:
+        raise ValidationFailed("norm_reference", "Referência normativa é obrigatória")
+    if valid_to is not None and valid_to < valid_from:
+        raise ValidationFailed("valid_to", "Fim da vigência anterior ao início")
+    return reference
+
+
+def default_version_name(valid_from: date) -> str:
+    return f"Vigente desde {valid_from:%d/%m/%Y}"
+
+
+def empty_groups() -> tuple[ScoringGroup, ...]:
+    return tuple(ScoringGroup(number=i + 1, name=f"Grupo {r}") for i, r in enumerate(_ROMAN))
+
+
+def latest_version(versions: Sequence[ScoringTableVersion]) -> ScoringTableVersion | None:
+    return max(versions, key=lambda v: v.valid_from, default=None)
+
+
+class CreateScoringTable:
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], audit: AuditService):
+        self._uow_factory = uow_factory
+        self._audit = audit
+
+    def execute(
+        self,
+        actor: User,
+        name: str,
+        unit_ids: Sequence[UUID],
+        valid_from: date,
+        valid_to: date | None,
+        norm_reference: str,
+        version_name: str | None = None,
+        status: TableStatus = TableStatus.PENDENTE_VALIDACAO,
+        base_version_id: UUID | None = None,
+    ) -> TableView:
+        require_admin(actor)
+        reference = check_validity(valid_from, valid_to, norm_reference)
+        with self._uow_factory() as uow:
+            name = _check_name(uow, name)
+            units = _check_units(uow, unit_ids)
+            groups, minimums, notes = empty_groups(), None, None
+            if base_version_id is not None:
+                base = uow.scoring_tables.get_version(base_version_id)
+                if base is None:
+                    raise ValidationFailed("base_version_id", "Versão base não encontrada")
+                groups, minimums, notes = base.groups, copy.deepcopy(base.minimums), base.notes
+            table = ScoringTableRecord(id=uuid.uuid4(), name=name, unit_ids=units)
+            version = ScoringTableVersion(
+                id=uuid.uuid4(),
+                table_id=table.id,
+                name=(version_name or "").strip() or default_version_name(valid_from),
+                valid_from=valid_from,
+                valid_to=valid_to,
+                norm_reference=reference,
+                status=status,
+                groups=groups,
+                minimums=minimums,
+                notes=notes,
+            )
+            uow.scoring_tables.add_table(table)
+            uow.scoring_tables.add_version(version)
+            self._audit.record(
+                uow, actor.id, TABLE_ENTITY, table.id, AuditAction.CREATE, {}, _audit_table(table)
+            )
+            self._audit.record(
+                uow,
+                actor.id,
+                VERSION_ENTITY,
+                version.id,
+                AuditAction.CREATE,
+                {},
+                _audit_version(version),
+                justification=reference,
+            )
+            uow.commit()
+        return TableView(table, [VersionView(version, False)])
+
+
+class DuplicateScoringTable:
+    """ADM-02: a new, independent table holding a copy of the source's latest version."""
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], audit: AuditService):
+        self._uow_factory = uow_factory
+        self._audit = audit
+
+    def execute(
+        self,
+        actor: User,
+        source_table_id: UUID,
+        new_name: str,
+        unit_ids: Sequence[UUID] = (),
+    ) -> TableView:
+        require_admin(actor)
+        with self._uow_factory() as uow:
+            if uow.scoring_tables.get_table(source_table_id) is None:
+                raise NotFound("Tabela de pontuação não encontrada")
+            source = latest_version(uow.scoring_tables.list_versions(source_table_id))
+            if source is None:
+                raise Conflict("A tabela de origem não tem versão para copiar")
+            name = _check_name(uow, new_name)
+            units = _check_units(uow, unit_ids)
+            table = ScoringTableRecord(id=uuid.uuid4(), name=name, unit_ids=units)
+            version = replace(
+                source,
+                id=uuid.uuid4(),
+                table_id=table.id,
+                minimums=copy.deepcopy(source.minimums),
+            )
+            uow.scoring_tables.add_table(table)
+            uow.scoring_tables.add_version(version)
+            self._audit.record(
+                uow,
+                actor.id,
+                TABLE_ENTITY,
+                table.id,
+                AuditAction.CREATE,
+                {},
+                {**_audit_table(table), "duplicated_from": source_table_id},
+            )
+            self._audit.record(
+                uow,
+                actor.id,
+                VERSION_ENTITY,
+                version.id,
+                AuditAction.CREATE,
+                {},
+                {**_audit_version(version), "copied_from_version_id": source.id},
+                justification=version.norm_reference,
+            )
+            uow.commit()
+        return TableView(table, [VersionView(version, False)])
+
+
+_TEXT_FIELDS = ("description", "unit_label", "accepted_evidence", "rules", "review_note")
+_DECIMAL_FIELDS = ("unit_points", "hours_per_block", "prep_ratio", "max_points")
+EDITABLE_CRITERION_FIELDS = (
+    *_TEXT_FIELDS,
+    *_DECIMAL_FIELDS,
+    "mode",
+    "weeks_per_semester",
+)
+
+
+def _plain(value):
+    if isinstance(value, Decimal):
+        return format(value.normalize(), "f")
+    return value
+
+
+def _criterion_view(c: ScoringCriterion, fields) -> dict:
+    return {
+        f"criteria.{c.group_number}.{c.item_number}.{f}": _plain(getattr(c, f)) for f in fields
+    }
+
+
+def _coerce_change(field: str, value):
+    if field == "mode":
+        try:
+            return ScoringMode(value)
+        except ValueError:
+            raise ValidationFailed("mode", "Modo de pontuação inválido") from None
+    if field in _DECIMAL_FIELDS:
+        if value is None:
+            return None
+        try:
+            number = Decimal(str(value))
+        except ArithmeticError:
+            raise ValidationFailed(field, "Valor numérico inválido") from None
+        if not number.is_finite() or number < 0:
+            raise ValidationFailed(field, "Valor deve ser um número não negativo")
+        return number
+    if field == "weeks_per_semester":
+        if value is None:
+            return None
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise ValidationFailed(field, "Valor deve ser um inteiro positivo")
+        return value
+    if field == "description" and not str(value or "").strip():
+        raise ValidationFailed(field, "Descrição é obrigatória")
+    if field == "review_note":
+        return (str(value).strip() or None) if value is not None else None
+    return "" if value is None else str(value)
+
+
+class UpdateVersionCriteria:
+    """ADM-03/04: edit one criterion of a version no process uses, citing the norm."""
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], audit: AuditService):
+        self._uow_factory = uow_factory
+        self._audit = audit
+
+    def execute(
+        self,
+        actor: User,
+        version_id: UUID,
+        group: int,
+        item: int,
+        changes: dict,
+        change_reference: str,
+    ) -> VersionView:
+        require_admin(actor)
+        reference = (change_reference or "").strip()
+        if not reference:
+            raise ValidationFailed(
+                "change_reference", "Referência normativa da alteração é obrigatória"
+            )
+        unknown = sorted(set(changes) - set(EDITABLE_CRITERION_FIELDS))
+        if unknown:
+            raise ValidationFailed("changes", f"Campo não editável: {', '.join(unknown)}")
+        if not changes:
+            raise ValidationFailed("changes", "Nenhuma alteração informada")
+        values = {f: _coerce_change(f, v) for f, v in changes.items()}
+        with self._uow_factory() as uow:
+            version = uow.scoring_tables.get_version(version_id)
+            if version is None:
+                raise NotFound("Versão da tabela de pontuação não encontrada")
+            current = version.get_criterion(group, item)
+            if current is None:
+                raise NotFound("Critério não encontrado")
+            if any(
+                v.valid_from > version.valid_from
+                for v in uow.scoring_tables.list_versions(version.table_id)
+            ):
+                raise Conflict(
+                    "Versão anterior é somente leitura; altere a versão mais recente "
+                    "ou crie uma nova versão"
+                )
+            if uow.scoring_tables.version_in_use(version_id):
+                raise Conflict(
+                    "Versão já usada por processos não pode ser alterada; "
+                    "crie uma nova versão para alterar os critérios"
+                )
+            updated = replace(current, **values)
+            uow.scoring_tables.update_criterion(version_id, updated)
+            self._audit.record(
+                uow,
+                actor.id,
+                VERSION_ENTITY,
+                version_id,
+                AuditAction.UPDATE,
+                _criterion_view(current, values),
+                _criterion_view(updated, values),
+                justification=reference,
+            )
+            result = uow.scoring_tables.get_version(version_id)
+            uow.commit()
+        return VersionView(result, False)
+
+
+def _overlaps(a: ScoringTableVersion, b: ScoringTableVersion) -> bool:
+    starts_before_b_ends = b.valid_to is None or a.valid_from <= b.valid_to
+    b_starts_before_a_ends = a.valid_to is None or b.valid_from <= a.valid_to
+    return starts_before_b_ends and b_starts_before_a_ends
+
+
+def close_open_version(
+    uow: UnitOfWork,
+    audit: AuditService,
+    actor: User,
+    existing: Sequence[ScoringTableVersion],
+    new_valid_from: date,
+) -> list[ScoringTableVersion]:
+    """ADM-05/06: end the open-ended version the day before the new one starts.
+
+    Raises Conflict, changing nothing, if a process that chose the open version has an
+    interstice ending on or after the new start. Returns `existing` with the closed version.
+    """
+    open_version = next((v for v in existing if v.valid_to is None), None)
+    if open_version is None or new_valid_from <= open_version.valid_from:
+        return list(existing)  # no open version, or not a successor: overlap check decides
+    if uow.scoring_tables.version_in_use_ending_from(open_version.id, new_valid_from):
+        raise Conflict(
+            f"Há processo que escolheu a versão \"{open_version.name}\" com interstício "
+            f"terminando a partir de {new_valid_from:%d/%m/%Y}; encerrá-la mudaria a "
+            "versão aplicável a ele"
+        )
+    closed = replace(open_version, valid_to=new_valid_from - timedelta(days=1))
+    uow.scoring_tables.update_version(closed)
+    audit.record(
+        uow,
+        actor.id,
+        VERSION_ENTITY,
+        closed.id,
+        AuditAction.UPDATE,
+        _audit_version(open_version),
+        _audit_version(closed),
+    )
+    return [closed if v.id == closed.id else v for v in existing]
+
+
+def add_version_closing_open(
+    uow: UnitOfWork, audit: AuditService, actor: User, version: ScoringTableVersion, extra: dict
+) -> None:
+    """Close the open version if needed, reject overlaps, persist and audit the new version."""
+    existing = list(uow.scoring_tables.list_versions(version.table_id))
+    existing = close_open_version(uow, audit, actor, existing, version.valid_from)
+    for other in existing:
+        if _overlaps(version, other):
+            raise Conflict(f'Vigência sobrepõe a versão "{other.name}"')
+    uow.scoring_tables.add_version(version)
+    audit.record(
+        uow,
+        actor.id,
+        VERSION_ENTITY,
+        version.id,
+        AuditAction.CREATE,
+        {},
+        {**_audit_version(version), **extra},
+        justification=version.norm_reference,
+    )
+
+
+class CreateVersionFrom:
+    """ADM-05..07: a new version copying groups, criteria and minimums of another."""
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], audit: AuditService):
+        self._uow_factory = uow_factory
+        self._audit = audit
+
+    def execute(
+        self,
+        actor: User,
+        table_id: UUID,
+        source_version_id: UUID,
+        valid_from: date,
+        valid_to: date | None,
+        norm_reference: str,
+        version_name: str | None = None,
+        status: TableStatus = TableStatus.PENDENTE_VALIDACAO,
+    ) -> VersionView:
+        require_admin(actor)
+        reference = check_validity(valid_from, valid_to, norm_reference)
+        with self._uow_factory() as uow:
+            if uow.scoring_tables.get_table(table_id) is None:
+                raise NotFound("Tabela de pontuação não encontrada")
+            source = uow.scoring_tables.get_version(source_version_id)
+            if source is None:
+                raise NotFound("Versão de origem não encontrada")
+            version = replace(
+                source,
+                id=uuid.uuid4(),
+                table_id=table_id,
+                name=(version_name or "").strip() or default_version_name(valid_from),
+                valid_from=valid_from,
+                valid_to=valid_to,
+                norm_reference=reference,
+                status=status,
+                minimums=copy.deepcopy(source.minimums),
+            )
+            add_version_closing_open(
+                uow, self._audit, actor, version, {"copied_from_version_id": source.id}
+            )
+            uow.commit()
+        return VersionView(version, False)
+
+
+class InvalidCsv(DomainError):
+    """ADM-09: every invalid line and field of the file (HTTP 422, nothing created)."""
+
+    def __init__(self, errors: Sequence[CsvError]):
+        super().__init__(f"{len(errors)} erro(s) no arquivo CSV")
+        self.errors = list(errors)
+
+
+class ImportCriteriaCsv:
+    """ADM-08/09: all-or-nothing import of a CSV as a new version of the table.
+
+    Group names, group limits and `counts_in_total` come from the table's latest version;
+    the criteria come only from the file. CARGA_SEMANAL rows have no columns for weeks and
+    preparation, so they take both from the same item of the latest version.
+    """
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], audit: AuditService):
+        self._uow_factory = uow_factory
+        self._audit = audit
+
+    def execute(
+        self,
+        actor: User,
+        table_id: UUID,
+        valid_from: date,
+        valid_to: date | None,
+        norm_reference: str,
+        csv_text: str,
+        status: TableStatus = TableStatus.PENDENTE_VALIDACAO,
+        version_name: str | None = None,
+    ) -> VersionView:
+        require_admin(actor)
+        reference = check_validity(valid_from, valid_to, norm_reference)
+        with self._uow_factory() as uow:
+            if uow.scoring_tables.get_table(table_id) is None:
+                raise NotFound("Tabela de pontuação não encontrada")
+            base = latest_version(uow.scoring_tables.list_versions(table_id))
+            parsed = parse_criteria_csv(csv_text)
+            errors = list(parsed.errors)
+            criteria = []
+            for criterion, line in zip(parsed.criteria, parsed.lines, strict=True):
+                if criterion.mode is ScoringMode.CARGA_SEMANAL:
+                    previous = base and base.get_criterion(
+                        criterion.group_number, criterion.item_number
+                    )
+                    if previous is None or previous.weeks_per_semester is None:
+                        errors.append(
+                            CsvError(
+                                line,
+                                "modo",
+                                "CARGA_SEMANAL exige semanas e preparação, que o CSV não traz; "
+                                "o item precisa existir na última versão com esses valores",
+                            )
+                        )
+                        continue
+                    criterion = replace(
+                        criterion,
+                        weeks_per_semester=previous.weeks_per_semester,
+                        prep_ratio=previous.prep_ratio,
+                    )
+                criteria.append(criterion)
+            if errors:
+                raise InvalidCsv(sorted(errors, key=lambda e: e.line))
+            groups = []
+            for number, template in enumerate(empty_groups(), start=1):
+                group = (base and base.get_group(number)) or template
+                groups.append(
+                    replace(
+                        group,
+                        criteria=tuple(
+                            sorted(
+                                (c for c in criteria if c.group_number == number),
+                                key=lambda c: c.item_number,
+                            )
+                        ),
+                    )
+                )
+            version = ScoringTableVersion(
+                id=uuid.uuid4(),
+                table_id=table_id,
+                name=(version_name or "").strip() or default_version_name(valid_from),
+                valid_from=valid_from,
+                valid_to=valid_to,
+                norm_reference=reference,
+                status=status,
+                groups=tuple(groups),
+                minimums=copy.deepcopy(base.minimums) if base else None,
+                notes=base.notes if base else None,
+            )
+            add_version_closing_open(
+                uow, self._audit, actor, version, {"imported_criteria": len(criteria)}
+            )
+            uow.commit()
+        return VersionView(version, False)
+
+
+class SetTableUnits:
+    """ADM-01: replace the academic units a table is associated with."""
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], audit: AuditService):
+        self._uow_factory = uow_factory
+        self._audit = audit
+
+    def execute(self, actor: User, table_id: UUID, unit_ids: Sequence[UUID]) -> TableView:
+        require_admin(actor)
+        with self._uow_factory() as uow:
+            before = uow.scoring_tables.get_table(table_id)
+            if before is None:
+                raise NotFound("Tabela de pontuação não encontrada")
+            units = _check_units(uow, unit_ids)
+            uow.scoring_tables.set_table_units(table_id, units)
+            after = uow.scoring_tables.get_table(table_id)
+            self._audit.record(
+                uow,
+                actor.id,
+                TABLE_ENTITY,
+                table_id,
+                AuditAction.UPDATE,
+                _audit_table(before),
+                _audit_table(after),
+            )
+            view = TableView(after, _views(uow, uow.scoring_tables.list_versions(table_id)))
+            uow.commit()
+        return view
+
+
+@dataclass(frozen=True)
+class TableHistory:
+    versions: list[VersionView]
+    events: list[AuditEvent]  # table and version events, chronological
+
+
+class GetTableHistory:
+    """ADM-10: every version with validity, reference and status, plus all audit events."""
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork]):
+        self._uow_factory = uow_factory
+
+    def execute(self, table_id: UUID) -> TableHistory:
+        with self._uow_factory() as uow:
+            if uow.scoring_tables.get_table(table_id) is None:
+                raise NotFound("Tabela de pontuação não encontrada")
+            versions = uow.scoring_tables.list_versions(table_id)
+            events = list(uow.audit.list_for(TABLE_ENTITY, str(table_id)))
+            for v in versions:
+                events.extend(uow.audit.list_for(VERSION_ENTITY, str(v.id)))
+            events.sort(key=lambda e: (e.occurred_at, e.id or 0))
+            return TableHistory(_views(uow, versions), events)

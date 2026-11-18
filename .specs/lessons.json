@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 11,
+  "next_id": 14,
   "lessons": [
     {
       "id": "L-001",
@@ -185,6 +185,60 @@
       ],
       "created": "2026-11-17T03:07:40Z",
       "last_seen": "2026-11-17T03:07:40Z"
+    },
+    {
+      "id": "L-011",
+      "key": "surviving_mutant::test a date driven selection with data where the start date and the end date select different candidates so the date actually used is observable",
+      "text": "Test a date-driven selection with data where the start date and the end date select different candidates, so the date actually used is observable.",
+      "signal": "surviving_mutant",
+      "scope": "scoring",
+      "status": "candidate",
+      "features": [
+        "pontuacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M31 backend/app/application/use_cases/scoring.py:112 (scoring)"
+      ],
+      "created": "2026-11-17T14:54:33Z",
+      "last_seen": "2026-11-17T14:54:33Z"
+    },
+    {
+      "id": "L-012",
+      "key": "surviving_mutant::when a rule says latest version test it with at least two versions so the latest and the first differ",
+      "text": "When a rule says latest version, test it with at least two versions so the latest and the first differ.",
+      "signal": "surviving_mutant",
+      "scope": "scoring-admin",
+      "status": "candidate",
+      "features": [
+        "pontuacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M56 backend/app/application/use_cases/scoring_admin.py:136 (scoring-admin)"
+      ],
+      "created": "2026-11-17T14:54:33Z",
+      "last_seen": "2026-11-17T14:54:33Z"
+    },
+    {
+      "id": "L-013",
+      "key": "spec_precision_gap::when a selection rule can match several candidates the spec must define the tie break and a test must assert it",
+      "text": "When a selection rule can match several candidates, the spec must define the tie-break and a test must assert it.",
+      "signal": "spec_precision_gap",
+      "scope": "scoring",
+      "status": "candidate",
+      "features": [
+        "pontuacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SEL-02 M32 backend/app/application/use_cases/scoring.py:114 (scoring)"
+      ],
+      "created": "2026-11-17T14:54:33Z",
+      "last_seen": "2026-11-17T14:54:33Z"
     }
   ]
 }

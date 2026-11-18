@@ -24,6 +24,13 @@ TABLES = {
     "professors",
     "functional_processes",
     "audit_logs",
+    "scoring_tables",
+    "scoring_table_units",
+    "scoring_table_versions",
+    "scoring_groups",
+    "scoring_criteria",
+    "activities",
+    "activity_candidates",
 }
 
 

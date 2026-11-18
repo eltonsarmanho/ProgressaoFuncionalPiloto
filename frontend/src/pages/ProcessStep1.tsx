@@ -162,7 +162,7 @@ export function ProcessStep1() {
 
   return (
     <>
-      <StepNav />
+      <StepNav enabled={[1, 4]} current={1} processId={process?.id} />
       <form className="card" onSubmit={onSubmit} noValidate>
         <h1>Etapa 1 · Processo e interstício</h1>
         {process && <p className="badge">{STATUS_LABELS[process.status]}</p>}

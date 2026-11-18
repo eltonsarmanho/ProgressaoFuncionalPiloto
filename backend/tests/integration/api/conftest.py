@@ -106,3 +106,17 @@ def reference(uow_factory):
     )
     with uow_factory() as uow:
         return {u.acronym: u for u in uow.units.list()}
+
+
+@pytest.fixture
+def scoring_tables(uow_factory, reference):
+    """Seeded IFCH and FASI scoring tables (T15); returns their latest versions by unit."""
+    from app.infrastructure.database.seed import seed_scoring_tables
+
+    seed_scoring_tables(uow_factory())
+    with uow_factory() as uow:
+        units = {u.id: u.acronym for u in uow.units.list()}
+        return {
+            units[t.unit_ids[0]]: uow.scoring_tables.list_versions(t.id)[-1]
+            for t in uow.scoring_tables.list_tables()
+        }

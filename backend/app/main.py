@@ -9,7 +9,19 @@ from app.core.logging import configure_logging, install_access_log
 from app.domain.repositories.ports import Clock
 from app.infrastructure.clock import SystemClock
 from app.infrastructure.database.session import make_engine
-from app.presentation.api import auth, career, health, processes, professors, units, users
+from app.presentation.api import (
+    activities,
+    auth,
+    career,
+    health,
+    processes,
+    professors,
+    scoring,
+    scoring_tables,
+    scoring_tables_admin,
+    units,
+    users,
+)
 from app.presentation.csrf import install_auth_middleware
 from app.presentation.dependencies import build_container
 from app.presentation.errors import install_error_handlers
@@ -37,4 +49,8 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     app.include_router(professors.router)
     app.include_router(processes.router)
     app.include_router(career.router)
+    app.include_router(scoring_tables.router)
+    app.include_router(scoring_tables_admin.router)
+    app.include_router(scoring.router)
+    app.include_router(activities.router)
     return app

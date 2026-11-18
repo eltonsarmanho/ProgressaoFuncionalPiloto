@@ -29,6 +29,29 @@ from app.application.use_cases.professors import (
     ListProfessors,
     UpdateProfessor,
 )
+from app.application.use_cases.scoring import (
+    CalculateProcessScore,
+    ChangeActivityStatus,
+    ChooseProcessTable,
+    CreateActivity,
+    GetActivity,
+    ListActivities,
+    MarkActivitiesDistinct,
+    SuggestScoringTable,
+    UpdateActivity,
+)
+from app.application.use_cases.scoring_admin import (
+    CreateScoringTable,
+    CreateVersionFrom,
+    DuplicateScoringTable,
+    GetScoringVersion,
+    GetTableHistory,
+    ImportCriteriaCsv,
+    ListScoringTables,
+    ListTableVersions,
+    SetTableUnits,
+    UpdateVersionCriteria,
+)
 from app.application.use_cases.units import ArchiveUnit, CreateUnit, ListUnits, UpdateUnit
 from app.application.use_cases.users import CreateUser, ListUsers
 from app.core.config import Settings
@@ -69,6 +92,25 @@ class Container:
     list_career_versions: ListCareerVersions
     create_career_version: CreateCareerVersion
     update_career_version: UpdateCareerVersion
+    list_scoring_tables: ListScoringTables
+    list_table_versions: ListTableVersions
+    get_scoring_version: GetScoringVersion
+    create_scoring_table: CreateScoringTable
+    duplicate_scoring_table: DuplicateScoringTable
+    create_scoring_version: CreateVersionFrom
+    update_version_criteria: UpdateVersionCriteria
+    import_criteria_csv: ImportCriteriaCsv
+    set_table_units: SetTableUnits
+    table_history: GetTableHistory
+    suggest_scoring_table: SuggestScoringTable
+    choose_process_table: ChooseProcessTable
+    calculate_process_score: CalculateProcessScore
+    create_activity: CreateActivity
+    get_activity: GetActivity
+    list_activities: ListActivities
+    update_activity: UpdateActivity
+    change_activity_status: ChangeActivityStatus
+    mark_activities_distinct: MarkActivitiesDistinct
 
 
 def build_container(settings: Settings, engine: Engine, clock: Clock) -> Container:
@@ -108,6 +150,25 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
         list_career_versions=ListCareerVersions(uow_factory),
         create_career_version=CreateCareerVersion(uow_factory, audit),
         update_career_version=UpdateCareerVersion(uow_factory, audit),
+        list_scoring_tables=ListScoringTables(uow_factory),
+        list_table_versions=ListTableVersions(uow_factory),
+        get_scoring_version=GetScoringVersion(uow_factory),
+        create_scoring_table=CreateScoringTable(uow_factory, audit),
+        duplicate_scoring_table=DuplicateScoringTable(uow_factory, audit),
+        create_scoring_version=CreateVersionFrom(uow_factory, audit),
+        update_version_criteria=UpdateVersionCriteria(uow_factory, audit),
+        import_criteria_csv=ImportCriteriaCsv(uow_factory, audit),
+        set_table_units=SetTableUnits(uow_factory, audit),
+        table_history=GetTableHistory(uow_factory),
+        suggest_scoring_table=SuggestScoringTable(uow_factory, audit, policy),
+        choose_process_table=ChooseProcessTable(uow_factory, audit, policy),
+        calculate_process_score=CalculateProcessScore(uow_factory, audit, policy),
+        create_activity=CreateActivity(uow_factory, audit, policy),
+        get_activity=GetActivity(uow_factory, audit, policy),
+        list_activities=ListActivities(uow_factory, audit, policy),
+        update_activity=UpdateActivity(uow_factory, audit, policy),
+        change_activity_status=ChangeActivityStatus(uow_factory, audit, policy),
+        mark_activities_distinct=MarkActivitiesDistinct(uow_factory, audit, policy),
     )
 
 

@@ -9,7 +9,7 @@ from app.application.use_cases.processes import ProcessResult
 from app.domain.entities.audit import AuditAction, AuditEvent
 from app.domain.entities.career import Modality
 from app.domain.entities.process import ProcessStatus
-from app.domain.rules.process_verification import Severity
+from app.domain.rules.process_verification import Alert, Severity
 
 
 class ProcessFields(BaseModel):
@@ -76,6 +76,15 @@ class AlertOut(BaseModel):
     severity: Severity
     message: str
     norm_reference: str
+
+    @classmethod
+    def of(cls, alert: Alert) -> "AlertOut":
+        return cls(
+            code=alert.code,
+            severity=alert.severity,
+            message=alert.message,
+            norm_reference=alert.norm_reference,
+        )
 
 
 class ProcessOut(ProcessCreate):
