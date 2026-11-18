@@ -2572,9 +2572,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Ordem, sumário, numeração contínua, remissão e `ATIVIDADE_SEM_COMPROVANTE` conferem no PDF; cada página anexada é idêntica ao original
-- [ ] A página removida do arranjo está ausente e o vínculo ainda existe na Etapa 3; a nova ordem é a do PDF
-- [ ] Gate full passa; 3+ testes
+- [x] Ordem, sumário, numeração contínua, remissão e `ATIVIDADE_SEM_COMPROVANTE` conferem no PDF; cada página anexada é idêntica ao original
+- [x] A página removida do arranjo está ausente e o vínculo ainda existe na Etapa 3; a nova ordem é a do PDF
+- [x] Gate full passa; 3+ testes
 
 **Tests**: integration
 **Gate**: full
