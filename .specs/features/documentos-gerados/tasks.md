@@ -883,9 +883,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O dicionário enviado não contém texto de página, nome do docente, SIAPE nem `evidence_note`, mesmo quando a atividade os tem
-- [ ] A descrição mascarada não contém CPF, e-mail ou telefone
-- [ ] Gate quick passa; 8+ testes
+- [x] O dicionário enviado não contém texto de página, nome do docente, SIAPE nem `evidence_note`, mesmo quando a atividade os tem
+- [x] A descrição mascarada não contém CPF, e-mail ou telefone
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
