@@ -172,6 +172,12 @@ describe("TELA-07 / TELA-09: avisos do documento", () => {
     expect(onCreateActivity).toHaveBeenCalledWith(expect.objectContaining({ id: "d1" }));
   });
 
+  it("VER-04: FALHOU por tentativas esgotadas mostra o aviso em português, não o código", () => {
+    setup([doc({ status: "FALHOU", status_code: "TENTATIVAS_ESGOTADAS", suggested_type: null, suggested_category: null, confidence: null })]);
+    expect(screen.getByText("Tentativas de leitura esgotadas: reprocesse o documento")).toBeInTheDocument();
+    expect(screen.queryByText("TENTATIVAS_ESGOTADAS")).not.toBeInTheDocument();
+  });
+
   it("documento processado com item não mostra a ação de criar atividade", () => {
     setup([doc()]);
     expect(screen.queryByRole("button", { name: "Criar atividade deste documento" })).not.toBeInTheDocument();

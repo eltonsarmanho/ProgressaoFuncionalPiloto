@@ -425,7 +425,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VER-08 | P1: Correções da verificação independente | Design | Implementing |
 | VER-09 | P1: Correções da verificação independente | Design | Implementing |
 | VER-10 | P1: Correções da verificação independente | Design | Implementing |
-| VER-11 | P1: Correções da verificação independente | Design | In Tasks |
+| VER-11 | P1: Correções da verificação independente | Design | Implementing |
 | VER-12 | P1: Correções da verificação independente | Design | In Tasks |
 | VER-13 | P1: Correções da verificação independente | Design | In Tasks |
 

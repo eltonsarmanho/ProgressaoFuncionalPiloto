@@ -2247,10 +2247,10 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 **Done when**:
 
-- [ ] Resposta 413 com corpo HTML mostra a mensagem de limite e não "não foi possível conectar"
-- [ ] Erro de rede de verdade segue mostrando a mensagem de conexão
-- [ ] Documento `FALHOU` com `TENTATIVAS_ESGOTADAS` mostra o rótulo em português
-- [ ] Gate full e build do frontend passam
+- [x] Resposta 413 com corpo HTML mostra a mensagem de limite e não "não foi possível conectar"
+- [x] Erro de rede de verdade segue mostrando a mensagem de conexão
+- [x] Documento `FALHOU` com `TENTATIVAS_ESGOTADAS` mostra o rótulo em português
+- [x] Gate full e build do frontend passam
 
 **Tests**: unit (frontend)
 **Gate**: build

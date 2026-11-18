@@ -122,6 +122,8 @@ export const DOCUMENT_CODE_LABELS: Record<string, string> = {
   QUANTIDADE_ESTIMADA: "Quantidade estimada: confira",
   ATIVIDADE_REPETIDA: "Atividade repetida no documento: criada uma só vez",
   CLAUSULA_DE_DISPENSA: "Dispensa da função: não vira atividade",
+  TENTATIVAS_ESGOTADAS: "Tentativas de leitura esgotadas: reprocesse o documento",
+  DATA_PARCIAL: "Data só com mês e ano: confira o período",
   ERRO_INTERNO: "Erro interno",
 };
 

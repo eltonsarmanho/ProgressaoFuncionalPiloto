@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ApiError, fieldErrors, request, setCsrfToken } from "./client";
+import { ApiError, errorMessage, fieldErrors, request, setCsrfToken } from "./client";
 import { mockFetch } from "../test/fetchMock";
 
 describe("api client", () => {
@@ -53,5 +53,24 @@ describe("api client", () => {
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(429);
     expect(err.message).toBe("Muitos envios");
+  });
+
+  it("VER-11: 413 do nginx, com corpo HTML, vira ApiError 413 com a mensagem de limite de envio", async () => {
+    mockFetch({ "POST /api/up": { status: 413, raw: "<html><h1>413 Request Entity Too Large</h1></html>" } });
+    const err = await request<never>("POST", "/api/up", new FormData()).catch((e: ApiError) => e);
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.status).toBe(413);
+    expect(errorMessage(err)).toBe("O arquivo ou o conjunto excede o limite de envio.");
+  });
+
+  it("VER-11: um erro de rede segue com a mensagem de conexão", () => {
+    expect(errorMessage(new TypeError("Failed to fetch"))).toBe("Não foi possível contactar o servidor.");
+  });
+
+  it("VER-11: um 502 com corpo HTML vira ApiError 502, não um erro de leitura", async () => {
+    mockFetch({ "GET /api/x": { status: 502, raw: "<html>Bad Gateway</html>" } });
+    const err = await request<never>("GET", "/api/x").catch((e: ApiError) => e);
+    expect(err).toBeInstanceOf(ApiError);
+    expect(errorMessage(err)).toBe("Erro 502");
   });
 });

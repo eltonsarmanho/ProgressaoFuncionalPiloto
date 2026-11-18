@@ -39,7 +39,13 @@ export async function request<T>(method: string, path: string, body?: unknown): 
     body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
   });
   const text = await response.text();
-  const data = text ? JSON.parse(text) : undefined;
+  let data: { detail?: unknown } | undefined;
+  try {
+    data = text ? JSON.parse(text) : undefined;
+  } catch (error) {
+    // an error page of nginx (413, 502) is HTML: the status alone tells what happened
+    if (response.ok) throw error;
+  }
   if (!response.ok) throw new ApiError(response.status, data?.detail, data);
   return data as T;
 }
@@ -53,9 +59,12 @@ export function fieldErrors(error: unknown): Record<string, string> {
 }
 
 /** Human message for any error (non-field). */
+export const TOO_LARGE_MESSAGE = "O arquivo ou o conjunto excede o limite de envio.";
+
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (typeof error.detail === "string") return error.detail;
+    if (error.status === 413) return TOO_LARGE_MESSAGE;
     if (error.status === 422) return "Verifique os campos destacados.";
     return `Erro ${error.status}`;
   }

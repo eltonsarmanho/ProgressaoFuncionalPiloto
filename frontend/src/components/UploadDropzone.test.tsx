@@ -122,6 +122,18 @@ describe("TELA-05: resultado por arquivo", () => {
     );
   });
 
+  it("VER-11: 413 do nginx (corpo HTML) mostra o limite de envio, não a falha de conexão", async () => {
+    const { onUploaded, user } = setup({
+      [POST]: { status: 413, raw: "<html><h1>413 Request Entity Too Large</h1></html>" },
+    });
+    await user.upload(screen.getByLabelText(/Selecionar arquivos/), pdf("grande.pdf"));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("O arquivo ou o conjunto excede o limite de envio");
+    expect(alert).not.toHaveTextContent("contactar");
+    expect(onUploaded).not.toHaveBeenCalled();
+  });
+
   it("422 de limite de documentos aparece ao lado do arquivo", async () => {
     const { user } = setup({
       [POST]: { status: 207, body: [result({ original_name: "w.pdf", status_code: 422, field: "limite", message: "O processo já tem 200 documentos" })] },
