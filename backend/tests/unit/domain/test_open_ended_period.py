@@ -1,10 +1,12 @@
 """SEG-02: a start-only period of a yearly item is open ended; other items keep one day."""
 
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from uuid import uuid4
 
 from app.domain.entities.activity import Activity, ActivityStatus, PeriodPrecision
+from app.domain.entities.extraction import ExtractedActivity, TaxonomyCode
 from app.domain.entities.scoring import (
     ScoringCriterion,
     ScoringGroup,
@@ -13,6 +15,7 @@ from app.domain.entities.scoring import (
     TableStatus,
 )
 from app.domain.rules.interstice import Interstice
+from app.domain.rules.quantity_rules import is_open_ended
 from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
 from app.domain.rules.scoring_engine import RowStatus, calculate
 from app.domain.rules.scoring_periods import PeriodState, activity_interval, evaluate_period
@@ -64,6 +67,24 @@ def test_without_the_open_flag_a_start_only_period_is_still_one_day():
 def test_open_ended_month_precision_starts_at_the_first_day_of_the_month():
     a = activity(period_start=date(2024, 11, 1), period_precision=PeriodPrecision.MONTH)
     assert activity_interval(a, INTERSTICE.end) == (date(2024, 11, 1), INTERSTICE.end)
+
+
+def test_open_ended_month_precision_start_in_the_middle_of_the_month_is_floored_to_day_one():
+    a = activity(period_start=date(2024, 11, 15), period_precision=PeriodPrecision.MONTH)
+    assert activity_interval(a, INTERSTICE.end) == (date(2024, 11, 1), INTERSTICE.end)
+
+
+def test_a_dated_event_with_a_start_date_is_not_open_ended():
+    base = ExtractedActivity(
+        taxonomy=TaxonomyCode.FUNCAO_DIRETOR_FACULDADE,
+        page=1,
+        evidence_text="x",
+        confidence=Decimal("0.9"),
+        start_date=date(2025, 3, 1),
+    )
+    assert is_open_ended(base) is True
+    assert is_open_ended(replace(base, event_date=date(2025, 3, 1))) is False
+    assert is_open_ended(replace(base, end_date=date(2025, 5, 1))) is False
 
 
 def criterion(group, item, unit_label) -> ScoringCriterion:

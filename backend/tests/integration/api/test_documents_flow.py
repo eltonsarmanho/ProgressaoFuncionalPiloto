@@ -48,6 +48,11 @@ COORIENTACAO = (
     f"Declaramos que {PROFESSOR} coorientou o trabalho de conclusao de curso de graduacao "
     "Analise Ficticia de Redes, defendido em 20 de junho de 2023."
 )
+PORTARIA = (
+    "PORTARIA N. 100/2024\n"
+    f"Designar {PROFESSOR} para exercer a funcao de Diretor da Faculdade Exemplo, "
+    "por 2 (dois) anos, a partir de 09/08/2024."
+)
 INVENTED = "2019-07-04"
 
 
@@ -78,6 +83,14 @@ class MariTalkServer:
                          role="coorientador", event_date="2023-06-20",
                          evidence_text="coorientou o trabalho de conclusao"),
                 name=None, document_type="DECLARACAO_ORIENTACAO",
+            )  # fmt: skip
+        elif "designar" in text:  # a designation with a start date and a written term
+            answer = payload(
+                activity(taxonomy="FUNCAO_DIRETOR_FACULDADE", title="Diretor da Faculdade Exemplo",
+                         role="Diretor", event_date=None, start_date="2024-08-09",
+                         term="por 2 (dois) anos",
+                         evidence_text="Designar para exercer a funcao de Diretor"),
+                name=PROFESSOR, document_type="PORTARIA",
             )  # fmt: skip
         elif "modelos ficticios" in text:  # the AI invents a date that is not in the document
             answer = payload(
@@ -238,6 +251,20 @@ def test_the_ai_that_invents_a_date_is_caught_and_the_date_never_reaches_the_act
     [draft] = activities(client, process)
     assert draft["event_date"] is None
     assert INVENTED not in json.dumps(draft)
+
+
+def test_the_end_date_derived_from_the_term_is_the_period_of_the_created_activity(case):
+    client, headers, process = case
+    [document] = upload(client, headers, process, ("portaria.pdf", text_pdf(PORTARIA)))
+
+    drain(client)
+
+    assert "DATA_FIM_DERIVADA" in alert_codes(detail(client, document))
+    [draft] = activities(client, process)
+    assert (draft["group_number"], draft["item_number"]) == (6, 6)
+    assert draft["period_start"] == "2024-08-09"
+    assert draft["period_end"] == "2026-08-09"  # derived from "por 2 (dois) anos", editable
+    assert draft["event_date"] is None
 
 
 # --- documents without an item and the TCC co-advising -------------------------------------------

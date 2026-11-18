@@ -2738,10 +2738,10 @@ T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T10
 
 **Done when**:
 
-- [ ] Atividade criada da portaria com prazo tem `period_start == 2024-08-09` e `period_end == 2026-08-09`, e a API devolve as duas datas
-- [ ] Com a tabela oficial, VI.6 sem data final fica aberto com `DATA_FIM_AUSENTE` e revisão; um item por ação com só o início não vai para revisão e não ganha `DATA_FIM_AUSENTE`; um item por ano fora da lista de taxonomias também é aberto
-- [ ] Mutantes PE01, PE02, A05, A14, A06 e A08 da terceira verificação morrem (cópia de arquivo, comando no corpo do commit)
-- [ ] Gate full passa
+- [x] Atividade criada da portaria com prazo tem `period_start == 2024-08-09` e `period_end == 2026-08-09`, e a API devolve as duas datas
+- [x] Com a tabela oficial, VI.6 sem data final fica aberto com `DATA_FIM_AUSENTE` e revisão; um item por ação com só o início não vai para revisão e não ganha `DATA_FIM_AUSENTE`; um item por ano fora da lista de taxonomias também é aberto
+- [x] Mutantes PE01, PE02, A05, A14, A06 e A08 da terceira verificação morrem (cópia de arquivo, comando no corpo do commit)
+- [x] Gate full passa
 
 **Tests**: unit + integration
 **Gate**: full
