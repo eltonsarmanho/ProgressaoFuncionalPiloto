@@ -82,12 +82,53 @@
 - **Date**: 2026-11-17
 - **Status**: active
 
+### AD-011
+- **Decision**: Os documentos gerados não usam LibreOffice nem conversão de DOCX em PDF: DOCX com python-docx, PDF gerado com reportlab (Liberation Serif versionada no repositório) e PDF montado com as páginas originais por PyMuPDF; PDF e DOCX têm o mesmo conteúdo e a mesma ordem, a aparência pode diferir.
+- **Reason**: A VM tem 1 CPU e 384 MB para o backend; as bibliotecas somam cerca de 24 MB e foram medidas com dados sintéticos (pico de 74 MB num Comprovante de 411 páginas). Instrução do usuário (2026-11-18); a licença AGPL do PyMuPDF foi aceita pelo usuário na mesma data (não é parecer jurídico).
+- **Trade-off**: O DOCX não foi testado no Word, só em LibreOffice no ambiente de desenvolvimento; reportlab 5.1.0 é recente (queda para 4.5.1 se a suíte falhar).
+- **Scope**: `documentos-gerados`, `banca-parecer`
+- **Date**: 2026-11-18
+- **Status**: active
+
+### AD-012
+- **Decision**: Cada geração de documento vira uma versão imutável (gatilho no banco), numerada só quando chega a `PRONTO`, com arquivo, SHA-256 e instantâneo do que foi usado; a geração perdida num reinício vira `FALHOU` com `INTERROMPIDA` e não é reenfileirada; todas as versões ficam enquanto o processo existir.
+- **Reason**: O resultado da pontuação não é gravado (AD-006), então a versão é o único registro do que foi entregue; falha não gasta número; repetir uma geração interrompida não é seguro de decidir sozinho.
+- **Trade-off**: Sem reentrega automática (diferente de `processing_jobs`, AD-008) e o volume cresce sem retenção, até 60 MB por Comprovante.
+- **Scope**: `documentos-gerados`, `banca-parecer`
+- **Date**: 2026-11-18
+- **Status**: active
+
+### AD-013
+- **Decision**: As páginas originais entram no Comprovante sem alterar o conteúdo (rotação, anotações e campos preservados; o número vai numa faixa de rodapé acrescentada, nunca sobre o original; rasterizar só como fallback alertado), e a ordem e a numeração vêm de um plano puro do domínio compartilhado entre a Tabela e o Comprovante, que usa só metadados.
+- **Reason**: O prompt proíbe alterar os comprovantes; a Tabela cita números do Comprovante antes de ele existir e depois que os originais forem excluídos.
+- **Trade-off**: O sumário tem capacidade fixa de linhas por página; página rotacionada com recorte perde o formato vetorial (`PAGINA_RASTERIZADA`); PNG acima de 12 megapixels é recusado.
+- **Scope**: `documentos-gerados`, `banca-parecer`
+- **Date**: 2026-11-18
+- **Status**: active
+
+### AD-014
+- **Decision**: A redação por IA do Relatório recebe só os campos da atividade (nunca texto bruto de página nem dado pessoal mascarado), roda como tarefa em segundo plano com estado na seção, só vale depois de uma conferência determinística (número, data, nome e palavra nova) e cai no texto-modelo se falhar ou passar de 60 s; texto editado pelo usuário nunca é reescrito.
+- **Reason**: Estende a AD-009 ao sentido da geração; o prompt proíbe inventar fatos e uma requisição de 60 s não cabe na tela nem no nginx. Decisão do usuário (2026-11-18).
+- **Trade-off**: A conferência não pega afirmação qualitativa feita só de palavras permitidas (a revisão humana cobre); a tarefa ocupa a thread única por até 60 s.
+- **Scope**: `documentos-gerados`, `banca-parecer`
+- **Date**: 2026-11-18
+- **Status**: active
+
+### AD-015
+- **Decision**: Concluir o processo significa "concluir e excluir documentos de entrada": só com versão PRONTO de Tabela, Relatório e Comprovante e confirmação irreversível, o sistema exclui os arquivos originais, os textos extraídos das páginas e os trechos de evidência, mantém metadados (marcados `ARQUIVO_EXCLUIDO`), vínculos e todos os documentos gerados, e só depois de remover todos os arquivos muda o processo para CONCLUIDO; a rota genérica de status recusa o alvo CONCLUIDO.
+- **Reason**: Pedido do usuário (2026-11-18): os documentos de entrada não devem ocupar espaço do servidor nem guardar dados pessoais depois que os artefatos estão prontos. A interpretação está como assunção não confirmada em `documentos-gerados/spec.md`.
+- **Trade-off**: Irreversível e sem backup na VM; depois da conclusão o Comprovante não pode ser regerado e o JSON estruturado das extrações permanece.
+- **Scope**: `documentos-gerados`, `fundacao` (transição de status), `inteligencia-documental` (leitura de arquivos e textos)
+- **Date**: 2026-11-18
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/inteligencia-documental` (Complex): **implementada**, Fases 1-16 (T1-T117) commitadas na branch `feat/inteligencia-documental` (empilhada sobre `feat/pontuacao` sobre `feat/fundacao`; main intocada). PRs abertos no GitHub: #1 `feat/fundacao`, #2 `feat/pontuacao`, #3 `feat/inteligencia-documental`. Depois: `documentos-gerados` → `banca-parecer` → `normativo` → `implantacao`
 - **Verificação**: quatro passagens do Verificador independente (`validation.md`: passagem 1 FAIL, 2, 3 e 4 PASS com lacunas) e seis rodadas de correção (fases 11-16; REAL, VER, SEG, TER, QUA, CER = 139 requisitos). A rodada 6 (T113-T117, CER-01..05) corrige o certificado em inglês de participação com carga horária (tipo `CERTIFICADO`, enquadramento em VII.10 com o alerta `ENQUADRADO_COMO_CAPACITACAO`, prompt em inglês): precisa de novo deploy; em "Resolution (round 6)", não re-verificada; A Fase 15 (T107-T112: rótulo de equipe e nome de outra pessoa na coordenação, negação da indexação, redação comum de extensão, pinos dos mutantes sobreviventes, variantes numeradas, registro) está em "Resolution (round 5)" e **não foi re-verificada pelo Verificador**; QUA-01..06 seguem `Implementing`
 - **Gate no HEAD**: backend `ruff` limpo e 3751 testes passando (3 `maritalk_live` desmarcados com `MARITALK_MODEL=sabia-4-thinking` no `.env`; 6 num checkout sem `.env`); frontend `eslint` limpo, build e 184 testes passando com `REQUIRE_DIST=1`; teste de aceitação da `tabela-oficial` (211 pontos) verde
 - **Decisões pendentes do usuário**: (1) regra de fração de ano para o Vice (cerca de 3,5 meses, 20 pontos por ano; hoje vale 0 por ano completo); (2) política do nome parcial do docente (D1: 5 documentos do próprio docente vão para revisão porque o texto traz só 2 dos 3 nomes); (3) atividade rejeitada em validação em lote; (4) unidade do VIII.36 ("por unidade" na tabela, "ano/revista" na descrição); (5) política da quantidade 0 (item por ano com menos de um ano completo vale 0 e pede a quantidade); (6) se "por mais N anos" sem "prorrogável" é prazo; (7) a regra de contenção de títulos (um título dentro do outro, na mesma página, tipo e data, vira uma atividade; títulos que diferem por numeral ou letra isolada, como "Nível 1" e "Nível 2", já não se reúnem desde T111)
+- **Feature em planejamento**: `.specs/features/documentos-gerados` (Complex), na fase Tasks: `spec.md` e `design.md` com as decisões do usuário de 2026-11-18 (AD-011 a AD-015) e `tasks.md` escrita, aguardando aprovação; nenhum código escrito; assunções com `Confirmed = n` na spec esperam o usuário
 - **Próximo passo**: push da branch e redeploy na VM com os commits das Fases 15 e 16 (d6dca43 é o que está no ar; os commits de `e08e95f` em diante, mais os registros em `.specs`, ainda não estão; só código do backend, do rótulo do frontend e testes, sem migração), com aprovação explícita do usuário para cada ação remota; uma quinta rodada do Verificador na Fase 15 se o usuário quiser. Nenhum push, deploy, acesso à VM ou chamada real à MariTalk foi feito na rodada 5
 - **Dívidas**: teste de 360 px só estático; sem backup; sem troca de senha; rotas de negócio devolvem 500 com banco fora do ar; `api/client.ts` só envia JSON; Grupo I do caso real com 16 pontos sem explicação; mínimos das classes novas sem regra; antivírus ausente na VM; itens informativos da passagem 2 (PIPE-02/ACC-02, `--fake-ai`, teste de lock, nginx do servidor fora do repositório, data final inclusiva); limites conhecidos da Fase 15 em "Resolution (round 5)" (pesquisadora e coordenadora na mesma frase vai para revisão; título de projeto com duas palavras capitalizadas entre papel e nome idem); D3, D5, D6 e D7 de `corpus-reports/ANALISE.md` são variação da IA ou dado a revisar
 - **Documentos reais** (`Documentos/`, não versionados): 44 PDFs e 1 PNG; só scripts locais os leem (`corpus-reports/` fica fora do git)
