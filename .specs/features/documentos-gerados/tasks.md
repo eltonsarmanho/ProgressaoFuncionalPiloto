@@ -909,10 +909,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Resposta fiel vira fonte `IA`; resposta com número inventado vira texto-modelo com `REDACAO_REJEITADA` e o motivo `NUMERO`
-- [ ] Entrada editada pelo usuário permanece idêntica e fora do envio
-- [ ] Sem resposta (indisponível) todas as entradas sem `USUARIO` ficam com o texto-modelo e a seção ganha `REDACAO_INDISPONIVEL`
-- [ ] Gate quick passa; 10+ testes
+- [x] Resposta fiel vira fonte `IA`; resposta com número inventado vira texto-modelo com `REDACAO_REJEITADA` e o motivo `NUMERO`
+- [x] Entrada editada pelo usuário permanece idêntica e fora do envio
+- [x] Sem resposta (indisponível) todas as entradas sem `USUARIO` ficam com o texto-modelo e a seção ganha `REDACAO_INDISPONIVEL`
+- [x] Gate quick passa; 10+ testes
 
 **Tests**: unit
 **Gate**: quick
