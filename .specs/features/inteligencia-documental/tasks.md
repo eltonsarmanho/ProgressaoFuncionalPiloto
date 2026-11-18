@@ -2819,11 +2819,11 @@ T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T10
 
 **Done when**:
 
-- [ ] VI.6 com início em 2020 e quantidade 3 no intersticio 2024-11-23 a 2026-11-23 vale 2 anos (60 pontos), não 90; quantidade 1 continua 1; sem quantidade vale os anos completos
-- [ ] Período fechado, evento datado e item que não é por ano não mudam; a linha traz `DATA_FIM_AUSENTE` só no período aberto
-- [ ] Duas atividades sem grupo e item de títulos diferentes e datas iguais não são duplicadas (D04)
-- [ ] O rótulo em português do alerta aparece na lista de pontuação
-- [ ] Gate build passa (backend e frontend)
+- [x] VI.6 com início em 2020 e quantidade 3 no intersticio 2024-11-23 a 2026-11-23 vale 2 anos (60 pontos), não 90; quantidade 1 continua 1; sem quantidade vale os anos completos
+- [x] Período fechado, evento datado e item que não é por ano não mudam; a linha traz `DATA_FIM_AUSENTE` só no período aberto
+- [x] Duas atividades sem grupo e item de títulos diferentes e datas iguais não são duplicadas (D04)
+- [x] O rótulo em português do alerta aparece na lista de pontuação
+- [x] Gate build passa (backend e frontend)
 
 **Tests**: unit + unit (frontend)
 **Gate**: build

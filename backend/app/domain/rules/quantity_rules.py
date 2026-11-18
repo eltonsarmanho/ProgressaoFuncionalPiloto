@@ -1,7 +1,6 @@
 """Quantity and hours derived by rule from extracted fields (CLS-06). Never points, never AI."""
 
 from dataclasses import dataclass
-from datetime import date
 from decimal import Decimal
 
 from app.domain.entities.activity import Level
@@ -9,6 +8,7 @@ from app.domain.entities.document import DocAlertCode
 from app.domain.entities.extraction import ExtractedActivity
 from app.domain.entities.extraction import TaxonomyCode as T
 from app.domain.rules.interstice import Interstice
+from app.domain.rules.scoring_periods import complete_years_between, complete_years_inside
 
 _HOUR_BASED = frozenset({T.ESTAGIO_CAPACITACAO})
 # One per document; the extracted hours are kept for the minimum course load check (MAP-04).
@@ -64,13 +64,6 @@ def is_open_ended(extracted: ExtractedActivity) -> bool:
     )
 
 
-def _whole_years(start: date, end: date) -> int:
-    years = end.year - start.year
-    if (end.month, end.day) < (start.month, start.day):
-        years -= 1
-    return years
-
-
 def _exercise_years(extracted: ExtractedActivity, interstice: Interstice | None) -> int:
     """Complete years of exercise, inside the interstice when given; 0 when unknown (REAL-11).
 
@@ -81,11 +74,9 @@ def _exercise_years(extracted: ExtractedActivity, interstice: Interstice | None)
         end = interstice.end
     if start is None or end is None or end < start:
         return 0
-    if interstice is not None:
-        start, end = max(start, interstice.start), min(end, interstice.end)
-        if end < start:
-            return 0
-    return _whole_years(start, end)
+    if interstice is None:
+        return complete_years_between(start, end)
+    return complete_years_inside(start, end, interstice)
 
 
 def derive_quantity(

@@ -75,7 +75,7 @@
 - **Status**: active
 
 ### AD-010
-- **Decision**: A data final de uma designação só é derivada de um prazo escrito no texto: a IA devolve o trecho literal `term` ("por 2 (dois) anos"), o código o confere na página, lê numerais e palavras e soma ao início (`end = start + prazo`), com o aviso `DATA_FIM_DERIVADA`; sem prazo, o item por ano de exercício com só a data de início é período aberto até o fim do interstício, com `DATA_FIM_AUSENTE`. Itens que não são por ano mantêm o dia único.
+- **Decision**: A data final de uma designação só é derivada de um prazo escrito no texto: a IA devolve o trecho literal `term` ("por 2 (dois) anos"), o código o confere na página, lê numerais e palavras e soma ao início (`end = start + prazo`), com o aviso `DATA_FIM_DERIVADA`; sem prazo, o item por ano de exercício com só a data de início é período aberto até o fim do interstício, com `DATA_FIM_AUSENTE`. Itens que não são por ano mantêm o dia único. O período aberto vale também para a atividade cadastrada à mão: a quantidade pontuada é o menor valor entre a informada e os anos completos do período dentro do interstício (sem quantidade informada, os anos completos), nunca acima do que a pessoa digitou, com o alerta `DATA_FIM_AUSENTE` na linha de pontuação (TER-05).
 - **Reason**: A portaria de Diretor valia 0 ponto porque a data de início sozinha era um dia; a IA não pode calcular nem inventar a data final (AD-009).
 - **Trade-off**: Prazo escrito de outra forma não é lido e cai no período aberto; o usuário confere a data derivada, que fica editável.
 - **Scope**: `inteligencia-documental`, `pontuacao`

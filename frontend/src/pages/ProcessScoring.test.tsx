@@ -357,6 +357,28 @@ describe("ProcessScoring", () => {
       expect(screen.queryByText("Total de horas de PIT")).not.toBeInTheDocument();
     });
 
+    it("explica em português o alerta DATA_FIM_AUSENTE de uma função sem data final (TER-05)", async () => {
+      const director: ScoringResult["rows"][number] = {
+        ...ROW,
+        activity_id: "d1",
+        title: "Diretor da Faculdade",
+        group_number: 6,
+        item_number: 6,
+        status: "POTENCIAL",
+        points: "60.00",
+        alerts: [
+          { code: "DATA_FIM_AUSENTE", severity: "ALERTA", message: "Sem data final na portaria", norm_reference: "Tabela oficial, VI.6" },
+        ],
+      };
+      mockFetch(baseRoutes(() => result("0.00", [director])));
+      renderPage();
+      expect(await screen.findByText("Diretor da Faculdade", { selector: "td" })).toBeInTheDocument();
+      const alerta = screen.getByRole("region", { name: /^Alerta \(\d+\)$/ });
+      expect(alerta).toHaveTextContent("Sem data final: quantidade limitada aos anos completos até o fim do interstício");
+      expect(alerta).toHaveTextContent("Diretor da Faculdade: Sem data final na portaria");
+      expect(alerta).not.toHaveTextContent("DATA_FIM_AUSENTE");
+    });
+
     it("explica em português o alerta CARGA_HORARIA_NAO_INFORMADA e a razão CARGA_HORARIA_INSUFICIENTE", async () => {
       const course: ScoringResult["rows"][number] = {
         ...ROW,

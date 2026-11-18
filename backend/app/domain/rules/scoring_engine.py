@@ -26,7 +26,13 @@ from app.domain.rules.interstice import Interstice
 from app.domain.rules.process_verification import Alert, Severity
 from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
 from app.domain.rules.scoring_duplicates import ContentKey, find_duplicates
-from app.domain.rules.scoring_periods import PeriodState, evaluate_period, is_yearly_unit
+from app.domain.rules.scoring_periods import (
+    PeriodState,
+    evaluate_period,
+    is_start_only,
+    is_yearly_unit,
+    open_period_years,
+)
 from app.domain.rules.scoring_points import criterion_points
 
 ZERO = Decimal(0)
@@ -131,6 +137,15 @@ def _not_scored(activity: Activity, reason: NotScoredReason, evidence_count: int
     )
 
 
+def _open_quantity(activity: Activity, interstice: Interstice) -> Decimal:
+    """The typed quantity capped at the complete years of the open period (TER-05).
+
+    Never above what the person typed; with no quantity typed, the complete years.
+    """
+    years = Decimal(open_period_years(activity, interstice))
+    return years if activity.quantity is None else min(activity.quantity, years)
+
+
 def _period_alerts(state: PeriodState, version: ScoringTableVersion) -> list[Alert]:
     if state is PeriodState.PARCIAL:
         message = (
@@ -160,7 +175,8 @@ def _evaluate(
     if activity.status is ActivityStatus.REJEITADA:
         return _not_scored(activity, NotScoredReason.REJEITADA, evidence_count)
 
-    state = evaluate_period(activity, interstice, is_yearly_unit(criterion.unit_label))
+    yearly = is_yearly_unit(criterion.unit_label)
+    state = evaluate_period(activity, interstice, yearly)
     if state is PeriodState.FORA:
         return _not_scored(activity, NotScoredReason.FORA_DO_INTERSTICIO, evidence_count)
 
@@ -180,8 +196,17 @@ def _evaluate(
 
     # PIT hours come from the weekly load only; informed points never replace them
     scored_activity = replace(activity, points_override=None) if pit else activity
+    open_ended = yearly and is_start_only(activity)
+    if open_ended:
+        scored_activity = replace(scored_activity, quantity=_open_quantity(activity, interstice))
     result = criterion_points(criterion, scored_activity)
     alerts = _period_alerts(state, version)
+    if open_ended:
+        message = (
+            "A atividade não tem data final; pontuada com os anos completos do período até o "
+            "fim do interstício, no máximo a quantidade informada."
+        )
+        alerts.append(_row_alert(ScoringAlertCode.DATA_FIM_AUSENTE, message, version))
     if missing_hours:
         message = (
             f"O item exige carga horária mínima de {criterion.min_hours:f} h e as horas não "

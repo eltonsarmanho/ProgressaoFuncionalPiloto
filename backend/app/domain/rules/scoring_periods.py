@@ -29,6 +29,38 @@ def is_yearly_unit(unit_label: str) -> bool:
     return unit_label.strip().casefold().startswith("por ano")
 
 
+def is_start_only(activity: Activity) -> bool:
+    """A start date with neither an end date nor a single event date (SEG-02)."""
+    return (
+        activity.event_date is None
+        and activity.period_start is not None
+        and activity.period_end is None
+    )
+
+
+def complete_years_between(start: date, end: date) -> int:
+    years = end.year - start.year
+    if (end.month, end.day) < (start.month, start.day):
+        years -= 1
+    return years
+
+
+def complete_years_inside(start: date, end: date, interstice: Interstice) -> int:
+    """Complete years of [start, end] that fall inside the interstice; 0 when none (TER-05)."""
+    start, end = max(start, interstice.start), min(end, interstice.end)
+    return 0 if end < start else complete_years_between(start, end)
+
+
+def open_period_years(activity: Activity, interstice: Interstice) -> int:
+    """Complete years of a start-only period that runs to the end of the interstice."""
+    start = activity.period_start
+    if start is None:
+        return 0
+    if activity.period_precision is PeriodPrecision.MONTH:
+        start = start.replace(day=1)
+    return complete_years_inside(start, interstice.end, interstice)
+
+
 def activity_interval(activity: Activity, open_end: date | None = None) -> tuple[date, date] | None:
     """Inclusive date range of the activity, or None when it has no date.
 
@@ -36,12 +68,7 @@ def activity_interval(activity: Activity, open_end: date | None = None) -> tuple
     the start to that date (the end of the interstice), or stays on its start when it began
     later (SEG-02). A dated event, a closed period and an end-only period never change.
     """
-    start_only = (
-        activity.event_date is None
-        and activity.period_start is not None
-        and activity.period_end is None
-    )
-    if start_only and open_end is not None:
+    if is_start_only(activity) and open_end is not None:
         start = activity.period_start
         if activity.period_precision is PeriodPrecision.MONTH:
             start = start.replace(day=1)
