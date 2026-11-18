@@ -1,0 +1,190 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 11,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "surviving_mutant::when an alert lists offending fields assert each field individually triggers it with its label in the message",
+      "text": "When an alert lists offending fields, assert each field individually triggers it with its label in the message",
+      "signal": "surviving_mutant",
+      "scope": "domain-rules",
+      "status": "candidate",
+      "features": [
+        "fundacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md M14/M15; backend/tests/unit/domain/test_process_verification.py:249 (domain-rules)"
+      ],
+      "created": "2026-11-17T01:57:02Z",
+      "last_seen": "2026-11-17T01:57:02Z"
+    },
+    {
+      "id": "L-002",
+      "key": "ac_gap::for versioned reference data with immutability and no overlap rules test adding a successor version after the current open ended version is in use",
+      "text": "For versioned reference data with immutability and no-overlap rules, test adding a successor version after the current open-ended version is in use",
+      "signal": "ac_gap",
+      "scope": "career-versions",
+      "status": "candidate",
+      "features": [
+        "fundacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "CARR-08; backend/tests/integration/api/test_career_api.py:156-177 (career-versions)"
+      ],
+      "created": "2026-11-17T01:57:02Z",
+      "last_seen": "2026-11-17T01:57:02Z"
+    },
+    {
+      "id": "L-003",
+      "key": "spec_precision_gap::when one validation makes another check meaningless state in the spec whether the dependent check is suppressed and pin it with a test",
+      "text": "When one validation makes another check meaningless, state in the spec whether the dependent check is suppressed and pin it with a test",
+      "signal": "spec_precision_gap",
+      "scope": "domain-rules",
+      "status": "candidate",
+      "features": [
+        "fundacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PROC-09; validation.md M20 (domain-rules)"
+      ],
+      "created": "2026-11-17T01:57:02Z",
+      "last_seen": "2026-11-17T01:57:02Z"
+    },
+    {
+      "id": "L-004",
+      "key": "spec_precision_gap::define day count convention inclusive or exclusive in the spec whenever a duration in days is displayed",
+      "text": "Define day-count convention inclusive or exclusive in the spec whenever a duration in days is displayed",
+      "signal": "spec_precision_gap",
+      "scope": "domain-rules",
+      "status": "candidate",
+      "features": [
+        "fundacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PROC-02; backend/app/domain/rules/interstice.py:29 (domain-rules)"
+      ],
+      "created": "2026-11-17T01:57:02Z",
+      "last_seen": "2026-11-17T01:57:02Z"
+    },
+    {
+      "id": "L-005",
+      "key": "spec_precision_gap::when every alert must cite a norm specify the reference for alerts that have no normative basis",
+      "text": "When every alert must cite a norm, specify the reference for alerts that have no normative basis",
+      "signal": "spec_precision_gap",
+      "scope": "domain-rules",
+      "status": "candidate",
+      "features": [
+        "fundacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PROC-04; backend/app/domain/rules/process_verification.py:20 (domain-rules)"
+      ],
+      "created": "2026-11-17T01:57:02Z",
+      "last_seen": "2026-11-17T01:57:02Z"
+    },
+    {
+      "id": "L-006",
+      "key": "spec_deviation::enforce append only tables with a database trigger because revoke does not restrict the owning role the app connects as",
+      "text": "Enforce append-only tables with a database trigger, because REVOKE does not restrict the owning role the app connects as",
+      "signal": "spec_deviation",
+      "scope": "database",
+      "status": "candidate",
+      "features": [
+        "fundacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SPEC_DEVIATION backend/alembic/versions/0001_initial_schema.py:245 (database)"
+      ],
+      "created": "2026-11-17T01:57:02Z",
+      "last_seen": "2026-11-17T01:57:02Z"
+    },
+    {
+      "id": "L-007",
+      "key": "surviving_mutant::test date range guards on the exact boundary day the spec names such as on or after versus after",
+      "text": "Test date-range guards on the exact boundary day the spec names, such as on-or-after versus after",
+      "signal": "surviving_mutant",
+      "scope": "career-versions",
+      "status": "candidate",
+      "features": [
+        "fundacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N4 backend/app/application/use_cases/career.py:125 (CARR-10) (career-versions)",
+        "N5 backend/app/application/use_cases/career.py:121 (CARR-09) (career-versions)"
+      ],
+      "created": "2026-11-17T02:17:06Z",
+      "last_seen": "2026-11-17T02:17:06Z"
+    },
+    {
+      "id": "L-008",
+      "key": "surviving_mutant::test interval overlap checks with ranges that share exactly one endpoint day on each side",
+      "text": "Test interval overlap checks with ranges that share exactly one endpoint day on each side",
+      "signal": "surviving_mutant",
+      "scope": "career-versions",
+      "status": "candidate",
+      "features": [
+        "fundacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "K1/K2 backend/app/application/use_cases/career.py:77,80 (CARR-08 overlap) (career-versions)"
+      ],
+      "created": "2026-11-17T02:32:56Z",
+      "last_seen": "2026-11-17T02:32:56Z"
+    },
+    {
+      "id": "L-009",
+      "key": "surviving_mutant::for each date guard test the last allowed day as well as the first rejected day",
+      "text": "For each date guard test the last allowed day as well as the first rejected day",
+      "signal": "surviving_mutant",
+      "scope": "career-versions",
+      "status": "candidate",
+      "features": [
+        "fundacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "K3 backend/app/application/use_cases/career.py:125 (CARR-09/CARR-10) (career-versions)"
+      ],
+      "created": "2026-11-17T02:32:56Z",
+      "last_seen": "2026-11-17T02:32:56Z"
+    },
+    {
+      "id": "L-010",
+      "key": "surviving_mutant::when a derived flag requires two conditions together assert a case where only one holds and the flag stays false",
+      "text": "When a derived flag requires two conditions together, assert a case where only one holds and the flag stays false",
+      "signal": "surviving_mutant",
+      "scope": "career-versions",
+      "status": "candidate",
+      "features": [
+        "fundacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "X6 backend/app/application/use_cases/career.py:89 (CARR-08) (career-versions)"
+      ],
+      "created": "2026-11-17T03:07:40Z",
+      "last_seen": "2026-11-17T03:07:40Z"
+    }
+  ]
+}
