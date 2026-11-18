@@ -118,6 +118,14 @@ Lacunas do relatório `validation.md` (veredito FAIL em `76022d5`), uma tarefa p
 T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → T81
 ```
 
+### Phase 13: Correções da segunda rodada
+
+Defeitos da segunda execução real (`corpus-reports/ANALISE.md`, local) e lacunas FT-8..FT-18 da segunda verificação (`validation.md`), uma tarefa por defeito, do mais grave ao mais leve; a memória do OCR fecha a fase. Os testes usam só texto, arquivos e PDFs sintéticos. Fase maior que o orçamento por ser uma cadeia de correções independentes, ordenadas pela gravidade.
+
+```
+T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → T92 → T93 → T94 → T95
+```
+
 ---
 
 ## Task Breakdown
@@ -2314,10 +2322,375 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 ---
 
+### T82: Prazo da designação e data final derivada
+
+**What**: Campo opcional `term` no esquema e no prompt da IA (trecho literal do prazo, aterrado no texto da página); `parse_term_months` lê numerais e palavras ("por 2 (dois) anos", "24 meses", "pelo período de um ano"); com data de início do dia e prazo, o analisador deriva `end_date = start + prazo` e emite `DATA_FIM_DERIVADA`, gravando a data como período da atividade. Arquivos: `extraction.py`, `document.py`, `schemas.py`, `maritalk.py`, `grounding.py`, `term_rules.py`, `document_analyzer.py` e testes.
+**Where**: `backend/app/domain/rules/term_rules.py`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `number_words.numerals_from_words`, `ground`, `ExtractedActivity`
+**Requirement**: SEG-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Portaria sintética "Diretor, por 2 (dois) anos, a partir de 09/08/2024": `end_date == 2026-08-09`, alerta `DATA_FIM_DERIVADA` na atividade e período 2024-08-09 a 2026-08-09 gravado na atividade criada
+- [ ] "24 meses", "pelo período de um ano", "por dois anos" e "1 ano e 6 meses" são lidos; "3 (dois) anos", "por alguns anos" e prazo sem unidade não derivam data
+- [ ] Prazo que não consta na página: `term` anulado com `NAO_ENCONTRADO_NO_TEXTO` e nenhuma data derivada; início só com mês e ano: nenhuma derivação; data final já informada e aterrada: o prazo é ignorado
+- [ ] O esquema estrito e o prompt trazem `term`; resposta sem a chave é recusada (`RESPOSTA_INVALIDA`)
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `feat(documents): derive the end date from a grounded term`
+
+---
+
+### T83: Período aberto a partir do início em itens por ano
+
+**What**: Em item por ano de exercício, data de início sem data final e sem prazo é período aberto: `activity_interval` e `evaluate_period` cortam no fim do interstício quando o item é por ano (unidade da tabela), `derive_quantity` conta os anos completos até o fim do interstício e o analisador emite `DATA_FIM_AUSENTE` e `QUANTIDADE_ESTIMADA` e deixa a atividade em revisão. Itens que não são por ano mantêm o dia único. Arquivos: `scoring_periods.py`, `scoring_engine.py`, `quantity_rules.py`, `document_analyzer.py`, `document.py` e testes.
+**Where**: `backend/app/domain/rules/scoring_periods.py`
+**Depends on**: T82
+**Reuses**: `activity_interval`, `evaluate_period`, `_exercise_years`
+**Requirement**: SEG-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Início 2026-08-09 sem fim em VI.7: `DENTRO`, quantidade 0 (3,5 meses), `QUANTIDADE_ESTIMADA` e `DATA_FIM_AUSENTE`, atividade em revisão
+- [ ] Início 2024-08-09 com fim derivado 2026-08-09 em VI.6: `PARCIAL`, quantidade 1 (anos completos de 2024-11-23 a 2026-08-09); o cálculo de anos está descrito no corpo do commit como decisão do usuário
+- [ ] Início 2024-08-09 sem fim em VI.6: `PARCIAL` e quantidade 1; início depois do fim do interstício: `FORA`
+- [ ] Item que não é por ano (VII.10, III.2) com só a data de início: continua um único dia (`FORA` quando antes do interstício)
+- [ ] Duplicidade e verificação manual de atividade com `period_start` e `period_end` não mudam
+- [ ] Gate full passa
+
+**Tests**: unit + integration
+**Gate**: full
+
+**Commit**: `feat(scoring): treat a start-only period of a yearly item as open ended`
+
+---
+
+### T84: Rótulos das datas derivada e ausente
+
+**What**: `labels.ts` ganha `DATA_FIM_DERIVADA` e `DATA_FIM_AUSENTE`, com teste de rótulo. Arquivos: `frontend/src/labels.ts` e `labels.test.ts`.
+**Where**: `frontend/src/labels.ts`
+**Depends on**: T83
+**Reuses**: `DOCUMENT_CODE_LABELS`
+**Requirement**: SEG-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O rótulo de `DATA_FIM_DERIVADA` é "Data final calculada do prazo da portaria: confira" e o de `DATA_FIM_AUSENTE` diz que não há data final e que a quantidade foi estimada até o fim do interstício
+- [ ] Gate build do frontend passa
+
+**Tests**: unit (frontend)
+**Gate**: build
+
+**Commit**: `feat(frontend): label the derived and missing end date alerts`
+
+---
+
+### T85: Títulos parecidos do mesmo item
+
+**What**: `find_duplicates` marca a atividade criada depois como duplicidade quando o item é o mesmo, as datas são iguais ou sobrepostas e os títulos normalizados têm similaridade de Jaccard de 0,8 ou mais, além do título igual. Arquivos: `scoring_duplicates.py` e `test_scoring_duplicates.py`.
+**Where**: `backend/app/domain/rules/scoring_duplicates.py`
+**Depends on**: T84
+**Reuses**: `find_duplicates`, `normalize_title`
+**Requirement**: SEG-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Dois títulos de 56 e 72 caracteres com Jaccard 0,88, mesmo item e mesma data: o segundo é `DUPLICIDADE`
+- [ ] Jaccard 0,79 (abaixo do limite), item diferente, datas disjuntas ou sem data: não duplicam
+- [ ] Atividade com `distinct_justification` não é marcada
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(scoring): flag near identical titles of the same item as duplicates`
+
+---
+
+### T86: Conteúdo idêntico em documentos diferentes
+
+**What**: O cálculo recebe, por atividade, as chaves de conteúdo (documento e SHA-256 do texto normalizado das páginas) das evidências ligadas; atividades do mesmo item de documentos diferentes de mesmo hash viram duplicidade, nunca as do mesmo documento. Arquivos: `scoring_duplicates.py`, `scoring_engine.py`, `ports.py`, `repositories.py`, `scoring.py` e testes.
+**Where**: `backend/app/domain/rules/scoring_duplicates.py`
+**Depends on**: T85
+**Reuses**: `counts_for_activities`, `find_duplicates`
+**Requirement**: SEG-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Dois documentos de bytes diferentes e texto normalizado igual, uma atividade em cada, mesmo item: a criada depois é `DUPLICIDADE` (PostgreSQL real, pelo cálculo do processo)
+- [ ] Duas atividades do mesmo documento nunca duplicam por conteúdo; textos diferentes não duplicam
+- [ ] Gate full passa
+
+**Tests**: unit + integration
+**Gate**: full
+
+**Commit**: `fix(scoring): flag activities of two documents with the same text as duplicates`
+
+---
+
+### T87: Curso de extensão só com contexto de natureza
+
+**What**: `confirm_extension_course` exige "extensão" em contexto de natureza do curso e ignora o nome de unidade (Pró-Reitoria, Diretoria, Coordenadoria, Centro, Núcleo de Extensão, PROEX). Arquivos: `suggestion_rules.py` e `test_suggestion_rules.py`.
+**Where**: `backend/app/domain/rules/suggestion_rules.py`
+**Depends on**: T86
+**Reuses**: `confirm_extension_course`
+**Requirement**: SEG-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] "entre a Pró-Reitoria de Extensão e as faculdades" sem outro contexto: VII.10
+- [ ] "curso de extensão", "atividade de extensão", "ação de extensão", "Categoria: Extensão" e "programa de extensão": VII.9, mesmo com a Pró-Reitoria no cabeçalho
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(suggestions): require extension wording in a course context, not a unit name`
+
+---
+
+### T88: Papel de coordenação de pesquisa
+
+**What**: `confirm_research_coordination` exige coordenação, coordenador ou líder no texto com o nome do docente a poucas palavras; sem isso a atividade V.1 ou V.2 não tem item. O analisador passa o nome do docente à regra. Arquivos: `suggestion_rules.py`, `document_analyzer.py` e testes.
+**Where**: `backend/app/domain/rules/suggestion_rules.py`
+**Depends on**: T87
+**Reuses**: `confirm_extension_project`, `professor_named_in_text`
+**Requirement**: SEG-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Certificado de participação de 18 horas com `PESQUISA_PROJETO_COORDENACAO`: `SEM_ITEM_DE_PONTUACAO`, nenhuma atividade V.1
+- [ ] "coordenadora do projeto de pesquisa" com o nome do docente na frase: V.1 mantido; coordenação de outra pessoa e docente só listado como membro: sem item
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(suggestions): require a coordination role for research coordination items`
+
+---
+
+### T89: Nome parcial sem prova no texto
+
+**What**: `same_person` deixa de aceitar nome parcial da IA sem o nome completo ou a matrícula no texto. Arquivos: `grounding.py` e `test_grounding.py`.
+**Where**: `backend/app/domain/rules/grounding.py`
+**Depends on**: T88
+**Reuses**: `same_person`, `professor_named_in_text`
+**Requirement**: SEG-08
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] "Maria Souza" para "Maria Aparecida de Souza" com texto que só traz "Maria Souza": `DOCENTE_DIVERGENTE`; com o nome completo no texto: aceito
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(documents): do not accept a partial professor name without text support`
+
+---
+
+### T90: PAPIM só para coordenação de extensão
+
+**What**: "PAPIM" e "intervenção metodológica" confirmam só o item IV.1 (texto da tabela oficial); o IV.2 exige "extensão". Arquivos: `suggestion_rules.py` e `test_suggestion_rules.py`.
+**Where**: `backend/app/domain/rules/suggestion_rules.py`
+**Depends on**: T89
+**Reuses**: `confirm_extension_project`, `ufpa.json`
+**Requirement**: SEG-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Teste lê a descrição do item IV.1 de `ufpa.json` e confirma que traz PAPIM e a descrição do IV.2 não
+- [ ] Coordenação com "PAPIM" sem "extensão": IV.1; participação com "PAPIM": sem item
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(suggestions): accept papim only for the extension coordination item`
+
+---
+
+### T91: Varredura do pacote sem pular
+
+**What**: `bundle.test.ts` falha, em vez de pular, quando `REQUIRE_DIST` está definido e `frontend/dist` não existe; o Build gate roda `npm run build` antes dos testes com `REQUIRE_DIST=1`. Arquivos: `bundle.test.ts`, `tasks.md` (linha do Build gate) e `docs/deploy`.
+**Where**: `frontend/tests/bundle.test.ts`
+**Depends on**: T90
+**Reuses**: `scripts/check_bundle_no_secrets.sh`
+**Requirement**: SEG-10
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Sem `dist` e com `REQUIRE_DIST=1`: o teste falha com mensagem clara; sem `REQUIRE_DIST`, pula como antes
+- [ ] A linha do Build gate de `tasks.md` gera o pacote antes dos testes
+- [ ] Gate build do frontend passa na ordem nova
+
+**Tests**: unit (frontend)
+**Gate**: build
+
+**Commit**: `test(frontend): fail the bundle scan instead of skipping it when dist is required`
+
+---
+
+### T92: Mutantes fracos do backend
+
+**What**: Testes para D04, R03, B04, X02, X03, X05, X07, X08, I02, I05, W03, K08 e R09 do relatório da segunda verificação. Arquivos: testes de `document_type`, `grounding`, `bulk_validate`, `document_analyzer`, `pdf_text`, `text_quality`, `limits_wiring` e `masking`.
+**Where**: `backend/tests/unit/domain/test_document_type.py`
+**Depends on**: T91
+**Reuses**: Fixtures sintéticas existentes
+**Requirement**: SEG-11
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Cada mutante listado é reproduzido em cópia de arquivo e morto pelo teste novo (o comando e o resultado vão no corpo do commit)
+- [ ] Gate full passa
+
+**Tests**: unit + integration
+**Gate**: full
+
+**Commit**: `test(documents): kill the weak assertions found by the second verification`
+
+---
+
+### T93: Rótulos DATA_PARCIAL e CLAUSULA_DE_DISPENSA
+
+**What**: Testes de rótulo para os dois códigos (F08 e F09). Arquivos: `labels.test.ts`.
+**Where**: `frontend/src/labels.test.ts`
+**Depends on**: T92
+**Reuses**: `DOCUMENT_CODE_LABELS`
+**Requirement**: SEG-11
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Os dois rótulos têm teste que falha se o texto for removido
+- [ ] Gate build do frontend passa
+
+**Tests**: unit (frontend)
+**Gate**: build
+
+**Commit**: `test(frontend): pin the partial date and dismissal labels`
+
+---
+
+### T94: Memória do OCR por página
+
+**What**: Mede o pico de memória do processamento de PDFs sintéticos de 10 páginas a 300 dpi dentro de `docker run -m 384m`, e reduz: uma página por vez, liberação do pixmap e da imagem, uma thread do Tesseract e `gc` entre páginas; teste que limita o crescimento de memória por página. Arquivos: `ocr/extractor.py`, `ocr/render.py`, `ocr/tesseract.py` e testes.
+**Where**: `backend/app/infrastructure/ocr/extractor.py`
+**Depends on**: T93
+**Reuses**: `DocumentTextExtractor`, `render_page`
+**Requirement**: SEG-12
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Pico medido antes e depois no contêiner limitado, com os números no corpo do commit
+- [ ] Teste limita o crescimento de memória entre 2 e N páginas
+- [ ] Gate full passa
+
+**Tests**: unit + integration
+**Gate**: full
+
+**Commit**: `perf(ocr): render and recognize one page at a time to bound memory`
+
+---
+
+### T95: Números de memória na documentação da VM
+
+**What**: `docs/deploy/vm.md` traz o pico medido e, se passar de 320 MB no pior caso sintético, a recomendação de subir o `mem_limit` do backend. Arquivos: `docs/deploy/vm.md`.
+**Where**: `docs/deploy/vm.md`
+**Depends on**: T94
+**Reuses**: —
+**Requirement**: SEG-12
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O documento traz os números antes e depois e a recomendação do limite
+- [ ] Gate build passa
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `docs(deploy): record the measured ocr memory peak and the recommended limit`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11 → Phase 12
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11 → Phase 12 → Phase 13
 
 Phase 1:  T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 Phase 2:  T9 → T10 → T11 → T12 → T13 → T14 → T15
@@ -2331,4 +2704,5 @@ Phase 9:  T48 → T49 → T50
 Phase 10:  T51 → T52 → T53 → T54
 Phase 11:  T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63 → T64 → T65 → T66 → T67 → T68 → T69 → T70
 Phase 12:  T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → T81
+Phase 13:  T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → T92 → T93 → T94 → T95
 ```

@@ -304,6 +304,31 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ---
 
+### P1: Correções da segunda rodada de validação ⭐ MVP
+
+**User Story**: Como docente, quero que a portaria de Diretor ou Vice-diretor valha os pontos do exercício dentro do interstício, que o mesmo certificado não conte duas vezes e que o sistema não confunda uma Pró-Reitoria de Extensão com um curso de extensão, para confiar nos números sem refazê-los à mão.
+
+**Why P1**: A segunda execução real sobre os 45 documentos (`corpus-reports/ANALISE.md`, local) e a segunda verificação independente (`validation.md`, PASS com lacunas FT-8..FT-18) acharam: designação com data de início e prazo ("por 2 anos, a partir de 09/08/2024") valendo 0 ponto (N1, cerca de 30 pontos), certificado idêntico com títulos diferentes pontuado duas vezes (N3), curso de extensão por causa do nome de uma Pró-Reitoria (N5), participação de 18 horas lida como coordenação de pesquisa (N4), nome parcial aceito sem prova no texto, e pico de memória de 427 MB contra o limite de 384 MB da VM. Entram como requisitos novos e não alteram os anteriores.
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. WHEN a IA devolve a data de início e o campo `term` (trecho literal do prazo, como "por 2 (dois) anos", "24 meses" ou "pelo período de um ano") e o trecho consta na página citada, a data de início tem o dia e não há data final THEN the system SHALL derivar `end_date = start_date + prazo`, SHALL registrar `DATA_FIM_DERIVADA` na atividade e SHALL gravar a data derivada como período da atividade, visível e editável pelo usuário; IF o prazo não consta na página, não é lido com certeza (número e palavra divergentes, unidade ausente) ou a data de início é só mês e ano THEN the system SHALL não derivar data final.
+2. WHERE o item é por ano de exercício e a atividade tem data de início, sem data final e sem prazo, the system SHALL tratar o período como aberto a partir do início, cortado no fim do interstício na verificação do período (início dentro: `DENTRO`; antes do início do interstício: `PARCIAL`; depois do fim: `FORA`), SHALL derivar a quantidade como os anos completos entre o início (ou o início do interstício) e o fim do interstício, SHALL emitir `QUANTIDADE_ESTIMADA` e `DATA_FIM_AUSENTE` e SHALL deixar a atividade para revisão; WHERE o item não é por ano, the system SHALL manter o período de uma data só como um único dia.
+3. The frontend SHALL exibir rótulo em português para `DATA_FIM_DERIVADA` ("Data final calculada do prazo da portaria: confira") e para `DATA_FIM_AUSENTE`.
+4. WHEN duas atividades do mesmo item e de datas iguais ou sobrepostas têm títulos de conjuntos de palavras normalizados com similaridade de Jaccard de 0,8 ou mais THEN the system SHALL marcar a criada depois como `DUPLICIDADE`, salvo justificativa; the system SHALL manter separadas as atividades de itens, datas ou títulos distintos.
+5. WHEN duas atividades do mesmo item vêm de documentos diferentes de um processo cujo texto normalizado das páginas é idêntico (mesmo hash) THEN the system SHALL marcar a criada depois como `DUPLICIDADE`, salvo justificativa; the system SHALL nunca marcar duas atividades do mesmo documento.
+6. IF o curso é sugerido como de extensão (VII.9) THEN the system SHALL exigir "extensão" em contexto de natureza do curso ("curso de extensão", "atividade, programa, projeto, ação ou evento de extensão", rótulo "Categoria/Natureza/Tipo: Extensão"), e SHALL ignorar a palavra dentro do nome de uma unidade (Pró-Reitoria, Diretoria, Coordenadoria, Centro ou Núcleo de Extensão, PROEX); sem esse contexto the system SHALL sugerir o item VII.10.
+7. IF a atividade é coordenação de projeto ou de grupo de pesquisa (V.1, V.2) THEN the system SHALL exigir no texto do documento coordenação, coordenador ou líder, com o nome do docente a poucas palavras do termo; sem isso the system SHALL tratar a atividade como sem item de pontuação.
+8. IF o nome devolvido pela IA é só parte do nome do docente (dois ou mais nomes, sem abreviação) THEN the system SHALL aceitá-lo como o docente somente se o nome completo do docente ou a matrícula consta no texto; caso contrário `DOCENTE_DIVERGENTE`.
+9. WHERE a palavra "PAPIM" ou "intervenção metodológica" aparece sem "extensão" the system SHALL aceitá-la como confirmação só do item IV.1 (coordenação, texto da própria tabela oficial) e SHALL não aceitá-la para o item IV.2.
+10. The system SHALL falhar, em vez de pular, o teste de varredura do pacote do frontend quando `REQUIRE_DIST` está definido, e o Build gate SHALL gerar o pacote antes dos testes.
+11. The system SHALL ter testes que fixam o que a segunda verificação mostrou frouxo: banca declarada antes de "orientadora", iniciais a mais que prenomes, versão de atividade já validada em lote, título e nível na deduplicação, períodos de uma data só, limites de OCR, `MAX_MEGAPIXELS` no inspetor, nome do docente em página posterior, "extensão" depois da sexta página, rótulos `DATA_PARCIAL` e `CLAUSULA_DE_DISPENSA`, CPF seguido de dígito e vírgula em faixa de datas.
+12. WHILE o OCR processa um documento de N páginas the system SHALL desenhar, reconhecer e liberar uma página por vez, com no máximo uma thread do Tesseract, de modo que o pico de memória não cresça com o número de páginas; the system SHALL documentar em `docs/deploy/vm.md` o pico medido em PDFs sintéticos de 10 páginas a 300 dpi dentro de `docker run -m 384m`.
+
+**Independent Test**: Texto sintético de portaria "designa ... Diretor, por 2 (dois) anos, a partir de 09/08/2024" com interstício 2024-11-23 a 2026-11-23 gera VI.6, período 2024-08-09 a 2026-08-09, quantidade 1 e `DATA_FIM_DERIVADA`; o mesmo texto sem prazo gera quantidade 1 com `DATA_FIM_AUSENTE`.
+
+---
+
 ## Edge Cases
 
 Edge cases are usually unwanted-behavior (IF/THEN) or boundary (WHEN) criteria:
@@ -428,12 +453,24 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VER-11 | P1: Correções da verificação independente | Design | Implementing |
 | VER-12 | P1: Correções da verificação independente | Design | Implementing |
 | VER-13 | P1: Correções da verificação independente | Design | Implementing |
+| SEG-01 | P1: Correções da segunda rodada de validação | Design | In Tasks |
+| SEG-02 | P1: Correções da segunda rodada de validação | Design | In Tasks |
+| SEG-03 | P1: Correções da segunda rodada de validação | Design | In Tasks |
+| SEG-04 | P1: Correções da segunda rodada de validação | Design | In Tasks |
+| SEG-05 | P1: Correções da segunda rodada de validação | Design | In Tasks |
+| SEG-06 | P1: Correções da segunda rodada de validação | Design | In Tasks |
+| SEG-07 | P1: Correções da segunda rodada de validação | Design | In Tasks |
+| SEG-08 | P1: Correções da segunda rodada de validação | Design | In Tasks |
+| SEG-09 | P1: Correções da segunda rodada de validação | Design | In Tasks |
+| SEG-10 | P1: Correções da segunda rodada de validação | Design | In Tasks |
+| SEG-11 | P1: Correções da segunda rodada de validação | Design | In Tasks |
+| SEG-12 | P1: Correções da segunda rodada de validação | Design | In Tasks |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 105 total, 105 mapped to tasks, 0 unmapped
+**Coverage:** 117 total, 117 mapped to tasks, 0 unmapped
 
 ---
 
