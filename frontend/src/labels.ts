@@ -128,6 +128,8 @@ export const DOCUMENT_CODE_LABELS: Record<string, string> = {
   DATA_FIM_DERIVADA: "Data final calculada do prazo da portaria: confira",
   DATA_FIM_AUSENTE: "Sem data final na portaria: quantidade estimada até o fim do interstício",
   INDEXACAO_NAO_COMPROVADA: "Indexação do periódico não comprovada no texto: item de artigo não indexado, confira",
+  ENQUADRADO_COMO_CAPACITACAO:
+    "Certificado de participação com carga horária: enquadrado como curso de curta duração (VII.10) pelo sistema, confira",
   ERRO_INTERNO: "Erro interno",
 };
 

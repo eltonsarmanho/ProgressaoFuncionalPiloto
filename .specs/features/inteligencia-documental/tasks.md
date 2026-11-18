@@ -3206,15 +3206,15 @@ T113 → T114 → T115 → T116 → T117
 
 **Done when**:
 
-- [ ] As quatro taxonomias de origem viram `CURSO_CONCLUIDO` quando o tipo é certificado, as horas são maiores que 0 e a confirmação deu `OUTRA`
-- [ ] Sem horas (ausentes ou 0), com outro tipo de documento, com outra taxonomia de origem ou com a confirmação mantendo a taxonomia, o resultado não muda
-- [ ] O código `ENQUADRADO_COMO_CAPACITACAO` existe e aparece em português no frontend (`DocumentViewer`)
-- [ ] Gate full passa
+- [x] As quatro taxonomias de origem viram `CURSO_CONCLUIDO` quando o tipo é certificado, as horas são maiores que 0 e a confirmação deu `OUTRA`
+- [x] Sem horas (ausentes ou 0), com outro tipo de documento, com outra taxonomia de origem ou com a confirmação mantendo a taxonomia, o resultado não muda
+- [x] O código `ENQUADRADO_COMO_CAPACITACAO` existe e aparece em português no frontend (`DocumentViewer`)
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full
 
-**Commit**: `feat(suggestions): classify a participation certificate with hours as a short course`
+**Commit**: `feat(suggestions): classify a certificate with hours as a short course`
 
 ---
 

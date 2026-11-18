@@ -2,6 +2,7 @@
 
 import re
 from dataclasses import dataclass
+from decimal import Decimal
 
 from app.domain.entities.activity import Level
 from app.domain.entities.extraction import DocumentType
@@ -382,6 +383,29 @@ def confirm_research_coordination(taxonomy: T, text: str, professor_name: str) -
         if _role_near_name(sentence, professor_name):
             return taxonomy
     return T.OUTRA
+
+
+_PROJECT_CLAIMS = _RESEARCH_COORDINATION | _EXTENSION_PROJECTS
+
+
+def reclassify_participation_certificate(
+    claimed: T, confirmed: T, document_type: DocumentType, hours: Decimal | None
+) -> T:
+    """A certificate with stated hours is a short course when the project was refused (CER-02).
+
+    `claimed` is the taxonomy the AI returned and `confirmed` the one left by the confirmations.
+    When the AI read a research coordination or an extension project and the confirmations
+    refused it (`OUTRA`: no coordination role, no extension nature) in a certificate that states
+    a workload, the document proves a participation with hours, which is the short course
+    (VII.10). Without hours, in another type of document, from another taxonomy or when a
+    confirmation kept the claim, nothing changes. The caller flags the result for review,
+    because the system, not the document, chose the item.
+    """
+    if confirmed is not T.OUTRA or claimed not in _PROJECT_CLAIMS:
+        return confirmed
+    if document_type is not DocumentType.CERTIFICADO or hours is None or hours <= 0:
+        return confirmed
+    return T.CURSO_CONCLUIDO
 
 
 _DISMISSAL_TAXONOMIES = frozenset(

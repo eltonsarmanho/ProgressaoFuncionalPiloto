@@ -152,3 +152,16 @@ describe("TER-06: aviso de indexação não comprovada", () => {
     expect(avisos).not.toHaveTextContent("INDEXACAO_NAO_COMPROVADA");
   });
 });
+
+describe("CER-02: aviso de enquadramento como curso de curta duração", () => {
+  it("mostra em português que o sistema escolheu o item do certificado com carga horária", () => {
+    view(detail({ alerts: [{ code: "ENQUADRADO_COMO_CAPACITACAO", field: null, activity_index: 0 }] }));
+    const avisos = screen.getByRole("region", { name: "Avisos" });
+    expect(
+      within(avisos).getByText(
+        /Certificado de participação com carga horária: enquadrado como curso de curta duração \(VII\.10\) pelo sistema, confira/,
+      ),
+    ).toBeInTheDocument();
+    expect(avisos).not.toHaveTextContent("ENQUADRADO_COMO_CAPACITACAO");
+  });
+});

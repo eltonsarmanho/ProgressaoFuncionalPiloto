@@ -54,8 +54,9 @@ def test_alert_codes_are_the_design_names_plus_those_of_the_real_validation():
         "DATA_FIM_DERIVADA",  # SEG-01
         "DATA_FIM_AUSENTE",  # SEG-02
         "INDEXACAO_NAO_COMPROVADA",  # TER-06
+        "ENQUADRADO_COMO_CAPACITACAO",  # CER-02
     }
-    assert len(DocAlertCode) == 18
+    assert len(DocAlertCode) == 19
 
 
 def test_pending_goes_to_processing():
