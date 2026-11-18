@@ -3015,9 +3015,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] A página mostra os três blocos, abre o editor do Relatório com as seções, abre o arranjo do Comprovante e a lista do dossiê
-- [ ] Em processo CONCLUIDO os blocos de Tabela e Relatório geram e todos baixam, o Comprovante some ou fica desligado com `ORIGINAIS_EXCLUIDOS` e rascunho e arranjo ficam somente leitura
-- [ ] Gate quick passa; 7+ testes
+- [x] A página mostra os três blocos, abre o editor do Relatório com as seções, abre o arranjo do Comprovante e a lista do dossiê
+- [x] Em processo CONCLUIDO os blocos de Tabela e Relatório geram e todos baixam, o Comprovante some ou fica desligado com `ORIGINAIS_EXCLUIDOS` e rascunho e arranjo ficam somente leitura
+- [x] Gate quick passa; 7+ testes
 
 **Tests**: unit
 **Gate**: quick

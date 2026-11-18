@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { request } from "../api/client";
 import type { DocumentKind, GeneratedDocument } from "../api/generated";
 import { generationErrorMessage, isConflict } from "../generationErrors";
@@ -12,18 +12,21 @@ import { DOCUMENT_KIND_LABELS, GENERATION_CODE_LABELS, GENERATION_STATE_LABELS, 
  * and the size of each format.
  *
  * `leftOut` is the number of activities that will not enter the document; `disabledReason` turns the
- * button off with the reason shown (a concluded process cannot generate the Comprovante).
+ * button off with the reason shown (a concluded process cannot generate the Comprovante); `children`
+ * is what goes at the end of the block (the draft of the report, the arrangement of the Comprovante).
  */
 export function GeneratedBlock({
   processId,
   kind,
   leftOut = 0,
   disabledReason,
+  children,
 }: {
   processId: string;
   kind: DocumentKind;
   leftOut?: number;
   disabledReason?: string;
+  children?: ReactNode;
 }) {
   const [rows, setRows] = useState<GeneratedDocument[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -127,6 +130,7 @@ export function GeneratedBlock({
           ))}
         </ul>
       )}
+      {children}
     </section>
   );
 }
