@@ -2939,8 +2939,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] A lista aparece na ordem recebida e marca `Tabela`, `Relatório` e `Comprovante` como gerados pelo sistema
-- [ ] Gate quick passa; 3+ testes
+- [x] A lista aparece na ordem recebida e marca `Tabela`, `Relatório` e `Comprovante` como gerados pelo sistema
+- [x] Gate quick passa; 3+ testes
 
 **Tests**: unit
 **Gate**: quick
