@@ -18,11 +18,15 @@ from app.domain.entities.comprovante import (
     LayoutActivity,
     LayoutPage,
     PageKind,
+    PlanAlert,
     PlanPage,
     TocEntry,
     TocLevel,
 )
+from app.domain.entities.generated import GenerationAlertCode
 from app.domain.repositories.ports import ActivityEvidence
+
+NO_VOUCHER_NOTE = "Sem comprovante anexado"
 
 
 def eligible_activities(activities: Sequence[Activity]) -> list[Activity]:
@@ -107,14 +111,30 @@ def _arrange(
     return groups
 
 
+def remission_text(ref: ActivityPageRef) -> str:
+    """What the table of contents says of a page that is attached for another activity."""
+    return f"ver comprovante nº {ref.comprovante_page}, p. {ref.source_page}"
+
+
+def _range(refs: list[ActivityPageRef]) -> tuple[int | None, int | None]:
+    """First and last Comprovante page of an activity: the pages attached for it, or else the
+    copies its remissions point to."""
+    attached = [r.comprovante_page for r in refs if not r.remission]
+    numbers = attached or [r.comprovante_page for r in refs]
+    return min(numbers, default=None), max(numbers, default=None)
+
+
 def plan_comprovante(
     layout: ComprovanteLayout, activities: Sequence[Activity], toc_capacity: int
 ) -> ComprovantePlan:
-    """The numbered pages of the Comprovante and its table of contents (CMP-01, CMP-02, CMP-04).
+    """The numbered pages of the Comprovante and its table of contents (CMP-01 to CMP-07).
 
     Cover, table of contents (`toc_capacity` lines a page), then one separator per group that
-    has an activity followed by the original pages. Only metadata is used: the plan exists
-    after the originals are gone, so the Tabela can still quote the numbers.
+    has an activity followed by the original pages. A page already attached for an earlier
+    activity is not attached again: the later activity gets a remission, unless the user
+    justified the repeat. An activity with no page is listed with a note and an alert. Only
+    metadata is used: the plan exists after the originals are gone, so the Tabela can still
+    quote the numbers.
     """
     groups = _arrange(layout, activities)
     lines = sum(
@@ -125,6 +145,8 @@ def plan_comprovante(
     pages = [PlanPage(PageKind.CAPA, 1)]
     pages += [PlanPage(PageKind.SUMARIO, 2 + n) for n in range(toc_pages)]
     toc: list[TocEntry] = []
+    alerts: list[PlanAlert] = []
+    attached_at: dict[tuple[UUID, int], int] = {}
     for group_number, items in groups.items():
         pages.append(PlanPage(PageKind.SEPARADOR, len(pages) + 1, group_number))
         toc.append(TocEntry(TocLevel.GRUPO, group_number, first_page=len(pages)))
@@ -133,21 +155,40 @@ def plan_comprovante(
             toc.append(TocEntry(TocLevel.ITEM, group_number, item_number))
             item_first = None
             for activity, layout_pages in found:
-                refs = []
+                refs: list[ActivityPageRef] = []
                 for layout_page in layout_pages:
-                    number = len(pages) + 1
-                    pages.append(
-                        PlanPage(
-                            PageKind.ORIGINAL,
-                            number,
-                            group_number,
-                            layout_page.document_id,
-                            layout_page.page,
+                    key = (layout_page.document_id, layout_page.page)
+                    justification = layout_page.repeat_justification
+                    if key in attached_at and justification is None:
+                        refs.append(
+                            ActivityPageRef(*key, comprovante_page=attached_at[key], remission=True)
                         )
+                        continue
+                    number = len(pages) + 1
+                    pages.append(PlanPage(PageKind.ORIGINAL, number, group_number, *key))
+                    if key in attached_at:
+                        alerts.append(
+                            PlanAlert(
+                                GenerationAlertCode.PAGINA_REPETIDA_JUSTIFICADA,
+                                activity.id,
+                                *key,
+                                justification=justification,
+                            )
+                        )
+                    else:
+                        attached_at[key] = number
+                        justification = None
+                    refs.append(
+                        ActivityPageRef(*key, comprovante_page=number, justification=justification)
                     )
-                    refs.append(ActivityPageRef(layout_page.document_id, layout_page.page, number))
                     item_first = item_first or number
-                numbers = [r.comprovante_page for r in refs]
+                note = None
+                if not refs:
+                    note = NO_VOUCHER_NOTE
+                    alerts.append(
+                        PlanAlert(GenerationAlertCode.ATIVIDADE_SEM_COMPROVANTE, activity.id)
+                    )
+                first, last = _range(refs)
                 toc.append(
                     TocEntry(
                         TocLevel.ATIVIDADE,
@@ -155,13 +196,14 @@ def plan_comprovante(
                         item_number,
                         activity.id,
                         activity.title,
-                        min(numbers, default=None),
-                        max(numbers, default=None),
+                        first,
+                        last,
                         tuple(refs),
+                        note,
                     )
                 )
             toc[item_entry] = TocEntry(
                 TocLevel.ITEM, group_number, item_number, first_page=item_first
             )
     # The hash is set when the limits and the hash are added (T18).
-    return ComprovantePlan(tuple(pages), "", tuple(toc))
+    return ComprovantePlan(tuple(pages), "", tuple(toc), tuple(alerts))

@@ -9,6 +9,8 @@ from enum import StrEnum
 from typing import NamedTuple
 from uuid import UUID
 
+from app.domain.entities.generated import GenerationAlertCode
+
 
 class PageKind(StrEnum):
     CAPA = "CAPA"
@@ -79,11 +81,18 @@ class TocLevel(StrEnum):
 
 @dataclass(frozen=True)
 class ActivityPageRef:
-    """A page of an activity: the source page and the page of the Comprovante it is in."""
+    """A page of an activity: the source page and the page of the Comprovante it is in.
+
+    A `remission` is a page already attached for another activity: `comprovante_page` is where
+    that copy is and nothing new is attached. A repeat the user justified is attached again and
+    keeps its `justification`.
+    """
 
     document_id: UUID
     source_page: int
     comprovante_page: int
+    remission: bool = False
+    justification: str | None = None
 
 
 @dataclass(frozen=True)
@@ -102,6 +111,18 @@ class TocEntry:
     first_page: int | None = None
     last_page: int | None = None
     sources: tuple[ActivityPageRef, ...] = ()
+    note: str | None = None
+
+
+@dataclass(frozen=True)
+class PlanAlert:
+    """Something the plan found that does not stop the generation (CMP-06, CMP-07)."""
+
+    code: GenerationAlertCode
+    activity_id: UUID
+    document_id: UUID | None = None
+    page: int | None = None
+    justification: str | None = None
 
 
 @dataclass(frozen=True)
@@ -109,6 +130,7 @@ class ComprovantePlan:
     pages: tuple[PlanPage, ...]
     plan_hash: str
     toc: tuple[TocEntry, ...] = ()
+    alerts: tuple[PlanAlert, ...] = ()
 
     def __post_init__(self) -> None:
         if [p.number for p in self.pages] != list(range(1, len(self.pages) + 1)):

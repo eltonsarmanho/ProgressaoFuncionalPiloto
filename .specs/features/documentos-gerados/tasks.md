@@ -640,10 +640,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Duas atividades apontando a mesma página: a primeira anexa, a segunda traz `ver comprovante nº N, p. X`
-- [ ] Com `repeat_justification` a página entra de novo, o alerta sai e a justificativa vai para o plano
-- [ ] Atividade sem página aparece com a linha `Sem comprovante anexado` e gera `ATIVIDADE_SEM_COMPROVANTE`; a numeração dos demais não muda
-- [ ] Gate quick passa; 8+ testes
+- [x] Duas atividades apontando a mesma página: a primeira anexa, a segunda traz `ver comprovante nº N, p. X`
+- [x] Com `repeat_justification` a página entra de novo, o alerta sai e a justificativa vai para o plano
+- [x] Atividade sem página aparece com a linha `Sem comprovante anexado` e gera `ATIVIDADE_SEM_COMPROVANTE`; a numeração dos demais não muda
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
