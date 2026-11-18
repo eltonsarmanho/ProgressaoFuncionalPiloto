@@ -40,8 +40,16 @@ class LayoutPage:
 
 @dataclass(frozen=True)
 class LayoutActivity:
+    """An activity of the layout with its pages in order.
+
+    `group_number` and `item_number` are where the scoring placed the activity when the layout
+    was saved; they let a later change of item be noticed (ARR-05, ARR-08). Unknown when None.
+    """
+
     activity_id: UUID
     pages: tuple[LayoutPage, ...] = ()
+    group_number: int | None = None
+    item_number: int | None = None
 
 
 @dataclass(frozen=True)

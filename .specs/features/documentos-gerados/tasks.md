@@ -587,9 +587,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Sem arranjo salvo, as atividades saem por grupo, item e data; as páginas seguem a ordem dos vínculos
-- [ ] Duas atividades com o mesmo título no mesmo item aparecem as duas, cada uma com as suas páginas
-- [ ] Gate quick passa; 8+ testes
+- [x] Sem arranjo salvo, as atividades saem por grupo, item e data; as páginas seguem a ordem dos vínculos
+- [x] Duas atividades com o mesmo título no mesmo item aparecem as duas, cada uma com as suas páginas
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick

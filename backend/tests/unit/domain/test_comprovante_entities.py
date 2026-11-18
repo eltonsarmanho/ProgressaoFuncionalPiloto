@@ -117,3 +117,16 @@ def test_staleness_is_set_by_any_of_its_three_causes_and_clear_when_empty():
     assert Staleness(left_activity_ids=(activity_id,)).is_stale is True
     assert Staleness(moved_activity_ids=(activity_id,)).is_stale is True
     assert Staleness(new_link_activity_ids=(activity_id,)).is_stale is True
+
+
+def test_a_layout_activity_remembers_the_item_the_scoring_gave_it():
+    placed = LayoutActivity(uuid4(), (), group_number=2, item_number=7)
+
+    assert (placed.group_number, placed.item_number) == (2, 7)
+
+
+def test_a_layout_activity_without_a_known_item_has_none():
+    assert (LayoutActivity(uuid4()).group_number, LayoutActivity(uuid4()).item_number) == (
+        None,
+        None,
+    )

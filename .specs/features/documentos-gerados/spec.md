@@ -324,7 +324,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ARR-02 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
 | ARR-03 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
 | ARR-04 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
-| ARR-05 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
+| ARR-05 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
 | ARR-06 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
 | ARR-07 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
 | ARR-08 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
