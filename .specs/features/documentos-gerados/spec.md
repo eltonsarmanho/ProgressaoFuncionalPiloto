@@ -363,12 +363,12 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | UIG-09 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
 | DEL-01 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
 | DEL-02 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
-| DEL-03 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-03 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
 | DEL-04 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
 | DEL-05 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
 | DEL-06 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
 | DEL-07 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
-| DEL-08 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
+| DEL-08 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | Implementing |
 | DEL-09 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
 | DEL-10 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |
 | DEL-11 | P1: Concluir o processo e excluir os documentos de entrada | Tasks | In Tasks |

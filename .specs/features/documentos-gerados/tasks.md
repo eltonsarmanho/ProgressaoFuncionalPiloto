@@ -427,8 +427,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] `ConclusionPreview` guarda `files`, `bytes` e `artifacts` por tipo; `ConclusionResult` guarda `status`, `files_removed`, `files_pending`, `bytes_freed` e alertas
-- [ ] Gate quick passa; 3+ testes
+- [x] `ConclusionPreview` guarda `files`, `bytes` e `artifacts` por tipo; `ConclusionResult` guarda `status`, `files_removed`, `files_pending`, `bytes_freed` e alertas
+- [x] Gate quick passa; 3+ testes
 
 **Tests**: unit
 **Gate**: quick
