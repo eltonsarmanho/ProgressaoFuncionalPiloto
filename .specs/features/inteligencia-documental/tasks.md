@@ -3132,7 +3132,7 @@ T107 → T108 → T109 → T110 → T111 → T112
 
 ### T112: Registro da quinta rodada e entrega
 
-**What**: `validation.md` corrige a contagem de testes desmarcados (6 `maritalk_live`), nota as decisões de FT-31 e o mutante equivalente S11, e traz a "Resolution (round 5)"; `spec.md` passa QUA-01..06 a Verified onde cabe; `STATE.md` atualiza o handoff (commit 9533966 no ar na VM, commits desta rodada precisam de novo deploy, PRs #1 a #3 no GitHub). Arquivos: `validation.md`, `spec.md`, `STATE.md`.
+**What**: `validation.md` corrige a contagem de testes desmarcados (6 `maritalk_live`), nota as decisões de FT-31 e o mutante equivalente S11, e traz a "Resolution (round 5)"; `spec.md` mantém QUA-01..06 em Implementing até a próxima verificação independente; `STATE.md` atualiza o handoff (commit 9533966 no ar na VM, commits desta rodada precisam de novo deploy, PRs #1 a #3 no GitHub). Arquivos: `validation.md`, `spec.md`, `STATE.md`.
 **Where**: `.specs/features/inteligencia-documental/validation.md`
 **Depends on**: T111
 **Reuses**: Resolution (round 4)
@@ -3145,10 +3145,10 @@ T107 → T108 → T109 → T110 → T111 → T112
 
 **Done when**:
 
-- [ ] A contagem de desmarcados está corrigida para 6 e a Resolution (round 5) lista commits, gate e decisões pendentes
-- [ ] O handoff do STATE.md traz o deploy atual e o que falta
-- [ ] `validate_spec.py`, `validate_tasks.py` e `validate_state.py` passam
-- [ ] Gate build passa
+- [x] A contagem de desmarcados está corrigida para 6 e a Resolution (round 5) lista commits, gate e decisões pendentes
+- [x] O handoff do STATE.md traz o deploy atual e o que falta
+- [x] `validate_spec.py`, `validate_tasks.py` e `validate_state.py` passam
+- [x] Gate build passa
 
 **Tests**: none
 **Gate**: build
