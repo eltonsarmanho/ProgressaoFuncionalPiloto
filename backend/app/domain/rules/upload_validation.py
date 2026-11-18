@@ -29,6 +29,8 @@ class FileFacts:
     has_active_content: bool
     is_encrypted: bool
     is_readable: bool
+    # PDF only: the largest page drawn at 300 dpi, in megapixels (VER-01).
+    max_page_megapixels: Decimal | None = None
 
 
 @dataclass(frozen=True)
@@ -130,6 +132,8 @@ def validate_upload(
         rejections.append(_reject("PAGINAS_EXCEDIDAS", "O PDF passa do número máximo de páginas."))
     if facts.megapixels is not None and facts.megapixels > limits.max_megapixels:
         rejections.append(_reject("IMAGEM_GRANDE", "A imagem passa da resolução máxima."))
+    if facts.max_page_megapixels is not None and facts.max_page_megapixels > limits.max_megapixels:
+        rejections.append(_reject("PAGINA_GRANDE", "Uma página do PDF passa do tamanho máximo."))
     if not facts.is_readable:
         rejections.append(_reject("ARQUIVO_INVALIDO", "O arquivo não pôde ser aberto."))
     if facts.is_encrypted:

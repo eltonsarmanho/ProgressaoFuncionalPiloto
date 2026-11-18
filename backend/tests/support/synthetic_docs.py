@@ -161,3 +161,16 @@ def pdf_with_embedded_file() -> bytes:
 def png_huge() -> bytes:
     """All-white PNG above 100 megapixels that stays small on disk."""
     return _encode(Image.new("1", (11000, 10000), 1), "PNG")
+
+
+def pdf_with_page_size(width_pt: float, height_pt: float, extra_pages: Sequence[str] = ()) -> bytes:
+    """Tiny PDF whose first page has the given size in points (a huge page stays small on disk).
+
+    `extra_pages` are normal A4 pages after it.
+    """
+    doc = pymupdf.open()
+    doc.new_page(width=width_pt, height=height_pt)
+    for text in extra_pages:
+        page = doc.new_page()
+        page.insert_text((50, 80), text, fontsize=_FONT_SIZE_PT)
+    return _pdf_bytes(doc)

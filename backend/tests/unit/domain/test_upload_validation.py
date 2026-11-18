@@ -211,3 +211,23 @@ def test_display_name_longer_than_255_is_cut_keeping_the_extension():
     assert shown.endswith(".pdf")
     assert "/" not in safe_display_name("x/" * 300 + "y" * 300)
     assert len(safe_display_name("x/" * 300 + "y" * 300)) <= 255
+
+
+# --- VER-01: the rendered size of a PDF page ----------------------------------------------
+
+
+def test_pdf_page_above_the_megapixel_limit_is_refused_with_pagina_grande():
+    facts = replace(PDF, max_page_megapixels=Decimal("100.01"))
+    result = validate_upload(facts, "application/pdf", ".pdf", LIMITS)
+    assert [(r.field, r.code) for r in result] == [("arquivo", "PAGINA_GRANDE")]
+
+
+def test_pdf_page_exactly_at_the_megapixel_limit_is_accepted():
+    facts = replace(PDF, max_page_megapixels=Decimal("100"))
+    assert validate_upload(facts, "application/pdf", ".pdf", LIMITS) == []
+
+
+def test_pdf_page_limit_comes_from_the_limits_argument():
+    facts = replace(PDF, max_page_megapixels=Decimal("8.7"))
+    small = UploadLimits(max_megapixels=5)
+    assert codes(validate_upload(facts, "application/pdf", ".pdf", small)) == ["PAGINA_GRANDE"]

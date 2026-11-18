@@ -150,6 +150,8 @@ def test_same_file_is_allowed_in_a_different_process(docs, add_process):
         (synth.pdf_with_embedded_file(), "anexo.pdf", "application/pdf", "ARQUIVO_INVALIDO"),
         (b"%PDF-1.4 quebrado", "quebrado.pdf", "application/pdf", "ARQUIVO_INVALIDO"),
         (synth.png_huge(), "gigante.png", "image/png", "IMAGEM_GRANDE"),
+        (synth.pdf_with_page_size(3000, 3000), "poster.pdf", "application/pdf", "PAGINA_GRANDE"),
+        (synth.pdf_with_page_size(2384, 3370), "a0.pdf", "application/pdf", "PAGINA_GRANDE"),
     ],
 )
 def test_rejected_files_give_422_on_arquivo_and_are_not_stored(

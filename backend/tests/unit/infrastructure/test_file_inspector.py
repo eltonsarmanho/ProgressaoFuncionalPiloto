@@ -159,3 +159,52 @@ def test_inspection_never_modifies_the_file(tmp_path):
 def test_facts_feed_the_upload_rules(inspect, make, ext, codes):
     rejections = validate_upload(inspect(make()), None, ext, UploadLimits())
     assert [r.code for r in rejections] == codes
+
+
+# --- VER-01: the rendered size of a PDF page -----------------------------------------------
+
+A1_POINTS = (1684, 2384)
+A0_POINTS = (2384, 3370)
+HUGE_POINTS = (3000, 3000)
+
+
+def test_pdf_page_size_is_reported_in_megapixels_at_300_dpi(inspect):
+    assert inspect(docs.pdf_with_page_size(*HUGE_POINTS)).max_page_megapixels == Decimal("156.25")
+
+
+def test_a_big_page_after_a_small_one_is_the_one_reported(inspect):
+    doc = pymupdf.open()
+    doc.new_page(width=595, height=842)
+    doc.new_page(width=3000, height=3000)
+    facts = inspect(doc.tobytes())
+    assert facts.max_page_megapixels == Decimal("156.25")
+
+
+def test_image_has_no_page_megapixels(inspect):
+    assert inspect(docs.png_with_text()).max_page_megapixels is None
+
+
+@pytest.mark.parametrize(
+    ("points", "codes"),
+    [
+        (HUGE_POINTS, ["PAGINA_GRANDE"]),
+        (A0_POINTS, ["PAGINA_GRANDE"]),
+        (A1_POINTS, []),
+        ((595, 842), []),
+    ],
+)
+def test_pdf_page_size_feeds_the_upload_rules(inspect, points, codes):
+    facts = inspect(docs.pdf_with_page_size(*points))
+    rejections = validate_upload(facts, "application/pdf", ".pdf", UploadLimits())
+    assert [(r.field, r.code) for r in rejections] == [("arquivo", c) for c in codes]
+
+
+def test_only_the_first_max_pages_pages_are_measured(tmp_path):
+    doc = pymupdf.open()
+    doc.new_page(width=595, height=842)
+    doc.new_page(width=3000, height=3000)
+    path = tmp_path / "duas.pdf"
+    path.write_bytes(doc.tobytes())
+    facts = PillowFileInspector(max_pages=1).inspect(path)
+    assert facts.page_count == 2
+    assert Decimal("8.6") < facts.max_page_megapixels < Decimal("8.8")

@@ -178,7 +178,7 @@ def build_container(
     create_activity = CreateActivity(uow_factory, audit, policy)
     change_status = ChangeActivityStatus(uow_factory, audit, policy)
     storage = LocalFileStorage(settings.storage_dir)
-    inspector = PillowFileInspector(settings.max_megapixels)
+    inspector = PillowFileInspector(settings.max_megapixels, settings.max_pages)
     limits = DocumentLimits(
         max_file_bytes=settings.max_upload_mb * 1024 * 1024,
         max_pages=settings.max_pages,

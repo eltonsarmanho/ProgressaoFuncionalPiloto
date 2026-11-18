@@ -2030,10 +2030,10 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 **Done when**:
 
-- [ ] PDF sintético com página 3000x3000 pt e outro A0 (2384x3370 pt) são recusados com 422 `arquivo`/`PAGINA_GRANDE` e não gravados; A1 e A4 passam
-- [ ] Com `max_megapixels` menor, uma página A4 passa a ser recusada (o limite vem do parâmetro, não de constante)
-- [ ] Teste que monta o contêiner com `MAX_PAGES` e `MAX_MEGAPIXELS` do ambiente e vê os valores no inspetor e nos limites de envio (mata M111 e M112)
-- [ ] Gate full passa
+- [x] PDF sintético com página 3000x3000 pt e outro A0 (2384x3370 pt) são recusados com 422 `arquivo`/`PAGINA_GRANDE` e não gravados; A1 e A4 passam
+- [x] Com `max_megapixels` menor, uma página A4 passa a ser recusada (o limite vem do parâmetro, não de constante)
+- [x] Teste que monta o contêiner com `MAX_PAGES` e `MAX_MEGAPIXELS` do ambiente e vê os valores no inspetor e nos limites de envio (mata M111 e M112)
+- [x] Gate full passa
 
 **Tests**: unit + integration
 **Gate**: full
