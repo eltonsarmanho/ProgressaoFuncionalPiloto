@@ -19,6 +19,7 @@ from tests.unit.infrastructure.table_support import (
     distinct_counters_table,
     long_table,
     scenario_table,
+    table_with_title,
 )
 
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
@@ -242,3 +243,13 @@ def test_a_thousand_rows_are_written_and_the_file_reads_back(tmp_path):
     rows = main_table(path).findall("w:tr", NS)
     assert len(rows) >= 1000
     assert "Atividade sintética 999" in text_of(path)
+
+
+def test_a_title_of_eight_thousand_characters_is_cut_in_the_docx_as_in_the_pdf(tmp_path):
+    title = " ".join(f"palavra{n}" for n in range(1000))
+
+    text = text_of(write(tmp_path, table_with_title(title)))
+
+    assert "palavra0 palavra1" in text
+    assert "palavra999" not in text
+    assert "…" in text

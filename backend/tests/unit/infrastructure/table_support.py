@@ -42,3 +42,10 @@ def capped_table() -> TableDocument:
 def distinct_counters_table() -> TableDocument:
     """The scenario with five different counters, so a wrong label shows."""
     return replace(scenario_table(), counters=Counters(21, 17, 5, 3, 2))
+
+
+def table_with_title(title: str) -> TableDocument:
+    """The document built, as in production, from one activity with the given title."""
+    one = [activity(2, 7, "1", title=title)]
+    version, activities, result = scenario_result(one)
+    return build_table_document(HEADER, version, result, activities, {})

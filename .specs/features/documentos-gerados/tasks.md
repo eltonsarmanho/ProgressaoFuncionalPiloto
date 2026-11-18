@@ -3473,9 +3473,9 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Um título de 8 000 caracteres gera o PDF da Tabela sem erro e a célula traz o título cortado no teto com `…`; o DOCX mostra o mesmo texto
-- [ ] Um título no teto exato e um abaixo dele aparecem inteiros, e um acima aparece cortado (fronteira)
-- [ ] O design registra o teto em Risks; gate quick passa; 3+ testes novos
+- [x] Um título de 8 000 caracteres gera o PDF da Tabela sem erro e a célula traz o título cortado no teto com `…`; o DOCX mostra o mesmo texto
+- [x] Um título no teto exato (400) e um abaixo dele aparecem inteiros, e um acima aparece cortado (fronteira)
+- [x] O design registra o teto em Risks; gate quick passa; 4 testes novos
 
 **Tests**: unit
 **Gate**: quick

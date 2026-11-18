@@ -16,6 +16,7 @@ from tests.unit.infrastructure.table_support import (
     distinct_counters_table,
     long_table,
     scenario_table,
+    table_with_title,
 )
 
 COLUMNS = [
@@ -191,3 +192,16 @@ def test_the_font_is_liberation_serif_embedded_as_a_subset(tmp_path):
     names = {font[3].split("+")[-1] for font in pdf[0].get_fonts()}
     assert names == {"LiberationSerif", "LiberationSerif-Bold"}
     assert all(font[3].count("+") == 1 for font in pdf[0].get_fonts())
+
+
+def test_a_title_of_eight_thousand_characters_does_not_break_the_pdf(tmp_path):
+    # TAB-01: the title of an activity has no size limit in the schema; the Tabela cuts it
+    title = " ".join(f"palavra{n}" for n in range(1000))  # about 8 000 characters
+    assert len(title) > 7_000
+
+    text = text_of(render(tmp_path, table_with_title(title)))
+
+    assert "palavra0 palavra1" in text
+    assert "palavra999" not in text
+    assert "…" in text
+    assert "Pontuação geral:" in text

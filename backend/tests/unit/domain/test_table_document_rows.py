@@ -3,7 +3,7 @@
 from dataclasses import replace
 from decimal import Decimal
 
-from app.domain.rules.table_document import TableHeader, build_table_document
+from app.domain.rules.table_document import MAX_TITLE_CHARS, TableHeader, build_table_document
 from tests.unit.domain.scenario_211 import (
     INTERSTICE,
     activity,
@@ -178,3 +178,24 @@ def test_the_band_subtotal_is_the_one_of_the_engine_even_when_a_limit_cuts_the_r
 
     assert document.bands[0].rows[0].points == "160,00"
     assert document.bands[0].subtotal == "40,00"
+
+
+def shown_title(title: str) -> str:
+    return build(activities=[activity(2, 7, title=title)]).bands[0].rows[0].title
+
+
+def test_a_title_up_to_the_cap_is_shown_whole_and_a_longer_one_is_cut_with_an_ellipsis():
+    exact = "a" * MAX_TITLE_CHARS
+    over = "b" * (MAX_TITLE_CHARS + 1)
+
+    assert shown_title(exact) == exact
+    assert shown_title("c" * (MAX_TITLE_CHARS - 1)) == "c" * (MAX_TITLE_CHARS - 1)
+    assert shown_title(over) == "b" * (MAX_TITLE_CHARS - 1) + "…"
+    assert len(shown_title(over)) == MAX_TITLE_CHARS
+
+
+def test_a_cut_title_is_the_same_every_time_and_as_long_as_the_cap():
+    long_title = "palavra " * 200
+
+    assert shown_title(long_title) == shown_title(long_title)
+    assert len(shown_title(long_title)) == MAX_TITLE_CHARS

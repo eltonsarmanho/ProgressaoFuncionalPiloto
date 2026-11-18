@@ -26,6 +26,7 @@ from app.domain.rules.scoring_engine import (
 )
 
 NO_VOUCHER = "sem comprovante"
+MAX_TITLE_CHARS = 400  # a table row cannot be taller than a page: a longer title is cut with "…"
 EMPTY_CELL = "—"
 _ROMAN = {1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI", 7: "VII", 8: "VIII"}
 _STATUS_TEXT = {
@@ -135,6 +136,14 @@ def _cell(value: Decimal | None) -> str:
     return EMPTY_CELL if value is None else two_places(value)
 
 
+def _shown_title(title: str) -> str:
+    """The title as the Tabela shows it: whole up to `MAX_TITLE_CHARS`, else cut and ended by "…",
+    exactly `MAX_TITLE_CHARS` characters long. The activity keeps its full title."""
+    if len(title) <= MAX_TITLE_CHARS:
+        return title
+    return title[: MAX_TITLE_CHARS - 1] + "…"
+
+
 def _table_row(row: ScoringRow, title: str, comprovante_numbers: Mapping[UUID, int]) -> TableRow:
     number = comprovante_numbers.get(row.activity_id)
     return TableRow(
@@ -218,7 +227,7 @@ def build_table_document(
     (group I in hours) has no band; its hours are the `pit_hours` section. `process_alerts` are
     the alerts of the process the screen shows beside the result.
     """
-    titles = {a.id: a.title for a in activities}
+    titles = {a.id: _shown_title(a.title) for a in activities}
     bands = tuple(
         GroupBand(
             group_number=group.number,
