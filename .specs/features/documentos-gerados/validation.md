@@ -9,15 +9,15 @@
 
 ## Validation: Documentos Gerados - PASS
 
-**Result**: PASS. Verifier A: PASS (36 PASS, 2 PARTIAL, 0 failed in 38 requirements; 0 Blocker, 0 High, 3 Medium, 8 Low). Verifier B: PASS (42 PASS, 1 PARTIAL, 0 failed in 43 requirements; 0 Blocker, 0 High, 3 Medium). After the correction round (T112-T125) every Medium finding is closed and the two Verifiers' PARTIAL items are resolved except two: REL-12 (grounding limit, user decision pending) and CMP-01 (item title cut in the table of contents, accepted limitation, spec text not aligned). Final traceability: 77 of 79 requirements `Verified`, 2 `Implementing` (CMP-01, REL-12). FORA-03 and FORA-07 of `inteligencia-documental` are `Verified`.
+**Result**: PASS. Verifier A: PASS (36 PASS, 2 PARTIAL, 0 failed in 38 requirements; 0 Blocker, 0 High, 3 Medium, 8 Low). Verifier B: PASS (42 PASS, 1 PARTIAL, 0 failed in 43 requirements; 0 Blocker, 0 High, 3 Medium). After the correction round (T112-T125) every Medium finding is closed, and the two Verifiers' last PARTIAL items (REL-12 grounding limit, CMP-01 item title cut in the table of contents) were closed by the user's decisions of 2026-11-18 (see "User decisions of 2026-11-18"). Final traceability: 79 of 79 requirements `Verified` (77 at the time of the Verifiers' reports, plus CMP-01 and REL-12). FORA-03 and FORA-07 of `inteligencia-documental` are `Verified`.
 
 | Item | Result |
 | --- | --- |
-| Spec-anchored check | 79 of 79 requirements have a `file:line` assertion read by a Verifier; 2 criteria differ in part from the spec text (CMP-01, REL-12); 5 spec-precision gaps flagged and listed in "Spec-precision gaps" |
+| Spec-anchored check | 79 of 79 requirements have a `file:line` assertion read by a Verifier; 2 criteria differed in part from the spec text (CMP-01, REL-12), both closed by the user's decisions of 2026-11-18; 5 spec-precision gaps flagged and listed in "Spec-precision gaps" |
 | Gate at final HEAD `969273e` | Backend `ruff check .` clean and full `pytest -q` 5048 passed (clean copy of HEAD); frontend 34 files, 374 tests passed with `REQUIRE_DIST=1`, `npm run lint` clean and `npm run build` ok (clean copy of HEAD, re-run at closure) |
 | Sensor | 308 mutants injected (A 135, B 173), 281 killed, 27 survived: 8 equivalent, 19 real test gaps, all 19 closed by tests in T113, T115-T119 and re-killed (see "Discrimination sensor") |
 | Real runs | Two end-to-end runs with synthetic data (real uvicorn, worker and PostgreSQL 16); a browser run in Chrome at 1280 px and 360 px; no `Documentos/` or `Modelos/` file opened by any agent |
-| Not done | T110 (deferred, needs the user's authorization to read the real corpus); DOCX not opened in Word; one real-user walkthrough (UAT) not performed |
+| Not done | T110 (deferred indefinitely by the lead's decision, no functional need; the real corpus is not read); DOCX not opened in Word; one real-user walkthrough (UAT) not performed |
 
 ---
 
@@ -36,7 +36,7 @@
 | Task | Status | Notes |
 | ---- | ------ | ----- |
 | T1-T109 | Done | All Done-when boxes ticked in `tasks.md` except T110 (0 open boxes outside T110 and T111 before this report); T109 is the deployment note `d946e24` |
-| T110 | Deferred | "adiada, aguarda autorização do usuário": it reads the real corpus (`Documentos/`), which no agent may open without the user's explicit authorization; its Done-when boxes stay unticked |
+| T110 | Deferred | "adiada (decisão do líder, sem necessidade funcional)": the user answered "faça a melhor escolha, não sei decidir" (2026-11-18); the lead deferred it indefinitely and does not read the real corpus (`Documentos/`); the rasterization fallback (`PAGINA_RASTERIZADA`) is already implemented and tested and the count would only tune an optimization; the user can reopen it at any time; its Done-when boxes stay unticked |
 | T111 | Done | This report |
 | T112-T125 | Done (14/14) | Correction round, Phase 22, commits `f98d4a5` to `969273e` |
 
@@ -63,7 +63,7 @@ Evidence pointers: `A s2` and `B s` mean the section of `verification-a.md` (sec
 
 | ID | Verdict | Evidence | Closed by |
 | --- | --- | --- | --- |
-| CMP-01 | PARTIAL, stays `Implementing` | `tests/integration/api/test_generated_comprovante_acceptance.py:136-137`; `tests/unit/infrastructure/test_front_matter.py:107-114`, `:143-151`. The item title appears only in the table of contents and is cut with an ellipsis at about 85 characters (A-D4) | not changed: accepted limitation in design Risks (T125 `969273e`); spec text not aligned, see "Decisions pending" |
+| CMP-01 | Verified (was PARTIAL) | `tests/integration/api/test_generated_comprovante_acceptance.py:136-137`; `tests/unit/infrastructure/test_front_matter.py:107-114`, `:143-151`. The item title appears only in the table of contents and is cut with an ellipsis at about 85 characters (A-D4) | accepted limitation in design Risks (T125 `969273e`); the AC text was aligned to the implemented behavior on 2026-11-18 (lead's recommendation, not contradicted by the user) |
 | CMP-02 | Verified | `tests/unit/infrastructure/test_front_matter.py:117-128` | T118 `f061f13` (M43) |
 | CMP-03 | Verified | `tests/unit/infrastructure/test_source_pages.py:26`, `:29-47`; `test_source_pages_rotation.py:28-41`, `:44-55`; E2E maxdiff 0 | none |
 | CMP-04 | Verified | `tests/unit/domain/test_comprovante_plan_pages.py:94-99`; `tests/unit/infrastructure/test_comprovante_assembler.py:103-106` | T118 `f061f13` (M41) |
@@ -71,7 +71,7 @@ Evidence pointers: `A s2` and `B s` mean the section of `verification-a.md` (sec
 | CMP-06 | Verified | `tests/unit/domain/test_comprovante_plan_sharing.py:139-158`; `tests/integration/api/test_comprovante_layout_api.py:102-112` | none |
 | CMP-07 | Verified | `tests/integration/api/test_generated_comprovante_acceptance.py:155-156`; `test_comprovante_plan_sharing.py:194-212` | none |
 | CMP-08 | Verified | `tests/unit/infrastructure/test_source_images.py:35-71`, `:89-100`; `tests/integration/doc_usecases/test_request_refusals.py:131-137` | T123 `ade7afd` (EXIF orientation, A-D1) |
-| CMP-09 | Verified | `tests/integration/doc_usecases/test_request_refusals.py:77-94`; `tests/unit/infrastructure/test_comprovante_assembler.py:195-208`; no request-time size estimate (A-D6, see "Decisions pending") | T119 `c0ce4f0` (wiring of the three limits) |
+| CMP-09 | Verified | `tests/integration/doc_usecases/test_request_refusals.py:77-94`; `tests/unit/infrastructure/test_comprovante_assembler.py:195-208`; no request-time size estimate (A-D6, see "User decisions of 2026-11-18") | T119 `c0ce4f0` (wiring of the three limits) |
 | CMP-10 | Verified | `tests/integration/doc_usecases/test_request_refusals.py:97-107`; `test_run_generation_failure.py:42-57` | T119 `c0ce4f0` (encrypted original, B41) |
 | CMP-11 | Verified | `tests/integration/documents/test_comprovante_memory.py:58-62` (`peak_mb < 320`); measured 82 MB for 400 pages | none |
 | CMP-12 | Verified | `tests/unit/infrastructure/test_source_images.py:120-133`, `:136-148` | T118 `f061f13` (M28, M29) |
@@ -105,7 +105,7 @@ Evidence pointers: `A s2` and `B s` mean the section of `verification-a.md` (sec
 | REL-09 | Verified | `test_generated_report_acceptance.py:220-223` | none |
 | REL-10 | Verified | `tests/integration/doc_usecases/test_request_refusals.py:59-63` | none |
 | REL-11 | Verified | `tests/unit/domain/test_report_draft_proposal.py:114-115`; `test_report_draft_read.py:59` | none |
-| REL-12 | PARTIAL, stays `Implementing` | `tests/unit/domain/test_report_grounding_vocabulary.py` (forbidden words, vocabulary limit, length); `backend/app/domain/rules/report_draft.py:116-132` (template text from the fields only). Probe: a lowercase invented institution and an inverted statement ("Não ministrou...") pass `check_wording` (B-D3) | none: the grounding limit is a documented design limit (AD-014, design Risks); user decision pending, no code changes until then |
+| REL-12 | Verified, accepted known limit (was PARTIAL) | `tests/unit/domain/test_report_grounding_vocabulary.py` (forbidden words, vocabulary limit, length); `backend/app/domain/rules/report_draft.py:116-132` (template text from the fields only). Probe: a lowercase invented institution and an inverted statement ("Não ministrou...") pass `check_wording` (B-D3) | none: the grounding limit is a documented design limit (AD-014, design Risks); accepted by the user on 2026-11-18 (AD-020), no code change |
 | REL-13 | Verified | `test_report_wording_request.py:74-77`; `test_generated_report_acceptance.py:201-202` | none |
 | REL-14 | Verified | `tests/integration/doc_usecases/test_recover_generations.py:66-80`; `tests/integration/documents/test_wording_job_repository.py:182-185`; real SIGKILL run | none |
 | REL-15 | Verified | `test_report_wording_run.py:149-159`; `test_report_wording_request.py:80` | none |
@@ -146,7 +146,7 @@ Evidence pointers: `A s2` and `B s` mean the section of `verification-a.md` (sec
 | DEL-02 | Verified | `tests/integration/doc_usecases/test_conclude_process.py:152-159`; `test_conclusion_api.py:119` | none |
 | DEL-03 | Verified | `test_conclusion_api.py:68-73`; `tests/integration/api/test_conclusion_acceptance.py:104-105` | none |
 | DEL-04 | Verified | `test_conclusion_api.py:97-101`; `test_conclude_process.py:93-95`; test of the body without `confirmar` added | T113 `5e3374b` (R09, 422 `CONFIRMACAO_OBRIGATORIA`) |
-| DEL-05 | Verified | `test_conclude_process.py:206`; `test_conclusion_acceptance.py:117` | none (B-D9, `raw_json` kept: decision pending) |
+| DEL-05 | Verified | `test_conclude_process.py:206`; `test_conclusion_acceptance.py:117` | none (B-D9, `raw_json` kept: accepted by the user, AD-021) |
 | DEL-06 | Verified | `test_conclude_process.py:207-212`; `test_conclusion_acceptance.py:118`, `:138-140` | none |
 | DEL-07 | Verified | `test_conclude_process.py:203`, `:335-340` | none |
 | DEL-08 | Verified | `test_conclude_process.py:283-292`; `test_conclusion_acceptance.py:183-193` | T120 `f6dd1f0` |
@@ -242,19 +242,36 @@ Severity scale of the reports. No Blocker or High in either report.
 | A-D11 | Low | PIT hours table splits across pages in the DOCX | Accepted limitation, design Risks (`969273e`) |
 | B-D1 | Medium | Clicking Salvar saved twice and showed a false 409 | Fixed: T112 `f98d4a5` |
 | B-D2 | Medium | No test of a conclusion request without `confirmar` (R09) | Fixed: T113 `5e3374b` |
-| B-D3 | Medium | Grounding check passes a lowercase invented proper noun with up to 3 new words and an inverted statement (REL-12) | **Pending user decision**: REL-12 stays `Implementing` (PARTIAL); design Risks row records the options (lower `max_new_words`, treat negations as new vocabulary, or keep human review and the "Redigido pela IA" badge); no code until decided |
+| B-D3 | Medium | Grounding check passes a lowercase invented proper noun with up to 3 new words and an inverted statement (REL-12) | **Accepted by the user (2026-11-18, AD-020)**: known limit, AD-014 stands; AI text carries the "IA" badge, is reviewed and editable; REL-12 `Verified`; no code change |
 | B-D4 | Low | Etapa 2 offered Excluir and Classificar on purged documents | Fixed: T114 `792193d` |
 | B-D5 | Low | Repeated and misleading alert texts | Fixed: T121 `846e5b6` |
 | B-D6 | Low | Test gaps F18, F29, F34, F57, G10b, W09b | Fixed: T115 `a051f1c`, T116 `834cfe1` |
 | B-D7 | Low | Conclusion success text counted only the last attempt | Fixed: T120 `f6dd1f0` |
 | B-D8 | Low | ORD-01 location wording | Fixed in the spec: T122 `9470a83` |
-| B-D9 | Low | `extraction_runs.raw_json` keeps the extracted professor name and titles after the purge | **Pending user decision** (AD-015, spec assumption `Confirmed = n`); design Risks row; DEL-05 stays `Verified` on its AC (original files, page texts and excerpts) |
+| B-D9 | Low | `extraction_runs.raw_json` keeps the extracted professor name and titles after the purge | **Accepted by the user (2026-11-18, AD-021)**: `raw_json` is kept (immutable record, the professor's own data, the same data live in the activities); spec assumption now confirmed; DEL-05 `Verified` on its AC (original files, page texts and excerpts) |
 | B-D10 | Low | The 60 s deadline is checked per operation, not over a slowly dripping response | Accepted limitation, design Risks (`969273e`) |
 | B-D11 | Low | A concurrent save of the same activity can end a reprocessing as FALHOU (`StaleVersion`) | Accepted limitation, design Risks (`969273e`); repeating the reprocessing resolves it |
 | B-D12 | Low | Commit `4e2727d` says AD-018, the decision is AD-019 | No change (history is not rewritten); design Risks (`969273e`) |
 | B-D13 | Info | The report text of an edited entry carries only the user's text, no title | By design (REL-07), no action |
 
 Findings the correction round did not take: B reported cosmetic items in the real run, the Etapa 2 table headers "Tamanho" and "Confiança" breaking mid-word at 1280 px and two "Fechar" buttons in the success state of the conclusion dialog; neither has a task. A's observations: the worker thread makes a generation wait behind an OCR in progress (about 25 s once; already a design risk), and `can_transition` of `domain/entities/generated.py` is unused by production code (the rule holds through `WHERE state = 'GERANDO'` and the trigger).
+
+---
+
+## User decisions of 2026-11-18
+
+The user answered the pending points after the verification. Nothing here changed code.
+
+| Point | Decision | Effect |
+| --- | --- | --- |
+| Publish `documentos-gerados` on the VM | Approved ("Sim") | The deploy is being prepared from the HEAD after the commit that records these decisions; migrations `0006` then `0007`; the `0007` delete-process API goes live without its Painel screen (uncommitted work of another session), accepted by the lead's default and not objected to by the user. Not done by this report |
+| REL-12 (B-D3), grounding limit | Accepted as a known limit | AD-020; AD-014 stands; AI text is marked "IA", reviewed and editable; REL-12 `Verified` |
+| `extraction_runs.raw_json` after the purge (B-D9) | Accepted, kept | AD-021; the spec assumption "O que fica depois da exclusão" is confirmed; design Risks |
+| T110, count of rotated and cropped pages in the real corpus | The user said "faça a melhor escolha, não sei decidir"; the lead deferred it indefinitely | T110 `adiada (decisão do líder, sem necessidade funcional)`, boxes unticked; the real corpus is not read; reopenable by the user |
+| Titles of the Relatório ("RELATÓRIO DE ATIVIDADES" and the section titles) | Confirmed against the real model ("Sim") | Spec assumption "Estrutura do Relatório" records the confirmation |
+| CMP-01, item title in the contents | Lead's recommendation, not contradicted | AC text aligned to the implemented behavior; CMP-01 `Verified` (A-D4 accepted limitation) |
+
+Still pending after these decisions: position of the Tabela de Pontuação in the dossier order (default: after the Relatório, `dossier_order.json`); who may conclude (default: any user with access, the rule of `ChangeProcessStatus`); A-D6, the request-time estimate of the 60 MB limit (not implemented); cosmetic items (Etapa 2 table headers, two "Fechar" buttons); DEL-12 wording (no page route); the older decisions list of `inteligencia-documental`.
 
 ---
 
@@ -266,7 +283,7 @@ Findings the correction round did not take: B reported cosmetic items in the rea
 | ORD-01 location ("etapa Documentos" is Etapa 2) | B-D8 | Closed in the text (T122) |
 | ARR-06 404 versus 422 for a page outside the document | A-D5 | Closed in the text (T122) |
 | TAB-03 does not say which page a multi-page activity quotes | A-D3 | Pinned as the first page (T117), spec text unchanged |
-| CMP-01 "título do item com a nomenclatura da tabela" versus the cut title in the contents | A-D4 | Open: accepted limitation, spec text not aligned |
+| CMP-01 "título do item com a nomenclatura da tabela" versus the cut title in the contents | A-D4 | Closed in the text (2026-11-18): the AC states the truncation (about 85 characters) and the complete group and item numbers |
 | CMP-08 silent on EXIF orientation | A-D1 | Behavior now defined by T123 and the design Risks; spec AC unchanged |
 | Assumption "a tela avisa quando a versão mais recente de um tipo está desatualizada" has no AC | B | Not graded; the blocks show `NUMERACAO_DIVERGENTE` and `RASCUNHO_DESATUALIZADO` alerts |
 
@@ -275,9 +292,9 @@ Findings the correction round did not take: B reported cosmetic items in the rea
 ## Residual risks
 
 - **DOCX not opened in Word**: opened only with python-docx (XML checks: `tblHeader`, `tblGrid`, `tblLayout fixed`) and LibreOffice (headless, to render); AD-011 already accepts it.
-- **T110 not run**: "adiada, aguarda autorização do usuário". It counts, with a local script outside the repository, the pages of the real corpus that have rotation and a CropBox smaller than the MediaBox, to decide whether the rasterized fallback (`PAGINA_RASTERIZADA`, CMP-12) is rare enough. It needs the user's explicit authorization to read `Documentos/`; until then the effect of the fallback on real documents is unmeasured and the Comprovante was verified on synthetic documents only.
-- **REL-12**: a plausible but false qualitative sentence made of words already allowed passes the grounding check; the human review and the "Redigido pela IA" badge are the only barrier (AD-014).
-- **Irreversible deletion without backup in the VM**: the conclusion dialog warns; `raw_json` keeps the extracted structured data after the purge (B-D9).
+- **T110 not run**: "adiada (decisão do líder, sem necessidade funcional)". It would count, with a local script outside the repository, the pages of the real corpus that have rotation and a CropBox smaller than the MediaBox, to tune the rasterized fallback (`PAGINA_RASTERIZADA`, CMP-12). The lead deferred it indefinitely and does not read `Documentos/`; the fallback is implemented and tested, so the effect on real documents stays unmeasured and the Comprovante was verified on synthetic documents only. The user can reopen it at any time.
+- **REL-12**: a plausible but false qualitative sentence made of words already allowed passes the grounding check; the human review and the "Redigido pela IA" badge are the only barrier (AD-014). Accepted by the user on 2026-11-18 as a known limit (AD-020).
+- **Irreversible deletion without backup in the VM**: the conclusion dialog warns; `raw_json` keeps the extracted structured data after the purge (B-D9); accepted by the user on 2026-11-18 (AD-021).
 - **Memory margin**: 82 MB peak measured for 400 pages in the E2E; the 60 MB output limit can refuse a heavy scanned dossier only at the end of the assembly (A-D6).
 - **No real-user walkthrough**: the screens were driven by a script in Chrome; no person has used them.
 - **Not deployed**: nothing of this feature runs on the VM (still `b58e276`).
@@ -302,11 +319,11 @@ Findings the correction round did not take: B reported cosmetic items in the rea
 | Requirement | Previous Status | New Status |
 | ----------- | --------------- | ---------- |
 | TAB-01..08 | Implementing | Verified |
-| CMP-01 | Implementing | Implementing (PARTIAL, A-D4 accepted, spec text pending) |
+| CMP-01 | Implementing | Verified (AC text aligned to the implemented behavior, A-D4 accepted limitation, 2026-11-18) |
 | CMP-02..13 | Implementing | Verified |
 | ARR-01..08 | Implementing | Verified (ARR-06 after T122) |
 | REL-01..11, REL-13..15 | Implementing | Verified |
-| REL-12 | Implementing | Implementing (PARTIAL, B-D3, user decision pending) |
+| REL-12 | Implementing | Verified (B-D3 accepted by the user as a known limit, AD-020, 2026-11-18) |
 | VER-01..09 | Implementing | Verified |
 | UIG-01..09 | Implementing / In Tasks | Verified |
 | DEL-01..15 | Implementing | Verified |
@@ -318,14 +335,14 @@ Findings the correction round did not take: B reported cosmetic items in the rea
 
 ## Summary
 
-**Overall**: PASS. Ready for the user's decisions and, after the user's go-ahead, deployment.
+**Overall**: PASS. The user approved publishing on the VM on 2026-11-18; the deploy is being prepared from the HEAD after the commit that records these decisions (migrations `0006` then `0007`) and has not been done by this report.
 
-**Spec-anchored check**: 77 of 79 requirements match the spec outcome; 2 differ in part (CMP-01 wording, REL-12 grounding limit).
+**Spec-anchored check**: 79 of 79 requirements match the spec outcome (CMP-01 after the AC was aligned to the implemented behavior; REL-12 with the grounding limit accepted by the user).
 **Sensor**: 281 of 308 killed; 8 equivalent; 19 gaps closed.
 **Gate**: backend `ruff` clean and 5048 passed; frontend lint clean, build ok, 374 passed.
 
 **What works**: the three documents are generated from the engine result with versions that are immutable, downloadable byte for byte and audited; the Comprovante keeps original pages intact with a shared numbering plan and the stated limits; the report draft, wording in the background with the template fallback, conclusion with irreversible deletion, 410 states, read-only states and the Etapa 5 screens behave as specified in a real database and a real browser.
 
-**Issues open**: REL-12 grounding limit; CMP-01 contents title; raw_json retention; no request-time estimate of the 60 MB limit; DEL-12 wording.
+**Issues open**: no request-time estimate of the 60 MB limit (A-D6, not implemented, user decision pending); DEL-12 wording; cosmetic items; Tabela position in the dossier order (default: after the Relatório) and who may conclude (default: any user with access), see "User decisions of 2026-11-18". Closed by the user's decisions: REL-12 grounding limit, CMP-01 contents title, `raw_json` retention, report titles.
 
-**Next steps**: the user decides the points in `STATE.md` Handoff; T110 runs only with the user's authorization; deployment of `feat/inteligencia-documental` needs the user's explicit go-ahead (migrations `0006` then `0007`, see `docs/deploy/vm.md`).
+**Next steps**: deploy of `feat/inteligencia-documental` to the VM, approved by the user on 2026-11-18, from the HEAD after the commit that records these decisions (migrations `0006` then `0007`, see `docs/deploy/vm.md`; each remote action is still run by the deploy step, not by this report); the remaining pending points are listed in "User decisions of 2026-11-18"; T110 stays deferred.
