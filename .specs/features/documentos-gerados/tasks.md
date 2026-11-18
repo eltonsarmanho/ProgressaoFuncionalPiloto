@@ -2339,9 +2339,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] A aplicação sobe com `worker_enabled` e com o executor desligado; o container expõe cada caso de uso novo
-- [ ] Linha `GERANDO` com `started_at` antes da partida vira `FALHOU/INTERROMPIDA` ao subir
-- [ ] Gate full passa; 3+ testes
+- [x] A aplicação sobe com `worker_enabled` e com o executor desligado; o container expõe cada caso de uso novo
+- [x] Linha `GERANDO` com `started_at` antes da partida vira `FALHOU/INTERROMPIDA` ao subir
+- [x] Gate full passa; 3+ testes
 
 **Tests**: integration
 **Gate**: full

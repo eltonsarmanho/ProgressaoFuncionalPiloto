@@ -9,12 +9,18 @@ from sqlalchemy import Engine
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
 from app.application.services.document_analyzer import DocumentAnalyzer
+from app.application.services.purge_inputs import PurgeInputDocuments
 from app.application.use_cases.auth import GetCurrentSession, Login, Logout
 from app.application.use_cases.career import (
     CreateCareerVersion,
     ListCareerVersions,
     UpdateCareerVersion,
 )
+from app.application.use_cases.comprovante_layout import (
+    GetComprovanteLayout,
+    SaveComprovanteLayout,
+)
+from app.application.use_cases.conclusion import ConcludeProcess, GetConclusionPreview
 from app.application.use_cases.document_processing import ProcessDocument, RecoverStuckJobs
 from app.application.use_cases.documents import (
     ClassifyDocumentManually,
@@ -28,6 +34,15 @@ from app.application.use_cases.documents import (
     UploadDocuments,
 )
 from app.application.use_cases.evidences import LinkEvidence, ListEvidences, UnlinkEvidence
+from app.application.use_cases.generated_documents import (
+    DownloadGeneratedFile,
+    GenerationLimits,
+    GetGeneratedDocument,
+    ListGeneratedDocuments,
+    RecoverInterruptedGenerations,
+    RequestGeneration,
+    RunGeneration,
+)
 from app.application.use_cases.processes import (
     ChangeProcessStatus,
     CreateProcess,
@@ -44,6 +59,15 @@ from app.application.use_cases.professors import (
     GetProfessor,
     ListProfessors,
     UpdateProfessor,
+)
+from app.application.use_cases.report_draft import (
+    GetReportDraft,
+    ListWordingJobs,
+    MoveReportEntry,
+    RequestSectionWording,
+    RunWording,
+    SaveReportEntry,
+    SaveReportSection,
 )
 from app.application.use_cases.scoring import (
     BulkValidateActivities,
@@ -82,14 +106,21 @@ from app.domain.repositories.ports import (
     UnitOfWork,
 )
 from app.infrastructure.ai.maritalk import MariTalkExtractor
+from app.infrastructure.ai.report_writer import MariTalkReportWriter
 from app.infrastructure.database.repositories import SqlUnitOfWork
 from app.infrastructure.database.session import make_session_factory
+from app.infrastructure.documents.comprovante_assembler import PdfComprovanteAssembler
+from app.infrastructure.documents.config_loader import ReportConfigLoader
+from app.infrastructure.documents.document_writer import FileDocumentWriter
+from app.infrastructure.documents.front_matter import TOC_CAPACITY
 from app.infrastructure.files.inspector import PillowFileInspector
 from app.infrastructure.ocr.extractor import DocumentTextExtractor
 from app.infrastructure.security import tokens
 from app.infrastructure.security.argon2_hasher import Argon2PasswordHasher
 from app.infrastructure.storage.generated_storage import LocalGeneratedStorage
 from app.infrastructure.storage.local_storage import LocalFileStorage
+
+MB = 1024 * 1024
 
 
 @dataclass
@@ -158,6 +189,23 @@ class Container:
     link_evidence: LinkEvidence
     unlink_evidence: UnlinkEvidence
     list_evidences: ListEvidences
+    request_generation: RequestGeneration
+    run_generation: RunGeneration
+    recover_generations: RecoverInterruptedGenerations
+    list_generated_documents: ListGeneratedDocuments
+    get_generated_document: GetGeneratedDocument
+    download_generated_file: DownloadGeneratedFile
+    get_report_draft: GetReportDraft
+    save_report_entry: SaveReportEntry
+    save_report_section: SaveReportSection
+    move_report_entry: MoveReportEntry
+    request_wording: RequestSectionWording
+    list_wording_jobs: ListWordingJobs
+    run_wording: RunWording
+    get_comprovante_layout: GetComprovanteLayout
+    save_comprovante_layout: SaveComprovanteLayout
+    conclusion_preview: GetConclusionPreview
+    conclude_process: ConcludeProcess
 
 
 def build_container(
@@ -183,6 +231,7 @@ def build_container(
     create_activity = CreateActivity(uow_factory, audit, policy)
     change_status = ChangeActivityStatus(uow_factory, audit, policy)
     storage = LocalFileStorage(settings.storage_dir)
+    generated_storage = LocalGeneratedStorage(settings.storage_dir)
     inspector = PillowFileInspector(settings.max_megapixels, settings.max_pages)
     limits = DocumentLimits(
         max_file_bytes=settings.max_upload_mb * 1024 * 1024,
@@ -196,6 +245,12 @@ def build_container(
         ai_extractor or MariTalkExtractor(settings),
         clock,
     )
+    generation_limits = GenerationLimits(
+        max_pages=settings.generation_max_pages,
+        png_max_megapixels=settings.generation_png_max_megapixels,
+        min_free_bytes=settings.generation_min_free_mb * MB,
+    )
+    report_config = ReportConfigLoader(template_id=settings.report_template_id)
     return Container(
         settings=settings,
         engine=engine,
@@ -220,9 +275,7 @@ def build_container(
         list_processes=ListProcesses(uow_factory, audit, policy),
         update_process=UpdateProcess(uow_factory, audit, policy),
         change_process_status=ChangeProcessStatus(uow_factory, audit, policy),
-        delete_process=DeleteProcess(
-            uow_factory, audit, policy, storage, LocalGeneratedStorage(settings.storage_dir)
-        ),
+        delete_process=DeleteProcess(uow_factory, audit, policy, storage, generated_storage),
         process_delete_preview=GetProcessDeletePreview(uow_factory, audit, policy),
         process_history=GetProcessHistory(uow_factory, audit, policy),
         list_career_versions=ListCareerVersions(uow_factory),
@@ -267,6 +320,53 @@ def build_container(
         link_evidence=LinkEvidence(uow_factory, audit, policy),
         unlink_evidence=UnlinkEvidence(uow_factory, audit, policy),
         list_evidences=ListEvidences(uow_factory),
+        request_generation=RequestGeneration(
+            uow_factory,
+            audit,
+            policy,
+            clock,
+            generated_storage,
+            storage,
+            inspector,
+            generation_limits,
+            TOC_CAPACITY,
+        ),
+        run_generation=RunGeneration(
+            uow_factory,
+            audit,
+            clock,
+            generated_storage,
+            FileDocumentWriter(),
+            PdfComprovanteAssembler(max_output_bytes=settings.generation_max_output_mb * MB),
+            report_config,
+            storage,
+            inspector,
+            generation_limits,
+            TOC_CAPACITY,
+        ),
+        recover_generations=RecoverInterruptedGenerations(
+            uow_factory, audit, clock, generated_storage
+        ),
+        list_generated_documents=ListGeneratedDocuments(uow_factory, audit, policy),
+        get_generated_document=GetGeneratedDocument(uow_factory, audit, policy),
+        download_generated_file=DownloadGeneratedFile(
+            uow_factory, audit, policy, generated_storage
+        ),
+        get_report_draft=GetReportDraft(uow_factory, audit, policy, report_config),
+        save_report_entry=SaveReportEntry(uow_factory, audit, policy, report_config),
+        save_report_section=SaveReportSection(uow_factory, audit, policy, report_config),
+        move_report_entry=MoveReportEntry(uow_factory, audit, policy, report_config),
+        request_wording=RequestSectionWording(uow_factory, audit, policy, clock, report_config),
+        list_wording_jobs=ListWordingJobs(uow_factory, audit, policy),
+        run_wording=RunWording(
+            uow_factory, audit, clock, report_config, MariTalkReportWriter(settings)
+        ),
+        get_comprovante_layout=GetComprovanteLayout(uow_factory, audit, policy, TOC_CAPACITY),
+        save_comprovante_layout=SaveComprovanteLayout(uow_factory, audit, policy),
+        conclusion_preview=GetConclusionPreview(uow_factory, audit, policy),
+        conclude_process=ConcludeProcess(
+            uow_factory, audit, policy, PurgeInputDocuments(uow_factory, storage, clock)
+        ),
     )
 
 

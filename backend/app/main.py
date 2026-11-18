@@ -52,6 +52,8 @@ def create_app(
                 container.process_document,
                 container.recover_stuck_jobs,
                 container.clock,
+                runners=[container.run_generation.run_next, container.run_wording.run_next],
+                recoverers=[container.recover_generations.execute],
             )
             worker.start()
         yield
