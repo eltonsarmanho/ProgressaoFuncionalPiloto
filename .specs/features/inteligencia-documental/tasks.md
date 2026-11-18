@@ -2601,8 +2601,8 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 **Done when**:
 
-- [ ] Cada mutante listado é reproduzido em cópia de arquivo e morto pelo teste novo (o comando e o resultado vão no corpo do commit)
-- [ ] Gate full passa
+- [x] Cada mutante listado é reproduzido em cópia de arquivo e morto pelo teste novo (o comando e o resultado vão no corpo do commit)
+- [x] Gate full passa
 
 **Tests**: unit + integration
 **Gate**: full
