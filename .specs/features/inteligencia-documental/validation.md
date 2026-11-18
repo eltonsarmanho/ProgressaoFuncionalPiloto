@@ -504,3 +504,34 @@ All 105 requirements are covered by at least one cited test. Proposed `spec.md` 
 **Issues found**: FT-8 (the secret-scan test can be skipped by the gate order), FT-9 and FT-10 (two spec-wording deviations), FT-11..FT-18 (weak assertions and info).
 
 **Next steps**: land FT-8, FT-9 and FT-10 (small, local) and the cheap tests of FT-11..FT-14; no re-verification of the pass-1 gaps is needed. Then run `python3 <skill-dir>/scripts/validate_state.py inteligencia-documental`.
+
+---
+
+## Resolution (round 3)
+
+Second real-environment findings (N1, N3, N4, N5, memory) and the pass-2 gaps FT-8..FT-18 became SEG-01..12 and tasks T82-T95 (Phase 13), each with one commit. Tests use synthetic text, files and PDFs only; no real document, MariTalk, VM, push or deploy. The independent Verifier has not re-run on these commits.
+
+| Task | Commit | Closes | Proof |
+| ---- | ------ | ------ | ----- |
+| T82 | `dde97b6` | N1 (term) | `test_document_analyzer_term.py`, `test_term_rules.py`: "por 2 (dois) anos" from 2024-08-09 gives end 2026-08-09 and `DATA_FIM_DERIVADA`; ungrounded, ambiguous or month-only start derives nothing |
+| T83 | `83c8d0a` | N1 (open end) | `test_open_ended_period.py`, `test_document_analyzer_open_end.py`: start-only period of a yearly item runs to the interstice end (`DENTRO`/`PARCIAL`/`FORA`), `DATA_FIM_AUSENTE`, review; other items keep one day |
+| T84 | `4e878fe` | N1 (labels) | `DocumentViewer.test.tsx` "SEG-03" |
+| T85 | `7fa39fe` | N3 (similar titles) | `test_scoring_duplicates_similar.py`: Jaccard 0.8 same item and date; 0.789, other item, other date, undated stay apart |
+| T86 | `9be02aa` | N3 (same text, two files) | `test_scoring_duplicates_content.py`, `test_process_score_content_duplicates.py` (PostgreSQL), `test_content_keys_pair_each_activity...`; upload already refuses equal SHA-256 per process (409), so equal text with other bytes was the open case |
+| T87 | `5759136` | N5 | `test_extension_course_context.py`, `test_document_analyzer_extension_unit.py`: Pro-Reitoria de Extensao in a header gives VII.10; "curso de extensao" gives VII.9 |
+| T88 | `996ae13` | N4 | `test_research_coordination_role.py`, `test_document_analyzer_research_role.py`: 18 h participation gives no V.1 |
+| T89 | `7d4e7e6` | FT-9 | `test_partial_professor_name.py`: "Maria Souza" without the full name or SIAPE in the text is `DOCENTE_DIVERGENTE`; the abbreviation rule also needs an initial |
+| T90 | `e0c709a` | FT-10 | `test_papim_wording.py`: the table text names PAPIM only in IV.1, so it confirms IV.1 and no longer IV.2 |
+| T91 | `0a75d28` | FT-8 | `bundle.test.ts` fails with `REQUIRE_DIST` and no `dist`; the Build gate builds first |
+| T92 | `2d23d15` | FT-11..FT-18 (D04, R03, B04, X02, X03, X05, I02, I05, W03, X07, X08, K08, R09) | 13 of 13 mutants re-applied to a copy and killed, baseline green |
+| T93 | `9d60e25` | FT-18 (F08, F09) | `DocumentViewer.test.tsx` "SEG-11" (removing both labels fails the test) |
+| T94 | `4c608aa` | N9 memory | `test_ocr_memory.py` (growth 166 MB before, under 40 MB after); in `docker run -m 384m` 10 scanned pages 342 -> 191 MB, 25 pages OOM -> fine, 100 pages 186 MB |
+| T95 | `6b21415` | N9 documentation | `docs/deploy/vm.md` section "Memória do OCR" |
+
+**Gate**: backend `ruff` clean, `pytest` 3153 passed, 3 deselected (`maritalk_live`); frontend `eslint` clean, `vite build` OK, `REQUIRE_DIST=1 vitest` 168 passed, 0 skipped.
+
+**Scope notes**
+- Year counting for N1 (decision for the user): complete years between max(start, interstice start) and min(end, interstice end). A derived end 2024-08-09..2026-08-09 in the interstice 2024-11-23..2026-11-23 counts 1 year; a start of 2024-08-09 without a term counts 2 years (upper bound, `DATA_FIM_AUSENTE`, review); a start of 2026-08-09 without a term counts 0 years. N2 (floor to complete years) stays as the user's rule.
+- Open-ended periods apply to items whose table unit is "por ano"; an activity entered by hand with only a start date in such an item now also runs to the interstice end (before it was one day).
+- Tests changed on purpose because the spec changed under them: `test_quantity_rules` (start-only yearly period also carries `DATA_FIM_AUSENTE`), `test_grounding` (a partial name needs the full name in the text), `test_suggestion_rules` (PAPIM moved to IV.1 only) and one analyzer case that wrote a bare "de EXTENSAO" after a course title.
+- Still open, low: a "Pro-Reitoria de Extensao" header still confirms an extension project (IV.1/IV.2), as T64 and `test_suggestion_rules` pin; N6 and N7 of `ANALISE.md` (seminar form as master co-advising, article item varies) are data to review, not code; the new coordination check reads sentences, so a single line naming another coordinator next to the professor is accepted for review.
