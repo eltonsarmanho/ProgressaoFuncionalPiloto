@@ -2598,9 +2598,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Versões 1 e 2 com hashes e instantâneos diferentes; a versão 1 baixada depois da mudança é igual byte a byte ao arquivo gravado
-- [ ] Tentativa direta de `UPDATE` ou `DELETE` de versão no banco é recusada; o histórico traz o tamanho de cada versão
-- [ ] Gate full passa; 3+ testes
+- [x] Versões 1 e 2 com hashes e instantâneos diferentes; a versão 1 baixada depois da mudança é igual byte a byte ao arquivo gravado
+- [x] Tentativa direta de `UPDATE` ou `DELETE` de versão no banco é recusada; o histórico traz o tamanho de cada versão
+- [x] Gate full passa; 3+ testes
 
 **Tests**: integration
 **Gate**: full
