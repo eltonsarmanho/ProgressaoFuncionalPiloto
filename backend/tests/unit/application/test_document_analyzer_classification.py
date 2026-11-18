@@ -24,6 +24,7 @@ from app.domain.entities.scoring import (
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.scoring_alerts import NotScoredReason
 from tests.unit.application.analyzer_fakes import (
+    BANCA_TEXT,
     FakeAi,
     FakeTextExtractor,
     activity,
@@ -232,9 +233,22 @@ def test_candidates_absent_from_the_table_are_dropped():
 
 INTERSTICE = Interstice(date(2026, 1, 1), date(2027, 1, 1))
 
+# A document whose dated activities are all outside the interstice creates nothing (FORA-01),
+# so the per-activity checks below sit next to a second activity that is inside it.
+INSIDE_SENTENCE = (
+    "\nDeclaramos que Fulana de Tal Exemplo participou como membro da banca examinadora do "
+    "trabalho de conclusao de curso Outro Estudo Ficticio, realizada em 20 de fevereiro de 2026."
+)
+
+
+def inside_companion():
+    return activity(title="Outro Estudo Ficticio", event_date="2026-02-20")
+
 
 def test_date_outside_the_interstice_is_flagged_and_the_activity_is_kept():
-    found = analyze(payload(activity()), interstice=INTERSTICE).activities[0]  # 2025-03-12
+    text = BANCA_TEXT + INSIDE_SENTENCE
+    result = analyze(payload(activity(), inside_companion()), text, interstice=INTERSTICE)
+    found = result.activities[0]  # 2025-03-12
     assert found.reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
     assert (found.group_number, found.item_number) == (3, 4)
 
@@ -272,13 +286,17 @@ def test_a_period_entirely_outside_the_interstice_is_flagged():
         end_date="2024-01-31",
         evidence_text="coordenou o projeto",
     )
-    found = analyze(payload(item), text, interstice=INTERSTICE).activities[0]
+    both = payload(item, inside_companion())
+    found = analyze(both, text + INSIDE_SENTENCE, interstice=INTERSTICE).activities[0]
     assert NotScoredReason.FORA_DO_INTERSTICIO in found.reasons
 
 
 def test_both_reasons_can_apply_to_the_same_activity():
     found = analyze(
-        payload(activity()), interstice=INTERSTICE, table_version=table((3, 1))
+        payload(activity(), inside_companion()),
+        BANCA_TEXT + INSIDE_SENTENCE,
+        interstice=INTERSTICE,
+        table_version=table((3, 1)),
     ).activities[0]
     assert found.reasons == (
         NotScoredReason.SEM_ENQUADRAMENTO,
@@ -427,7 +445,11 @@ def test_a_month_inside_the_interstice_uses_the_whole_month_and_is_not_flagged()
 def test_a_month_entirely_outside_the_interstice_is_flagged():
     outside = Interstice(date(2026, 1, 1), date(2027, 1, 1))
 
-    found = analyze(month_only(), MONTH_TEXT, interstice=outside).activities[0]
+    both = payload(
+        activity(event_date="2025-03-01"), inside_companion()
+    )
+
+    found = analyze(both, MONTH_TEXT + INSIDE_SENTENCE, interstice=outside).activities[0]
 
     assert found.reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
 

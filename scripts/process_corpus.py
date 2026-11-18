@@ -928,7 +928,8 @@ def _fill_entry(
                 title=title,
             )
         )
-    entry.interstice = interstice_summary(states)
+    outside = document.status_code == "DOCUMENTO_FORA_DO_INTERSTICIO"
+    entry.interstice = "FORA" if outside else interstice_summary(states)
     entry.without_item = (
         document.suggested_category == NO_ITEM_ALERT
         or NO_ITEM_ALERT in entry.alerts

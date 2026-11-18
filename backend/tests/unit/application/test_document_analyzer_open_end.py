@@ -44,6 +44,20 @@ def analyze(item, text):
     return run(analyzer(FakeTextExtractor(text_page(1, text)), ai), interstice=INTERSTICE)
 
 
+# A document whose dated activities are all outside the interstice creates nothing (FORA-01),
+# so the checks of an outside activity sit next to a second one that is inside it.
+INSIDE_SENTENCE = (
+    f"\nDeclaramos que {PROFESSOR} participou como membro da banca examinadora do trabalho de "
+    "conclusao de curso Estudo Ficticio sobre Dados Abertos, realizada em 12 de marco de 2025."
+)
+
+
+def analyze_next_to_an_inside_activity(item, text):
+    ai = FakeAi(payload(item, activity(), document_type="PORTARIA"))
+    page = text_page(1, text + INSIDE_SENTENCE)
+    return run(analyzer(FakeTextExtractor(page), ai), interstice=INTERSTICE)
+
+
 def codes(result):
     return [(a.code, a.activity_index) for a in result.alerts]
 
@@ -73,8 +87,8 @@ def test_director_from_before_the_interstice_counts_the_years_inside_it():
 
 def test_a_function_starting_after_the_interstice_is_out_of_it():
     item = function("FUNCAO_DIRETOR_FACULDADE", "2027-01-10")
-    result = analyze(item, portaria("10/01/2027", "Diretor"))
-    [suggested] = result.activities
+    result = analyze_next_to_an_inside_activity(item, portaria("10/01/2027", "Diretor"))
+    suggested = result.activities[0]
     assert [reason.name for reason in suggested.reasons] == ["FORA_DO_INTERSTICIO"]
 
 
@@ -95,7 +109,7 @@ def test_an_item_that_is_not_yearly_keeps_the_single_day_and_no_missing_end_aler
         evidence_text="concluiu o curso Exemplo",
     )
     text = f"Certificamos que {PROFESSOR} concluiu o curso Exemplo em 09/08/2024, 40 horas."
-    result = analyze(item, text)
-    [suggested] = result.activities
+    result = analyze_next_to_an_inside_activity(item, text)
+    suggested = result.activities[0]
     assert [reason.name for reason in suggested.reasons] == ["FORA_DO_INTERSTICIO"]
     assert DocAlertCode.DATA_FIM_AUSENTE not in [a.code for a in result.alerts]

@@ -34,6 +34,7 @@ from app.domain.repositories.ports import (
     TextExtractor,
 )
 from app.domain.rules.confidence import final_confidence, needs_review
+from app.domain.rules.document_period import document_outside_interstice
 from app.domain.rules.document_type import detect_document_type
 from app.domain.rules.grounding import (
     DatePrecision,
@@ -104,6 +105,8 @@ class DocAlert:
     code: DocAlertCode
     field: str | None = None  # the nulled field of a NAO_ENCONTRADO_NO_TEXTO warning
     activity_index: int | None = None
+    # Text facts the screen needs; only DOCUMENTO_FORA_DO_INTERSTICIO carries them (FORA-02).
+    detail: dict[str, str] | None = None
 
 
 @dataclass(frozen=True)
@@ -159,6 +162,9 @@ class _Run:
     model: str | None = None
     activities: list[SuggestedActivity] = field(default_factory=list)
     alerts: list[DocAlert] = field(default_factory=list)
+    # One entry per extracted activity with a date, for the outside-the-interstice rule (FORA-01).
+    period_states: list[PeriodState | None] = field(default_factory=list)
+    latest_dates: list[tuple[date, PeriodPrecision]] = field(default_factory=list)
 
 
 class DocumentAnalyzer:
@@ -242,12 +248,34 @@ class DocumentAnalyzer:
             )
             if suggested is not None:
                 run.activities.append(suggested)
+        if interstice is not None and document_outside_interstice(run.period_states):
+            return self._outside_the_interstice(run, interstice)
         if not payload.activities:
             run.alerts.append(DocAlert(DocAlertCode.NENHUMA_ATIVIDADE_ENCONTRADA))
         if not _same_professor(payload.docente_nome, professor_name, professor_siape, run.pages):
             run.alerts.append(DocAlert(DocAlertCode.DOCENTE_DIVERGENTE))
             status = DocumentStatus.REQUER_REVISAO
         return status, None
+
+    @staticmethod
+    def _outside_the_interstice(
+        run: _Run, interstice: Interstice
+    ) -> tuple[DocumentStatus, str | None]:
+        """Every dated activity is outside the interstice: no activity, a plain warning (FORA-01).
+
+        The document is PROCESSADO without review: it is neither pending nor an error
+        (FORA-09). Its date is the most recent extracted one (FORA-02).
+        """
+        run.activities.clear()
+        moment, precision = max(run.latest_dates, key=lambda found: found[0])
+        detail = {
+            "document_date": moment.isoformat(),
+            "date_precision": precision.value,
+            "interstice_start": interstice.start.isoformat(),
+            "interstice_end": interstice.end.isoformat(),
+        }
+        run.alerts.append(DocAlert(DocAlertCode.DOCUMENTO_FORA_DO_INTERSTICIO, detail=detail))
+        return DocumentStatus.PROCESSADO, DocAlertCode.DOCUMENTO_FORA_DO_INTERSTICIO.value
 
     def _ask_ai(
         self, run: _Run, text: str, professor_name: str
@@ -309,6 +337,12 @@ class DocumentAnalyzer:
         if unproven_indexing:
             run.alerts.append(DocAlert(DocAlertCode.INDEXACAO_NAO_COMPROVADA, None, index))
         suggestion = suggest_item(taxonomy, activity.level)
+        yearly = _is_yearly(taxonomy, suggestion.principal, table_version)
+        period = _period_state(activity, interstice, precision, yearly)
+        run.period_states.append(period)
+        latest = _latest_date(grounded.activity)
+        if latest is not None:
+            run.latest_dates.append((latest, precision))
         if suggestion.principal is None:
             run.alerts.append(DocAlert(DocAlertCode.SEM_ITEM_DE_PONTUACAO, None, index))
             return None
@@ -320,8 +354,6 @@ class DocumentAnalyzer:
         reasons: list[NotScoredReason] = []
         if principal is None:
             reasons.append(NotScoredReason.SEM_ENQUADRAMENTO)
-        yearly = _is_yearly(taxonomy, suggestion.principal, table_version)
-        period = _period_state(activity, interstice, precision, yearly)
         if period is PeriodState.FORA:
             reasons.append(NotScoredReason.FORA_DO_INTERSTICIO)
         confidence = final_confidence(raw.confidence, grounded.grounded_ratio)
@@ -365,6 +397,12 @@ def _interval(activity: ExtractedActivity) -> tuple[date, date] | None:
         return activity.event_date, activity.event_date
     start, end = activity.start_date or activity.end_date, activity.end_date or activity.start_date
     return None if start is None or end is None else (start, end)
+
+
+def _latest_date(activity: ExtractedActivity) -> date | None:
+    """The most recent date the document states for the activity."""
+    found = [d for d in (activity.event_date, activity.start_date, activity.end_date) if d]
+    return max(found, default=None)
 
 
 def _end_from_term(activity: ExtractedActivity, partial: dict[str, DatePrecision]) -> date | None:

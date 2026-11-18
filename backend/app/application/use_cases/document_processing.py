@@ -58,6 +58,7 @@ logger = logging.getLogger("app.documents.processing")
 
 INTERNAL_ERROR = "ERRO_INTERNO"
 NO_ITEM_CATEGORY = DocAlertCode.SEM_ITEM_DE_PONTUACAO.value
+OUTSIDE_CODE = DocAlertCode.DOCUMENTO_FORA_DO_INTERSTICIO.value
 MAX_EXCERPT_CHARS = 300
 MAX_TITLE_CHARS = 300
 _KIND_BY_MIME = {
@@ -78,11 +79,14 @@ class _Job:
 
 
 def _alert_dict(alert: DocAlert) -> dict:
-    return {
+    stored = {
         "code": alert.code.value,
         "field": alert.field,
         "activity_index": alert.activity_index,
     }
+    if alert.detail is not None:
+        stored["detail"] = alert.detail
+    return stored
 
 
 def _academic_period(value: str | None) -> str | None:
@@ -252,6 +256,8 @@ class ProcessDocument:
         category = None
         if result.activities:
             category = result.activities[0].taxonomy.value
+        elif result.status_code == OUTSIDE_CODE:
+            category = None  # not "no scoring item": the document is outside the interstice
         elif result.status is DocumentStatus.PROCESSADO:
             category = NO_ITEM_CATEGORY
         confidence: Decimal | None = min(

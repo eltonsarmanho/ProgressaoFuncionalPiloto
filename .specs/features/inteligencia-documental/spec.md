@@ -639,9 +639,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FORA-04 | P1: Documentos fora do interstício | Design | Pending |
 | FORA-05 | P1: Documentos fora do interstício | Design | Implementing |
 | FORA-06 | P1: Documentos fora do interstício | Design | Implementing |
-| FORA-07 | P1: Documentos fora do interstício | Design | Pending |
+| FORA-07 | P1: Documentos fora do interstício | Design | Implementing |
 | FORA-08 | P1: Documentos fora do interstício | Design | Pending |
-| FORA-09 | P1: Documentos fora do interstício | Design | Pending |
+| FORA-09 | P1: Documentos fora do interstício | Design | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 

@@ -99,15 +99,17 @@ def test_report_has_one_entry_per_supported_file_with_method_status_type_item_an
     assert banca.wall_seconds is not None and banca.duration_ms is not None
 
 
-def test_activity_outside_the_interstice_is_reported_as_outside(
+def test_document_outside_the_interstice_is_reported_as_outside_with_no_activity(
     folder, tmp_path, engine, migrated_url
 ):
     report = run(
         folder, tmp_path, migrated_url, KeyedAi(), start=date(2022, 11, 23), end=date(2024, 11, 23)
     )
 
-    assert by_name(report)["a-banca.pdf"].interstice == "FORA"
-    assert by_name(report)["a-banca.pdf"].activities[0].period == "FORA"
+    banca = by_name(report)["a-banca.pdf"]
+    assert banca.interstice == "FORA"
+    assert banca.status_code == "DOCUMENTO_FORA_DO_INTERSTICIO"
+    assert banca.activities == []
 
 
 def test_value_invented_by_the_ai_is_reported_as_a_grounding_warning(

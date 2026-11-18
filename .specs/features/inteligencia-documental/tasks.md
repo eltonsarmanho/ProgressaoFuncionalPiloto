@@ -3987,11 +3987,11 @@ T141 → T142 → T143 → T144 → T145
 
 **Done when**:
 
-- [ ] Documento com todas as atividades de 2022 e interstício 2024-2026 não cria atividade e traz o alerta, `PROCESSADO`, sem `REQUER_REVISAO`
-- [ ] Documento com uma atividade dentro e outra fora cria as duas, e a de fora segue `FORA_DO_INTERSTICIO`
-- [ ] Reprocessar depois de ampliar o interstício apaga o alerta e cria a atividade
-- [ ] Atividades já ligadas ao documento fora são tratadas como no reprocessamento atual (substituídas pelo resultado novo)
-- [ ] Gate quick passa
+- [x] Documento com todas as atividades de 2022 e interstício 2024-2026 não cria atividade e traz o alerta, `PROCESSADO`, sem `REQUER_REVISAO`
+- [x] Documento com uma atividade dentro e outra fora cria as duas, e a de fora segue `FORA_DO_INTERSTICIO`
+- [x] Reprocessar depois de ampliar o interstício apaga o alerta e cria a atividade
+- [x] Atividades já ligadas ao documento fora são tratadas como no reprocessamento atual (substituídas pelo resultado novo)
+- [x] Gate quick passa
 
 **Tests**: unit + integration
 **Gate**: quick
