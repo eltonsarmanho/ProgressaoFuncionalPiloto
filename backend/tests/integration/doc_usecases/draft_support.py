@@ -3,6 +3,7 @@
 import dataclasses
 
 from app.application.services.generation_inputs import load_generation_inputs
+from app.application.use_cases.comprovante_layout import GetComprovanteLayout
 from app.application.use_cases.report_draft import (
     GetReportDraft,
     ListWordingJobs,
@@ -14,6 +15,7 @@ from app.application.use_cases.report_draft import (
 )
 from app.domain.rules.report_draft import propose_draft
 from app.infrastructure.documents.config_loader import ReportConfigLoader, load_report_config
+from app.infrastructure.documents.front_matter import TOC_CAPACITY
 
 
 def get_draft_uc(world) -> GetReportDraft:
@@ -67,6 +69,19 @@ class FakeReportWriter:
             for i in items
             if i.activity_id in self.answers
         }
+
+
+def get_layout_uc(world) -> GetComprovanteLayout:
+    return GetComprovanteLayout(world.uow_factory, world.audit, world.policy, TOC_CAPACITY)
+
+
+def save_current_layout(world):
+    """Stores the arrangement the generation would use now as the saved one (version 1)."""
+    with world.uow_factory() as uow:
+        layout = load_generation_inputs(uow, uow.processes.get(world.process.id)).layout
+        saved = uow.comprovante_layouts.create(layout, world.admin.id, 0)
+        uow.commit()
+    return saved
 
 
 def set_status(world, status):

@@ -2098,9 +2098,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Sem arranjo salvo devolve `saved: false` e `version: 0` montado dos vínculos; com arranjo e uma atividade revalidada depois, `stale: true` e o aviso `ARRANJO_DESATUALIZADO`
-- [ ] `GET` não grava; documento excluído depois aparece como entrada inválida
-- [ ] Gate full passa; 6+ testes
+- [x] Sem arranjo salvo devolve `saved: false` e `version: 0` montado dos vínculos; com arranjo e uma atividade revalidada depois, `stale: true` e o aviso `ARRANJO_DESATUALIZADO`
+- [x] `GET` não grava; documento excluído depois aparece como entrada inválida
+- [x] Gate full passa; 6+ testes
 
 **Tests**: integration
 **Gate**: full
