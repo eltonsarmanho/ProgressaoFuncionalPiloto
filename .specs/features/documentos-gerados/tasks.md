@@ -2311,9 +2311,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Listar os vínculos de uma atividade cujo documento foi excluído devolve documento e página sem trecho; ler o texto da página responde `Gone`
-- [ ] Criar vínculo novo com página de documento excluído é recusado
-- [ ] Gate full passa; 5+ testes
+- [x] Listar os vínculos de uma atividade cujo documento foi excluído devolve documento e página sem trecho; ler o texto da página responde `Gone`
+- [x] Criar vínculo novo com página de documento excluído é recusado
+- [x] Gate full passa; 5+ testes
 
 **Tests**: integration
 **Gate**: full

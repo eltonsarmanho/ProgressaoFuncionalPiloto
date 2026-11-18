@@ -6,7 +6,7 @@ Audit events carry identifiers and the justification only, never the document te
 
 import uuid
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from uuid import UUID
 
 from app.application.services.access_policy import AccessPolicy
@@ -15,6 +15,7 @@ from app.application.use_cases.document_processing import MAX_EXCERPT_CHARS
 from app.application.use_cases.documents import (
     EVIDENCE_ENTITY,
     active_run,
+    refuse_deleted_file,
     refuse_outside_interstice,
 )
 from app.domain.entities.activity import Activity
@@ -110,6 +111,7 @@ class LinkEvidence(_EvidenceUseCase):
             if document.process_id != activity.process_id:
                 raise ValidationFailed("documento", "O documento pertence a outro processo")
             refuse_outside_interstice(document)
+            refuse_deleted_file(document)  # there is no page text to take the excerpt from
             if not 1 <= page <= document.page_count:
                 raise ValidationFailed("pagina", "Página fora do documento")
             justification = (justification or "").strip() or None
@@ -173,9 +175,11 @@ class ListEvidences:
     def execute(self, activity_ids: Sequence[UUID]) -> dict[UUID, list[EvidenceView]]:
         """The links of each activity, for presenting activities the caller already read.
 
-        It checks no access: the ids must come from a use case that did.
+        It checks no access: the ids must come from a use case that did. The link to a document
+        whose file was deleted keeps the document and the page and has no excerpt (DEL-06).
         """
         names: dict[UUID, str] = {}
+        deleted: set[UUID] = set()
         found: dict[UUID, list[EvidenceView]] = {}
         with self._uow_factory() as uow:
             for activity_id in activity_ids:
@@ -184,6 +188,10 @@ class ListEvidences:
                     if evidence.document_id not in names:
                         document = uow.documents.get(evidence.document_id)
                         names[evidence.document_id] = document.original_name if document else ""
+                        if document is not None and document.file_deleted_at is not None:
+                            deleted.add(document.id)
+                    if evidence.document_id in deleted:
+                        evidence = replace(evidence, excerpt="")
                     views.append(EvidenceView(evidence, names[evidence.document_id]))
                 found[activity_id] = views
         return found
