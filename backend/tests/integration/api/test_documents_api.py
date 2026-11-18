@@ -25,6 +25,7 @@ from tests.integration.api.documents_support import (
 )
 from tests.integration.test_scoring_repositories import make_activity
 from tests.support import synthetic_docs as synth
+from tests.support.process_status import conclude_for_test
 
 DOCUMENT_KEYS = {
     "id", "process_id", "original_name", "mime", "size_bytes", "sha256", "page_count", "status",
@@ -44,9 +45,12 @@ def documents_url(process):
     return f"/api/processes/{process['id']}/documents"
 
 
-def close_process(client, headers, process, final="CONCLUIDO"):
-    path = ["EM_ANDAMENTO", "CONCLUIDO"] if final == "CONCLUIDO" else ["ARQUIVADO"]
-    for status in path:
+def close_process(client, headers, process, uow_factory, final="CONCLUIDO"):
+    if final == "CONCLUIDO":
+        steps = ["EM_ANDAMENTO"]
+    else:
+        steps = ["ARQUIVADO"]
+    for status in steps:
         version = client.get(f"/api/processes/{process['id']}").json()["version"]
         response = client.post(
             f"/api/processes/{process['id']}/status",
@@ -54,6 +58,8 @@ def close_process(client, headers, process, final="CONCLUIDO"):
             headers=headers,
         )
         assert response.status_code == 200, response.text
+    if final == "CONCLUIDO":
+        conclude_for_test(uow_factory, process["id"])
 
 
 # --- upload: DOC-01 ----------------------------------------------------------------------
@@ -299,10 +305,10 @@ def test_without_access_to_the_process_everything_is_404(
 
 @pytest.mark.parametrize("final", ["CONCLUIDO", "ARQUIVADO"])
 def test_upload_to_a_closed_process_is_409_and_listing_still_works(
-    client, headers, process, tmp_path, final
+    client, headers, process, tmp_path, uow_factory, final
 ):
     upload_one(client, headers, process, "antes")
-    close_process(client, headers, process, final)
+    close_process(client, headers, process, uow_factory, final)
 
     response = upload(client, headers, process, ("depois.pdf", pdf("depois")))
 

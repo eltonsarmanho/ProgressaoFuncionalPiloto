@@ -70,7 +70,7 @@ def test_a_document_still_in_the_queue_cannot_be_reprocessed(client, headers, pr
 
 def test_reprocess_on_a_closed_process_is_409(client, headers, process, uow_factory):
     document = processed(client, headers, process, uow_factory)
-    close_process(client, headers, process)
+    close_process(client, headers, process, uow_factory)
 
     assert client.post(reprocess_url(document), headers=headers).status_code == 409
 
@@ -171,7 +171,7 @@ def test_classification_with_a_stale_expected_version_is_409(
 
 def test_classification_on_a_closed_process_is_409(client, headers, process, uow_factory):
     document = processed(client, headers, process, uow_factory)
-    close_process(client, headers, process)
+    close_process(client, headers, process, uow_factory)
 
     response = client.put(
         classification_url(document),

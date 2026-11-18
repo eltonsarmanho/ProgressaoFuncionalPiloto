@@ -6,6 +6,7 @@ import pytest
 
 from app.domain.entities.user import Role
 from tests.integration.api.factories import add_professor, process_payload
+from tests.support.process_status import conclude_for_test
 
 
 @pytest.fixture
@@ -396,10 +397,10 @@ def test_distinct_mark_without_a_justification_also_releases_the_duplicate(
 
 
 @pytest.mark.parametrize("final", ["CONCLUIDO", "ARQUIVADO"])
-def test_writes_on_a_closed_process_are_409(client, headers, chosen, final):
+def test_writes_on_a_closed_process_are_409(client, headers, chosen, uow_factory, final):
     created = create(client, headers, chosen)
     current = chosen
-    for status in ("EM_ANDAMENTO", "CONCLUIDO") if final == "CONCLUIDO" else ("ARQUIVADO",):
+    for status in ("EM_ANDAMENTO",) if final == "CONCLUIDO" else ("ARQUIVADO",):
         version = client.get(f"/api/processes/{current['id']}").json()["version"]
         response = client.post(
             f"/api/processes/{current['id']}/status",
@@ -407,6 +408,8 @@ def test_writes_on_a_closed_process_are_409(client, headers, chosen, final):
             headers=headers,
         )
         assert response.status_code == 200, response.text
+    if final == "CONCLUIDO":
+        conclude_for_test(uow_factory, current["id"])
     url = f"/api/activities/{created['id']}"
 
     assert client.post(activities_url(chosen), json=body(), headers=headers).status_code == 409

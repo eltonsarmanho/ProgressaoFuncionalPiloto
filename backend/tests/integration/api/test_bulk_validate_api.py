@@ -157,7 +157,7 @@ def test_it_writes_one_audit_event_per_activity_with_the_justification(
 
 
 def test_it_needs_a_session_the_csrf_token_access_and_an_open_process(
-    client, make_client, act_as, admin, headers, chosen, reference
+    client, make_client, act_as, admin, headers, chosen, reference, uow_factory
 ):
     mine = draft(client, admin, chosen, "Minha")
     body = {"activity_ids": [str(mine.id)], "justificativa": "Conferi"}
@@ -166,7 +166,7 @@ def test_it_needs_a_session_the_csrf_token_access_and_an_open_process(
     _, other = act_as("fora@ufpa.br", Role.SECRETARIA, unit_ids=frozenset({reference["IFCH"].id}))
     outsider = client.post(url(chosen), json=body, headers=other)
     _, again = act_as("admin2@ufpa.br", Role.ADMIN)
-    close_process(client, again, chosen)
+    close_process(client, again, chosen, uow_factory)
     closed = client.post(url(chosen), json=body, headers=again)
 
     assert anonymous.post(url(chosen), json=body).status_code == 401

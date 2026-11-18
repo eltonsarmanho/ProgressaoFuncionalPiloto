@@ -240,10 +240,12 @@ def test_evidence_routes_need_a_session_the_csrf_token_and_access(
     assert client.get(f"/api/activities/{activity['id']}").status_code == 404
 
 
-def test_links_on_a_closed_process_are_409(client, headers, process, two_page_document):
+def test_links_on_a_closed_process_are_409(
+    client, headers, process, two_page_document, uow_factory
+):
     activity = new_activity(client, headers, process)
     created = link(client, headers, activity, two_page_document).json()
-    close_process(client, headers, process)
+    close_process(client, headers, process, uow_factory)
 
     assert link(client, headers, activity, two_page_document, page=2).status_code == 409
     removed = client.delete(f"{evidences_url(activity)}/{created['id']}", headers=headers)

@@ -9,6 +9,7 @@ import pytest
 from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.entities.user import Role
 from tests.integration.api.factories import add_professor, mark_pending, process_payload
+from tests.support.process_status import conclude_for_test
 
 D = Decimal
 
@@ -169,17 +170,19 @@ def test_chosen_version_becomes_in_use(client, admin, process, scoring_tables):
     assert client.get(url).json()["in_use"] is True
 
 
-def test_stale_process_version_and_closed_process_are_409(client, admin, process, scoring_tables):
+def test_stale_process_version_and_closed_process_are_409(
+    client, admin, process, scoring_tables, uow_factory
+):
     _, headers = admin
 
     stale = choose(client, headers, process, scoring_tables["OFICIAL"], expected_version=99)
-    for status in ("EM_ANDAMENTO", "CONCLUIDO"):
-        current = client.get(f"/api/processes/{process['id']}").json()["version"]
-        client.post(
-            f"/api/processes/{process['id']}/status",
-            json={"status": status, "expected_version": current, "justificativa": "x"},
-            headers=headers,
-        )
+    current = client.get(f"/api/processes/{process['id']}").json()["version"]
+    client.post(
+        f"/api/processes/{process['id']}/status",
+        json={"status": "EM_ANDAMENTO", "expected_version": current, "justificativa": "x"},
+        headers=headers,
+    )
+    conclude_for_test(uow_factory, process["id"])
     closed = choose(client, headers, process, scoring_tables["OFICIAL"])
 
     assert stale.status_code == 409

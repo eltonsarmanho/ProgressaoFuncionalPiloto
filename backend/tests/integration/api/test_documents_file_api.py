@@ -229,7 +229,7 @@ def test_replace_and_delete_on_a_closed_process_are_409(
 ):
     document = upload_one(client, headers, process, f"fechado-{final}")
     finish_processing(uow_factory, document)
-    close_process(client, headers, process, final)
+    close_process(client, headers, process, uow_factory, final)
 
     assert replace(client, headers, document, pdf("x")).status_code == 409
     deleted = client.delete(f"/api/documents/{document['id']}?justificativa=x", headers=headers)

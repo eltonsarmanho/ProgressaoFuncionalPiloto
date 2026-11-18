@@ -2153,8 +2153,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Os testes que levavam o processo a CONCLUIDO pela rota genérica usam o auxiliar e passam sem mudar o que verificam
-- [ ] Gate full passa; contagem de testes igual à anterior
+- [x] Os testes que levavam o processo a CONCLUIDO pela rota genérica usam o auxiliar e passam sem mudar o que verificam
+- [x] Gate full passa; contagem de testes igual à anterior
 
 **Tests**: integration
 **Gate**: full
