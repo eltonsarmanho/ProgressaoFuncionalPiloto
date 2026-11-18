@@ -1541,9 +1541,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Renderizada a 2x, a área do original da página de saída é idêntica pixel a pixel à página de origem; o texto extraído é igual e a faixa traz o número
-- [ ] Os bytes das imagens embutidas na saída são idênticos aos da origem (sem recompressão)
-- [ ] Gate quick passa; 6+ testes
+- [x] Renderizada a 2x, a área do original da página de saída é idêntica pixel a pixel à página de origem; o texto extraído é igual e a faixa traz o número
+- [x] Os bytes das imagens embutidas na saída são idênticos aos da origem (sem recompressão)
+- [x] Gate quick passa; 6+ testes
 
 **Tests**: unit
 **Gate**: quick
