@@ -1,14 +1,22 @@
-"""Background executor of document jobs: one daemon thread inside the backend (AD-008).
+"""Background executor of jobs: one daemon thread inside the backend (AD-008).
 
 Jobs and their states live in PostgreSQL; the worker claims the oldest pending job (the
 repository uses `FOR UPDATE SKIP LOCKED`), runs it and goes back for the next one, sleeping
-`poll_seconds` when there is none. At start it recovers the jobs a restart left `PROCESSANDO`
-(PIPE-03). Logs carry the exception type and the job id only (PIPE-10).
+`poll_seconds` when there is none. Besides the OCR of documents it runs the `runners` it is given
+(the generation of documents, then the wording of report sections), tried in that order before
+the OCR because the user waits for them (VER-04, REL-13). At start it runs the recoverers: the
+OCR one, which puts the jobs a restart left `PROCESSANDO` back in line (PIPE-03), and the ones it
+is given for the interrupted generations and wordings (VER-08, REL-14). Logs carry the exception
+type and the job id only (PIPE-10).
+
+A runner is a callable that claims and runs one job and says whether there was one. It closes its
+own row when the job fails; what escapes it is logged by type, never by message, and the thread
+goes on.
 """
 
 import logging
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 from app.application.use_cases.document_processing import (
     INTERNAL_ERROR,
@@ -31,20 +39,35 @@ class DocumentWorker:
         recover: RecoverStuckJobs,
         clock: Clock,
         poll_seconds: float = 2.0,
+        runners: Sequence[Callable[[], bool]] = (),
+        recoverers: Sequence[Callable[[], object]] = (),
     ) -> None:
         self._uow_factory = uow_factory
         self._process_document = process_document
         self._recover = recover
         self._clock = clock
         self._poll_seconds = poll_seconds
+        self._runners = tuple(runners)
+        self._recoverers = tuple(recoverers)
         self._stopping = threading.Event()
         self._thread: threading.Thread | None = None
 
     def run_once(self) -> bool:
         """Claims and runs one job; False when none was pending.
 
+        The runners go first, in order, then the OCR; the first with a job to run ends the call.
         A job that raises is logged and closed as failed, and still counts as run.
         """
+        for runner in self._runners:
+            try:
+                if runner():
+                    return True
+            except Exception as error:
+                logger.error("runner error_type=%s", type(error).__name__)
+                return True
+        return self._run_ocr_job()
+
+    def _run_ocr_job(self) -> bool:
         with self._uow_factory() as uow:
             job = uow.jobs.claim_next(self._clock.now())
             uow.commit()
@@ -69,10 +92,11 @@ class DocumentWorker:
         """Recovers stuck jobs, then starts the loop thread; a second call does nothing."""
         if self._thread is not None:
             return
-        try:
-            self._recover.execute()
-        except Exception as error:
-            logger.error("recover error_type=%s", type(error).__name__)
+        for recover in (self._recover.execute, *self._recoverers):
+            try:
+                recover()
+            except Exception as error:
+                logger.error("recover error_type=%s", type(error).__name__)
         self._stopping.clear()
         self._thread = threading.Thread(target=self._loop, name=THREAD_NAME, daemon=True)
         self._thread.start()

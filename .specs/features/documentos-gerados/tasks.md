@@ -1674,9 +1674,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Os testes existentes do executor passam sem alteração com o OCR como único runner
-- [ ] Com uma geração e um documento pendentes, a geração roda primeiro; runner que levanta exceção não derruba a thread e o log não traz texto de documento
-- [ ] Gate full passa; 6+ testes novos
+- [x] Os testes existentes do executor passam sem alteração com o OCR como único runner
+- [x] Com uma geração e um documento pendentes, a geração roda primeiro; runner que levanta exceção não derruba a thread e o log não traz texto de documento
+- [x] Gate full passa; 6+ testes novos
 
 **Tests**: integration
 **Gate**: full
