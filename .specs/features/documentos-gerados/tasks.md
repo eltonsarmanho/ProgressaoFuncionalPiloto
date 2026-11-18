@@ -1567,9 +1567,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Rotação de 90, 180 e 270 graus: área do original idêntica pixel a pixel à página de origem renderizada
-- [ ] Carimbo, texto livre, destaque, campo preenchido e aparência de assinatura continuam visíveis (diferença máxima de 1 nível de cinza na região)
-- [ ] Gate quick passa; 8+ testes
+- [x] Rotação de 90, 180 e 270 graus: área do original idêntica pixel a pixel à página de origem renderizada
+- [x] Carimbo, texto livre, destaque, campo preenchido e aparência de assinatura continuam visíveis (diferença máxima de 1 nível de cinza na região)
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick

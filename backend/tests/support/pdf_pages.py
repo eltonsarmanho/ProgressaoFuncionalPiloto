@@ -53,3 +53,46 @@ def image_bytes(doc: pymupdf.Document, page_number: int) -> list[bytes]:
 def render(page: pymupdf.Page, clip: pymupdf.Rect | None = None, zoom: float = 2.0) -> bytes:
     """The pixels of the page (or of `clip`) at `zoom`, for comparing two renderings."""
     return page.get_pixmap(matrix=pymupdf.Matrix(zoom, zoom), clip=clip).samples
+
+
+def max_difference(first: bytes, second: bytes) -> int:
+    """The largest gap between two renderings of the same size, in gray levels."""
+    assert len(first) == len(second), "the renderings do not have the same size"
+    return max((abs(a - b) for a, b in zip(first, second, strict=True)), default=0)
+
+
+ANNOTATION_AREA = pymupdf.Rect(320, 560, 520, 640)
+
+
+def add_annotation(page: pymupdf.Page, kind: str) -> None:
+    """One annotation or field inside `ANNOTATION_AREA`: stamp, free text, highlight, a filled
+    text field, or an ink stroke standing for the appearance of a signature."""
+    area = ANNOTATION_AREA
+    if kind == "stamp":
+        page.add_stamp_annot(area, stamp=pymupdf.STAMP_Approved)
+    elif kind == "freetext":
+        page.add_freetext_annot(
+            area, "Recebido em teste", fontsize=14, text_color=(0, 0, 1), fill_color=(1, 1, 0.6)
+        )
+    elif kind == "highlight":
+        page.draw_rect(area, color=None, fill=(0.8, 0.8, 0.8))
+        page.insert_text((area.x0 + 4, area.y0 + 30), "Trecho destacado", fontsize=14)
+        page.add_highlight_annot(pymupdf.Rect(area.x0, area.y0 + 15, area.x1, area.y0 + 36))
+    elif kind == "field":
+        widget = pymupdf.Widget()
+        widget.field_type = pymupdf.PDF_WIDGET_TYPE_TEXT
+        widget.field_name = "nome"
+        widget.rect = area
+        widget.field_value = "Fulana Exemplo"
+        widget.text_fontsize = 14
+        page.add_widget(widget)
+    elif kind == "signature":
+        stroke = [
+            [(area.x0 + 5 + 8 * i, area.y0 + 40 + (-1) ** i * 20) for i in range(20)],
+        ]
+        annot = page.add_ink_annot(stroke)
+        annot.set_border(width=3)
+        annot.set_colors(stroke=(0, 0, 0.6))
+        annot.update()
+    else:
+        raise ValueError(kind)

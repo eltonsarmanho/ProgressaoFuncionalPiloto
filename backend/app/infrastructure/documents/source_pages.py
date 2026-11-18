@@ -43,6 +43,28 @@ def _place(out: pymupdf.Document, src: pymupdf.Document, pno: int, number: int) 
     _draw_strip(page, width, height, number)
 
 
+def _needs_preparation(page: pymupdf.Page) -> bool:
+    """`show_pdf_page` drops the rotation, the annotations and the fields of a page."""
+    return page.rotation != 0 or page.first_annot is not None or page.first_widget is not None
+
+
+def _prepared(src: pymupdf.Document, pno: int) -> pymupdf.Document:
+    """A one-page copy with the annotations and fields drawn into the content and the rotation
+    turned into the geometry of the page, so `show_pdf_page` carries all of it over."""
+    copy = pymupdf.open()
+    copy.insert_pdf(src, from_page=pno, to_page=pno, annots=True, widgets=True)
+    copy.bake(annots=True, widgets=True)
+    copy[0].remove_rotation()
+    return copy
+
+
 def attach(out: pymupdf.Document, src: pymupdf.Document, pno: int, number: int) -> None:
     """Appends page `pno` (0-based) of `src` to `out`, numbered `number` in the strip."""
-    _place(out, src, pno, number)
+    if not _needs_preparation(src[pno]):
+        _place(out, src, pno, number)
+        return
+    copy = _prepared(src, pno)
+    try:
+        _place(out, copy, 0, number)
+    finally:
+        copy.close()
