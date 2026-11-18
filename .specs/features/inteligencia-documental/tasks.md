@@ -3680,11 +3680,11 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Confiança 0,91 sem aviso: nenhum texto de baixa confiança, de revisão nem selo de revisão
-- [ ] Confiança 0,69 mostra o aviso; confiança 0,70 não mostra (limite)
-- [ ] DOCENTE_DIVERGENTE, TEXTO_ILEGIVEL e FALHOU mostram o aviso mesmo com confiança 0,95
-- [ ] A frase antiga "Tudo que a IA sugere precisa da sua revisão" some e a nova traz a Etapa 3, os 70% e o descarte dos rascunhos
-- [ ] Gate quick passa
+- [x] Confiança 0,91 sem aviso: nenhum texto de baixa confiança, de revisão nem selo de revisão
+- [x] Confiança 0,69 mostra o aviso; confiança 0,70 não mostra (limite)
+- [x] DOCENTE_DIVERGENTE, TEXTO_ILEGIVEL e FALHOU mostram o aviso mesmo com confiança 0,95
+- [x] A frase antiga "Tudo que a IA sugere precisa da sua revisão" some e a nova traz a Etapa 3, os 70% e o descarte dos rascunhos
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

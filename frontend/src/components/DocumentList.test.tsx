@@ -233,6 +233,42 @@ describe("UIM-02 / UIM-03: ações por documento", () => {
   });
 });
 
+describe("UIM-09: confiança de 70% e avisos reais", () => {
+  const row = (name: string) => screen.getByText(name, { selector: "td" }).closest("tr")!;
+
+  it("confiança de 0,70 ou mais, sem aviso real, não mostra aviso nem selo de revisão", () => {
+    setup([doc({ original_name: "alta.pdf", confidence: "0.91" }), doc({ id: "d2", original_name: "limite.pdf", confidence: "0.70" })]);
+    for (const name of ["alta.pdf", "limite.pdf"]) {
+      expect(row(name)).not.toHaveTextContent(/Baixa confiança|revisão|confira/i);
+      expect(row(name).querySelector(".doc-warning")).toBeNull();
+    }
+  });
+
+  it("abaixo de 0,70 mostra o aviso de baixa confiança (0,69 é o limite de baixo)", () => {
+    setup([doc({ confidence: "0.69" })]);
+    expect(screen.getByText(/Baixa confiança: confira os dados/)).toBeInTheDocument();
+  });
+
+  it("aviso real aparece mesmo com confiança alta: texto ilegível, falha e revisão sem código", () => {
+    setup([
+      doc({ id: "i", original_name: "ilegivel.pdf", status: "REQUER_REVISAO", status_code: "TEXTO_ILEGIVEL", confidence: "0.95" }),
+      doc({ id: "f", original_name: "falha.pdf", status: "FALHOU", status_code: "TEMPO_ESGOTADO", confidence: "0.95" }),
+      doc({ id: "d", original_name: "divergente.pdf", status: "REQUER_REVISAO", status_code: null, confidence: "0.95" }),
+    ]);
+    expect(row("ilegivel.pdf")).toHaveTextContent("Texto ilegível");
+    expect(row("falha.pdf")).toHaveTextContent("Tempo de leitura esgotado");
+    expect(row("divergente.pdf")).toHaveTextContent("Requer revisão: abra o documento e confira os avisos");
+  });
+
+  it("a frase de abertura diz que a validação é na Etapa 3, cita os 70% e o descarte dos rascunhos", () => {
+    setup([doc()]);
+    expect(screen.queryByText(/Tudo que a IA sugere precisa da sua revisão/)).not.toBeInTheDocument();
+    const intro = screen.getByText(/validação na Etapa 3/);
+    expect(intro).toHaveTextContent("abaixo de 70% ou com aviso merecem uma conferência mais atenta");
+    expect(intro).toHaveTextContent("Reprocessar um documento descarta os rascunhos da leitura anterior que você ainda não editou");
+  });
+});
+
 describe("TELA-07 / TELA-09: avisos do documento", () => {
   it("EXTRAIDO_SEM_IA mostra o aviso de IA indisponível e a orientação do cadastro manual", () => {
     setup([doc({ status: "EXTRAIDO_SEM_IA", status_code: "IA_INDISPONIVEL", suggested_type: null, suggested_category: null, confidence: null })]);

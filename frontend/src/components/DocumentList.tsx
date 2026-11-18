@@ -55,6 +55,9 @@ function StatusNote({ doc }: { doc: DocumentSummary }) {
   if ((doc.status === "FALHOU" || doc.status === "REQUER_REVISAO") && doc.status_code) {
     return <p className="doc-warning sev-ALERTA">{labelOf(DOCUMENT_CODE_LABELS, doc.status_code)}</p>;
   }
+  if (doc.status === "REQUER_REVISAO") {
+    return <p className="doc-warning sev-ALERTA">Requer revisão: abra o documento e confira os avisos.</p>;
+  }
   return null;
 }
 
@@ -263,8 +266,9 @@ export function DocumentList({
     <section className="card" aria-labelledby="documents-title">
       <h2 id="documents-title">Documentos enviados</h2>
       <p className="muted">
-        Tudo que a IA sugere precisa da sua revisão. Reprocessar um documento rejeita os rascunhos da leitura anterior
-        que você ainda não editou.
+        As atividades sugeridas continuam sujeitas à sua validação na Etapa 3. Documentos com confiança abaixo de 70% ou
+        com aviso merecem uma conferência mais atenta. Reprocessar um documento descarta os rascunhos da leitura
+        anterior que você ainda não editou.
       </p>
       <input
         ref={replaceInput}
