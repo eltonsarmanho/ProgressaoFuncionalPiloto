@@ -3012,10 +3012,10 @@ T107 → T108 → T109 → T110 → T111 → T112
 
 **Done when**:
 
-- [ ] "Coordenador: Pedro Alves" + "Equipe: Maria de Souza Lima" não confirma a Maria (V.1 e V.2); "Pesquisadores:", "Autores:" e "Orientando(a):" idem
-- [ ] Nome completo de outra pessoa entre o papel e o docente recusa; papel no plural, nome de instituição e título (Profa. Dra.) entre eles não recusam
-- [ ] Todos os testes de `test_research_coordination_window.py` e `test_research_coordination_role.py` continuam verdes
-- [ ] Gate full passa
+- [x] "Coordenador: Pedro Alves" + "Equipe: Maria de Souza Lima" não confirma a Maria (V.1 e V.2); "Pesquisadores:", "Autores:" e "Orientando(a):" idem
+- [x] Nome completo de outra pessoa entre o papel e o docente recusa; papel no plural, nome de instituição e título (Profa. Dra.) entre eles não recusam
+- [x] Todos os testes de `test_research_coordination_window.py` e `test_research_coordination_role.py` continuam verdes
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

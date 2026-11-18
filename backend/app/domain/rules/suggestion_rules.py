@@ -232,10 +232,27 @@ _COORDINATED_BY = frozenset({"por", "pelo", "pela", "pelos", "pelas"})
 _OTHER_ROLE = frozenset(
     {"membro", "membros", "participante", "participantes", "colaborador", "colaboradora",
      "colaboradores", "bolsista", "bolsistas", "integrante", "integrantes", "vice", "aluno",
-     "aluna", "estudante"}
+     "aluna", "estudante", "equipe", "equipes", "pesquisador", "pesquisadora", "pesquisadores",
+     "pesquisadoras", "autor", "autora", "autores", "autoras", "orientando", "orientanda",
+     "orientandos", "orientandas"}
 )  # fmt: skip
 COORDINATION_WINDOW_WORDS = 8  # "a poucas palavras" (SEG-07): words between the name and the role
+LABEL_WORDS_BEFORE_NAME = 2  # a role label right before the name ("Pesquisador(a): Maria")
 _SENTENCE_OR_PARAGRAPH = re.compile(r"[.;]+|\n\s*\n")
+# Several people at once: "coordenadores", "coordenaram", "lideram" (QUA-01).
+_PLURAL_ROLE = re.compile(r"coordenad(?:ores|oras)|coordenaram|coordenam|lideres|lideram|lideraram")
+# Capitalized words that are not a person: institutions, units and titles (QUA-01).
+_INSTITUTION_WORD = frozenset(
+    {"universidade", "federal", "estadual", "instituto", "faculdade", "centro", "nucleo",
+     "departamento", "programa", "projeto", "pesquisa", "grupo", "laboratorio", "escola",
+     "secretaria", "coordenadoria", "coordenacao", "diretoria", "reitoria", "ufpa", "fundacao",
+     "conselho", "comissao", "curso", "extensao", "ensino"}
+)  # fmt: skip
+_TITLE_WORD = frozenset(
+    {"prof", "profa", "professor", "professora", "dr", "dra", "doutor", "doutora", "ms", "ma",
+     "me", "mestre", "mestra", "sr", "sra", "msc", "phd"}
+)  # fmt: skip
+_NAME_CONNECTOR = frozenset({"de", "da", "do", "dos", "das", "e"})
 
 
 def _coordination_positions(words: list[str]) -> list[int]:
@@ -255,20 +272,74 @@ def _coordination_positions(words: list[str]) -> list[int]:
     return positions
 
 
+def _words_with_capitals(sentence: str) -> tuple[list[str], list[bool]]:
+    """Normalized words and, for each, whether it was written with a capital first letter."""
+    words: list[str] = []
+    capitals: list[bool] = []
+    for token in re.findall(r"[^\W_]+", sentence):
+        pieces = re.findall(r"[a-z0-9]+", normalize_title(token))
+        words.extend(pieces)
+        capitals.extend([token[0].isupper()] * len(pieces))
+    return words, capitals
+
+
+def _names_another_person(words: list[str], capitals: list[bool], start: int, end: int) -> bool:
+    """True when words[start:end] hold a run of 2+ capitalized words that can be a person.
+
+    "de", "da", "e" may join the capitalized words of a run ("Maria de Souza Lima"). A run with
+    the name of an institution ("Instituto de Ciências Exatas") is not a person, and a title
+    ("Profa.", "Dr.") ends a run without being part of it.
+    """
+    run: list[str] = []
+
+    def is_person() -> bool:
+        parts = [word for word in run if word not in _NAME_CONNECTOR]
+        return len(parts) >= 2 and not _INSTITUTION_WORD & set(parts)
+
+    for index in range(start, end):
+        word = words[index]
+        if capitals[index] and word not in _TITLE_WORD:
+            run.append(word)
+        elif run and word in _NAME_CONNECTOR:
+            run.append(word)
+        else:
+            if is_person():
+                return True
+            run = []
+    while run and run[-1] in _NAME_CONNECTOR:
+        run.pop()
+    return is_person()
+
+
 def _role_near_name(sentence: str, professor_name: str) -> bool:
-    """The role and the full name are at most 8 words apart, with no other role between them."""
-    words = re.findall(r"[a-z0-9]+", normalize_title(sentence))
+    """The role and the full name are at most 8 words apart, with no other role between them.
+
+    Another role word or the full name of another person between them (a label list such as
+    "Coordenador: A / Equipe: B") refuses the coordination (QUA-01); a role label right before
+    the name does too when the coordination word comes after it.
+    """
+    words, capitals = _words_with_capitals(sentence)
     roles = _coordination_positions(words)
     for first, last in professor_word_spans(professor_name, words):
         for role in roles:
             if role > last:
-                between = words[last + 1 : role]
+                start, end = last + 1, role
+                labels = words[max(0, first - LABEL_WORDS_BEFORE_NAME) : first]
             elif role < first:
-                between = words[role + 1 : first]
+                start, end = role + 1, first
+                labels = []
             else:
                 continue
-            if len(between) <= COORDINATION_WINDOW_WORDS and not _OTHER_ROLE & set(between):
-                return True
+            between = words[start:end]
+            if len(between) > COORDINATION_WINDOW_WORDS:
+                continue
+            if _OTHER_ROLE & (set(between) | set(labels)):
+                continue
+            if not _PLURAL_ROLE.fullmatch(words[role]) and _names_another_person(
+                words, capitals, start, end
+            ):
+                continue
+            return True
     return False
 
 
