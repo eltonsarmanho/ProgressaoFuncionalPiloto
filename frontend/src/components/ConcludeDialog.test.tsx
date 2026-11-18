@@ -111,8 +111,28 @@ describe("DEL-08: exclusão parcial", () => {
 
     await user.click(within(d).getByRole("button", { name: "Tentar de novo" }));
     expect(await within(d).findByText("Processo concluído.")).toBeInTheDocument();
+    // DEL-08: the text counts every attempt of the dialog, not only the last one (2 + 1 files, 3 + 5 MB)
+    expect(within(d).getByText("3 arquivos excluídos no total, 8,0 MB liberados.")).toBeInTheDocument();
     expect(posts(calls)).toHaveLength(2);
     expect(JSON.parse(String(posts(calls)[1].init?.body))).toEqual({ expected_version: 5, confirmar: true });
+  });
+});
+
+describe("DEL-08: a repetição soma as tentativas do diálogo", () => {
+  it("duas tentativas parciais mostram o total já excluído e o que ainda falta", async () => {
+    const answers: ConclusionResult[] = [
+      { status: "EM_ANDAMENTO", arquivos_removidos: 2, arquivos_pendentes: 2, bytes_liberados: 2048, alertas: [] },
+      { status: "EM_ANDAMENTO", arquivos_removidos: 1, arquivos_pendentes: 1, bytes_liberados: 1024, alertas: [] },
+    ];
+    let next = 0;
+    const { user } = setup(preview(), { [POST]: () => ({ status: 200, body: answers[next++] }) });
+    const d = await dialog();
+    await user.click(await within(d).findByLabelText(/Confirmo a exclusão irreversível/));
+    await user.click(within(d).getByRole("button", { name: "Concluir e excluir" }));
+    expect(await within(d).findByText("2 arquivos excluídos, 2 arquivos ainda por excluir.")).toBeInTheDocument();
+
+    await user.click(within(d).getByRole("button", { name: "Tentar de novo" }));
+    expect(await within(d).findByText("3 arquivos excluídos, 1 arquivo ainda por excluir.")).toBeInTheDocument();
   });
 });
 

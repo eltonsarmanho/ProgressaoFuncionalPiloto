@@ -29,6 +29,8 @@ export function ConcludeDialog({
 }) {
   const [preview, setPreview] = useState<ConclusionPreview | null>(null);
   const [result, setResult] = useState<ConclusionResult | null>(null);
+  /** What every attempt of this dialog removed, so a retry does not hide what the first one did. */
+  const [removed, setRemoved] = useState({ files: 0, bytes: 0, attempts: 0 });
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +63,11 @@ export function ConcludeDialog({
         confirmar: true,
       });
       setResult(done);
+      setRemoved((all) => ({
+        files: all.files + done.arquivos_removidos,
+        bytes: all.bytes + done.bytes_liberados,
+        attempts: all.attempts + 1,
+      }));
       if (done.status === "CONCLUIDO") onChanged();
       else setReloads((n) => n + 1);
     } catch (err) {
@@ -82,7 +89,8 @@ export function ConcludeDialog({
         <>
           <p role="status">Processo concluído.</p>
           <p>
-            {plural(result.arquivos_removidos, "arquivo excluído", "arquivos excluídos")}, {space(result.bytes_liberados)} liberados.
+            {plural(removed.files, "arquivo excluído", "arquivos excluídos")}
+            {removed.attempts > 1 ? " no total" : ""}, {space(removed.bytes)} liberados.
           </p>
           <p className="muted">O processo agora é somente leitura. Os documentos gerados e o histórico continuam disponíveis.</p>
           <div className="btn-row">
@@ -111,7 +119,7 @@ export function ConcludeDialog({
                 {GENERATION_ALERT_LABELS.EXCLUSAO_PARCIAL}
               </p>
               <p>
-                {plural(result.arquivos_removidos, "arquivo excluído", "arquivos excluídos")},{" "}
+                {plural(removed.files, "arquivo excluído", "arquivos excluídos")},{" "}
                 {plural(result.arquivos_pendentes, "arquivo ainda por excluir", "arquivos ainda por excluir")}.
               </p>
             </>

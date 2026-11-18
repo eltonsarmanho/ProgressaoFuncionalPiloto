@@ -3367,9 +3367,9 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Com 2 arquivos removidos na primeira tentativa e 1 na segunda, o sucesso diz `3 arquivos excluídos no total` e a soma dos bytes liberados
-- [ ] Uma conclusão numa tentativa só mantém o texto atual
-- [ ] Gate quick passa; 2+ testes novos
+- [x] Com 2 arquivos removidos na primeira tentativa e 1 na segunda, o sucesso diz `3 arquivos excluídos no total` e a soma dos bytes liberados
+- [x] Uma conclusão numa tentativa só mantém o texto atual
+- [x] Gate quick passa; 1 teste novo e 1 asserção nova no teste de DEL-08
 
 **Tests**: unit
 **Gate**: quick
