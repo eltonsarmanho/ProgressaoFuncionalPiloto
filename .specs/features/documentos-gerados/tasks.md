@@ -2468,8 +2468,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] A resposta traz a lista na ordem do arquivo com a marca `generated_by`; exige sessão autenticada
-- [ ] Gate full passa; 3+ testes
+- [x] A resposta traz a lista na ordem do arquivo com a marca `generated_by`; exige sessão autenticada
+- [x] Gate full passa; 3+ testes
 
 **Tests**: integration
 **Gate**: full

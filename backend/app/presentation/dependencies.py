@@ -96,6 +96,7 @@ from app.application.use_cases.scoring_admin import (
 from app.application.use_cases.units import ArchiveUnit, CreateUnit, ListUnits, UpdateUnit
 from app.application.use_cases.users import CreateUser, ListUsers
 from app.core.config import Settings
+from app.domain.entities.report import DossierItem
 from app.domain.entities.user import Session, User
 from app.domain.repositories.ports import (
     AiExtractor,
@@ -110,7 +111,7 @@ from app.infrastructure.ai.report_writer import MariTalkReportWriter
 from app.infrastructure.database.repositories import SqlUnitOfWork
 from app.infrastructure.database.session import make_session_factory
 from app.infrastructure.documents.comprovante_assembler import PdfComprovanteAssembler
-from app.infrastructure.documents.config_loader import ReportConfigLoader
+from app.infrastructure.documents.config_loader import ReportConfigLoader, load_dossier_order
 from app.infrastructure.documents.document_writer import FileDocumentWriter
 from app.infrastructure.documents.front_matter import TOC_CAPACITY
 from app.infrastructure.files.inspector import PillowFileInspector
@@ -206,6 +207,7 @@ class Container:
     save_comprovante_layout: SaveComprovanteLayout
     conclusion_preview: GetConclusionPreview
     conclude_process: ConcludeProcess
+    dossier_order: Callable[[], tuple[DossierItem, ...]]
 
 
 def build_container(
@@ -367,6 +369,7 @@ def build_container(
         conclude_process=ConcludeProcess(
             uow_factory, audit, policy, PurgeInputDocuments(uow_factory, storage, clock)
         ),
+        dossier_order=load_dossier_order,
     )
 
 
