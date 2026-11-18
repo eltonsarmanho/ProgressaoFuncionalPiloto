@@ -172,6 +172,12 @@ T103 → T104 → T105 → T106 → T107 → T108
 T109 → T110 → T111
 ```
 
+### Phase 22: Correções da verificação
+
+```
+T112 → T113 → T114 → T115 → T116 → T117 → T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125
+```
+
 ### Batches (proposta de execução)
 
 Fases inteiras acumuladas até ~7 tarefas por lote; o lote só fecha na fronteira de uma fase. Os lotes rodam em sequência.
@@ -191,8 +197,9 @@ Fases inteiras acumuladas até ~7 tarefas por lote; o lote só fecha na fronteir
 | 11 | 17, 18 | T89 a T98 | 10 |
 | 12 | 19, 20 | T99 a T108 | 10 |
 | 13 | 21 | T109 a T111 | 3 |
+| 14 | 22 | T112 a T125 | 14 |
 
-Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último lote (T111).
+Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último lote (T111); a fase 22 (T112 a T125) é a rodada de correção depois das duas verificações independentes (`verification-a.md`, `verification-b.md`), e o gate completo do backend (cerca de 18 min) roda uma vez no fim da fase, com o gate de cada tarefa limitado ao arquivo e à área tocados mais `ruff check .`.
 
 ---
 
@@ -3131,10 +3138,383 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 ---
 
+### Phase 22: Correções da verificação
+
+#### T112: Salvar do rascunho grava a entrada uma vez
+
+**What**: Corrige B-D1: o clique em `Salvar` de uma entrada do rascunho do Relatório tira o foco da caixa (que já grava) e grava de novo com a versão velha, e a tela mostra um falso 409. A gravação passa a ignorar o pedido igual ao que já está em andamento para a mesma entrada.
+**Where**: `frontend/src/components/ReportDraftEditor.tsx`
+**Depends on**: T99 (fase 19)
+**Reuses**: `ReportDraftEditor.test.tsx` (`setup`, `server`); também toca: `frontend/src/components/ReportDraftEditor.test.tsx`
+**Requirement**: UIG-02, REL-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O teste digita na entrada e CLICA em `Salvar` com `userEvent.click` (a ordem real: o foco sai, depois o clique): há exatamente um `PUT`, nenhum alerta de conflito e o texto fica salvo; o teste falha antes da correção
+- [ ] O teste do mesmo clique com a gravação ainda em andamento (resposta adiada) também mostra um único `PUT`
+- [ ] Gate quick passa; 2+ testes novos
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `fix(web): save a report entry once when its Salvar button is clicked`
+
+---
+
+#### T113: Conclusão sem a confirmação é recusada
+
+**What**: Corrige B-D2 (R09): testes de API que mandam a conclusão sem o campo `confirmar` e com `confirmar` falso, e esperam 422 `CONFIRMACAO_OBRIGATORIA` sem excluir nada; mata o mutante que troca o padrão do campo para verdadeiro.
+**Where**: `backend/tests/integration/api/test_conclusion_api.py`
+**Depends on**: T112
+**Reuses**: `test_conclusion_api.py` (corpo `expected_version` + `confirmar`); também toca: `backend/tests/integration/doc_usecases/test_conclude_process.py`
+**Requirement**: DEL-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Corpo só com `expected_version`: 422, `field` `geracao`, código `CONFIRMACAO_OBRIGATORIA`, o arquivo continua armazenado e o processo continua EM_ANDAMENTO; o mesmo com `confirmar: false`
+- [ ] O mutante `confirmar: bool = True` em `schemas/generated.py` é morto (comando no corpo do commit)
+- [ ] Gate full passa; 2+ testes novos
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(api): refuse a conclusion request that omits the confirmation`
+
+---
+
+#### T114: Etapa 2 sem Excluir e Classificar em documento excluído
+
+**What**: Corrige B-D4: depois da conclusão, a lista de documentos da Etapa 2 não oferece `Excluir` nem `Classificar` (nem outra ação sobre arquivo) no documento marcado como arquivo excluído, e também não as oferece num processo somente leitura.
+**Where**: `frontend/src/components/DocumentList.tsx`
+**Depends on**: T106 (fase 20), T113
+**Reuses**: `DocumentList.test.tsx` (caso DEL-12); também toca: `frontend/src/components/DocumentList.test.tsx`
+**Requirement**: DEL-12, DEL-13
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O teste de documento com o arquivo excluído confere que `Excluir` e `Classificar` não aparecem, junto das ações que já não apareciam (Visualizar, Baixar, Substituir, Reprocessar)
+- [ ] Um documento com arquivo continua com as ações (o teste existente segue passando)
+- [ ] Gate quick passa; 2+ testes novos
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `fix(web): hide delete and classify on documents whose file was removed`
+
+---
+
+#### T115: Lacunas de teste da interface (F18, F29, F34, F57)
+
+**What**: Corrige B-D6 no frontend: testes que matam os mutantes F18 (histórico sem o filtro PRONTO), F29 (atividade sem item não contada como fora), F34 (texto livre da seção editável em processo concluído) e F57 (`Subir` da primeira atividade do arranjo).
+**Where**: `frontend/src/components/GeneratedBlock.test.tsx`
+**Depends on**: T114
+**Reuses**: `generatedFixtures`; também toca: `frontend/src/pages/ProcessGenerated.test.tsx`, `frontend/src/components/ReportDraftEditor.test.tsx`, `frontend/src/components/ComprovanteLayoutEditor.test.tsx`
+**Requirement**: UIG-01, UIG-06, UIG-02, DEL-13, UIG-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Uma linha FALHOU ou GERANDO ao lado de uma PRONTO não aparece em `Versões geradas`
+- [ ] A atividade validada com grupo e sem item entra na contagem `fica de fora`
+- [ ] Em processo somente leitura a caixa `Texto livre da seção` é `readonly`
+- [ ] `Subir` da primeira atividade e `Descer` da última ficam desligados no arranjo
+- [ ] Cada mutante é morto numa cópia isolada da árvore (comandos no corpo do commit); gate quick passa; 4+ testes novos
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(web): close the surviving mutants of the generated documents screens`
+
+---
+
+#### T116: Lacunas de teste da redação (G10b, W09b)
+
+**What**: Corrige B-D6 no backend: teste de fronteira do tamanho mínimo da palavra de conteúdo (5 e 6 letras novas contam, G10b) e teste de chaves exatas do que vai à IA com uma atividade cujo título cita um curso (W09b).
+**Where**: `backend/tests/unit/domain/test_report_grounding_vocabulary.py`
+**Depends on**: T115
+**Reuses**: os dois arquivos de teste; também toca: `backend/tests/unit/domain/test_report_wording_items.py`
+**Requirement**: REL-04, REL-06, REL-12
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Uma palavra nova de 5 letras e uma de 6 letras contam no limite de palavras novas (G10b morto)
+- [ ] O conjunto de chaves de cada atividade enviada à IA é exatamente `id, tipo, titulo, datas, carga_horaria, quantidade, descricao`, com um título que nomeia um curso (W09b morto)
+- [ ] Gate quick passa; 2+ testes novos
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(report): pin the content word length and the exact fields sent to the AI`
+
+---
+
+#### T117: Total, contagens e página citada da Tabela
+
+**What**: Corrige A-D2, F1, F4 e A-D3, F5 (M50, M64, M96): fixa o total mostrado contra um caso com subtotal limitado (teto de 40 pontos), fixa as contagens com valores distintos (`Com comprovante` diferente de `Atividades`) e fixa a página que a Tabela cita para uma atividade de várias páginas (a primeira, comportamento atual; a spec não diz qual).
+**Where**: `backend/tests/unit/domain/test_table_document_totals.py`
+**Depends on**: T116
+**Reuses**: `test_table_document_rows.py` (cenário do limite de critério); também toca: `backend/tests/unit/infrastructure/test_table_pdf.py`, `backend/tests/unit/infrastructure/test_table_docx.py`, `backend/tests/integration/doc_usecases/test_run_generation_table.py`
+**Requirement**: TAB-03, TAB-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Com o critério limitado a 40 pontos, `document.total == "40,00"` e o PDF e o DOCX trazem `Pontuação geral: 40,00` e `Subtotal: 40,00` (M50 morto)
+- [ ] As contagens com valores distintos aparecem certas no PDF e no DOCX (M64 morto)
+- [ ] A atividade com as páginas 7 e 8 mostra `7` na coluna `Comprovante` da Tabela gerada (M96 morto); a escolha fica registrada em Risks como lacuna da spec
+- [ ] Cada mutante é morto numa cópia isolada da árvore (comandos no corpo do commit); gate full passa; 4+ testes novos
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(table): pin the total under a limit, the counters and the cited page`
+
+---
+
+#### T118: Rasterização e sumário do Comprovante (F2, F3)
+
+**What**: Corrige F2 e F3 (M28, M29, M41, M43): testes da página rasterizada com recorte em um só eixo e com a qualidade 92 do JPEG; testes do sumário com atividade de página única (`Comprovante p. N`, sem `a N`) e com a página de origem diferente da página do Comprovante.
+**Where**: `backend/tests/unit/infrastructure/test_source_images.py`
+**Depends on**: T117
+**Reuses**: os dois arquivos de teste; também toca: `backend/tests/unit/infrastructure/test_front_matter.py`
+**Requirement**: CMP-12, CMP-04, CMP-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] A página girada com recorte menor só na largura e só na altura é rasterizada a 200 dpi com o alerta `PAGINA_RASTERIZADA` (M29 morto); o JPEG da página rasterizada tem qualidade 92 medida pela tabela de quantização (M28 morto)
+- [ ] O sumário mostra `Comprovante p. N` para uma página única e `p. N a M` só para várias (M41 morto)
+- [ ] A origem do sumário traz a página de origem quando ela difere do número do Comprovante (M43 morto)
+- [ ] Cada mutante é morto numa cópia isolada da árvore (comandos no corpo do commit); gate quick passa; 4+ testes novos
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(comprovante): pin the raster quality, the one-axis crop and the table of contents wording`
+
+---
+
+#### T119: Montador e ligação dos limites (F6, F9)
+
+**What**: Corrige F6 e F9 (B04, B05, B06, M37, B41): teste de ligação de `GENERATION_MAX_PAGES`, `GENERATION_MAX_OUTPUT_MB` e `GENERATION_PNG_MAX_MEGAPIXELS` até os limites do pedido e do montador; testes do montador com falha depois de um ponto de salvamento (alvo ausente) e com original cifrado (`ORIGINAL_INDISPONIVEL`).
+**Where**: `backend/tests/unit/infrastructure/test_comprovante_assembler.py`
+**Depends on**: T118
+**Reuses**: `test_request_refusals.py`, `test_comprovante_assembler.py`; também toca: `backend/tests/integration/doc_usecases/test_request_refusals.py`
+**Requirement**: CMP-09, CMP-10, CMP-13
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Um ambiente com cada uma das três variáveis alteradas muda o limite que recusa o pedido e o que recusa a montagem (B04, B05, B06 mortos)
+- [ ] A falha depois do ponto de salvamento do montador deixa o alvo ausente sem depender do descarte externo (M37 morto)
+- [ ] O original cifrado resulta em `ORIGINAL_INDISPONIVEL` (B41 morto)
+- [ ] Cada mutante é morto numa cópia isolada da árvore (comandos no corpo do commit); gate full passa; 4+ testes novos
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(comprovante): pin the limit settings wiring and the assembler failure paths`
+
+---
+
+#### T120: Texto de sucesso da conclusão soma as tentativas
+
+**What**: Corrige B-D7: depois de uma conclusão parcial e da repetição, o texto de sucesso conta só a última tentativa. O diálogo soma os arquivos e os bytes das tentativas feitas nele e diz `no total` quando houve mais de uma.
+**Where**: `frontend/src/components/ConcludeDialog.tsx`
+**Depends on**: T119
+**Reuses**: `ConcludeDialog.test.tsx` (caso DEL-08); também toca: `frontend/src/components/ConcludeDialog.test.tsx`
+**Requirement**: DEL-08, UIG-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Com 2 arquivos removidos na primeira tentativa e 1 na segunda, o sucesso diz `3 arquivos excluídos no total` e a soma dos bytes liberados
+- [ ] Uma conclusão numa tentativa só mantém o texto atual
+- [ ] Gate quick passa; 2+ testes novos
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `fix(web): sum the removed files of every conclusion attempt in the success text`
+
+---
+
+#### T121: Textos dos alertas sem repetição nem engano
+
+**What**: Corrige B-D5: o alerta mostra a mensagem só quando ela acrescenta informação (sem repetir o rótulo), a redação recusada aparece uma vez por entrada e `REDACAO_INDISPONIVEL` usa um texto neutro (não diz `a tempo` quando a chave não existe ou o provedor deu erro).
+**Where**: `frontend/src/labels.ts`
+**Depends on**: T120
+**Reuses**: `alertText`; também toca: `frontend/src/components/GeneratedBlock.tsx`, `frontend/src/components/ReportDraftEditor.tsx`, `frontend/src/labels.test.ts`, `frontend/src/components/GeneratedBlock.test.tsx`, `frontend/src/components/ReportDraftEditor.test.tsx`
+**Requirement**: UIG-05, UIG-02, REL-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `ATIVIDADES_FORA_DO_DOCUMENTO` aparece sem repetir o rótulo dentro da mensagem
+- [ ] `REDACAO_REJEITADA` aparece uma vez por entrada e uma vez por seção, sem texto duplicado na mesma linha
+- [ ] `REDACAO_INDISPONIVEL` tem texto neutro que vale para chave ausente, erro do provedor e prazo esgotado
+- [ ] Gate quick passa; 3+ testes novos
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `fix(web): drop the repeated and misleading wording of the generation alerts`
+
+---
+
+#### T122: Alinhar a spec: ORD-01 e ARR-06
+
+**What**: Corrige B-D8 e A-D5 no texto da spec, mantendo os IDs: ORD-01 passa a dizer Etapa 5 (Documentos gerados) no lugar de `etapa Documentos` (que é o nome da Etapa 2); ARR-06 passa a dizer 422 `PAGINA_FORA_DO_DOCUMENTO` para página fora do intervalo do documento e 404 para documento desconhecido ou fora do interstício, como o código e o design.
+**Where**: `.specs/features/documentos-gerados/spec.md`
+**Depends on**: T121
+**Reuses**: tabela de erros do design
+**Requirement**: ORD-01, ARR-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O texto de ORD-01 e o de ARR-06 batem com o código e com o design
+- [ ] `validate_spec.py documentos-gerados` termina sem erro
+- [ ] Gate build passa
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `docs(specs): align ORD-01 and ARR-06 with the implemented behavior`
+
+---
+
+#### T123: Orientação EXIF do JPEG no Comprovante
+
+**What**: Corrige A-D1: a página de um JPEG com orientação EXIF 6 ou 3 (foto de celular) entra no Comprovante em pé; com orientação 1 ou sem EXIF os bytes do JPEG entram sem recompressão e sem decodificar; as páginas originais de PDF seguem sem alteração (CMP-03). A orientação é aplicada na página (rotação da página e da imagem na inserção), sem decodificar o pixel.
+**Where**: `backend/app/infrastructure/documents/source_pages.py`
+**Depends on**: T122
+**Reuses**: `test_source_images.py` (JPEG sintético); também toca: `backend/tests/unit/infrastructure/test_source_images.py`, `.specs/features/documentos-gerados/spec.md`, `.specs/features/documentos-gerados/design.md`
+**Requirement**: CMP-08, CMP-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Um JPEG sintético com EXIF gerado em código, orientação 6, vira página em pé e a conferência por pixel mostra o marcador no canto certo; o mesmo para a orientação 3 (180 graus)
+- [ ] Com orientação 1 e sem EXIF, os bytes do JPEG na página são idênticos aos de origem (sem recompressão) e o teste de 40 megapixels segue sem decodificar
+- [ ] As páginas originais de PDF seguem idênticas por pixel (testes de CMP-03 passam sem mudança)
+- [ ] CMP-08 e o design registram a orientação; gate quick passa; 4+ testes novos
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(comprovante): honor the EXIF orientation of JPEG sources`
+
+---
+
+#### T124: Título longo não derruba o PDF da Tabela
+
+**What**: Corrige A-D9: um título de atividade de 5 000 caracteres ou mais derruba o PDF da Tabela (`LayoutError`, linha mais alta que a página). O título mostrado na Tabela, no PDF e no DOCX, é cortado num teto determinístico com reticências; o texto inteiro continua na atividade e no Relatório. O teto fica no design, em Risks.
+**Where**: `backend/app/domain/rules/table_document.py`
+**Depends on**: T123
+**Reuses**: `test_table_pdf.py` (mil linhas); também toca: `backend/tests/unit/domain/test_table_document_rows.py`, `backend/tests/unit/infrastructure/test_table_pdf.py`, `.specs/features/documentos-gerados/design.md`
+**Requirement**: TAB-01, TAB-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Um título de 8 000 caracteres gera o PDF da Tabela sem erro e a célula traz o título cortado no teto com `…`; o DOCX mostra o mesmo texto
+- [ ] Um título no teto exato e um abaixo dele aparecem inteiros, e um acima aparece cortado (fronteira)
+- [ ] O design registra o teto em Risks; gate quick passa; 3+ testes novos
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `fix(table): cap the activity title shown in the Tabela so a long title cannot break the PDF`
+
+---
+
+#### T125: Limitações conhecidas no design
+
+**What**: Registra em Risks do design, uma linha cada com a referência ao relatório, as limitações que ficam sem mudança de código (A-D4, A-D7, A-D8, A-D10, A-D11, B-D10, B-D11, B-D12 e glifos CJK) e as duas decisões pendentes do usuário (B-D3, limite da conferência de REL-12, e B-D9, `extraction_runs.raw_json` depois da exclusão).
+**Where**: `.specs/features/documentos-gerados/design.md`
+**Depends on**: T124
+**Reuses**: Risks & Concerns do design
+**Requirement**: CMP-01, CMP-04, TAB-04, TAB-05, REL-05, REL-12, DEL-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Cada limitação tem uma linha em Risks com o ID do relatório (`verification-a.md` ou `verification-b.md`)
+- [ ] B-D3 e B-D9 aparecem como `decisão pendente do usuário`, sem mudança de código
+- [ ] Gate build passa
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `docs(specs): record the known limitations found by the verification`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11 → Phase 12 → Phase 13 → Phase 14 → Phase 15 → Phase 16 → Phase 17 → Phase 18 → Phase 19 → Phase 20 → Phase 21
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11 → Phase 12 → Phase 13 → Phase 14 → Phase 15 → Phase 16 → Phase 17 → Phase 18 → Phase 19 → Phase 20 → Phase 21 → Phase 22
 ```
 
 Execução estritamente sequencial: um agente (ou o trabalhador de um lote) cumpre uma tarefa por vez, em ordem, e cada tarefa termina em um commit atômico com a marca de concluída neste arquivo e a tabela de rastreabilidade da spec atualizadas no mesmo commit.
@@ -3258,6 +3638,20 @@ Verificado por `validate_tasks.py` (dentro de cada fase, cada seta do diagrama t
 | T109 | T31 | - (mesma fase) | ✅ Match |
 | T110 | T109, T53 | T109 (mesma fase) | ✅ Match |
 | T111 | T110, T108 | T110 (mesma fase) | ✅ Match |
+| T112 | T99 (fase 19) | - (mesma fase) | ✅ Match |
+| T113 | T112 | T112 (mesma fase) | ✅ Match |
+| T114 | T106 (fase 20), T113 | T113 (mesma fase) | ✅ Match |
+| T115 | T114 | T114 (mesma fase) | ✅ Match |
+| T116 | T115 | T115 (mesma fase) | ✅ Match |
+| T117 | T116 | T116 (mesma fase) | ✅ Match |
+| T118 | T117 | T117 (mesma fase) | ✅ Match |
+| T119 | T118 | T118 (mesma fase) | ✅ Match |
+| T120 | T119 | T119 (mesma fase) | ✅ Match |
+| T121 | T120 | T120 (mesma fase) | ✅ Match |
+| T122 | T121 | T121 (mesma fase) | ✅ Match |
+| T123 | T122 | T122 (mesma fase) | ✅ Match |
+| T124 | T123 | T123 (mesma fase) | ✅ Match |
+| T125 | T124 | T124 (mesma fase) | ✅ Match |
 
 ---
 
@@ -3376,6 +3770,20 @@ Verificado por `validate_tasks.py` (dentro de cada fase, cada seta do diagrama t
 | T109: Notas de implantação | Docs | none | none | ✅ OK |
 | T110: Contagem local de páginas com rotação e recorte | Docs | none | none | ✅ OK |
 | T111: Verificador independente | Docs | none | none | ✅ OK |
+| T112: Salvar do rascunho grava a entrada uma vez | Frontend components/pages | unit | unit | ✅ OK |
+| T113: Conclusão sem a confirmação é recusada | Use cases + API routes | integration | integration | ✅ OK |
+| T114: Etapa 2 sem Excluir e Classificar em documento excluído | Frontend components/pages | unit | unit | ✅ OK |
+| T115: Lacunas de teste da interface (F18, F29, F34, F57) | Frontend components/pages | unit | unit | ✅ OK |
+| T116: Lacunas de teste da redação (G10b, W09b) | Domain (entities, rules) | unit | unit | ✅ OK |
+| T117: Total, contagens e página citada da Tabela | Document writers (DOCX, PDF, assembler) | integration | integration | ✅ OK |
+| T118: Rasterização e sumário do Comprovante (F2, F3) | Document writers (DOCX, PDF, assembler) | unit | unit | ✅ OK |
+| T119: Montador e ligação dos limites (F6, F9) | Document writers (DOCX, PDF, assembler) | integration | integration | ✅ OK |
+| T120: Texto de sucesso da conclusão soma as tentativas | Frontend components/pages | unit | unit | ✅ OK |
+| T121: Textos dos alertas sem repetição nem engano | Frontend components/pages | unit | unit | ✅ OK |
+| T122: Alinhar a spec: ORD-01 e ARR-06 | Docs | none | none | ✅ OK |
+| T123: Orientação EXIF do JPEG no Comprovante | Document writers (DOCX, PDF, assembler) | unit | unit | ✅ OK |
+| T124: Título longo não derruba o PDF da Tabela | Document writers (DOCX, PDF, assembler) | unit | unit | ✅ OK |
+| T125: Limitações conhecidas no design | Docs | none | none | ✅ OK |
 
 ---
 
@@ -3393,35 +3801,35 @@ Cada requisito da spec aparece em pelo menos uma tarefa (verificado por script c
 | ARR-06 | T20, T73, T85 |
 | ARR-07 | T31, T37, T73, T85 |
 | ARR-08 | T19, T72, T102 |
-| CMP-01 | T16, T33, T50, T54, T63, T90, T111 |
-| CMP-02 | T16, T54, T63 |
+| CMP-01 | T16, T33, T50, T54, T63, T90, T111, T125 |
+| CMP-02 | T16, T54, T63, T118 |
 | CMP-03 | T51, T52, T54, T90 |
-| CMP-04 | T8, T16, T50, T72, T90 |
+| CMP-04 | T8, T16, T50, T72, T90, T118, T125 |
 | CMP-05 | T17, T63, T90 |
 | CMP-06 | T17, T102 |
 | CMP-07 | T17, T63, T90 |
 | CMP-08 | T53 |
-| CMP-09 | T18, T40, T41, T54, T60, T64 |
-| CMP-10 | T18, T54, T60, T64 |
+| CMP-09 | T18, T40, T41, T54, T60, T64, T119 |
+| CMP-10 | T18, T54, T60, T64, T119 |
 | CMP-11 | T54, T55 |
-| CMP-12 | T53, T110 |
-| CMP-13 | T18, T41, T53, T60 |
+| CMP-12 | T53, T110, T118 |
+| CMP-13 | T18, T41, T53, T60, T119 |
 | DEL-01 | T28, T34, T78, T87, T111 |
 | DEL-02 | T28, T38, T78, T87 |
 | DEL-03 | T9, T29, T77, T87, T105 |
-| DEL-04 | T78, T87, T105 |
-| DEL-05 | T31, T33, T38, T76, T78, T93, T109 |
+| DEL-04 | T78, T87, T105, T113 |
+| DEL-05 | T31, T33, T38, T76, T78, T93, T109, T125 |
 | DEL-06 | T31, T38, T76, T79, T80, T88, T93, T106 |
 | DEL-07 | T78, T93 |
-| DEL-08 | T9, T29, T76, T78, T93, T105 |
+| DEL-08 | T9, T29, T76, T78, T93, T105, T120 |
 | DEL-09 | T29, T76, T78, T93 |
 | DEL-10 | T78 |
 | DEL-11 | T18, T60, T93 |
-| DEL-12 | T3, T4, T79, T80, T88, T93, T106 |
+| DEL-12 | T3, T4, T79, T80, T88, T93, T106, T114 |
 | DEL-13 | T29, T66, T83, T93 |
 | DEL-14 | T4, T74, T75 |
 | DEL-15 | T75, T77, T78, T87 |
-| ORD-01 | T44, T86, T104, T107, T111 |
+| ORD-01 | T44, T86, T104, T107, T111, T122 |
 | ORD-02 | T42, T44, T86 |
 | REL-01 | T7, T21, T42, T43, T67, T111 |
 | REL-02 | T10, T21, T43 |
@@ -3438,23 +3846,23 @@ Cada requisito da spec aparece em pelo menos uma tarefa (verificado por script c
 | REL-13 | T6, T31, T32, T35, T70, T84, T92, T100 |
 | REL-14 | T35, T56, T65, T81 |
 | REL-15 | T35, T71 |
-| TAB-01 | T1, T2, T45, T46, T47, T58, T59, T61, T83, T89, T111 |
+| TAB-01 | T1, T2, T45, T46, T47, T58, T59, T61, T83, T89, T111, T124 |
 | TAB-02 | T10, T12, T58 |
-| TAB-03 | T12, T46, T47 |
-| TAB-04 | T2, T13, T46, T47, T89 |
-| TAB-05 | T13, T46, T47, T89 |
+| TAB-03 | T12, T46, T47, T117, T124 |
+| TAB-04 | T2, T13, T46, T47, T89, T117, T125 |
+| TAB-05 | T13, T46, T47, T89, T125 |
 | TAB-06 | T13, T46, T47, T89 |
 | TAB-07 | T3, T4, T59, T83, T89, T94 |
 | TAB-08 | T59, T83, T89 |
-| UIG-01 | T82, T96, T98, T103, T107, T111 |
-| UIG-02 | T84, T99, T107 |
-| UIG-03 | T85, T101, T102, T107 |
+| UIG-01 | T82, T96, T98, T103, T107, T111, T115 |
+| UIG-02 | T84, T99, T107, T112, T115, T121 |
+| UIG-03 | T85, T101, T102, T107, T115 |
 | UIG-04 | T95, T103 |
-| UIG-05 | T94, T97, T103 |
-| UIG-06 | T58, T103 |
+| UIG-05 | T94, T97, T103, T121 |
+| UIG-06 | T58, T103, T115 |
 | UIG-07 | T108 |
 | UIG-08 | T84, T95, T100 |
-| UIG-09 | T105, T107 |
+| UIG-09 | T105, T107, T120 |
 | VER-01 | T6, T30, T33, T34, T39, T40, T61, T91, T109, T111 |
 | VER-02 | T14, T32, T34, T61, T63, T91 |
 | VER-03 | T11, T66, T82, T83, T91 |
