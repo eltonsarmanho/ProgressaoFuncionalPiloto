@@ -493,3 +493,190 @@ fieldset.grid legend {
   border: 0;
   padding: 0;
 }
+
+/* Buttons (UIM-02): short labels; the object they act on is in aria-label and title. */
+.btn {
+  margin: 0;
+  padding: 0.35rem 0.7rem;
+  min-height: 2rem;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.btn-primary {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-secondary {
+  color: var(--primary);
+  background: var(--card);
+  border: 1px solid var(--primary);
+}
+
+.btn-danger {
+  color: #fff;
+  background: var(--erro);
+  border-color: var(--erro);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+/* Wide tables (UIM-01, UIM-10, UIM-19): fixed short columns on wide screens, cards below. */
+.wide-table td {
+  overflow-wrap: break-word;
+}
+
+.wide-table .row-actions {
+  gap: 0.35rem;
+}
+
+.text-block {
+  text-align: justify;
+  hyphens: auto;
+}
+
+.doc-name-cell {
+  font-weight: 600;
+}
+
+@media (min-width: 960px) {
+  .doc-table,
+  .review-table,
+  .score-table {
+    table-layout: fixed;
+  }
+
+  .doc-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .doc-table th:nth-child(2) {
+    width: 7rem;
+  }
+
+  .doc-table th:nth-child(3) {
+    width: 5rem;
+  }
+
+  .doc-table th:nth-child(4) {
+    width: 8rem;
+  }
+
+  .doc-table th:nth-child(5) {
+    width: 9rem;
+  }
+
+  .doc-table th:nth-child(6) {
+    width: 5.5rem;
+  }
+
+  .doc-table th:nth-child(7) {
+    width: 13rem;
+  }
+
+  .review-table th:nth-child(1) {
+    width: 5rem;
+  }
+
+  .review-table th:nth-child(3) {
+    width: 6rem;
+  }
+
+  .review-table th:nth-child(4) {
+    width: 7rem;
+  }
+
+  .review-table th:nth-child(6) {
+    width: 7.5rem;
+  }
+
+  .review-table th:nth-child(7) {
+    width: 8.5rem;
+  }
+
+  .review-table th:nth-child(8) {
+    width: 10rem;
+  }
+
+  .score-table th:nth-child(1) {
+    width: 4rem;
+  }
+
+  .score-table th:nth-child(2) {
+    width: 3.5rem;
+  }
+
+  .score-table th:nth-child(4) {
+    width: 6rem;
+  }
+
+  .score-table th:nth-child(5) {
+    width: 6rem;
+  }
+
+  .score-table th:nth-child(6) {
+    width: 5.5rem;
+  }
+
+  .score-table th:nth-child(7) {
+    width: 8rem;
+  }
+
+  .score-table th:nth-child(8) {
+    width: 11rem;
+  }
+}
+
+@media (max-width: 959px) {
+  .wide-table thead {
+    display: none;
+  }
+
+  .wide-table,
+  .wide-table tbody,
+  .wide-table tr,
+  .wide-table td,
+  .wide-table .group-head th {
+    display: block;
+    width: 100%;
+  }
+
+  .wide-table tr {
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card);
+  }
+
+  .wide-table td {
+    border-bottom: 0;
+  }
+
+  .wide-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+}

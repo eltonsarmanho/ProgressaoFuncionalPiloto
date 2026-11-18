@@ -35,3 +35,45 @@ describe("UI-06: utilizável em 360 px sem rolagem horizontal", () => {
     expect(media![1]).toMatch(/content:\s*attr\(data-label\)/);
   });
 });
+
+describe("UIM-01 / UIM-02 / UIM-10 / UIM-19: tabelas legíveis e botões", () => {
+  const block = (query: string) => {
+    const start = css.indexOf(query);
+    expect(start).toBeGreaterThan(-1);
+    let depth = 0;
+    for (let i = css.indexOf("{", start); i < css.length; i++) {
+      if (css[i] === "{") depth++;
+      if (css[i] === "}" && --depth === 0) return css.slice(css.indexOf("{", start) + 1, i);
+    }
+    throw new Error("unbalanced css");
+  };
+
+  it("há botões primário, secundário e perigo, com estado desabilitado", () => {
+    expect(css).toMatch(/\.btn-primary\s*{[^}]*background:/);
+    expect(css).toMatch(/\.btn-secondary\s*{[^}]*background:[^}]*border:/);
+    expect(css).toMatch(/\.btn-danger\s*{[^}]*background:\s*var\(--erro\)/);
+    expect(css).toMatch(/\.btn:disabled\s*{[^}]*opacity/);
+  });
+
+  it("a partir de 960 px as colunas das tabelas têm larguras curtas e o nome trunca com reticências", () => {
+    const wide = block("@media (min-width: 960px)");
+    for (const table of ["doc-table", "review-table", "score-table"]) {
+      expect(wide).toMatch(new RegExp(`\\.${table}\\b[^{}]*{[^}]*table-layout:\\s*fixed`));
+      expect(wide).toMatch(new RegExp(`\\.${table}\\s+th:nth-child\\(\\d\\)\\s*{[^}]*width:`));
+    }
+    expect(wide).toMatch(/\.doc-name\s*{[^}]*text-overflow:\s*ellipsis[^}]*white-space:\s*nowrap/);
+  });
+
+  it("o texto corrido das tabelas é justificado com hifenização e não quebra uma letra por linha", () => {
+    expect(css).toMatch(/\.text-block\s*{[^}]*text-align:\s*justify[^}]*hyphens:\s*auto/);
+    expect(css).toMatch(/\.wide-table\s+td\s*{[^}]*overflow-wrap:\s*break-word/);
+  });
+
+  it("abaixo de 960 px as tabelas largas viram cartões com o rótulo de cada coluna", () => {
+    const narrow = block("@media (max-width: 959px)");
+    expect(narrow).toMatch(/\.wide-table\s+thead\s*{[^}]*display:\s*none/);
+    expect(narrow).toMatch(/\.wide-table\s+td\s*[,{][^}]*display:\s*block/);
+    expect(narrow).toMatch(/content:\s*attr\(data-label\)/);
+  });
+});
+

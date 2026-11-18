@@ -3514,10 +3514,10 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] O teste estático confere as variantes `.btn-primary`, `.btn-secondary` e `.btn-danger` e `.btn:disabled`
-- [ ] O teste estático confere a regra de reticências do nome (`text-overflow: ellipsis`) e `text-align: justify` com `hyphens: auto` na Etapa 3
-- [ ] As regras de largura de coluna ficam dentro de `@media (min-width: 481px)` e os testes estáticos de 360 px existentes continuam verdes
-- [ ] Gate quick passa
+- [x] O teste estático confere as variantes `.btn-primary`, `.btn-secondary` e `.btn-danger` e `.btn:disabled`
+- [x] O teste estático confere a regra de reticências do nome (`text-overflow: ellipsis`) e `text-align: justify` com `hyphens: auto` na Etapa 3
+- [x] As regras de largura de coluna ficam dentro de `@media (min-width: 481px)` e os testes estáticos de 360 px existentes continuam verdes
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick
