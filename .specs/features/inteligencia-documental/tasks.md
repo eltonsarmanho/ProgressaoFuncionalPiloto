@@ -2965,8 +2965,8 @@ T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T10
 
 ### T106: REQUIRE_DIST=0 não conta como definido
 
-**What**: O teste de varredura trata `REQUIRE_DIST` ausente, vazio, `0` e `false` como não definido; corrige a nota "3 deselected" e o título de T94 em `validation.md`. Arquivos: `bundle.test.ts` e `validation.md`.
-**Where**: `frontend/tests/bundle.test.ts`
+**What**: O teste de varredura trata `REQUIRE_DIST` ausente, vazio, `0` e `false` como não definido (função `isDistRequired` testada) e a documentação da VM diz o mesmo; as imprecisões do relatório (nota "3 deselected", título de T94) são corrigidas no registro da resolução em `validation.md`. Arquivos: `bundle.test.ts`, `require-dist.ts`, `require-dist.test.ts` e `docs/deploy/vm.md`.
+**Where**: `frontend/tests/require-dist.ts`
 **Depends on**: T105
 **Reuses**: `REQUIRE_DIST` de T91
 **Requirement**: TER-11
@@ -2978,9 +2978,9 @@ T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T10
 
 **Done when**:
 
-- [ ] `REQUIRE_DIST=0` sem `dist` pula; `REQUIRE_DIST=1` sem `dist` falha
-- [ ] O parser da variável é função testada com valores `1`, `true`, `0`, `false`, vazio e ausente
-- [ ] Gate build passa
+- [x] `REQUIRE_DIST=0` sem `dist` pula; `REQUIRE_DIST=1` sem `dist` falha
+- [x] O parser da variável é função testada com valores `1`, `true`, `0`, `false`, vazio e ausente
+- [x] Gate build passa
 
 **Tests**: unit (frontend)
 **Gate**: build

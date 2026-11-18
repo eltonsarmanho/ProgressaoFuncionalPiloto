@@ -4,6 +4,7 @@ import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { isDistRequired } from "./require-dist";
 
 /**
  * VER-07 / EXT-06: the production bundle must not carry the MariTalk key or its name.
@@ -13,7 +14,8 @@ const SCRIPT = resolve(import.meta.dirname, "../../scripts/check_bundle_no_secre
 const DIST = resolve(import.meta.dirname, "../dist");
 
 // The Build gate builds first and sets REQUIRE_DIST=1: then a missing dist fails instead of skipping.
-const REQUIRE_DIST = Boolean(process.env.REQUIRE_DIST);
+// REQUIRE_DIST=0 or false does not count as set (TER-11).
+const REQUIRE_DIST = isDistRequired(process.env.REQUIRE_DIST);
 
 const scan = (dir: string) => spawnSync("bash", [SCRIPT, dir], { encoding: "utf8" });
 
