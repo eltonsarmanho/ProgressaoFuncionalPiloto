@@ -268,9 +268,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Os dois erros carregam `code` e `message` e descendem de `DomainError`
-- [ ] O teste de arquitetura segue verde (nada de framework no domínio)
-- [ ] Gate quick passa; 3+ testes
+- [x] Os dois erros carregam `code` e `message` e descendem de `DomainError`
+- [x] O teste de arquitetura segue verde (nada de framework no domínio)
+- [x] Gate quick passa; 3+ testes
 
 **Tests**: unit
 **Gate**: quick
