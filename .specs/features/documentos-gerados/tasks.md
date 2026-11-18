@@ -856,10 +856,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Nome novo reprova com `NOME`; `objetivo`, `resultado`, `metodologia`, `excelente`, `relevante`, `visando` e `contribuindo` reprovam com `PALAVRA_PROIBIDA`
-- [ ] Palavra de conteúdo nova além do limite reprova com `VOCABULARIO`; texto longo reprova com `COMPRIMENTO`
-- [ ] Sigla e nome presentes nos campos ou em `allowed_terms` (UFPA, Universidade Federal do Pará, unidade) são aceitos; reprovação devolve o texto-modelo
-- [ ] Gate quick passa; 14+ testes
+- [x] Nome novo reprova com `NOME`; `objetivo`, `resultado`, `metodologia`, `excelente`, `relevante`, `visando` e `contribuindo` reprovam com `PALAVRA_PROIBIDA`
+- [x] Palavra de conteúdo nova além do limite reprova com `VOCABULARIO`; texto longo reprova com `COMPRIMENTO`
+- [x] Sigla e nome presentes nos campos ou em `allowed_terms` (UFPA, Universidade Federal do Pará, unidade) são aceitos; reprovação devolve o texto-modelo
+- [x] Gate quick passa; 14+ testes
 
 **Tests**: unit
 **Gate**: quick

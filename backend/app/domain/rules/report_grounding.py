@@ -1,8 +1,9 @@
 """Conference of the wording the AI proposes for a report entry (REL-04, REL-12, AD-009).
 
-The text from the AI is untrusted: it only stays when every number and date it carries is in the
-fields that were sent. A refused text is replaced by the template text. Everything is compared
-accent-free and with number words read as digits, like the grounding of the extraction.
+The text from the AI is untrusted: it only stays when every number, date and name it carries is
+in the fields that were sent and it adds no new words beyond a small limit. A refused text is
+replaced by the template text. Everything is compared accent-free and with number words read as
+digits, like the grounding of the extraction.
 """
 
 import re
@@ -20,6 +21,10 @@ from app.domain.rules.scoring_periods import normalize_title
 class WordingReason(StrEnum):
     NUMERO = "NUMERO"
     DATA = "DATA"
+    NOME = "NOME"
+    VOCABULARIO = "VOCABULARIO"
+    COMPRIMENTO = "COMPRIMENTO"
+    PALAVRA_PROIBIDA = "PALAVRA_PROIBIDA"
 
 
 @dataclass(frozen=True)
@@ -66,6 +71,11 @@ _NUMERIC_MONTH = re.compile(r"(?<![\d/.\-])(\d{1,2})\s?/\s?(\d{4})(?!\d)")
 _ACADEMIC_PERIOD = re.compile(r"(?<!\d)(\d{4})\.([1-9])(?!\d)")
 _NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
 _THOUSANDS = re.compile(r"\d{1,3}(?:[.,]\d{3})+")
+_WORD = re.compile(r"[^\W\d_]+(?:[-'’][^\W\d_]+)*")
+_NOT_NAMES = frozenset({"de", "da", "do", "das", "dos", "e", "em", "a", "o", *_MONTH_NUMBER})
+CONTENT_WORD_LETTERS = 5  # a "content word" has this many letters or more
+LENGTH_FACTOR = 2
+LENGTH_SLACK = 120
 
 
 def _ordinal_digit(found: re.Match[str]) -> str:
@@ -160,10 +170,77 @@ def _number_reasons(wording: str, facts_text: str) -> set[WordingReason]:
     return reasons
 
 
+def _fold(word: str) -> str:
+    """The word accent-free, lowercase and without the plural `s`, to compare forms of a word."""
+    plain = normalize_title(word)
+    return plain[:-1] if len(plain) > 3 and plain.endswith("s") else plain
+
+
+def _folded_words(text: str) -> set[str]:
+    return {_fold(w.group()) for w in _WORD.finditer(text)}
+
+
+def _starts_sentence(text: str, position: int) -> bool:
+    before = text[:position]
+    if not before.strip() or before.rstrip(" \t").endswith("\n"):
+        return True
+    return before.rstrip().endswith((".", "!", "?"))
+
+
+def _name_is_new(wording: str, allowed: set[str]) -> bool:
+    """A capitalized word outside the start of a sentence, or an acronym, that is not allowed."""
+    for found in _WORD.finditer(wording):
+        word = found.group()
+        if normalize_title(word) in _NOT_NAMES:
+            continue
+        acronym = len(word) > 1 and word.isupper()
+        capitalized = word[0].isupper() and not _starts_sentence(wording, found.start())
+        if (acronym or capitalized) and _fold(word) not in allowed:
+            return True
+    return False
+
+
+def _new_words(wording: str, allowed: set[str]) -> set[str]:
+    return {
+        _fold(w.group())
+        for w in _WORD.finditer(wording)
+        if len(normalize_title(w.group())) >= CONTENT_WORD_LETTERS
+        and _fold(w.group()) not in allowed
+    }
+
+
+def _vocabulary_reasons(
+    wording: str, facts_text: str, vocabulary: WordingVocabulary, model_text: str
+) -> set[WordingReason]:
+    reasons: set[WordingReason] = set()
+    facts_words = _folded_words(facts_text)
+    terms = " ".join(vocabulary.allowed_terms)
+    allowed = facts_words | _folded_words(f"{terms} {model_text}")
+    if _name_is_new(wording, allowed):
+        reasons.add(WordingReason.NOME)
+    formal = allowed | _folded_words(" ".join(vocabulary.formal_vocabulary))
+    if len(_new_words(wording, formal)) > vocabulary.max_new_words:
+        reasons.add(WordingReason.VOCABULARIO)
+    if len(wording) > LENGTH_FACTOR * len(model_text) + LENGTH_SLACK:
+        reasons.add(WordingReason.COMPRIMENTO)
+    forbidden = {_fold(w) for w in vocabulary.forbidden_words} - facts_words
+    if forbidden & _folded_words(wording):
+        reasons.add(WordingReason.PALAVRA_PROIBIDA)
+    return reasons
+
+
 def check_wording(
     wording: str, facts: Mapping[str, str], vocabulary: WordingVocabulary, model_text: str
 ) -> WordingCheck:
-    """Accept the wording only when what it states is in the fields that were sent."""
-    reasons = _number_reasons(wording, "\n".join(facts.values()))
+    """Accept the wording only when what it states is in the fields that were sent.
+
+    Refused when it carries a number or date, a name or acronym, or more new words than the
+    limit that the fields do not have; when it is longer than twice the template text plus 120
+    characters; or when it uses a forbidden word the fields do not use themselves (REL-12). A
+    refused wording gives the template text back.
+    """
+    facts_text = "\n".join(facts.values())
+    reasons = _number_reasons(wording, facts_text)
+    reasons |= _vocabulary_reasons(wording, facts_text, vocabulary, model_text)
     ordered = tuple(r for r in WordingReason if r in reasons)
     return WordingCheck(not ordered, ordered, model_text if ordered else wording)
