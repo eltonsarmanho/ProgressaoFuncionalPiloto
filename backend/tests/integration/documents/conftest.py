@@ -6,6 +6,7 @@ import uuid
 import pytest
 
 from app.domain.entities.process import FunctionalProcess
+from app.infrastructure.database.session import make_session_factory
 from tests.integration.test_scoring_repositories import add_process, base  # noqa: F401
 
 
@@ -22,3 +23,9 @@ def other_process(uow_factory, process) -> FunctionalProcess:
         uow.processes.add(other)
         uow.commit()
     return other
+
+
+@pytest.fixture
+def session_factory(engine):
+    """Sessions bound to the test database, for the repositories that take a session."""
+    return make_session_factory(engine)

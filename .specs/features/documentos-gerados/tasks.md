@@ -1098,10 +1098,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Duas gerações do mesmo processo e tipo terminando em `PRONTO` recebem as versões 1 e 2; uma que falha não gasta número
-- [ ] Duas chamadas concorrentes de `claim_next` nunca pegam a mesma linha; só a linha com `started_at` preenchido vira `FALHOU/INTERROMPIDA` na recuperação
-- [ ] `latest_ready_by_kind` devolve a versão mais recente `PRONTO` por tipo ou nada
-- [ ] Gate full passa; 10+ testes
+- [x] Duas gerações do mesmo processo e tipo terminando em `PRONTO` recebem as versões 1 e 2; uma que falha não gasta número
+- [x] Duas chamadas concorrentes de `claim_next` nunca pegam a mesma linha; só a linha com `started_at` preenchido vira `FALHOU/INTERROMPIDA` na recuperação
+- [x] `latest_ready_by_kind` devolve a versão mais recente `PRONTO` por tipo ou nada
+- [x] Gate full passa; 10+ testes
 
 **Tests**: integration
 **Gate**: full

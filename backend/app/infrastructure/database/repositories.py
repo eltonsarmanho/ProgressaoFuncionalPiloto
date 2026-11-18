@@ -23,6 +23,15 @@ from app.domain.entities.document import (
     PageText,
     RunStatus,
 )
+from app.domain.entities.generated import (
+    DocumentKind,
+    GeneratedDocument,
+    GeneratedFile,
+    GenerationAlert,
+    GenerationAlertCode,
+    GenerationCode,
+    GenerationState,
+)
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor
 from app.domain.entities.scoring import (
@@ -54,6 +63,8 @@ from app.infrastructure.database.models import (
     DocumentPageModel,
     ExtractionRunModel,
     FunctionalProcessModel,
+    GeneratedDocumentModel,
+    GeneratedFileModel,
     LoginAttemptModel,
     ProcessingJobModel,
     ProfessorModel,
@@ -1257,6 +1268,236 @@ class SqlEvidenceRepository:
             if document_id in hashes:
                 keys.setdefault(activity_id, set()).add((document_id, hashes[document_id]))
         return keys
+
+
+def _alerts_to_json(alerts: Sequence[GenerationAlert], text_key: str) -> list[dict[str, str]]:
+    """`[{code, <text_key>?}]`; the text is left out when empty."""
+    return [{"code": a.code.value, **({text_key: a.message} if a.message else {})} for a in alerts]
+
+
+def _alerts_from_json(
+    rows: Sequence[dict[str, str]] | None, text_key: str
+) -> tuple[GenerationAlert, ...]:
+    return tuple(
+        GenerationAlert(GenerationAlertCode(r["code"]), r.get(text_key, "")) for r in rows or ()
+    )
+
+
+INTERRUPTED_MESSAGE = "A geração foi interrompida pela reinicialização do servidor."
+
+
+class SqlGenerationRepository:
+    """Generated documents and their files (VER-01)."""
+
+    def __init__(self, session: Session):
+        self._s = session
+
+    def _to_entities(self, models: Sequence[GeneratedDocumentModel]) -> list[GeneratedDocument]:
+        files: dict[UUID, list[GeneratedFile]] = {}
+        if models:
+            rows = self._s.scalars(
+                select(GeneratedFileModel)
+                .where(GeneratedFileModel.generated_document_id.in_([m.id for m in models]))
+                .order_by(GeneratedFileModel.format)
+            ).all()
+            for row in rows:
+                files.setdefault(row.generated_document_id, []).append(
+                    GeneratedFile(row.format, row.internal_name, row.sha256, row.size_bytes)
+                )
+        return [
+            GeneratedDocument(
+                id=m.id,
+                process_id=m.process_id,
+                kind=m.kind,
+                state=m.state,
+                version_number=m.version_number,
+                requested_by=m.requested_by,
+                requested_at=m.requested_at,
+                started_at=m.started_at,
+                finished_at=m.finished_at,
+                error_code=GenerationCode(m.error_code) if m.error_code else None,
+                error_message=m.error_message,
+                snapshot=m.snapshot,
+                alerts=_alerts_from_json(m.alerts, "message"),
+                plan_hash=m.plan_hash,
+                files=tuple(files.get(m.id, ())),
+            )
+            for m in models
+        ]
+
+    def add(self, generation: GeneratedDocument) -> None:
+        values = dict(
+            id=generation.id,
+            process_id=generation.process_id,
+            kind=generation.kind,
+            state=generation.state,
+            version_number=generation.version_number,
+            requested_by=generation.requested_by,
+            requested_at=generation.requested_at,
+            started_at=generation.started_at,
+            finished_at=generation.finished_at,
+            error_code=generation.error_code.value if generation.error_code else None,
+            error_message=generation.error_message,
+            snapshot=generation.snapshot,
+            alerts=_alerts_to_json(generation.alerts, "message") if generation.alerts else None,
+            plan_hash=generation.plan_hash,
+        )
+        try:
+            with self._s.begin_nested():
+                self._s.execute(insert(GeneratedDocumentModel).values(**values))
+        except IntegrityError as exc:
+            if _is_unique_violation(exc):
+                raise Conflict(
+                    "Já há uma geração em andamento deste documento",
+                    GenerationCode.GERACAO_EM_ANDAMENTO.value,
+                ) from None
+            raise
+
+    def get(self, generation_id: UUID) -> GeneratedDocument | None:
+        m = self._s.get(GeneratedDocumentModel, generation_id, populate_existing=True)
+        return self._to_entities([m])[0] if m else None
+
+    def list_for_process(
+        self, process_id: UUID, kind: DocumentKind | None = None
+    ) -> Sequence[GeneratedDocument]:
+        stmt = select(GeneratedDocumentModel).where(GeneratedDocumentModel.process_id == process_id)
+        if kind is not None:
+            stmt = stmt.where(GeneratedDocumentModel.kind == kind)
+        running_first = (GeneratedDocumentModel.state != GenerationState.GERANDO).asc()
+        models = self._s.scalars(
+            stmt.order_by(
+                running_first,
+                GeneratedDocumentModel.requested_at.desc(),
+                GeneratedDocumentModel.id,
+            )
+        ).all()
+        return self._to_entities(models)
+
+    def claim_next(self, now: datetime) -> GeneratedDocument | None:
+        m = self._s.scalars(
+            select(GeneratedDocumentModel)
+            .where(
+                GeneratedDocumentModel.state == GenerationState.GERANDO,
+                GeneratedDocumentModel.started_at.is_(None),
+            )
+            .order_by(GeneratedDocumentModel.requested_at, GeneratedDocumentModel.id)
+            .limit(1)
+            .with_for_update(skip_locked=True)
+        ).first()
+        if m is None:
+            return None
+        m.started_at = now
+        self._s.flush()
+        return self._to_entities([m])[0]
+
+    def _close(self, generation_id: UUID, values: dict[str, Any]) -> None:
+        """GERANDO to a final state; a row already final or unknown is refused."""
+        rowcount = self._s.execute(
+            update(GeneratedDocumentModel)
+            .where(
+                GeneratedDocumentModel.id == generation_id,
+                GeneratedDocumentModel.state == GenerationState.GERANDO,
+            )
+            .values(**values)
+        ).rowcount
+        if rowcount == 0:
+            if self._s.get(GeneratedDocumentModel, generation_id) is None:
+                raise NotFound("Geração não encontrada")
+            raise Conflict("A geração já terminou")
+
+    def finish_ready(
+        self,
+        generation_id: UUID,
+        now: datetime,
+        files: Sequence[GeneratedFile],
+        snapshot: dict[str, Any],
+        alerts: Sequence[GenerationAlert],
+        plan_hash: str | None = None,
+    ) -> GeneratedDocument:
+        row = self._s.get(GeneratedDocumentModel, generation_id, populate_existing=True)
+        if row is None:
+            raise NotFound("Geração não encontrada")
+        # Only one row of a process and kind is GERANDO at a time, so no other finish competes
+        # for the number; the unique index would refuse a duplicate anyway.
+        next_version = (
+            self._s.scalar(
+                select(func.coalesce(func.max(GeneratedDocumentModel.version_number), 0)).where(
+                    GeneratedDocumentModel.process_id == row.process_id,
+                    GeneratedDocumentModel.kind == row.kind,
+                )
+            )
+            + 1
+        )
+        self._close(
+            generation_id,
+            dict(
+                state=GenerationState.PRONTO,
+                version_number=next_version,
+                finished_at=now,
+                snapshot=snapshot,
+                alerts=_alerts_to_json(alerts, "message"),
+                plan_hash=plan_hash,
+            ),
+        )
+        for file in files:
+            self._s.execute(
+                insert(GeneratedFileModel).values(
+                    id=uuid.uuid4(),
+                    generated_document_id=generation_id,
+                    format=file.format,
+                    internal_name=file.internal_name,
+                    sha256=file.sha256,
+                    size_bytes=file.size_bytes,
+                )
+            )
+        done = self.get(generation_id)
+        assert done is not None
+        return done
+
+    def finish_failed(
+        self, generation_id: UUID, now: datetime, error_code: GenerationCode, error_message: str
+    ) -> None:
+        self._close(
+            generation_id,
+            dict(
+                state=GenerationState.FALHOU,
+                finished_at=now,
+                error_code=error_code.value,
+                error_message=error_message,
+            ),
+        )
+
+    def recover_interrupted(self, now: datetime) -> Sequence[GeneratedDocument]:
+        models = self._s.scalars(
+            update(GeneratedDocumentModel)
+            .where(
+                GeneratedDocumentModel.state == GenerationState.GERANDO,
+                GeneratedDocumentModel.started_at.is_not(None),
+            )
+            .values(
+                state=GenerationState.FALHOU,
+                finished_at=now,
+                error_code=GenerationCode.INTERROMPIDA.value,
+                error_message=INTERRUPTED_MESSAGE,
+            )
+            .returning(GeneratedDocumentModel)
+        ).all()
+        return self._to_entities(sorted(models, key=lambda m: (m.requested_at, m.id)))
+
+    def latest_ready_by_kind(self, process_id: UUID) -> dict[DocumentKind, GeneratedDocument]:
+        models = self._s.scalars(
+            select(GeneratedDocumentModel)
+            .where(
+                GeneratedDocumentModel.process_id == process_id,
+                GeneratedDocumentModel.state == GenerationState.PRONTO,
+            )
+            .order_by(GeneratedDocumentModel.version_number.desc())
+        ).all()
+        newest: dict[DocumentKind, GeneratedDocumentModel] = {}
+        for m in models:
+            newest.setdefault(m.kind, m)
+        entities = self._to_entities(list(newest.values()))
+        return {e.kind: e for e in entities}
 
 
 class SqlUnitOfWork:

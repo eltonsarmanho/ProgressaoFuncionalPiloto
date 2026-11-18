@@ -350,7 +350,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VER-05 | P1: Versões imutáveis e download | Tasks | Implementing |
 | VER-06 | P1: Versões imutáveis e download | Tasks | In Tasks |
 | VER-07 | P1: Versões imutáveis e download | Tasks | In Tasks |
-| VER-08 | P1: Versões imutáveis e download | Tasks | In Tasks |
+| VER-08 | P1: Versões imutáveis e download | Tasks | Implementing |
 | VER-09 | P1: Versões imutáveis e download | Tasks | In Tasks |
 | UIG-01 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
 | UIG-02 | P1: Etapa 5, Documentos gerados, na interface | Tasks | In Tasks |
