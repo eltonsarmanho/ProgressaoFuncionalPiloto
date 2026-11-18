@@ -332,6 +332,10 @@ class EvidenceRepository(Protocol):
 
     def counts_for_activities(self, activity_ids: Sequence[UUID]) -> dict[UUID, int]: ...
 
+    def counts_for_documents(self, document_ids: Sequence[UUID]) -> dict[UUID, int]:
+        """Per document, how many distinct activities that were not rejected cite it (UIM-07)."""
+        ...
+
     def content_keys_for_activities(
         self, activity_ids: Sequence[UUID]
     ) -> dict[UUID, set[tuple[UUID, str]]]:

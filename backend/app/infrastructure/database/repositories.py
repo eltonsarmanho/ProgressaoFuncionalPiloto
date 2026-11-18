@@ -1209,6 +1209,25 @@ class SqlEvidenceRepository:
         counts.update({activity_id: count for activity_id, count in rows})
         return counts
 
+    def counts_for_documents(self, document_ids: Sequence[UUID]) -> dict[UUID, int]:
+        if not document_ids:
+            return {}
+        rows = self._s.execute(
+            select(
+                ActivityEvidenceModel.document_id,
+                func.count(func.distinct(ActivityEvidenceModel.activity_id)),
+            )
+            .join(ActivityModel, ActivityModel.id == ActivityEvidenceModel.activity_id)
+            .where(
+                ActivityEvidenceModel.document_id.in_(document_ids),
+                ActivityModel.status != ActivityStatus.REJEITADA,
+            )
+            .group_by(ActivityEvidenceModel.document_id)
+        ).all()
+        counts = {document_id: 0 for document_id in document_ids}
+        counts.update({document_id: count for document_id, count in rows})
+        return counts
+
     def content_keys_for_activities(
         self, activity_ids: Sequence[UUID]
     ) -> dict[UUID, set[tuple[UUID, str]]]:

@@ -25,6 +25,7 @@ from app.presentation.dependencies import Container, current_user, get_container
 from app.presentation.schemas.documents import (
     ClassificationIn,
     DocumentDetailOut,
+    DocumentListItemOut,
     DocumentOut,
     UploadResultOut,
 )
@@ -81,22 +82,22 @@ async def upload_documents(
     return [UploadResultOut.of(r) for r in results]
 
 
-@router.get("/processes/{process_id}/documents", response_model=list[DocumentOut])
+@router.get("/processes/{process_id}/documents", response_model=list[DocumentListItemOut])
 async def list_documents(
     process_id: UUID,
     actor: UserDep,
     container: ContainerDep,
     status: DocumentStatus | None = None,
     document_type: Annotated[DocumentType | None, Query(alias="type")] = None,
-) -> list[DocumentOut]:
+) -> list[DocumentListItemOut]:
     found = await run_in_threadpool(
-        container.list_documents.execute,
+        container.list_documents.execute_with_counts,
         actor,
         process_id,
         status,
         document_type.value if document_type else None,
     )
-    return [DocumentOut.of(d) for d in found]
+    return [DocumentListItemOut.with_count(d, count) for d, count in found]
 
 
 @router.get("/documents/{document_id}", response_model=DocumentDetailOut)

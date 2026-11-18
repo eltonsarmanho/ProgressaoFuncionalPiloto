@@ -265,6 +265,8 @@ export type DocumentSummary = {
   uploaded_at: string | null;
   updated_at: string | null;
   version: number;
+  /** Activities (not rejected) that cite the document; sent by the process list only. */
+  activity_count?: number;
 };
 
 export type TextMethod = "TEXTO" | "OCR";

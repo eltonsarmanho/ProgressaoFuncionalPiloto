@@ -3348,9 +3348,9 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] O repositório conta cada atividade uma vez por documento, ignora as rejeitadas e devolve 0 para documento sem ligação
-- [ ] `GET /api/processes/{id}/documents` traz `activity_count` em cada documento (0, 1 e 2 em documentos de teste) e o detalhe do documento continua igual
-- [ ] Gate full passa
+- [x] O repositório conta cada atividade uma vez por documento, ignora as rejeitadas e devolve 0 para documento sem ligação
+- [x] `GET /api/processes/{id}/documents` traz `activity_count` em cada documento (0, 1 e 2 em documentos de teste) e o detalhe do documento continua igual
+- [x] Gate full passa
 
 **Tests**: integration
 **Gate**: full

@@ -41,6 +41,16 @@ class DocumentOut(BaseModel):
         return cls(**_document_fields(d))
 
 
+class DocumentListItemOut(DocumentOut):
+    """A row of the process list: the document plus how many activities came from it."""
+
+    activity_count: int
+
+    @classmethod
+    def with_count(cls, d: Document, activity_count: int) -> "DocumentListItemOut":
+        return cls(**_document_fields(d), activity_count=activity_count)
+
+
 def _document_fields(d: Document) -> dict[str, Any]:
     return {name: getattr(d, name) for name in DocumentOut.model_fields}
 

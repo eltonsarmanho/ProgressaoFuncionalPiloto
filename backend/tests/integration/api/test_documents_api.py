@@ -4,9 +4,11 @@ import tempfile
 import uuid
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from types import SimpleNamespace
 
 import pytest
 
+from app.domain.entities.activity import ActivityStatus
 from app.domain.entities.document import DocumentStatus
 from app.domain.entities.user import Role
 from app.domain.repositories.ports import ActivityEvidence
@@ -21,6 +23,7 @@ from tests.integration.api.documents_support import (
     upload,
     upload_one,
 )
+from tests.integration.test_scoring_repositories import make_activity
 from tests.support import synthetic_docs as synth
 
 DOCUMENT_KEYS = {
@@ -28,6 +31,7 @@ DOCUMENT_KEYS = {
     "status_code", "manual_type", "manual_category", "suggested_type", "suggested_category",
     "confidence", "uploaded_by", "uploaded_at", "updated_at", "version",
 }  # fmt: skip
+LIST_KEYS = DOCUMENT_KEYS | {"activity_count"}
 RESULT_KEYS = {
     "original_name", "status_code", "document", "existing_document_id", "field", "code", "message",
 }  # fmt: skip
@@ -340,13 +344,25 @@ def test_the_list_is_in_upload_order_with_status_type_category_and_confidence(
     earlier = seed_document(
         uow_factory, process, user, original_name="primeiro.pdf", uploaded_at=base,
     )  # fmt: skip
+    with uow_factory() as uow:
+        activity = make_activity(
+            SimpleNamespace(id=uuid.UUID(process["id"])), {"admin": user},
+            status=ActivityStatus.AGUARDANDO_REVISAO,
+        )  # fmt: skip
+        uow.activities.add(activity)
+        uow.commit()
+        uow.evidences.add(
+            ActivityEvidence(uuid.uuid4(), activity.id, later.id, 1, "trecho", user.id)
+        )
+        uow.commit()
 
     response = client.get(documents_url(process))
 
     assert response.status_code == 200
     listed = response.json()
     assert [d["id"] for d in listed] == [str(earlier.id), str(later.id)]
-    assert set(listed[0]) == DOCUMENT_KEYS
+    assert set(listed[0]) == LIST_KEYS
+    assert (listed[0]["activity_count"], listed[1]["activity_count"]) == (0, 1)
     assert listed[1]["status"] == "PROCESSADO"
     assert listed[1]["suggested_type"] == "DECLARACAO_BANCA"
     assert listed[1]["suggested_category"] == "BANCA_TCC_GRADUACAO"

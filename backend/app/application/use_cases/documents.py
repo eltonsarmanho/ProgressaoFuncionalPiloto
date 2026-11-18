@@ -367,6 +367,20 @@ class ListDocuments(_DocumentUseCase):
             self._readable(uow, actor, process_id)
             return list(uow.documents.list_for_process(process_id, status, type))
 
+    def execute_with_counts(
+        self,
+        actor: User,
+        process_id: UUID,
+        status: DocumentStatus | None = None,
+        type: str | None = None,
+    ) -> list[tuple[Document, int]]:
+        """The same list, each document with the number of activities that cite it (UIM-07)."""
+        with self._uow_factory() as uow:
+            self._readable(uow, actor, process_id)
+            found = list(uow.documents.list_for_process(process_id, status, type))
+            counts = uow.evidences.counts_for_documents([d.id for d in found])
+            return [(d, counts[d.id]) for d in found]
+
 
 @dataclass(frozen=True)
 class DownloadedFile:

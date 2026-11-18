@@ -7,6 +7,7 @@ from decimal import Decimal
 import pytest
 from sqlalchemy import text
 
+from app.domain.entities.activity import ActivityStatus
 from app.domain.entities.document import (
     DocumentStatus,
     PageText,
@@ -573,6 +574,31 @@ def test_counts_for_activities_counts_links_per_activity(uow_factory, linked):
         counts = uow.evidences.counts_for_activities([act1.id, act2.id])
         assert counts == {act1.id: 2, act2.id: 0}
         assert uow.evidences.counts_for_activities([]) == {}
+
+
+def test_counts_for_documents_counts_each_not_rejected_activity_once(uow_factory, process, base):
+    """UIM-07: a document with no usable activity counts 0; rejected activities do not count."""
+    user_id = base["admin"].id
+    kept = make_activity(process, base)
+    twice = make_activity(process, base)
+    rejected = make_activity(process, base, status=ActivityStatus.REJEITADA)
+    doc_kept, doc_rejected, doc_free = (make_document(process, user_id) for _ in range(3))
+    with uow_factory() as uow:
+        for activity in (kept, twice, rejected):
+            uow.activities.add(activity)
+        for document in (doc_kept, doc_rejected, doc_free):
+            uow.documents.add(document)
+        uow.commit()
+        uow.evidences.add(make_evidence(kept, doc_kept, user_id, page=1))
+        uow.evidences.add(make_evidence(kept, doc_kept, user_id, page=2))  # same activity, 2 pages
+        uow.evidences.add(make_evidence(twice, doc_kept, user_id, page=1))
+        uow.evidences.add(make_evidence(rejected, doc_rejected, user_id, page=1))
+        uow.commit()
+
+    with uow_factory() as uow:
+        counts = uow.evidences.counts_for_documents([doc_kept.id, doc_rejected.id, doc_free.id])
+        assert counts == {doc_kept.id: 2, doc_rejected.id: 0, doc_free.id: 0}
+        assert uow.evidences.counts_for_documents([]) == {}
 
 
 def test_content_keys_pair_each_activity_with_the_hash_of_its_documents_text(uow_factory, linked):

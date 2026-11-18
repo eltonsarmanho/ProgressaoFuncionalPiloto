@@ -64,6 +64,27 @@ def test_list_is_in_upload_order_with_category_and_confidence(docs, read):
     assert listed[0].suggested_type == "DECLARACAO_BANCA"
 
 
+def test_list_with_counts_gives_the_number_of_activities_linked_to_each_document(docs, read):
+    """UIM-07: the count is in the same order as the list; 0 when nothing is linked."""
+    w = docs.world
+    with w.uow_factory() as uow:
+        free = make_document(w.process, w.admin.id, original_name="livre.pdf")
+        linked_doc = make_document(w.process, w.admin.id, original_name="ligado.pdf")
+        uow.documents.add(free)
+        uow.documents.add(linked_doc)
+        uow.commit()
+    run = seed_run(w, linked_doc)
+    activity = draft_activity(w, w.process, "Banca", run=run)
+    link(w, activity, linked_doc, page=1, run_id=run.id)
+
+    counted = read.list.execute_with_counts(w.docente, w.process.id)
+
+    assert {d.original_name: n for d, n in counted} == {"livre.pdf": 0, "ligado.pdf": 1}
+    assert read.list.execute_with_counts(w.docente, w.process.id, type="OUTRO") == []
+    with pytest.raises(NotFound):
+        read.list.execute_with_counts(w.other_docente, w.process.id)
+
+
 def test_list_filters_by_status_and_by_type(docs, read):
     w = docs.world
     with w.uow_factory() as uow:
