@@ -123,3 +123,21 @@ describe("SEG-03: avisos de data final", () => {
     expect(avisos).not.toHaveTextContent("DATA_FIM_AUSENTE");
   });
 });
+
+describe("SEG-11: avisos de data parcial e de dispensa", () => {
+  it("mostra em português a data só com mês e ano e a cláusula de dispensa", () => {
+    view(
+      detail({
+        alerts: [
+          { code: "DATA_PARCIAL", field: "event_date", activity_index: 0 },
+          { code: "CLAUSULA_DE_DISPENSA", field: null, activity_index: 1 },
+        ],
+      }),
+    );
+    const avisos = screen.getByRole("region", { name: "Avisos" });
+    expect(within(avisos).getByText(/Data só com mês e ano: confira o período/)).toBeInTheDocument();
+    expect(within(avisos).getByText(/Dispensa da função: não vira atividade/)).toBeInTheDocument();
+    expect(avisos).not.toHaveTextContent("DATA_PARCIAL");
+    expect(avisos).not.toHaveTextContent("CLAUSULA_DE_DISPENSA");
+  });
+});

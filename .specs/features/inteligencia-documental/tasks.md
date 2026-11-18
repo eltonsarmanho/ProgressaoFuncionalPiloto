@@ -2613,8 +2613,8 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 ### T93: Rótulos DATA_PARCIAL e CLAUSULA_DE_DISPENSA
 
-**What**: Testes de rótulo para os dois códigos (F08 e F09). Arquivos: `labels.test.ts`.
-**Where**: `frontend/src/labels.test.ts`
+**What**: Testes de rótulo para os dois códigos (F08 e F09). Arquivos: `DocumentViewer.test.tsx`.
+**Where**: `frontend/src/components/DocumentViewer.test.tsx`
 **Depends on**: T92
 **Reuses**: `DOCUMENT_CODE_LABELS`
 **Requirement**: SEG-11
@@ -2626,8 +2626,8 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 **Done when**:
 
-- [ ] Os dois rótulos têm teste que falha se o texto for removido
-- [ ] Gate build do frontend passa
+- [x] Os dois rótulos têm teste que falha se o texto for removido
+- [x] Gate build do frontend passa
 
 **Tests**: unit (frontend)
 **Gate**: build
