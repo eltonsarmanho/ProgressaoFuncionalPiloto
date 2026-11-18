@@ -4073,6 +4073,7 @@ T141 → T142 → T143 → T144 → T145
 - [x] `CLAUDE.md` descreve a regra e os limites já fixados (pontuação determinística, IA só sugere, documentos reais nunca versionados)
 - [x] `validate_spec.py`, `validate_tasks.py` e `validate_state.py` passam
 - [x] Gate build passa
+- [x] Verificador independente rodou (`verification-fora.md`): FORA-01, 02, 04 a 09 Verified, FORA-03 Implementing com a exceção documentada da atividade já editada ou validada (AD-017); D2 e D4 fechados no frontend, D3 corrigido em `validation.md`
 
 **Tests**: none
 **Gate**: build

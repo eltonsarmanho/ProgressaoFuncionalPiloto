@@ -478,10 +478,10 @@ Round 8 is the rule of the document outside the interstice (FORA-01..09, tasks T
 
 **Open points for the lead**
 - The list stays an array: the count `outside_interstice_count` is summed by the screen, not sent by the API.
-- A draft of an earlier reading, rejected by the reprocess, stays as a rejected zero-point row linked to the document (PIPE-09); a draft the user edited or validated before the document became outside also stays and keeps its link. FORA-03 reads strictly, so say if such activities must also leave the stages.
+- A draft of an earlier reading, rejected by the reprocess, stays as a rejected zero-point row linked to the document (PIPE-09); a draft the user edited or validated before the document became outside also stays and keeps its link. Decided (AD-017): this non-destructive behavior stays and FORA-03 now says so.
 - Substituir is hidden on the outside row (FORA-04 lists four buttons).
-- The rule is decided before the professor check: a document of another professor that is wholly outside ends `PROCESSADO` with the outside alert (`DOCENTE_DIVERGENTE` is still stored).
-- SUG-09 (spec line 167) still reads as if the outside activity were always kept; FORA-05 narrows it. The text of SUG-09 was not edited.
+- The rule is decided before the professor check: a document of another professor that is wholly outside ends `PROCESSADO` with only the outside alert. `DOCENTE_DIVERGENTE` is not stored for it, because the analyzer returns at the outside rule before the professor check (corrected after the independent verification, `verification-fora.md` D3; accepted: the document is not processed and not pending either way).
+- SUG-09 (spec line 167) read as if the outside activity were always kept; FORA-05 narrows it. SUG-09 now carries a note saying so.
 
 ## Pass 4 (independent Verifier, HEAD 9533966)
 
