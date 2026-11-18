@@ -372,6 +372,24 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ---
 
+### P1: Correções da sexta rodada de validação ⭐ MVP
+
+**User Story**: Como docente, quero que um certificado em inglês de participação com carga horária, que o texto não chama de curso, seja reconhecido como certificado e pontue como curso de curta duração (VII.10) em vez de ficar sem item, para não digitar à mão uma atividade que o documento comprova.
+
+**Why P1**: O usuário enviou um certificado de uma página em inglês ("This is to certify ... participated in the development of the policy brief ..., dedicating six weeks (18 hours)"). O sistema não pontuou: o detector de tipo só conhece marcas em português e devolveu `OUTRO` (e o PDF perdeu os glifos "ti" do texto: "cerfy", "parcipated"); a IA devolveu coordenação de pesquisa ou participação em projeto de extensão, e as confirmações recusaram com razão (nenhum papel de coordenação, nenhuma natureza de extensão), de modo que a atividade foi descartada sem item. O usuário decidiu que esse certificado é curso de curta duração (VII.10). Entram como requisitos novos e não alteram os anteriores.
+
+**Acceptance Criteria** (each line is one EARS pattern):
+
+1. WHEN o texto traz "this is to certify" (também com glifos perdidos, como "this is to cerfy"), "hereby certify" ou "hereby certified", "certificate of participation", "completion" ou "attendance", ou a palavra "certificate" sozinha numa linha ou como última palavra do texto THEN the system SHALL tipar o documento como certificado; IF o texto é de artigo (os marcadores de artigo de EXT-09) THEN the system SHALL não aceitar a palavra "certificate" solta como marca de certificado, de modo que um artigo com "certificate" no corpo, uma portaria e os demais tipos SHALL continuar com o tipo que tinham.
+2. IF o documento é um certificado, a atividade tem carga horária maior que 0 comprovada no texto e a taxonomia devolvida pela IA era de coordenação de projeto ou de grupo de pesquisa (V.1, V.2) ou de projeto de extensão (IV.1, IV.2) e a confirmação a recusou por falta do papel de coordenação ou da natureza de extensão THEN the system SHALL enquadrar a atividade como curso concluído (VII.10), SHALL emitir `ENQUADRADO_COMO_CAPACITACAO` e SHALL deixar a atividade para revisão, e the frontend SHALL exibir `ENQUADRADO_COMO_CAPACITACAO` em português ("Certificado de participação com carga horária: enquadrado como curso de curta duração (VII.10) pelo sistema, confira"); WHERE não há carga horária, o documento não é certificado, a taxonomia era outra ou a confirmação manteve a taxonomia original THEN the system SHALL manter o resultado anterior.
+3. The system SHALL dizer no prompt da IA que o documento pode estar em inglês e que os campos são copiados literalmente do texto, sem traduzir, com teste que fixa a frase.
+4. WHEN a atividade enquadrada por CER-02 não traz datas THEN the system SHALL tratá-la como qualquer atividade sem data (sem inventar data; um prazo como "six weeks" não deriva data final), com a quantidade das regras de VII.10 e a carga horária extraída preservada na atividade.
+5. The system SHALL registrar em `validation.md` a "Resolution (round 6)" e no `STATE.md` o handoff com a necessidade de novo deploy.
+
+**Independent Test**: Texto sintético "This is to certify, for all due purposes, that Maria Exemplo Silva, from the Universidade Federal Exemplar, participated in the development of the policy brief "Open Data for Cities", dedicating six weeks (18 hours) to this activity as part of the initiatives of the Example Chair on Open Data. Chair Coordinator CERTIFICATE" (com "ti" perdido), com uma IA falsa que devolve `PESQUISA_PROJETO_COORDENACAO`, papel "participant" e 18 horas, gera uma só atividade em VII.10, para revisão, com `ENQUADRADO_COMO_CAPACITACAO`, sem data final derivada.
+
+---
+
 ## Edge Cases
 
 Edge cases are usually unwanted-behavior (IF/THEN) or boundary (WHEN) criteria:
@@ -525,12 +543,17 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | QUA-04 | P1: Correções da quarta rodada de validação | Design | Implementing |
 | QUA-05 | P1: Correções da quarta rodada de validação | Design | Implementing |
 | QUA-06 | P1: Correções da quarta rodada de validação | Design | Implementing |
+| CER-01 | P1: Correções da sexta rodada de validação | Design | Implementing |
+| CER-02 | P1: Correções da sexta rodada de validação | Design | Implementing |
+| CER-03 | P1: Correções da sexta rodada de validação | Design | Implementing |
+| CER-04 | P1: Correções da sexta rodada de validação | Design | Implementing |
+| CER-05 | P1: Correções da sexta rodada de validação | Design | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 134 total, 134 mapped to tasks, 0 unmapped
+**Coverage:** 139 total, 139 mapped to tasks, 0 unmapped
 
 ---
 

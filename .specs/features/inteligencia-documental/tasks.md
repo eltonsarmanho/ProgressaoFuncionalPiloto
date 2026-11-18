@@ -142,6 +142,14 @@ Lacunas FT-28..FT-33 da quarta verificação (`validation.md`, PASS com lacunas)
 T107 → T108 → T109 → T110 → T111 → T112
 ```
 
+### Phase 16: Correções da sexta rodada
+
+Certificado em inglês de participação com carga horária que não pontuava (CER-01..05): o tipo do documento em inglês, o enquadramento como curso de curta duração (VII.10) quando as confirmações recusam coordenação ou extensão num certificado com horas, o aviso do enquadramento, o prompt e o registro. Os testes usam só texto sintético (pessoa e cartilha inventadas); nenhum documento real, MariTalk, VM, push ou deploy. A fase fica dentro do orçamento de um lote.
+
+```
+T113 → T114 → T115 → T116 → T117
+```
+
 ---
 
 ## Task Breakdown
@@ -3157,10 +3165,143 @@ T107 → T108 → T109 → T110 → T111 → T112
 
 ---
 
+### T113: Certificado em inglês tem o tipo certificado
+
+**What**: `detect_document_type` reconhece "this is to cer…" (tolerante a glifos perdidos), "hereby certif…", "certificate of participation/completion/attendance" e a palavra "certificate" sozinha numa linha ou como última palavra do texto como certificado; a palavra solta não vale em texto de artigo. Arquivos: `document_type.py` e `test_document_type.py`.
+**Where**: `backend/app/domain/rules/document_type.py`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `_CERTIFICA`, `_ARTICLE_MARKERS`
+**Requirement**: CER-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O texto sintético do certificado em inglês, com "cerfy" e "parcipated", e os demais marcadores listados dão `CERTIFICADO`
+- [ ] Artigo com "certificate" no corpo, artigo terminado em "certificate", portaria e os testes de tipo existentes continuam com o tipo anterior
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(documents): detect certificates written in english`
+
+---
+
+### T114: Certificado de participação com horas vira curso de curta duração
+
+**What**: Função pura `reclassify_participation_certificate` em `suggestion_rules.py`: certificado, horas maiores que 0 e coordenação de pesquisa ou projeto de extensão recusado pelas confirmações (taxonomia original de V.1, V.2, IV.1 ou IV.2 e resultado `OUTRA`) passam a `CURSO_CONCLUIDO` (VII.10); novo `DocAlertCode.ENQUADRADO_COMO_CAPACITACAO` com rótulo em português no frontend e nos testes que enumeram os códigos. Arquivos: `suggestion_rules.py`, `document.py`, `labels.ts` e testes.
+**Where**: `backend/app/domain/rules/suggestion_rules.py`
+**Depends on**: T113
+**Reuses**: `confirm_research_coordination`, `confirm_extension_project`, `_RESEARCH_COORDINATION`, `_EXTENSION_PROJECTS`
+**Requirement**: CER-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] As quatro taxonomias de origem viram `CURSO_CONCLUIDO` quando o tipo é certificado, as horas são maiores que 0 e a confirmação deu `OUTRA`
+- [ ] Sem horas (ausentes ou 0), com outro tipo de documento, com outra taxonomia de origem ou com a confirmação mantendo a taxonomia, o resultado não muda
+- [ ] O código `ENQUADRADO_COMO_CAPACITACAO` existe e aparece em português no frontend (`DocumentViewer`)
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `feat(suggestions): classify a participation certificate with hours as a short course`
+
+---
+
+### T115: Analisador enquadra o certificado e não inventa data
+
+**What**: `DocumentAnalyzer._suggest` chama a função de T114 depois das confirmações, emite `ENQUADRADO_COMO_CAPACITACAO` e deixa a atividade para revisão; teste com IA falsa que devolve a taxonomia, o papel e as 18 horas do texto sintético em inglês. Arquivos: `document_analyzer.py` e teste do analisador.
+**Where**: `backend/app/application/services/document_analyzer.py`
+**Depends on**: T114
+**Reuses**: `analyzer_fakes.py`, `reclassify_participation_certificate`
+**Requirement**: CER-02, CER-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O texto em inglês gera uma só atividade em VII.10, `needs_review` verdadeiro, quantidade 1, carga horária 18 preservada, alerta `ENQUADRADO_COMO_CAPACITACAO` e sem `SEM_ITEM_DE_PONTUACAO`
+- [ ] Sem datas na atividade e "six weeks" no `term` não derivam data final nem criam datas
+- [ ] Coordenação real e extensão real mantêm a taxonomia e não geram o alerta; sem horas continua sem item
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(documents): keep the participation certificate as a short course`
+
+---
+
+### T116: Prompt avisa que o documento pode estar em inglês
+
+**What**: O prompt do sistema diz que o documento pode estar em inglês e que os campos são copiados literalmente do texto, sem traduzir; teste fixa a frase. Arquivos: `maritalk.py` e `test_maritalk_prompt.py`.
+**Where**: `backend/app/infrastructure/ai/maritalk.py`
+**Depends on**: T115
+**Reuses**: `test_maritalk_prompt.py`
+**Requirement**: CER-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O prompt contém a frase sobre inglês e cópia literal sem tradução, com e sem o nome do docente
+- [ ] Os testes do prompt e do cliente MariTalk existentes continuam verdes
+- [ ] Gate full passa
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(ai): tell the model that documents may be in english`
+
+---
+
+### T117: Registro da sexta rodada e entrega
+
+**What**: `validation.md` traz a "Resolution (round 6)"; `spec.md` mantém CER-01..05 em Implementing; `STATE.md` atualiza o handoff (a rodada 6 corrige o certificado em inglês; precisa de novo deploy). Arquivos: `validation.md`, `spec.md`, `STATE.md`.
+**Where**: `.specs/features/inteligencia-documental/validation.md`
+**Depends on**: T116
+**Reuses**: Resolution (round 5)
+**Requirement**: CER-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] A Resolution (round 6) lista commits, gate e decisões pendentes
+- [ ] O handoff do STATE.md traz a linha da rodada 6 e o deploy pendente
+- [ ] `validate_spec.py`, `validate_tasks.py` e `validate_state.py` passam
+- [ ] Gate build passa
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `docs(specs): record the resolution of round 6 and the handoff`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11 → Phase 12 → Phase 13 → Phase 14 → Phase 15
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11 → Phase 12 → Phase 13 → Phase 14 → Phase 15 → Phase 16
 
 Phase 1:  T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 Phase 2:  T9 → T10 → T11 → T12 → T13 → T14 → T15
@@ -3177,4 +3318,5 @@ Phase 12:  T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 �
 Phase 13:  T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → T92 → T93 → T94 → T95
 Phase 14:  T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T105 → T106
 Phase 15:  T107 → T108 → T109 → T110 → T111 → T112
+Phase 16:  T113 → T114 → T115 → T116 → T117
 ```
