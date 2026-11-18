@@ -41,6 +41,7 @@ from app.domain.entities.professor import Professor
 from app.domain.entities.report import DraftEntry, DraftSection, ReportDocument, ReportDraft
 from app.domain.entities.scoring import ScoringCriterion, ScoringTableVersion
 from app.domain.entities.user import Session, User
+from app.domain.rules.report_draft import ReportConfig
 from app.domain.rules.report_wording import WordingItem
 from app.domain.rules.table_document import TableDocument, TableHeader
 from app.domain.rules.upload_validation import FileFacts, FileKind
@@ -633,6 +634,14 @@ class ReportWriter(Protocol):
     def draft(self, section_title: str, items: Sequence[WordingItem]) -> Mapping[UUID, str]:
         """One text per item id. Raises `AiWritingError` when the provider refuses, answers out of
         the schema or takes longer than its deadline."""
+        ...
+
+
+class ReportConfigProvider(Protocol):
+    """The versioned template of the Relatório: sections, group map, vocabulary, layout."""
+
+    def load(self) -> ReportConfig:
+        """Raises when the configuration file is broken; the message names the file and field."""
         ...
 
 

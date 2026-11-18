@@ -17,6 +17,7 @@ from app.application.use_cases.scoring import ActivityData
 from app.domain.entities.activity import Activity, ActivityStatus, Level
 from app.domain.entities.document import DocAlertCode
 from app.domain.repositories.ports import ActivityEvidence
+from app.infrastructure.documents.config_loader import ReportConfigLoader
 from app.infrastructure.documents.document_writer import FileDocumentWriter
 from app.infrastructure.documents.front_matter import TOC_CAPACITY
 from app.infrastructure.storage.generated_storage import LocalGeneratedStorage
@@ -96,6 +97,7 @@ def build_run(world, docs, **overrides) -> RunGeneration:
         clock=docs.clock,
         storage=LocalGeneratedStorage(docs.storage_root),
         writer=FileDocumentWriter(),
+        report_config=ReportConfigLoader(),
         toc_capacity=TOC_CAPACITY,
     )
     return RunGeneration(**(deps | overrides))

@@ -312,6 +312,18 @@ def load_report_config(
     return _template(reader, chosen, templates[chosen])
 
 
+class ReportConfigLoader:
+    """The `ReportConfigProvider` port: the template of the setting `REPORT_TEMPLATE_ID`, or the
+    one the file marks as default, read from the versioned file at every call."""
+
+    def __init__(self, template_id: str | None = None, path: Path = REPORT_TEMPLATES) -> None:
+        self._template_id = template_id
+        self._path = path
+
+    def load(self) -> ReportConfig:
+        return load_report_config(self._path, self._template_id)
+
+
 def load_dossier_order(path: Path = DOSSIER_ORDER) -> tuple[DossierItem, ...]:
     """The documents of the dossier in delivery order; the order values must go up."""
     reader, data = _load_json(Path(path))

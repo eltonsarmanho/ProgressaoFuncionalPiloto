@@ -1834,9 +1834,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O documento usa o texto editado pelo usuário, sem sobrescrevê-lo, e o instantâneo guarda seções, atividades e fonte de cada texto
-- [ ] Sem rascunho salvo gera a partir da proposta com texto-modelo
-- [ ] Gate full passa; 5+ testes
+- [x] O documento usa o texto editado pelo usuário, sem sobrescrevê-lo, e o instantâneo guarda seções, atividades e fonte de cada texto
+- [x] Sem rascunho salvo gera a partir da proposta com texto-modelo
+- [x] Gate full passa; 5+ testes
 
 **Tests**: integration
 **Gate**: full

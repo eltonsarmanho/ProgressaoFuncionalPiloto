@@ -39,6 +39,7 @@ from app.domain.entities.generated import (
     GenerationCode,
     GenerationState,
 )
+from app.domain.entities.report import ReportDraft
 from app.domain.entities.user import User
 from app.domain.errors import GenerationRefused, NotFound
 from app.domain.repositories.ports import (
@@ -47,6 +48,7 @@ from app.domain.repositories.ports import (
     FileInspector,
     FileStorage,
     GeneratedFileStorage,
+    ReportConfigProvider,
     UnitOfWork,
 )
 from app.domain.rules.comprovante_plan import (
@@ -55,6 +57,14 @@ from app.domain.rules.comprovante_plan import (
     plan_comprovante,
 )
 from app.domain.rules.generation_snapshot import build_snapshot
+from app.domain.rules.report_document import build_report_document
+from app.domain.rules.report_draft import (
+    STALE,
+    STALE_MESSAGE,
+    document_sections,
+    propose_draft,
+    reconcile_draft,
+)
 from app.domain.rules.table_document import build_table_document
 
 logger = logging.getLogger("app.documents.generation")
@@ -281,6 +291,7 @@ class RunGeneration:
         clock: Clock,
         storage: GeneratedFileStorage,
         writer: DocumentWriter,
+        report_config: ReportConfigProvider,
         toc_capacity: int,
     ) -> None:
         self._uow_factory = uow_factory
@@ -288,6 +299,7 @@ class RunGeneration:
         self._clock = clock
         self._storage = storage
         self._writer = writer
+        self._report_config = report_config
         self._toc_capacity = toc_capacity
 
     def run_next(self) -> bool:
@@ -309,7 +321,10 @@ class RunGeneration:
                 raise NotFound("Geração não encontrada")
             process = uow.processes.get(generation.process_id)
             inputs = load_generation_inputs(uow, process)
-        produced = self._produce(generation, inputs)
+            saved_draft = None
+            if generation.kind is DocumentKind.RELATORIO:
+                saved_draft = uow.report_drafts.get(process.id)
+        produced = self._produce(generation, inputs, saved_draft)
         files = []
         for fmt, temp in produced.outputs:
             sha256, size = _digest(temp)
@@ -351,7 +366,11 @@ class RunGeneration:
             resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024,
         )
 
-    def _produce(self, generation: GeneratedDocument, inputs: GenerationInputs) -> _Produced:
+    def _produce(
+        self, generation: GeneratedDocument, inputs: GenerationInputs, saved: ReportDraft | None
+    ) -> _Produced:
+        if generation.kind is DocumentKind.RELATORIO:
+            return self._report(generation, inputs, saved)
         return self._table(generation, inputs)
 
     def _table(self, generation: GeneratedDocument, inputs: GenerationInputs) -> _Produced:
@@ -391,3 +410,68 @@ class RunGeneration:
             layout=_layout_snapshot(inputs.layout, plan),
         )
         return _Produced(outputs, snapshot, _left_out_alert(inputs), plan.plan_hash)
+
+    def _report(
+        self, generation: GeneratedDocument, inputs: GenerationInputs, saved: ReportDraft | None
+    ) -> _Produced:
+        """The report from the saved draft brought up to date, or from the proposal when nothing
+        was saved; the draft itself is never written here (REL-09, REL-07)."""
+        version = inputs.version
+        if version is None:
+            raise GenerationRefused(
+                GenerationCode.TABELA_NAO_ESCOLHIDA,
+                "Escolha a tabela de pontuação do processo antes de gerar.",
+            )
+        config = self._report_config.load()
+        if saved is None:
+            draft = propose_draft(
+                config.template,
+                inputs.activities,
+                config.group_map,
+                process_id=generation.process_id,
+            )
+        else:
+            draft = reconcile_draft(saved, inputs.activities, config.template, config.group_map)
+        item_names = {
+            (c.group_number, c.item_number): c.description
+            for group in version.groups
+            for c in group.criteria
+        }
+        model = build_report_document(config, inputs.header, draft, inputs.activities, item_names)
+        outputs = []
+        for fmt in _FORMATS:
+            temp = self._storage.new_temp_path(generation.process_id)
+            outputs.append((fmt, temp))
+            self._writer.write_report(model, fmt, temp)
+        report = {
+            "sections": [
+                {
+                    "key": section.key,
+                    "free_text": section.free_text,
+                    "entries": [
+                        {
+                            "activity_id": str(e.activity_id),
+                            "text": e.text,
+                            "source": e.source.value,
+                        }
+                        for e in section.entries
+                    ],
+                }
+                for section in document_sections(draft)
+            ]
+        }
+        snapshot = build_snapshot(
+            generation.kind,
+            version,
+            inputs.interstice,
+            inputs.score.result,
+            inputs.activities,
+            excluded=inputs.excluded,
+            alerts=_unique([a.code for a in inputs.score.alerts]),
+            template={"id": config.template.id, "version": config.template.version},
+            report=report,
+        )
+        alerts = _left_out_alert(inputs)
+        if any(w.code is STALE for section in draft.sections for w in section.warnings):
+            alerts.append(GenerationAlert(STALE, STALE_MESSAGE))
+        return _Produced(outputs, snapshot, alerts)

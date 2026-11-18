@@ -15,6 +15,7 @@ from app.domain.entities.report import GroupBy, MatchRule
 from app.domain.rules.report_draft import ENTRY_MARKERS, GroupTarget, activity_fields
 from app.infrastructure.documents.config_loader import (
     ConfigError,
+    ReportConfigLoader,
     load_dossier_order,
     load_report_config,
 )
@@ -354,3 +355,17 @@ def test_a_dossier_without_items_is_refused(tmp_path):
     with pytest.raises(ConfigError) as error:
         load_dossier_order(path)
     assert "items" in str(error.value)
+
+
+def test_the_provider_gives_the_template_the_file_marks_as_default():
+    config = ReportConfigLoader().load()
+
+    assert config == load_report_config()
+
+
+def test_the_provider_gives_the_template_of_the_setting_and_refuses_an_unknown_one():
+    default = load_report_config()
+
+    assert ReportConfigLoader(default.template.id).load() == default
+    with pytest.raises(ConfigError):
+        ReportConfigLoader("modelo-que-nao-existe").load()
