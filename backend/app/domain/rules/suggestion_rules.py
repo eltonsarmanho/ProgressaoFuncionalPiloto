@@ -7,7 +7,7 @@ from app.domain.entities.activity import Level
 from app.domain.entities.extraction import DocumentType
 from app.domain.entities.extraction import TaxonomyCode as T
 from app.domain.rules.document_type import is_seminar_evaluation_form
-from app.domain.rules.grounding import professor_named_in_text
+from app.domain.rules.grounding import professor_word_spans
 from app.domain.rules.scoring_periods import normalize_title
 
 _ROMAN = {1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI", 7: "VII", 8: "VIII"}
@@ -187,26 +187,72 @@ def confirm_extension_project(taxonomy: T, text: str) -> T:
 
 _RESEARCH_COORDINATION = frozenset({T.PESQUISA_PROJETO_COORDENACAO, T.PESQUISA_GRUPO_COORDENACAO})
 _TITLE_ABBREVIATION = re.compile(r"\b(prof\w*|dra?|sra?|ma|ms)\.", re.IGNORECASE)
-_COORDINATOR = re.compile(r"\b(?:coordena\w*|lider(?:es)?|lideranca)\b")
-_COORDINATED_BY = re.compile(r"\bcoordenad[oa]s?\s+(?:pel[oa]s?|por)\b")
 _RESEARCH_WORDS = re.compile(r"\b(?:pesquisa|projeto|grupo)\b")
+# "coordena", "coordenou", "coordenadora", "lidera", "liderou", "líder": a role, not the unit
+# "Coordenadoria"; "responsável pelo projeto" is the role of the person in charge.
+_COORDINATOR_WORD = re.compile(r"(?:coorden(?:ou|ei|a(?!doria)\w*)|lider\w*)")
+_RESPONSIBLE_OF = frozenset({"pelo", "pela", "pelos", "pelas", "do", "da", "dos", "das"})
+_COORDINATED_BY = frozenset({"por", "pelo", "pela", "pelos", "pelas"})
+_OTHER_ROLE = frozenset(
+    {"membro", "membros", "participante", "participantes", "colaborador", "colaboradora",
+     "colaboradores", "bolsista", "bolsistas", "integrante", "integrantes", "vice", "aluno",
+     "aluna", "estudante"}
+)  # fmt: skip
+COORDINATION_WINDOW_WORDS = 8  # "a poucas palavras" (SEG-07): words between the name and the role
+_SENTENCE_OR_PARAGRAPH = re.compile(r"[.;]+|\n\s*\n")
+
+
+def _coordination_positions(words: list[str]) -> list[int]:
+    """Indexes of the words that say the person coordinates or leads (not "coordenado por")."""
+    positions = []
+    for index, word in enumerate(words):
+        following = words[index + 1 : index + 3]
+        if _COORDINATOR_WORD.fullmatch(word):
+            coordinated_by = word.startswith("coordenad") and following[:1] and (
+                following[0] in _COORDINATED_BY
+            )
+            if not coordinated_by:  # "coordenado por Fulano" names the other person
+                positions.append(index)
+        elif word == "responsavel" and len(following) == 2:
+            if following[0] in _RESPONSIBLE_OF and following[1] in ("projeto", "grupo"):
+                positions.append(index)
+    return positions
+
+
+def _role_near_name(sentence: str, professor_name: str) -> bool:
+    """The role and the full name are at most 8 words apart, with no other role between them."""
+    words = re.findall(r"[a-z0-9]+", normalize_title(sentence))
+    roles = _coordination_positions(words)
+    for first, last in professor_word_spans(professor_name, words):
+        for role in roles:
+            if role > last:
+                between = words[last + 1 : role]
+            elif role < first:
+                between = words[role + 1 : first]
+            else:
+                continue
+            if len(between) <= COORDINATION_WINDOW_WORDS and not _OTHER_ROLE & set(between):
+                return True
+    return False
 
 
 def confirm_research_coordination(taxonomy: T, text: str, professor_name: str) -> T:
-    """Coordination of a research project or group needs the role in the text (SEG-07).
+    """Coordination of a research project or group needs the role in the text (SEG-07, TER-03).
 
-    One sentence must name the professor and a coordination word ("coordenadora", "coordena",
-    "líder"), and the document must speak of a research project or group. "Coordenado por
-    Fulano" does not make the professor the coordinator. A participation certificate that the
-    AI took for coordination has no scoring item (`OUTRA`): the human review decides.
+    The professor's name and a coordination word ("coordenadora", "coordenou", "líder",
+    "lidera", "responsável pelo projeto") must be at most 8 words apart in the same paragraph
+    (a line break inside it does not separate them; a sentence end or a blank line does), with
+    no other role ("membro", "bolsista") between them, and the document must speak of a
+    research project or group. "Coordenado por Fulano" does not make the professor the
+    coordinator. A participation certificate that the AI took for coordination has no scoring
+    item (`OUTRA`): the human review decides.
     """
     if taxonomy not in _RESEARCH_COORDINATION:
         return taxonomy
     if not _RESEARCH_WORDS.search(normalize_title(text)):
         return T.OUTRA
-    for sentence in re.split(r"[.;\n]+", _TITLE_ABBREVIATION.sub(r"\1", text)):
-        role = _COORDINATED_BY.sub(" ", normalize_title(sentence))
-        if _COORDINATOR.search(role) and professor_named_in_text(professor_name, sentence):
+    for sentence in _SENTENCE_OR_PARAGRAPH.split(_TITLE_ABBREVIATION.sub(r"\1", text)):
+        if _role_near_name(sentence, professor_name):
             return taxonomy
     return T.OUTRA
 

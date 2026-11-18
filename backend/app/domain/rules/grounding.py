@@ -149,6 +149,25 @@ def _words(text: str) -> list[str]:
     return re.findall(r"[a-z0-9]+", normalize_title(text))
 
 
+def professor_word_spans(professor_name: str, words: list[str]) -> list[tuple[int, int]]:
+    """Where the whole name sits in `words`, as (first, last) word indexes (TER-03).
+
+    The tokens of the name (3+ letters) must fall within a short window of words, so the same
+    words scattered over a page that names other people do not count as the professor.
+    """
+    wanted = _tokens(professor_name)
+    if len(wanted) < 2:
+        return []
+    width = len(wanted) + NAME_WINDOW_SLACK
+    spans = []
+    for index, word in enumerate(words):
+        window = words[index : index + width]
+        if word in wanted and wanted <= set(window):
+            last = max(index + i for i, w in enumerate(window) if w in wanted)
+            spans.append((index, last))
+    return spans
+
+
 def professor_named_in_text(professor_name: str, text: str) -> bool:
     """True when the whole name (2+ tokens of 3+ letters) sits together in the text.
 
@@ -156,15 +175,7 @@ def professor_named_in_text(professor_name: str, text: str) -> bool:
     but the tokens must fall within a short window of words, so the same words scattered over
     a page that names other people do not count as the professor (REAL-02).
     """
-    wanted = _tokens(professor_name)
-    if len(wanted) < 2:
-        return False
-    words = _words(text)
-    width = len(wanted) + NAME_WINDOW_SLACK
-    for index, word in enumerate(words):
-        if word in wanted and wanted <= set(words[index : index + width]):
-            return True
-    return False
+    return bool(professor_word_spans(professor_name, _words(text)))
 
 
 def _words_in_text(wanted: list[str], text: str) -> bool:

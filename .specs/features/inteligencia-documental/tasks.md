@@ -2765,10 +2765,10 @@ T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T10
 
 **Done when**:
 
-- [ ] Cada palavra de papel mantém V.1 com o nome a até 8 palavras; 9 palavras de distância dão sem item; a quebra de linha dentro do parágrafo não separa nome e papel
-- [ ] Outro coordenador, "coordenado por" e o docente só participante dão sem item
-- [ ] "Coordenadoria" não é papel; texto sem "pesquisa", "projeto" ou "grupo" dá sem item (mutante U07)
-- [ ] Gate full passa
+- [x] Cada palavra de papel mantém V.1 com o nome a até 8 palavras; 9 palavras de distância dão sem item; a quebra de linha dentro do parágrafo não separa nome e papel
+- [x] Outro coordenador, "coordenado por" e o docente só participante dão sem item
+- [x] "Coordenadoria" não é papel; texto sem "pesquisa", "projeto" ou "grupo" dá sem item (mutante U07)
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full
