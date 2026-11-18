@@ -3486,11 +3486,11 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] O diálogo tem `role="dialog"`, `aria-modal="true"` e o nome do título, e o foco vai para dentro ao abrir
-- [ ] Esc e o botão Fechar chamam `onClose`; ao desmontar o foco volta ao botão que abriu
-- [ ] Tab e Shift+Tab no último e no primeiro elemento ficam dentro da janela
-- [ ] O CSS do corpo da janela usa `max-width: 100%` e rolagem vertical, sem largura fixa acima de 360 px
-- [ ] Gate quick passa
+- [x] O diálogo tem `role="dialog"`, `aria-modal="true"` e o nome do título, e o foco vai para dentro ao abrir
+- [x] Esc e o botão Fechar chamam `onClose`; ao desmontar o foco volta ao botão que abriu
+- [x] Tab e Shift+Tab no último e no primeiro elemento ficam dentro da janela
+- [x] O CSS do corpo da janela usa `max-width: 100%` e rolagem vertical, sem largura fixa acima de 360 px
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick
