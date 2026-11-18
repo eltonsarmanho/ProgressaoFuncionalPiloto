@@ -2704,9 +2704,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Os testes de `ProcessDocuments` passam sem alteração
-- [ ] Teste novo: o hook consulta a cada 3 s com relógio falso, para quando a condição de parada é verdadeira e para ao desmontar
-- [ ] Gate quick passa; 4+ testes novos
+- [x] Os testes de `ProcessDocuments` passam sem alteração
+- [x] Teste novo: o hook consulta a cada 3 s com relógio falso, para quando a condição de parada é verdadeira e para ao desmontar
+- [x] Gate quick passa; 4+ testes novos
 
 **Tests**: unit
 **Gate**: quick

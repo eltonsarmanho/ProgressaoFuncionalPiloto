@@ -8,10 +8,8 @@ import { DocumentViewer } from "../components/DocumentViewer";
 import { Modal } from "../components/Modal";
 import { StepNav } from "../components/StepNav";
 import { UploadDropzone } from "../components/UploadDropzone";
+import { usePolling } from "../hooks/usePolling";
 import { ACTIVE_DOCUMENT_STATUSES } from "../labels";
-
-/** TELA-03: how often the list reloads while a document is still pending or processing. */
-export const POLL_INTERVAL_MS = 3000;
 
 /** The form of a new activity that starts from a document; the document is linked once it is saved. */
 function ActivityFromDocument({
@@ -98,11 +96,8 @@ export function ProcessDocuments() {
     };
   }, [id, reloads]);
 
-  useEffect(() => {
-    if (!polling) return;
-    const timer = setInterval(reload, POLL_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, [polling]);
+  // TELA-03: the list reloads while a document is still pending or processing
+  usePolling(reload, polling);
 
   useEffect(() => {
     if (!viewId) return;
