@@ -8,10 +8,16 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.application.use_cases.generated_documents import GenerationLimits, RequestGeneration
-from app.domain.entities.activity import Activity, ActivityStatus
+from app.application.use_cases.generated_documents import (
+    GenerationLimits,
+    RequestGeneration,
+    RunGeneration,
+)
+from app.application.use_cases.scoring import ActivityData
+from app.domain.entities.activity import Activity, ActivityStatus, Level
 from app.domain.entities.document import DocAlertCode
 from app.domain.repositories.ports import ActivityEvidence
+from app.infrastructure.documents.document_writer import FileDocumentWriter
 from app.infrastructure.documents.front_matter import TOC_CAPACITY
 from app.infrastructure.storage.generated_storage import LocalGeneratedStorage
 from tests.integration.documents.factories import make_document
@@ -83,6 +89,18 @@ def build_request(world, docs, storage=None, limits=None) -> RequestGeneration:
     )
 
 
+def build_run(world, docs, **overrides) -> RunGeneration:
+    deps = dict(
+        uow_factory=world.uow_factory,
+        audit=world.audit,
+        clock=docs.clock,
+        storage=LocalGeneratedStorage(docs.storage_root),
+        writer=FileDocumentWriter(),
+        toc_capacity=TOC_CAPACITY,
+    )
+    return RunGeneration(**(deps | overrides))
+
+
 @pytest.fixture
 def gen(docs, official_chosen):
     """The world of the document tests with the official table chosen, plus the generation use
@@ -95,6 +113,7 @@ def gen(docs, official_chosen):
         originals=docs.storage,
         generated=LocalGeneratedStorage(docs.storage_root),
         request=lambda storage=None, limits=None: build_request(world, docs, storage, limits),
+        run=lambda **overrides: build_run(world, docs, **overrides),
     )
 
 
@@ -120,3 +139,37 @@ def link_pages(world, activity, document, pages) -> None:
                 )
             )
         uow.commit()
+
+
+def add_scenario_211(world) -> None:
+    """The activities of the acceptance scenario of the official table (tabela-oficial, ACE-01):
+    subtotals II to VIII of 52, 7, 62, 0, 30, 4 and 56, total 211, PIT hours 24, 24, 24 and 20."""
+    def create(**kwargs):
+        world.create.execute(
+            world.admin, world.process.id, ActivityData(evidence_note="Declaração", **kwargs)
+        )
+
+    semesters = [("2023.1", date(2023, 3, 6)), ("2023.2", date(2023, 8, 7)),
+                 ("2023.3", date(2023, 12, 4)), ("2023.4", date(2024, 3, 4))]  # fmt: skip
+    offers = [(68, 68, 68), (68, 68, 68), (68, 68, 68), (68, 68, 34)]
+    for (period, day), hours in zip(semesters, offers, strict=True):
+        for number, offer_hours in enumerate(hours, start=1):
+            create(
+                title=f"Disciplina {number} {period}", group_number=1, event_date=day,
+                academic_period=period, level=Level.GRADUACAO, hours=Decimal(offer_hours),
+            )  # fmt: skip
+    for group, item, times in [(2, 7, 4), (2, 8, 4), (2, 12, 4), (4, 1, 4), (7, 10, 2)]:
+        for n in range(1, times + 1):
+            create(
+                title=f"Item {group}.{item} número {n}", group_number=group, item_number=item,
+                quantity=Decimal(1), event_date=date(2023, n + 3, 15),
+            )  # fmt: skip
+    for group, item in [(3, 2), (3, 3), (6, 6), (8, 9), (8, 10), (8, 11), (8, 36)]:
+        create(
+            title=f"Item {group}.{item}", group_number=group, item_number=item,
+            quantity=Decimal(1), event_date=date(2024, 2, 20),
+        )  # fmt: skip
+    create(
+        title="Curso de extensão ministrado", group_number=4, item_number=4, quantity=Decimal(1),
+        hours=Decimal(21), event_date=date(2024, 5, 10),
+    )  # fmt: skip

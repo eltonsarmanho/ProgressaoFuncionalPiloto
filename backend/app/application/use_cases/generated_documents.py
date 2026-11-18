@@ -5,9 +5,15 @@ Audit events carry identifiers, kinds, states and codes only, never the text of 
 (VER-07).
 """
 
+import hashlib
+import logging
+import resource
+import time
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 from uuid import UUID
 
 from app.application.services.access_policy import AccessPolicy
@@ -15,18 +21,29 @@ from app.application.services.audit_service import AuditService
 from app.application.services.generation_inputs import GenerationInputs, load_generation_inputs
 from app.application.use_cases.scoring import _ScoringUseCase
 from app.domain.entities.audit import AuditAction
-from app.domain.entities.comprovante import ComprovantePlan, PageKind, SourceDocument
+from app.domain.entities.comprovante import (
+    ComprovanteLayout,
+    ComprovantePlan,
+    PageKind,
+    SourceDocument,
+    TocLevel,
+)
 from app.domain.entities.document import Document
 from app.domain.entities.generated import (
+    DocumentFormat,
     DocumentKind,
     GeneratedDocument,
+    GeneratedFile,
+    GenerationAlert,
+    GenerationAlertCode,
     GenerationCode,
     GenerationState,
 )
 from app.domain.entities.user import User
-from app.domain.errors import GenerationRefused
+from app.domain.errors import GenerationRefused, NotFound
 from app.domain.repositories.ports import (
     Clock,
+    DocumentWriter,
     FileInspector,
     FileStorage,
     GeneratedFileStorage,
@@ -37,6 +54,10 @@ from app.domain.rules.comprovante_plan import (
     check_comprovante,
     plan_comprovante,
 )
+from app.domain.rules.generation_snapshot import build_snapshot
+from app.domain.rules.table_document import build_table_document
+
+logger = logging.getLogger("app.documents.generation")
 
 GENERATED_ENTITY = "generated_document"
 MB = 1024 * 1024
@@ -188,3 +209,185 @@ class RequestGeneration(_ScoringUseCase):
             )
             uow.commit()
             return generation
+
+
+_LEFT_OUT_LABELS = {
+    "pendentes": "aguardando revisão",
+    "rejeitadas": "rejeitadas",
+    "sem_enquadramento": "sem enquadramento na tabela",
+}
+_FORMATS = (DocumentFormat.DOCX, DocumentFormat.PDF)
+_CHUNK = 1024 * 1024
+
+
+@dataclass
+class _Produced:
+    """What a kind wrote: the temporary files by format, the snapshot and the alerts."""
+
+    outputs: list[tuple[DocumentFormat, Path]]
+    snapshot: dict[str, Any]
+    alerts: list[GenerationAlert]
+    plan_hash: str | None = None
+
+
+def _digest(path: Path) -> tuple[str, int]:
+    """SHA-256 and size of a file, read in chunks (a Comprovante has up to 60 MB)."""
+    hasher, size = hashlib.sha256(), 0
+    with path.open("rb") as handle:
+        while chunk := handle.read(_CHUNK):
+            hasher.update(chunk)
+            size += len(chunk)
+    return hasher.hexdigest(), size
+
+
+def _left_out_alert(inputs: GenerationInputs) -> list[GenerationAlert]:
+    if not inputs.excluded:
+        return []
+    parts = "; ".join(f"{n} {_LEFT_OUT_LABELS[reason]}" for reason, n in inputs.excluded.items())
+    return [
+        GenerationAlert(
+            GenerationAlertCode.ATIVIDADES_FORA_DO_DOCUMENTO,
+            f"Atividades fora do documento: {parts}.",
+        )
+    ]
+
+
+def _layout_snapshot(layout: ComprovanteLayout, plan: ComprovantePlan) -> dict[str, Any]:
+    """The arrangement the Tabela and the Comprovante were numbered from (VER-02)."""
+    entries = []
+    for entry in layout.activities:
+        pages = []
+        for page in entry.pages:
+            found: dict[str, Any] = {"document_id": str(page.document_id), "page": page.page}
+            if page.repeat_justification:
+                found["justification"] = page.repeat_justification
+            pages.append(found)
+        entries.append({"activity_id": str(entry.activity_id), "pages": pages})
+    return {"plan_hash": plan.plan_hash, "entries": entries}
+
+
+def _unique(codes: Sequence[str]) -> list[str]:
+    return list(dict.fromkeys(codes))
+
+
+class RunGeneration:
+    """The executor side of a generation: builds the document, stores the files and closes the
+    row as PRONTO with the next version number (VER-01, VER-02)."""
+
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        clock: Clock,
+        storage: GeneratedFileStorage,
+        writer: DocumentWriter,
+        toc_capacity: int,
+    ) -> None:
+        self._uow_factory = uow_factory
+        self._audit = audit
+        self._clock = clock
+        self._storage = storage
+        self._writer = writer
+        self._toc_capacity = toc_capacity
+
+    def run_next(self) -> bool:
+        """The runner of the executor: claims the oldest waiting row and runs it; False when
+        there is none."""
+        with self._uow_factory() as uow:
+            claimed = uow.generations.claim_next(self._clock.now())
+            uow.commit()
+        if claimed is None:
+            return False
+        self.execute(claimed.id)
+        return True
+
+    def execute(self, generation_id: UUID) -> None:
+        started = time.monotonic()
+        with self._uow_factory() as uow:
+            generation = uow.generations.get(generation_id)
+            if generation is None:
+                raise NotFound("Geração não encontrada")
+            process = uow.processes.get(generation.process_id)
+            inputs = load_generation_inputs(uow, process)
+        produced = self._produce(generation, inputs)
+        files = []
+        for fmt, temp in produced.outputs:
+            sha256, size = _digest(temp)
+            name = self._storage.commit(generation.process_id, temp, fmt.value.lower())
+            files.append(GeneratedFile(fmt, name, sha256, size))
+        with self._uow_factory() as uow:
+            done = uow.generations.finish_ready(
+                generation.id,
+                self._clock.now(),
+                files,
+                produced.snapshot,
+                produced.alerts,
+                produced.plan_hash,
+            )
+            self._audit.record(
+                uow,
+                None,
+                GENERATED_ENTITY,
+                generation.id,
+                AuditAction.STATUS,
+                {"state": GenerationState.GERANDO},
+                {
+                    "state": done.state,
+                    "version_number": done.version_number,
+                    "files": [
+                        {"format": f.format, "sha256": f.sha256, "size_bytes": f.size_bytes}
+                        for f in files
+                    ],
+                },
+            )
+            uow.commit()
+        logger.info(
+            "generation_id=%s kind=%s state=%s duration_ms=%d size_bytes=%d peak_rss_mb=%d",
+            generation.id,
+            generation.kind.value,
+            done.state.value,
+            (time.monotonic() - started) * 1000,
+            sum(f.size_bytes for f in files),
+            resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024,
+        )
+
+    def _produce(self, generation: GeneratedDocument, inputs: GenerationInputs) -> _Produced:
+        return self._table(generation, inputs)
+
+    def _table(self, generation: GeneratedDocument, inputs: GenerationInputs) -> _Produced:
+        version = inputs.version
+        if version is None:
+            raise GenerationRefused(
+                GenerationCode.TABELA_NAO_ESCOLHIDA,
+                "Escolha a tabela de pontuação do processo antes de gerar.",
+            )
+        plan = plan_comprovante(inputs.layout, inputs.activities, self._toc_capacity)
+        numbers = {
+            e.activity_id: e.first_page
+            for e in plan.toc
+            if e.level is TocLevel.ATIVIDADE and e.first_page is not None
+        }
+        model = build_table_document(
+            inputs.header,
+            version,
+            inputs.score.result,
+            inputs.activities,
+            numbers,
+            inputs.score.alerts,
+        )
+        outputs = []
+        for fmt in _FORMATS:
+            temp = self._storage.new_temp_path(generation.process_id)
+            outputs.append((fmt, temp))
+            self._writer.write_table(model, fmt, temp)
+        snapshot = build_snapshot(
+            generation.kind,
+            version,
+            inputs.interstice,
+            inputs.score.result,
+            inputs.activities,
+            excluded=inputs.excluded,
+            alerts=_unique([a.code for a in model.alerts]),
+            layout=_layout_snapshot(inputs.layout, plan),
+        )
+        return _Produced(outputs, snapshot, _left_out_alert(inputs), plan.plan_hash)

@@ -1808,9 +1808,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] A geração termina em `PRONTO` com versão 1, dois arquivos com hash e tamanho e instantâneo com o total 211; a segunda dá a versão 2
-- [ ] Os dois formatos refletem o mesmo resultado; o evento `STATUS` traz hash e tamanho por formato e nenhum texto
-- [ ] Gate full passa; 6+ testes
+- [x] A geração termina em `PRONTO` com versão 1, dois arquivos com hash e tamanho e instantâneo com o total 211; a segunda dá a versão 2
+- [x] Os dois formatos refletem o mesmo resultado; o evento `STATUS` traz hash e tamanho por formato e nenhum texto
+- [x] Gate full passa; 6+ testes
 
 **Tests**: integration
 **Gate**: full
