@@ -2885,9 +2885,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Acrescentar página de documento do processo grava na posição pedida; página fora do documento mostra o erro; repetir exige justificativa
-- [ ] Arranjo desatualizado mostra o aviso e as entradas inválidas marcadas
-- [ ] Gate quick passa; 7+ testes
+- [x] Acrescentar página de documento do processo grava na posição pedida; página fora do documento mostra o erro; repetir exige justificativa
+- [x] Arranjo desatualizado mostra o aviso e as entradas inválidas marcadas
+- [x] Gate quick passa; 7+ testes
 
 **Tests**: unit
 **Gate**: quick

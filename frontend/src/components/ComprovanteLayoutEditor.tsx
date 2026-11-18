@@ -1,9 +1,151 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { request } from "../api/client";
-import type { LayoutActivity, LayoutView, PageRef, TocEntry } from "../api/generated";
+import type { GenerationAlert, LayoutActivity, LayoutPage, LayoutView, PageRef, Staleness, TocEntry } from "../api/generated";
 import type { DocumentSummary } from "../api/types";
 import { generationErrorMessage, isConflict } from "../generationErrors";
-import { itemLabel, roman } from "../labels";
+import { GENERATION_CODE_LABELS, alertText, itemLabel, roman } from "../labels";
+import { Modal } from "./Modal";
+
+const pageKey = (documentId: string, page: number) => `${documentId}:${page}`;
+
+/** What changed in the activities since the arrangement was saved, in a short line (ARR-08). */
+function stalenessLine(s: Staleness): string {
+  const part = (n: number, one: string, many: string) => (n === 0 ? [] : [n === 1 ? `1 ${one}` : `${n} ${many}`]);
+  return [
+    ...part(s.left_activity_ids.length, "saiu", `saíram`),
+    ...part(s.moved_activity_ids.length, "mudou de item", "mudaram de item"),
+    ...part(s.new_link_activity_ids.length, "tem vínculo novo", "têm vínculo novo"),
+    ...part(s.joined_activity_ids.length, "entrou", "entraram"),
+  ].join(" · ");
+}
+
+/** CMP-06: the justification the user gives to attach a page again in an activity. */
+function RepeatDialog({ onSave, onCancel }: { onSave: (justification: string) => void; onCancel: () => void }) {
+  const [text, setText] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!text.trim()) {
+      setError("Informe a justificativa da repetição.");
+      return;
+    }
+    onSave(text.trim());
+  }
+
+  return (
+    <Modal title="Repetir página" onClose={onCancel}>
+      <p className="muted">
+        A página já está em outra atividade; por padrão ela é anexada uma só vez e as demais citam o número. Repetir
+        anexa a página de novo e guarda a justificativa no arranjo.
+      </p>
+      <form onSubmit={submit} noValidate>
+        <label htmlFor="repeat-justification">Justificativa da repetição</label>
+        <textarea
+          id="repeat-justification"
+          rows={3}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          aria-invalid={error ? true : undefined}
+        />
+        {error && (
+          <p role="alert" className="error field-error">
+            {error}
+          </p>
+        )}
+        <div className="btn-row">
+          <button type="submit" className="btn btn-primary">
+            Repetir página
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+/** ARR-02: a page of a document of the process, at a position of the activity. */
+function AddPageForm({
+  title,
+  count,
+  documents,
+  onAdd,
+  onCancel,
+}: {
+  title: string;
+  count: number;
+  documents: DocumentSummary[];
+  onAdd: (page: LayoutPage, position: number) => void;
+  onCancel: () => void;
+}) {
+  const [documentId, setDocumentId] = useState("");
+  const [page, setPage] = useState("1");
+  const [position, setPosition] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const idBase = `add-${title.replace(/\s+/g, "-")}`;
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    const doc = documents.find((d) => d.id === documentId);
+    const number = Number(page);
+    if (!doc) return setError("Escolha o documento.");
+    if (!Number.isInteger(number) || number < 1) return setError("Informe a página.");
+    if (number > doc.page_count) return setError(GENERATION_CODE_LABELS.PAGINA_FORA_DO_DOCUMENTO);
+    const at = Number.parseInt(position, 10);
+    const where = Number.isNaN(at) ? count + 1 : Math.min(Math.max(at, 1), count + 1);
+    onAdd({ document_id: doc.id, page: number, repeat_justification: null }, where);
+  }
+
+  return (
+    <form onSubmit={submit} noValidate>
+      <fieldset className="grid">
+        <legend className="visually-hidden">{`Acrescentar página em ${title}`}</legend>
+        <div>
+          <label htmlFor={`${idBase}-doc`}>Documento</label>
+          <select id={`${idBase}-doc`} value={documentId} onChange={(e) => setDocumentId(e.target.value)}>
+            <option value="">Escolha o documento</option>
+            {documents.map((d) => (
+              <option key={d.id} value={d.id}>
+                {`${d.original_name} (${d.page_count} ${d.page_count === 1 ? "página" : "páginas"})`}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor={`${idBase}-page`}>Página</label>
+          <input id={`${idBase}-page`} type="number" min={1} value={page} onChange={(e) => setPage(e.target.value)} />
+        </div>
+        <div>
+          <label htmlFor={`${idBase}-pos`}>Posição</label>
+          <input
+            id={`${idBase}-pos`}
+            type="number"
+            min={1}
+            max={count + 1}
+            placeholder={`${count + 1}`}
+            value={position}
+            onChange={(e) => setPosition(e.target.value)}
+          />
+        </div>
+        {error && (
+          <p role="alert" className="error field-error">
+            {error}
+          </p>
+        )}
+        <div className="btn-row">
+          <button type="submit" className="btn btn-primary">
+            Acrescentar
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            Cancelar
+          </button>
+        </div>
+      </fieldset>
+    </form>
+  );
+}
 
 /** The page a layout entry is in the planned Comprovante, found by its document and page (the nth repeat of it). */
 function plannedPage(toc: TocEntry | undefined, activity: LayoutActivity, index: number): PageRef | undefined {
@@ -32,6 +174,8 @@ export function ComprovanteLayoutEditor({ processId, readOnly = false }: { proce
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [reloads, setReloads] = useState(0);
+  const [adding, setAdding] = useState<string | null>(null);
+  const [repeating, setRepeating] = useState<{ index: number; page: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,6 +222,22 @@ export function ComprovanteLayoutEditor({ processId, readOnly = false }: { proce
   const tocOf = (id: string) => view.plan.toc.find((e) => e.level === "ATIVIDADE" && e.activity_id === id);
   const docName = (id: string) => documents.find((d) => d.id === id)?.original_name ?? "Documento";
   const groups = [...new Set(activities.map((a) => a.group_number ?? 0))].sort((a, b) => a - b);
+
+  // the first holder of a page, in the order of the table, owns it; the others cite it (CMP-05)
+  const owners = new Map<string, number>();
+  activities
+    .map((a, index) => ({ a, index }))
+    .sort((x, y) => (x.a.group_number ?? 0) - (y.a.group_number ?? 0) || (x.a.item_number ?? 0) - (y.a.item_number ?? 0) || x.index - y.index)
+    .forEach(({ a, index }) =>
+      a.pages.forEach((p) => {
+        if (!owners.has(pageKey(p.document_id, p.page))) owners.set(pageKey(p.document_id, p.page), index);
+      }),
+    );
+  const invalid = new Set(view.invalid.map((k) => `${k.activity_id}:${pageKey(k.document_id, k.page)}`));
+  const warnings: GenerationAlert[] =
+    view.stale && !view.alerts.some((a) => a.code === "ARRANJO_DESATUALIZADO")
+      ? [{ code: "ARRANJO_DESATUALIZADO", message: "" }, ...view.alerts]
+      : view.alerts;
 
   const edit = (change: (list: LayoutActivity[]) => LayoutActivity[]) => setDraft(change(activities));
   const editPages = (index: number, change: (pages: LayoutActivity["pages"]) => LayoutActivity["pages"]) =>
@@ -126,6 +286,12 @@ export function ComprovanteLayoutEditor({ processId, readOnly = false }: { proce
           {error}
         </p>
       )}
+      {warnings.map((alert) => (
+        <p key={alert.code} className="doc-warning sev-ALERTA">
+          {alertText(alert)}
+        </p>
+      ))}
+      {view.stale && stalenessLine(view.staleness) && <p className="muted">{stalenessLine(view.staleness)}</p>}
       {!readOnly && dirty && (
         <p className="review-summary">
           Alterações não salvas. A numeração aparece depois de salvar.
@@ -215,6 +381,8 @@ export function ComprovanteLayoutEditor({ processId, readOnly = false }: { proce
                                 {a.pages.map((p, i) => {
                                   const name = docName(p.document_id);
                                   const planned = dirty ? undefined : plannedPage(toc, a, i);
+                                  const repeated = p.repeat_justification != null && p.repeat_justification !== "";
+                                  const owner = owners.get(pageKey(p.document_id, p.page)) === index;
                                   return (
                                     <li key={`${p.document_id}-${p.page}-${i}`}>
                                       <span>
@@ -227,8 +395,39 @@ export function ComprovanteLayoutEditor({ processId, readOnly = false }: { proce
                                             : ` · Comprovante p. ${planned.comprovante_page}`}
                                         </small>
                                       )}
+                                      {repeated && <small className="muted">{` · Repetida: ${p.repeat_justification}`}</small>}
+                                      {invalid.has(`${a.activity_id}:${pageKey(p.document_id, p.page)}`) && (
+                                        <small className="error">
+                                          {" · Inválida: o documento ou a página não está mais disponível"}
+                                        </small>
+                                      )}
                                       {!readOnly && (
                                         <span className="row-actions">
+                                          {repeated ? (
+                                            <button
+                                              type="button"
+                                              className="btn btn-secondary"
+                                              aria-label={`Desfazer repetição da página ${p.page} de ${name} em ${title}`}
+                                              onClick={() =>
+                                                editPages(index, (pages) =>
+                                                  pages.map((q, n) => (n === i ? { ...q, repeat_justification: null } : q)),
+                                                )
+                                              }
+                                            >
+                                              Desfazer repetição
+                                            </button>
+                                          ) : (
+                                            !owner && (
+                                              <button
+                                                type="button"
+                                                className="btn btn-secondary"
+                                                aria-label={`Repetir página ${p.page} de ${name} em ${title} com justificativa`}
+                                                onClick={() => setRepeating({ index, page: i })}
+                                              >
+                                                Repetir
+                                              </button>
+                                            )
+                                          )}
                                           <button
                                             type="button"
                                             className="btn btn-secondary"
@@ -262,6 +461,30 @@ export function ComprovanteLayoutEditor({ processId, readOnly = false }: { proce
                                 })}
                               </ul>
                             )}
+                            {!readOnly &&
+                              (adding === a.activity_id ? (
+                                <AddPageForm
+                                  title={title}
+                                  count={a.pages.length}
+                                  documents={documents}
+                                  onCancel={() => setAdding(null)}
+                                  onAdd={(page, position) => {
+                                    editPages(index, (pages) => [...pages.slice(0, position - 1), page, ...pages.slice(position - 1)]);
+                                    setAdding(null);
+                                  }}
+                                />
+                              ) : (
+                                <div className="btn-row">
+                                  <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    aria-label={`Acrescentar página em ${title}`}
+                                    onClick={() => setAdding(a.activity_id)}
+                                  >
+                                    Acrescentar página
+                                  </button>
+                                </div>
+                              ))}
                           </li>
                         );
                       })}
@@ -272,6 +495,17 @@ export function ComprovanteLayoutEditor({ processId, readOnly = false }: { proce
           </section>
         );
       })}
+      {repeating && (
+        <RepeatDialog
+          onCancel={() => setRepeating(null)}
+          onSave={(justification) => {
+            editPages(repeating.index, (pages) =>
+              pages.map((q, n) => (n === repeating.page ? { ...q, repeat_justification: justification } : q)),
+            );
+            setRepeating(null);
+          }}
+        />
+      )}
     </div>
   );
 }

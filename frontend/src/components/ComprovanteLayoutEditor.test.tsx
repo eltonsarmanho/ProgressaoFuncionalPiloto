@@ -198,3 +198,160 @@ describe("DEL-13: somente leitura", () => {
     expect(screen.queryByRole("button", { name: /Subir|Descer|Remover|Salvar/ })).not.toBeInTheDocument();
   });
 });
+
+describe("ARR-02: acrescentar página", () => {
+  async function openForm(user: ReturnType<typeof userEvent.setup>, activity = "Algoritmos") {
+    await screen.findByRole("listitem", { name: activity });
+    await user.click(screen.getByRole("button", { name: `Acrescentar página em ${activity}` }));
+    return screen.getByRole("group", { name: `Acrescentar página em ${activity}` });
+  }
+
+  it("oferece só os documentos do processo e grava a página na posição pedida", async () => {
+    const { calls, user } = setup(layoutView(), { [PUT]: { status: 200, body: layoutView() } });
+    const form = await openForm(user);
+    const options = within(within(form).getByLabelText("Documento")).getAllByRole("option").map((o) => o.textContent);
+    expect(options).toEqual(["Escolha o documento", "certificado-a.pdf (8 páginas)", "declaracao-b.pdf (3 páginas)"]);
+    await user.selectOptions(within(form).getByLabelText("Documento"), DOC_2);
+    await user.clear(within(form).getByLabelText("Página"));
+    await user.type(within(form).getByLabelText("Página"), "3");
+    await user.clear(within(form).getByLabelText("Posição"));
+    await user.type(within(form).getByLabelText("Posição"), "2");
+    await user.click(within(form).getByRole("button", { name: "Acrescentar" }));
+
+    const pages = within(screen.getByRole("listitem", { name: "Algoritmos" })).getAllByRole("listitem");
+    expect(pages.map((p) => p.textContent)).toEqual([
+      expect.stringContaining("certificado-a.pdf, página 2"),
+      expect.stringContaining("declaracao-b.pdf, página 3"),
+      expect.stringContaining("certificado-a.pdf, página 5"),
+    ]);
+    await user.click(screen.getByRole("button", { name: "Salvar arranjo" }));
+    await waitFor(() => expect(calls.some((c) => c.method === "PUT")).toBe(true));
+    expect(putBody(calls).activities[0].pages.map((p: { document_id: string; page: number }) => [p.document_id, p.page])).toEqual([
+      [DOC_1, 2],
+      [DOC_2, 3],
+      [DOC_1, 5],
+    ]);
+  });
+
+  it("sem posição a página vai para o fim da atividade", async () => {
+    const { user } = setup();
+    const form = await openForm(user, "Redes");
+    await user.selectOptions(within(form).getByLabelText("Documento"), DOC_1);
+    await user.clear(within(form).getByLabelText("Página"));
+    await user.type(within(form).getByLabelText("Página"), "7");
+    await user.click(within(form).getByRole("button", { name: "Acrescentar" }));
+    const pages = within(screen.getByRole("listitem", { name: "Redes" })).getAllByRole("listitem");
+    expect(pages[pages.length - 1]).toHaveTextContent("certificado-a.pdf, página 7");
+  });
+
+  it("página fora do documento mostra o erro e não acrescenta nada", async () => {
+    const { user } = setup();
+    const form = await openForm(user);
+    await user.selectOptions(within(form).getByLabelText("Documento"), DOC_2);
+    await user.clear(within(form).getByLabelText("Página"));
+    await user.type(within(form).getByLabelText("Página"), "4");
+    await user.click(within(form).getByRole("button", { name: "Acrescentar" }));
+    expect(within(form).getByRole("alert")).toHaveTextContent("A página indicada não existe no documento.");
+    expect(within(screen.getByRole("listitem", { name: "Algoritmos" })).getAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it("o 422 PAGINA_FORA_DO_DOCUMENTO do servidor ao salvar mostra a mensagem do erro", async () => {
+    const { user } = setup(layoutView(), {
+      [PUT]: {
+        status: 422,
+        body: { detail: [{ field: "geracao", code: "PAGINA_FORA_DO_DOCUMENTO", message: "A página 9 não existe no documento declaracao-b.pdf." }] },
+      },
+    });
+    const form = await openForm(user);
+    await user.selectOptions(within(form).getByLabelText("Documento"), DOC_1);
+    await user.clear(within(form).getByLabelText("Página"));
+    await user.type(within(form).getByLabelText("Página"), "7");
+    await user.click(within(form).getByRole("button", { name: "Acrescentar" }));
+    await user.click(screen.getByRole("button", { name: "Salvar arranjo" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("A página 9 não existe no documento declaracao-b.pdf.");
+    expect(screen.getByText(/Alterações não salvas/)).toBeInTheDocument();
+  });
+});
+
+describe("CMP-06: repetir a página com justificativa", () => {
+  /** Redes gets page 2 of certificado-a.pdf, which Algoritmos already has: it is a remission. */
+  async function addShared(user: ReturnType<typeof userEvent.setup>) {
+    await screen.findByRole("listitem", { name: "Redes" });
+    await user.click(screen.getByRole("button", { name: "Acrescentar página em Redes" }));
+    const form = screen.getByRole("group", { name: "Acrescentar página em Redes" });
+    await user.selectOptions(within(form).getByLabelText("Documento"), DOC_1);
+    await user.clear(within(form).getByLabelText("Página"));
+    await user.type(within(form).getByLabelText("Página"), "2");
+    await user.click(within(form).getByRole("button", { name: "Acrescentar" }));
+  }
+
+  it("a página que outra atividade já tem oferece repetir; sem justificativa não repete", async () => {
+    const { user } = setup();
+    await addShared(user);
+    await user.click(screen.getByRole("button", { name: "Repetir página 2 de certificado-a.pdf em Redes com justificativa" }));
+    const dialog = screen.getByRole("dialog", { name: "Repetir página" });
+    await user.click(within(dialog).getByRole("button", { name: "Repetir página" }));
+    expect(within(dialog).getByRole("alert")).toHaveTextContent("Informe a justificativa da repetição.");
+    expect(screen.queryByText(/Repetida:/)).not.toBeInTheDocument();
+  });
+
+  it("com a justificativa a página é anexada de novo e o corpo leva repeat_justification", async () => {
+    const { calls, user } = setup(layoutView(), { [PUT]: { status: 200, body: layoutView() } });
+    await addShared(user);
+    await user.click(screen.getByRole("button", { name: "Repetir página 2 de certificado-a.pdf em Redes com justificativa" }));
+    await user.type(screen.getByLabelText("Justificativa da repetição"), "O mesmo certificado comprova as duas atividades");
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Repetir página" }));
+    expect(screen.getByText(/Repetida: O mesmo certificado comprova as duas atividades/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Salvar arranjo" }));
+    await waitFor(() => expect(calls.some((c) => c.method === "PUT")).toBe(true));
+    expect(putBody(calls).activities[1].pages).toContainEqual({
+      document_id: DOC_1,
+      page: 2,
+      repeat_justification: "O mesmo certificado comprova as duas atividades",
+    });
+  });
+
+  it("a página dona do comprovante (a primeira na ordem) não oferece repetir", async () => {
+    const { user } = setup();
+    await addShared(user);
+    expect(screen.queryByRole("button", { name: "Repetir página 2 de certificado-a.pdf em Algoritmos com justificativa" })).not.toBeInTheDocument();
+  });
+
+  it("a repetição guardada mostra a justificativa e pode ser desfeita", async () => {
+    const view = layoutView();
+    view.layout.activities[1].pages = [{ document_id: DOC_1, page: 2, repeat_justification: "Mesma prova" }];
+    const { user } = setup(view);
+    const redes = await screen.findByRole("listitem", { name: "Redes" });
+    expect(redes).toHaveTextContent("Repetida: Mesma prova");
+    await user.click(screen.getByRole("button", { name: "Desfazer repetição da página 2 de certificado-a.pdf em Redes" }));
+    expect(screen.getByRole("listitem", { name: "Redes" })).not.toHaveTextContent("Repetida:");
+  });
+});
+
+describe("ARR-08: arranjo desatualizado", () => {
+  it("mostra o aviso em português e o que mudou", async () => {
+    const view = layoutView({
+      stale: true,
+      alerts: [{ code: "ARRANJO_DESATUALIZADO", message: "O arranjo está desatualizado." }],
+      staleness: { left_activity_ids: ["x1"], moved_activity_ids: ["x2", "x3"], new_link_activity_ids: [], joined_activity_ids: ["x4"] },
+    });
+    setup(view);
+    expect(await screen.findByText(/O arranjo do Comprovante está desatualizado: as atividades mudaram depois que ele foi salvo/)).toBeInTheDocument();
+    expect(screen.getByText("1 saiu · 2 mudaram de item · 1 entrou")).toBeInTheDocument();
+  });
+
+  it("marca como inválida a página que aponta para documento ou página que não existe mais", async () => {
+    const view = layoutView({ invalid: [{ activity_id: ACT_A, document_id: DOC_1, page: 5 }] });
+    setup(view);
+    const pages = within(await screen.findByRole("listitem", { name: "Algoritmos" })).getAllByRole("listitem");
+    expect(pages[1]).toHaveTextContent("Inválida: o documento ou a página não está mais disponível");
+    expect(pages[0]).not.toHaveTextContent("Inválida");
+  });
+
+  it("sem aviso do servidor não mostra aviso de arranjo desatualizado", async () => {
+    setup();
+    await screen.findByRole("listitem", { name: "Algoritmos" });
+    expect(screen.queryByText(/desatualizado/)).not.toBeInTheDocument();
+  });
+});
