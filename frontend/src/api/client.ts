@@ -60,6 +60,7 @@ export function fieldErrors(error: unknown): Record<string, string> {
 
 /** Human message for any error (non-field). */
 export const TOO_LARGE_MESSAGE = "O arquivo ou o conjunto excede o limite de envio.";
+const FILE_DELETED_MESSAGE = "O arquivo deste documento foi excluído na conclusão do processo";
 
 /** The message of the first item of a 422 `detail` that carries a `code` (a refusal with a reason). */
 function codedMessage(detail: unknown): string | null {
@@ -77,6 +78,8 @@ export function errorMessage(error: unknown): string {
     if (typeof error.detail === "string") return error.detail;
     if (error.status === 413) return TOO_LARGE_MESSAGE;
     if (error.status === 422) return codedMessage(error.detail) ?? "Verifique os campos destacados.";
+    // DEL-12: a 410 is the file of a document the conclusion deleted; the screen shows the reason
+    if (error.status === 410) return codedMessage(error.detail) ?? `${FILE_DELETED_MESSAGE}.`;
     return `Erro ${error.status}`;
   }
   return "Não foi possível contactar o servidor.";

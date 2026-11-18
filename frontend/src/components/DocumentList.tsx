@@ -339,6 +339,7 @@ export function DocumentList({
                 const category = doc.manual_category ?? doc.suggested_category;
                 const busy = ACTIVE_DOCUMENT_STATUSES.includes(doc.status);
                 const outside = doc.outside_interstice === true;
+                const deleted = doc.arquivo_excluido === true; // DEL-12: the conclusion removed the file
                 return (
                   <Fragment key={doc.id}>
                     <tr className={outside ? "doc-outside" : undefined}>
@@ -350,9 +351,13 @@ export function DocumentList({
                         {doc.manual_type && <small className="muted"> (informado por você)</small>}
                         {!doc.manual_type && doc.suggested_type && <small className="muted"> (sugerido pela IA)</small>}
                       </td>
-                      <td data-label="Tamanho">{formatSize(doc.size_bytes)}</td>
+                      <td data-label="Tamanho">
+                        {formatSize(doc.size_bytes)}
+                        {deleted && ` · ${doc.page_count} ${doc.page_count === 1 ? "página" : "páginas"}`}
+                      </td>
                       <td data-label="Status">
                         <span className={`status status-${doc.status}`}>{DOCUMENT_STATUS_LABELS[doc.status]}</span>
+                        {deleted && <span className="badge badge-pending">Arquivo excluído</span>}
                         <StatusNote doc={doc} />
                       </td>
                       <td data-label="Categoria sugerida">
@@ -369,25 +374,29 @@ export function DocumentList({
                       </td>
                       <td data-label="Ações">
                         <div className="row-actions">
-                          <button
-                            type="button"
-                            className="btn btn-primary"
-                            aria-label={`Visualizar ${doc.original_name}`}
-                            title={`Visualizar ${doc.original_name}`}
-                            onClick={() => onView(doc)}
-                          >
-                            Visualizar
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-secondary"
-                            aria-label={`Baixar ${doc.original_name}`}
-                            title={`Baixar ${doc.original_name}`}
-                            onClick={() => download(doc)}
-                          >
-                            Baixar
-                          </button>
-                          {!outside && (
+                          {!deleted && (
+                            <>
+                              <button
+                                type="button"
+                                className="btn btn-primary"
+                                aria-label={`Visualizar ${doc.original_name}`}
+                                title={`Visualizar ${doc.original_name}`}
+                                onClick={() => onView(doc)}
+                              >
+                                Visualizar
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                aria-label={`Baixar ${doc.original_name}`}
+                                title={`Baixar ${doc.original_name}`}
+                                onClick={() => download(doc)}
+                              >
+                                Baixar
+                              </button>
+                            </>
+                          )}
+                          {!outside && !deleted && (
                             <button
                               type="button"
                               className="btn btn-secondary"
@@ -410,17 +419,19 @@ export function DocumentList({
                           >
                             Excluir
                           </button>
-                          <button
-                            type="button"
-                            className="btn btn-secondary"
-                            aria-label={`Reprocessar ${doc.original_name}`}
-                            title={`Reprocessar ${doc.original_name}`}
-                            disabled={busy}
-                            onClick={() => void reprocess(doc)}
-                          >
-                            Reprocessar
-                          </button>
-                          {!outside && producedNoActivity(doc) && (
+                          {!deleted && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              aria-label={`Reprocessar ${doc.original_name}`}
+                              title={`Reprocessar ${doc.original_name}`}
+                              disabled={busy}
+                              onClick={() => void reprocess(doc)}
+                            >
+                              Reprocessar
+                            </button>
+                          )}
+                          {!outside && !deleted && producedNoActivity(doc) && (
                             <button
                               type="button"
                               className="btn btn-primary"

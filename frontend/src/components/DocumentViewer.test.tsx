@@ -162,3 +162,18 @@ describe("CER-02: aviso de enquadramento como curso de curta duração", () => {
     expect(avisos).not.toHaveTextContent("ENQUADRADO_COMO_CAPACITACAO");
   });
 });
+
+describe("DEL-12: documento com o arquivo excluído na conclusão", () => {
+  it("mostra Arquivo excluído no lugar do arquivo e não oferece baixar", () => {
+    view(detail({ arquivo_excluido: true, pages: [], run: null }));
+    expect(screen.getByText("Arquivo excluído")).toBeInTheDocument();
+    expect(screen.getByText(/foi excluído na conclusão do processo/)).toBeInTheDocument();
+    expect(screen.queryByTitle(/Documento ata-defesa\.pdf/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Baixar/ })).not.toBeInTheDocument();
+  });
+
+  it("mantém as atividades ligadas ao documento excluído", () => {
+    view(detail({ arquivo_excluido: true, pages: [], run: null }));
+    expect(screen.getByText("Banca de mestrado de Maria")).toBeInTheDocument();
+  });
+});

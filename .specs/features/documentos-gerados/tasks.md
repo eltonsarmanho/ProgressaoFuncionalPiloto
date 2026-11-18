@@ -2990,8 +2990,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Documento excluído mostra nome, tipo e páginas e o selo `Arquivo excluído`, sem botões de visualizar e baixar; 410 mostra a mensagem em português
-- [ ] Gate quick passa; 4+ testes
+- [x] Documento excluído mostra nome, tipo e páginas e o selo `Arquivo excluído`, sem botões de visualizar e baixar; 410 mostra a mensagem em português
+- [x] Gate quick passa; 4+ testes
 
 **Tests**: unit
 **Gate**: quick

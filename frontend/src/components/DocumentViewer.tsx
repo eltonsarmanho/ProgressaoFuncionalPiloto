@@ -44,7 +44,14 @@ export function DocumentViewer({ doc }: { doc: DocumentDetail }) {
         O que a IA leu deste documento é só uma sugestão: nada vale como validado até você revisar.
       </p>
 
-      <Original doc={doc} />
+      {doc.arquivo_excluido ? (
+        <p role="status">
+          <span className="badge badge-pending">Arquivo excluído</span> O arquivo deste documento foi excluído na conclusão
+          do processo. Ficam o nome, o tipo, o número de páginas e as atividades ligadas.
+        </p>
+      ) : (
+        <Original doc={doc} />
+      )}
 
       {processing && <p>Este documento ainda está sendo processado.</p>}
 

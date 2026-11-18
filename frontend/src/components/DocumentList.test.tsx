@@ -449,3 +449,31 @@ describe("FORA-02 / FORA-04 / FORA-08 / FORA-09: documento fora do interstício"
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
 });
+
+describe("DEL-12: documento com o arquivo excluído na conclusão", () => {
+  const gone = () => doc({ id: "g", original_name: "certificado-antigo.pdf", page_count: 4, arquivo_excluido: true });
+  const nameCell = (name: string) => screen.getByText(name, { selector: "td" });
+
+  it("mostra nome, tipo e páginas e o selo Arquivo excluído", () => {
+    setup([gone()]);
+    const row = nameCell("certificado-antigo.pdf").closest("tr")!;
+    expect(within(row).getByText("Arquivo excluído")).toBeInTheDocument();
+    expect(row).toHaveTextContent("Declaração de banca");
+    expect(row).toHaveTextContent("4 páginas");
+  });
+
+  it("não oferece visualizar, baixar, substituir nem reprocessar", () => {
+    setup([gone()]);
+    expect(screen.queryByRole("button", { name: /Visualizar certificado-antigo\.pdf/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Baixar certificado-antigo\.pdf/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Substituir certificado-antigo\.pdf/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Reprocessar certificado-antigo\.pdf/ })).not.toBeInTheDocument();
+  });
+
+  it("o documento com arquivo continua com visualizar e baixar", () => {
+    setup([gone(), doc()]);
+    expect(screen.getByRole("button", { name: "Visualizar declaracao-banca.pdf" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Baixar declaracao-banca.pdf" })).toBeInTheDocument();
+    expect(screen.getAllByText("Arquivo excluído")).toHaveLength(1);
+  });
+});

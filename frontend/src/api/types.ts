@@ -267,6 +267,8 @@ export type DocumentSummary = {
   uploaded_at: string | null;
   updated_at: string | null;
   version: number;
+  /** DEL-12: the conclusion of the process deleted the input file; only the metadata is left. */
+  arquivo_excluido?: boolean;
   /** Activities (not rejected) that cite the document; sent by the process list only. */
   activity_count?: number;
   /** FORA-01: every dated activity is outside the interstice; the process list sends the fields below. */

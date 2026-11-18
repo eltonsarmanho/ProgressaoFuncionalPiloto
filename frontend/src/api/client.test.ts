@@ -108,4 +108,15 @@ describe("api client", () => {
   it("UIG-05: um erro com detalhe em texto segue mostrando o texto", () => {
     expect(errorMessage(new ApiError(409, "Versão desatualizada"))).toBe("Versão desatualizada");
   });
+
+  it("DEL-12: o 410 de um arquivo excluído mostra a mensagem em português do servidor", () => {
+    const err = new ApiError(410, [
+      { field: "arquivo", code: "ARQUIVO_EXCLUIDO", message: "O arquivo deste documento foi excluído na conclusão do processo" },
+    ]);
+    expect(errorMessage(err)).toBe("O arquivo deste documento foi excluído na conclusão do processo");
+  });
+
+  it("DEL-12: um 410 sem mensagem do servidor ainda diz que o arquivo foi excluído", () => {
+    expect(errorMessage(new ApiError(410, undefined))).toBe("O arquivo deste documento foi excluído na conclusão do processo.");
+  });
 });
