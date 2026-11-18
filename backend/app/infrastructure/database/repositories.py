@@ -1802,6 +1802,15 @@ class SqlReportDraftRepository:
         self._s.flush()
         return self._to_entity(m)
 
+    def edit(
+        self,
+        process_id: UUID,
+        expected_version: int,
+        change: Callable[[tuple[DraftSection, ...]], tuple[DraftSection, ...]],
+        user_id: UUID,
+    ) -> ReportDraft:
+        return self._edit(process_id, expected_version, user_id, change)
+
     def update_entry(
         self, process_id: UUID, expected_version: int, entry: DraftEntry, user_id: UUID
     ) -> ReportDraft:

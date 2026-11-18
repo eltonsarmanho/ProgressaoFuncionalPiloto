@@ -538,6 +538,19 @@ class ReportDraftRepository(Protocol):
         `section_key`; the version goes up by one."""
         ...
 
+    def edit(
+        self,
+        process_id: UUID,
+        expected_version: int,
+        change: Callable[[tuple[DraftSection, ...]], tuple[DraftSection, ...]],
+        user_id: UUID,
+    ) -> ReportDraft:
+        """Locks the row, checks `expected_version` and saves what `change` makes of the
+        sections as they are stored at that moment; the version goes up by one. It lets an edit
+        bring the draft up to date (an activity validated since the last save) in the same
+        write, without ever reading the sections before the lock."""
+        ...
+
     def apply_wording_locked(self, process_id: UUID, section: DraftSection) -> ReportDraft:
         """Locks the row and replaces the entries of the section that are not from the user and
         the warnings of the section with the ones in `section`. The version does not change, so

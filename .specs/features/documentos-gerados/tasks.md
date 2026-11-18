@@ -1994,9 +1994,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] A primeira gravação usa `expected_version: 0` e cria o rascunho; `expected_version` desatualizada responde 409 `VERSAO_DESATUALIZADA`; mais de 20 000 caracteres responde 422
-- [ ] O texto salvo vira fonte `USUARIO` e permanece depois de uma nova leitura; processo CONCLUIDO ou ARQUIVADO responde 409 `PROCESSO_SOMENTE_LEITURA`
-- [ ] Gate full passa; 7+ testes
+- [x] A primeira gravação usa `expected_version: 0` e cria o rascunho; `expected_version` desatualizada responde 409 `VERSAO_DESATUALIZADA`; mais de 20 000 caracteres responde 422
+- [x] O texto salvo vira fonte `USUARIO` e permanece depois de uma nova leitura; processo CONCLUIDO ou ARQUIVADO responde 409 `PROCESSO_SOMENTE_LEITURA`
+- [x] Gate full passa; 7+ testes
 
 **Tests**: integration
 **Gate**: full

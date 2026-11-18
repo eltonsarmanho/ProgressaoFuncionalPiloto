@@ -6,26 +6,33 @@ events carry identifiers, states and codes only, never the text of an entry (AD-
 """
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from uuid import UUID
 
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
 from app.application.services.generation_inputs import GenerationInputs, load_generation_inputs
+from app.application.use_cases.generated_documents import _EditUseCase
 from app.application.use_cases.scoring import _ScoringUseCase
 from app.domain.entities.activity import Activity
+from app.domain.entities.audit import AuditAction
 from app.domain.entities.generated import GenerationAlert
 from app.domain.entities.process import FunctionalProcess
-from app.domain.entities.report import ReportDraft
+from app.domain.entities.report import DraftEntry, DraftSection, EntrySource, ReportDraft
 from app.domain.entities.user import User
+from app.domain.errors import NotFound, ValidationFailed
 from app.domain.repositories.ports import ReportConfigProvider, UnitOfWork
 from app.domain.rules.report_draft import (
     STALE,
     STALE_MESSAGE,
+    ReportConfig,
     empty_sections,
     propose_draft,
     reconcile_draft,
 )
+
+DRAFT_ENTITY = "report_draft"
+MAX_TEXT_LENGTH = 20_000
 
 
 @dataclass(frozen=True)
@@ -53,13 +60,21 @@ def _item_names(inputs: GenerationInputs) -> dict[tuple[int, int], str]:
     }
 
 
-def current_draft(
-    uow: UnitOfWork,
-    process: FunctionalProcess,
-    config_provider: ReportConfigProvider,
-) -> tuple[ReportDraft, bool, GenerationInputs]:
-    """The draft as the generation sees it now, whether it is saved, and the inputs it used.
-    Nothing is written."""
+@dataclass(frozen=True)
+class _Current:
+    """The draft as the generation sees it now: `draft` is the saved one brought up to date, or
+    the proposal; `saved` is the one stored, None when there is none."""
+
+    draft: ReportDraft
+    saved: ReportDraft | None
+    inputs: GenerationInputs
+    config: ReportConfig
+
+
+def _current(
+    uow: UnitOfWork, process: FunctionalProcess, config_provider: ReportConfigProvider
+) -> _Current:
+    """Reads only; nothing is written."""
     inputs = load_generation_inputs(uow, process)
     config = config_provider.load()
     saved = uow.report_drafts.get(process.id)
@@ -67,9 +82,9 @@ def current_draft(
         draft = propose_draft(
             config.template, inputs.activities, config.group_map, process_id=process.id
         )
-        return draft, False, inputs
-    draft = reconcile_draft(saved, inputs.activities, config.template, config.group_map)
-    return draft, True, inputs
+    else:
+        draft = reconcile_draft(saved, inputs.activities, config.template, config.group_map)
+    return _Current(draft, saved, inputs, config)
 
 
 class GetReportDraft(_ScoringUseCase):
@@ -87,13 +102,148 @@ class GetReportDraft(_ScoringUseCase):
         """A read never writes: the first one only proposes (REL-01)."""
         with self._uow_factory() as uow:
             process = self._readable(uow, actor, process_id)
-            draft, saved, inputs = current_draft(uow, process, self._report_config)
+            current = _current(uow, process, self._report_config)
+        draft = current.draft
         stale = any(w.code is STALE for section in draft.sections for w in section.warnings)
         return ReportDraftView(
             draft=draft,
-            saved=saved,
+            saved=current.saved is not None,
             empty_sections=empty_sections(draft),
             alerts=(GenerationAlert(STALE, STALE_MESSAGE),) if stale else (),
-            activities=inputs.activities,
-            item_names=_item_names(inputs),
+            activities=current.inputs.activities,
+            item_names=_item_names(current.inputs),
+        )
+
+
+def _without_stale(sections: tuple[DraftSection, ...]) -> tuple[DraftSection, ...]:
+    """The alert is computed at every read; it is never stored."""
+    return tuple(
+        replace(s, warnings=tuple(w for w in s.warnings if w.code is not STALE)) for s in sections
+    )
+
+
+class _DraftEditUseCase(_EditUseCase):
+    """An edit of the draft: made on the draft brought up to date and saved with the version the
+    user saw, so an activity that arrived since the last save can be edited too (REL-07)."""
+
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        policy: AccessPolicy,
+        report_config: ReportConfigProvider,
+    ) -> None:
+        super().__init__(uow_factory, audit, policy)
+        self._report_config = report_config
+
+    def _save(
+        self,
+        actor: User,
+        process_id: UUID,
+        expected_version: int,
+        operation: str,
+        edit: Callable[[ReportDraft, GenerationInputs, ReportConfig], ReportDraft],
+        check: Callable[[], None] = lambda: None,
+    ) -> ReportDraft:
+        """`edit` makes the new draft from the one brought up to date; the first save creates the
+        draft and needs `expected_version` 0."""
+        with self._uow_factory() as uow:
+            process = self._editable(uow, actor, process_id)
+            check()
+            current = _current(uow, process, self._report_config)
+            inputs, config = current.inputs, current.config
+            with self._versioned():
+                if current.saved is None:
+                    draft = edit(current.draft, inputs, config)
+                    draft = replace(draft, sections=_without_stale(draft.sections))
+                    result = uow.report_drafts.create(draft, actor.id, expected_version)
+                else:
+                    saved = current.saved
+
+                    def change(sections: tuple[DraftSection, ...]) -> tuple[DraftSection, ...]:
+                        now = reconcile_draft(
+                            replace(saved, sections=sections),
+                            inputs.activities,
+                            config.template,
+                            config.group_map,
+                        )
+                        return _without_stale(edit(now, inputs, config).sections)
+
+                    result = uow.report_drafts.edit(process.id, expected_version, change, actor.id)
+            created = current.saved is None
+            self._audit.record(
+                uow,
+                actor.id,
+                DRAFT_ENTITY,
+                process.id,
+                AuditAction.CREATE if created else AuditAction.UPDATE,
+                {"version": result.version - 1},
+                {"version": result.version, "operation": operation},
+            )
+            uow.commit()
+            return result
+
+
+def _checked_length(text: str, field: str) -> None:
+    if len(text) > MAX_TEXT_LENGTH:
+        raise ValidationFailed(field, f"O texto passa de {MAX_TEXT_LENGTH} caracteres")
+
+
+class SaveReportEntry(_DraftEditUseCase):
+    def execute(
+        self, actor: User, process_id: UUID, activity_id: UUID, text: str, expected_version: int
+    ) -> ReportDraft:
+        """The text of one activity becomes the user's and the AI never rewrites it (REL-07).
+        The first save creates the draft (`expected_version` 0); a version that is not the stored
+        one is a 409 `VERSAO_DESATUALIZADA`; more than 20 000 characters is a 422."""
+
+        def edit(draft: ReportDraft, inputs: GenerationInputs, config: ReportConfig):
+            found = False
+            sections = []
+            for section in draft.sections:
+                entries = []
+                for entry in section.entries:
+                    if entry.activity_id == activity_id:
+                        found = True
+                        entry = DraftEntry(activity_id, text, EntrySource.USUARIO)
+                    entries.append(entry)
+                sections.append(replace(section, entries=tuple(entries)))
+            if not found:
+                raise NotFound("Atividade não encontrada no rascunho")
+            return replace(draft, sections=tuple(sections))
+
+        return self._save(
+            actor,
+            process_id,
+            expected_version,
+            "ENTRY",
+            edit,
+            check=lambda: _checked_length(text, "text"),
+        )
+
+
+class SaveReportSection(_DraftEditUseCase):
+    def execute(
+        self, actor: User, process_id: UUID, section_key: str, free_text: str, expected_version: int
+    ) -> ReportDraft:
+        """The free text of a section (REL-07); same version rule and same limit as an entry."""
+
+        def edit(draft: ReportDraft, inputs: GenerationInputs, config: ReportConfig):
+            if all(s.key != section_key for s in draft.sections):
+                raise NotFound("Seção não encontrada")
+            return replace(
+                draft,
+                sections=tuple(
+                    replace(s, free_text=free_text) if s.key == section_key else s
+                    for s in draft.sections
+                ),
+            )
+
+        return self._save(
+            actor,
+            process_id,
+            expected_version,
+            "SECTION",
+            edit,
+            check=lambda: _checked_length(free_text, "free_text"),
         )

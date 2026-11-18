@@ -278,3 +278,48 @@ def test_apply_wording_of_an_unknown_draft_or_section_is_not_found(session_facto
             session_factory,
             lambda r: r.apply_wording_locked(process.id, DraftSection("9.9", "x")),
         )
+
+
+def test_edit_gives_the_change_the_stored_sections_and_saves_its_result_with_the_next_version(
+    session_factory, process, base
+):
+    draft = saved(session_factory, process, base)
+    worded = dataclasses.replace(
+        draft.sections[1],
+        entries=(DraftEntry(draft.sections[1].entries[0].activity_id, "IA", EntrySource.IA),),
+    )
+    repo_call(session_factory, lambda r: r.apply_wording_locked(process.id, worded))
+    seen = []
+
+    def change(sections):
+        seen.append(sections)
+        return tuple(dataclasses.replace(s, free_text="livre") for s in sections)
+
+    result = repo_call(session_factory, lambda r: r.edit(process.id, 1, change, base["admin"].id))
+
+    assert seen[0][1].entries[0].text == "IA"  # the wording applied after the read is there
+    assert result.version == 2
+    stored = get(session_factory, process.id)
+    assert stored == result
+    assert [s.free_text for s in stored.sections] == ["livre"] * len(draft.sections)
+
+
+def test_edit_with_a_stale_version_does_not_call_the_change_and_keeps_the_stored_draft(
+    session_factory, process, base
+):
+    draft = saved(session_factory, process, base)
+    called = []
+
+    with pytest.raises(StaleVersion):
+        repo_call(
+            session_factory,
+            lambda r: r.edit(process.id, 0, lambda s: called.append(s) or s, base["admin"].id),
+        )
+
+    assert called == []
+    assert get(session_factory, process.id) == dataclasses.replace(draft, version=1)
+
+
+def test_edit_of_an_unknown_draft_is_not_found(session_factory, process, base):
+    with pytest.raises(NotFound):
+        repo_call(session_factory, lambda r: r.edit(process.id, 1, lambda s: s, base["admin"].id))

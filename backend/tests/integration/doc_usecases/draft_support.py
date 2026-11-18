@@ -1,13 +1,35 @@
 """Builders for the tests of the report draft, the wording and the arrangement use cases."""
 
+import dataclasses
+
 from app.application.services.generation_inputs import load_generation_inputs
-from app.application.use_cases.report_draft import GetReportDraft
+from app.application.use_cases.report_draft import (
+    GetReportDraft,
+    SaveReportEntry,
+    SaveReportSection,
+)
 from app.domain.rules.report_draft import propose_draft
 from app.infrastructure.documents.config_loader import ReportConfigLoader, load_report_config
 
 
 def get_draft_uc(world) -> GetReportDraft:
     return GetReportDraft(world.uow_factory, world.audit, world.policy, ReportConfigLoader())
+
+
+def save_entry_uc(world) -> SaveReportEntry:
+    return SaveReportEntry(world.uow_factory, world.audit, world.policy, ReportConfigLoader())
+
+
+def save_section_uc(world) -> SaveReportSection:
+    return SaveReportSection(world.uow_factory, world.audit, world.policy, ReportConfigLoader())
+
+
+def set_status(world, status):
+    """Moves the main process to `status` straight in the database."""
+    with world.uow_factory() as uow:
+        current = uow.processes.get(world.process.id)
+        uow.processes.update(dataclasses.replace(current, status=status), current.version)
+        uow.commit()
 
 
 def proposal(world):

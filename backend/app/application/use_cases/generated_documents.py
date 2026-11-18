@@ -10,7 +10,8 @@ import logging
 import resource
 import time
 import uuid
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -39,9 +40,10 @@ from app.domain.entities.generated import (
     GenerationCode,
     GenerationState,
 )
+from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.report import ReportDraft
 from app.domain.entities.user import User
-from app.domain.errors import GenerationRefused, NotFound
+from app.domain.errors import Conflict, GenerationRefused, NotFound, StaleVersion
 from app.domain.repositories.ports import (
     Clock,
     ComprovanteAssembler,
@@ -749,6 +751,28 @@ class RecoverInterruptedGenerations:
             removed,
         )
         return len(generations) + len(jobs)
+
+
+class _EditUseCase(_ScoringUseCase):
+    """The writes of the report draft and of the arrangement of the Comprovante: refused in a
+    concluded or archived process, and a stale `expected_version` answers with its own code."""
+
+    def _editable(self, uow: UnitOfWork, actor: User, process_id: UUID) -> FunctionalProcess:
+        process = self._readable(uow, actor, process_id)
+        if process.status.is_read_only:
+            raise Conflict(
+                "Processo concluído ou arquivado não pode ser alterado",
+                GenerationCode.PROCESSO_SOMENTE_LEITURA.value,
+            )
+        return process
+
+    @staticmethod
+    @contextmanager
+    def _versioned() -> Iterator[None]:
+        try:
+            yield
+        except StaleVersion as error:
+            raise StaleVersion(str(error), GenerationCode.VERSAO_DESATUALIZADA.value) from None
 
 
 GENERATED_NOT_FOUND = "Documento gerado não encontrado"
