@@ -4042,11 +4042,11 @@ T141 → T142 → T143 → T144 → T145
 
 **Done when**:
 
-- [ ] A faixa aparece com a data do documento, as datas do interstício e a cor de alerta; documentos dentro do período não a mostram
-- [ ] Classificar e Criar atividade não aparecem nessa linha
-- [ ] O resumo mostra "N fora do interstício" e o documento não entra em "pendentes de revisão"
-- [ ] Nenhum campo de justificativa
-- [ ] Gate quick passa
+- [x] A faixa aparece com a data do documento, as datas do interstício e a cor de alerta; documentos dentro do período não a mostram
+- [x] Classificar e Criar atividade não aparecem nessa linha
+- [x] O resumo mostra "N fora do interstício" e o documento não entra em "pendentes de revisão"
+- [x] Nenhum campo de justificativa
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

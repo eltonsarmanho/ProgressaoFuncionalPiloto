@@ -269,6 +269,14 @@ export type DocumentSummary = {
   version: number;
   /** Activities (not rejected) that cite the document; sent by the process list only. */
   activity_count?: number;
+  /** FORA-01: every dated activity is outside the interstice; the process list sends the fields below. */
+  outside_interstice?: boolean;
+  /** The most recent date the document states (ISO), with "MONTH" when only month and year are known. */
+  document_date?: string | null;
+  document_date_precision?: "DAY" | "MONTH" | null;
+  /** The interstice the document was judged by (ISO dates). */
+  interstice_start?: string | null;
+  interstice_end?: string | null;
 };
 
 export type TextMethod = "TEXTO" | "OCR";
@@ -291,7 +299,13 @@ export type DocumentRun = {
   created_at: string | null;
 };
 
-export type DocumentAlert = { code: string; field: string | null; activity_index: number | null };
+export type DocumentAlert = {
+  code: string;
+  field: string | null;
+  activity_index: number | null;
+  /** Facts of the outside-the-interstice alert (date and interstice, ISO). */
+  detail?: Record<string, string> | null;
+};
 
 /** A link between an activity and a page of a document (VINC-01). */
 export type Evidence = {

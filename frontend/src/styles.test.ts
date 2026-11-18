@@ -69,6 +69,15 @@ describe("UIM-01 / UIM-02 / UIM-10 / UIM-19: tabelas legíveis e botões", () =>
     expect(css).toMatch(/\.wide-table\s+td\s*{[^}]*overflow-wrap:\s*break-word/);
   });
 
+  it("FORA-02: a faixa do documento fora do interstício tem a cor de alerta e fica presa ao cartão em telas estreitas", () => {
+    expect(css).toMatch(
+      /\.doc-outside-banner\s+td\s*{[^}]*background:\s*#fff4e5[^}]*border-left:\s*4px solid var\(--alerta\)[^}]*color:\s*var\(--alerta\)/,
+    );
+    const narrow = block("@media (max-width: 959px)");
+    expect(narrow).toMatch(/tr\.doc-outside\s*{[^}]*margin-bottom:\s*0/);
+    expect(narrow).toMatch(/\.doc-outside-banner\s+td::before\s*{[^}]*content:\s*none/);
+  });
+
   it("abaixo de 960 px as tabelas largas viram cartões com o rótulo de cada coluna", () => {
     const narrow = block("@media (max-width: 959px)");
     expect(narrow).toMatch(/\.wide-table\s+thead\s*{[^}]*display:\s*none/);

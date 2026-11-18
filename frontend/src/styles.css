@@ -419,6 +419,23 @@ fieldset.grid legend {
   font-weight: 700;
 }
 
+/* FORA-02: the warning of a document outside the interstice is a strip under its row, in the alert colour. */
+.doc-outside td {
+  background: #fff4e5;
+  border-bottom: 0;
+}
+
+.doc-outside-banner td {
+  background: #fff4e5;
+  border-left: 4px solid var(--alerta);
+  color: var(--alerta);
+  font-weight: 600;
+}
+
+.doc-summary {
+  margin: 0.5rem 0;
+}
+
 .doc-frame {
   display: block;
   width: 100%;
@@ -678,6 +695,24 @@ fieldset.grid legend {
     display: block;
     font-size: 0.8rem;
     color: var(--muted);
+  }
+
+  /* The strip stays attached to the card of its document. */
+  .wide-table tr.doc-outside {
+    margin-bottom: 0;
+    border-bottom: 0;
+    border-radius: 6px 6px 0 0;
+    background: #fff4e5;
+  }
+
+  .wide-table tr.doc-outside-banner {
+    border-top: 0;
+    border-radius: 0 0 6px 6px;
+    background: #fff4e5;
+  }
+
+  .wide-table .doc-outside-banner td::before {
+    content: none;
   }
 }
 

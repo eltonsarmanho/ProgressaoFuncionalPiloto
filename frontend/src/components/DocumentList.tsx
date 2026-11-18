@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from "react";
+import { Fragment, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { ApiError, errorMessage, fieldErrors, request } from "../api/client";
 import type { DocumentSummary } from "../api/types";
@@ -9,9 +9,11 @@ import {
   DOCUMENT_TYPE_LABELS,
   LOW_CONFIDENCE,
   NO_ITEM_CODE,
+  OUTSIDE_INTERSTICE_CODE,
   TAXONOMY_LABELS,
   formatDecimal,
   formatSize,
+  outsideIntersticeWarning,
 } from "../labels";
 import { FieldError, errorProps } from "./FieldError";
 import { Modal } from "./Modal";
@@ -67,6 +69,28 @@ function producedNoActivity(doc: DocumentSummary): boolean {
   if (doc.status === "FALHOU" || doc.status === "REQUER_REVISAO" || doc.status === "EXTRAIDO_SEM_IA") return true;
   if (doc.suggested_category === NO_ITEM_CODE) return true;
   return doc.activity_count === 0;
+}
+
+/** FORA-02: the highlighted strip under the row of a document outside the interstice. */
+function OutsideBanner({ doc }: { doc: DocumentSummary }) {
+  return (
+    <tr className="doc-outside-banner">
+      <td colSpan={COLUMNS.length}>{outsideIntersticeWarning(doc) ?? DOCUMENT_CODE_LABELS[OUTSIDE_INTERSTICE_CODE]}</td>
+    </tr>
+  );
+}
+
+/** FORA-08 / FORA-09: the counts of the list; a document outside the interstice is never "pending review". */
+function Summary({ documents }: { documents: DocumentSummary[] }) {
+  const outside = documents.filter((d) => d.outside_interstice).length;
+  const pending = documents.filter((d) => d.status === "REQUER_REVISAO" && !d.outside_interstice).length;
+  const total = documents.length;
+  return (
+    <p className="muted doc-summary" data-testid="doc-summary">
+      {total} {total === 1 ? "documento" : "documentos"} · {pending}{" "}
+      {pending === 1 ? "pendente de revisão" : "pendentes de revisão"} · {outside} fora do interstício
+    </p>
+  );
 }
 
 function Confidence({ doc }: { doc: DocumentSummary }) {
@@ -297,126 +321,137 @@ export function DocumentList({
       {documents.length === 0 ? (
         <p>Nenhum documento enviado neste processo.</p>
       ) : (
-        <table className="scoring-table wide-table doc-table">
-          <thead>
-            <tr>
-              {COLUMNS.map((c) => (
-                <th key={c} scope="col">
-                  {c}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {documents.map((doc) => {
-              const type = doc.manual_type ?? doc.suggested_type;
-              const category = doc.manual_category ?? doc.suggested_category;
-              const busy = ACTIVE_DOCUMENT_STATUSES.includes(doc.status);
-              return (
-                <tr key={doc.id}>
-                  <td data-label="Nome" className="doc-name" title={doc.original_name}>
-                    {doc.original_name}
-                  </td>
-                  <td data-label="Tipo">
-                    {labelOf(DOCUMENT_TYPE_LABELS, type)}
-                    {doc.manual_type && <small className="muted"> (informado por você)</small>}
-                    {!doc.manual_type && doc.suggested_type && <small className="muted"> (sugerido pela IA)</small>}
-                  </td>
-                  <td data-label="Tamanho">{formatSize(doc.size_bytes)}</td>
-                  <td data-label="Status">
-                    <span className={`status status-${doc.status}`}>{DOCUMENT_STATUS_LABELS[doc.status]}</span>
-                    <StatusNote doc={doc} />
-                  </td>
-                  <td data-label="Categoria sugerida">
-                    {category === NO_ITEM_CODE ? "Sem item de pontuação" : labelOf(TAXONOMY_LABELS, category)}
-                    {doc.manual_category ? (
-                      <small className="muted"> (informada por você)</small>
-                    ) : (
-                      category &&
-                      category !== NO_ITEM_CODE && <small className="muted"> (sugerida pela IA)</small>
-                    )}
-                  </td>
-                  <td data-label="Confiança">
-                    <Confidence doc={doc} />
-                  </td>
-                  <td data-label="Ações">
-                    <div className="row-actions">
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        aria-label={`Visualizar ${doc.original_name}`}
-                        title={`Visualizar ${doc.original_name}`}
-                        onClick={() => onView(doc)}
-                      >
-                        Visualizar
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        aria-label={`Baixar ${doc.original_name}`}
-                        title={`Baixar ${doc.original_name}`}
-                        onClick={() => download(doc)}
-                      >
-                        Baixar
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        aria-label={`Substituir ${doc.original_name}`}
-                        title={`Substituir ${doc.original_name}`}
-                        onClick={() => {
-                          replaceTarget.current = doc;
-                          replaceInput.current?.click();
-                        }}
-                      >
-                        Substituir
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-danger"
-                        aria-label={`Excluir ${doc.original_name}`}
-                        title={`Excluir ${doc.original_name}`}
-                        onClick={() => setPanel({ kind: "delete", doc })}
-                      >
-                        Excluir
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        aria-label={`Reprocessar ${doc.original_name}`}
-                        title={`Reprocessar ${doc.original_name}`}
-                        disabled={busy}
-                        onClick={() => void reprocess(doc)}
-                      >
-                        Reprocessar
-                      </button>
-                      {producedNoActivity(doc) && (
-                        <button
-                          type="button"
-                          className="btn btn-primary"
-                          aria-label={`Criar atividade de ${doc.original_name}`}
-                          title={`Criar atividade de ${doc.original_name}`}
-                          onClick={() => onCreateActivity(doc)}
-                        >
-                          Criar atividade
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        aria-label={`Classificar ${doc.original_name}`}
-                        title={`Classificar ${doc.original_name}`}
-                        onClick={() => setPanel({ kind: "classify", doc })}
-                      >
-                        Classificar
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <>
+          <Summary documents={documents} />
+          <table className="scoring-table wide-table doc-table">
+            <thead>
+              <tr>
+                {COLUMNS.map((c) => (
+                  <th key={c} scope="col">
+                    {c}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {documents.map((doc) => {
+                const type = doc.manual_type ?? doc.suggested_type;
+                const category = doc.manual_category ?? doc.suggested_category;
+                const busy = ACTIVE_DOCUMENT_STATUSES.includes(doc.status);
+                const outside = doc.outside_interstice === true;
+                return (
+                  <Fragment key={doc.id}>
+                    <tr className={outside ? "doc-outside" : undefined}>
+                      <td data-label="Nome" className="doc-name" title={doc.original_name}>
+                        {doc.original_name}
+                      </td>
+                      <td data-label="Tipo">
+                        {labelOf(DOCUMENT_TYPE_LABELS, type)}
+                        {doc.manual_type && <small className="muted"> (informado por você)</small>}
+                        {!doc.manual_type && doc.suggested_type && <small className="muted"> (sugerido pela IA)</small>}
+                      </td>
+                      <td data-label="Tamanho">{formatSize(doc.size_bytes)}</td>
+                      <td data-label="Status">
+                        <span className={`status status-${doc.status}`}>{DOCUMENT_STATUS_LABELS[doc.status]}</span>
+                        <StatusNote doc={doc} />
+                      </td>
+                      <td data-label="Categoria sugerida">
+                        {category === NO_ITEM_CODE ? "Sem item de pontuação" : labelOf(TAXONOMY_LABELS, category)}
+                        {doc.manual_category ? (
+                          <small className="muted"> (informada por você)</small>
+                        ) : (
+                          category &&
+                          category !== NO_ITEM_CODE && <small className="muted"> (sugerida pela IA)</small>
+                        )}
+                      </td>
+                      <td data-label="Confiança">
+                        <Confidence doc={doc} />
+                      </td>
+                      <td data-label="Ações">
+                        <div className="row-actions">
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            aria-label={`Visualizar ${doc.original_name}`}
+                            title={`Visualizar ${doc.original_name}`}
+                            onClick={() => onView(doc)}
+                          >
+                            Visualizar
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            aria-label={`Baixar ${doc.original_name}`}
+                            title={`Baixar ${doc.original_name}`}
+                            onClick={() => download(doc)}
+                          >
+                            Baixar
+                          </button>
+                          {!outside && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              aria-label={`Substituir ${doc.original_name}`}
+                              title={`Substituir ${doc.original_name}`}
+                              onClick={() => {
+                                replaceTarget.current = doc;
+                                replaceInput.current?.click();
+                              }}
+                            >
+                              Substituir
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="btn btn-danger"
+                            aria-label={`Excluir ${doc.original_name}`}
+                            title={`Excluir ${doc.original_name}`}
+                            onClick={() => setPanel({ kind: "delete", doc })}
+                          >
+                            Excluir
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            aria-label={`Reprocessar ${doc.original_name}`}
+                            title={`Reprocessar ${doc.original_name}`}
+                            disabled={busy}
+                            onClick={() => void reprocess(doc)}
+                          >
+                            Reprocessar
+                          </button>
+                          {!outside && producedNoActivity(doc) && (
+                            <button
+                              type="button"
+                              className="btn btn-primary"
+                              aria-label={`Criar atividade de ${doc.original_name}`}
+                              title={`Criar atividade de ${doc.original_name}`}
+                              onClick={() => onCreateActivity(doc)}
+                            >
+                              Criar atividade
+                            </button>
+                          )}
+                          {!outside && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              aria-label={`Classificar ${doc.original_name}`}
+                              title={`Classificar ${doc.original_name}`}
+                              onClick={() => setPanel({ kind: "classify", doc })}
+                            >
+                              Classificar
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                    {outside && <OutsideBanner doc={doc} />}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </>
       )}
       {panel?.kind === "delete" && (
         <ConfirmDelete key={panel.doc.id} doc={panel.doc} onDone={done} onCancel={() => setPanel(null)} />

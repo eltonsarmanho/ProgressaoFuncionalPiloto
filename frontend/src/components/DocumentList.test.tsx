@@ -337,3 +337,95 @@ describe("TELA-07 / TELA-09: avisos do documento", () => {
     expect(screen.queryByRole("button", { name: /Criar atividade/ })).not.toBeInTheDocument();
   });
 });
+
+describe("FORA-02 / FORA-04 / FORA-08 / FORA-09: documento fora do interstício", () => {
+  const OUTSIDE = "DOCUMENTO_FORA_DO_INTERSTICIO";
+  const outside = (over: Partial<DocumentSummary> = {}) =>
+    doc({
+      id: "o",
+      original_name: "antigo.pdf",
+      status_code: OUTSIDE,
+      suggested_category: null,
+      confidence: null,
+      activity_count: 0,
+      outside_interstice: true,
+      document_date: "2022-03-10",
+      document_date_precision: "DAY",
+      interstice_start: "2024-11-23",
+      interstice_end: "2026-11-23",
+      ...over,
+    });
+  const nameCell = (name: string) => screen.getByText(name, { selector: "td" });
+  const buttonsOf = (name: string) =>
+    within(nameCell(name).closest("tr")!)
+      .getAllByRole("button")
+      .map((b) => b.textContent);
+
+  it("mostra a faixa com a data do documento e as datas do interstício, na cor de alerta", () => {
+    setup([outside()]);
+    const banner = screen.getByText(
+      "Data do documento 10/03/2022, fora do interstício (23/11/2024 a 23/11/2026): não será processado nas próximas etapas",
+    );
+    expect(banner.closest("tr")).toHaveClass("doc-outside-banner");
+    expect(nameCell("antigo.pdf").closest("tr")).toHaveClass("doc-outside");
+  });
+
+  it("com precisão de mês mostra o mês e o ano da data do documento", () => {
+    setup([outside({ document_date: "2022-03-01", document_date_precision: "MONTH" })]);
+    expect(
+      screen.getByText(/^Data do documento 03\/2022, fora do interstício \(23\/11\/2024 a 23\/11\/2026\)/),
+    ).toBeInTheDocument();
+  });
+
+  it("um documento dentro do período não mostra a faixa", () => {
+    setup([doc()]);
+    expect(screen.queryByText(/Data do documento/)).not.toBeInTheDocument();
+    expect(nameCell("declaracao-banca.pdf").closest("tr")).not.toHaveClass("doc-outside");
+  });
+
+  it("a linha só tem Visualizar, Baixar, Excluir e Reprocessar, sem Classificar, Criar atividade nem Substituir", () => {
+    setup([outside()]);
+    expect(buttonsOf("antigo.pdf")).toEqual(["Visualizar", "Baixar", "Excluir", "Reprocessar"]);
+    expect(screen.queryByRole("button", { name: /Criar atividade|Classificar|Substituir/ })).not.toBeInTheDocument();
+  });
+
+  it("Reprocessar continua chamando a API e recarrega a lista", async () => {
+    const { calls, onChanged, user } = setup([outside()], {
+      "POST /api/documents/o/reprocess": { status: 202, body: outside({ status: "PENDENTE" }) },
+    });
+    await user.click(screen.getByRole("button", { name: "Reprocessar antigo.pdf" }));
+    await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
+    expect(calls.map((c) => `${c.method} ${c.path}`)).toEqual(["POST /api/documents/o/reprocess"]);
+  });
+
+  it("o documento processado fora do período não mostra aviso de revisão nem categoria de item", () => {
+    setup([outside()]);
+    const row = nameCell("antigo.pdf").closest("tr")!;
+    expect(row).toHaveTextContent("Processado");
+    expect(row).not.toHaveTextContent(/Requer revisão|Sem item de pontuação|Baixa confiança/);
+  });
+
+  it("o resumo conta os documentos, os pendentes de revisão e os fora do interstício", () => {
+    setup([
+      doc(),
+      outside(),
+      outside({ id: "o2", original_name: "antigo2.pdf" }),
+      doc({ id: "r", original_name: "revisao.pdf", status: "REQUER_REVISAO", status_code: "TEXTO_ILEGIVEL" }),
+    ]);
+    const summary = screen.getByTestId("doc-summary");
+    expect(summary).toHaveTextContent("4 documentos");
+    expect(summary).toHaveTextContent("1 pendente de revisão");
+    expect(summary).toHaveTextContent("2 fora do interstício");
+  });
+
+  it("sem documentos fora do período o resumo mostra 0 fora do interstício", () => {
+    setup([doc()]);
+    expect(screen.getByTestId("doc-summary")).toHaveTextContent("0 fora do interstício");
+  });
+
+  it("não há campo de justificativa na lista nem na faixa", () => {
+    setup([outside()]);
+    expect(screen.queryByLabelText(/justificativa/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+});

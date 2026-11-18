@@ -131,10 +131,30 @@ export const DOCUMENT_CODE_LABELS: Record<string, string> = {
   INDEXACAO_NAO_COMPROVADA: "Indexação do periódico não comprovada no texto: item de artigo não indexado, confira",
   ENQUADRADO_COMO_CAPACITACAO:
     "Certificado de participação com carga horária: enquadrado como curso de curta duração (VII.10) pelo sistema, confira",
+  DOCUMENTO_FORA_DO_INTERSTICIO: "Documento fora do interstício: não será processado nas próximas etapas",
   ERRO_INTERNO: "Erro interno",
 };
 
 export const NO_ITEM_CODE = "SEM_ITEM_DE_PONTUACAO";
+export const OUTSIDE_INTERSTICE_CODE = "DOCUMENTO_FORA_DO_INTERSTICIO";
+
+/** "2024-11-23" -> "23/11/2024"; with month precision "2022-03-01" -> "03/2022". */
+export function formatDocumentDate(iso: string, precision: "DAY" | "MONTH" | null | undefined): string {
+  const [y, m] = iso.split("-");
+  return precision === "MONTH" ? `${m}/${y}` : formatDate(iso);
+}
+
+/** FORA-02: the warning of a document outside the interstice; null when the API sent no dates. */
+export function outsideIntersticeWarning(doc: {
+  document_date?: string | null;
+  document_date_precision?: "DAY" | "MONTH" | null;
+  interstice_start?: string | null;
+  interstice_end?: string | null;
+}): string | null {
+  if (!doc.document_date || !doc.interstice_start || !doc.interstice_end) return null;
+  const when = formatDocumentDate(doc.document_date, doc.document_date_precision);
+  return `Data do documento ${when}, fora do interstício (${formatDate(doc.interstice_start)} a ${formatDate(doc.interstice_end)}): não será processado nas próximas etapas`;
+}
 
 export const TAXONOMY_LABELS: Record<string, string> = {
   DISCIPLINA_MINISTRADA: "Disciplina ministrada",
