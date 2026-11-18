@@ -127,6 +127,7 @@ export const DOCUMENT_CODE_LABELS: Record<string, string> = {
   DATA_PARCIAL: "Data só com mês e ano: confira o período",
   DATA_FIM_DERIVADA: "Data final calculada do prazo da portaria: confira",
   DATA_FIM_AUSENTE: "Sem data final na portaria: quantidade estimada até o fim do interstício",
+  INDEXACAO_NAO_COMPROVADA: "Indexação do periódico não comprovada no texto: item de artigo não indexado, confira",
   ERRO_INTERNO: "Erro interno",
 };
 

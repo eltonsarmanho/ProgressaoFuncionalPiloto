@@ -141,3 +141,14 @@ describe("SEG-11: avisos de data parcial e de dispensa", () => {
     expect(avisos).not.toHaveTextContent("CLAUSULA_DE_DISPENSA");
   });
 });
+
+describe("TER-06: aviso de indexação não comprovada", () => {
+  it("mostra em português que o artigo ficou no item não indexado", () => {
+    view(detail({ alerts: [{ code: "INDEXACAO_NAO_COMPROVADA", field: null, activity_index: 0 }] }));
+    const avisos = screen.getByRole("region", { name: "Avisos" });
+    expect(
+      within(avisos).getByText(/Indexação do periódico não comprovada no texto: item de artigo não indexado, confira/),
+    ).toBeInTheDocument();
+    expect(avisos).not.toHaveTextContent("INDEXACAO_NAO_COMPROVADA");
+  });
+});

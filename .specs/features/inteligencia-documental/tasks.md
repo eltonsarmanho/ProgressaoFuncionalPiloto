@@ -2847,10 +2847,10 @@ T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T104 → T10
 
 **Done when**:
 
-- [ ] Artigo sintético com "Scopus" ou "Qualis A1" mantém o item; sem prova vira VIII.11 com `INDEXACAO_NAO_COMPROVADA` e revisão; "não indexado" não é prova
-- [ ] As descrições de VIII.9, VIII.10 e VIII.11 em `ufpa.json` são lidas pelo teste e a regra só vale para os itens que exigem indexação
-- [ ] O rótulo do aviso tem teste no frontend
-- [ ] Gate build passa (backend e frontend)
+- [x] Artigo sintético com "Scopus" ou "Qualis A1" mantém o item; sem prova vira VIII.11 com `INDEXACAO_NAO_COMPROVADA` e revisão; "não indexado" não é prova
+- [x] As descrições de VIII.9, VIII.10 e VIII.11 em `ufpa.json` são lidas pelo teste e a regra só vale para os itens que exigem indexação
+- [x] O rótulo do aviso tem teste no frontend
+- [x] Gate build passa (backend e frontend)
 
 **Tests**: unit + unit (frontend)
 **Gate**: build

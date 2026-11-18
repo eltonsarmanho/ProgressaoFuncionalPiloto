@@ -171,6 +171,31 @@ def confirm_board_document(taxonomy: T, document_type: DocumentType, text: str) 
     return taxonomy
 
 
+_INDEXED_ARTICLES = frozenset({T.ARTIGO_INTERNACIONAL_INDEXADO, T.ARTIGO_NACIONAL_INDEXADO})
+_NOT_INDEXED = re.compile(
+    r"\b(?:nao|sem|not|non)[\s-]+(?:(?:e|is|are|foi|sao|esta|estao|being)\s+)?"
+    r"(?:indexad\w*|indexacao|indexed)\b"
+)
+_INDEXING_EVIDENCE = re.compile(
+    r"\b(?:scopus|web of science|wos|jcr|journal citation reports?|qualis|scielo|doaj|latindex|"
+    r"pubmed|medline|indexad[oa]s?|indexacao|indexed|indexing)\b"
+)
+
+
+def confirm_article_indexing(taxonomy: T, text: str) -> T:
+    """The indexed article items (VIII.9, VIII.10) need proof of indexing in the text (TER-06).
+
+    The official table words them "revista indexada (ISSN) ... Qualis CAPES"; an ISSN alone
+    proves nothing. Without a mention of a known index (Scopus, Web of Science, JCR, Qualis,
+    SciELO, DOAJ, "indexado", "indexação") the article falls to the non-indexed item (VIII.11).
+    "Não indexada" and "sem indexação" are not evidence.
+    """
+    if taxonomy not in _INDEXED_ARTICLES:
+        return taxonomy
+    claimed = _NOT_INDEXED.sub(" ", normalize_title(text))
+    return taxonomy if _INDEXING_EVIDENCE.search(claimed) else T.ARTIGO_NAO_INDEXADO
+
+
 _EXTENSION_PROJECTS = frozenset({T.EXTENSAO_PROJETO_COORDENACAO, T.EXTENSAO_PROJETO_PARTICIPACAO})
 _PAPIM_WORDING = re.compile(r"\bpapim\b|intervencao metodologica")
 

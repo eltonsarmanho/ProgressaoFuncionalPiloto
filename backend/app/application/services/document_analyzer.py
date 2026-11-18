@@ -54,6 +54,7 @@ from app.domain.rules.scoring_periods import (
 )
 from app.domain.rules.suggestion_rules import (
     Item,
+    confirm_article_indexing,
     confirm_board_document,
     confirm_extension_course,
     confirm_extension_project,
@@ -293,6 +294,11 @@ class DocumentAnalyzer:
         taxonomy = confirm_extension_course(taxonomy, document_text)
         taxonomy = confirm_extension_project(taxonomy, document_text)
         taxonomy = confirm_research_coordination(taxonomy, document_text, professor_name)
+        claimed = taxonomy
+        taxonomy = confirm_article_indexing(taxonomy, document_text)
+        unproven_indexing = taxonomy is not claimed
+        if unproven_indexing:
+            run.alerts.append(DocAlert(DocAlertCode.INDEXACAO_NAO_COMPROVADA, None, index))
         suggestion = suggest_item(taxonomy, activity.level)
         if suggestion.principal is None:
             run.alerts.append(DocAlert(DocAlertCode.SEM_ITEM_DE_PONTUACAO, None, index))
@@ -312,6 +318,7 @@ class DocumentAnalyzer:
         confidence = final_confidence(raw.confidence, grounded.grounded_ratio)
         crosses_limit = precision is PeriodPrecision.MONTH and period is PeriodState.PARCIAL
         open_ended = yearly and is_open_ended(activity)
+        flagged = crosses_limit or open_ended or unproven_indexing
         return SuggestedActivity(
             source_index=index,
             extracted=activity,
@@ -319,7 +326,7 @@ class DocumentAnalyzer:
             page=activity.page,
             excerpt=_excerpt(activity.evidence_text, pages.get(activity.page, "")),
             confidence=confidence,
-            needs_review=needs_review(confidence) or crosses_limit or open_ended,
+            needs_review=needs_review(confidence) or flagged,
             group_number=principal.group if principal else None,
             item_number=principal.item if principal else None,
             candidates=tuple(
