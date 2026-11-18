@@ -96,3 +96,27 @@ def add_annotation(page: pymupdf.Page, kind: str) -> None:
         annot.update()
     else:
         raise ValueError(kind)
+
+
+def write_image(path, fmt: str, size: tuple[int, int], dpi=None, mode: str = "RGB") -> bytes:
+    """A flat-color image file of `fmt` (JPEG or PNG) with the given pixels and dpi; flat colors
+    keep the file small, so a very large picture costs the test no memory to store."""
+    image = Image.new(mode, size, 255 if mode in ("L", "1") else (200, 120, 40))
+    options = {} if dpi is None else {"dpi": (dpi, dpi)}
+    image.save(path, format=fmt, **options)
+    return path.read_bytes()
+
+
+def write_png_header_only(path, size: tuple[int, int]) -> None:
+    """A PNG with a header of `size` and picture data that is not data: Pillow can read its
+    dimensions, but nothing can decode it."""
+    import struct
+    import zlib
+
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        crc = struct.pack(">I", zlib.crc32(kind + data))
+        return struct.pack(">I", len(data)) + kind + data + crc
+
+    header = struct.pack(">IIBBBBB", size[0], size[1], 8, 0, 0, 0, 0)
+    body = chunk(b"IHDR", header) + chunk(b"IDAT", b"not a picture") + chunk(b"IEND", b"")
+    path.write_bytes(b"\x89PNG\r\n\x1a\n" + body)

@@ -1593,10 +1593,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] JPEG de 40 megapixels entra e o pico de memória sobe menos de 40 MB; PNG de 12 megapixels entra e o de 12 megapixels mais um pixel levanta `IMAGEM_GRANDE_DEMAIS` antes de decodificar
-- [ ] Página rotacionada com CropBox menor sai rasterizada com o conteúdo visível preservado e o alerta traz documento e página
-- [ ] Página PDF de 52 megapixels (JPEG de 5 MB) é anexada sem rasterizar e sem falhar
-- [ ] Gate quick passa; 10+ testes
+- [x] JPEG de 40 megapixels entra e o pico de memória sobe menos de 40 MB; PNG de 12 megapixels entra e o de 12 megapixels mais um pixel levanta `IMAGEM_GRANDE_DEMAIS` antes de decodificar
+- [x] Página rotacionada com CropBox menor sai rasterizada com o conteúdo visível preservado e o alerta traz documento e página
+- [x] Página PDF de 52 megapixels (JPEG de 5 MB) é anexada sem rasterizar e sem falhar
+- [x] Gate quick passa; 10+ testes
 
 **Tests**: unit
 **Gate**: quick
