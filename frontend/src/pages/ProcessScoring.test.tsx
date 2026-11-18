@@ -190,7 +190,7 @@ describe("ProcessScoring", () => {
     expect(calls.filter((c) => c.method === "GET" && c.path === "/api/processes/proc-1/scoring")).toHaveLength(2);
   });
 
-  it("TELA-04: edita uma atividade com justificativa e recarrega o resultado", async () => {
+  it("TELA-04: edita uma atividade sem justificativa e recarrega o resultado", async () => {
     let total = "40.00";
     const { calls } = mockFetch({
       ...baseRoutes(() => result(total, [ROW])),
@@ -206,7 +206,7 @@ describe("ProcessScoring", () => {
     const quantidade = await screen.findByLabelText("Quantidade");
     await user.clear(quantidade);
     await user.type(quantidade, "5");
-    await user.type(screen.getByLabelText("Justificativa da alteração"), "Ata corrigida");
+    expect(screen.queryByLabelText("Justificativa da alteração")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
     await waitFor(() =>
       expect(screen.getByText("Total geral", { selector: "dt" }).nextElementSibling).toHaveTextContent("50,00"),
@@ -214,10 +214,9 @@ describe("ProcessScoring", () => {
     const put = calls.find((c) => c.method === "PUT")!;
     expect(JSON.parse(put.init!.body as string)).toMatchObject({
       quantidade: 5,
-      justificativa: "Ata corrigida",
       expected_version: 3,
     });
-    expect(screen.queryByLabelText("Justificativa da alteração")).not.toBeInTheDocument();
+    expect(JSON.parse(put.init!.body as string)).not.toHaveProperty("justificativa");
   });
 
   it("validar e rejeitar chamam o endpoint de status com justificativa e expected_version", async () => {

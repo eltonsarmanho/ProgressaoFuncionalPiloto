@@ -139,29 +139,18 @@ describe("ActivityForm", () => {
     });
   });
 
-  it("TELA-04: na edição, sem justificativa não envia e mostra o erro junto ao campo", async () => {
-    const { calls } = mockFetch({});
-    render(<ActivityForm processId="p1" groups={GROUPS} activity={SAVED} onSaved={vi.fn()} />);
-    const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
-    expect(calls).toHaveLength(0);
-    const field = screen.getByLabelText("Justificativa da alteração");
-    expect(field).toHaveAttribute("aria-invalid", "true");
-    expect(screen.getByText("Informe a justificativa da alteração.")).toBeInTheDocument();
-  });
-
-  it("TELA-04: na edição, com justificativa envia PUT com expected_version", async () => {
+  it("UIM-17: na edição não há campo de justificativa e o PUT sai sem ela, com expected_version", async () => {
     const { calls } = mockFetch({ "PUT /api/activities/a1": { status: 200, body: { ...SAVED, version: 4 } } });
     const onSaved = vi.fn();
     render(<ActivityForm processId="p1" groups={GROUPS} activity={SAVED} onSaved={onSaved} />);
     const user = userEvent.setup();
+    expect(screen.queryByLabelText(/Justificativa/)).not.toBeInTheDocument();
     await user.clear(screen.getByLabelText("Quantidade"));
     await user.type(screen.getByLabelText("Quantidade"), "5");
-    await user.type(screen.getByLabelText("Justificativa da alteração"), "Corrigido conforme ata");
     await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
     const body = JSON.parse(calls[0].init!.body as string);
     expect(body.expected_version).toBe(3);
-    expect(body.justificativa).toBe("Corrigido conforme ata");
+    expect(body).not.toHaveProperty("justificativa");
     expect(body.quantidade).toBe(5);
     expect(onSaved).toHaveBeenCalledWith({ ...SAVED, version: 4 });
   });
@@ -190,16 +179,16 @@ describe("ActivityForm", () => {
     expect(onSaved).not.toHaveBeenCalled();
   });
 
-  it("TELA-04: pontuação manual exige justificativa mesmo na criação", async () => {
-    const { calls } = mockFetch({});
+  it("UIM-17: pontuação manual na criação também não pede justificativa e é enviada", async () => {
+    const { calls } = mockFetch({ "POST /api/processes/p1/activities": { status: 201, body: SAVED } });
     render(<ActivityForm processId="p1" groups={GROUPS} onSaved={vi.fn()} />);
     const user = await pick("1");
-    expect(screen.queryByLabelText("Justificativa da alteração")).not.toBeInTheDocument();
     await user.type(screen.getByLabelText("Título"), "Aulas");
     await user.type(screen.getByLabelText("Pontuação manual (substitui o cálculo)"), "12");
-    expect(screen.getByLabelText("Justificativa da alteração")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Justificativa/)).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
-    expect(calls).toHaveLength(0);
-    expect(screen.getByText("Informe a justificativa da alteração.")).toBeInTheDocument();
+    const body = JSON.parse(calls[0].init!.body as string);
+    expect(body.points_override).toBe(12);
+    expect(body).not.toHaveProperty("justificativa");
   });
 });

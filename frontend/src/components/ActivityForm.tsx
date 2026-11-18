@@ -20,7 +20,6 @@ type Form = {
   course_hours: string;
   points_override: string;
   informed_points: string;
-  justificativa: string;
 };
 
 const str = (v: string | number | null | undefined) => (v == null ? "" : String(v));
@@ -42,7 +41,6 @@ function toForm(a?: Activity): Form {
     course_hours: str(a?.course_hours),
     points_override: str(a?.points_override),
     informed_points: str(a?.informed_points),
-    justificativa: "",
   };
 }
 
@@ -58,7 +56,7 @@ const TEXT = [
   "level",
 ] as const;
 
-/** TELA-04 / TELA-05: fields follow the criterion mode; edit requires the justificativa. */
+/** TELA-04 / TELA-05: fields follow the criterion mode. No justification field (UIM-17). */
 export function ActivityForm({
   processId,
   groups,
@@ -86,15 +84,10 @@ export function ActivityForm({
       ? "CARGA_SEMANAL"
       : (criterion?.mode ?? null);
   const isEdit = Boolean(activity);
-  const needsJustification = isEdit || form.points_override.trim() !== "";
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    if (needsJustification && form.justificativa.trim() === "") {
-      setErrors({ justificativa: "Informe a justificativa da alteração." });
-      return;
-    }
     const body: Record<string, unknown> = {};
     for (const f of TEXT) {
       const v = form[f].trim();
@@ -106,7 +99,6 @@ export function ActivityForm({
       const v = form[f].trim();
       if (v !== "") body[f] = Number.isNaN(Number(v)) ? v : Number(v);
     }
-    if (form.justificativa.trim() !== "") body.justificativa = form.justificativa.trim();
 
     setBusy(true);
     setErrors({});
@@ -230,8 +222,6 @@ export function ActivityForm({
       )}
 
       {input("evidence_note", "Comprovante")}
-
-      {needsJustification && textarea("justificativa", "Justificativa da alteração")}
 
       {error && (
         <p role="alert" className="error">

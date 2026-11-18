@@ -3626,10 +3626,10 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Editar uma atividade e informar pontos manuais não mostram campo de justificativa e enviam o `PUT` sem `justificativa`
-- [ ] O formulário não bloqueia o envio por falta de justificativa; o 422 de outros campos aparece junto do campo
-- [ ] Os testes que exigiam a justificativa foram trocados pelos novos, sem enfraquecer a cobertura
-- [ ] Gate quick passa
+- [x] Editar uma atividade e informar pontos manuais não mostram campo de justificativa e enviam o `PUT` sem `justificativa`
+- [x] O formulário não bloqueia o envio por falta de justificativa; o 422 de outros campos aparece junto do campo
+- [x] Os testes que exigiam a justificativa foram trocados pelos novos, sem enfraquecer a cobertura
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

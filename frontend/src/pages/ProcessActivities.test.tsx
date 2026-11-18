@@ -92,13 +92,13 @@ describe("TELA-06: página da Etapa 3", () => {
     await waitFor(() => expect(count(calls, LIST)).toBe(2));
   });
 
-  it("editar recarrega a lista depois de salvar com justificativa", async () => {
+  it("editar recarrega a lista depois de salvar, sem justificativa", async () => {
     const { calls, user } = renderPage({
       [LIST]: { status: 200, body: [activity()] },
       "PUT /api/activities/a1": { status: 200, body: activity({ title: "Banca corrigida" }) },
     });
     await user.click(await screen.findByRole("button", { name: "Editar Banca de mestrado" }));
-    await user.type(screen.getByLabelText("Justificativa da alteração"), "Corrigi o título");
+    expect(screen.queryByLabelText("Justificativa da alteração")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
     await waitFor(() => expect(count(calls, LIST)).toBe(2));
   });

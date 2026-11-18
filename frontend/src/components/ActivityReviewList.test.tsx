@@ -170,17 +170,18 @@ describe("REV-03: validar e rejeitar", () => {
   });
 });
 
-describe("REV-02: editar com justificativa", () => {
-  it("abre o formulário de edição, que exige a justificativa, e recarrega após salvar", async () => {
+describe("REV-02: editar sem justificativa (UIM-17)", () => {
+  it("abre o formulário de edição, sem campo de justificativa, e recarrega após salvar", async () => {
     const { calls, onChanged, user } = setup([activity()], { "PUT /api/activities/a1": { status: 200, body: activity({ title: "Banca corrigida" }) } });
     await user.click(screen.getByRole("button", { name: "Editar Banca de mestrado de Maria" }));
     const title = screen.getByLabelText("Título");
     await user.clear(title);
     await user.type(title, "Banca corrigida");
-    await user.type(screen.getByLabelText("Justificativa da alteração"), "Título errado");
+    expect(screen.queryByLabelText("Justificativa da alteração")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
-    expect(body(calls[0].init)).toMatchObject({ title: "Banca corrigida", expected_version: 4, justificativa: "Título errado" });
+    expect(body(calls[0].init)).toMatchObject({ title: "Banca corrigida", expected_version: 4 });
+    expect(body(calls[0].init)).not.toHaveProperty("justificativa");
   });
 });
 
