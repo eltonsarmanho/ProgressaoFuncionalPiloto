@@ -123,8 +123,81 @@ def upgrade() -> None:
         "FOR EACH ROW EXECUTE FUNCTION generated_files_immutable()"
     )
 
+    op.create_table(
+        "report_wording_jobs",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("process_id", sa.UUID(), nullable=False),
+        sa.Column("section_key", sa.String(length=20), nullable=False),
+        sa.Column("state", state, nullable=False),
+        sa.Column("requested_by", sa.UUID(), nullable=False),
+        sa.Column("requested_at", TIMESTAMP, server_default=sa.func.now(), nullable=False),
+        sa.Column("started_at", TIMESTAMP, nullable=True),
+        sa.Column("finished_at", TIMESTAMP, nullable=True),
+        sa.Column("error_code", sa.String(length=40), nullable=True),
+        # [{code, reason?}]: the warnings the wording gave the section.
+        sa.Column("warnings", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.ForeignKeyConstraint(["process_id"], ["functional_processes.id"]),
+        sa.ForeignKeyConstraint(["requested_by"], ["users.id"]),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    # REL-13: one wording per process and section at a time, without a race.
+    op.create_index(
+        "uq_report_wording_jobs_generating",
+        "report_wording_jobs",
+        ["process_id", "section_key"],
+        unique=True,
+        postgresql_where=sa.text("state = 'GERANDO'"),
+    )
+    op.create_index(
+        "ix_report_wording_jobs_history",
+        "report_wording_jobs",
+        ["process_id", "section_key", sa.text("requested_at DESC")],
+    )
+
+    op.create_table(
+        "report_drafts",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("process_id", sa.UUID(), nullable=False),
+        sa.Column("template_id", sa.String(length=60), nullable=False),
+        sa.Column("template_version", sa.Integer(), nullable=False),
+        sa.Column("content", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("version", sa.Integer(), nullable=False),
+        sa.Column("created_by", sa.UUID(), nullable=False),
+        sa.Column("created_at", TIMESTAMP, server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_by", sa.UUID(), nullable=False),
+        sa.Column("updated_at", TIMESTAMP, server_default=sa.func.now(), nullable=False),
+        sa.ForeignKeyConstraint(["process_id"], ["functional_processes.id"]),
+        sa.ForeignKeyConstraint(["created_by"], ["users.id"]),
+        sa.ForeignKeyConstraint(["updated_by"], ["users.id"]),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("process_id", name="uq_report_drafts_process"),
+    )
+
+    op.create_table(
+        "comprovante_layouts",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("process_id", sa.UUID(), nullable=False),
+        sa.Column("content", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("version", sa.Integer(), nullable=False),
+        sa.Column("updated_by", sa.UUID(), nullable=False),
+        sa.Column("updated_at", TIMESTAMP, server_default=sa.func.now(), nullable=False),
+        sa.ForeignKeyConstraint(["process_id"], ["functional_processes.id"]),
+        sa.ForeignKeyConstraint(["updated_by"], ["users.id"]),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("process_id", name="uq_comprovante_layouts_process"),
+    )
+
+    # DEL-05, DEL-06: set when the conclusion removed the file; existing documents stay NULL.
+    op.add_column("documents", sa.Column("file_deleted_at", TIMESTAMP, nullable=True))
+
 
 def downgrade() -> None:
+    op.drop_column("documents", "file_deleted_at")
+    op.drop_table("comprovante_layouts")
+    op.drop_table("report_drafts")
+    op.drop_index("ix_report_wording_jobs_history", table_name="report_wording_jobs")
+    op.drop_index("uq_report_wording_jobs_generating", table_name="report_wording_jobs")
+    op.drop_table("report_wording_jobs")
     op.execute("DROP TRIGGER IF EXISTS generated_files_guard ON generated_files")
     op.execute("DROP FUNCTION IF EXISTS generated_files_immutable()")
     op.drop_table("generated_files")

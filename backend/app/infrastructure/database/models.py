@@ -351,6 +351,8 @@ class DocumentModel(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     version: Mapped[int] = mapped_column(Integer, default=1)
+    # Set when the conclusion removed the file (DEL-05); only ever goes from NULL to a date.
+    file_deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class ExtractionRunModel(Base):
@@ -490,3 +492,72 @@ class GeneratedFileModel(Base):
     sha256: Mapped[str] = mapped_column(CHAR(64))
     size_bytes: Mapped[int] = mapped_column(BigInteger)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ReportWordingJobModel(Base):
+    """Background request to word one section of the report (REL-13)."""
+
+    __tablename__ = "report_wording_jobs"
+    __table_args__ = (
+        Index(
+            "uq_report_wording_jobs_generating",
+            "process_id",
+            "section_key",
+            unique=True,
+            postgresql_where=text("state = 'GERANDO'"),
+        ),
+        Index(
+            "ix_report_wording_jobs_history", "process_id", "section_key", text("requested_at DESC")
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    process_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_processes.id")
+    )
+    section_key: Mapped[str] = mapped_column(String(20))
+    state: Mapped[GenerationState] = mapped_column(_enum(GenerationState, "generated_state"))
+    requested_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    requested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(40))
+    warnings: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
+
+
+class ReportDraftModel(Base):
+    """The saved draft of the report: one per process, edited with an optimistic lock."""
+
+    __tablename__ = "report_drafts"
+    __table_args__ = (UniqueConstraint("process_id", name="uq_report_drafts_process"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    process_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_processes.id")
+    )
+    template_id: Mapped[str] = mapped_column(String(60))
+    template_version: Mapped[int] = mapped_column(Integer)
+    content: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    version: Mapped[int] = mapped_column(Integer)
+    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ComprovanteLayoutModel(Base):
+    """The saved arrangement of the Comprovante: one per process, optimistic lock by `version`."""
+
+    __tablename__ = "comprovante_layouts"
+    __table_args__ = (UniqueConstraint("process_id", name="uq_comprovante_layouts_process"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    process_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_processes.id")
+    )
+    content: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    version: Mapped[int] = mapped_column(Integer)
+    updated_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

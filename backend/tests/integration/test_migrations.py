@@ -38,6 +38,9 @@ TABLES = {
     "activity_evidences",
     "generated_documents",
     "generated_files",
+    "report_wording_jobs",
+    "report_drafts",
+    "comprovante_layouts",
 }
 
 

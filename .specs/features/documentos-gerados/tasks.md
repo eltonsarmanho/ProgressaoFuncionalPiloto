@@ -1019,10 +1019,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Segundo `GERANDO` da mesma seção falha; seções diferentes coexistem
-- [ ] Um rascunho e um arranjo por processo; segundo insert falha por unique
-- [ ] `documents.file_deleted_at` aceita nulo e data; documentos existentes ficam com nulo; `downgrade` remove tudo sem afetar `0004`
-- [ ] Gate full passa; 6+ testes
+- [x] Segundo `GERANDO` da mesma seção falha; seções diferentes coexistem
+- [x] Um rascunho e um arranjo por processo; segundo insert falha por unique
+- [x] `documents.file_deleted_at` aceita nulo e data; documentos existentes ficam com nulo; `downgrade` remove tudo sem afetar `0004`
+- [x] Gate full passa; 6+ testes
 
 **Tests**: integration
 **Gate**: full
