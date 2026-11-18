@@ -44,7 +44,7 @@ function ActivityFromDocument({
   }
 
   return (
-    <section aria-label="Criar atividade a partir do documento">
+    <div>
       <div className="card">
         <p>
           A nova atividade será vinculada a <strong>{doc.original_name}</strong>.
@@ -62,7 +62,7 @@ function ActivityFromDocument({
         </div>
       </div>
       <ActivityForm processId={processId} groups={groups} onSaved={(a) => void saved(a)} onCancel={onCancel} />
-    </section>
+    </div>
   );
 }
 
@@ -173,18 +173,20 @@ export function ProcessDocuments() {
       )}
 
       {creating && (
-        <ActivityFromDocument
-          key={creating.id}
-          processId={id}
-          doc={creating}
-          groups={groups}
-          onSaved={(text) => {
-            setCreating(null);
-            setMessage(text);
-            reload();
-          }}
-          onCancel={() => setCreating(null)}
-        />
+        <Modal title="Criar atividade a partir do documento" onClose={() => setCreating(null)}>
+          <ActivityFromDocument
+            key={creating.id}
+            processId={id}
+            doc={creating}
+            groups={groups}
+            onSaved={(text) => {
+              setCreating(null);
+              setMessage(text);
+              reload();
+            }}
+            onCancel={() => setCreating(null)}
+          />
+        </Modal>
       )}
 
       <p>

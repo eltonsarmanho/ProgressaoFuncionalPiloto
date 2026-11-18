@@ -228,14 +228,16 @@ export function ActivityForm({
           {error}
         </p>
       )}
-      <button type="submit" disabled={busy}>
-        Salvar atividade
-      </button>
-      {onCancel && (
-        <button type="button" className="link" onClick={onCancel}>
-          Cancelar
+      <div className="btn-row">
+        <button type="submit" className="btn btn-primary" disabled={busy}>
+          Salvar atividade
         </button>
-      )}
+        {onCancel && (
+          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            Cancelar
+          </button>
+        )}
+      </div>
     </form>
   );
 }

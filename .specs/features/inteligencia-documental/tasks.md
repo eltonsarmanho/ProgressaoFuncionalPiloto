@@ -3653,10 +3653,10 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] O botão aparece para os cinco casos e não aparece em documento processado com `activity_count` 1
-- [ ] O botão abre `role="dialog"` com o formulário de atividade; salvar cria a atividade, vincula a página, fecha a janela, mostra a mensagem e recarrega
-- [ ] O aviso `SEM_ITEM_DE_PONTUACAO` e o de IA indisponível continuam ao lado do documento
-- [ ] Gate quick passa
+- [x] O botão aparece para os cinco casos e não aparece em documento processado com `activity_count` 1
+- [x] O botão abre `role="dialog"` com o formulário de atividade; salvar cria a atividade, vincula a página, fecha a janela, mostra a mensagem e recarrega
+- [x] O aviso `SEM_ITEM_DE_PONTUACAO` e o de IA indisponível continuam ao lado do documento
+- [x] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick

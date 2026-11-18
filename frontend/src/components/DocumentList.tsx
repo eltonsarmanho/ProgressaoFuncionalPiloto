@@ -36,25 +36,19 @@ function labelOf(table: Record<string, string>, code: string | null): string {
 }
 
 /** The warning each document status carries; the AI-unavailable one points to manual entry (TELA-07). */
-function StatusNote({ doc, onCreateActivity }: { doc: DocumentSummary; onCreateActivity: () => void }) {
+function StatusNote({ doc }: { doc: DocumentSummary }) {
   if (doc.status === "EXTRAIDO_SEM_IA") {
     return (
       <p className="doc-warning sev-ALERTA">
         A IA ficou indisponível para este documento ({labelOf(DOCUMENT_CODE_LABELS, doc.status_code)}). O texto foi
-        extraído, mas nenhuma atividade foi sugerida: cadastre a atividade manualmente.{" "}
-        <button type="button" className="link" onClick={onCreateActivity}>
-          Criar atividade deste documento
-        </button>
+        extraído, mas nenhuma atividade foi sugerida: cadastre a atividade manualmente.
       </p>
     );
   }
   if (doc.suggested_category === NO_ITEM_CODE) {
     return (
       <p className="doc-warning sev-ALERTA">
-        {DOCUMENT_CODE_LABELS[NO_ITEM_CODE]}: nenhuma atividade foi criada a partir deste documento.{" "}
-        <button type="button" className="link" onClick={onCreateActivity}>
-          Criar atividade deste documento
-        </button>
+        {DOCUMENT_CODE_LABELS[NO_ITEM_CODE]}: nenhuma atividade foi criada a partir deste documento.
       </p>
     );
   }
@@ -62,6 +56,14 @@ function StatusNote({ doc, onCreateActivity }: { doc: DocumentSummary; onCreateA
     return <p className="doc-warning sev-ALERTA">{labelOf(DOCUMENT_CODE_LABELS, doc.status_code)}</p>;
   }
   return null;
+}
+
+/** UIM-07: the document produced no usable activity, so the user may create one from it. */
+function producedNoActivity(doc: DocumentSummary): boolean {
+  if (ACTIVE_DOCUMENT_STATUSES.includes(doc.status)) return false;
+  if (doc.status === "FALHOU" || doc.status === "REQUER_REVISAO" || doc.status === "EXTRAIDO_SEM_IA") return true;
+  if (doc.suggested_category === NO_ITEM_CODE) return true;
+  return doc.activity_count === 0;
 }
 
 function Confidence({ doc }: { doc: DocumentSummary }) {
@@ -319,7 +321,7 @@ export function DocumentList({
                   <td data-label="Tamanho">{formatSize(doc.size_bytes)}</td>
                   <td data-label="Status">
                     <span className={`status status-${doc.status}`}>{DOCUMENT_STATUS_LABELS[doc.status]}</span>
-                    <StatusNote doc={doc} onCreateActivity={() => onCreateActivity(doc)} />
+                    <StatusNote doc={doc} />
                   </td>
                   <td data-label="Categoria sugerida">
                     {category === NO_ITEM_CODE ? "Sem item de pontuação" : labelOf(TAXONOMY_LABELS, category)}
@@ -384,6 +386,17 @@ export function DocumentList({
                       >
                         Reprocessar
                       </button>
+                      {producedNoActivity(doc) && (
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          aria-label={`Criar atividade de ${doc.original_name}`}
+                          title={`Criar atividade de ${doc.original_name}`}
+                          onClick={() => onCreateActivity(doc)}
+                        >
+                          Criar atividade
+                        </button>
+                      )}
                       <button
                         type="button"
                         className="btn btn-secondary"

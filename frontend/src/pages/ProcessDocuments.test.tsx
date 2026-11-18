@@ -198,7 +198,7 @@ describe("TELA-04: ações recarregam a lista", () => {
 });
 
 describe("TELA-09: criar atividade a partir do documento", () => {
-  it("abre o formulário com o documento vinculado e o vincula à atividade criada, na página escolhida", async () => {
+  it("abre o formulário numa janela com o documento vinculado e o vincula à atividade criada, na página escolhida", async () => {
     let listed = 0;
     const { calls, user } = renderPage({
       [LIST]: () => {
@@ -209,9 +209,9 @@ describe("TELA-09: criar atividade a partir do documento", () => {
       "POST /api/activities/a9/evidences": { status: 201, body: { id: "e1" } },
     });
     expect(await screen.findByText(/Sem item de pontuação: nenhuma atividade/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Criar atividade deste documento" }));
+    await user.click(screen.getByRole("button", { name: "Criar atividade de ata.pdf" }));
 
-    const section = screen.getByRole("region", { name: "Criar atividade a partir do documento" });
+    const section = screen.getByRole("dialog", { name: "Criar atividade a partir do documento" });
     expect(within(section).getByText("ata.pdf")).toBeInTheDocument();
     await user.clear(within(section).getByLabelText("Página do documento de origem"));
     await user.type(within(section).getByLabelText("Página do documento de origem"), "2");
@@ -222,12 +222,25 @@ describe("TELA-09: criar atividade a partir do documento", () => {
     const link = calls.find((c) => c.path === "/api/activities/a9/evidences")!;
     expect(JSON.parse(link.init?.body as string)).toEqual({ document_id: "d1", page: 2 });
     expect(listed).toBeGreaterThanOrEqual(2);
-    expect(screen.queryByRole("region", { name: "Criar atividade a partir do documento" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("Esc fecha a janela de criar atividade sem criar nada", async () => {
+    const { calls, user } = renderPage({
+      [LIST]: { status: 200, body: [doc({ suggested_category: "SEM_ITEM_DE_PONTUACAO", confidence: null })] },
+    });
+    await user.click(await screen.findByRole("button", { name: "Criar atividade de ata.pdf" }));
+    expect(screen.getByRole("dialog", { name: "Criar atividade a partir do documento" })).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(calls.filter((c) => c.method === "POST")).toHaveLength(0);
   });
 
   it("EXTRAIDO_SEM_IA orienta o cadastro manual e oferece a criação da atividade", async () => {
     renderPage({ [LIST]: { status: 200, body: [doc({ status: "EXTRAIDO_SEM_IA", status_code: "IA_INDISPONIVEL", suggested_category: null })] } });
     expect(await screen.findByText(/A IA ficou indisponível/)).toHaveTextContent("cadastre a atividade manualmente");
-    expect(screen.getByRole("button", { name: "Criar atividade deste documento" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Criar atividade de ata.pdf" })).toBeInTheDocument();
   });
 });

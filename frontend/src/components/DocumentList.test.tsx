@@ -240,10 +240,13 @@ describe("TELA-07 / TELA-09: avisos do documento", () => {
     expect(note).toHaveTextContent("cadastre a atividade manualmente");
   });
 
-  it("SEM_ITEM_DE_PONTUACAO mostra o aviso e a ação de criar a atividade deste documento", async () => {
+  it("SEM_ITEM_DE_PONTUACAO mostra o aviso e o botão Criar atividade na linha", async () => {
     const { onCreateActivity, user } = setup([doc({ suggested_category: "SEM_ITEM_DE_PONTUACAO", confidence: null })]);
     expect(screen.getByText(/Sem item de pontuação: nenhuma atividade foi criada/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Criar atividade deste documento" }));
+    const row = screen.getByText("declaracao-banca.pdf", { selector: "td" }).closest("tr")!;
+    const button = within(row).getByRole("button", { name: "Criar atividade de declaracao-banca.pdf" });
+    expect(button).toHaveTextContent("Criar atividade");
+    await user.click(button);
     expect(onCreateActivity).toHaveBeenCalledWith(expect.objectContaining({ id: "d1" }));
   });
 
@@ -253,8 +256,26 @@ describe("TELA-07 / TELA-09: avisos do documento", () => {
     expect(screen.queryByText("TENTATIVAS_ESGOTADAS")).not.toBeInTheDocument();
   });
 
-  it("documento processado com item não mostra a ação de criar atividade", () => {
-    setup([doc()]);
-    expect(screen.queryByRole("button", { name: "Criar atividade deste documento" })).not.toBeInTheDocument();
+  it("UIM-07: o botão Criar atividade aparece quando o documento não gerou atividade utilizável", () => {
+    const no = { suggested_type: null, suggested_category: null, confidence: null };
+    setup([
+      doc({ id: "f", original_name: "falhou.pdf", status: "FALHOU", status_code: "TENTATIVAS_ESGOTADAS", ...no }),
+      doc({ id: "r", original_name: "revisao.pdf", status: "REQUER_REVISAO", status_code: "TEXTO_ILEGIVEL", ...no }),
+      doc({ id: "s", original_name: "sem-ia.pdf", status: "EXTRAIDO_SEM_IA", status_code: "IA_INDISPONIVEL", ...no }),
+      doc({ id: "n", original_name: "sem-item.pdf", suggested_category: "SEM_ITEM_DE_PONTUACAO" }),
+      doc({ id: "z", original_name: "zero.pdf", activity_count: 0 }),
+    ]);
+    for (const name of ["falhou.pdf", "revisao.pdf", "sem-ia.pdf", "sem-item.pdf", "zero.pdf"]) {
+      expect(screen.getByRole("button", { name: `Criar atividade de ${name}` })).toBeInTheDocument();
+    }
+  });
+
+  it("UIM-07: documento processado com atividade, sem contagem ou ainda em fila não mostra o botão", () => {
+    setup([
+      doc({ id: "a", original_name: "com-atividade.pdf", activity_count: 1 }),
+      doc({ id: "b", original_name: "sem-contagem.pdf" }),
+      doc({ id: "c", original_name: "na-fila.pdf", status: "PENDENTE", activity_count: 0, confidence: null }),
+    ]);
+    expect(screen.queryByRole("button", { name: /Criar atividade/ })).not.toBeInTheDocument();
   });
 });
