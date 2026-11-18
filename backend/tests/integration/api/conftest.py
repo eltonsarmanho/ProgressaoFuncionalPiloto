@@ -11,6 +11,7 @@ from app.domain.entities.user import Role, User
 from app.infrastructure.security.argon2_hasher import Argon2PasswordHasher
 from app.main import create_app
 from tests.integration.api.factories import add_professor, process_payload
+from tests.integration.api.generated_support import scenario  # noqa: F401  (fixture)
 from tests.support.scoring_variants import add_other_table, add_points_table
 
 PASSWORD = "senha-correta-1"

@@ -2390,10 +2390,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Pedido responde 202; `SEM_ATIVIDADES_VALIDADAS` e `TABELA_NAO_ESCOLHIDA` respondem 422 com `field`, `code` e `message`; segundo pedido, 409 `GERACAO_EM_ANDAMENTO`
-- [ ] Download devolve o arquivo com o tipo de conteúdo do formato, nome legível sem o docente e `ETag` com o SHA-256; fora do acesso, 404
-- [ ] Em processo CONCLUIDO o download funciona e o pedido do Comprovante responde 422 `ORIGINAIS_EXCLUIDOS`
-- [ ] Gate full passa; 10+ testes
+- [x] Pedido responde 202; `SEM_ATIVIDADES_VALIDADAS` e `TABELA_NAO_ESCOLHIDA` respondem 422 com `field`, `code` e `message`; segundo pedido, 409 `GERACAO_EM_ANDAMENTO`
+- [x] Download devolve o arquivo com o tipo de conteúdo do formato, nome legível sem o docente e `ETag` com o SHA-256; fora do acesso, 404
+- [x] Em processo CONCLUIDO o download funciona e o pedido do Comprovante responde 422 `ORIGINAIS_EXCLUIDOS`
+- [x] Gate full passa; 10+ testes
 
 **Tests**: integration
 **Gate**: full
