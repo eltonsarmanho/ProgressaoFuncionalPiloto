@@ -2365,12 +2365,12 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 **Done when**:
 
-- [ ] Início 2026-08-09 sem fim em VI.7: `DENTRO`, quantidade 0 (3,5 meses), `QUANTIDADE_ESTIMADA` e `DATA_FIM_AUSENTE`, atividade em revisão
-- [ ] Início 2024-08-09 com fim derivado 2026-08-09 em VI.6: `PARCIAL`, quantidade 1 (anos completos de 2024-11-23 a 2026-08-09); o cálculo de anos está descrito no corpo do commit como decisão do usuário
-- [ ] Início 2024-08-09 sem fim em VI.6: `PARCIAL` e quantidade 1; início depois do fim do interstício: `FORA`
-- [ ] Item que não é por ano (VII.10, III.2) com só a data de início: continua um único dia (`FORA` quando antes do interstício)
-- [ ] Duplicidade e verificação manual de atividade com `period_start` e `period_end` não mudam
-- [ ] Gate full passa
+- [x] Início 2026-08-09 sem fim em VI.7: `DENTRO`, quantidade 0 (3,5 meses), `QUANTIDADE_ESTIMADA` e `DATA_FIM_AUSENTE`, atividade em revisão
+- [x] Início 2024-08-09 com fim derivado 2026-08-09 em VI.6: `PARCIAL`, quantidade 1 (anos completos de 2024-11-23 a 2026-08-09); o cálculo de anos está descrito no corpo do commit como decisão do usuário
+- [x] Início 2024-08-09 sem fim em VI.6: `PARCIAL` e quantidade 1; início depois do fim do interstício: `FORA`
+- [x] Item que não é por ano (VII.10, III.2) com só a data de início: continua um único dia (`FORA` quando antes do interstício)
+- [x] Duplicidade e verificação manual de atividade com `period_start` e `period_end` não mudam
+- [x] Gate full passa
 
 **Tests**: unit + integration
 **Gate**: full

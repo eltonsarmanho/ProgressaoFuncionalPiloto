@@ -193,19 +193,28 @@ def test_three_years_and_one_day_short_gives_two():
 
 
 @pytest.mark.parametrize(
-    "fields",
+    ("fields", "warnings"),
     [
-        {},
-        {"start_date": date(2022, 8, 1)},
-        {"end_date": date(2024, 8, 1)},
-        {"start_date": date(2024, 8, 1), "end_date": date(2022, 8, 1)},
+        ({}, (DocAlertCode.QUANTIDADE_ESTIMADA,)),
+        # SEG-02: a start without end is flagged as open ended too (no interstice: nothing to count)
+        (
+            {"start_date": date(2022, 8, 1)},
+            (DocAlertCode.QUANTIDADE_ESTIMADA, DocAlertCode.DATA_FIM_AUSENTE),
+        ),
+        ({"end_date": date(2024, 8, 1)}, (DocAlertCode.QUANTIDADE_ESTIMADA,)),
+        (
+            {"start_date": date(2024, 8, 1), "end_date": date(2022, 8, 1)},
+            (DocAlertCode.QUANTIDADE_ESTIMADA,),
+        ),
     ],
 )
-def test_per_year_item_without_a_usable_period_gives_zero_with_the_estimate_warning(fields):
+def test_per_year_item_without_a_usable_period_gives_zero_with_the_estimate_warning(
+    fields, warnings
+):
     # REAL-11: with no usable period the quantity stays 0 for the user to inform
     result = derive_quantity(T.PESQUISA_GRUPO_MEMBRO, extracted(T.PESQUISA_GRUPO_MEMBRO, **fields))
     assert result.quantity == D(0)
-    assert result.warnings == (DocAlertCode.QUANTIDADE_ESTIMADA,)
+    assert result.warnings == warnings
 
 
 def test_result_never_carries_points():

@@ -24,8 +24,28 @@ def expand_month_dates(start: date, end: date) -> tuple[date, date]:
     return start.replace(day=1), end.replace(day=last_day)
 
 
-def activity_interval(activity: Activity) -> tuple[date, date] | None:
-    """Inclusive date range of the activity, or None when it has no date."""
+def is_yearly_unit(unit_label: str) -> bool:
+    """Whether the unit of a table item is "por ano ..." (a function held for a time)."""
+    return unit_label.strip().casefold().startswith("por ano")
+
+
+def activity_interval(activity: Activity, open_end: date | None = None) -> tuple[date, date] | None:
+    """Inclusive date range of the activity, or None when it has no date.
+
+    A period with only a start date is one day, unless `open_end` is given: then it runs from
+    the start to that date (the end of the interstice), or stays on its start when it began
+    later (SEG-02). A dated event, a closed period and an end-only period never change.
+    """
+    start_only = (
+        activity.event_date is None
+        and activity.period_start is not None
+        and activity.period_end is None
+    )
+    if start_only and open_end is not None:
+        start = activity.period_start
+        if activity.period_precision is PeriodPrecision.MONTH:
+            start = start.replace(day=1)
+        return start, max(start, open_end)
     if activity.event_date is not None:
         start = end = activity.event_date
     elif activity.period_start is not None or activity.period_end is not None:
@@ -38,10 +58,13 @@ def activity_interval(activity: Activity) -> tuple[date, date] | None:
     return start, end
 
 
-def evaluate_period(activity: Activity, interstice: Interstice) -> PeriodState:
+def evaluate_period(
+    activity: Activity, interstice: Interstice, open_ended: bool = False
+) -> PeriodState:
+    """`open_ended` reads a start-only period as running to the end of the interstice."""
     if interstice.end <= interstice.start:
         return PeriodState.NAO_VERIFICAVEL
-    interval = activity_interval(activity)
+    interval = activity_interval(activity, interstice.end if open_ended else None)
     if interval is None:
         return PeriodState.SEM_DATA
     start, end = interval

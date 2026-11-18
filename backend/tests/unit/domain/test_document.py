@@ -52,8 +52,9 @@ def test_alert_codes_are_the_design_names_plus_those_of_the_real_validation():
         "TENTATIVAS_ESGOTADAS",  # VER-04
         "DATA_PARCIAL",  # VER-10
         "DATA_FIM_DERIVADA",  # SEG-01
+        "DATA_FIM_AUSENTE",  # SEG-02
     }
-    assert len(DocAlertCode) == 16
+    assert len(DocAlertCode) == 17
 
 
 def test_pending_goes_to_processing():

@@ -26,7 +26,7 @@ from app.domain.rules.interstice import Interstice
 from app.domain.rules.process_verification import Alert, Severity
 from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
 from app.domain.rules.scoring_duplicates import find_duplicates
-from app.domain.rules.scoring_periods import PeriodState, evaluate_period
+from app.domain.rules.scoring_periods import PeriodState, evaluate_period, is_yearly_unit
 from app.domain.rules.scoring_points import criterion_points
 
 ZERO = Decimal(0)
@@ -160,7 +160,7 @@ def _evaluate(
     if activity.status is ActivityStatus.REJEITADA:
         return _not_scored(activity, NotScoredReason.REJEITADA, evidence_count)
 
-    state = evaluate_period(activity, interstice)
+    state = evaluate_period(activity, interstice, is_yearly_unit(criterion.unit_label))
     if state is PeriodState.FORA:
         return _not_scored(activity, NotScoredReason.FORA_DO_INTERSTICIO, evidence_count)
 

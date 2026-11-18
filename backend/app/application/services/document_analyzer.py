@@ -44,9 +44,14 @@ from app.domain.rules.grounding import (
 )
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.masking import mask_identifiers
-from app.domain.rules.quantity_rules import derive_quantity
+from app.domain.rules.quantity_rules import derive_quantity, is_open_ended, is_per_year
 from app.domain.rules.scoring_alerts import NotScoredReason
-from app.domain.rules.scoring_periods import PeriodState, evaluate_period, normalize_title
+from app.domain.rules.scoring_periods import (
+    PeriodState,
+    evaluate_period,
+    is_yearly_unit,
+    normalize_title,
+)
 from app.domain.rules.suggestion_rules import (
     Item,
     confirm_board_document,
@@ -297,11 +302,13 @@ class DocumentAnalyzer:
         reasons: list[NotScoredReason] = []
         if principal is None:
             reasons.append(NotScoredReason.SEM_ENQUADRAMENTO)
-        period = _period_state(activity, interstice, precision)
+        yearly = _is_yearly(taxonomy, suggestion.principal, table_version)
+        period = _period_state(activity, interstice, precision, yearly)
         if period is PeriodState.FORA:
             reasons.append(NotScoredReason.FORA_DO_INTERSTICIO)
         confidence = final_confidence(raw.confidence, grounded.grounded_ratio)
         crosses_limit = precision is PeriodPrecision.MONTH and period is PeriodState.PARCIAL
+        open_ended = yearly and is_open_ended(activity)
         return SuggestedActivity(
             source_index=index,
             extracted=activity,
@@ -309,7 +316,7 @@ class DocumentAnalyzer:
             page=activity.page,
             excerpt=_excerpt(activity.evidence_text, pages.get(activity.page, "")),
             confidence=confidence,
-            needs_review=needs_review(confidence) or crosses_limit,
+            needs_review=needs_review(confidence) or crosses_limit or open_ended,
             group_number=principal.group if principal else None,
             item_number=principal.item if principal else None,
             candidates=tuple(
@@ -451,8 +458,22 @@ def _items_in_table(table_version: ScoringTableVersion | None) -> Callable[[Item
     return exists
 
 
+def _is_yearly(
+    taxonomy: TaxonomyCode, item: Item | None, table: ScoringTableVersion | None
+) -> bool:
+    """Whether the item counts years of exercise: the unit of the table when it has the item."""
+    if item is not None and table is not None:
+        criterion = table.get_criterion(item.group, item.item)
+        if criterion is not None:
+            return is_yearly_unit(criterion.unit_label)
+    return is_per_year(taxonomy)
+
+
 def _period_state(
-    activity: ExtractedActivity, interstice: Interstice | None, precision: PeriodPrecision
+    activity: ExtractedActivity,
+    interstice: Interstice | None,
+    precision: PeriodPrecision,
+    open_ended: bool = False,
 ) -> PeriodState | None:
     """The period of the activity against the interstice; a month precision uses whole months."""
     if interstice is None:
@@ -468,7 +489,7 @@ def _period_state(
         period_end=activity.end_date,
         period_precision=precision,
     )
-    return evaluate_period(probe, interstice)
+    return evaluate_period(probe, interstice, open_ended)
 
 
 def _excerpt(evidence_text: str, page_text: str) -> str:

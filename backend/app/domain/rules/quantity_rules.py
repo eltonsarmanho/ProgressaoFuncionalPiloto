@@ -50,6 +50,20 @@ class QuantityResult:
     warnings: tuple[DocAlertCode, ...]
 
 
+def is_per_year(taxonomy: T) -> bool:
+    """Whether the quantity of the taxonomy counts years of exercise."""
+    return taxonomy in _PER_YEAR
+
+
+def is_open_ended(extracted: ExtractedActivity) -> bool:
+    """A start date with neither an end date nor a single event date (SEG-02)."""
+    return (
+        extracted.start_date is not None
+        and extracted.end_date is None
+        and extracted.event_date is None
+    )
+
+
 def _whole_years(start: date, end: date) -> int:
     years = end.year - start.year
     if (end.month, end.day) < (start.month, start.day):
@@ -58,8 +72,13 @@ def _whole_years(start: date, end: date) -> int:
 
 
 def _exercise_years(extracted: ExtractedActivity, interstice: Interstice | None) -> int:
-    """Complete years of exercise, inside the interstice when given; 0 when unknown (REAL-11)."""
+    """Complete years of exercise, inside the interstice when given; 0 when unknown (REAL-11).
+
+    Without an end date the period is open: it runs to the end of the interstice (SEG-02).
+    """
     start, end = extracted.start_date, extracted.end_date
+    if end is None and interstice is not None:
+        end = interstice.end
     if start is None or end is None or end < start:
         return 0
     if interstice is not None:
@@ -91,5 +110,8 @@ def derive_quantity(
         return QuantityResult(Decimal(1), extracted.hours, None, None, ())
     if taxonomy in _PER_YEAR:
         years = _exercise_years(extracted, interstice)
-        return QuantityResult(Decimal(years), None, None, None, (DocAlertCode.QUANTIDADE_ESTIMADA,))
+        warnings = [DocAlertCode.QUANTIDADE_ESTIMADA]
+        if is_open_ended(extracted):
+            warnings.append(DocAlertCode.DATA_FIM_AUSENTE)
+        return QuantityResult(Decimal(years), None, None, None, tuple(warnings))
     return QuantityResult(Decimal(1), None, None, None, ())
