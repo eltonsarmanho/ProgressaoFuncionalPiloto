@@ -152,7 +152,7 @@ T113 → T114 → T115 → T116 → T117
 
 ### Phase 17: Rodada de interface das Etapas 2 e 3
 
-Tabelas legíveis, botões curtos que agem na hora, janelas para classificar, criar atividade, visualizar e editar, a regra de confiança de 70% e a validação em lote com seleção (UIM-01..15). Seis tarefas de backend abrem a fase (exclusão, validação, edição, vínculo e escolha de tabela sem justificativa, `activity_count` e a prévia da pontuação); as demais são do frontend. A justificativa deixa de ser exigida nas Etapas 2, 3 e 4 (UIM-14, UIM-16, UIM-17, UIM-18); a Etapa 1 não muda. A Etapa 4 ganha a mesma tabela legível, botões diretos e o editor de pontuação automática ou manual (UIM-19..23). Os testes usam só nomes e textos sintéticos; nenhum documento real, MariTalk, VM, push ou deploy. A confiança de uma atividade vem do documento ligado, pois a API não a expõe. Fase maior que o orçamento por ser uma cadeia de mudanças da mesma tela, ordenadas por dependência.
+Tabelas legíveis, botões curtos que agem na hora, janelas para classificar, criar atividade, visualizar e editar, a regra de confiança de 70% e a validação em lote com seleção (UIM-01..15). Seis tarefas de backend abrem a fase (exclusão, validação, edição, vínculo e escolha de tabela sem justificativa, `activity_count` e o valor unitário manual da atividade); as demais são do frontend. A justificativa deixa de ser exigida nas Etapas 2, 3 e 4 (UIM-14, UIM-16, UIM-17, UIM-18); a Etapa 1 não muda. A Etapa 4 ganha a mesma tabela legível, botões diretos e o editor do valor unitário manual (UIM-19..23). Os testes usam só nomes e textos sintéticos; nenhum documento real, MariTalk, VM, push ou deploy. A confiança de uma atividade vem do documento ligado, pois a API não a expõe. Fase maior que o orçamento por ser uma cadeia de mudanças da mesma tela, ordenadas por dependência.
 
 ```
 T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 → T127 → T128 → T129 → T130 → T131 → T132 → T133 → T134 → T135 → T136 → T137 → T138 → T139
@@ -3443,12 +3443,12 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 ---
 
-### T123: Prévia da pontuação de uma atividade
+### T123: Valor unitário manual por atividade
 
-**What**: `POST /api/activities/{id}/scoring-preview` recebe os campos da atividade (os do `PUT`, sem a versão), valida como a edição (422 igual), troca a atividade em memória e devolve o resultado do mesmo motor de pontuação (`ProcessScoreOut`: linhas, subtotais e total), sem gravar nada nem auditar; o motor segue a única fonte do cálculo. Arquivos: `scoring.py` (caso de uso), `activities.py` (rota), `dependencies.py` e testes de integração.
-**Where**: `backend/app/application/use_cases/scoring.py`
+**What**: Campo `unit_points_override` na atividade (entidade, tabela com migração Alembic, repositório, schemas de entrada e saída, auditoria); o motor de pontuação usa o valor digitado no lugar do valor unitário da tabela nos critérios por unidade e por bloco de horas, sob os mesmos limites, e emite o novo alerta `VALOR_UNITARIO_MANUAL`; a validação recusa o campo (422) em item de carga semanal, de valor informado ou de PIT e fora de 0 a 10000; vazio volta à tabela. Sem justificativa. Arquivos: `activity.py`, `models.py`, migração, `repositories.py`, `scoring_points.py`, `scoring_engine.py`, `scoring_alerts.py`, `scoring.py`, `activities.py` (schema) e testes.
+**Where**: `backend/app/domain/rules/scoring_points.py`
 **Depends on**: T122
-**Reuses**: `CalculateProcessScore`, `normalize_activity`, `ProcessScoreOut`
+**Reuses**: `points_override`, `criterion_points`, `_check_criterion_inputs`
 **Requirement**: UIM-21
 
 **Tools**:
@@ -3458,16 +3458,17 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] A prévia com a quantidade ou os pontos manuais novos devolve a linha da atividade com os pontos e o total que o motor calcula, iguais aos de salvar e consultar `GET /api/processes/{id}/scoring`
-- [ ] Depois da prévia a atividade e o resultado de `GET /scoring` continuam como estavam e nenhum evento de auditoria foi gravado
-- [ ] Pontos manuais em item que não é de carga semanal e em linha de horas de PIT dão 422 no campo `points_override`, como a edição
-- [ ] Atividade de outro processo sem acesso dá 404 e sem sessão 401
+- [ ] Por unidade, quantidade 3 e valor unitário digitado 2,5 dão 7,5 pelo motor, e a linha traz o valor unitário digitado e o alerta `VALOR_UNITARIO_MANUAL`; por bloco de horas, blocos × valor digitado
+- [ ] O limite do critério (teto do item e do grupo) continua valendo sobre o valor digitado
+- [ ] Mudar a quantidade depois mantém o valor digitado; enviar o campo vazio volta ao valor da tabela e some o alerta
+- [ ] Carga semanal, valor informado, PIT e valor negativo ou acima de 10000 dão 422 em `unit_points_override`; sem justificativa em todos os casos
+- [ ] A auditoria da atividade registra o valor anterior e o novo, e a migração cria a coluna e desfaz
 - [ ] Gate full passa
 
 **Tests**: integration
 **Gate**: full
 
-**Commit**: `feat(scoring): preview the points of an activity before saving`
+**Commit**: `feat(scoring): let the unit points of an activity be set by hand`
 
 ---
 
@@ -3830,12 +3831,12 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 ---
 
-### T137: Editor de pontuação com modo automático e manual
+### T137: Editor de valor unitário da pontuação
 
-**What**: Componente `ScoreEditor` na `Modal`: alterna Automática (padrão; quantidade, horas e item recalculam, e a prévia de T123 mostra os pontos, o total e os alertas do motor com espera curta entre as digitações) e Manual (campo de pontos informados, só para item de carga semanal fora do PIT; nos demais modos e nas linhas de horas de PIT, só automático com uma nota curta); salvar envia o `PUT` da atividade e Voltar ao automático envia `points_override` nulo. Nada é calculado no frontend. Arquivos: `ScoreEditor.tsx` e `ScoreEditor.test.tsx`.
+**What**: Componente `ScoreEditor` na `Modal` com um só campo "Valor unitário" (preenchido com o valor da tabela ou o digitado), que salva enviando `unit_points_override` na atualização da atividade com os demais campos preservados, e Usar valor da tabela, que envia o campo vazio; em item de carga semanal, de valor informado ou de horas de PIT mostra a nota curta e não oferece o campo; `ActivityForm` passa a preservar o valor digitado ao editar. Nada é calculado no frontend. Arquivos: `ScoreEditor.tsx`, `ScoreEditor.test.tsx`, `ActivityForm.tsx`, `types.ts`.
 **Where**: `frontend/src/components/ScoreEditor.tsx`
 **Depends on**: T136
-**Reuses**: `ActivityForm`, `scoring-preview`, `Modal`
+**Reuses**: `ActivityForm`, `Modal`
 **Requirement**: UIM-22
 
 **Tools**:
@@ -3845,22 +3846,22 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 
 **Done when**:
 
-- [ ] Em Automática, mudar a quantidade chama a prévia com o valor novo e mostra os pontos devolvidos pelo servidor, sem calcular no navegador
-- [ ] Em Manual, os pontos digitados vão na prévia e no `PUT` como `points_override`; Voltar ao automático envia `points_override` nulo
-- [ ] Em item que não é de carga semanal e em linha de horas de PIT, o modo Manual fica indisponível e a nota explica
-- [ ] O 422 de `points_override` aparece junto do campo e o editor não tem campo de justificativa
+- [ ] Salvar envia o `PUT` da atividade com `unit_points_override` igual ao digitado e os demais campos como estavam, sem `justificativa`
+- [ ] Usar valor da tabela envia o campo vazio; o 422 de `unit_points_override` aparece junto do campo
+- [ ] Em item de carga semanal, de valor informado e em linha de PIT aparece a nota e não há campo
+- [ ] Editar a atividade pelo `ActivityForm` mantém o valor digitado no corpo enviado
 - [ ] Gate quick passa
 
 **Tests**: unit
 **Gate**: quick
 
-**Commit**: `feat(scoring): edit the points of an activity automatically or manually`
+**Commit**: `feat(scoring): edit the unit value of an activity in a modal`
 
 ---
 
-### T138: Editar pontuação na linha, selo Manual e totais atualizados
+### T138: Editar pontuação na linha e selo Manual
 
-**What**: `ScoringTable` mostra o botão Editar pontuação nas linhas PONTUADA e POTENCIAL, que abre o `ScoreEditor` numa `Modal`; a linha com o alerta `PONTOS_AJUSTADOS_MANUALMENTE` traz o selo Manual e o botão Voltar ao automático; salvar recarrega as linhas, os subtotais e o total. Arquivos: `ScoringTable.tsx`, `ProcessScoring.tsx` e testes.
+**What**: `ScoringTable` mostra o botão Editar pontuação nas linhas PONTUADA e POTENCIAL, que abre o `ScoreEditor` numa `Modal`; a linha com o alerta `VALOR_UNITARIO_MANUAL` traz o selo Manual e o botão Usar valor da tabela; salvar ou limpar recarrega as linhas, os subtotais e o total. Arquivos: `ScoringTable.tsx`, `ProcessScoring.tsx`, `labels.ts` e testes.
 **Where**: `frontend/src/pages/ProcessScoring.tsx`
 **Depends on**: T137
 **Reuses**: `ScoreEditor`, `ScoringRow.alerts`
@@ -3874,7 +3875,7 @@ T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 →
 **Done when**:
 
 - [ ] Editar pontuação aparece em linha PONTUADA e POTENCIAL e não em NAO_PONTUADA
-- [ ] A linha com pontos manuais mostra o selo Manual e Voltar ao automático, que envia `points_override` nulo e recarrega
+- [ ] A linha com o alerta `VALOR_UNITARIO_MANUAL` mostra o selo Manual e Usar valor da tabela, que limpa o valor e recarrega
 - [ ] Salvar na janela atualiza o total e o subtotal exibidos com os valores do `GET /scoring` seguinte
 - [ ] Gate quick passa
 
