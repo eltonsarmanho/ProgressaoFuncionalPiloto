@@ -131,3 +131,34 @@ class DossierItem:
     order: int
     title: str
     generated_by: DocumentKind | None = None
+
+
+@dataclass(frozen=True)
+class DocumentGroup:
+    """Entries of a section under one subtitle (a period, an item, a source group); the texts are
+    the ones of the draft."""
+
+    subtitle: str | None
+    entries: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class DocumentSection:
+    key: str
+    title: str
+    free_text: str
+    groups: tuple[DocumentGroup, ...]
+
+
+@dataclass(frozen=True)
+class ReportDocument:
+    """What a writer draws (REL-09): the layout, the lines of the header and of the identification
+    already filled, and the sections that have something to say, in the order of the template.
+    Nothing here comes from outside the draft and the identification of the process (REL-12)."""
+
+    layout: ReportLayout
+    header_lines: tuple[str, ...]
+    title: str
+    identification: tuple[str, ...]
+    body_heading: str
+    sections: tuple[DocumentSection, ...]

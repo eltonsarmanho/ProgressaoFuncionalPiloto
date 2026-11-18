@@ -38,7 +38,7 @@ from app.domain.entities.generated import (
 )
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor
-from app.domain.entities.report import DraftEntry, DraftSection, ReportDraft
+from app.domain.entities.report import DraftEntry, DraftSection, ReportDocument, ReportDraft
 from app.domain.entities.scoring import ScoringCriterion, ScoringTableVersion
 from app.domain.entities.user import Session, User
 from app.domain.rules.report_wording import WordingItem
@@ -586,9 +586,9 @@ class DocumentWriter(Protocol):
 
     def write_table(self, model: TableDocument, fmt: DocumentFormat, target: Path) -> None: ...
 
-    def write_report(self, model: Any, fmt: DocumentFormat, target: Path) -> None:
-        """`model` is the report model defined with the writers (header, identification and the
-        sections of the draft that go in the document)."""
+    def write_report(self, model: ReportDocument, fmt: DocumentFormat, target: Path) -> None:
+        """`model` is built by `build_report_document`: the header, the identification and the
+        sections of the draft that go in the document."""
         ...
 
 

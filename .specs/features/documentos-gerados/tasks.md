@@ -1462,9 +1462,9 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] O DOCX traz o cabeçalho, a identificação do docente e do interstício e todas as seções com atividade na ordem do modelo; seção vazia não aparece
-- [ ] O texto do documento é o texto do rascunho, sem objetivo, resultado nem metodologia acrescentados
-- [ ] Gate quick passa; 8+ testes
+- [x] O DOCX traz o cabeçalho, a identificação do docente e do interstício e todas as seções com atividade na ordem do modelo; seção vazia não aparece
+- [x] O texto do documento é o texto do rascunho, sem objetivo, resultado nem metodologia acrescentados
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
