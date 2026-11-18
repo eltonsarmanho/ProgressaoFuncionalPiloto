@@ -2679,8 +2679,8 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] 422 com `SEM_ATIVIDADES_VALIDADAS` mostra a mensagem em português; 422 de validação de campo continua mostrando o aviso dos campos destacados
-- [ ] Gate quick passa; 4+ testes
+- [x] 422 com `SEM_ATIVIDADES_VALIDADAS` mostra a mensagem em português; 422 de validação de campo continua mostrando o aviso dos campos destacados
+- [x] Gate quick passa; 4+ testes
 
 **Tests**: unit
 **Gate**: quick

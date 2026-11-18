@@ -73,4 +73,39 @@ describe("api client", () => {
     expect(err).toBeInstanceOf(ApiError);
     expect(errorMessage(err)).toBe("Erro 502");
   });
+
+  it("UIG-05, TAB-07: um 422 com código mostra a mensagem em português do servidor", () => {
+    const err = new ApiError(422, [
+      {
+        field: "geracao",
+        code: "SEM_ATIVIDADES_VALIDADAS",
+        message: "O processo não tem atividade validada.",
+      },
+    ]);
+    expect(errorMessage(err)).toBe("O processo não tem atividade validada.");
+  });
+
+  it("UIG-05: um 422 de validação de campo, sem código, continua com o aviso dos campos destacados", () => {
+    const err = new ApiError(422, [{ field: "siape", message: "SIAPE deve ter 7 dígitos" }]);
+    expect(errorMessage(err)).toBe("Verifique os campos destacados.");
+    expect(fieldErrors(err)).toEqual({ siape: "SIAPE deve ter 7 dígitos" });
+  });
+
+  it("UIG-05: com vários itens, vale a mensagem do primeiro que tem código", () => {
+    const err = new ApiError(422, [
+      { field: "siape", message: "SIAPE deve ter 7 dígitos" },
+      { field: "geracao", code: "TABELA_NAO_ESCOLHIDA", message: "Escolha a tabela de pontuação." },
+      { field: "geracao", code: "OUTRO", message: "Outra mensagem." },
+    ]);
+    expect(errorMessage(err)).toBe("Escolha a tabela de pontuação.");
+  });
+
+  it("UIG-05: um item com código mas sem mensagem cai no aviso dos campos destacados", () => {
+    const err = new ApiError(422, [{ field: "geracao", code: "ERRO_INTERNO" }]);
+    expect(errorMessage(err)).toBe("Verifique os campos destacados.");
+  });
+
+  it("UIG-05: um erro com detalhe em texto segue mostrando o texto", () => {
+    expect(errorMessage(new ApiError(409, "Versão desatualizada"))).toBe("Versão desatualizada");
+  });
 });

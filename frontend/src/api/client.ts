@@ -61,11 +61,22 @@ export function fieldErrors(error: unknown): Record<string, string> {
 /** Human message for any error (non-field). */
 export const TOO_LARGE_MESSAGE = "O arquivo ou o conjunto excede o limite de envio.";
 
+/** The message of the first item of a 422 `detail` that carries a `code` (a refusal with a reason). */
+function codedMessage(detail: unknown): string | null {
+  if (!Array.isArray(detail)) return null;
+  for (const item of detail as { code?: unknown; message?: unknown }[]) {
+    if (item && typeof item.code === "string" && typeof item.message === "string" && item.message) {
+      return item.message;
+    }
+  }
+  return null;
+}
+
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (typeof error.detail === "string") return error.detail;
     if (error.status === 413) return TOO_LARGE_MESSAGE;
-    if (error.status === 422) return "Verifique os campos destacados.";
+    if (error.status === 422) return codedMessage(error.detail) ?? "Verifique os campos destacados.";
     return `Erro ${error.status}`;
   }
   return "Não foi possível contactar o servidor.";
