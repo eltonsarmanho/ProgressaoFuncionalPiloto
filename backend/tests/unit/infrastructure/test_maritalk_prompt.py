@@ -35,3 +35,10 @@ def test_the_professor_instruction_does_not_replace_the_term_instruction():
     prompt = system_prompt("Fulana de Tal Exemplo")
     assert "Em `term` copie literalmente" in prompt
     assert "Fulana de Tal Exemplo" in prompt
+
+
+def test_the_prompt_says_the_document_may_be_in_english_and_fields_are_copied_untranslated():
+    """CER-03: an english certificate must come back with its own words, not a translation."""
+    for prompt in (system_prompt(), system_prompt("Fulana de Tal Exemplo")):
+        assert "O documento pode estar em inglês" in prompt
+        assert "copie os campos literalmente do texto, sem traduzir" in prompt

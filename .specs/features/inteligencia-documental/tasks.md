@@ -3260,9 +3260,9 @@ T113 → T114 → T115 → T116 → T117
 
 **Done when**:
 
-- [ ] O prompt contém a frase sobre inglês e cópia literal sem tradução, com e sem o nome do docente
-- [ ] Os testes do prompt e do cliente MariTalk existentes continuam verdes
-- [ ] Gate full passa
+- [x] O prompt contém a frase sobre inglês e cópia literal sem tradução, com e sem o nome do docente
+- [x] Os testes do prompt e do cliente MariTalk existentes continuam verdes
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full

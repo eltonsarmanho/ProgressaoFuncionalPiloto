@@ -32,6 +32,7 @@ _SYSTEM_PROMPT = (
     "O texto está dividido em páginas marcadas como [PÁGINA n]; informe em `page` o número "
     "da página de onde veio cada dado e em `evidence_text` o trecho literal dessa página. "
     "Não calcule pontos, quantidades nem horas: copie apenas o que o texto diz. "
+    "O documento pode estar em inglês: copie os campos literalmente do texto, sem traduzir. "
     "Em `term` copie literalmente o prazo de duração da designação quando o texto o traz "
     "(\"por 2 (dois) anos\", \"24 meses\"); nunca calcule a data final. "
     "Em portarias, devolva como atividade somente a designação do docente para a função ou a "
