@@ -2112,10 +2112,10 @@ T71 → T72 → T73 → T74 → T75 → T76 → T77 → T78 → T79 → T80 → 
 
 **Done when**:
 
-- [ ] Cada vazamento listado vira marcador (`[CPF]`, `[TELEFONE]`, `[RG]`), um teste por forma
-- [ ] Casos negativos: data "12/03/2025", hora "14:30", processo "23073.012345/2025-11", "página 12", "SIAPE 1234567" e carga horária seguem no texto
-- [ ] Os testes de máscara já existentes seguem passando sem alteração
-- [ ] Gate full passa
+- [x] Cada vazamento listado vira marcador (`[CPF]`, `[TELEFONE]`, `[RG]`), um teste por forma
+- [x] Casos negativos: data "12/03/2025", hora "14:30", processo "23073.012345/2025-11", "página 12", "SIAPE 1234567" e carga horária seguem no texto
+- [x] Os testes de máscara já existentes seguem passando sem alteração
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full
