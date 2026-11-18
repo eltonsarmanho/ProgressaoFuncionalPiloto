@@ -321,11 +321,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CMP-12 | P1: Comprovante de Documentos em PDF | Tasks | In Tasks |
 | CMP-13 | P1: Comprovante de Documentos em PDF | Tasks | Implementing |
 | ARR-01 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
-| ARR-02 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
-| ARR-03 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
-| ARR-04 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
+| ARR-02 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
+| ARR-03 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
+| ARR-04 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
 | ARR-05 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
-| ARR-06 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
+| ARR-06 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
 | ARR-07 | P1: Arranjo manual do Comprovante | Tasks | In Tasks |
 | ARR-08 | P1: Arranjo manual do Comprovante | Tasks | Implementing |
 | REL-01 | P1: Relatório de Atividades em DOCX e PDF com revisão | Tasks | Implementing |

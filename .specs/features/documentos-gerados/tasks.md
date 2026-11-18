@@ -722,10 +722,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Documento de outro processo é recusado como não encontrado e página 0 ou acima de `page_count` como `PAGINA_FORA_DO_DOCUMENTO`
-- [ ] Mover atividade para outro item é recusado; reordenar atividades dentro do item e páginas dentro da atividade é aceito e preserva a nova ordem
-- [ ] Remover página do arranjo não toca no vínculo atividade-página (a função não escreve)
-- [ ] Gate quick passa; 10+ testes
+- [x] Documento de outro processo é recusado como não encontrado e página 0 ou acima de `page_count` como `PAGINA_FORA_DO_DOCUMENTO`
+- [x] Mover atividade para outro item é recusado; reordenar atividades dentro do item e páginas dentro da atividade é aceito e preserva a nova ordem
+- [x] Remover página do arranjo não toca no vínculo atividade-página (a função não escreve)
+- [x] Gate quick passa; 10+ testes
 
 **Tests**: unit
 **Gate**: quick

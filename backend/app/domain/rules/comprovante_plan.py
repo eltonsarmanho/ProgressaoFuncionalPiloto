@@ -29,7 +29,7 @@ from app.domain.entities.comprovante import (
     TocLevel,
 )
 from app.domain.entities.generated import GenerationAlertCode, GenerationCode
-from app.domain.errors import GenerationRefused
+from app.domain.errors import GenerationRefused, NotFound, ValidationFailed
 from app.domain.repositories.ports import ActivityEvidence
 
 NO_VOUCHER_NOTE = "Sem comprovante anexado"
@@ -392,3 +392,58 @@ def invalid_entries(
             if document is None or document.file_deleted or page.page > document.page_count:
                 invalid.append(EvidenceKey(entry.activity_id, page.document_id, page.page))
     return tuple(invalid)
+
+
+def layout_page(
+    document_id: UUID, page: int, repeat_justification: str | None = None
+) -> LayoutPage:
+    """A page of the layout; below the first page it is outside the document (ARR-06)."""
+    if page < 1:
+        raise GenerationRefused(
+            GenerationCode.PAGINA_FORA_DO_DOCUMENTO, "A página deve ser a primeira ou uma seguinte."
+        )
+    return LayoutPage(document_id, page, repeat_justification)
+
+
+def validate_layout(
+    layout: ComprovanteLayout,
+    process_documents: Sequence[SourceDocument],
+    activities: Sequence[Activity],
+) -> ComprovanteLayout:
+    """What a layout the user saves may contain (ARR-02 to ARR-06); never writes anything.
+
+    Every activity is a validated one of the process and every page is a page of a document of
+    the process. The activities stay in the order of the table's groups and items and none sits
+    in an item other than its own: moving one to another item is refused, while reordering
+    activities inside an item and pages inside an activity is kept as sent. Removing a page
+    leaves the link between the activity and the page alone. Returns the layout with the group
+    and item of the scoring on each activity.
+    """
+    current = {a.id: a for a in eligible_activities(activities)}
+    documents = {document.id: document for document in process_documents}
+    checked: list[LayoutActivity] = []
+    previous = (0, 0)
+    for entry in layout.activities:
+        now = current.get(entry.activity_id)
+        if now is None:
+            raise NotFound("Atividade não encontrada")
+        where = (now.group_number, now.item_number)
+        if entry.group_number is not None and (entry.group_number, entry.item_number) != where:
+            raise ValidationFailed("activities", "Uma atividade não muda de item no arranjo.")
+        if where < previous:
+            raise ValidationFailed(
+                "activities", "Os grupos e itens seguem a ordem da tabela de pontuação."
+            )
+        previous = where
+        for page in entry.pages:
+            document = documents.get(page.document_id)
+            if document is None:
+                raise NotFound("Documento não encontrado")
+            if not 1 <= page.page <= document.page_count:
+                raise GenerationRefused(
+                    GenerationCode.PAGINA_FORA_DO_DOCUMENTO,
+                    f"O documento tem {document.page_count} páginas; a página {page.page} "
+                    "não existe.",
+                )
+        checked.append(replace(entry, group_number=where[0], item_number=where[1]))
+    return replace(layout, activities=tuple(checked))
