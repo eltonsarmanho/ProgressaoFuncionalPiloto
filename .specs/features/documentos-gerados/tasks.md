@@ -2204,10 +2204,10 @@ Total: 111 tarefas em 21 fases e 13 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Três documentos: os três arquivos somem do armazenamento, as páginas e os trechos somem, os metadados e os vínculos (números) ficam e `file_deleted_at` é preenchido
-- [ ] Um arquivo cuja remoção falha fica pendente sem marca, os outros seguem; repetir remove o que falta e arquivo já ausente conta como removido
-- [ ] Queda simulada entre a remoção do arquivo e o commit: a nova tentativa fecha o documento
-- [ ] Gate full passa; 8+ testes
+- [x] Três documentos: os três arquivos somem do armazenamento, as páginas e os trechos somem, os metadados e os vínculos (números) ficam e `file_deleted_at` é preenchido
+- [x] Um arquivo cuja remoção falha fica pendente sem marca, os outros seguem; repetir remove o que falta e arquivo já ausente conta como removido
+- [x] Queda simulada entre a remoção do arquivo e o commit: a nova tentativa fecha o documento
+- [x] Gate full passa; 8+ testes
 
 **Tests**: integration
 **Gate**: full
