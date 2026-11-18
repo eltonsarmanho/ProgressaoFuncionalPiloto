@@ -103,3 +103,23 @@ describe("TELA-04 / REV-01: visualizador", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("SEG-03: avisos de data final", () => {
+  it("mostra em português a data final calculada do prazo e a data final ausente", () => {
+    view(
+      detail({
+        alerts: [
+          { code: "DATA_FIM_DERIVADA", field: "end_date", activity_index: 0 },
+          { code: "DATA_FIM_AUSENTE", field: null, activity_index: 1 },
+        ],
+      }),
+    );
+    const avisos = screen.getByRole("region", { name: "Avisos" });
+    expect(within(avisos).getByText(/Data final calculada do prazo da portaria: confira/)).toBeInTheDocument();
+    expect(
+      within(avisos).getByText(/Sem data final na portaria: quantidade estimada até o fim do interstício/),
+    ).toBeInTheDocument();
+    expect(avisos).not.toHaveTextContent("DATA_FIM_DERIVADA");
+    expect(avisos).not.toHaveTextContent("DATA_FIM_AUSENTE");
+  });
+});

@@ -2367,7 +2367,7 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 - [x] Início 2026-08-09 sem fim em VI.7: `DENTRO`, quantidade 0 (3,5 meses), `QUANTIDADE_ESTIMADA` e `DATA_FIM_AUSENTE`, atividade em revisão
 - [x] Início 2024-08-09 com fim derivado 2026-08-09 em VI.6: `PARCIAL`, quantidade 1 (anos completos de 2024-11-23 a 2026-08-09); o cálculo de anos está descrito no corpo do commit como decisão do usuário
-- [x] Início 2024-08-09 sem fim em VI.6: `PARCIAL` e quantidade 1; início depois do fim do interstício: `FORA`
+- [x] Início 2024-08-09 sem fim em VI.6: `PARCIAL` e quantidade 2 (2024-11-23 a 2026-11-23, limite superior sinalizado); início depois do fim do interstício: `FORA`
 - [x] Item que não é por ano (VII.10, III.2) com só a data de início: continua um único dia (`FORA` quando antes do interstício)
 - [x] Duplicidade e verificação manual de atividade com `period_start` e `period_end` não mudam
 - [x] Gate full passa
@@ -2381,7 +2381,7 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 ### T84: Rótulos das datas derivada e ausente
 
-**What**: `labels.ts` ganha `DATA_FIM_DERIVADA` e `DATA_FIM_AUSENTE`, com teste de rótulo. Arquivos: `frontend/src/labels.ts` e `labels.test.ts`.
+**What**: `labels.ts` ganha `DATA_FIM_DERIVADA` e `DATA_FIM_AUSENTE`, com teste de rótulo. Arquivos: `frontend/src/labels.ts` e `DocumentViewer.test.tsx`.
 **Where**: `frontend/src/labels.ts`
 **Depends on**: T83
 **Reuses**: `DOCUMENT_CODE_LABELS`
@@ -2394,8 +2394,8 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 **Done when**:
 
-- [ ] O rótulo de `DATA_FIM_DERIVADA` é "Data final calculada do prazo da portaria: confira" e o de `DATA_FIM_AUSENTE` diz que não há data final e que a quantidade foi estimada até o fim do interstício
-- [ ] Gate build do frontend passa
+- [x] O visualizador mostra "Data final calculada do prazo da portaria: confira" para `DATA_FIM_DERIVADA` e "Sem data final na portaria: quantidade estimada até o fim do interstício" para `DATA_FIM_AUSENTE`
+- [x] Gate build do frontend passa
 
 **Tests**: unit (frontend)
 **Gate**: build

@@ -124,6 +124,8 @@ export const DOCUMENT_CODE_LABELS: Record<string, string> = {
   CLAUSULA_DE_DISPENSA: "Dispensa da função: não vira atividade",
   TENTATIVAS_ESGOTADAS: "Tentativas de leitura esgotadas: reprocesse o documento",
   DATA_PARCIAL: "Data só com mês e ano: confira o período",
+  DATA_FIM_DERIVADA: "Data final calculada do prazo da portaria: confira",
+  DATA_FIM_AUSENTE: "Sem data final na portaria: quantidade estimada até o fim do interstício",
   ERRO_INTERNO: "Erro interno",
 };
 
