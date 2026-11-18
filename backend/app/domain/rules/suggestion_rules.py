@@ -164,19 +164,25 @@ def confirm_board_document(taxonomy: T, document_type: DocumentType, text: str) 
 
 
 _EXTENSION_PROJECTS = frozenset({T.EXTENSAO_PROJETO_COORDENACAO, T.EXTENSAO_PROJETO_PARTICIPACAO})
-_EXTENSION_WORDING = re.compile(r"extensao|\bpapim\b|intervencao metodologica")
+_PAPIM_WORDING = re.compile(r"\bpapim\b|intervencao metodologica")
 
 
 def confirm_extension_project(taxonomy: T, text: str) -> T:
     """A project or program counts as extension only when the document says so (REAL-12).
 
-    The accepted wording is "extensão" or the table's own ("PAPIM", "intervenção
-    metodológica"). Without it the activity has no scoring item (`OUTRA`): the human review
-    decides, and no IV.1 or IV.2 points are suggested for a project that may be research.
+    The accepted wording is "extensão"; for the coordination item IV.1 also the table's own
+    ("PAPIM", "intervenção metodológica"), which only that item names in the official table
+    (SEG-09). Without it the activity has no scoring item (`OUTRA`): the human review decides,
+    and no IV.1 or IV.2 points are suggested for a project that may be research.
     """
-    if taxonomy in _EXTENSION_PROJECTS and not _EXTENSION_WORDING.search(normalize_title(text)):
-        return T.OUTRA
-    return taxonomy
+    if taxonomy not in _EXTENSION_PROJECTS:
+        return taxonomy
+    normalized = normalize_title(text)
+    if "extensao" in normalized:
+        return taxonomy
+    if taxonomy is T.EXTENSAO_PROJETO_COORDENACAO and _PAPIM_WORDING.search(normalized):
+        return taxonomy
+    return T.OUTRA
 
 
 _RESEARCH_COORDINATION = frozenset({T.PESQUISA_PROJETO_COORDENACAO, T.PESQUISA_GRUPO_COORDENACAO})

@@ -333,7 +333,6 @@ def test_project_without_the_extension_wording_has_no_scoring_item(taxonomy):
     [
         "Projeto de Extensão Dados Abertos",
         "PROJETO DE EXTENSAO DADOS ABERTOS",
-        "Programa de Apoio a Projetos de Intervenção Metodológica - PAPIM",
         "Pró-Reitoria de Extensão certifica a participação no projeto",
     ],
 )

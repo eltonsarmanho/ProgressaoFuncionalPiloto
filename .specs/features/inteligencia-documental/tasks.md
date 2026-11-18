@@ -34,7 +34,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 | --- | --- | --- |
 | Quick | After tasks with unit tests only | `cd backend && .venv/bin/pytest tests/unit tests/architecture -q` (frontend: `cd frontend && npm test -- --run`) |
 | Full | After tasks with integration tests | `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` |
-| Build | After phase completion or config-only tasks | `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm test -- --run && npm run build` |
+| Build | After phase completion or config-only tasks | `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run` |
 
 ---
 
@@ -2549,9 +2549,9 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 **Done when**:
 
-- [ ] Teste lê a descrição do item IV.1 de `ufpa.json` e confirma que traz PAPIM e a descrição do IV.2 não
-- [ ] Coordenação com "PAPIM" sem "extensão": IV.1; participação com "PAPIM": sem item
-- [ ] Gate full passa
+- [x] Teste lê a descrição do item IV.1 de `ufpa.json` e confirma que traz PAPIM e a descrição do IV.2 não
+- [x] Coordenação com "PAPIM" sem "extensão": IV.1; participação com "PAPIM": sem item
+- [x] Gate full passa
 
 **Tests**: unit
 **Gate**: full
