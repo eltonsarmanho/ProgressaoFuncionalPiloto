@@ -332,6 +332,12 @@ class EvidenceRepository(Protocol):
 
     def counts_for_activities(self, activity_ids: Sequence[UUID]) -> dict[UUID, int]: ...
 
+    def content_keys_for_activities(
+        self, activity_ids: Sequence[UUID]
+    ) -> dict[UUID, set[tuple[UUID, str]]]:
+        """Per activity, the (document id, hash of the normalized page text) of its evidences."""
+        ...
+
 
 class FileStorage(Protocol):
     def save(self, process_id: UUID, extension: str, content: bytes) -> str:

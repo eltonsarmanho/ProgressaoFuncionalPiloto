@@ -650,7 +650,9 @@ class CalculateProcessScore(_ScoringUseCase):
             process = self._readable(uow, actor, process_id)
             state = table_state(uow, process)
             activities = sorted(uow.activities.list_for_process(process.id), key=_listing_order)
-            evidence_counts = uow.evidences.counts_for_activities([a.id for a in activities])
+            ids = [a.id for a in activities]
+            evidence_counts = uow.evidences.counts_for_activities(ids)
+            contents = uow.evidences.content_keys_for_activities(ids)
             if state.chosen is None:
                 no_table = MinimumComparison(MinimumStatus.NAO_DEFINIDO, None, ZERO)
                 return ProcessScore(
@@ -664,7 +666,7 @@ class CalculateProcessScore(_ScoringUseCase):
                 )
             version = state.chosen.version
             interstice = Interstice(process.start_date, process.end_date)
-            result = calculate(version, activities, interstice, evidence_counts)
+            result = calculate(version, activities, interstice, evidence_counts, contents)
             professor = uow.professors.get(process.professor_id)
             code = uow.career_versions.structure_code(professor.career_structure_id)
             versions = uow.career_versions.list_versions(code) if code else []

@@ -16,6 +16,7 @@ from app.domain.entities.document import (
 from app.domain.entities.user import Role, User
 from app.domain.errors import Conflict, NotFound, StaleVersion
 from app.domain.repositories.ports import ActivityEvidence, JobStatus, ProcessingJob
+from app.domain.rules.scoring_duplicates import content_hash
 from tests.integration.documents.factories import make_document, make_run
 from tests.integration.test_scoring_repositories import make_activity
 
@@ -568,3 +569,21 @@ def test_counts_for_activities_counts_links_per_activity(uow_factory, linked):
         counts = uow.evidences.counts_for_activities([act1.id, act2.id])
         assert counts == {act1.id: 2, act2.id: 0}
         assert uow.evidences.counts_for_activities([]) == {}
+
+
+def test_content_keys_pair_each_activity_with_the_hash_of_its_documents_text(uow_factory, linked):
+    (act1, act2), (doc1, doc2), user_id = linked
+    run = make_run(doc1.id)
+    with uow_factory() as uow:
+        uow.extractions.add_run(run)
+        pages = [_page(doc1.id, run.id, 2, "pagina dois"), _page(doc1.id, run.id, 1, "Pagina UM")]
+        uow.extractions.replace_pages(doc1.id, pages)
+        uow.evidences.add(make_evidence(act1, doc1, user_id, page=1))
+        uow.evidences.add(make_evidence(act1, doc1, user_id, page=2))
+        uow.evidences.add(make_evidence(act2, doc2, user_id, page=1))  # doc2 has no text stored
+        uow.commit()
+
+    with uow_factory() as uow:
+        keys = uow.evidences.content_keys_for_activities([act1.id, act2.id])
+        assert uow.evidences.content_keys_for_activities([]) == {}
+    assert keys == {act1.id: {(doc1.id, content_hash(["pagina um", "pagina dois"]))}}

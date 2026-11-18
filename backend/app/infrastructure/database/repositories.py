@@ -41,6 +41,7 @@ from app.domain.repositories.ports import (
     ProcessingJob,
     ScoringTableRecord,
 )
+from app.domain.rules.scoring_duplicates import content_hash
 from app.infrastructure.database.models import (
     AcademicUnitModel,
     ActivityCandidateModel,
@@ -1207,6 +1208,31 @@ class SqlEvidenceRepository:
         counts = {activity_id: 0 for activity_id in activity_ids}
         counts.update({activity_id: count for activity_id, count in rows})
         return counts
+
+    def content_keys_for_activities(
+        self, activity_ids: Sequence[UUID]
+    ) -> dict[UUID, set[tuple[UUID, str]]]:
+        if not activity_ids:
+            return {}
+        links = self._s.execute(
+            select(ActivityEvidenceModel.activity_id, ActivityEvidenceModel.document_id)
+            .where(ActivityEvidenceModel.activity_id.in_(activity_ids))
+            .distinct()
+        ).all()
+        document_ids = {document_id for _, document_id in links}
+        pages: dict[UUID, list[str]] = {}
+        for document_id, text in self._s.execute(
+            select(DocumentPageModel.document_id, DocumentPageModel.text)
+            .where(DocumentPageModel.document_id.in_(document_ids))
+            .order_by(DocumentPageModel.document_id, DocumentPageModel.page_number)
+        ):
+            pages.setdefault(document_id, []).append(text)
+        hashes = {document_id: content_hash(texts) for document_id, texts in pages.items()}
+        keys: dict[UUID, set[tuple[UUID, str]]] = {}
+        for activity_id, document_id in links:
+            if document_id in hashes:
+                keys.setdefault(activity_id, set()).add((document_id, hashes[document_id]))
+        return keys
 
 
 class SqlUnitOfWork:

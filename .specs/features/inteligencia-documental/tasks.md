@@ -2446,9 +2446,9 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 **Done when**:
 
-- [ ] Dois documentos de bytes diferentes e texto normalizado igual, uma atividade em cada, mesmo item: a criada depois é `DUPLICIDADE` (PostgreSQL real, pelo cálculo do processo)
-- [ ] Duas atividades do mesmo documento nunca duplicam por conteúdo; textos diferentes não duplicam
-- [ ] Gate full passa
+- [x] Dois documentos de bytes diferentes e texto normalizado igual, uma atividade em cada, mesmo item: a criada depois é `DUPLICIDADE` (PostgreSQL real, pelo cálculo do processo)
+- [x] Duas atividades do mesmo documento nunca duplicam por conteúdo; textos diferentes não duplicam
+- [x] Gate full passa
 
 **Tests**: unit + integration
 **Gate**: full

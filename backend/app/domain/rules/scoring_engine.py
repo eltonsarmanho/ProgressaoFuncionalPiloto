@@ -14,7 +14,7 @@ them are unchanged).
 """
 
 from collections import defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, Sequence, Set
 from dataclasses import dataclass, field, replace
 from decimal import ROUND_HALF_UP, Decimal
 from enum import StrEnum
@@ -25,7 +25,7 @@ from app.domain.entities.scoring import ScoringCriterion, ScoringMode, ScoringTa
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.process_verification import Alert, Severity
 from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
-from app.domain.rules.scoring_duplicates import find_duplicates
+from app.domain.rules.scoring_duplicates import ContentKey, find_duplicates
 from app.domain.rules.scoring_periods import PeriodState, evaluate_period, is_yearly_unit
 from app.domain.rules.scoring_points import criterion_points
 
@@ -308,10 +308,14 @@ def calculate(
     activities: Sequence[Activity],
     interstice: Interstice,
     evidence_counts: Mapping[UUID, int] | None = None,
+    contents: Mapping[UUID, Set[ContentKey]] | None = None,
 ) -> ScoringResult:
-    """`evidence_counts` maps an activity id to its linked documents; absent means none."""
+    """`evidence_counts` maps an activity id to its linked documents; absent means none.
+
+    `contents` maps an activity id to the (document, text hash) pairs of its evidences.
+    """
     counts = evidence_counts or {}
-    duplicates = find_duplicates(activities)
+    duplicates = find_duplicates(activities, contents)
     adjustments: list[LimitAdjustment] = []
     rows = tuple(
         _evaluate(a, version, interstice, duplicates, adjustments, counts.get(a.id, 0))
