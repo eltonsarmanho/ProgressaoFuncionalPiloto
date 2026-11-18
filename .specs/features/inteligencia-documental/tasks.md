@@ -4070,9 +4070,9 @@ T141 → T142 → T143 → T144 → T145
 
 **Done when**:
 
-- [ ] `CLAUDE.md` descreve a regra e os limites já fixados (pontuação determinística, IA só sugere, documentos reais nunca versionados)
-- [ ] `validate_spec.py`, `validate_tasks.py` e `validate_state.py` passam
-- [ ] Gate build passa
+- [x] `CLAUDE.md` descreve a regra e os limites já fixados (pontuação determinística, IA só sugere, documentos reais nunca versionados)
+- [x] `validate_spec.py`, `validate_tasks.py` e `validate_state.py` passam
+- [x] Gate build passa
 
 **Tests**: none
 **Gate**: build

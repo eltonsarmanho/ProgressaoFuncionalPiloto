@@ -647,7 +647,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 171 total, 162 mapped to tasks, 9 unmapped ⚠️ (FORA-01..09 entram na Phase 18)
+**Coverage:** 171 total, 171 mapped to tasks, 0 unmapped (FORA-01..09 na Phase 18, T141-T145)
 
 ---
 

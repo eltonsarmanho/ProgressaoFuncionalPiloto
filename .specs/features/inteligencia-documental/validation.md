@@ -458,6 +458,31 @@ The interface round of stages 2, 3 and 4 became UIM-01..23 and tasks T118-T140 (
 - Tables below 960 px wide turn into cards (not only below 480 px) so the columns never squeeze the text.
 - Deploy: this round adds migration 0005 (`activities.unit_points_override`); the VM needs `alembic upgrade head` with the new image.
 
+## Resolution (round 8)
+
+Round 8 is the rule of the document outside the interstice (FORA-01..09, tasks T141-T145, Phase 18), asked by the user on 2026-11-18. Each task is one commit. **The independent Verifier pass is pending**: the author wrote these lines and FORA-01..09 stay `Implementing` until a fresh Verifier confirms them and runs the mutants on the analyzer and on the screen.
+
+| Task | Commit | Closes | Proof |
+| ---- | ------ | ------ | ----- |
+| T141 | `be7c11b` | FORA-01, 05, 06 | `test_document_period.py`: all `FORA` is outside; `FORA`+`DENTRO` and `FORA`+`PARCIAL` are inside; an empty list or no usable date does not apply; `test_repositories.py` stores the code in `status_code` and in the run warnings (no migration: `status_code` is `String(40)` and the warnings are JSONB) |
+| T142 | `df59346` | FORA-01, 05, 06, 07, 09 | `test_document_analyzer_outside_interstice.py` (no activity, alert with the most recent date, month precision, outside next to inside or crossing, no date, no interstice) and `test_process_outside_interstice.py` (`PROCESSADO`, no `REQUER_REVISAO`, widening the interstice and reprocessing removes the alert and creates the activity, narrowing replaces the old draft) |
+| T143 | `0c6fbff` | FORA-02, 03, 04, 08 | `test_documents_outside_interstice_api.py`: list fields, detail alert `detail`, 409 `DOCUMENTO_FORA_DO_INTERSTICIO` on classification and on linking, no activity or evidence of the document, Visualizar, Baixar, Reprocessar and Excluir still work |
+| T144 | `a1b651c` | FORA-02, 04, 08, 09 | `DocumentList.test.tsx` (strip text with the dates, month precision, only four buttons, summary counts, no justification field) and `styles.test.ts` (alert colour, strip attached to the card) |
+| T145 | this commit | all | this section, `AD-016` and the handoff |
+
+**Where the document date lives**: in the `detail` of the `DOCUMENTO_FORA_DO_INTERSTICIO` alert stored in the active run warnings (`document_date` ISO, `date_precision` `DAY` or `MONTH`, `interstice_start`, `interstice_end`). The list use case reads it only for documents whose `status_code` is the new code (no extra query for the others) and the list API exposes `outside_interstice`, `document_date`, `document_date_precision`, `interstice_start` and `interstice_end`; the detail API exposes the alert with `detail`. The date is the latest of the event, start and end dates the page proves.
+
+**Existing tests changed** (the rule changed the old single-activity expectation of SUG-09): six analyzer tests in `test_document_analyzer_classification.py` and `test_document_analyzer_open_end.py` that checked `FORA_DO_INTERSTICIO` on a document with one outside activity now put a second, inside activity in the same document (FORA-05); `test_process_corpus_run.py` expects the outside document with no activity and `interstice == "FORA"` (`scripts/process_corpus.py` reports it so); `test_documents_api.py` lists the new keys and the `detail: None` of the alerts; `test_read.py` reads `ListedDocument`.
+
+**Gate** (HEAD `a1b651c` plus this commit): backend `ruff` clean and `pytest` 4613 passed, 3 deselected (`maritalk_live`), 0 failed; frontend `eslint` clean, `tsc` and `vite build` OK, `REQUIRE_DIST=1 vitest` 246 passed (26 files). `validate_spec.py` 0 errors, `validate_tasks.py` 0 errors (6 warnings, `Tests: none`), `validate_state.py` 0 errors. `CLAUDE.md` already described the final behavior and was not changed (the only detail it does not say: with month precision the warning shows `mm/aaaa`).
+
+**Open points for the lead**
+- The list stays an array: the count `outside_interstice_count` is summed by the screen, not sent by the API.
+- A draft of an earlier reading, rejected by the reprocess, stays as a rejected zero-point row linked to the document (PIPE-09); a draft the user edited or validated before the document became outside also stays and keeps its link. FORA-03 reads strictly, so say if such activities must also leave the stages.
+- Substituir is hidden on the outside row (FORA-04 lists four buttons).
+- The rule is decided before the professor check: a document of another professor that is wholly outside ends `PROCESSADO` with the outside alert (`DOCENTE_DIVERGENTE` is still stored).
+- SUG-09 (spec line 167) still reads as if the outside activity were always kept; FORA-05 narrows it. The text of SUG-09 was not edited.
+
 ## Pass 4 (independent Verifier, HEAD 9533966)
 
 ### Validation pass 4 - Phase 14 (T96-T106, TER-01..TER-11)
