@@ -156,7 +156,7 @@ Tabelas legíveis, botões curtos que agem na hora, janelas para classificar, cr
 
 ```
 T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 → T127 → T128 → T129 → T130 → T131 → T132 → T133 → T134 → T135 → T136 → T137 → T138 → T139 → T140
-Phase 18:  T141 → T142 → T143 → T144 → T145
+Phase 18:  T141 → T142 → T143 → T144 → T145 → T146
 ```
 
 ---
@@ -3943,7 +3943,7 @@ Phase 18:  T141 → T142 → T143 → T144 → T145
 Regra de negócio pedida em 2026-11-18: o documento cujas atividades datadas caem todas fora do interstício aparece na Etapa 2 com aviso destacado e não segue para as Etapas 3, 4 e 5 (FORA-01..09). Cinco tarefas encadeadas: regra pura, analisador, API, tela e registro.
 
 ```
-T141 → T142 → T143 → T144 → T145
+T141 → T142 → T143 → T144 → T145 → T146
 ```
 
 ### T141: Regra pura do documento fora do interstício
@@ -4082,6 +4082,35 @@ T141 → T142 → T143 → T144 → T145
 
 ---
 
+### T146: Rejeitar as atividades de um documento que passa a ficar fora do interstício
+
+**What**: No reprocessamento, quando o documento passa a ter o alerta `DOCUMENTO_FORA_DO_INTERSTICIO`, rejeitar com auditoria todas as atividades ligadas só a ele, inclusive as editadas ou validadas; a atividade com evidência de outro documento permanece, sem a evidência do documento fora. Pontuação, listas das Etapas 3 e 4 e documentos gerados não mostram a atividade rejeitada. Arquivos: caso de uso de reprocessamento em `application/use_cases/documents.py` e seus testes; atualizar a nota de FORA-03 na spec e AD-018.
+**Where**: `backend/app/application/use_cases/documents.py`
+**Depends on**: T145
+**Reuses**: Regra de reprocessamento que rejeita os rascunhos sem edição (`documents.py` ~523-541), auditoria de rejeição
+**Requirement**: FORA-03, FORA-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Atividade validada ou editada ligada só ao documento que ficou fora é rejeitada com auditoria
+- [ ] Atividade com evidência de outro documento dentro do período permanece e perde só a evidência do documento fora
+- [ ] Reprocessar de novo com o interstício ampliado cria as atividades do documento sem duplicar as rejeitadas
+- [ ] A pontuação do processo não conta a atividade rejeitada
+- [ ] FORA-03 passa a `Verified` depois do Verifier independente
+- [ ] Gate full passa
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(documents): reject the activities of a document that became outside the interstice`
+
+---
+
 ---
 
 ## Phase Execution Map
@@ -4106,5 +4135,5 @@ Phase 14:  T96 → T97 → T98 → T99 → T100 → T101 → T102 → T103 → T
 Phase 15:  T107 → T108 → T109 → T110 → T111 → T112
 Phase 16:  T113 → T114 → T115 → T116 → T117
 Phase 17:  T118 → T119 → T120 → T121 → T122 → T123 → T124 → T125 → T126 → T127 → T128 → T129 → T130 → T131 → T132 → T133 → T134 → T135 → T136 → T137 → T138 → T139 → T140
-Phase 18:  T141 → T142 → T143 → T144 → T145
+Phase 18:  T141 → T142 → T143 → T144 → T145 → T146
 ```

@@ -440,7 +440,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 1. WHEN um documento é processado e todas as atividades extraídas que têm data estão fora do interstício do processo (estado de período `FORA`, pela mesma verificação de SUG-09 e DATA-10) THEN the system SHALL marcar o documento com o alerta `DOCUMENTO_FORA_DO_INTERSTICIO` e SHALL não criar atividade nenhuma a partir dele.
 2. WHILE um documento traz o alerta `DOCUMENTO_FORA_DO_INTERSTICIO` the system SHALL mostrá-lo na lista da Etapa 2 com um aviso destacado (faixa de cor de alerta na linha, não um selo discreto) com o texto "Data do documento dd/mm/aaaa, fora do interstício (dd/mm/aaaa a dd/mm/aaaa): não será processado nas próximas etapas", com a data extraída do documento (a mais recente quando há várias, ou o mês e o ano quando a precisão é de mês) e as datas do interstício do processo.
-3. WHILE um documento traz o alerta `DOCUMENTO_FORA_DO_INTERSTICIO` the system SHALL excluí-lo das Etapas 3, 4 e 5: nenhuma atividade é criada a partir dele; as atividades já editadas ou validadas pelo usuário antes do reprocessamento permanecem ligadas ao documento.
+3. WHILE um documento traz o alerta `DOCUMENTO_FORA_DO_INTERSTICIO` the system SHALL excluí-lo das Etapas 3, 4 e 5: nenhuma atividade é criada a partir dele, e WHEN o reprocessamento o torna fora do interstício THEN the system SHALL rejeitar, com auditoria, as atividades ligadas só a ele, inclusive as já editadas ou validadas pelo usuário (decisão do usuário em 2026-11-18); a atividade que também tem evidência de outro documento permanece, sem a evidência do documento fora do interstício.
 4. WHILE um documento traz o alerta `DOCUMENTO_FORA_DO_INTERSTICIO` the system SHALL mantê-lo com Visualizar, Baixar, Reprocessar e Excluir, e SHALL não oferecer Classificar nem Criar atividade para ele.
 5. WHERE ao menos uma atividade do documento está dentro do interstício ou o cruza (`DENTRO` ou `PARCIAL`) the system SHALL processar o documento normalmente, e as atividades fora do período seguem a regra de SUG-09 (`FORA_DO_INTERSTICIO` na sugestão).
 6. WHERE nenhuma atividade extraída do documento tem data utilizável the system SHALL não aplicar esta regra e SHALL manter o fluxo normal do documento.
@@ -647,7 +647,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**FORA-03 note:** stays `Implementing`: the case of an activity the user edited or validated before the document became outside is a documented exception (AD-017), kept non-destructive by decision, not a defect.
+**FORA-03 note:** volta a `Implementing`: o usuário decidiu em 2026-11-18 (AD-018) que as atividades já editadas ou validadas de um documento que passa a ficar fora do interstício também saem das Etapas 3 a 5 (T146).
 
 **Coverage:** 171 total, 171 mapped to tasks, 0 unmapped (FORA-01..09 na Phase 18, T141-T145)
 

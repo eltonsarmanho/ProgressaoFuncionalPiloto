@@ -136,6 +136,14 @@
 - **Trade-off**: A Etapa 2 pode mostrar a faixa ao lado de `activity_count` maior que 0, e a atividade mantida segue na Etapa 3 com linha de 0 ponto; a faixa não avisa disso (uma segunda linha na faixa foi considerada e não implementada).
 - **Scope**: `inteligencia-documental`
 - **Date**: 2026-11-18
+- **Status**: superseded in part by AD-018 (atividades editadas ou validadas); o seletor da Etapa 3 e o `DOCENTE_DIVERGENTE` seguem valendo
+
+### AD-018
+- **Decision**: Quando o reprocessamento torna um documento fora do interstício, o sistema rejeita, com auditoria (`DOCUMENTO_FORA_DO_INTERSTICIO`), todas as atividades ligadas só a esse documento, inclusive as já editadas ou validadas pelo usuário; a atividade que tem também evidência de outro documento permanece, sem a evidência do documento fora. Substitui a parte de AD-017 que mantinha as atividades editadas ou validadas.
+- **Reason**: Pedido do usuário em 2026-11-18 ("Remover"): o documento fora do interstício é identificado só na Etapa 2 e não segue para as próximas etapas.
+- **Trade-off**: Trabalho já validado pelo usuário é rejeitado sozinho; a rejeição é auditada e a atividade continua no histórico (não é apagada do banco).
+- **Scope**: `inteligencia-documental` (FORA-03, T146)
+- **Date**: 2026-11-18
 - **Status**: active
 
 ## Handoff
