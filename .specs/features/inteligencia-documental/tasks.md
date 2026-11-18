@@ -2651,9 +2651,9 @@ T82 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90 → T91 → 
 
 **Done when**:
 
-- [ ] Pico medido antes e depois no contêiner limitado, com os números no corpo do commit
-- [ ] Teste limita o crescimento de memória entre 2 e N páginas
-- [ ] Gate full passa
+- [x] Pico medido antes e depois no contêiner limitado, com os números no corpo do commit
+- [x] Teste limita o crescimento de memória entre 2 e N páginas
+- [x] Gate full passa
 
 **Tests**: unit + integration
 **Gate**: full

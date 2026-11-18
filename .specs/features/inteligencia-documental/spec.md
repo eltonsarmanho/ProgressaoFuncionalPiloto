@@ -464,7 +464,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SEG-09 | P1: Correções da segunda rodada de validação | Design | Implementing |
 | SEG-10 | P1: Correções da segunda rodada de validação | Design | Implementing |
 | SEG-11 | P1: Correções da segunda rodada de validação | Design | Implementing |
-| SEG-12 | P1: Correções da segunda rodada de validação | Design | In Tasks |
+| SEG-12 | P1: Correções da segunda rodada de validação | Design | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 

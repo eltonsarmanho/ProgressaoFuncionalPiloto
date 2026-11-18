@@ -31,13 +31,26 @@ def preprocess(image: Image.Image) -> Image.Image:
 
 
 def render_page(path: Path, page_number: int, dpi: int = DEFAULT_DPI) -> Image.Image:
-    """Render a PDF page (1-based) at `dpi` as a preprocessed grayscale image."""
-    with pymupdf.open(path, filetype="pdf") as doc:
-        page = doc[page_number - 1]
-        dpi = _dpi_within_cap(page.rect, dpi)
-        pixmap = page.get_pixmap(dpi=dpi, colorspace=pymupdf.csGRAY, alpha=False)
-        rendered = Image.frombytes("L", (pixmap.width, pixmap.height), pixmap.samples)
-    return preprocess(rendered)
+    """Render a PDF page (1-based) at `dpi` as a preprocessed grayscale image.
+
+    The pixmap and the intermediate images are released here and MuPDF's global image cache is
+    emptied, so the memory of a long scanned PDF does not grow with its pages (SEG-12).
+    """
+    try:
+        with pymupdf.open(path, filetype="pdf") as doc:
+            page = doc[page_number - 1]
+            dpi = _dpi_within_cap(page.rect, dpi)
+            pixmap = page.get_pixmap(dpi=dpi, colorspace=pymupdf.csGRAY, alpha=False)
+            rendered = Image.frombytes("L", (pixmap.width, pixmap.height), pixmap.samples)
+            del pixmap
+        try:
+            return preprocess(rendered)
+        finally:
+            rendered.close()
+    finally:
+        # MuPDF keeps every decoded page image in a store of up to 256 MB: about 17 MB per A4
+        # scan, enough to reach the 384 MB limit of the VM backend within 25 pages.
+        pymupdf.TOOLS.store_shrink(100)
 
 
 def _dpi_within_cap(rect: pymupdf.Rect, dpi: int) -> int:
