@@ -82,6 +82,21 @@ describe("UIG-01: a página da Etapa 5", () => {
     }
   });
 
+  it("UIG-06: a atividade validada com grupo e sem item, ou com item e sem grupo, também fica de fora", async () => {
+    setup("EM_ANDAMENTO", {}, {
+      "GET /api/processes/p1/activities": {
+        status: 200,
+        body: [
+          activity("ok", "VALIDADA", 1, 1),
+          activity("sem-item", "VALIDADA", 3, null),
+          activity("sem-grupo", "VALIDADA", null, 1),
+        ],
+      },
+    });
+    const b = await block("Tabela de Pontuação");
+    expect(await within(b).findByText("2 atividades ficam de fora: só entram as validadas, com grupo e item.")).toBeInTheDocument();
+  });
+
   it("o histórico de cada bloco traz os links de download da versão pronta", async () => {
     setup("EM_ANDAMENTO", { TABELA: [generated()] });
     const b = await block("Tabela de Pontuação");
@@ -179,6 +194,7 @@ describe("DEL-13: processo CONCLUIDO", () => {
     const relatorio = await block("Relatório de Atividades");
     await user.click(within(relatorio).getByRole("button", { name: "Revisar rascunho do Relatório" }));
     expect(await within(relatorio).findByLabelText("Texto de Algoritmos")).toHaveAttribute("readonly");
+    expect(within(relatorio).getByLabelText("Texto livre da seção 1.1")).toHaveAttribute("readonly");
     expect(within(relatorio).queryByRole("button", { name: /Pedir redação/ })).not.toBeInTheDocument();
     expect(within(relatorio).queryByRole("combobox", { name: /Mover/ })).not.toBeInTheDocument();
 

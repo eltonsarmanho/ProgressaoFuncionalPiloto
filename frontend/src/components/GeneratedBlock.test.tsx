@@ -107,6 +107,19 @@ describe("UIG-05: falha e alertas em português", () => {
     expect(asks(calls)).toHaveLength(1);
   });
 
+  it("UIG-01: o histórico só lista versões PRONTO; a que falhou ou está gerando não entra", async () => {
+    setup([
+      generated({ id: "g3", state: "GERANDO", version_number: null, files: [], finished_at: null }),
+      generated({ id: "g2", state: "FALHOU", version_number: null, files: [], error_code: "ERRO_INTERNO" }),
+      generated({ id: "g1" }),
+    ]);
+    const history = await screen.findByRole("list", { name: "Versões geradas" });
+    const items = within(history).getAllByRole("listitem");
+    expect(items).toHaveLength(1);
+    expect(items[0]).toHaveTextContent("Versão 1");
+    expect(history).not.toHaveTextContent("Versão null");
+  });
+
   it("lista os alertas da última versão pronta com o texto em português", async () => {
     setup([
       generated({

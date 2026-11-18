@@ -3232,11 +3232,11 @@ Total: 125 tarefas em 22 fases e 14 lotes. O Verificador roda depois do último 
 
 **Done when**:
 
-- [ ] Uma linha FALHOU ou GERANDO ao lado de uma PRONTO não aparece em `Versões geradas`
-- [ ] A atividade validada com grupo e sem item entra na contagem `fica de fora`
-- [ ] Em processo somente leitura a caixa `Texto livre da seção` é `readonly`
-- [ ] `Subir` da primeira atividade e `Descer` da última ficam desligados no arranjo
-- [ ] Cada mutante é morto numa cópia isolada da árvore (comandos no corpo do commit); gate quick passa; 4+ testes novos
+- [x] Uma linha FALHOU ou GERANDO ao lado de uma PRONTO não aparece em `Versões geradas`
+- [x] A atividade validada com grupo e sem item entra na contagem `fica de fora`
+- [x] Em processo somente leitura a caixa `Texto livre da seção` é `readonly`
+- [x] `Subir` da primeira atividade e `Descer` da última ficam desligados no arranjo
+- [x] Cada mutante é morto numa cópia isolada da árvore (comandos no corpo do commit); gate quick passa; 4+ testes novos
 
 **Tests**: unit
 **Gate**: quick

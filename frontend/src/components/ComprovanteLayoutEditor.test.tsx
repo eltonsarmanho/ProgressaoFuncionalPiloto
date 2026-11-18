@@ -150,6 +150,15 @@ describe("ARR-04: reordenar e ARR-03: remover páginas", () => {
     expect(pages[0]).toHaveTextContent("página 5");
   });
 
+  it("os botões de ordem das atividades ficam desligados nas pontas do item", async () => {
+    setup();
+    await screen.findByRole("listitem", { name: "Algoritmos" });
+    expect(screen.getByRole("button", { name: "Subir atividade Algoritmos" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Descer atividade Algoritmos" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Subir atividade Redes" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Descer atividade Redes" })).toBeDisabled();
+  });
+
   it("subir e descer a atividade dentro do item muda a ordem enviada", async () => {
     const { calls, user } = setup(layoutView(), { [PUT]: { status: 200, body: layoutView() } });
     await screen.findByRole("listitem", { name: "Algoritmos" });
