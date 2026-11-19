@@ -284,6 +284,8 @@ T42 → T43 → T44
 
 ### T7: Código de recusa `ATIVIDADE_SEM_CATEGORIA`
 
+**Status**: Done
+
 **What**: Novo valor `ATIVIDADE_SEM_CATEGORIA` em `GenerationCode`.
 **Where**: `backend/app/domain/entities/generated.py` (modify)
 **Depends on**: None
@@ -297,9 +299,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] O valor existe e o teste de contrato dos códigos (`test_generation_error_mapping.py`) inclui o novo com status 422
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: nenhum teste apagado
+- [x] O valor existe e o teste de contrato dos códigos (`test_generation_error_mapping.py`) inclui o novo com status 422
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: nenhum teste apagado
 
 **Tests**: none
 **Gate**: build

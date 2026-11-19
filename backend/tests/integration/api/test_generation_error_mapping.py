@@ -4,6 +4,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from app.domain.entities.generated import GenerationCode
 from app.domain.errors import (
     Conflict,
     GenerationRefused,
@@ -16,6 +17,9 @@ from app.presentation.errors import install_error_handlers
 
 RAISED = {
     "refused": GenerationRefused("SEM_ATIVIDADES_VALIDADAS", "Nenhuma atividade validada"),
+    "no_category": GenerationRefused(
+        GenerationCode.ATIVIDADE_SEM_CATEGORIA, "Há atividades sem categoria na Etapa 3."
+    ),
     "gone": Gone("ARQUIVO_EXCLUIDO", "O arquivo foi excluído"),
     "conflict_code": Conflict("Já existe uma geração em andamento", code="GERACAO_EM_ANDAMENTO"),
     "conflict": Conflict("Processo concluído ou arquivado não pode ser alterado"),
@@ -51,6 +55,22 @@ def test_a_generation_refusal_is_422_with_field_code_and_message(client):
                 "field": "geracao",
                 "code": "SEM_ATIVIDADES_VALIDADAS",
                 "message": "Nenhuma atividade validada",
+            }
+        ]
+    }
+
+
+def test_the_refusal_of_an_activity_without_category_is_422_with_its_code(client):
+    # SEG-05
+    response = client.get("/raise/no_category")
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": [
+            {
+                "field": "geracao",
+                "code": "ATIVIDADE_SEM_CATEGORIA",
+                "message": "Há atividades sem categoria na Etapa 3.",
             }
         ]
     }
