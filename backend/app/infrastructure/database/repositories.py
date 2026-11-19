@@ -769,6 +769,7 @@ _ACTIVITY_FIELDS = (
     "distinct_justification",
     "created_by",
     "extraction_run_id",
+    "merged_into_id",
 )
 
 
@@ -833,14 +834,38 @@ class SqlActivityRepository:
         process_id: UUID,
         group_number: int | None = None,
         status: ActivityStatus | None = None,
+        include_merged: bool = False,
     ) -> Sequence[Activity]:
         stmt = select(ActivityModel).where(ActivityModel.process_id == process_id)
+        if not include_merged:
+            stmt = stmt.where(ActivityModel.merged_into_id.is_(None))
         if group_number is not None:
             stmt = stmt.where(ActivityModel.group_number == group_number)
         if status is not None:
             stmt = stmt.where(ActivityModel.status == status)
         models = self._s.scalars(stmt.order_by(ActivityModel.created_at, ActivityModel.id)).all()
         return [self._to_entity(m) for m in models]
+
+    def list_merged_into(self, activity_id: UUID) -> Sequence[Activity]:
+        models = self._s.scalars(
+            select(ActivityModel)
+            .where(ActivityModel.merged_into_id == activity_id)
+            .order_by(ActivityModel.created_at, ActivityModel.id)
+        ).all()
+        return [self._to_entity(m) for m in models]
+
+    def set_merged_into(
+        self, activity: Activity, target_id: UUID | None, expected_version: int
+    ) -> None:
+        activity.version = _versioned_update(
+            self._s,
+            ActivityModel,
+            activity.id,
+            expected_version,
+            {"merged_into_id": target_id, "updated_at": func.now()},
+            "Atividade",
+        )
+        activity.merged_into_id = target_id
 
 
 class SqlAuditRepository:
@@ -1213,6 +1238,7 @@ class SqlEvidenceRepository:
             created_by=m.created_by,
             run_id=m.run_id,
             created_at=m.created_at,
+            origin_activity_id=m.origin_activity_id,
         )
 
     def add(self, evidence: ActivityEvidence) -> None:
@@ -1224,6 +1250,7 @@ class SqlEvidenceRepository:
             excerpt=evidence.excerpt,
             run_id=evidence.run_id,
             created_by=evidence.created_by,
+            origin_activity_id=evidence.origin_activity_id,
         )
         if evidence.created_at is not None:
             values["created_at"] = evidence.created_at
@@ -1270,6 +1297,55 @@ class SqlEvidenceRepository:
             .values(excerpt="")
         )
 
+    def move(
+        self, evidence_ids: Sequence[UUID], to_activity_id: UUID, origin_activity_id: UUID
+    ) -> list[UUID]:
+        if not evidence_ids:
+            return []
+        taken = {
+            (document_id, page_number)
+            for document_id, page_number in self._s.execute(
+                select(ActivityEvidenceModel.document_id, ActivityEvidenceModel.page_number).where(
+                    ActivityEvidenceModel.activity_id == to_activity_id
+                )
+            )
+        }
+        candidates = self._s.scalars(
+            select(ActivityEvidenceModel)
+            .where(ActivityEvidenceModel.id.in_(evidence_ids))
+            .order_by(ActivityEvidenceModel.created_at, ActivityEvidenceModel.id)
+        ).all()
+        moved: list[UUID] = []
+        for evidence in candidates:
+            page = (evidence.document_id, evidence.page_number)
+            if page in taken:
+                continue
+            taken.add(page)
+            self._s.execute(
+                update(ActivityEvidenceModel)
+                .where(ActivityEvidenceModel.id == evidence.id)
+                .values(
+                    activity_id=to_activity_id,
+                    origin_activity_id=evidence.origin_activity_id or origin_activity_id,
+                )
+            )
+            moved.append(evidence.id)
+        return moved
+
+    def restore_from(self, origin_activity_id: UUID) -> list[UUID]:
+        ids = self._s.scalars(
+            select(ActivityEvidenceModel.id)
+            .where(ActivityEvidenceModel.origin_activity_id == origin_activity_id)
+            .order_by(ActivityEvidenceModel.created_at, ActivityEvidenceModel.id)
+        ).all()
+        if ids:
+            self._s.execute(
+                update(ActivityEvidenceModel)
+                .where(ActivityEvidenceModel.id.in_(ids))
+                .values(activity_id=origin_activity_id, origin_activity_id=None)
+            )
+        return list(ids)
+
     def counts_for_activities(self, activity_ids: Sequence[UUID]) -> dict[UUID, int]:
         if not activity_ids:
             return {}
@@ -1294,6 +1370,7 @@ class SqlEvidenceRepository:
             .where(
                 ActivityEvidenceModel.document_id.in_(document_ids),
                 ActivityModel.status != ActivityStatus.REJEITADA,
+                ActivityModel.merged_into_id.is_(None),
             )
             .group_by(ActivityEvidenceModel.document_id)
         ).all()

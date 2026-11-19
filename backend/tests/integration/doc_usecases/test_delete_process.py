@@ -118,6 +118,27 @@ def test_an_admin_deletes_the_process_and_everything_below_it(case):
         assert count(world, table) == 0, table
 
 
+def test_a_process_with_a_merged_activity_is_deleted_whole(case):
+    """DUP-02: the merge keys (NO ACTION) do not block the single DELETE of the activities."""
+    world = case.world
+    with world.uow_factory() as uow:
+        kept = uow.activities.list_for_process(world.process.id)[0]
+    merged = add_activity(world, world.process, title="Duplicada")
+    evidence = link(world, merged, case.docs[1])
+    with world.uow_factory() as uow:
+        uow.evidences.move([evidence.id], kept.id, merged.id)
+        current = uow.activities.get(merged.id)
+        uow.activities.set_merged_into(current, kept.id, current.version)
+        uow.commit()
+    assert count(world, "activities") == 2
+
+    delete(case).execute(world.admin, world.process.id)
+
+    assert not process_exists(world, world.process.id)
+    for table in ("activities", "activity_evidences", "documents"):
+        assert count(world, table) == 0, table
+
+
 def test_the_main_process_goes_and_the_other_process_stays(case):
     world = case.world
     other_doc = store_original(case.gen, world.ifch_process, pdf("other"))

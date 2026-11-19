@@ -426,6 +426,8 @@ T42 → T43 → T44
 
 ### T12: Repositórios SQL da mesclagem
 
+**Status**: Done
+
 **What**: Implementação SQL das portas: a lista padrão deixa de trazer as mescladas, e as provas movem e voltam com a origem gravada.
 **Where**: `backend/app/infrastructure/database/repositories.py` (modify)
 **Depends on**: T11
@@ -439,9 +441,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_repositories_merge.py`: lista padrão sem mescladas e com `include_merged=True` com elas; `set_merged_into` respeita a versão esperada (409 se mudou); mover provas grava `origin_activity_id`, não repete o par documento e página que a mantida já tem, e `restore_from` devolve só as provas que vieram dela; excluir um processo com atividade mesclada pelo `DELETE` do caso de uso apaga tudo sem violar a FK
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `backend/tests/integration/test_repositories_merge.py`: lista padrão sem mescladas e com `include_merged=True` com elas; `set_merged_into` respeita a versão esperada (409 se mudou); mover provas grava `origin_activity_id`, não repete o par documento e página que a mantida já tem, e `restore_from` devolve só as provas que vieram dela; excluir um processo com atividade mesclada pelo `DELETE` do caso de uso apaga tudo sem violar a FK
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: integration
 **Gate**: full
