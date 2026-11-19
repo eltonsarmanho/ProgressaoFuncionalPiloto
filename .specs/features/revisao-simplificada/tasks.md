@@ -370,6 +370,8 @@ T42 → T43 → T44
 
 ### T10: Campo `merged_into_id` na entidade `Activity`
 
+**Status**: Done
+
 **What**: `Activity.merged_into_id` (nulo por padrão) e `Activity.is_merged`.
 **Where**: `backend/app/domain/entities/activity.py` (modify)
 **Depends on**: T9
@@ -383,9 +385,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Teste em `backend/tests/unit/domain/test_activity_entity.py`: padrão nulo; `is_merged` verdadeiro só com o campo preenchido; `dataclasses.replace` preserva o campo
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam
+- [x] Teste em `backend/tests/unit/domain/test_activity_entity.py`: padrão nulo; `is_merged` verdadeiro só com o campo preenchido; `dataclasses.replace` preserva o campo
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick

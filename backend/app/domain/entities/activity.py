@@ -68,6 +68,11 @@ class Activity:
     updated_at: datetime | None = None
     version: int = 1
     extraction_run_id: UUID | None = None  # the run that suggested it (PIPE-09)
+    merged_into_id: UUID | None = None  # the activity this one was merged into (DUP-02)
+
+    @property
+    def is_merged(self) -> bool:
+        return self.merged_into_id is not None
 
 
 def initial_status(source: ActivitySource) -> ActivityStatus:
