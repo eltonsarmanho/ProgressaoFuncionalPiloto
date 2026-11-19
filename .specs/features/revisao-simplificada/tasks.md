@@ -734,6 +734,8 @@ T42 → T43 → T44
 
 ### T23: Candidatos carregados em lote
 
+**Status**: Done
+
 **What**: `list_for_process` carrega os candidatos de todas as atividades numa consulta só, em vez de uma por atividade.
 **Where**: `backend/app/infrastructure/database/repositories.py` (modify)
 **Depends on**: T12
@@ -747,9 +749,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Teste primeiro em `backend/tests/integration/test_repositories_activity_queries.py`: listar 300 atividades com candidatos executa um número de consultas que não cresce com o número de atividades (contado com o evento do SQLAlchemy); os candidatos continuam na mesma ordem
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam
+- [x] Teste primeiro em `backend/tests/integration/test_repositories_activity_queries.py`: listar 300 atividades com candidatos executa um número de consultas que não cresce com o número de atividades (contado com o evento do SQLAlchemy); os candidatos continuam na mesma ordem
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: integration
 **Gate**: full

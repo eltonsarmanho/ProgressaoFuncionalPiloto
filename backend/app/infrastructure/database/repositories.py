@@ -778,21 +778,33 @@ class SqlActivityRepository:
         self._s = session
 
     def _to_entity(self, m: ActivityModel) -> Activity:
-        candidates = self._s.scalars(
+        return self._to_entities([m])[0]
+
+    def _to_entities(self, models: Sequence[ActivityModel]) -> list[Activity]:
+        """The candidates of all the activities come in one query, not one per activity (SEC-01)."""
+        if not models:
+            return []
+        rows = self._s.scalars(
             select(ActivityCandidateModel)
-            .where(ActivityCandidateModel.activity_id == m.id)
+            .where(ActivityCandidateModel.activity_id.in_([m.id for m in models]))
             .order_by(ActivityCandidateModel.group_number, ActivityCandidateModel.item_number)
         ).all()
-        return Activity(
-            id=m.id,
-            created_at=m.created_at,
-            updated_at=m.updated_at,
-            version=m.version,
-            candidates=tuple(
-                Candidate(c.group_number, c.item_number, c.justification) for c in candidates
-            ),
-            **{f: getattr(m, f) for f in _ACTIVITY_FIELDS},
-        )
+        candidates: dict[UUID, list[Candidate]] = {}
+        for c in rows:
+            candidates.setdefault(c.activity_id, []).append(
+                Candidate(c.group_number, c.item_number, c.justification)
+            )
+        return [
+            Activity(
+                id=m.id,
+                created_at=m.created_at,
+                updated_at=m.updated_at,
+                version=m.version,
+                candidates=tuple(candidates.get(m.id, ())),
+                **{f: getattr(m, f) for f in _ACTIVITY_FIELDS},
+            )
+            for m in models
+        ]
 
     def _replace_candidates(self, activity: Activity) -> None:
         self._s.execute(
@@ -844,7 +856,7 @@ class SqlActivityRepository:
         if status is not None:
             stmt = stmt.where(ActivityModel.status == status)
         models = self._s.scalars(stmt.order_by(ActivityModel.created_at, ActivityModel.id)).all()
-        return [self._to_entity(m) for m in models]
+        return self._to_entities(models)
 
     def list_merged_into(self, activity_id: UUID) -> Sequence[Activity]:
         models = self._s.scalars(
@@ -852,7 +864,7 @@ class SqlActivityRepository:
             .where(ActivityModel.merged_into_id == activity_id)
             .order_by(ActivityModel.created_at, ActivityModel.id)
         ).all()
-        return [self._to_entity(m) for m in models]
+        return self._to_entities(models)
 
     def set_merged_into(
         self, activity: Activity, target_id: UUID | None, expected_version: int
