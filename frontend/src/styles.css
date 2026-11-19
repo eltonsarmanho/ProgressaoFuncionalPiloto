@@ -877,3 +877,39 @@ fieldset.grid legend {
     width: 100%;
   }
 }
+
+/* Revisão simplificada (Etapa 3): filtros e chips de situação. */
+.activity-filters-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0 1rem;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.chip {
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+.chip[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

@@ -193,7 +193,7 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 | VAL-06 | P1: Validar pontua | Design | Implementing |
 | SEC-01 | P1: Etapa 3 em duas seções | Design | Implementing |
 | SEC-02 | P1: Etapa 3 em duas seções | Design | Implementing |
-| SEC-03 | P1: Etapa 3 em duas seções | Design | Pending |
+| SEC-03 | P1: Etapa 3 em duas seções | Design | Implementing |
 | SEC-04 | P1: Etapa 3 em duas seções | Design | Pending |
 | SEC-05 | P1: Etapa 3 em duas seções | Design | Pending |
 | SEC-06 | P1: Etapa 3 em duas seções | Design | Implementing |

@@ -958,6 +958,8 @@ T42 → T43 → T44
 
 ### T31: `ActivityFilters`
 
+**Status**: Done
+
 **What**: Busca por título, chips de situação com contagem (todas, aguardando validação, validadas, precisa de categoria) e filtro por grupo.
 **Where**: `frontend/src/components/ActivityFilters.tsx` (novo)
 **Depends on**: T28
@@ -971,9 +973,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ActivityFilters.test.tsx`: cada chip mostra a contagem recebida; clicar marca `aria-pressed` e chama `onChange`; a busca chama `onChange` com o texto; o filtro por grupo lista só os grupos presentes; limpar volta ao padrão
-- [ ] Gate check passes: `cd frontend && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/ActivityFilters.test.tsx`: cada chip mostra a contagem recebida; clicar marca `aria-pressed` e chama `onChange`; a busca chama `onChange` com o texto; o filtro por grupo lista só os grupos presentes; limpar volta ao padrão
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick
