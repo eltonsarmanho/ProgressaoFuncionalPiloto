@@ -18,7 +18,9 @@ from app.presentation.schemas.activities import (
     ActivitySeparate,
     ActivityStatusChange,
     ActivityUpdate,
+    BulkValidateOut,
     MergeOut,
+    SkippedOut,
 )
 from app.presentation.schemas.documents import EvidenceOut
 
@@ -61,13 +63,12 @@ async def create_activity(
     return (await _present(container, [activity]))[0]
 
 
-@router.post(
-    "/processes/{process_id}/activities/validate-batch", response_model=list[ActivityOut]
-)
+@router.post("/processes/{process_id}/activities/validate-batch", response_model=BulkValidateOut)
 async def validate_batch(
     process_id: UUID, body: ActivityBulkValidate, actor: UserDep, container: ContainerDep
-) -> list[ActivityOut]:
-    """Validates the listed activities with one justification; one of another process: 404."""
+) -> BulkValidateOut:
+    """Validates the listed activities that can be validated and lists the skipped ones with the
+    reason; one of another process: 404."""
     validated = await run_in_threadpool(
         container.bulk_validate_activities.execute,
         actor,
@@ -75,7 +76,10 @@ async def validate_batch(
         body.activity_ids,
         body.justificativa,
     )
-    return await _present(container, validated.activities)
+    return BulkValidateOut(
+        activities=await _present(container, validated.activities),
+        skipped=[SkippedOut(id=s.id, reason=s.reason) for s in validated.skipped],
+    )
 
 
 @router.post("/processes/{process_id}/activities/merge-duplicates", response_model=MergeOut)

@@ -65,12 +65,61 @@ def test_it_validates_the_listed_activities_and_returns_each_one(
 
     assert response.status_code == 200, response.text
     body = response.json()
-    assert [a["id"] for a in body] == [str(first.id), str(second.id)]
-    assert [a["status"] for a in body] == ["VALIDADA", "VALIDADA"]
-    assert [a["version"] for a in body] == [2, 2]
-    assert [a["title"] for a in body] == ["A", "B"]
-    assert all("evidences" in a for a in body)
+    assert set(body) == {"activities", "skipped"}  # VAL-04: the body is {activities, skipped}
+    activities = body["activities"]
+    assert body["skipped"] == []
+    assert [a["id"] for a in activities] == [str(first.id), str(second.id)]
+    assert [a["status"] for a in activities] == ["VALIDADA", "VALIDADA"]
+    assert [a["version"] for a in activities] == [2, 2]
+    assert [a["title"] for a in activities] == ["A", "B"]
+    assert all("evidences" in a for a in activities)
     assert status_of(client, untouched) == "AGUARDANDO_REVISAO"
+
+
+def test_the_ones_without_a_category_come_back_in_skipped_and_are_not_validated(
+    client, admin, headers, chosen
+):
+    # VAL-04: the batch validates what can be validated and lists the rest with the reason
+    good = draft(client, admin, chosen, "Com categoria")
+    user, _ = admin
+    bare = client.app.state.container.create_activity.execute(
+        user,
+        uuid.UUID(chosen["id"]),
+        ActivityData(title="Sem categoria", event_date=date(2023, 5, 10)),
+        source=ActivitySource.SUGERIDA_IA,
+    )
+
+    response = client.post(
+        url(chosen), json={"activity_ids": [str(good.id), str(bare.id)]}, headers=headers
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert [a["id"] for a in body["activities"]] == [str(good.id)]
+    assert body["skipped"] == [{"id": str(bare.id), "reason": "SEM_CATEGORIA"}]
+    assert status_of(client, good) == "VALIDADA"
+    assert status_of(client, bare) == "AGUARDANDO_REVISAO"
+
+
+def test_an_activity_outside_the_interstice_is_skipped_with_its_reason(
+    client, admin, headers, chosen
+):
+    user, _ = admin
+    outside = client.app.state.container.create_activity.execute(
+        user,
+        uuid.UUID(chosen["id"]),
+        ActivityData(
+            title="Fora", group_number=3, item_number=4, event_date=date(2020, 1, 10),
+            quantity=Decimal(1),
+        ),
+        source=ActivitySource.SUGERIDA_IA,
+    )  # fmt: skip
+
+    response = client.post(url(chosen), json={"activity_ids": [str(outside.id)]}, headers=headers)
+
+    body = response.json()
+    assert body["activities"] == []
+    assert body["skipped"] == [{"id": str(outside.id), "reason": "FORA_DO_INTERSTICIO"}]
 
 
 def test_validating_changes_the_scoring_total(client, admin, headers, chosen):

@@ -323,8 +323,9 @@ def test_nothing_is_validated_by_the_processing_and_validating_in_batch_changes_
     )
 
     assert response.status_code == 200, response.text
-    assert [a["status"] for a in response.json()] == ["VALIDADA", "VALIDADA"]
-    assert all(len(a["evidences"]) == 1 for a in response.json())
+    validated = response.json()["activities"]  # VAL-04: the body is {activities, skipped}
+    assert [a["status"] for a in validated] == ["VALIDADA", "VALIDADA"]
+    assert all(len(a["evidences"]) == 1 for a in validated)
     after = score(client, process)
     assert after["total"] != before["total"]
     assert after["total"] == before["potential_total"]

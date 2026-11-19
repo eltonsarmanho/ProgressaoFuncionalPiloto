@@ -156,6 +156,14 @@ class CandidateOut(BaseModel):
     justification: str
 
 
+class SkippedOut(BaseModel):
+    """An activity the batch validation left as it was: `reason` is `SEM_CATEGORIA` or the reason
+    of its validity (`REJEITADA`, `FORA_DO_INTERSTICIO`, `CARGA_HORARIA_INSUFICIENTE`, ...)."""
+
+    id: UUID
+    reason: str
+
+
 class ActivityOut(BaseModel):
     id: UUID
     process_id: UUID
@@ -226,3 +234,10 @@ class ActivityOut(BaseModel):
             updated_at=a.updated_at,
             version=a.version,
         )
+
+
+class BulkValidateOut(BaseModel):
+    """The answer of the batch validation (VAL-04): what was validated and what was skipped."""
+
+    activities: list[ActivityOut]
+    skipped: list[SkippedOut]

@@ -622,6 +622,8 @@ T42 → T43 → T44
 
 ### T19: Rota do lote devolve `{activities, skipped}`
 
+**Status**: Done
+
 **What**: A rota `POST /api/processes/{id}/activities/validate` passa a responder `{activities, skipped}`; o modelo de resposta acompanha, no módulo de esquemas de atividade.
 **Where**: `backend/app/presentation/api/activities.py` (modify)
 **Depends on**: T18
@@ -635,9 +637,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_bulk_validate_api.py` (ajustado): o corpo novo traz `activities` e `skipped: [{id, reason}]`; o código 409 e o 404 seguem; sem CSRF → 403
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes de `test_bulk_validate_api.py` ajustados mantêm a cobertura
+- [x] Testes primeiro em `backend/tests/integration/api/test_bulk_validate_api.py` (ajustado): o corpo novo traz `activities` e `skipped: [{id, reason}]`; o código 409 e o 404 seguem; sem CSRF → 403
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes de `test_bulk_validate_api.py` ajustados mantêm a cobertura
 
 **Tests**: integration
 **Gate**: full
