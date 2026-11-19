@@ -1014,6 +1014,8 @@ T42 → T43 → T44
 
 ### T33: `ActivityRow`
 
+**Status**: Done
+
 **What**: Linha responsiva da atividade: título, data, categoria, pontos previstos, selos e ações (Validar só na válida; Editar; Rejeitar; Reabrir; Vincular).
 **Where**: `frontend/src/components/ActivityRow.tsx` (novo)
 **Depends on**: T29, T30, T32
@@ -1027,9 +1029,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ActivityRow.test.tsx`: atividade válida com categoria mostra Validar; sem categoria mostra o selo "Precisa de categoria" com o seletor e sem Validar; não válida não mostra Validar e mostra o motivo; rejeitada mostra Reabrir; os pontos previstos aparecem; os selos têm texto; os botões têm nome acessível e a linha cabe em 360 px (classe responsiva sem largura fixa)
-- [ ] Gate check passes: `cd frontend && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/ActivityRow.test.tsx`: atividade válida com categoria mostra Validar; sem categoria mostra o selo "Precisa de categoria" com o seletor e sem Validar; não válida não mostra Validar e mostra o motivo; rejeitada mostra Reabrir; os pontos previstos aparecem; os selos têm texto; os botões têm nome acessível e a linha cabe em 360 px (classe responsiva sem largura fixa)
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick
