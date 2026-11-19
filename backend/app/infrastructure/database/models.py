@@ -277,6 +277,13 @@ class ScoringCriterionModel(Base):
 
 class ActivityModel(Base):
     __tablename__ = "activities"
+    __table_args__ = (
+        Index(
+            "ix_activities_merged_into",
+            "merged_into_id",
+            postgresql_where=text("merged_into_id IS NOT NULL"),
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
     process_id: Mapped[uuid.UUID] = mapped_column(
@@ -310,6 +317,9 @@ class ActivityModel(Base):
     version: Mapped[int] = mapped_column(Integer, default=1)
     extraction_run_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("extraction_runs.id", ondelete="SET NULL")
+    )
+    merged_into_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("activities.id")
     )
 
 
@@ -435,6 +445,9 @@ class ActivityEvidenceModel(Base):
     )
     created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    origin_activity_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("activities.id")
+    )
 
 
 class GeneratedDocumentModel(Base):

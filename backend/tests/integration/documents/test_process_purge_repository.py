@@ -157,6 +157,33 @@ def test_delete_all_leaves_no_row_of_the_process_in_any_dependent_table(
     assert left == 0
 
 
+def test_a_process_with_a_merged_activity_is_purged_without_breaking_the_merge_keys(
+    engine, uow_factory, session_factory, process, base
+):
+    """DUP-02: merged_into_id and origin_activity_id are NO ACTION and do not block the DELETE."""
+    populate(uow_factory, process, base, session_factory)
+    with engine.begin() as conn:
+        kept, merged = (
+            conn.execute(
+                text("SELECT id FROM activities WHERE title = :t"), {"t": title}
+            ).scalar_one()
+            for title in ("Atividade 1", "Atividade 2")
+        )
+        conn.execute(
+            text("UPDATE activities SET merged_into_id = :k WHERE id = :m"),
+            {"k": kept, "m": merged},
+        )
+        conn.execute(
+            text("UPDATE activity_evidences SET activity_id = :k, origin_activity_id = :m "
+                 "WHERE activity_id = :m"),
+            {"k": kept, "m": merged},
+        )  # fmt: skip
+
+    purge(session_factory, process.id)
+
+    assert rows(engine) == dict.fromkeys(PROCESS_TABLES, 0)
+
+
 def test_delete_all_touches_nothing_of_another_process(
     engine, uow_factory, session_factory, process, other_process, base
 ):
@@ -278,7 +305,14 @@ def test_every_foreign_key_to_the_process_is_handled(engine):
         }
 
     assert direct == HANDLED_DIRECT
-    explicit = {("generated_files", "generated_documents", "a")}
+    # DUP-02 (migration 0008): merged_into_id and origin_activity_id point to activities with
+    # NO ACTION; the purge deletes every activity of the process in one statement, so both are
+    # satisfied at its end (test_a_process_with_a_merged_activity_is_purged_without_...).
+    explicit = {
+        ("generated_files", "generated_documents", "a"),
+        ("activities", "activities", "a"),
+        ("activity_evidences", "activities", "a"),
+    }
     assert {t for t in below if t[2] not in ("c", "n")} == explicit
 
 

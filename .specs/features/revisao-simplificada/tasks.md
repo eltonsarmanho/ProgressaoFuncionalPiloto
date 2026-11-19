@@ -341,6 +341,8 @@ T42 → T43 → T44
 
 ### T9: Migração `0008_activity_merge`
 
+**Status**: Done
+
 **What**: Colunas `activities.merged_into_id` e `activity_evidences.origin_activity_id` (FK `NO ACTION`), índice parcial e o espelho das colunas nos modelos SQLAlchemy (a mesma mudança de esquema).
 **Where**: `backend/alembic/versions/0008_activity_merge.py` (novo)
 **Depends on**: None
@@ -354,10 +356,10 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_migration_activity_merge.py`: após o `upgrade`, as colunas e o índice existem e aceitam nulo; `downgrade` remove as duas colunas e o índice; a FK recusa um id inexistente; o `test_models_match_migrated_schema` passa
-- [ ] Cabeça do alembic é `0008`; os dados existentes não mudam
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `backend/tests/integration/test_migration_activity_merge.py`: após o `upgrade`, as colunas e o índice existem e aceitam nulo; `downgrade` remove as duas colunas e o índice; a FK recusa um id inexistente; o `test_models_match_migrated_schema` passa
+- [x] Cabeça do alembic é `0008`; os dados existentes não mudam
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: integration
 **Gate**: full
