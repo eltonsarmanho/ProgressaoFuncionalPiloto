@@ -112,6 +112,11 @@ Usar só dados sintéticos (docente com SIAPE fictício, PDF sintético; nunca `
 - Roteiro de fumaça (dados sintéticos, por túnel SSH): Tabela, Relatório e Comprovante do processo A foram a `PRONTO` e baixaram (a Tabela em PDF com acentos e a Liberation Serif embutida); a segunda geração da Tabela virou a versão 2 e a 1 ficou no histórico; no processo B (em andamento) a conclusão levou o processo a `CONCLUIDO`, o arquivo de entrada passou a responder 410 `ARQUIVO_EXCLUIDO`, os gerados continuaram baixando e um novo Comprovante foi recusado; os processos sintéticos foram excluídos pela API e o docente sintético (SIAPE 9999991) foi arquivado.
 - Observações: (1) o `DELETE` do processo apaga os arquivos mas deixa os diretórios vazios `uploads/<id>` e `generated/<id>`; removidos à mão com `rmdir` (cosmético, a corrigir em `gestao-processos`); (2) o cookie de sessão é `Secure`: um roteiro por túnel `http` precisa repassar o cookie à mão; (3) a conclusão exige o processo `EM_ANDAMENTO` (de `RASCUNHO` responde "Transição de status não permitida").
 
+### Painel com Arquivar e Excluir, publicado em 2026-11-19
+
+- Só o frontend foi reconstruído e carregado, a partir do commit `d3823fc` (o backend não mudou desde `62c9c04`; sem migração e sem cópia do banco). Pacote sem segredo (`scripts/check_bundle_no_secrets.sh`); `GET /api/health` 200 depois de `docker compose up -d --no-build frontend` e `docker compose restart nginx`; o `index.html` serve `assets/index-CiODvMVC.js`, que contém "Excluir definitivamente".
+- Retorno: imagem `progressao-funcional-frontend:painel-pre-d3823fc` (a de `62c9c04`).
+
 ### Avisos
 
 - **A conclusão é irreversível e a VM não tem backup dos arquivos de entrada.** O `pg_dump` guarda o banco, não o volume `storage`: depois de concluir um processo, os PDFs, as imagens e o texto das páginas dele só existem no computador do docente. Restaurar o dump anterior à conclusão traz de volta a linha do documento sem `file_deleted_at`, mas não o arquivo. Dizer isso ao docente antes de a primeira conclusão real acontecer (a tela já mostra a confirmação "irreversível" com o número de arquivos e o espaço).
