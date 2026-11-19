@@ -7,18 +7,20 @@ that stays, minus the pairs it already has. Everything runs in the caller's unit
 caller commits, so a failure in the middle changes nothing; running it again changes nothing.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from uuid import UUID
 
 from app.application.services.audit_service import AuditService
 from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.entities.audit import AuditAction
-from app.domain.errors import NotFound
+from app.domain.errors import NotFound, StaleVersion, ValidationFailed
 from app.domain.repositories.ports import UnitOfWork
 from app.domain.rules.scoring_duplicates import duplicate_groups
 
 ACTIVITY_ENTITY = "activity"
 MERGE = "MERGE"
+SEPARATE = "SEPARATE"
+DISTINCT_TEXT = "Marcada como distinta pelo usuário"  # as MarkActivitiesDistinct writes it
 
 
 @dataclass(frozen=True)
@@ -90,3 +92,63 @@ class MergeDuplicateActivities:
             },
         )
         return MergedActivity(merged.id, kept.id, len(moved))
+
+    def separate(
+        self,
+        uow: UnitOfWork,
+        actor_id: UUID | None,
+        activity_id: UUID,
+        expected_version: int | None = None,
+    ) -> Activity:
+        """"Não é duplicada": restores a merged activity, gives back the evidences that came from
+        it and marks it and the one it was merged into as distinct, so the merge does not repeat.
+
+        `expected_version` is checked when given; the caller commits.
+        """
+        activity = uow.activities.get(activity_id)
+        if activity is None:
+            raise NotFound("Atividade não encontrada")
+        if not activity.is_merged:
+            raise ValidationFailed("atividade", "A atividade não foi mesclada")
+        if expected_version is not None and activity.version != expected_version:
+            raise StaleVersion("A atividade foi alterada por outro usuário; recarregue")
+        kept = uow.activities.get(activity.merged_into_id)
+        restored = uow.evidences.restore_from(activity.id)
+        released = replace(
+            activity,
+            merged_into_id=None,
+            distinct_justification=activity.distinct_justification or DISTINCT_TEXT,
+        )
+        uow.activities.update(released, activity.version)
+        self._audit.record(
+            uow,
+            actor_id,
+            ACTIVITY_ENTITY,
+            activity.id,
+            AuditAction.UPDATE,
+            {
+                "merged_into_id": activity.merged_into_id,
+                "distinct_justification": activity.distinct_justification,
+            },
+            {
+                "operation": SEPARATE,
+                "merged_activity_id": activity.id,
+                "kept_activity_id": activity.merged_into_id,
+                "merged_into_id": None,
+                "distinct_justification": released.distinct_justification,
+                "evidences_restored": len(restored),
+            },
+        )
+        if kept is not None and not (kept.distinct_justification or "").strip():
+            marked = replace(kept, distinct_justification=DISTINCT_TEXT)
+            uow.activities.update(marked, kept.version)
+            self._audit.record(
+                uow,
+                actor_id,
+                ACTIVITY_ENTITY,
+                kept.id,
+                AuditAction.UPDATE,
+                {"distinct_justification": kept.distinct_justification},
+                {"distinct_justification": marked.distinct_justification},
+            )
+        return uow.activities.get(activity.id)

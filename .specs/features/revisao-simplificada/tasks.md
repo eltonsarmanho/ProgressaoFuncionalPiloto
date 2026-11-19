@@ -510,6 +510,8 @@ T42 → T43 → T44
 
 ### T15: `separate` ("Não é duplicada")
 
+**Status**: Done
+
 **What**: Restaura a atividade mesclada, devolve as provas que vieram dela e marca as duas como distintas.
 **Where**: `backend/app/application/services/activity_merge.py` (modify)
 **Depends on**: T14
@@ -523,9 +525,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_activity_separate.py`: depois de `separate` a atividade volta às listas, suas provas voltam, as duas ficam como distintas e `merge_process` não as mescla de novo; só uma atividade mesclada pode ser separada (outra → 422); auditoria do evento; versão desatualizada → 409
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_activity_separate.py`: depois de `separate` a atividade volta às listas, suas provas voltam, as duas ficam como distintas e `merge_process` não as mescla de novo; só uma atividade mesclada pode ser separada (outra → 422); auditoria do evento; versão desatualizada → 409
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: integration
 **Gate**: full
