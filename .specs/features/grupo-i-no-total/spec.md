@@ -1,15 +1,15 @@
-# Grupo I no total, Tabela sem Status e resumo da Etapa 4 Specification
+# Grupo I no total, Tabela sem Status nem Comprovante e resumo da Etapa 4 Specification
 
 > **Nota de substituição:** esta feature substitui PIT-01, PIT-02 e PIT-03 e TELA-01 e TELA-02 da feature `tabela-oficial` (Grupo I em horas, fora do total) e a decisão de 2026-11-17 que a sustentava. O usuário reverteu a decisão em 2026-11-19, depois de gerar os documentos reais: o Grupo I entra no total, a 1 ponto por hora de PIT.
 
 ## Problem Statement
 
-A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): as horas aparecem só numa tabela à parte e o Total geral não as soma. O usuário quer o Grupo I como uma seção da própria tabela, com uma linha por disciplina, cada hora de PIT valendo 1 ponto e somando no total. A coluna Status da tabela não serve ao usuário. O resumo da Etapa 4 mostra 20 cartões soltos, com rótulos longos, valores zerados e o PIT só por semestre, sem as disciplinas.
+A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): as horas aparecem só numa tabela à parte e o Total geral não as soma. O usuário quer o Grupo I como uma seção da própria tabela, com uma linha por disciplina, cada hora de PIT valendo 1 ponto e somando no total. As colunas Status e Comprovante da tabela não servem ao usuário. O resumo da Etapa 4 mostra 20 cartões soltos, com rótulos longos, valores zerados e o PIT só por semestre, sem as disciplinas.
 
 ## Goals
 
 - [ ] O Grupo I da tabela oficial conta no Total geral, com pontos iguais às horas de PIT (68 h de graduação = 8,00 pontos).
-- [ ] A Tabela de Pontuação (DOCX e PDF) traz a seção I com uma linha por oferta, inclui o Grupo I no Total geral e não tem a coluna Status.
+- [ ] A Tabela de Pontuação (DOCX e PDF) traz a seção I com uma linha por oferta, inclui o Grupo I no Total geral e não tem as colunas Status e Comprovante.
 - [ ] A Etapa 4 mostra o resumo em painel (total, pontos por grupo, docência por semestre e disciplina, contadores) em vez de cartões soltos.
 
 ## Out of Scope
@@ -29,8 +29,8 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --------------------- | -------------- | --------- | ---------- |
 | O Grupo I entra no total | Soma no Total geral, a 1 ponto por hora de PIT, sem limite de pontos (o Grupo I da planilha não tem teto) | Decisão do usuário em 2026-11-19; reverte a de 2026-11-17 e a fórmula do TOTAL da planilha oficial, que não soma o Grupo I | y |
-| Linha do Grupo I na Tabela | Item `I.1` (graduação) ou `I.2` (pós-graduação); Atividade = disciplina e período; Quantidade = horas de PIT; Pontuação unitária = 1,00; Total = horas; Comprovante como nas demais linhas | Pedido do usuário: "1 unidade do PIT são 1 hora/aula" | y |
-| Coluna Status | Sai da Tabela de Pontuação (DOCX e PDF); a linha sem pontos aparece com Total 0,00 e o motivo continua na seção Alertas; o contador "Não pontuadas" do rodapé fica | Pedido do usuário em 2026-11-19 | y |
+| Linha do Grupo I na Tabela | Item `I.1` (graduação) ou `I.2` (pós-graduação); Atividade = disciplina e período; Quantidade = horas de PIT; Pontuação unitária = 1,00; Total = horas | Pedido do usuário: "1 unidade do PIT são 1 hora/aula" | y |
+| Colunas Status e Comprovante | Saem da Tabela de Pontuação (DOCX e PDF); as colunas que ficam são Item, Atividade, Quantidade, Pontuação unitária e Total; a linha sem pontos aparece com Total 0,00 e o motivo continua na seção Alertas; o contador "Não pontuadas" do rodapé fica; a tabela deixa de apontar o número do Comprovante, que continua no Comprovante e no Relatório | Pedidos do usuário em 2026-11-19 | y |
 | Desenho do resumo da Etapa 4 | Painel em blocos: faixa com Total geral e situação do mínimo; barras de pontos por grupo; bloco Docência (PIT) por semestre e disciplina; potencial e contadores em cartões pequenos | Escolha do usuário em 2026-11-19 | y |
 | Como a mudança chega à tabela oficial | Nova versão `OFICIAL` da tabela, com o Grupo I contando no total; a versão anterior fica como está. Um processo muda de versão pela escolha de tabela existente; o processo da VM está em rascunho | O `counts_in_total` é dado da versão e processo que já escolheu uma versão não pode ser reescrito; o desenho exato fica para a fase Design | n |
 | Tabela de horas por semestre na Tabela de Pontuação | Continua como resumo, com o título "Horas de PIT por semestre (Grupo I)" e o total em horas | Os totais por semestre continuam úteis ao docente; só deixa de dizer "fora do total de pontos" | n |
@@ -65,21 +65,21 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 
 ---
 
-### P1: Tabela de Pontuação com o Grupo I e sem a coluna Status ⭐ MVP
+### P1: Tabela de Pontuação com o Grupo I e sem as colunas Status e Comprovante ⭐ MVP
 
-**User Story**: Como docente, quero ver as disciplinas na própria Tabela de Pontuação, com o Grupo I somado no total, e sem uma coluna de status.
+**User Story**: Como docente, quero ver as disciplinas na própria Tabela de Pontuação, com o Grupo I somado no total, e sem as colunas de status e de comprovante.
 
 **Why P1**: A tabela é o documento entregue; hoje ela omite o Grupo I e mostra uma coluna que o usuário não quer.
 
 **Acceptance Criteria**:
 
 1. WHEN a Tabela de Pontuação é gerada com a versão em que o Grupo I conta no total THEN the system SHALL abrir a lista de grupos com a faixa "I. Docência/atividades de ensino/desempenho didático, avaliado com a participação do corpo discente" e o subtotal do Grupo I  <!-- event-driven -->
-2. WHEN a tabela lista as ofertas do Grupo I THEN the system SHALL escrever uma linha por oferta, ordenada por período letivo e depois por título, com o item `I.1` ou `I.2`, a disciplina e o período na coluna Atividade, as horas de PIT em Quantidade, 1,00 em Pontuação unitária, as horas em Total e o número do Comprovante  <!-- event-driven -->
+2. WHEN a tabela lista as ofertas do Grupo I THEN the system SHALL escrever uma linha por oferta, ordenada por período letivo e depois por título, com o item `I.1` ou `I.2`, a disciplina e o período na coluna Atividade, as horas de PIT em Quantidade, 1,00 em Pontuação unitária, e as horas em Total  <!-- event-driven -->
 3. WHEN a tabela é gerada THEN the system SHALL calcular a "Pontuação geral" somando os Grupos I a VIII  <!-- event-driven -->
-4. The system SHALL gerar a Tabela de Pontuação em DOCX e em PDF sem a coluna Status e sem o valor "Pontuada", "Potencial" ou "Não pontuada" em qualquer linha  <!-- ubiquitous -->
+4. The system SHALL gerar a Tabela de Pontuação em DOCX e em PDF só com as colunas Item, Atividade, Quantidade, Pontuação unitária e Total, sem as colunas Status e Comprovante, sem o valor "Pontuada", "Potencial" ou "Não pontuada" e sem "sem comprovante" em qualquer linha  <!-- ubiquitous -->
 5. WHEN uma linha não pontua THEN the system SHALL mostrá-la com Total 0,00 e SHALL manter o motivo na seção Alertas  <!-- event-driven -->
 6. WHEN a tabela traz a seção de horas por semestre THEN the system SHALL intitulá-la "Horas de PIT por semestre (Grupo I)" e listar as horas de cada período e o total em horas  <!-- event-driven -->
-7. WHERE a tabela usada tem o Grupo I fora do total (versão anterior) the system SHALL gerar o documento como antes, sem a seção I, mas sem a coluna Status  <!-- optional-feature -->
+7. WHERE a tabela usada tem o Grupo I fora do total (versão anterior) the system SHALL gerar o documento como antes, sem a seção I, mas sem as colunas Status e Comprovante  <!-- optional-feature -->
 
 **Independent Test**: Gerar a Tabela de um processo com ofertas do Grupo I e ver a seção I com as disciplinas, o total com o Grupo I somado e nenhuma coluna Status, no DOCX e no PDF.
 
@@ -127,13 +127,13 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 | GI-06 | P1: Grupo I conta no total | Design | Pending |
 | GI-07 | P1: Grupo I conta no total | Design | Pending |
 | GI-08 | P1: Grupo I conta no total | Design | Pending |
-| GTAB-01 | P1: Tabela com o Grupo I e sem Status | Design | Pending |
-| GTAB-02 | P1: Tabela com o Grupo I e sem Status | Design | Pending |
-| GTAB-03 | P1: Tabela com o Grupo I e sem Status | Design | Pending |
-| GTAB-04 | P1: Tabela com o Grupo I e sem Status | Design | Pending |
-| GTAB-05 | P1: Tabela com o Grupo I e sem Status | Design | Pending |
-| GTAB-06 | P1: Tabela com o Grupo I e sem Status | Design | Pending |
-| GTAB-07 | P1: Tabela com o Grupo I e sem Status | Design | Pending |
+| GTAB-01 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
+| GTAB-02 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
+| GTAB-03 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
+| GTAB-04 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
+| GTAB-05 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
+| GTAB-06 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
+| GTAB-07 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
 | GRES-01 | P1: Resumo da Etapa 4 em painel | Design | Pending |
 | GRES-02 | P1: Resumo da Etapa 4 em painel | Design | Pending |
 | GRES-03 | P1: Resumo da Etapa 4 em painel | Design | Pending |
@@ -155,5 +155,5 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 ## Success Criteria
 
 - [ ] O cenário derivado de 2022–2024 dá 24, 24, 24 e 20 pontos no Grupo I e 211 + 92 = 303 pontos de total geral (teste automatizado).
-- [ ] A Tabela gerada, em DOCX e em PDF, tem a seção I com uma linha por oferta, o Total geral com o Grupo I e nenhuma coluna Status (teste automatizado).
+- [ ] A Tabela gerada, em DOCX e em PDF, tem a seção I com uma linha por oferta, o Total geral com o Grupo I e nenhuma coluna Status nem Comprovante (teste automatizado).
 - [ ] A Etapa 4 mostra o painel em blocos com o bloco Docência por semestre e disciplina (teste de componente).
