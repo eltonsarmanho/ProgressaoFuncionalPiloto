@@ -31,10 +31,11 @@ from app.domain.entities.scoring import ScoringMode, ScoringTableVersion
 from app.domain.entities.user import User
 from app.domain.errors import Conflict, NotFound, StaleVersion, ValidationFailed
 from app.domain.repositories.ports import UnitOfWork
-from app.domain.rules.activity_validity import classify_activity
+from app.domain.rules.activity_validity import InvalidReason, Validity, classify_activity
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.process_verification import Alert
 from app.domain.rules.scoring_alerts import NotScoredReason
+from app.domain.rules.scoring_duplicates import find_duplicates
 from app.domain.rules.scoring_engine import (
     GROUPS,
     ZERO,
@@ -339,6 +340,60 @@ class _ActivityUseCase(_ScoringUseCase):
         return uow.scoring_tables.get_version(process.scoring_table_version_id)
 
 
+NEEDS_CATEGORY_MESSAGE = "Escolha a categoria antes de validar"
+NOT_VALID_CODE = "ATIVIDADE_NAO_VALIDA"
+NO_CATEGORY = "SEM_CATEGORIA"  # the `reason` of a skipped activity that has no category
+
+
+def _day(value: date | None) -> str:
+    return value.strftime("%d/%m/%Y") if value else ""
+
+
+def _not_valid_message(validity: Validity) -> str:
+    """Why the activity cannot be validated, in words for the person (VAL-06)."""
+    params = validity.params
+    match validity.reason:
+        case InvalidReason.REJEITADA:
+            return "A atividade foi rejeitada; reabra-a antes de validar"
+        case InvalidReason.FORA_DO_INTERSTICIO:
+            return (
+                "A atividade está fora do interstício "
+                f"({_day(params['interstice_start'])} a {_day(params['interstice_end'])})"
+            )
+        case InvalidReason.CARGA_HORARIA_INSUFICIENTE:
+            return (
+                f"Carga horária insuficiente: {params['hours'].normalize():f} h; "
+                f"o item exige {params['min_hours'].normalize():f} h"
+            )
+        case InvalidReason.GRUPO_NAO_CONTA:
+            return "O grupo da atividade não conta na pontuação"
+        case _:
+            return "A atividade é duplicada de outra"
+
+
+def _classifier(uow: UnitOfWork, process: FunctionalProcess) -> Callable[[Activity], Validity]:
+    """The validity of an activity of the process, as the engine decides it (AD-006: computed
+    on demand, never stored). The duplicates are looked up once for all the calls."""
+    version = None
+    if process.scoring_table_version_id is not None:
+        version = uow.scoring_tables.get_version(process.scoring_table_version_id)
+    interstice = Interstice(process.start_date, process.end_date)
+    duplicates: set[UUID] = set()
+    if version is not None:
+        activities = uow.activities.list_for_process(process.id)
+        contents = uow.evidences.content_keys_for_activities([a.id for a in activities])
+        duplicates = find_duplicates(activities, contents)
+    return lambda activity: classify_activity(activity, version, interstice, duplicates)
+
+
+def _skip_reason(validity: Validity) -> str | None:
+    """Why an activity cannot be validated, or None when it can: the reason of the validity, or
+    `SEM_CATEGORIA`."""
+    if not validity.is_valid:
+        return validity.reason.value
+    return NO_CATEGORY if validity.needs_category else None
+
+
 def _fields(data: ActivityData) -> dict:
     return {f.name: getattr(data, f.name) for f in fields(data)}
 
@@ -435,6 +490,17 @@ class UpdateActivity(_ExistingActivityUseCase):
 
 
 class ChangeActivityStatus(_ExistingActivityUseCase):
+    @staticmethod
+    def _check_can_validate(
+        uow: UnitOfWork, process: FunctionalProcess, activity: Activity
+    ) -> None:
+        """Only a valid activity with a category is validated (VAL-03, VAL-06)."""
+        validity = _classifier(uow, process)(activity)
+        if not validity.is_valid:
+            raise ValidationFailed("status", _not_valid_message(validity), NOT_VALID_CODE)
+        if validity.needs_category:
+            raise ValidationFailed("categoria", NEEDS_CATEGORY_MESSAGE)
+
     def execute(
         self,
         actor: User,
@@ -448,11 +514,13 @@ class ChangeActivityStatus(_ExistingActivityUseCase):
         The justification is optional (UIM-14): audited when sent, never required.
         """
         with self._uow_factory() as uow:
-            current, _ = self._load(uow, actor, activity_id)
+            current, process = self._load(uow, actor, activity_id)
             justification = (justification or "").strip() or None
             if target is current.status:
                 raise ValidationFailed("status", "A atividade já está neste status")
             self._check_version(current, expected_version)
+            if target is ActivityStatus.VALIDADA:
+                self._check_can_validate(uow, process, current)
             updated = replace(current, status=target)
             uow.activities.update(updated, expected_version)
             self._audit.record(

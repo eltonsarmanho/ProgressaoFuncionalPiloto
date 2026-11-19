@@ -26,10 +26,13 @@ class Forbidden(DomainError):
 
 
 class ValidationFailed(DomainError):
-    def __init__(self, field: str, message: str):
+    """A 422 on one field; `code` is optional and reaches the error entry when set."""
+
+    def __init__(self, field: str, message: str, code: str | None = None):
         super().__init__(f"{field}: {message}")
         self.field = field
         self.message = message
+        self.code = code
 
 
 class _CodedError(DomainError):

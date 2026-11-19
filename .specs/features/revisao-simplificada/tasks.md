@@ -566,6 +566,8 @@ T42 → T43 → T44
 
 ### T17: Validar exige categoria e atividade válida
 
+**Status**: Done
+
 **What**: `ChangeActivityStatus` recusa `VALIDADA` sem categoria (422 no campo `categoria`) e para atividade não válida (422 `ATIVIDADE_NAO_VALIDA` no campo `status`); rejeitar e reabrir seguem livres.
 **Where**: `backend/app/application/use_cases/scoring.py` (modify)
 **Depends on**: T5
@@ -579,9 +581,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_activity_validate_rules_api.py`: sem categoria → 422 com campo `categoria` e a mensagem "Escolha a categoria antes de validar" e a atividade intacta; atividade fora do interstício → 422 `ATIVIDADE_NAO_VALIDA`; atividade com categoria dentro do interstício → 200 e a auditoria do status gravada sem justificativa; rejeitar e reabrir uma atividade sem categoria funcionam
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam; os de `test_activities_api.py` que validavam sem categoria ajustados com anotação VAL-03
+- [x] Testes primeiro em `backend/tests/integration/api/test_activity_validate_rules_api.py`: sem categoria → 422 com campo `categoria` e a mensagem "Escolha a categoria antes de validar" e a atividade intacta; atividade fora do interstício → 422 `ATIVIDADE_NAO_VALIDA`; atividade com categoria dentro do interstício → 200 e a auditoria do status gravada sem justificativa; rejeitar e reabrir uma atividade sem categoria funcionam
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; os de `test_activities_api.py` que validavam sem categoria ajustados com anotação VAL-03
 
 **Tests**: integration
 **Gate**: full

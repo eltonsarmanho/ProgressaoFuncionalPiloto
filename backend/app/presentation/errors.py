@@ -64,6 +64,8 @@ def install_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(ValidationFailed)
     async def validation_failed(request: Request, exc: ValidationFailed) -> JSONResponse:
+        if exc.code is not None:
+            return _coded(422, exc.field, exc.code, exc.message)
         return _field_errors([{"field": exc.field, "message": exc.message}])
 
     @app.exception_handler(RequestValidationError)
