@@ -11,6 +11,7 @@ from app.domain.rules.activity_validity import InvalidReason
 from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
 from app.domain.rules.scoring_engine import RowStatus
 from tests.integration.documents.factories import make_document
+from tests.support.legacy_duplicates import add_legacy_duplicate
 
 D = Decimal
 
@@ -159,7 +160,8 @@ def test_without_a_chosen_table_the_links_are_still_reported(world):
 def test_duplicates_linked_to_the_same_document_are_not_counted_twice(official_chosen):
     world = official_chosen
     first = add(world, "Banca de TCC", quantity=D("2"))
-    second = add(world, "banca de tcc", quantity=D("2"))
+    # DUP-04: a write merges duplicates now, so the second one is a row from before the merge
+    second = add_legacy_duplicate(world.uow_factory, first, title="banca de tcc")
     document = new_document(world)
     link(world, first, document)
     link(world, second, document)

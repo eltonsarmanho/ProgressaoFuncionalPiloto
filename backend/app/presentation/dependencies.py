@@ -234,8 +234,8 @@ def build_container(
     hasher = Argon2PasswordHasher()
     audit = AuditService(clock)
     policy = AccessPolicy()
-    create_activity = CreateActivity(uow_factory, audit, policy)
     merger = MergeDuplicateActivities(audit)
+    create_activity = CreateActivity(uow_factory, audit, policy, merger)
     change_status = ChangeActivityStatus(uow_factory, audit, policy)
     storage = LocalFileStorage(settings.storage_dir)
     generated_storage = LocalGeneratedStorage(settings.storage_dir)
@@ -304,7 +304,7 @@ def build_container(
         create_activity=create_activity,
         get_activity=GetActivity(uow_factory, audit, policy),
         list_activities=ListActivities(uow_factory, audit, policy),
-        update_activity=UpdateActivity(uow_factory, audit, policy),
+        update_activity=UpdateActivity(uow_factory, audit, policy, merger),
         change_activity_status=change_status,
         mark_activities_distinct=MarkActivitiesDistinct(uow_factory, audit, policy),
         bulk_validate_activities=BulkValidateActivities(uow_factory, audit, policy),

@@ -14,6 +14,7 @@ from app.domain.errors import Conflict, NotFound, StaleVersion, ValidationFailed
 from app.domain.rules.activity_validity import InvalidReason
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.scoring_engine import RowStatus, calculate
+from tests.support.legacy_duplicates import add_legacy_duplicate
 
 D = Decimal
 INTERSTICE = Interstice(date(2022, 11, 23), date(2024, 11, 23))
@@ -254,16 +255,9 @@ def test_same_status_is_rejected_on_the_status_field(world, activity):
 
 
 def test_distinct_mark_releases_the_duplicate_and_audits_the_justification(world, activity):
-    twin = world.create.execute(
-        world.admin,
-        world.process.id,
-        ActivityData(
-            title="  orientação de TCC ",
-            group_number=2,
-            item_number=7,
-            quantity=D("1"),
-            event_date=date(2023, 5, 10),
-        ),
+    # DUP-04: a write merges duplicates now, so the twin is a row from before the merge
+    twin = add_legacy_duplicate(
+        world.uow_factory, activity, title="  orientação de TCC ", quantity=D("1")
     )
     with world.uow_factory() as uow:
         both = uow.activities.list_for_process(world.process.id)
@@ -289,14 +283,9 @@ def test_distinct_mark_without_justification_still_releases_the_duplicate(
     world, activity, justification
 ):
     """UIM-14: the mark itself is what counts both activities; the text is optional."""
-    twin = world.create.execute(
-        world.admin,
-        world.process.id,
-        ActivityData(
-            title="orientação de TCC", group_number=2, item_number=7, quantity=D("1"),
-            event_date=date(2023, 5, 10),
-        ),
-    )  # fmt: skip
+    # DUP-04: a write merges duplicates now, so the twin is a row from before the merge
+    twin = add_legacy_duplicate(world.uow_factory, activity, title="orientação de TCC",
+                                quantity=D("1"))  # fmt: skip
 
     marked = world.mark_distinct.execute(world.admin, twin.id, twin.version, justification)
 

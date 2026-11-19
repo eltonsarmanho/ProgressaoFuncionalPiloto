@@ -678,6 +678,8 @@ T42 → T43 → T44
 
 ### T21: Criar e editar atividade mesclam as duplicadas
 
+**Status**: Done
+
 **What**: `CreateActivity` e `UpdateActivity` chamam `merge_process` depois de gravar, na mesma unidade de trabalho.
 **Where**: `backend/app/application/use_cases/scoring.py` (modify)
 **Depends on**: T14, T20
@@ -691,9 +693,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_activity_merge_on_write_api.py`: criar uma atividade igual a outra mescla na hora e a lista mostra uma só com as duas provas; editar o título para igualar a outra mescla; editar até deixar de ser duplicada não desfaz a mesclagem; uma falha da mesclagem reverte também a criação
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `backend/tests/integration/api/test_activity_merge_on_write_api.py`: criar uma atividade igual a outra mescla na hora e a lista mostra uma só com as duas provas; editar o título para igualar a outra mescla; editar até deixar de ser duplicada não desfaz a mesclagem; uma falha da mesclagem reverte também a criação
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: integration
 **Gate**: full

@@ -6,6 +6,7 @@ import pytest
 
 from app.domain.entities.user import Role
 from tests.integration.api.factories import add_professor, process_payload
+from tests.support.legacy_duplicates import add_legacy_duplicate
 from tests.support.process_status import conclude_for_test
 
 
@@ -354,17 +355,18 @@ def test_status_change_still_accepts_and_audits_a_justification(client, headers,
     assert ok.json()["status"] == "REJEITADA"
 
 
+def legacy_twin(client, original: dict, **changes) -> dict:
+    """DUP-04: a write merges duplicates now, so the twin is a row from before the merge."""
+    container = client.app.state.container
+    with container.uow_factory() as uow:
+        stored = uow.activities.get(uuid.UUID(original["id"]))
+    twin = add_legacy_duplicate(container.uow_factory, stored, **changes)
+    return {"id": str(twin.id)}
+
+
 def test_distinct_mark_releases_a_duplicate_in_the_result(client, headers, chosen):
-    create(client, headers, chosen, group_number=2, item_number=7, quantidade=1)
-    twin = create(
-        client,
-        headers,
-        chosen,
-        title=" ORIENTAÇÃO de tcc",
-        group_number=2,
-        item_number=7,
-        quantidade=1,
-    )
+    first = create(client, headers, chosen, group_number=2, item_number=7, quantidade=1)
+    twin = legacy_twin(client, first, title=" ORIENTAÇÃO de tcc")
     scoring_url = f"/api/processes/{chosen['id']}/scoring"
     # SEG-01: the duplicate is not valid; it has no row, so only the first one scores
     before = client.get(scoring_url).json()
@@ -384,11 +386,8 @@ def test_distinct_mark_releases_a_duplicate_in_the_result(client, headers, chose
 def test_distinct_mark_without_a_justification_also_releases_the_duplicate(
     client, headers, chosen
 ):
-    create(client, headers, chosen, group_number=2, item_number=7, quantidade=1)
-    twin = create(
-        client, headers, chosen, title=" ORIENTAÇÃO de tcc", group_number=2, item_number=7,
-        quantidade=1,
-    )  # fmt: skip
+    first = create(client, headers, chosen, group_number=2, item_number=7, quantidade=1)
+    twin = legacy_twin(client, first, title=" ORIENTAÇÃO de tcc")
 
     ok = client.post(
         f"/api/activities/{twin['id']}/distinct", json={"expected_version": 1}, headers=headers

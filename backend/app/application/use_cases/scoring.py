@@ -12,6 +12,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from app.application.services.access_policy import AccessPolicy
+from app.application.services.activity_merge import MergeDuplicateActivities
 from app.application.services.audit_service import AuditService
 from app.domain.entities.activity import (
     Activity,
@@ -333,6 +334,16 @@ def normalize_activity(data: ActivityData, version: ScoringTableVersion | None) 
 
 
 class _ActivityUseCase(_ScoringUseCase):
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        policy: AccessPolicy,
+        merger: MergeDuplicateActivities | None = None,
+    ):
+        super().__init__(uow_factory, audit, policy)
+        self._merger = merger or MergeDuplicateActivities(audit)
+
     def _chosen_version(
         self, uow: UnitOfWork, process: FunctionalProcess
     ) -> ScoringTableVersion | None:
@@ -470,6 +481,11 @@ class CreateActivity(_ActivityUseCase):
                 activity_audit_view(activity),
                 justification,
             )
+            if source is ActivitySource.MANUAL:
+                # A reading creates its activities one by one and links each to its page after
+                # that: the document processing merges once at the end, so the proof of a
+                # duplicate is not left on an activity that was merged before it arrived.
+                self._merger.merge_process(uow, process.id, actor.id)
             uow.commit()
             return uow.activities.get(activity.id)
 
@@ -522,6 +538,8 @@ class UpdateActivity(_ExistingActivityUseCase):
                 activity_audit_view(updated),
                 (justification or "").strip() or None,
             )
+            # DUP-04: what was merged before stays merged, even if this edit made them differ
+            self._merger.merge_process(uow, process.id, actor.id)
             uow.commit()
             return uow.activities.get(activity_id)
 

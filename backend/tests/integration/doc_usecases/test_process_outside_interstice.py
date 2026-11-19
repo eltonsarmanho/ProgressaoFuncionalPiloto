@@ -17,7 +17,13 @@ from tests.integration.doc_usecases.test_process_document import (
     process_banca,
     state,
 )
-from tests.unit.application.analyzer_fakes import FakeAi, FakeTextExtractor, text_page
+from tests.unit.application.analyzer_fakes import (
+    FakeAi,
+    FakeTextExtractor,
+    activity,
+    payload,
+    text_page,
+)
 
 OUTSIDE = DocAlertCode.DOCUMENTO_FORA_DO_INTERSTICIO.value
 # the banca of banca_text is dated 12/03/2023
@@ -177,7 +183,18 @@ def test_an_edited_activity_linked_only_to_the_document_is_rejected_too(docs):
 def test_the_activities_of_other_documents_and_the_manual_ones_are_left_alone(docs):
     w = docs.world
     document = process_banca(docs, "alvo")
-    neighbour_document = process_banca(docs, "vizinho")
+    # DUP-04: the neighbour reads another title and a date that stays inside the later
+    # interstice, or its activity would be merged into the target (same item, same text)
+    neighbour_document = process_banca(
+        docs,
+        "vizinho",
+        ai=FakeAi(
+            payload(
+                activity(title="Outro Trabalho de Conclusao", event_date="2024-06-01"),
+                name=w.professor.full_name,
+            )
+        ),
+    )
     target = activity_of(docs, document)
     neighbour = activity_of(docs, neighbour_document)
     validate(w, neighbour)

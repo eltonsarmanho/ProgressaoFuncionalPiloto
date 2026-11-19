@@ -219,7 +219,10 @@ def test_points_override_only_for_weekly_load_criteria_and_without_needing_a_jus
     assert event.changes["points_override"] == {"before": None, "after": "24"}
 
     # UIM-16: no justification needed; the audit event simply has none
-    without = world.create.execute(world.admin, world.process.id, data(**weekly))
+    # DUP-04: another title, or the second offer would be merged into the first
+    without = world.create.execute(
+        world.admin, world.process.id, data(**{**weekly, "title": "Outra disciplina"})
+    )
     assert without.points_override == D("24")
     with world.uow_factory() as uow:
         [event_without] = uow.audit.list_for("activity", str(without.id))
