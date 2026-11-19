@@ -482,6 +482,8 @@ T42 → T43 → T44
 
 ### T14: `merge_process` (mesclagem do processo)
 
+**Status**: Done
+
 **What**: Mescla as duplicadas do processo: fica a validada mais antiga, ou a mais antiga se nenhuma ou todas estão validadas; as provas passam para a mantida; auditoria `MERGE`; idempotente e atômica.
 **Where**: `backend/app/application/services/activity_merge.py` (novo)
 **Depends on**: T12, T13
@@ -495,9 +497,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_activity_merge.py`: duas duplicadas viram uma com as provas das duas e sem par documento e página repetido; fica a validada mesmo se a outra é mais antiga; com as duas validadas ou nenhuma fica a mais antiga; cadeia de três vira uma; a mesclada permanece no banco com `merged_into_id` e um evento de auditoria com os dois ids; repetir não muda nada; uma falha no meio (repositório forçado a falhar) não deixa atividade nem prova alterada; processo somente leitura não é alterado
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_activity_merge.py`: duas duplicadas viram uma com as provas das duas e sem par documento e página repetido; fica a validada mesmo se a outra é mais antiga; com as duas validadas ou nenhuma fica a mais antiga; cadeia de três vira uma; a mesclada permanece no banco com `merged_into_id` e um evento de auditoria com os dois ids; repetir não muda nada; uma falha no meio (repositório forçado a falhar) não deixa atividade nem prova alterada; processo somente leitura não é alterado
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: integration
 **Gate**: full
