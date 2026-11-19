@@ -101,10 +101,16 @@ T39 → T40
 T39 → T42
 ```
 
+### Phase 7b: Frontend, correções da revisão do lote 5
+
+```
+T42 → T45 → T46 → T47 → T48 → T49 → T50
+```
+
 ### Phase 8: Documentação e verificação
 
 ```
-T42 → T43 → T44
+T50 → T43 → T44
 ```
 
 ---
@@ -1293,11 +1299,170 @@ T42 → T43 → T44
 
 ---
 
+### T45: TF1, foco e anúncio depois de ações na linha
+
+**What**: Depois de validar, rejeitar, reabrir, salvar a edição ou escolher a categoria na linha, o foco vai para um elemento estável e o resultado é anunciado numa região viva sempre montada; "Mostrar mais" leva o foco à primeira linha nova e o contador de linhas é região viva.
+**Where**: `frontend/src/components/ActivityWorkspace.tsx` (modify), com `ActivityRow.tsx`, `ValidActivitiesSection.tsx`, `InvalidActivitiesSection.tsx` e `CategoryPicker.tsx`
+**Depends on**: T42
+**Reuses**: `Modal` (devolve o foco ao abridor que ainda existe), `role="status"`
+**Requirement**: SEC-12, SEC-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Testes primeiro (que falham antes): depois de Validar, Rejeitar, Reabrir e de escolher a categoria na linha, `document.activeElement` é um elemento da página (o título da linha, com `tabIndex=-1`, ou o da linha seguinte quando ela some), nunca o `<body>`; uma região `role="status"` sempre montada no `ActivityWorkspace` diz "<título> validada", "rejeitada", "reaberta" e "categoria definida"; ao salvar a edição no modal o foco volta a um elemento estável da seção; "Mostrar mais" nas duas seções leva o foco à primeira linha nova e o texto "Mostrando N de M" tem `aria-live="polite"`
+- [ ] A gravação da categoria continua imediata (regra 5 do projeto), sem botão de confirmar
+- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [ ] Test count: os 508 testes seguem e os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): keep the focus and announce the result after a row action`
+
+---
+
+### T46: TF2, o erro da linha sobrevive à recarga e não se duplica
+
+**What**: O aviso de 409 ou 422 de uma escrita da linha sobe para o `ActivityWorkspace` e aparece numa região `role="alert"` que sobrevive à recarga em que a linha troca de seção; no 422 do campo `categoria` só o erro do seletor aparece.
+**Where**: `frontend/src/components/ActivityWorkspace.tsx` (modify), com `ActivityRow.tsx`
+**Depends on**: T45
+**Reuses**: a região viva da T45, `fieldErrors`, `errorMessage`
+**Requirement**: SEC-04, SEC-12
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Testes primeiro (que falham antes): um 409 ao validar mostra o aviso com o título da atividade e a recarga que tira a linha da seção não apaga o aviso; um 422 de `status` idem; um 422 de `categoria` mostra o texto uma só vez, no `FieldError` do seletor, sem outro `role="alert"` com a mesma mensagem
+- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [ ] Test count: nenhum teste apagado; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): keep the row error visible when the row changes section`
+
+---
+
+### T47: TF3, a Etapa 3 sem tabela escolhida não fica sem saída
+
+**What**: O bloqueio do avanço (SEC-05) só vale quando a Etapa 3 tem tabela (a lista de grupos não está vazia); sem tabela o avanço fica livre e a Etapa 3 mostra o aviso de que falta escolher a tabela, com o link para a Etapa 4.
+**Where**: `frontend/src/pages/ProcessActivities.tsx` (modify), com `CategoryPicker.tsx`
+**Depends on**: T46
+**Reuses**: `needsCategoryMessage`, `StepNav`
+**Requirement**: SEC-05, SEC-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Testes primeiro em `frontend/src/pages/ProcessActivities.test.tsx` (que falham antes): `GET /scoring/table` com `chosen` e `suggested` nulos e uma atividade sem categoria deixa "Ir para a Etapa 4" como link habilitado, o `StepNav` sem bloqueio e o aviso "Escolha a tabela de pontuação na Etapa 4..." com o link para a Etapa 4; com tabela, a mesma atividade bloqueia o avanço e mostra "1 atividade precisa de categoria"
+- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [ ] Test count: nenhum teste apagado; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): do not block the next step when no table is chosen`
+
+---
+
+### T48: TF4, filtros e seleção coerentes
+
+**What**: O filtro de grupo mostra a contagem de cada grupo; a seleção só conta e valida as atividades filtradas; a caixa de seleção some da linha que precisa de categoria e tem alvo de toque de 1,25 rem; "Selecionar todas" diz quantas estão além das mostradas.
+**Where**: `frontend/src/components/ValidActivitiesSection.tsx` (modify), com `ActivityFilters.tsx`, `ActivityRow.tsx`, `activityList.ts` e `styles.css`
+**Depends on**: T47
+**Reuses**: `filterActivities`, `groupsOf`
+**Requirement**: SEC-03, SEC-11
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Testes primeiro (que falham antes): as opções do filtro de grupo trazem a contagem ("II · Orientação (12)") calculada sobre as válidas; filtrar por grupo esconde da seleção, e do contador de "Validar as selecionadas (N)", as atividades que ficaram de fora; a linha que precisa de categoria não oferece a caixa de seleção; `styles.css` dá à caixa de seleção 1.25rem por 1.25rem; "Selecionar todas (N)" informa no texto quantas das N estão além das mostradas
+- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [ ] Test count: nenhum teste apagado; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): count the groups and cross the selection with the filters`
+
+---
+
+### T49: TF5, acessibilidade dos formulários e da navegação
+
+**What**: O foco do erro 422 do formulário da atividade acha o seletor de categoria; os formulários de vínculo e de pontuação focam o primeiro campo inválido e mostram o erro como alerta; um 422 de campo sem entrada vira alerta geral; o `StepNav` tem região viva sempre montada e os itens fechados apontam a mensagem; o critério dos 70% de "Validar as confiáveis" é texto visível.
+**Where**: `frontend/src/components/ActivityForm.tsx` (modify), com `CategoryPicker.tsx`, `ActivityLinkForm.tsx`, `ScoreEditor.tsx`, `StepNav.tsx`, `FieldError.tsx` e `ValidActivitiesSection.tsx`
+**Depends on**: T48
+**Reuses**: `fieldErrors`, `errorProps`, `FieldError`
+**Requirement**: SEC-05, SEC-12, EDT-02, QTD-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Testes primeiro (que falham antes): 422 em `categoria` no `ActivityForm` leva o foco ao seletor de categoria; 422 em `document_id` ou `page` no `ActivityLinkForm` e em `quantidade`, `horas` ou `unit_points_override` no `ScoreEditor` leva o foco ao primeiro campo inválido e o erro tem `role="alert"`; 422 de um campo sem input no `ScoreEditor` mostra o alerta geral; o `StepNav` tem sempre um `role="status"` (vazio sem bloqueio) e os itens fechados e "Ir para a Etapa 4" têm `aria-describedby` com o id da mensagem; o critério dos 70% é um texto visível ligado ao botão por `aria-describedby`, sem `title`
+- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [ ] Test count: nenhum teste apagado; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): focus and announce the form errors and the blocked steps`
+
+---
+
+### T50: TF6, notas do `ScoreEditor` e decisões registradas
+
+**What**: As notas "para informar pontos use Editar" e "pontos informados na edição da atividade" do `ScoreEditor` apontam o caminho real; `design.md` registra as decisões do lote 5 (bloqueio a partir da Etapa 3, horas de PIT fora da linha, "Validar as confiáveis" sem motivo por linha).
+**Where**: `frontend/src/components/ScoreEditor.tsx` (modify), com `.specs/features/revisao-simplificada/design.md`
+**Depends on**: T49
+**Reuses**: EDT-01, QTD-01, regra 7 do `CLAUDE.md` (`unit_points_override`)
+**Requirement**: EDT-01, QTD-01, QTD-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Testes primeiro em `frontend/src/components/ScoreEditor.test.tsx` (que falham antes): a nota dos itens de carga semanal e a dos itens de valor informado não mandam mais "Editar" da Etapa 3 e dizem onde os pontos se informam; os testes que dependiam do texto antigo seguem com a mesma força
+- [ ] Item `VALOR_INFORMADO` sem caminho de entrada de pontos não ganha solução nova: vira pergunta aberta no relatório
+- [ ] `design.md` com a seção "Decisões do lote 5" (SEC-05 desde a Etapa 3 com recusa `ATIVIDADE_SEM_CATEGORIA` no servidor; horas de PIT só na Etapa 4; "Validar as confiáveis" explica só o critério)
+- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [ ] Test count: nenhum teste apagado; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): point the score editor notes to the real path`
+
+---
+
 ### T43: Documentação da feature
 
 **What**: AD-022 em `STATE.md` (coluna `merged_into_id`, validade no servidor, mesclagem na escrita), regra 10 em `CLAUDE.md` e rastreabilidade da spec marcada como `Implemented`.
 **Where**: `.specs/STATE.md` (modify)
-**Depends on**: T42
+**Depends on**: T50
 **Reuses**: AD-018 como modelo; o texto do Design
 **Requirement**: DUP-02, SEG-01, VAL-01
 
@@ -1352,7 +1517,7 @@ T42 → T43 → T44
 
 | Requisito | Tarefas | Requisito | Tarefas |
 | --- | --- | --- | --- |
-| VAL-01 | T2, T5 | SEC-12 | T33, T35, T36 |
+| VAL-01 | T2, T5 | SEC-12 | T33, T35, T36, T45, T46, T49 |
 | VAL-02 | T3, T4, T28 | DUP-01 | T13, T14 |
 | VAL-03 | T17 | DUP-02 | T9, T10, T11, T12, T14 |
 | VAL-04 | T18, T19, T34 | DUP-03 | T10, T12, T14 |
@@ -1360,18 +1525,18 @@ T42 → T43 → T44
 | VAL-06 | T1, T17, T33, T34 | DUP-05 | T14 |
 | SEC-01 | T23, T24, T27, T36, T38, T39 | DUP-06 | T14 |
 | SEC-02 | T1, T25, T26, T34 | DUP-07 | T15, T16, T24, T32 |
-| SEC-03 | T31, T34 | SEG-01 | T1, T2, T5, T6, T8 |
-| SEC-04 | T30, T33 | SEG-02 | T6, T8 |
-| SEC-05 | T34, T37, T38 | SEG-03 | T2, T6, T8, T26 |
+| SEC-03 | T31, T34, T48 | SEG-01 | T1, T2, T5, T6, T8 |
+| SEC-04 | T30, T33, T45, T46, T47 | SEG-02 | T6, T8 |
+| SEC-05 | T34, T37, T38, T47, T49 | SEG-03 | T2, T6, T8, T26 |
 | SEC-06 | T1, T22, T25, T35 | SEG-04 | T2, T5 |
 | SEC-07 | T1, T24, T25, T28, T29, T35 | SEG-05 | T7, T8, T28 |
-| SEC-08 | T25, T26, T36 | EDT-01 | T40 |
-| SEC-09 | T25, T35, T36 | EDT-02 | T20, T41 |
+| SEC-08 | T25, T26, T36 | EDT-01 | T40, T50 |
+| SEC-09 | T25, T35, T36 | EDT-02 | T20, T41, T49 |
 | SEC-10 | T35 | EDT-03 | T20, T41 |
-| SEC-11 | T34, T35 | EDT-04 | T40 |
-| QTD-01 | T42 | EDT-05 | T40 |
-| QTD-02 | T20, T42 | EDT-06 | T20, T40 |
-| QTD-03 | T20, T42 | EDT-07 | T40 |
+| SEC-11 | T34, T35, T48 | EDT-04 | T40 |
+| QTD-01 | T42, T50 | EDT-05 | T40 |
+| QTD-02 | T20, T42, T50 | EDT-06 | T20, T40 |
+| QTD-03 | T20, T42, T49 | EDT-07 | T40 |
 
 ---
 
@@ -1410,4 +1575,5 @@ T42 → T43 → T44
 | T29-T38 | Frontend components/pages | unit | unit | ✅ OK |
 | T39 | Removal of a component | none (build gate) | none | ✅ OK |
 | T40-T42 | Frontend components | unit | unit | ✅ OK |
+| T45-T50 | Frontend components/pages | unit | unit | ✅ OK |
 | T43, T44 | Docs | none | none | ✅ OK |
