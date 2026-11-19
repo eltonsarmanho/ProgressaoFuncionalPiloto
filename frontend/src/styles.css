@@ -1018,3 +1018,41 @@ fieldset.grid legend {
   padding-left: 1.25rem;
   font-size: 0.9rem;
 }
+
+.section-heading {
+  margin: 0;
+}
+
+.section-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  max-width: 100%;
+  padding: 0.5rem 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.section-toggle::before {
+  content: "▸";
+}
+
+.section-toggle[aria-expanded="true"]::before {
+  content: "▾";
+}
+
+.section-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.section-toggle-counts {
+  font-size: 0.9rem;
+  font-weight: 400;
+}

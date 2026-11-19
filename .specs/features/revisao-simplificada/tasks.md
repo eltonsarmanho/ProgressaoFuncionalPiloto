@@ -1070,6 +1070,8 @@ T42 → T43 → T44
 
 ### T35: Seção "Atividades não válidas"
 
+**Status**: Done
+
 **What**: Seção fechada ao abrir, com `aria-expanded`, total e contagem por motivo no título; cada linha com o motivo e Editar (e Reabrir nas rejeitadas).
 **Where**: `frontend/src/components/InvalidActivitiesSection.tsx` (novo)
 **Depends on**: T33
@@ -1083,9 +1085,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/InvalidActivitiesSection.test.tsx`: abre fechada; o botão alterna `aria-expanded` e é focável por teclado; o título mostra o total e a contagem por motivo; as linhas mostram o motivo em texto; Editar e Reabrir chamam os callbacks; "Nenhuma atividade não válida" quando vazia; 25 por vez com "Mostrar mais"
-- [ ] Gate check passes: `cd frontend && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/InvalidActivitiesSection.test.tsx`: abre fechada; o botão alterna `aria-expanded` e é focável por teclado; o título mostra o total e a contagem por motivo; as linhas mostram o motivo em texto; Editar e Reabrir chamam os callbacks; "Nenhuma atividade não válida" quando vazia; 25 por vez com "Mostrar mais"
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick
