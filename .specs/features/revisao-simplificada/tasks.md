@@ -1358,6 +1358,8 @@ T50 → T43 → T44
 
 ### T47: TF3, a Etapa 3 sem tabela escolhida não fica sem saída
 
+**Status**: Done
+
 **What**: O bloqueio do avanço (SEC-05) só vale quando a Etapa 3 tem tabela (a lista de grupos não está vazia); sem tabela o avanço fica livre e a Etapa 3 mostra o aviso de que falta escolher a tabela, com o link para a Etapa 4.
 **Where**: `frontend/src/pages/ProcessActivities.tsx` (modify), com `CategoryPicker.tsx`
 **Depends on**: T46
@@ -1371,9 +1373,9 @@ T50 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/pages/ProcessActivities.test.tsx` (que falham antes): `GET /scoring/table` com `chosen` e `suggested` nulos e uma atividade sem categoria deixa "Ir para a Etapa 4" como link habilitado, o `StepNav` sem bloqueio e o aviso "Escolha a tabela de pontuação na Etapa 4..." com o link para a Etapa 4; com tabela, a mesma atividade bloqueia o avanço e mostra "1 atividade precisa de categoria"
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado; os novos passam
+- [x] Testes primeiro em `frontend/src/pages/ProcessActivities.test.tsx` (que falham antes): `GET /scoring/table` com `chosen` e `suggested` nulos e uma atividade sem categoria deixa "Ir para a Etapa 4" como link habilitado, o `StepNav` sem bloqueio e o aviso "Escolha a tabela de pontuação na Etapa 4..." com o link para a Etapa 4; com tabela, a mesma atividade bloqueia o avanço e mostra "1 atividade precisa de categoria"
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado; os novos passam
 
 **Tests**: unit
 **Gate**: build

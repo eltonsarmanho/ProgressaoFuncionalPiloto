@@ -187,6 +187,28 @@ describe("SEC-05: o avanço bloqueado sem categoria", () => {
   });
 });
 
+describe("SEC-05: sem tabela escolhida o avanço não fica sem saída", () => {
+  const NO_TABLE = { "GET /api/processes/p1/scoring/table": { status: 200, body: { chosen: null, suggested: null, alerts: [] } } };
+
+  it("sem tabela, com atividade sem categoria, o avanço à Etapa 4 segue livre e a página explica e leva à Etapa 4", async () => {
+    renderPage({ ...NO_TABLE, [LIST]: { status: 200, body: [noCategory("c1", "Uma"), noCategory("c2", "Duas")] } });
+    await screen.findByText("Uma");
+    expect(within(nav()).queryByText(/precisam? de categoria/)).not.toBeInTheDocument();
+    expect(within(nav()).getAllByRole("listitem")[3]).not.toHaveAttribute("aria-disabled");
+    expect(screen.getByRole("link", { name: "Ir para a Etapa 4 · Pontuação" })).toHaveAttribute("href", "/processos/p1/pontuacao");
+    expect(screen.getByText("Nenhuma tabela de pontuação foi escolhida, por isso as categorias ainda não podem ser definidas.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Escolher a tabela na Etapa 4" })).toHaveAttribute("href", "/processos/p1/pontuacao");
+  });
+
+  it("com tabela, o aviso de tabela não aparece e a atividade sem categoria bloqueia com 'N atividades precisam de categoria'", async () => {
+    renderPage({ [LIST]: { status: 200, body: [noCategory("c1", "Uma"), noCategory("c2", "Duas")] } });
+    await screen.findByText("Uma");
+    expect(screen.queryByText(/Nenhuma tabela de pontuação foi escolhida/)).not.toBeInTheDocument();
+    expect(within(nav()).getByText("2 atividades precisam de categoria")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Ir para a Etapa 4 · Pontuação" })).not.toBeInTheDocument();
+  });
+});
+
 describe("REV: rejeitar, editar e validar em lote recarregam a lista", () => {
   it("rejeitar recarrega a lista", async () => {
     const { calls, user } = renderPage({

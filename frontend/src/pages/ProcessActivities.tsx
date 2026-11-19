@@ -50,7 +50,8 @@ async function load(id: string): Promise<Loaded> {
 /**
  * Etapa 3: review of the activities in two sections (valid and not valid), with the batch
  * validation and the documents. The way to Etapa 4 stays closed while a valid activity lacks its
- * category (SEC-05).
+ * category (SEC-05), but only when there is a table to choose the category from: without one the
+ * way stays open and the page tells the user to choose the table in Etapa 4, where it is chosen.
  */
 export function ProcessActivities() {
   const { id = "" } = useParams();
@@ -76,7 +77,8 @@ export function ProcessActivities() {
     };
   }, [id, reloads]);
 
-  const missing = data ? data.activities.filter((a) => isValid(a) && validityOf(a).needs_category).length : 0;
+  const hasTable = data != null && data.groups.length > 0;
+  const missing = hasTable ? data.activities.filter((a) => isValid(a) && validityOf(a).needs_category).length : 0;
 
   return (
     <>
@@ -89,6 +91,12 @@ export function ProcessActivities() {
       {error && (
         <p role="alert" className="error">
           {error}
+        </p>
+      )}
+      {data && !hasTable && (
+        <p className="review-note">
+          Nenhuma tabela de pontuação foi escolhida, por isso as categorias ainda não podem ser definidas.{" "}
+          <Link to={`/processos/${id}/pontuacao`}>Escolher a tabela na Etapa 4</Link>
         </p>
       )}
       {data && (
