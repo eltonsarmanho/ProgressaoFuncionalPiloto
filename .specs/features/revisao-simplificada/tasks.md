@@ -986,6 +986,8 @@ T42 → T43 → T44
 
 ### T32: `MergedNote`
 
+**Status**: Done
+
 **What**: Texto "N duplicadas mescladas" com o botão "Não é duplicada" por mesclada.
 **Where**: `frontend/src/components/MergedNote.tsx` (novo)
 **Depends on**: T28
@@ -999,9 +1001,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/MergedNote.test.tsx`: mostra "1 duplicada mesclada" e "2 duplicadas mescladas" com os títulos; "Não é duplicada" chama `POST /api/activities/{id}/separate` e avisa o pai; erro 409/422 mostra a mensagem; sem mescladas não renderiza nada
-- [ ] Gate check passes: `cd frontend && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/MergedNote.test.tsx`: mostra "1 duplicada mesclada" e "2 duplicadas mescladas" com os títulos; "Não é duplicada" chama `POST /api/activities/{id}/separate` e avisa o pai; erro 409/422 mostra a mensagem; sem mescladas não renderiza nada
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick

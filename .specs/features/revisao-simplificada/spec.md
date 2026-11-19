@@ -209,7 +209,7 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 | DUP-04 | P1: Duplicadas mescladas | Design | Implementing |
 | DUP-05 | P1: Duplicadas mescladas | Design | Implemented |
 | DUP-06 | P1: Duplicadas mescladas | Design | Implemented |
-| DUP-07 | P1: Duplicadas mescladas | Design | Implementing |
+| DUP-07 | P1: Duplicadas mescladas | Design | Implemented |
 | SEG-01 | P1: Só as válidas seguem | Design | Implemented |
 | SEG-02 | P1: Só as válidas seguem | Design | Implemented |
 | SEG-03 | P1: Só as válidas seguem | Design | Implemented |
