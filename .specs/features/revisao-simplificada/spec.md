@@ -222,8 +222,8 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 | EDT-05 | P1: Editar atividade com poucos campos | Design | Implemented |
 | EDT-06 | P1: Editar atividade com poucos campos | Design | Implemented |
 | EDT-07 | P1: Editar atividade com poucos campos | Design | Implemented |
-| QTD-01 | P1: Quantidade e valor manual na Etapa 4 | Design | Pending |
-| QTD-02 | P1: Quantidade e valor manual na Etapa 4 | Design | Implementing |
+| QTD-01 | P1: Quantidade e valor manual na Etapa 4 | Design | Implemented |
+| QTD-02 | P1: Quantidade e valor manual na Etapa 4 | Design | Implemented |
 | QTD-03 | P1: Quantidade e valor manual na Etapa 4 | Design | Implemented |
 
 **ID format:** `[CATEGORY]-[NUMBER]`

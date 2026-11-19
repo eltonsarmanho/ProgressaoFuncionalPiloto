@@ -273,7 +273,7 @@ describe("ProcessScoring", () => {
       expect(field).toHaveValue(10);
       await user.clear(field);
       await user.type(field, "2.5");
-      await user.click(within(dialog).getByRole("button", { name: "Salvar valor" }));
+      await user.click(within(dialog).getByRole("button", { name: "Salvar pontuação" }));
 
       await waitFor(() => expect(screen.getByText("Total geral", { selector: "dt" }).nextElementSibling).toHaveTextContent("10,00"));
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

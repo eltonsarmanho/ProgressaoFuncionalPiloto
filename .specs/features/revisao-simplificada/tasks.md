@@ -1267,6 +1267,8 @@ T42 → T43 → T44
 
 ### T42: Quantidade, horas e valor manual na Etapa 4
 
+**Status**: Done
+
 **What**: `ScoreEditor` oferece Quantidade (ou Horas nos itens medidos por horas) e o valor unitário manual, e mostra o erro 422 de `quantidade`.
 **Where**: `frontend/src/components/ScoreEditor.tsx` (modify)
 **Depends on**: T39
@@ -1280,9 +1282,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ScoreEditor.test.tsx`: item por unidade mostra Quantidade; item por horas mostra Horas; o valor unitário manual segue; salvar manda o corpo completo e recarrega o total; quantidade negativa mostra o erro do campo vindo do 422; sem campo de justificativa
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/ScoreEditor.test.tsx`: item por unidade mostra Quantidade; item por horas mostra Horas; o valor unitário manual segue; salvar manda o corpo completo e recarrega o total; quantidade negativa mostra o erro do campo vindo do 422; sem campo de justificativa
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: build
