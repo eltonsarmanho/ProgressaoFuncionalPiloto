@@ -902,6 +902,8 @@ T42 → T43 → T44
 
 ### T29: `ReasonText`
 
+**Status**: Done
+
 **What**: Componente que escreve o motivo de uma atividade não válida a partir de `validity.params`.
 **Where**: `frontend/src/components/ReasonText.tsx` (novo)
 **Depends on**: T28
@@ -915,9 +917,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ReasonText.test.tsx`: cada motivo gera o texto exato da spec com as datas e horas dos parâmetros; período por ano usa início e fim; o motivo não depende só de cor (o texto está presente)
-- [ ] Gate check passes: `cd frontend && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/ReasonText.test.tsx`: cada motivo gera o texto exato da spec com as datas e horas dos parâmetros; período por ano usa início e fim; o motivo não depende só de cor (o texto está presente)
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick
