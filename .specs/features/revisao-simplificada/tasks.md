@@ -1182,6 +1182,8 @@ T42 → T43 → T44
 
 ### T39: Remover `ActivityReviewList`
 
+**Status**: Done
+
 **What**: Remove o componente antigo e o teste dele depois de conferir que cada comportamento foi portado.
 **Where**: `frontend/src/components/ActivityReviewList.tsx` (remover)
 **Depends on**: T38
@@ -1195,10 +1197,10 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Uma tabela no corpo do commit mapeia cada um dos 22 testes antigos ao teste novo que cobre o comportamento (seleção, validar em lote, validar as confiáveis, vincular documento, rejeitar, reabrir, selo de revisão, filtros), ou à decisão da spec que o aposentou
-- [ ] `ActivityReviewList.tsx` e `.test.tsx` removidos; nenhum import restante
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: o total cai só pelos 22 testes mapeados
+- [x] Uma tabela no corpo do commit mapeia cada um dos 22 testes antigos ao teste novo que cobre o comportamento (seleção, validar em lote, validar as confiáveis, vincular documento, rejeitar, reabrir, selo de revisão, filtros), ou à decisão da spec que o aposentou
+- [x] `ActivityReviewList.tsx` e `.test.tsx` removidos; nenhum import restante
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: o total cai só pelos 22 testes mapeados
 
 **Tests**: none
 **Gate**: build

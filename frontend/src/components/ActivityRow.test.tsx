@@ -132,6 +132,8 @@ describe("VAL-06, SEC-04, SEC-12: ActivityRow", () => {
     await user.click(screen.getByRole("button", { name: "Validar Banca de mestrado de Maria" }));
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
     expect(body(calls[0].init)).toEqual({ status: "VALIDADA", expected_version: 4 });
+    expect(screen.queryByLabelText(/justificativa/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("Rejeitar chama o status REJEITADA na hora", async () => {
@@ -179,6 +181,39 @@ describe("VAL-06, SEC-04, SEC-12: ActivityRow", () => {
     await user.click(screen.getByRole("button", { name: "Reabrir Banca de mestrado de Maria" }));
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
     expect(body(calls[0].init)).toEqual({ status: "AGUARDANDO_REVISAO", expected_version: 4 });
+  });
+
+  it("atividade sem vínculo mostra 'Sem documento vinculado'; a vinculada lista o documento e a página", () => {
+    setup(activity({ evidences: [] }));
+    expect(screen.getByText("Sem documento vinculado")).toBeInTheDocument();
+    expect(screen.queryByText(/página/)).not.toBeInTheDocument();
+  });
+
+  it("REAL-09: atividade sem data mostra 'Sem data'; a datada mostra a data", () => {
+    setup(activity({ event_date: null }));
+    expect(screen.getByText("Sem data")).toBeInTheDocument();
+    expect(screen.queryByText("10/05/2025")).not.toBeInTheDocument();
+  });
+
+  it("UIM-13: os rótulos visíveis são curtos e o título da atividade vai no nome acessível", () => {
+    setup(activity());
+    const buttons = within(rowElement()).getAllByRole("button");
+    expect(buttons.map((b) => b.textContent)).toEqual(["Validar", "Rejeitar", "Editar", "Vincular"]);
+    expect(buttons.map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Validar Banca de mestrado de Maria",
+      "Rejeitar Banca de mestrado de Maria",
+      "Editar Banca de mestrado de Maria",
+      "Vincular documento a Banca de mestrado de Maria",
+    ]);
+  });
+
+  it("409 de versão desatualizada mostra o alerta e recarrega a lista", async () => {
+    const { onChanged, user } = setup(activity(), {
+      "POST /api/activities/a1/status": { status: 409, body: { detail: "A atividade foi alterada; recarregue" } },
+    });
+    await user.click(screen.getByRole("button", { name: "Validar Banca de mestrado de Maria" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("A atividade foi alterada; recarregue");
+    expect(onChanged).toHaveBeenCalledTimes(1);
   });
 
   it("Editar e Vincular avisam o pai com a atividade; a linha não abre painel sozinha", async () => {
