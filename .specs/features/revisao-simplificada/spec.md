@@ -198,11 +198,11 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 | SEC-05 | P1: Etapa 3 em duas seções | Design | Implementing |
 | SEC-06 | P1: Etapa 3 em duas seções | Design | Implemented |
 | SEC-07 | P1: Etapa 3 em duas seções | Design | Implemented |
-| SEC-08 | P1: Etapa 3 em duas seções | Design | Implementing |
-| SEC-09 | P1: Etapa 3 em duas seções | Design | Implementing |
+| SEC-08 | P1: Etapa 3 em duas seções | Design | Implemented |
+| SEC-09 | P1: Etapa 3 em duas seções | Design | Implemented |
 | SEC-10 | P1: Etapa 3 em duas seções | Design | Implemented |
 | SEC-11 | P1: Etapa 3 em duas seções | Design | Implemented |
-| SEC-12 | P1: Etapa 3 em duas seções | Design | Implementing |
+| SEC-12 | P1: Etapa 3 em duas seções | Design | Implemented |
 | DUP-01 | P1: Duplicadas mescladas | Design | Implemented |
 | DUP-02 | P1: Duplicadas mescladas | Design | Implemented |
 | DUP-03 | P1: Duplicadas mescladas | Design | Implemented |

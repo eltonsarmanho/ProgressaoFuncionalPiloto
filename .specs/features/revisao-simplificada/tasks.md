@@ -1098,6 +1098,8 @@ T42 → T43 → T44
 
 ### T36: `ActivityWorkspace`
 
+**Status**: Done
+
 **What**: Monta as duas seções, divide a lista pela validade e move a atividade de seção quando a edição ou a reabertura muda a validade, sem recarregar a página.
 **Where**: `frontend/src/components/ActivityWorkspace.tsx` (novo)
 **Depends on**: T34, T35
@@ -1111,9 +1113,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ActivityWorkspace.test.tsx`: as duas seções com o total no título; editar a data de uma não válida para dentro do interstício a move para as válidas; reabrir uma rejeitada a move; uma mesclada não aparece; o layout não força rolagem horizontal em 360 px (sem largura mínima fixa); os títulos das seções são navegáveis por teclado
-- [ ] Gate check passes: `cd frontend && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/ActivityWorkspace.test.tsx`: as duas seções com o total no título; editar a data de uma não válida para dentro do interstício a move para as válidas; reabrir uma rejeitada a move; uma mesclada não aparece; o layout não força rolagem horizontal em 360 px (sem largura mínima fixa); os títulos das seções são navegáveis por teclado
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick
