@@ -209,7 +209,8 @@ def test_activities_left_out_are_counted_in_the_snapshot_and_alerted(gen):
 
     done = generate(gen)
 
-    assert done.snapshot["excluded"] == {"pendentes": 1, "rejeitadas": 1}
+    # SEG-01: the rejected activity is not valid and is no longer counted as left out
+    assert done.snapshot["excluded"] == {"pendentes": 1}
     assert [a.code for a in done.alerts] == [GenerationAlertCode.ATIVIDADES_FORA_DO_DOCUMENTO]
     assert "1 aguardando revisão" in done.alerts[0].message
 

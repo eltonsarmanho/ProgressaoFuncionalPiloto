@@ -312,6 +312,8 @@ T42 → T43 → T44
 
 ### T8: A geração usa a validade e recusa atividade sem categoria
 
+**Status**: Done
+
 **What**: `load_generation_inputs` seleciona as atividades pela validade, `_excluded` conta só as válidas que ficam de fora (aguardando validação) e a geração é recusada com `ATIVIDADE_SEM_CATEGORIA` quando há atividade válida sem categoria.
 **Where**: `backend/app/application/services/generation_inputs.py` (modify)
 **Depends on**: T6, T7
@@ -325,10 +327,10 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_generated_validity_acceptance.py`: com atividades fora do interstício, duplicadas, rejeitadas e com carga insuficiente, a Tabela, o Relatório e o Comprovante não trazem nenhuma delas, nem como "Não pontuada", e o Comprovante não inclui páginas cuja única atividade é não válida; corrigir a data de uma e gerar de novo a inclui; atividade válida sem categoria → 422 `ATIVIDADE_SEM_CATEGORIA` nos três documentos; as versões geradas antes continuam iguais (AD-012)
-- [ ] O snapshot `excluded` não lista mais rejeitadas nem sem categoria como "ficaram de fora" (a regra nova as trata como não válidas ou recusa a geração); ajustes nos testes existentes anotados com SEG-01
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam; nenhum teste apagado sem substituto
+- [x] Testes primeiro em `backend/tests/integration/api/test_generated_validity_acceptance.py`: com atividades fora do interstício, duplicadas, rejeitadas e com carga insuficiente, a Tabela, o Relatório e o Comprovante não trazem nenhuma delas, nem como "Não pontuada", e o Comprovante não inclui páginas cuja única atividade é não válida; corrigir a data de uma e gerar de novo a inclui; atividade válida sem categoria → 422 `ATIVIDADE_SEM_CATEGORIA` nos três documentos; as versões geradas antes continuam iguais (AD-012)
+- [x] O snapshot `excluded` não lista mais rejeitadas nem sem categoria como "ficaram de fora" (a regra nova as trata como não válidas ou recusa a geração); ajustes nos testes existentes anotados com SEG-01
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; nenhum teste apagado sem substituto
 
 **Tests**: integration
 **Gate**: full

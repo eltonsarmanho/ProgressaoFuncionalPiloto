@@ -279,4 +279,4 @@ def test_the_generated_documents_do_not_read_the_rejected_activity_or_its_eviden
         inputs = load_generation_inputs(uow, uow.processes.get(w.process.id))
     assert inputs.activities == ()
     assert inputs.evidences == ()
-    assert inputs.excluded == {"rejeitadas": 1}
+    assert inputs.excluded == {}  # SEG-01: the rejected activity is not valid, not left out

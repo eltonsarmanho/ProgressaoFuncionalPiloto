@@ -1,5 +1,6 @@
 """TAB-01, TAB-02, UIG-06: what the generation reads from the process, in one read."""
 
+import pytest
 from sqlalchemy import text
 
 from app.application.services.generation_inputs import load_generation_inputs
@@ -11,6 +12,8 @@ from app.domain.entities.comprovante import (
     LayoutActivity,
     LayoutPage,
 )
+from app.domain.entities.generated import GenerationCode
+from app.domain.errors import GenerationRefused
 from app.domain.rules.comprovante_plan import plan_comprovante
 from tests.integration.doc_usecases.generation_support import (
     MOMENT,
@@ -27,20 +30,34 @@ def load(world):
         return load_generation_inputs(uow, uow.processes.get(world.process.id))
 
 
-def test_only_validated_activities_with_group_and_item_go_in_and_the_rest_is_counted_by_reason(
+def test_only_validated_valid_activities_go_in_and_the_valid_left_out_are_counted(
     official_chosen,
 ):
+    # SEG-01: the rejected activity is not valid, so it is not counted as left out
     world = official_chosen
     kept = add_activity(world, title="Orientação")
     add_activity(world, title="Sugerida 1", status=ActivityStatus.AGUARDANDO_REVISAO)
     add_activity(world, title="Sugerida 2", status=ActivityStatus.AGUARDANDO_REVISAO)
     add_activity(world, title="Recusada", status=ActivityStatus.REJEITADA)
-    add_activity(world, title="Sem item", group_number=None, item_number=None)
+    add_activity(world, title="Rejeitada sem item", group_number=None, item_number=None,
+                 status=ActivityStatus.REJEITADA)  # fmt: skip
 
     inputs = load(world)
 
     assert [a.id for a in inputs.activities] == [kept.id]
-    assert inputs.excluded == {"pendentes": 2, "rejeitadas": 1, "sem_enquadramento": 1}
+    assert inputs.excluded == {"pendentes": 2}
+
+
+def test_a_valid_activity_without_category_refuses_with_its_code(official_chosen):
+    # SEG-05: whatever its status, a valid activity with no category refuses the generation
+    world = official_chosen
+    add_activity(world, title="Orientação")
+    add_activity(world, title="Sem item", group_number=None, item_number=None)
+
+    with pytest.raises(GenerationRefused) as error:
+        load(world)
+
+    assert error.value.code == GenerationCode.ATIVIDADE_SEM_CATEGORIA
 
 
 def test_activities_come_in_the_order_of_the_table(official_chosen):

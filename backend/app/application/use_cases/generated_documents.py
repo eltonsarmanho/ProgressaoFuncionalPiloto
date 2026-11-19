@@ -229,8 +229,6 @@ class RequestGeneration(_ScoringUseCase):
 
 _LEFT_OUT_LABELS = {
     "pendentes": "aguardando revisão",
-    "rejeitadas": "rejeitadas",
-    "sem_enquadramento": "sem enquadramento na tabela",
 }
 _FORMATS = (DocumentFormat.DOCX, DocumentFormat.PDF)
 _CHUNK = 1024 * 1024
