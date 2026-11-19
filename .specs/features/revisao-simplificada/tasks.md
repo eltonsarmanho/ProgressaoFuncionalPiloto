@@ -818,6 +818,8 @@ T42 → T43 → T44
 
 ### T26: Rota da lista com os campos novos
 
+**Status**: Done
+
 **What**: `GET /api/processes/{id}/activities` e `GET /api/activities/{id}` montam `ActivityOut` com a validade, as mescladas e os pontos previstos.
 **Where**: `backend/app/presentation/api/activities.py` (modify)
 **Depends on**: T25
@@ -831,9 +833,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_activities_validity_api.py`: a lista de um processo com 120 atividades devolve todas, com a validade; uma mesclada não aparece e a mantida lista `merged`; `GET /api/activities/{id}` traz os mesmos campos; processo fora do acesso → 404; o fluxo da Etapa 4 (validar e pontuar) segue verde
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam; `test_activities_api.py` ajustado só onde o corpo ganhou campos
+- [x] Testes primeiro em `backend/tests/integration/api/test_activities_validity_api.py`: a lista de um processo com 120 atividades devolve todas, com a validade; uma mesclada não aparece e a mantida lista `merged`; `GET /api/activities/{id}` traz os mesmos campos; processo fora do acesso → 404; o fluxo da Etapa 4 (validar e pontuar) segue verde
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; `test_activities_api.py` ajustado só onde o corpo ganhou campos
 
 **Tests**: integration
 **Gate**: full

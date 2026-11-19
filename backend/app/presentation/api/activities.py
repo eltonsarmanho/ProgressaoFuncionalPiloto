@@ -7,6 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from starlette.concurrency import run_in_threadpool
 
+from app.application.use_cases.scoring import ActivityListing
 from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.entities.user import User
 from app.presentation.dependencies import Container, current_user, get_container
@@ -19,6 +20,7 @@ from app.presentation.schemas.activities import (
     ActivityStatusChange,
     ActivityUpdate,
     BulkValidateOut,
+    MergedOut,
     MergeOut,
     SkippedOut,
 )
@@ -30,11 +32,30 @@ ContainerDep = Annotated[Container, Depends(get_container)]
 UserDep = Annotated[User, Depends(current_user)]
 
 
-async def _present(container: Container, activities: Sequence[Activity]) -> list[ActivityOut]:
-    """The activities with their linked documents (VINC-02), in the order given."""
+async def _present(
+    container: Container,
+    activities: Sequence[Activity],
+    described: ActivityListing | None = None,
+) -> list[ActivityOut]:
+    """The activities with their linked documents (VINC-02), in the order given.
+
+    With `described` (the list and the read of one activity) each also carries its validity, the
+    activities merged into it and its predicted points; the answer of a write leaves them empty.
+    """
     found = await run_in_threadpool(container.list_evidences.execute, [a.id for a in activities])
+    if described is None:
+        return [
+            ActivityOut.of(a, [EvidenceOut.of(v.evidence, v.document_name) for v in found[a.id]])
+            for a in activities
+        ]
     return [
-        ActivityOut.of(a, [EvidenceOut.of(v.evidence, v.document_name) for v in found[a.id]])
+        ActivityOut.of(
+            a,
+            [EvidenceOut.of(v.evidence, v.document_name) for v in found[a.id]],
+            validity=described.validity.get(a.id),
+            merged=[MergedOut(id=m.id, title=m.title) for m in described.merged.get(a.id, ())],
+            predicted_points=described.predicted_points.get(a.id),
+        )
         for a in activities
     ]
 
@@ -50,7 +71,7 @@ async def list_activities(
     found = await run_in_threadpool(
         container.list_activities.execute, actor, process_id, group, status
     )
-    return await _present(container, found.activities)
+    return await _present(container, found.activities, found)
 
 
 @router.post("/processes/{process_id}/activities", response_model=ActivityOut, status_code=201)
@@ -111,7 +132,7 @@ async def separate_activity(
 @router.get("/activities/{activity_id}", response_model=ActivityOut)
 async def get_activity(activity_id: UUID, actor: UserDep, container: ContainerDep) -> ActivityOut:
     found = await run_in_threadpool(container.get_activity.execute, actor, activity_id)
-    return (await _present(container, found.activities))[0]
+    return (await _present(container, found.activities, found))[0]
 
 
 @router.put("/activities/{activity_id}", response_model=ActivityOut)

@@ -85,7 +85,15 @@ def test_create_returns_201_with_manual_validated_activity(client, headers, chos
     assert created["event_date"] == "2023-05-10"
     assert created["period_precision"] == "DAY"
     assert created["evidence_note"] == "Declaração"
-    assert client.get(f"/api/activities/{created['id']}").json() == created
+    read = client.get(f"/api/activities/{created['id']}").json()
+    # SEC-02: the read adds the validity, the merged ones and the points; the answer of the write
+    # leaves them empty
+    extra = ("validity", "merged", "predicted_points")
+    assert {k: v for k, v in read.items() if k not in extra} == {
+        k: v for k, v in created.items() if k not in extra
+    }
+    assert (created["validity"], created["merged"], created["predicted_points"]) == (None, [], None)
+    assert read["validity"]["state"] == "VALIDA"
 
 
 @pytest.mark.parametrize("extra", [{"source": "SUGERIDA_IA"}, {"source": "MANUAL"}])

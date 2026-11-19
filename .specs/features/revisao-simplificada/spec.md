@@ -212,7 +212,7 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 | DUP-07 | P1: Duplicadas mescladas | Design | Implementing |
 | SEG-01 | P1: Só as válidas seguem | Design | Implemented |
 | SEG-02 | P1: Só as válidas seguem | Design | Implemented |
-| SEG-03 | P1: Só as válidas seguem | Design | Implementing |
+| SEG-03 | P1: Só as válidas seguem | Design | Implemented |
 | SEG-04 | P1: Só as válidas seguem | Design | Implemented |
 | SEG-05 | P1: Só as válidas seguem | Design | Implementing |
 | EDT-01 | P1: Editar atividade com poucos campos | Design | Pending |
