@@ -29,6 +29,8 @@ function whenText(a: Activity): string {
 export type RowFeedback = {
   /** The write succeeded; called before the list reloads, while the row is still on the page. */
   done: (activityId: string, message: string) => void;
+  /** The write failed: the workspace shows the message, with the title, where a reload cannot remove it. */
+  fail: (title: string, message: string) => void;
 };
 
 /**
@@ -66,6 +68,7 @@ export function ActivityRow({
 
   const validity = validityOf(activity);
   const isValid = validity.state === "VALIDA";
+  const pickerShown = isValid && validity.needs_category;
   const rejected = activity.status === "REJEITADA";
   const awaiting = activity.status === "AGUARDANDO_REVISAO";
   const criterion = groups
@@ -75,7 +78,7 @@ export function ActivityRow({
     ? `${itemLabel(activity.group_number, activity.item_number)} · ${criterion.description}`
     : itemLabel(activity.group_number, activity.item_number);
 
-  /** A write of this row: errors stay in the row; a stale list is reloaded (409, or 422 of status or category). */
+  /** A write of this row: an error goes to the workspace (the row itself without one); a stale list is reloaded (409, or 422 of status or category). */
   async function write(action: () => Promise<unknown>, success: string) {
     setNotice(null);
     setCategoryError(undefined);
@@ -89,10 +92,14 @@ export function ActivityRow({
     } catch (err) {
       const byField = fieldErrors(err);
       const message = Object.values(byField)[0] ?? errorMessage(err);
-      setNotice(message);
-      if (byField.categoria) {
+      if (byField.categoria && pickerShown) {
+        // The select of the row says it; a second message would only repeat it.
         setCategoryError(byField.categoria);
         pickerRef.current?.focus();
+      } else if (feedback) {
+        feedback.fail(activity.title, message);
+      } else {
+        setNotice(message);
       }
       const stale = err instanceof ApiError && (err.status === 409 || "status" in byField || "categoria" in byField);
       if (stale) onChanged();
@@ -157,7 +164,7 @@ export function ActivityRow({
               <ReasonText validity={validity} />
             </p>
           )}
-          {isValid && validity.needs_category && (
+          {pickerShown && (
             <CategoryPicker
               groups={groups}
               value={null}

@@ -68,7 +68,7 @@ export function CategoryPicker({
           </optgroup>
         ))}
       </select>
-      <FieldError id={errorId} message={error} />
+      <FieldError id={errorId} message={error} alert />
     </div>
   );
 }

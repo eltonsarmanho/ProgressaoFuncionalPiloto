@@ -269,3 +269,60 @@ describe("SEC-12: foco e anúncio depois de uma ação na linha", () => {
     expect(status()).toBeEmptyDOMElement();
   });
 });
+
+describe("SEC-12: o erro da linha sobrevive à recarga e não se repete", () => {
+  const STALE = { detail: "A atividade foi alterada; recarregue" };
+
+  it("409 ao validar: a recarga tira a linha da seção e o aviso, com o título, continua na tela", async () => {
+    const rejected = activity({ id: "v1", title: "Banca válida", status: "REJEITADA", validity: REJECTED, predicted_points: null });
+    const { user } = setup(START(), (current) => current.map((a) => (a.id === "v1" ? rejected : a)), {
+      "POST /api/activities/v1/status": { status: 409, body: STALE },
+    });
+    await user.click(screen.getByRole("button", { name: "Validar Banca válida" }));
+    await waitFor(() => expect(screen.getByRole("heading", { level: 2, name: "Atividades válidas (0)" })).toBeInTheDocument());
+    expect(screen.queryByText("Banca válida", { selector: ".activity-title" })).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("Banca válida: A atividade foi alterada; recarregue");
+  });
+
+  it("422 do campo status também fica na tela depois da recarga", async () => {
+    const out = activity({ id: "v1", title: "Banca válida", validity: OUT, predicted_points: null });
+    const { user } = setup(START(), (current) => current.map((a) => (a.id === "v1" ? out : a)), {
+      "POST /api/activities/v1/status": {
+        status: 422,
+        body: { detail: [{ field: "status", code: "ATIVIDADE_NAO_VALIDA", message: "Atividade não válida não pode ser validada" }] },
+      },
+    });
+    await user.click(screen.getByRole("button", { name: "Validar Banca válida" }));
+    await waitFor(() => expect(screen.getByRole("heading", { level: 2, name: "Atividades válidas (0)" })).toBeInTheDocument());
+    expect(screen.getByRole("alert")).toHaveTextContent("Banca válida: Atividade não válida não pode ser validada");
+  });
+
+  it("422 de categoria no seletor da linha mostra a mensagem uma vez só, no campo do seletor", async () => {
+    const needs = activity({ id: "n1", title: "Sem categoria", group_number: null, item_number: null, predicted_points: null, validity: { ...VALID, needs_category: true } });
+    const { user } = setup([needs], (c) => c, {
+      "PUT /api/activities/n1": {
+        status: 422,
+        body: { detail: [{ field: "categoria", code: "VALIDACAO", message: "Escolha a categoria antes de validar" }] },
+      },
+    });
+    await user.selectOptions(screen.getByRole("combobox", { name: "Categoria de Sem categoria" }), "3.2");
+    await waitFor(() => expect(screen.getAllByText("Escolha a categoria antes de validar")).toHaveLength(1));
+    expect(screen.getByRole("combobox", { name: "Categoria de Sem categoria" })).toHaveAccessibleDescription("Escolha a categoria antes de validar");
+  });
+
+  it("uma escrita seguinte que dá certo tira o aviso antigo", async () => {
+    const validated = activity({ id: "v2", title: "Banca dois", status: "VALIDADA" });
+    let second = false;
+    const { user } = setup([activity({ id: "v1", title: "Banca um" }), activity({ id: "v2", title: "Banca dois" })], (current) => (second ? current.map((a) => (a.id === "v2" ? validated : a)) : current), {
+      "POST /api/activities/v1/status": { status: 409, body: STALE },
+      "POST /api/activities/v2/status": () => {
+        second = true;
+        return { status: 200, body: validated };
+      },
+    });
+    await user.click(screen.getByRole("button", { name: "Validar Banca um" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Banca um: A atividade foi alterada; recarregue");
+    await user.click(screen.getByRole("button", { name: "Validar Banca dois" }));
+    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+  });
+});

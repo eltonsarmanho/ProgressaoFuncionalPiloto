@@ -34,6 +34,7 @@ export function ActivityWorkspace({
 }) {
   const [editing, setEditing] = useState<Activity | null>(null);
   const [announcement, setAnnouncement] = useState("");
+  const [rowError, setRowError] = useState<{ title: string; message: string } | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const pending = useRef<PendingFocus | null>(null);
 
@@ -43,6 +44,7 @@ export function ActivityWorkspace({
   const feedback: RowFeedback = {
     done: (id, message) => {
       setAnnouncement(message);
+      setRowError(null);
       const row = titleOf(id)?.closest("li");
       const neighbor = row?.nextElementSibling ?? row?.previousElementSibling;
       pending.current = {
@@ -51,6 +53,7 @@ export function ActivityWorkspace({
         section: row?.closest("section")?.getAttribute("aria-labelledby") ?? null,
       };
     },
+    fail: (title, message) => setRowError({ title, message }),
   };
 
   // After a reload the row may be gone (it changed section): the focus goes to its new place, to the
@@ -79,6 +82,11 @@ export function ActivityWorkspace({
       <div role="status" className="visually-hidden">
         {announcement}
       </div>
+      {rowError && (
+        <p role="alert" className="error">
+          {`${rowError.title}: ${rowError.message}`}
+        </p>
+      )}
       <ValidActivitiesSection
         processId={processId}
         activities={activities.filter(isValid)}

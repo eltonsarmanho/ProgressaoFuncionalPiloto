@@ -1330,6 +1330,8 @@ T50 → T43 → T44
 
 ### T46: TF2, o erro da linha sobrevive à recarga e não se duplica
 
+**Status**: Done
+
 **What**: O aviso de 409 ou 422 de uma escrita da linha sobe para o `ActivityWorkspace` e aparece numa região `role="alert"` que sobrevive à recarga em que a linha troca de seção; no 422 do campo `categoria` só o erro do seletor aparece.
 **Where**: `frontend/src/components/ActivityWorkspace.tsx` (modify), com `ActivityRow.tsx`
 **Depends on**: T45
@@ -1343,9 +1345,9 @@ T50 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro (que falham antes): um 409 ao validar mostra o aviso com o título da atividade e a recarga que tira a linha da seção não apaga o aviso; um 422 de `status` idem; um 422 de `categoria` mostra o texto uma só vez, no `FieldError` do seletor, sem outro `role="alert"` com a mesma mensagem
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado; os novos passam
+- [x] Testes primeiro (que falham antes): um 409 ao validar mostra o aviso com o título da atividade e a recarga que tira a linha da seção não apaga o aviso; um 422 de `status` idem; um 422 de `categoria` mostra o texto uma só vez, no `FieldError` do seletor, sem outro `role="alert"` com a mesma mensagem
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado; os novos passam
 
 **Tests**: unit
 **Gate**: build
