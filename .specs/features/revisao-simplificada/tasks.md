@@ -846,6 +846,8 @@ T42 → T43 → T44
 
 ### T27: Tipos do frontend
 
+**Status**: Done
+
 **What**: `Validity`, `InvalidReason`, `MergedRef`, `BulkValidateResult` e os campos novos de `Activity` em `types.ts`.
 **Where**: `frontend/src/api/types.ts` (modify)
 **Depends on**: T26
@@ -859,9 +861,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Tipos exportados conforme o Design (`state`, `reason`, `needs_category`, `params`), `GenerationCode` com `ATIVIDADE_SEM_CATEGORIA` e `ScoringAlertCode` com `QUANTIDADE_ASSUMIDA`
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado
+- [x] Tipos exportados conforme o Design (`state`, `reason`, `needs_category`, `params`), `GenerationCode` com `ATIVIDADE_SEM_CATEGORIA` e `ScoringAlertCode` com `QUANTIDADE_ASSUMIDA`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado
 
 **Tests**: none
 **Gate**: build

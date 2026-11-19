@@ -45,6 +45,26 @@ export type Professor = {
   version: number;
 };
 
+/** Codes of the alerts of the scoring engine (`ScoringAlertCode` of the backend). */
+export const SCORING_ALERT_CODES = [
+  "TABELA_NAO_ENCONTRADA",
+  "TABELA_DE_OUTRA_UNIDADE",
+  "TABELA_PENDENTE_VALIDACAO",
+  "TABELA_FORA_DE_VIGENCIA",
+  "SEM_EXTENSAO_OU_PESQUISA",
+  "MINIMO_NAO_DEFINIDO",
+  "INTERSTICIO_PARCIAL",
+  "DATA_AUSENTE",
+  "DATA_FIM_AUSENTE",
+  "SEM_COMPROVANTE",
+  "PONTOS_AJUSTADOS_MANUALMENTE",
+  "VALOR_UNITARIO_MANUAL",
+  "LIMITE_APLICADO",
+  "CARGA_HORARIA_NAO_INFORMADA",
+  "QUANTIDADE_ASSUMIDA",
+] as const;
+export type ScoringAlertCode = (typeof SCORING_ALERT_CODES)[number];
+
 export type Alert = {
   code: string;
   severity: Severity;
@@ -187,6 +207,37 @@ export type ScoringVersion = VersionInfo & {
   groups: ScoringGroup[];
 };
 
+/** Why an activity is not valid (the server decides: `classify_activity`). */
+export type InvalidReason =
+  | "REJEITADA"
+  | "FORA_DO_INTERSTICIO"
+  | "CARGA_HORARIA_INSUFICIENTE"
+  | "GRUPO_NAO_CONTA"
+  | "DUPLICIDADE";
+
+/**
+ * Whether an activity is valid for Etapas 3 to 5 and why not. `params` holds what the reason is
+ * written from, all as text: ISO dates and hours without trailing zeros ("19").
+ */
+export type Validity = {
+  state: "VALIDA" | "NAO_VALIDA";
+  reason: InvalidReason | null;
+  /** A valid activity without a category: it cannot be validated until one is chosen. */
+  needs_category: boolean;
+  params: {
+    event_date?: string;
+    period_start?: string;
+    period_end?: string;
+    interstice_start: string;
+    interstice_end: string;
+    hours?: string;
+    min_hours?: string;
+  };
+};
+
+/** A duplicate merged into the activity that carries it. */
+export type MergedRef = { id: string; title: string };
+
 export type Activity = {
   id: string;
   process_id: string;
@@ -215,7 +266,18 @@ export type Activity = {
   /** Documents (and pages) linked to the activity; absent where the API call does not send them. */
   evidences?: Evidence[];
   version: number;
+  /** Only the list and the read of one activity fill these; a write answers null, [] and null. */
+  validity?: Validity | null;
+  merged?: MergedRef[];
+  /** Points the activity would score once validated (2 decimals); null when it cannot be told. */
+  predicted_points?: string | null;
 };
+
+/** An activity the batch validation left as it was: "SEM_CATEGORIA" or the reason of its validity. */
+export type SkippedActivity = { id: string; reason: "SEM_CATEGORIA" | InvalidReason };
+
+/** The answer of `POST /api/processes/{id}/activities/validate-batch` (VAL-04). */
+export type BulkValidateResult = { activities: Activity[]; skipped: SkippedActivity[] };
 
 export type ScoringTableInfo = {
   id: string;

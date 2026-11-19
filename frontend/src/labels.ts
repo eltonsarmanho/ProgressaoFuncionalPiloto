@@ -272,6 +272,7 @@ export const GENERATION_CODE_LABELS: Record<GenerationCode, string> = {
   SEM_ATIVIDADES_VALIDADAS: "O processo não tem atividade validada. Valide ao menos uma na Etapa 3.",
   TABELA_NAO_ESCOLHIDA: "Escolha a tabela de pontuação na Etapa 4 antes de gerar.",
   ATIVIDADE_SEM_DESCRICAO: "Há atividade validada sem título e sem descrição. Preencha-a na Etapa 3.",
+  ATIVIDADE_SEM_CATEGORIA: "Há atividades sem categoria na Etapa 3. Escolha a categoria de cada uma.",
   COMPROVANTE_GRANDE_DEMAIS: "O Comprovante passa de 400 páginas ou de 60 MB. Tire páginas do arranjo.",
   IMAGEM_GRANDE_DEMAIS: "Há imagem PNG acima de 12 megapixels entre os documentos. Envie-a de novo como JPEG ou menor.",
   ORIGINAL_INDISPONIVEL: "Um documento de origem não está mais disponível ou a página não existe mais.",
