@@ -22,6 +22,7 @@ from app.domain.entities.activity import (
     Level,
     PeriodPrecision,
 )
+from app.domain.rules.activity_validity import InvalidReason, Validity, ValidityState
 from app.presentation.schemas.documents import EvidenceOut
 from app.presentation.schemas.scoring import Money
 
@@ -164,6 +165,40 @@ class SkippedOut(BaseModel):
     reason: str
 
 
+def _param_text(value: date | Decimal) -> str:
+    """Dates as ISO text, hours without trailing zeros (`19`, not `19.00`)."""
+    if isinstance(value, date):
+        return value.isoformat()
+    return format(value.normalize(), "f")
+
+
+class ValidityOut(BaseModel):
+    """Whether the activity is valid and why not; `params` holds what the reason is written
+    from: the date or the period and the interstice (FORA_DO_INTERSTICIO), the hours and the
+    minimum (CARGA_HORARIA_INSUFICIENTE), all as text."""
+
+    state: ValidityState
+    reason: InvalidReason | None
+    needs_category: bool
+    params: dict[str, str]
+
+    @classmethod
+    def of(cls, validity: Validity) -> "ValidityOut":
+        return cls(
+            state=validity.state,
+            reason=validity.reason,
+            needs_category=validity.needs_category,
+            params={k: _param_text(v) for k, v in validity.params.items() if v is not None},
+        )
+
+
+class MergedOut(BaseModel):
+    """A duplicate merged into the activity that carries it."""
+
+    id: UUID
+    title: str
+
+
 class ActivityOut(BaseModel):
     id: UUID
     process_id: UUID
@@ -193,9 +228,20 @@ class ActivityOut(BaseModel):
     created_at: datetime | None
     updated_at: datetime | None
     version: int
+    # Filled by the list and by the read of one activity; the answer of a write leaves them empty.
+    validity: ValidityOut | None = None
+    merged: list[MergedOut] = []
+    predicted_points: Money | None = None
 
     @classmethod
-    def of(cls, a: Activity, evidences: Sequence[EvidenceOut] = ()) -> "ActivityOut":
+    def of(
+        cls,
+        a: Activity,
+        evidences: Sequence[EvidenceOut] = (),
+        validity: Validity | None = None,
+        merged: Sequence[MergedOut] = (),
+        predicted_points: Decimal | None = None,
+    ) -> "ActivityOut":
         precision = a.period_precision
         return cls(
             id=a.id,
@@ -233,6 +279,9 @@ class ActivityOut(BaseModel):
             created_at=a.created_at,
             updated_at=a.updated_at,
             version=a.version,
+            validity=ValidityOut.of(validity) if validity is not None else None,
+            merged=list(merged),
+            predicted_points=predicted_points,
         )
 
 

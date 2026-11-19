@@ -762,6 +762,8 @@ T42 → T43 → T44
 
 ### T24: Esquema `ActivityOut` com validade, mescladas e pontos previstos
 
+**Status**: Done
+
 **What**: `ActivityOut` ganha `validity`, `merged` (`[{id, title}]`) e `predicted_points`; `ValidityOut` espelha o domínio.
 **Where**: `backend/app/presentation/schemas/activities.py` (modify)
 **Depends on**: T23
@@ -775,9 +777,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/presentation/test_activity_schema.py`: a serialização traz `validity.state/reason/needs_category/params` com datas e horas em texto, `merged` e `predicted_points` (nulo quando não há previsão); campos extras seguem recusados; nenhum dado pessoal novo
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `backend/tests/unit/presentation/test_activity_schema.py`: a serialização traz `validity.state/reason/needs_category/params` com datas e horas em texto, `merged` e `predicted_points` (nulo quando não há previsão); campos extras seguem recusados; nenhum dado pessoal novo
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick
