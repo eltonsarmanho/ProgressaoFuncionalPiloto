@@ -50,11 +50,11 @@ e aplicar com `nginx -t && systemctl reload nginx`. Sem isso, o nginx do servido
 
 ## Deploy dos documentos gerados (feature `documentos-gerados`)
 
-Esta seção diz o que a versão com a Etapa 5 (Tabela, Relatório e Comprovante, mais a conclusão do processo) exige além do procedimento de "Atualizar para uma versão nova". Ela só descreve; nenhum passo daqui foi executado e o deploy continua dependendo da autorização do usuário.
+Esta seção diz o que a versão com a Etapa 5 (Tabela, Relatório e Comprovante, mais a conclusão do processo) exige além do procedimento de "Atualizar para uma versão nova". Foi executada em 2026-11-19, com a autorização do usuário, a partir do commit `62c9c04` (ver "Deploy executado em 2026-11-19" ao fim desta seção).
 
 ### Antes do deploy
 
-Estado da VM: migração `0005` no ar (`unit_points_override`), imagens de `b58e276`. O `alembic upgrade head` do `docker-entrypoint.sh` aplica, em ordem, o que a imagem nova trouxer:
+Estado da VM antes do deploy de 2026-11-19: migração `0005` no ar (`unit_points_override`), imagens de `b58e276`. O `alembic upgrade head` do `docker-entrypoint.sh` aplica, em ordem, o que a imagem nova trouxer:
 
 | Ordem | Migração | Feature | O que faz |
 | --- | --- | --- | --- |
@@ -103,6 +103,14 @@ Usar só dados sintéticos (docente com SIAPE fictício, PDF sintético; nunca `
 4. No volume: `docker exec progressao-funcional-backend-1 ls -l /app/storage/generated` mostra o diretório do processo A com modo `drwx------` e dono `app`; `df -h` confere o espaço usado contra a linha de base.
 5. Conclusão, num processo sintético B (não no A, para manter um exemplo com os originais): gerar os três documentos, abrir "Concluir e excluir documentos de entrada", conferir a prévia (número de arquivos e MB), marcar a confirmação e concluir. Esperado: o processo vira `CONCLUIDO` e somente leitura, os arquivos de entrada do B somem do volume, os documentos de entrada aparecem como arquivo excluído, os três documentos gerados continuam baixando, e pedir o Comprovante de novo responde `ORIGINAIS_EXCLUIDOS`.
 6. Se a `0007` entrou: excluir o processo B pela API (`DELETE /api/processes/{id}`) ou pelo Painel, se a tela estiver no ar, e conferir que o diretório `generated/<id>` e as linhas dele saem e que a auditoria registra `DELETE`. Apagar também o A.
+
+### Deploy executado em 2026-11-19
+
+- Commit publicado: `62c9c04` (`git archive`; imagens construídas fora da VM com variáveis de ambiente de mentira; quatro `.ttf` Liberation Serif conferidas na imagem; pacote do frontend limpo em `scripts/check_bundle_no_secrets.sh`). Migrações aplicadas pelo entrypoint: `0006` e `0007`; `alembic_version` = `0007`. Como a imagem saiu de `62c9c04`, a exclusão de processo (`DELETE /api/processes/{id}`, `gestao-processos`) está no ar sem a tela do Painel.
+- Retorno: imagens `progressao-funcional-backend:docs-pre-62c9c04` e `progressao-funcional-frontend:docs-pre-62c9c04` (as de `b58e276`), dump `backups/progressao-pre-documentos-gerados-2026-11-19.sql.gz` (`gzip -t` ok), cópias de `docker-compose.override.yml` e `.env` em `backups/`. Lembrete: o `ADD VALUE` da `0007` não se desfaz; para voltar à `0005` é preciso restaurar o dump.
+- Verificação: `GET /api/health` 200 depois do `docker compose restart nginx`; sem erro de migração nos logs; `generated` com diretórios `drwx------` do usuário `app`.
+- Roteiro de fumaça (dados sintéticos, por túnel SSH): Tabela, Relatório e Comprovante do processo A foram a `PRONTO` e baixaram (a Tabela em PDF com acentos e a Liberation Serif embutida); a segunda geração da Tabela virou a versão 2 e a 1 ficou no histórico; no processo B (em andamento) a conclusão levou o processo a `CONCLUIDO`, o arquivo de entrada passou a responder 410 `ARQUIVO_EXCLUIDO`, os gerados continuaram baixando e um novo Comprovante foi recusado; os processos sintéticos foram excluídos pela API e o docente sintético (SIAPE 9999991) foi arquivado.
+- Observações: (1) o `DELETE` do processo apaga os arquivos mas deixa os diretórios vazios `uploads/<id>` e `generated/<id>`; removidos à mão com `rmdir` (cosmético, a corrigir em `gestao-processos`); (2) o cookie de sessão é `Secure`: um roteiro por túnel `http` precisa repassar o cookie à mão; (3) a conclusão exige o processo `EM_ANDAMENTO` (de `RASCUNHO` responde "Transição de status não permitida").
 
 ### Avisos
 
