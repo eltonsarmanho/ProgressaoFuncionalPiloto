@@ -930,6 +930,8 @@ T42 → T43 → T44
 
 ### T30: `CategoryPicker`
 
+**Status**: Done
+
 **What**: Seletor de categoria com grupos e itens, usado na linha e no formulário.
 **Where**: `frontend/src/components/CategoryPicker.tsx` (novo)
 **Depends on**: T28
@@ -943,9 +945,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/CategoryPicker.test.tsx`: lista os itens por grupo; escolher chama `onChange` na hora, sem justificativa; rótulo acessível; operável por teclado; sem tabela escolhida mostra a mensagem de escolher a tabela
-- [ ] Gate check passes: `cd frontend && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/CategoryPicker.test.tsx`: lista os itens por grupo; escolher chama `onChange` na hora, sem justificativa; rótulo acessível; operável por teclado; sem tabela escolhida mostra a mensagem de escolher a tabela
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick
