@@ -4,7 +4,7 @@
 
 Implement these tasks with the `tlc-spec-driven` skill: **activate it by name and follow its Execute flow and Critical Rules.** Do not search for skill files by filesystem path. If the skill cannot be activated, STOP and tell the user.
 
-**Design**: `.specs/features/gestao-processos/design.md` · **Spec**: `.specs/features/gestao-processos/spec.md` · **Status**: Pending
+**Design**: `.specs/features/gestao-processos/design.md` · **Spec**: `.specs/features/gestao-processos/spec.md` · **Status**: Verified (PASS, 2026-11-19)
 
 Regras: teste primeiro; só dados sintéticos; `Documentos/` e `Modelos/` nunca são abertos; um commit por tarefa (Conventional Commits, com `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`), marcando a tarefa neste arquivo no mesmo commit; sem push nem deploy.
 
@@ -18,5 +18,5 @@ Gates: backend `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`; fr
 - [x] **T4 Rotas e schemas** — `DELETE /api/processes/{id}` (204) e `GET /api/processes/{id}/delete-preview`, CSRF exigido, containers ligados (`container.py`), `ProcessSummary.version` se faltar. Testes de API: 204/403/404/409/401/CSRF, rota do processo → 404 depois.
 - [x] **T5 Front: Arquivar no Painel** — GP-ARQ-01..06. Modal, chamada, atualização local, erros 403/409. Testes de componente.
 - [x] **T6 Front: Excluir no Painel** — GP-DEL-01, 02, 08 e Edge (404 = já excluído). Modal com prévia, "Excluir definitivamente", atualização local, erro 403/409 (`OPERACAO_EM_ANDAMENTO` com mensagem legível em `labels.ts`). Testes de componente; eslint + build.
-- [ ] **T7 Documentação** — AD-018 em `.specs/STATE.md`, regra 9 em `CLAUDE.md`, rastreabilidade da spec marcada Verified, nota na `fundacao/spec.md` (linha do ciclo de vida).
-- [ ] **T8 Verifier independente** — agente diferente do autor confere GP-ARQ-01..06 e GP-DEL-01..10 com evidência (testes + leitura do código) e mutantes (ex.: esquecer uma tabela, não checar dono, não bloquear ocupado); relatório em `.specs/features/gestao-processos/verification.md`.
+- [x] **T7 Documentação** — AD-018 em `.specs/STATE.md`, regra 9 em `CLAUDE.md`, rastreabilidade da spec marcada Verified, nota na `fundacao/spec.md` (linha do ciclo de vida).
+- [x] **T8 Verifier independente** — agente diferente do autor confere GP-ARQ-01..06 e GP-DEL-01..10 com evidência (testes + leitura do código) e mutantes (ex.: esquecer uma tabela, não checar dono, não bloquear ocupado); relatório em `.specs/features/gestao-processos/verification.md`.

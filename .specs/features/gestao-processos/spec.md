@@ -67,8 +67,8 @@ No Painel o usuário vê os processos, mas não consegue arquivar nem excluir um
 
 | ID | Story | Status |
 | --- | --- | --- |
-| GP-ARQ-01..06 | Arquivar processo no Painel | Pending |
-| GP-DEL-01..10 | Excluir processo | Pending |
+| GP-ARQ-01..06 | Arquivar processo no Painel | Verified |
+| GP-DEL-01..10 | Excluir processo | Verified |
 
 (Os números seguem a ordem dos critérios acima: ARQ-01 = critério 1 etc.)
 
