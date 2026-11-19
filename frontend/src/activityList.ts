@@ -48,3 +48,8 @@ export function filterActivities(activities: Activity[], filters: ActivityFilter
 export function groupsOf(activities: Activity[]): number[] {
   return [...new Set(activities.map((a) => a.group_number).filter((g): g is number => g != null))].sort((a, b) => a - b);
 }
+
+/** Whether the unit of a table item is "por ano ..." (a function held for a time): its date is a period. */
+export function isYearlyUnit(unitLabel: string | null | undefined): boolean {
+  return (unitLabel ?? "").trim().toLowerCase().startsWith("por ano");
+}

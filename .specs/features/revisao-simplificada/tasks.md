@@ -1211,6 +1211,8 @@ T42 → T43 → T44
 
 ### T40: Formulário de edição enxuto
 
+**Status**: Done
+
 **What**: `ActivityForm` mostra Título, Data (ou Início e Fim nas categorias por ano), Categoria e Horas só quando a categoria tem carga mínima; nova atividade acrescenta Quantidade; oferta do Grupo I mostra só Título e Categoria; sem campo de comprovante.
 **Where**: `frontend/src/components/ActivityForm.tsx` (modify)
 **Depends on**: T30, T39
@@ -1224,9 +1226,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ActivityForm.test.tsx`: os campos exibidos para cada caso (categoria comum, por ano, com carga mínima, Grupo I, nova manual); salvar manda o corpo completo e mantém Quantidade, Horas, descrição e pontos que não foram editados; salvar aplica na hora, sem campo de justificativa; nenhum campo de texto de comprovante
-- [ ] Gate check passes: `cd frontend && npm test -- --run`
-- [ ] Test count: os testes antigos de campos removidos substituídos por testes dos campos novos, contagem registrada
+- [x] Testes primeiro em `frontend/src/components/ActivityForm.test.tsx`: os campos exibidos para cada caso (categoria comum, por ano, com carga mínima, Grupo I, nova manual); salvar manda o corpo completo e mantém Quantidade, Horas, descrição e pontos que não foram editados; salvar aplica na hora, sem campo de justificativa; nenhum campo de texto de comprovante
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes antigos de campos removidos substituídos por testes dos campos novos, contagem registrada
 
 **Tests**: unit
 **Gate**: quick

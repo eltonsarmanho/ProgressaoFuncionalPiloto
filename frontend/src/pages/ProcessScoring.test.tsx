@@ -174,8 +174,7 @@ describe("ProcessScoring", () => {
     await user.click(screen.getByRole("button", { name: "Nova atividade" }));
     expect(screen.getByRole("dialog", { name: "Nova atividade" })).toBeInTheDocument();
     await user.type(screen.getByLabelText("Título"), "Outra orientação");
-    await user.selectOptions(screen.getByLabelText("Grupo"), "2");
-    await user.selectOptions(screen.getByLabelText("Item"), "7");
+    await user.selectOptions(screen.getByLabelText("Categoria"), "2.7");
     await user.type(screen.getByLabelText("Quantidade"), "8");
     await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
     await waitFor(() =>
@@ -205,17 +204,19 @@ describe("ProcessScoring", () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Editar Orientação de TCC" }));
     expect(await screen.findByRole("dialog", { name: "Editar atividade" })).toBeInTheDocument();
-    const quantidade = await screen.findByLabelText("Quantidade");
-    await user.clear(quantidade);
-    await user.type(quantidade, "5");
+    const title = await screen.findByLabelText("Título");
+    await user.clear(title);
+    await user.type(title, "Orientação corrigida");
     expect(screen.queryByLabelText(/justificativa/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Quantidade")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
     await waitFor(() =>
       expect(screen.getByText("Total geral", { selector: "dt" }).nextElementSibling).toHaveTextContent("50,00"),
     );
     const put = calls.find((c) => c.method === "PUT")!;
     expect(JSON.parse(put.init!.body as string)).toMatchObject({
-      quantidade: 5,
+      title: "Orientação corrigida",
+      quantidade: Number(ACTIVITY.quantidade),
       expected_version: 3,
     });
     expect(JSON.parse(put.init!.body as string)).not.toHaveProperty("justificativa");
