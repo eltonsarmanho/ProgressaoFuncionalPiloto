@@ -874,6 +874,8 @@ T42 → T43 → T44
 
 ### T28: Rótulos dos motivos, selos e mensagens
 
+**Status**: Done
+
 **What**: Textos em `labels.ts`: motivos de não válida, selos "Precisa de categoria" e "Aguardando validação", mensagem do bloqueio, mensagem do alerta `QUANTIDADE_ASSUMIDA` e a recusa `ATIVIDADE_SEM_CATEGORIA`.
 **Where**: `frontend/src/labels.ts` (modify)
 **Depends on**: T27
@@ -887,9 +889,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/labels.test.ts`: o texto de cada motivo bate com a spec ("Fora do interstício: data dd/mm/aaaa; interstício dd/mm/aaaa a dd/mm/aaaa", "Carga horária insuficiente: N h; o item exige M h", "Rejeitada por você"); cada código de `GenerationCode` e de `ScoringAlertCode` tem rótulo
-- [ ] Gate check passes: `cd frontend && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/labels.test.ts`: o texto de cada motivo bate com a spec ("Fora do interstício: data dd/mm/aaaa; interstício dd/mm/aaaa a dd/mm/aaaa", "Carga horária insuficiente: N h; o item exige M h", "Rejeitada por você"); cada código de `GenerationCode` e de `ScoringAlertCode` tem rótulo
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick

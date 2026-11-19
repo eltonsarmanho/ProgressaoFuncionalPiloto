@@ -228,8 +228,9 @@ export type Validity = {
     event_date?: string;
     period_start?: string;
     period_end?: string;
-    interstice_start: string;
-    interstice_end: string;
+    /** With the date or the period, for FORA_DO_INTERSTICIO only. */
+    interstice_start?: string;
+    interstice_end?: string;
     hours?: string;
     min_hours?: string;
   };

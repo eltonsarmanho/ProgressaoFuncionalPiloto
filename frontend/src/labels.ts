@@ -1,5 +1,5 @@
 import type { DocumentKind, EntrySource, GenerationAlert, GenerationAlertCode, GenerationCode, GenerationState } from "./api/generated";
-import type { DocumentStatus, Modality, ProcessStatus, Severity } from "./api/types";
+import type { DocumentStatus, InvalidReason, Modality, ProcessStatus, Severity, Validity } from "./api/types";
 
 export const STATUS_LABELS: Record<ProcessStatus, string> = {
   RASCUNHO: "Rascunho",
@@ -65,7 +65,52 @@ export const ALERT_CODE_LABELS: Record<string, string> = {
   CARGA_HORARIA_NAO_INFORMADA: "Carga horária não informada",
   DATA_FIM_AUSENTE: "Sem data final: quantidade limitada aos anos completos até o fim do interstício",
   VALOR_UNITARIO_MANUAL: "Valor unitário informado por você",
+  QUANTIDADE_ASSUMIDA: "Quantidade assumida como 1: confira",
 };
+
+/** SEC-07: the short name of each reason an activity is not valid (the counts of the section title). */
+export const INVALID_REASON_LABELS = {
+  REJEITADA: "Rejeitada por você",
+  FORA_DO_INTERSTICIO: "Fora do interstício",
+  CARGA_HORARIA_INSUFICIENTE: "Carga horária insuficiente",
+  GRUPO_NAO_CONTA: "Grupo não conta no total",
+  DUPLICIDADE: "Duplicidade",
+} satisfies Record<InvalidReason, string>;
+
+/** Hours arrive as text without trailing zeros ("19", "19.5"); pt-BR writes the comma. */
+const hoursText = (value: string | undefined) => `${formatDecimal(value)} h`;
+
+/**
+ * SEC-07: why an activity is not valid, in words, from `validity.params`. A period (categories
+ * measured by year) shows its start and end where a date shows the day.
+ */
+export function invalidReasonText(validity: Pick<Validity, "reason" | "params">): string {
+  const { reason, params } = validity;
+  if (reason === "FORA_DO_INTERSTICIO") {
+    const when = params.event_date
+      ? `data ${formatDate(params.event_date)}`
+      : `período ${params.period_start ? formatDate(params.period_start) : "—"} a ${params.period_end ? formatDate(params.period_end) : "—"}`;
+    const interstice =
+      params.interstice_start && params.interstice_end
+        ? `; interstício ${formatDate(params.interstice_start)} a ${formatDate(params.interstice_end)}`
+        : "";
+    return `${INVALID_REASON_LABELS.FORA_DO_INTERSTICIO}: ${when}${interstice}`;
+  }
+  if (reason === "CARGA_HORARIA_INSUFICIENTE") {
+    return `${INVALID_REASON_LABELS.CARGA_HORARIA_INSUFICIENTE}: ${hoursText(params.hours)}; o item exige ${hoursText(params.min_hours)}`;
+  }
+  return reason ? INVALID_REASON_LABELS[reason] : "";
+}
+
+/** SEC-04: the seals of a valid activity; the text is always there, never only a colour. */
+export const BADGE_NEEDS_CATEGORY = "Precisa de categoria";
+export const BADGE_AWAITING_VALIDATION = "Aguardando validação";
+export const BADGE_VALIDATED = "Validada";
+
+/** SEC-05: why the way to Etapa 4 is closed. */
+export function needsCategoryMessage(count: number): string {
+  return count === 1 ? "1 atividade precisa de categoria" : `${count} atividades precisam de categoria`;
+}
 
 export const MINIMUM_LABELS: Record<string, string> = {
   ATINGE: "Atinge o mínimo",
