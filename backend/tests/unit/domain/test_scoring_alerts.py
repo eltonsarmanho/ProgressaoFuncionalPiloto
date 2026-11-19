@@ -18,6 +18,7 @@ EXPECTED_CODES = {
     "VALOR_UNITARIO_MANUAL",  # UIM-21
     "LIMITE_APLICADO",
     "CARGA_HORARIA_NAO_INFORMADA",
+    "QUANTIDADE_ASSUMIDA",  # VAL-02
 }
 
 
@@ -72,3 +73,7 @@ def test_missing_hours_alert_code_is_a_warning_and_the_reason_is_not_an_alert_co
     assert alert.code is ScoringAlertCode.CARGA_HORARIA_NAO_INFORMADA
     assert alert.severity is Severity.ALERTA
     assert "CARGA_HORARIA_INSUFICIENTE" not in {c.name for c in ScoringAlertCode}
+
+
+def test_the_assumed_quantity_alert_code_has_the_exact_text():
+    assert ScoringAlertCode.QUANTIDADE_ASSUMIDA.value == "QUANTIDADE_ASSUMIDA"

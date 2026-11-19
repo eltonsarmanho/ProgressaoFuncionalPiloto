@@ -186,7 +186,7 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | VAL-01 | P1: Validar pontua | Design | Implementing |
-| VAL-02 | P1: Validar pontua | Design | Pending |
+| VAL-02 | P1: Validar pontua | Design | Implementing |
 | VAL-03 | P1: Validar pontua | Design | Pending |
 | VAL-04 | P1: Validar pontua | Design | Pending |
 | VAL-05 | P1: Validar pontua | Design | Pending |

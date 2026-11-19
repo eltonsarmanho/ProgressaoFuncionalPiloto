@@ -171,6 +171,8 @@ T42 → T43 → T44
 
 ### T3: Código de alerta `QUANTIDADE_ASSUMIDA`
 
+**Status**: Done
+
 **What**: Novo valor `QUANTIDADE_ASSUMIDA` em `ScoringAlertCode`.
 **Where**: `backend/app/domain/rules/scoring_alerts.py` (modify)
 **Depends on**: None
@@ -184,9 +186,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Teste em `backend/tests/unit/domain/test_scoring_alerts.py`: o código existe com o texto `QUANTIDADE_ASSUMIDA` e o conjunto de códigos conhecidos do teste de contrato inclui o novo
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: o teste novo passa
+- [x] Teste em `backend/tests/unit/domain/test_scoring_alerts.py`: o código existe com o texto `QUANTIDADE_ASSUMIDA` e o conjunto de códigos conhecidos do teste de contrato inclui o novo
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: o teste novo passa
 
 **Tests**: unit
 **Gate**: quick
