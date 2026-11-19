@@ -179,7 +179,22 @@ class ActivityRepository(Protocol):
         process_id: UUID,
         group_number: int | None = None,
         status: ActivityStatus | None = None,
-    ) -> Sequence[Activity]: ...
+        include_merged: bool = False,
+    ) -> Sequence[Activity]:
+        """The activities of the process in creation order; the ones merged into another are
+        left out unless `include_merged` (DUP-03)."""
+        ...
+
+    def list_merged_into(self, activity_id: UUID) -> Sequence[Activity]:
+        """The activities merged into this one, in creation order (DUP-07)."""
+        ...
+
+    def set_merged_into(
+        self, activity: Activity, target_id: UUID | None, expected_version: int
+    ) -> None:
+        """Marks the activity as merged into `target_id` (None unmerges it), bumps its version
+        and raises StaleVersion when `expected_version` is old (DUP-02)."""
+        ...
 
 
 class AuditRepository(Protocol):
@@ -225,6 +240,7 @@ class ActivityEvidence:
     created_by: UUID
     run_id: UUID | None = None
     created_at: datetime | None = None
+    origin_activity_id: UUID | None = None  # the merged activity this link came from (DUP-02)
 
 
 @dataclass(frozen=True)
@@ -377,6 +393,19 @@ class EvidenceRepository(Protocol):
     def clear_excerpts_for_document(self, document_id: UUID) -> None:
         """Turns the excerpt of every link of the document into '' and keeps the page numbers
         (DEL-05, DEL-06)."""
+        ...
+
+    def move(
+        self, evidence_ids: Sequence[UUID], to_activity_id: UUID, origin_activity_id: UUID
+    ) -> list[UUID]:
+        """Moves the links to another activity, recording `origin_activity_id` on the ones that
+        had no origin yet. A link whose (document, page) the target already has stays where it
+        is. Returns the ids moved (DUP-01, DUP-02)."""
+        ...
+
+    def restore_from(self, origin_activity_id: UUID) -> list[UUID]:
+        """Gives back to `origin_activity_id` the links that came from it and clears their
+        origin. Returns the ids restored (DUP-07)."""
         ...
 
 

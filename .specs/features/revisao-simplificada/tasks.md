@@ -398,6 +398,8 @@ T42 → T43 → T44
 
 ### T11: Porta do repositório para a mesclagem
 
+**Status**: Done
+
 **What**: Métodos da porta `ActivityRepository` para listar as mescladas numa atividade, gravar a mesclagem e mover provas, e `origin_activity_id` em `ActivityEvidence`.
 **Where**: `backend/app/domain/repositories/ports.py` (modify)
 **Depends on**: T10
@@ -411,9 +413,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Porta com `list_merged_into(activity_id)`, `set_merged_into(activity, target_id, expected_version)`, `list_for_process(..., include_merged=False)`, e `EvidenceRepository.move(evidence_ids, to_activity_id, origin_activity_id)` / `restore_from(origin_activity_id)`; `ActivityEvidence.origin_activity_id`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (o teste de arquitetura continua passando)
-- [ ] Test count: nenhum teste apagado
+- [x] Porta com `list_merged_into(activity_id)`, `set_merged_into(activity, target_id, expected_version)`, `list_for_process(..., include_merged=False)`, e `EvidenceRepository.move(evidence_ids, to_activity_id, origin_activity_id)` / `restore_from(origin_activity_id)`; `ActivityEvidence.origin_activity_id`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (o teste de arquitetura continua passando)
+- [x] Test count: nenhum teste apagado
 
 **Tests**: none
 **Gate**: build
