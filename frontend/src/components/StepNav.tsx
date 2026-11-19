@@ -25,10 +25,13 @@ export function StepNav({
   enabled = [1, 2, 3, 4, 5],
   current = 1,
   processId,
+  blocked,
 }: {
   enabled?: number[];
   current?: number;
   processId?: string;
+  /** SEC-05: the steps after `step` are closed (no link, `aria-disabled`) and `message` says why. */
+  blocked?: { step: number; message: string };
 }) {
   return (
     <nav aria-label="Etapas do processo">
@@ -42,6 +45,13 @@ export function StepNav({
             );
           }
           const label = `Etapa ${n} · ${STEP_TITLES[n] ?? ""}`;
+          if (blocked && n > blocked.step) {
+            return (
+              <li key={n} className="step disabled" aria-disabled="true">
+                {label}
+              </li>
+            );
+          }
           const to = stepPath(n, processId);
           const content = to ? <Link to={to}>{label}</Link> : label;
           return n === current ? (
@@ -55,6 +65,11 @@ export function StepNav({
           );
         })}
       </ol>
+      {blocked && (
+        <p className="step-blocked" aria-live="polite">
+          {blocked.message}
+        </p>
+      )}
     </nav>
   );
 }

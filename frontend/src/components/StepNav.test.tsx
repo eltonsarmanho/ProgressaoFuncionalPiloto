@@ -66,3 +66,47 @@ describe("TELA-01, UIG-01: navegação das etapas", () => {
     expect(items[4]).not.toHaveTextContent("em breve");
   });
 });
+
+describe("SEC-05: avanço bloqueado", () => {
+  const blocked = { step: 3, message: "3 atividades precisam de categoria" };
+
+  it("com 'blocked' as Etapas 4 e seguintes ficam desabilitadas, sem link, com aria-disabled", () => {
+    const items = steps({ processId: "p1", current: 3, blocked });
+    [3, 4].forEach((i) => {
+      expect(items[i]).toHaveAttribute("aria-disabled", "true");
+      expect(within(items[i]).queryByRole("link")).not.toBeInTheDocument();
+    });
+    expect(items[3]).toHaveTextContent("Etapa 4 · Pontuação");
+    expect(items[4]).toHaveTextContent("Etapa 5 · Documentos gerados");
+  });
+
+  it("mostra a mensagem do bloqueio dentro da navegação", () => {
+    steps({ processId: "p1", current: 3, blocked });
+    const nav = screen.getByRole("navigation", { name: "Etapas do processo" });
+    expect(within(nav).getByText("3 atividades precisam de categoria")).toBeInTheDocument();
+  });
+
+  it("as etapas até a que bloqueia seguem ativas: a atual, com aria-current, e as anteriores, com link", () => {
+    const items = steps({ processId: "p1", current: 3, blocked });
+    [0, 1].forEach((i) => {
+      expect(items[i]).not.toHaveAttribute("aria-disabled");
+      expect(within(items[i]).getByRole("link")).toBeInTheDocument();
+    });
+    expect(items[2]).toHaveAttribute("aria-current", "step");
+    expect(items[2]).not.toHaveAttribute("aria-disabled");
+  });
+
+  it("as etapas 6 a 9 seguem 'em breve'", () => {
+    const items = steps({ processId: "p1", current: 3, blocked });
+    items.slice(5).forEach((item) => expect(item).toHaveTextContent("em breve"));
+  });
+
+  it("sem 'blocked' o comportamento não muda e nenhuma mensagem aparece", () => {
+    const items = steps({ processId: "p1", current: 3 });
+    items.slice(0, 5).forEach((item) => {
+      expect(item).not.toHaveAttribute("aria-disabled");
+      expect(within(item).getByRole("link")).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/precisam? de categoria/)).not.toBeInTheDocument();
+  });
+});

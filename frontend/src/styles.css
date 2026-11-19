@@ -1056,3 +1056,10 @@ fieldset.grid legend {
   font-size: 0.9rem;
   font-weight: 400;
 }
+
+.step-blocked {
+  flex-basis: 100%;
+  margin: -0.5rem 0 1rem;
+  color: var(--erro);
+  font-weight: 600;
+}

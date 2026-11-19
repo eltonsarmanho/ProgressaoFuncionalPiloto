@@ -1126,6 +1126,8 @@ T42 → T43 → T44
 
 ### T37: `StepNav` com `blocked`
 
+**Status**: Done
+
 **What**: `StepNav` ganha `blocked` (passo e mensagem) e desabilita o avanço para a Etapa 4 e as seguintes enquanto bloqueado.
 **Where**: `frontend/src/components/StepNav.tsx` (modify)
 **Depends on**: T28
@@ -1139,9 +1141,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/StepNav.test.tsx`: com `blocked` as etapas 4 e seguintes ficam desabilitadas com `aria-disabled` e a mensagem "N atividades precisam de categoria"; sem `blocked` o comportamento atual não muda; as etapas anteriores seguem ativas
-- [ ] Gate check passes: `cd frontend && npm test -- --run`
-- [ ] Test count: os testes novos passam; os existentes seguem
+- [x] Testes primeiro em `frontend/src/components/StepNav.test.tsx`: com `blocked` as etapas 4 e seguintes ficam desabilitadas com `aria-disabled` e a mensagem "N atividades precisam de categoria"; sem `blocked` o comportamento atual não muda; as etapas anteriores seguem ativas
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam; os existentes seguem
 
 **Tests**: unit
 **Gate**: quick
