@@ -7,6 +7,7 @@ export type Interstice = { months: number; days: number };
 export type ProcessSummary = {
   id: string;
   status: ProcessStatus;
+  version: number;
   professor_id: string;
   professor_name: string;
   unit_id: string;
