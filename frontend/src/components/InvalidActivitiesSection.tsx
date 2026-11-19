@@ -1,8 +1,8 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { PAGE_SIZE, validityOf } from "../activityList";
 import type { Activity, InvalidReason, ScoringGroup } from "../api/types";
 import { INVALID_REASON_LABELS } from "../labels";
-import { ActivityRow } from "./ActivityRow";
+import { ActivityRow, type RowFeedback } from "./ActivityRow";
 
 const REASON_ORDER: InvalidReason[] = ["REJEITADA", "FORA_DO_INTERSTICIO", "CARGA_HORARIA_INSUFICIENTE", "GRUPO_NAO_CONTA", "DUPLICIDADE"];
 
@@ -29,21 +29,34 @@ export function InvalidActivitiesSection({
   groups,
   onEdit,
   onChanged,
+  feedback,
 }: {
   activities: Activity[];
   groups: ScoringGroup[];
   onEdit: (activity: Activity) => void;
   onChanged: () => void;
+  feedback?: RowFeedback;
 }) {
   const panelId = useId();
   const [open, setOpen] = useState(false);
   const [shown, setShown] = useState(PAGE_SIZE);
   const title = `Atividades não válidas (${activities.length})`;
+  const list = useRef<HTMLUListElement>(null);
+  const focusFrom = useRef<number | null>(null);
+
+  // "Mostrar mais" removes the button that had the focus: the first new row takes it.
+  useEffect(() => {
+    if (focusFrom.current == null) return;
+    list.current?.querySelectorAll<HTMLElement>("[data-activity-title]")[focusFrom.current]?.focus();
+    focusFrom.current = null;
+  }, [shown]);
 
   if (activities.length === 0) {
     return (
       <section className="activity-section" aria-labelledby="invalid-title">
-        <h2 id="invalid-title">{title}</h2>
+        <h2 id="invalid-title" tabIndex={-1} data-focus-fallback>
+          {title}
+        </h2>
         <p>Nenhuma atividade não válida</p>
       </section>
     );
@@ -52,7 +65,7 @@ export function InvalidActivitiesSection({
   return (
     <section className="activity-section" aria-labelledby="invalid-title">
       <h2 id="invalid-title" className="section-heading">
-        <button type="button" className="section-toggle" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((o) => !o)}>
+        <button type="button" className="section-toggle" data-focus-fallback aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((o) => !o)}>
           <span className="section-toggle-title">{title}</span>
           <span className="section-toggle-counts">{reasonCounts(activities)}</span>
         </button>
@@ -60,7 +73,7 @@ export function InvalidActivitiesSection({
       <div id={panelId} hidden={!open}>
         {open && (
           <>
-            <ul className="activity-list">
+            <ul className="activity-list" ref={list}>
               {activities.slice(0, shown).map((a) => (
                 <ActivityRow
                   key={a.id}
@@ -70,12 +83,17 @@ export function InvalidActivitiesSection({
                   onEdit={() => onEdit(a)}
                   onLink={() => undefined}
                   onChanged={onChanged}
+                  feedback={feedback}
                 />
               ))}
             </ul>
-            <p className="muted">{`Mostrando ${Math.min(shown, activities.length)} de ${activities.length}`}</p>
+            <p className="muted" aria-live="polite">{`Mostrando ${Math.min(shown, activities.length)} de ${activities.length}`}</p>
             {activities.length > shown && (
-              <button type="button" className="btn btn-secondary" onClick={() => setShown((n) => n + PAGE_SIZE)}>
+              <button type="button" className="btn btn-secondary" onClick={() => {
+                  focusFrom.current = shown;
+                  setShown((n) => n + PAGE_SIZE);
+                }}
+              >
                 Mostrar mais
               </button>
             )}

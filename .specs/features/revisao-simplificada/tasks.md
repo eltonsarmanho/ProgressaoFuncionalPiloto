@@ -1301,6 +1301,8 @@ T50 → T43 → T44
 
 ### T45: TF1, foco e anúncio depois de ações na linha
 
+**Status**: Done
+
 **What**: Depois de validar, rejeitar, reabrir, salvar a edição ou escolher a categoria na linha, o foco vai para um elemento estável e o resultado é anunciado numa região viva sempre montada; "Mostrar mais" leva o foco à primeira linha nova e o contador de linhas é região viva.
 **Where**: `frontend/src/components/ActivityWorkspace.tsx` (modify), com `ActivityRow.tsx`, `ValidActivitiesSection.tsx`, `InvalidActivitiesSection.tsx` e `CategoryPicker.tsx`
 **Depends on**: T42
@@ -1314,10 +1316,10 @@ T50 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro (que falham antes): depois de Validar, Rejeitar, Reabrir e de escolher a categoria na linha, `document.activeElement` é um elemento da página (o título da linha, com `tabIndex=-1`, ou o da linha seguinte quando ela some), nunca o `<body>`; uma região `role="status"` sempre montada no `ActivityWorkspace` diz "<título> validada", "rejeitada", "reaberta" e "categoria definida"; ao salvar a edição no modal o foco volta a um elemento estável da seção; "Mostrar mais" nas duas seções leva o foco à primeira linha nova e o texto "Mostrando N de M" tem `aria-live="polite"`
-- [ ] A gravação da categoria continua imediata (regra 5 do projeto), sem botão de confirmar
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os 508 testes seguem e os novos passam
+- [x] Testes primeiro (que falham antes): depois de Validar, Rejeitar, Reabrir e de escolher a categoria na linha, `document.activeElement` é um elemento da página (o título da linha, com `tabIndex=-1`, ou o da linha seguinte quando ela some), nunca o `<body>`; uma região `role="status"` sempre montada no `ActivityWorkspace` diz "<título> validada", "rejeitada", "reaberta" e "categoria definida"; ao salvar a edição no modal o foco volta a um elemento estável da seção; "Mostrar mais" nas duas seções leva o foco à primeira linha nova e o texto "Mostrando N de M" tem `aria-live="polite"`
+- [x] A gravação da categoria continua imediata (regra 5 do projeto), sem botão de confirmar
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os 508 testes seguem e os novos passam
 
 **Tests**: unit
 **Gate**: build

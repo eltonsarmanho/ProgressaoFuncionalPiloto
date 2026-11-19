@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PAGE_SIZE, countSituations, filterActivities, groupsOf, validityOf } from "../activityList";
 import { errorMessage, request } from "../api/client";
 import type { Activity, BulkValidateResult, DocumentSummary, ScoringGroup, ScoringRow, SkippedActivity } from "../api/types";
@@ -6,7 +6,7 @@ import { INVALID_REASON_LABELS, needsCategoryMessage } from "../labels";
 import { isConfidentSuggestion } from "../trust";
 import { ActivityFilters, DEFAULT_FILTERS, type ActivityFilterState } from "./ActivityFilters";
 import { ActivityLinkForm } from "./ActivityLinkForm";
-import { ActivityRow } from "./ActivityRow";
+import { ActivityRow, type RowFeedback } from "./ActivityRow";
 
 type Notice = { tone: "error" | "ok"; text: string; skipped?: string[] };
 
@@ -38,6 +38,7 @@ export function ValidActivitiesSection({
   documents,
   onEdit,
   onChanged,
+  feedback,
 }: {
   processId: string;
   activities: Activity[];
@@ -46,6 +47,7 @@ export function ValidActivitiesSection({
   documents: DocumentSummary[];
   onEdit: (activity: Activity) => void;
   onChanged: () => void;
+  feedback?: RowFeedback;
 }) {
   const [filters, setFilters] = useState<ActivityFilterState>(DEFAULT_FILTERS);
   const [shown, setShown] = useState(PAGE_SIZE);
@@ -53,6 +55,15 @@ export function ValidActivitiesSection({
   const [notice, setNotice] = useState<Notice | null>(null);
   const [busy, setBusy] = useState(false);
   const [linking, setLinking] = useState<Activity | null>(null);
+  const list = useRef<HTMLUListElement>(null);
+  const focusFrom = useRef<number | null>(null);
+
+  // "Mostrar mais" removes the button that had the focus: the first new row takes it.
+  useEffect(() => {
+    if (focusFrom.current == null) return;
+    list.current?.querySelectorAll<HTMLElement>("[data-activity-title]")[focusFrom.current]?.focus();
+    focusFrom.current = null;
+  }, [shown]);
 
   const rowOf = new Map(rows.map((r) => [r.activity_id, r]));
   const filtered = filterActivities(activities, filters);
@@ -101,7 +112,9 @@ export function ValidActivitiesSection({
 
   return (
     <section className="activity-section" aria-labelledby="valid-title">
-      <h2 id="valid-title">{`Atividades válidas (${activities.length})`}</h2>
+      <h2 id="valid-title" tabIndex={-1} data-focus-fallback>
+        {`Atividades válidas (${activities.length})`}
+      </h2>
       <p className="review-note">Atividades sugeridas pela IA aguardam a sua revisão: nada é validado sem você.</p>
       {needsCategory > 0 && (
         <p className="error" aria-live="polite">
@@ -167,7 +180,7 @@ export function ValidActivitiesSection({
             <p>Nenhuma atividade encontrada com estes filtros.</p>
           ) : (
             <>
-              <ul className="activity-list">
+              <ul className="activity-list" ref={list}>
                 {visible.map((a) => (
                   <ActivityRow
                     key={a.id}
@@ -178,12 +191,17 @@ export function ValidActivitiesSection({
                     onEdit={() => onEdit(a)}
                     onLink={() => setLinking(a)}
                     onChanged={onChanged}
+                    feedback={feedback}
                   />
                 ))}
               </ul>
-              <p className="muted">{`Mostrando ${visible.length} de ${filtered.length}`}</p>
+              <p className="muted" aria-live="polite">{`Mostrando ${visible.length} de ${filtered.length}`}</p>
               {filtered.length > shown && (
-                <button type="button" className="btn btn-secondary" onClick={() => setShown((n) => n + PAGE_SIZE)}>
+                <button type="button" className="btn btn-secondary" onClick={() => {
+                    focusFrom.current = shown;
+                    setShown((n) => n + PAGE_SIZE);
+                  }}
+                >
                   Mostrar mais
                 </button>
               )}

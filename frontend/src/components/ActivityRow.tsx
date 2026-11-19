@@ -25,6 +25,12 @@ function whenText(a: Activity): string {
   return "Sem data";
 }
 
+/** What the workspace does with the result of a write of a row: announce it and keep the focus. */
+export type RowFeedback = {
+  /** The write succeeded; called before the list reloads, while the row is still on the page. */
+  done: (activityId: string, message: string) => void;
+};
+
 /**
  * VAL-06, SEC-04, SEC-12: one activity of the Etapa 3 as a `<li>` that wraps at any width. It shows
  * the title, the date, the category, the predicted points, the seals (always with text) and the
@@ -40,6 +46,7 @@ export function ActivityRow({
   onEdit,
   onLink,
   onChanged,
+  feedback,
 }: {
   activity: Activity;
   groups: ScoringGroup[];
@@ -49,11 +56,13 @@ export function ActivityRow({
   onEdit: () => void;
   onLink: () => void;
   onChanged: () => void;
+  feedback?: RowFeedback;
 }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [categoryError, setCategoryError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   const pickerRef = useRef<HTMLSelectElement>(null);
+  const titleRef = useRef<HTMLParagraphElement>(null);
 
   const validity = validityOf(activity);
   const isValid = validity.state === "VALIDA";
@@ -67,12 +76,15 @@ export function ActivityRow({
     : itemLabel(activity.group_number, activity.item_number);
 
   /** A write of this row: errors stay in the row; a stale list is reloaded (409, or 422 of status or category). */
-  async function write(action: () => Promise<unknown>) {
+  async function write(action: () => Promise<unknown>, success: string) {
     setNotice(null);
     setCategoryError(undefined);
     setBusy(true);
     try {
       await action();
+      feedback?.done(activity.id, success);
+      // The button or the select that had the focus goes away with the write: the title is the stable place.
+      titleRef.current?.focus();
       onChanged();
     } catch (err) {
       const byField = fieldErrors(err);
@@ -89,15 +101,25 @@ export function ActivityRow({
     }
   }
 
+  const STATUS_RESULT: Partial<Record<ActivityStatus, string>> = {
+    VALIDADA: "validada",
+    REJEITADA: "rejeitada",
+    AGUARDANDO_REVISAO: "reaberta",
+  };
   const changeStatus = (status: ActivityStatus) =>
-    write(() => request("POST", `/api/activities/${activity.id}/status`, { status, expected_version: activity.version }));
+    write(
+      () => request("POST", `/api/activities/${activity.id}/status`, { status, expected_version: activity.version }),
+      `${activity.title} ${STATUS_RESULT[status] ?? "atualizada"}`,
+    );
   const chooseCategory = (value: CategoryValue) =>
-    write(() =>
-      request("PUT", `/api/activities/${activity.id}`, {
-        ...activityBody(activity),
-        ...value,
-        expected_version: activity.version,
-      }),
+    write(
+      () =>
+        request("PUT", `/api/activities/${activity.id}`, {
+          ...activityBody(activity),
+          ...value,
+          expected_version: activity.version,
+        }),
+      `Categoria definida em ${activity.title}`,
     );
 
   return (
@@ -112,7 +134,9 @@ export function ActivityRow({
           />
         )}
         <div className="activity-row-body">
-          <p className="activity-title">{activity.title}</p>
+          <p className="activity-title" ref={titleRef} tabIndex={-1} data-activity-title={activity.id}>
+            {activity.title}
+          </p>
           <p className="activity-meta">
             {isValid &&
               (validity.needs_category ? (

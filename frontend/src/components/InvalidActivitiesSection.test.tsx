@@ -165,3 +165,16 @@ describe("motivos", () => {
     expect(within(document.querySelector("li.activity-row") as HTMLElement).getByText(text)).toBeInTheDocument();
   });
 });
+
+describe("SEC-12: 'Mostrar mais' mantém o foco e o contador é anunciado", () => {
+  it("o foco vai à primeira linha nova e o contador é uma região viva educada", async () => {
+    const list = Array.from({ length: 60 }, (_, i) => activity({ id: `x${i + 1}`, title: `Fora ${String(i + 1).padStart(3, "0")}` }));
+    const { user } = setup(list);
+    await user.click(toggle());
+    const counter = screen.getByText("Mostrando 25 de 60");
+    expect(counter).toHaveAttribute("aria-live", "polite");
+    await user.click(screen.getByRole("button", { name: "Mostrar mais" }));
+    expect(screen.getByText("Mostrando 50 de 60")).toBe(counter);
+    expect(document.activeElement).toBe(screen.getByText("Fora 026"));
+  });
+});

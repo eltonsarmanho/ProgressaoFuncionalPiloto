@@ -193,3 +193,79 @@ describe("notifica o pai", () => {
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
   });
 });
+
+describe("SEC-12: foco e anúncio depois de uma ação na linha", () => {
+  const moveTo = (id: string, next: Activity) => (current: Activity[]) => current.map((a) => (a.id === id ? next : a));
+  const status = () => screen.getByRole("status");
+
+  it("Validar mantém o foco no título da linha e anuncia 'validada'", async () => {
+    const validated = activity({ id: "v1", title: "Banca válida", status: "VALIDADA" });
+    const { user } = setup(START(), moveTo("v1", validated), { "POST /api/activities/v1/status": { status: 200, body: validated } });
+    await user.click(screen.getByRole("button", { name: "Validar Banca válida" }));
+    await waitFor(() => expect(status()).toHaveTextContent("Banca válida validada"));
+    expect(document.activeElement).toBe(within(validRegion()).getByText("Banca válida"));
+  });
+
+  it("Rejeitar, com outra linha na seção, leva o foco ao título da vizinha e anuncia 'rejeitada'", async () => {
+    const rejected = activity({ id: "v1", title: "Banca um", status: "REJEITADA", validity: REJECTED, predicted_points: null });
+    const { user } = setup([activity({ id: "v1", title: "Banca um" }), activity({ id: "v2", title: "Banca dois" })], moveTo("v1", rejected), {
+      "POST /api/activities/v1/status": { status: 200, body: rejected },
+    });
+    await user.click(screen.getByRole("button", { name: "Rejeitar Banca um" }));
+    await waitFor(() => expect(status()).toHaveTextContent("Banca um rejeitada"));
+    await waitFor(() => expect(screen.getByRole("heading", { level: 2, name: "Atividades válidas (1)" })).toBeInTheDocument());
+    expect(document.activeElement).toBe(within(validRegion()).getByText("Banca dois"));
+  });
+
+  it("Rejeitar a única linha da seção leva o foco ao título da seção, nunca ao body", async () => {
+    const rejected = activity({ id: "v1", title: "Banca um", status: "REJEITADA", validity: REJECTED, predicted_points: null });
+    const { user } = setup([activity({ id: "v1", title: "Banca um" })], moveTo("v1", rejected), {
+      "POST /api/activities/v1/status": { status: 200, body: rejected },
+    });
+    await user.click(screen.getByRole("button", { name: "Rejeitar Banca um" }));
+    await waitFor(() => expect(screen.getByRole("heading", { level: 2, name: "Atividades válidas (0)" })).toBeInTheDocument());
+    expect(document.activeElement).toBe(screen.getByRole("heading", { level: 2, name: "Atividades válidas (0)" }));
+    expect(status()).toHaveTextContent("Banca um rejeitada");
+  });
+
+  it("Reabrir leva o foco ao título da linha na seção das válidas e anuncia 'reaberta'", async () => {
+    const reopened = activity({ id: "r1", title: "Orientação rejeitada" });
+    const { user } = setup(START(), moveTo("r1", reopened), { "POST /api/activities/r1/status": { status: 200, body: reopened } });
+    await openInvalid(user);
+    await user.click(screen.getByRole("button", { name: "Reabrir Orientação rejeitada" }));
+    await waitFor(() => expect(status()).toHaveTextContent("Orientação rejeitada reaberta"));
+    await waitFor(() => expect(within(validRegion()).getByText("Orientação rejeitada")).toBeInTheDocument());
+    expect(document.activeElement).toBe(within(validRegion()).getByText("Orientação rejeitada"));
+  });
+
+  it("escolher a categoria na linha grava na hora, devolve o foco ao título e anuncia o resultado", async () => {
+    const needs = activity({ id: "n1", title: "Sem categoria", group_number: null, item_number: null, predicted_points: null, validity: { ...VALID, needs_category: true } });
+    const done = activity({ id: "n1", title: "Sem categoria" });
+    const { calls, user } = setup([needs], moveTo("n1", done), { "PUT /api/activities/n1": { status: 200, body: done } });
+    await user.selectOptions(screen.getByRole("combobox", { name: "Categoria de Sem categoria" }), "3.2");
+    expect(calls).toHaveLength(1);
+    await waitFor(() => expect(status()).toHaveTextContent("Categoria definida em Sem categoria"));
+    await waitFor(() => expect(screen.queryByRole("combobox", { name: "Categoria de Sem categoria" })).not.toBeInTheDocument());
+    expect(document.activeElement).toBe(within(validRegion()).getByText("Sem categoria"));
+  });
+
+  it("salvar a edição de uma não válida que passa às válidas leva o foco ao título dela e anuncia 'salva'", async () => {
+    const saved = activity({ id: "o1", title: "Curso antigo", event_date: "2025-03-15" });
+    const { user } = setup(START(), moveTo("o1", saved), { "PUT /api/activities/o1": { status: 200, body: saved } });
+    await openInvalid(user);
+    await user.click(screen.getByRole("button", { name: "Editar Curso antigo" }));
+    const date = within(screen.getByRole("dialog")).getByLabelText(/^Data/);
+    await user.clear(date);
+    await user.type(date, "2025-03-15");
+    await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await waitFor(() => expect(within(validRegion()).getByText("Curso antigo")).toBeInTheDocument());
+    expect(document.activeElement).toBe(within(validRegion()).getByText("Curso antigo"));
+    expect(status()).toHaveTextContent("Atividade Curso antigo salva");
+  });
+
+  it("a região de anúncio existe desde a abertura, vazia", () => {
+    setup(START());
+    expect(status()).toBeEmptyDOMElement();
+  });
+});

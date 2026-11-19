@@ -389,3 +389,14 @@ describe("Editar e SEC-12", () => {
     expect(css).toMatch(/\.activity-toolbar\s*{[^}]*flex-wrap:\s*wrap/);
   });
 });
+
+describe("SEC-12: 'Mostrar mais' mantém o foco e o contador é anunciado", () => {
+  it("o foco vai à primeira linha nova e o contador é uma região viva educada", async () => {
+    const { user } = setup(many(60, { }));
+    const counter = screen.getByText("Mostrando 25 de 60");
+    expect(counter).toHaveAttribute("aria-live", "polite");
+    await user.click(screen.getByRole("button", { name: "Mostrar mais" }));
+    expect(screen.getByText("Mostrando 50 de 60")).toBe(counter);
+    expect(document.activeElement).toBe(screen.getByText("Atividade 026"));
+  });
+});
