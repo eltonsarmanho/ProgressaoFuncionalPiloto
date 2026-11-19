@@ -7,9 +7,11 @@ from fastapi import Request
 from sqlalchemy import Engine
 
 from app.application.services.access_policy import AccessPolicy
+from app.application.services.activity_merge import MergeDuplicateActivities
 from app.application.services.audit_service import AuditService
 from app.application.services.document_analyzer import DocumentAnalyzer
 from app.application.services.purge_inputs import PurgeInputDocuments
+from app.application.use_cases.activity_merging import MergeProcessDuplicates, SeparateActivity
 from app.application.use_cases.auth import GetCurrentSession, Login, Logout
 from app.application.use_cases.career import (
     CreateCareerVersion,
@@ -175,6 +177,8 @@ class Container:
     change_activity_status: ChangeActivityStatus
     mark_activities_distinct: MarkActivitiesDistinct
     bulk_validate_activities: BulkValidateActivities
+    merge_process_duplicates: MergeProcessDuplicates
+    separate_activity: SeparateActivity
     storage: FileStorage
     inspector: FileInspector
     process_document: ProcessDocument
@@ -231,6 +235,7 @@ def build_container(
     audit = AuditService(clock)
     policy = AccessPolicy()
     create_activity = CreateActivity(uow_factory, audit, policy)
+    merger = MergeDuplicateActivities(audit)
     change_status = ChangeActivityStatus(uow_factory, audit, policy)
     storage = LocalFileStorage(settings.storage_dir)
     generated_storage = LocalGeneratedStorage(settings.storage_dir)
@@ -303,6 +308,8 @@ def build_container(
         change_activity_status=change_status,
         mark_activities_distinct=MarkActivitiesDistinct(uow_factory, audit, policy),
         bulk_validate_activities=BulkValidateActivities(uow_factory, audit, policy),
+        merge_process_duplicates=MergeProcessDuplicates(uow_factory, audit, policy, merger),
+        separate_activity=SeparateActivity(uow_factory, audit, policy, merger),
         storage=storage,
         inspector=inspector,
         process_document=ProcessDocument(uow_factory, audit, storage, analyzer, create_activity),

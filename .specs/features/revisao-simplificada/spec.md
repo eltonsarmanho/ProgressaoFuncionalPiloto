@@ -203,13 +203,13 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 | SEC-10 | P1: Etapa 3 em duas seções | Design | Pending |
 | SEC-11 | P1: Etapa 3 em duas seções | Design | Pending |
 | SEC-12 | P1: Etapa 3 em duas seções | Design | Pending |
-| DUP-01 | P1: Duplicadas mescladas | Design | Implementing |
+| DUP-01 | P1: Duplicadas mescladas | Design | Implemented |
 | DUP-02 | P1: Duplicadas mescladas | Design | Implemented |
 | DUP-03 | P1: Duplicadas mescladas | Design | Implemented |
-| DUP-04 | P1: Duplicadas mescladas | Design | Pending |
+| DUP-04 | P1: Duplicadas mescladas | Design | Implementing |
 | DUP-05 | P1: Duplicadas mescladas | Design | Implemented |
 | DUP-06 | P1: Duplicadas mescladas | Design | Implemented |
-| DUP-07 | P1: Duplicadas mescladas | Design | Pending |
+| DUP-07 | P1: Duplicadas mescladas | Design | Implementing |
 | SEG-01 | P1: Só as válidas seguem | Design | Implemented |
 | SEG-02 | P1: Só as válidas seguem | Design | Implemented |
 | SEG-03 | P1: Só as válidas seguem | Design | Implementing |

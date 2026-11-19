@@ -15,8 +15,10 @@ from app.presentation.schemas.activities import (
     ActivityCreate,
     ActivityDistinct,
     ActivityOut,
+    ActivitySeparate,
     ActivityStatusChange,
     ActivityUpdate,
+    MergeOut,
 )
 from app.presentation.schemas.documents import EvidenceOut
 
@@ -74,6 +76,32 @@ async def validate_batch(
         body.justificativa,
     )
     return await _present(container, validated)
+
+
+@router.post("/processes/{process_id}/activities/merge-duplicates", response_model=MergeOut)
+async def merge_duplicates(
+    process_id: UUID, actor: UserDep, container: ContainerDep
+) -> MergeOut:
+    """Merges the duplicate activities of the process; answers 0 when there is nothing to do."""
+    merged = await run_in_threadpool(container.merge_process_duplicates.execute, actor, process_id)
+    return MergeOut(merged=merged)
+
+
+@router.post("/activities/{activity_id}/separate", response_model=ActivityOut)
+async def separate_activity(
+    activity_id: UUID,
+    actor: UserDep,
+    container: ContainerDep,
+    body: ActivitySeparate | None = None,
+) -> ActivityOut:
+    """"Não é duplicada": restores a merged activity and marks the two as distinct."""
+    activity = await run_in_threadpool(
+        container.separate_activity.execute,
+        actor,
+        activity_id,
+        body.expected_version if body else None,
+    )
+    return (await _present(container, [activity]))[0]
 
 
 @router.get("/activities/{activity_id}", response_model=ActivityOut)

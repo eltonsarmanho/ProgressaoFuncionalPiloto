@@ -538,6 +538,8 @@ T42 → T43 → T44
 
 ### T16: Rotas de mesclagem e de separação
 
+**Status**: Done
+
 **What**: `POST /api/processes/{id}/activities/merge-duplicates` → `{merged: n}` e `POST /api/activities/{id}/separate` → a atividade; o modelo de resposta `MergeOut` fica no módulo de esquemas de atividade.
 **Where**: `backend/app/presentation/api/activities.py` (modify)
 **Depends on**: T15
@@ -551,9 +553,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_activity_merge_api.py`: `merge-duplicates` devolve o número de mesclagens e uma segunda chamada devolve 0; processo somente leitura devolve 0 sem alterar; processo de outro usuário → 404; sem CSRF → 403; `separate` devolve a atividade restaurada, 422 numa atividade não mesclada, 404 fora do acesso
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `backend/tests/integration/api/test_activity_merge_api.py`: `merge-duplicates` devolve o número de mesclagens e uma segunda chamada devolve 0; processo somente leitura devolve 0 sem alterar; processo de outro usuário → 404; sem CSRF → 403; `separate` devolve a atividade restaurada, 422 numa atividade não mesclada, 404 fora do acesso
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: integration
 **Gate**: full

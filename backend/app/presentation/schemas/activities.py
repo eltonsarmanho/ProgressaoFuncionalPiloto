@@ -133,6 +133,16 @@ class ActivityDistinct(BaseModel):
     justificativa: str | None = None
 
 
+class ActivitySeparate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    expected_version: int | None = None
+
+
+class MergeOut(BaseModel):
+    merged: int
+
+
 class ActivityBulkValidate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
