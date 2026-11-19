@@ -14,6 +14,7 @@ from app.domain.entities.scoring import (
     ScoringTableVersion,
     TableStatus,
 )
+from app.domain.rules.activity_validity import InvalidReason
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.process_verification import Severity
 from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
@@ -73,6 +74,10 @@ def row_of(result, activity):
     return next(r for r in result.rows if r.activity_id == activity.id)
 
 
+def has_row(result, activity) -> bool:
+    return any(r.activity_id == activity.id for r in result.rows)
+
+
 # --- inclusion rules (CALC-08, CALC-10, VERIF-08) -------------------------------------------
 
 
@@ -99,13 +104,14 @@ def test_awaiting_review_becomes_potential_and_stays_out_of_the_total():
     assert result.group_subtotals[2] == D("0")
 
 
-def test_rejected_activity_is_not_scored_with_reason_rejeitada():
+def test_rejected_activity_is_not_valid_with_reason_rejeitada_and_has_no_row():
+    # SEG-01: a rejected activity is not valid, so it no longer shows as a "not scored" row.
     a = act(status=ActivityStatus.REJEITADA)
 
     result = calculate(BASIC, [a], INTERSTICE)
 
-    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
-    assert row_of(result, a).reasons == (NotScoredReason.REJEITADA,)
+    assert not has_row(result, a)
+    assert result.validity[a.id].reason is InvalidReason.REJEITADA
     assert result.total == D("0")
 
 
@@ -127,13 +133,14 @@ def test_activity_without_group_and_item_is_sem_enquadramento():
     assert row_of(result, a).reasons == (NotScoredReason.SEM_ENQUADRAMENTO,)
 
 
-def test_activity_outside_interstice_is_fora_do_interstício():
+def test_activity_outside_interstice_is_not_valid_fora_do_interstício_and_has_no_row():
+    # SEG-01: outside the interstice is a validity reason, not a "not scored" row.
     a = act(event_date=date(2022, 11, 22))
 
     result = calculate(BASIC, [a], INTERSTICE)
 
-    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
-    assert row_of(result, a).reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
+    assert not has_row(result, a)
+    assert result.validity[a.id].reason is InvalidReason.FORA_DO_INTERSTICIO
     assert result.total == D("0")
 
 
@@ -144,8 +151,9 @@ def test_group_that_does_not_count_gives_zero_subtotal_and_reason():
 
     result = calculate(version, [a, b], INTERSTICE)
 
-    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
-    assert row_of(result, a).reasons == (NotScoredReason.GRUPO_NAO_CONTA,)
+    # SEG-01: a group outside the total is a validity reason; the activity has no row
+    assert not has_row(result, a)
+    assert result.validity[a.id].reason is InvalidReason.GRUPO_NAO_CONTA
     assert result.group_subtotals[1] == D("0")
     assert result.total == D("10")
 
@@ -157,8 +165,9 @@ def test_newer_duplicate_is_excluded_and_older_counts():
     result = calculate(BASIC, [newer, older], INTERSTICE)
 
     assert row_of(result, older).status is RowStatus.PONTUADA
-    assert row_of(result, newer).status is RowStatus.NAO_PONTUADA
-    assert row_of(result, newer).reasons == (NotScoredReason.DUPLICIDADE,)
+    # SEG-01: the residual duplicate is not valid; it has no row
+    assert not has_row(result, newer)
+    assert result.validity[newer.id].reason is InvalidReason.DUPLICIDADE
     assert result.total == D("10")
 
 
@@ -175,14 +184,16 @@ def test_distinct_justification_makes_both_count():
     assert result.total == D("20")
 
 
-def test_precedence_missing_criterion_over_rejected_over_period():
+def test_precedence_rejected_over_missing_criterion_and_over_period():
+    # SEG-01: the rule changed; rejected now comes first, before the missing criterion
     rejected_missing = act(item=99, status=ActivityStatus.REJEITADA)
     rejected_outside = act(status=ActivityStatus.REJEITADA, event_date=date(2020, 1, 1))
 
     result = calculate(BASIC, [rejected_missing, rejected_outside], INTERSTICE)
 
-    assert row_of(result, rejected_missing).reasons == (NotScoredReason.SEM_ENQUADRAMENTO,)
-    assert row_of(result, rejected_outside).reasons == (NotScoredReason.REJEITADA,)
+    assert result.validity[rejected_missing.id].reason is InvalidReason.REJEITADA
+    assert result.validity[rejected_outside.id].reason is InvalidReason.REJEITADA
+    assert result.rows == ()
 
 
 def test_precedence_period_over_group_that_does_not_count():
@@ -191,7 +202,8 @@ def test_precedence_period_over_group_that_does_not_count():
 
     result = calculate(version, [a], INTERSTICE)
 
-    assert row_of(result, a).reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
+    assert result.validity[a.id].reason is InvalidReason.FORA_DO_INTERSTICIO
+    assert not has_row(result, a)
 
 
 def test_awaiting_review_outside_interstice_is_not_potential():
@@ -199,7 +211,7 @@ def test_awaiting_review_outside_interstice_is_not_potential():
 
     result = calculate(BASIC, [a], INTERSTICE)
 
-    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
+    assert not has_row(result, a)  # SEG-01
     assert result.potential_total == D("0")
 
 
@@ -444,12 +456,14 @@ def test_invalid_interstice_does_not_exclude_nor_alert_on_dates():
     result = calculate(BASIC, [a], bad)
 
     assert row_of(result, a).status is RowStatus.PONTUADA
-    assert NotScoredReason.FORA_DO_INTERSTICIO not in row_of(result, a).reasons
+    assert result.validity[a.id].is_valid
     assert ScoringAlertCode.INTERSTICIO_PARCIAL not in codes(result, a)
 
 
 def test_non_scored_row_has_no_alerts():
-    a = act(event_date=date(2020, 1, 1), evidence_note=None)
+    # SEG-01: the not scored row left is the one without category (outside the interstice has
+    # no row any more)
+    a = act(g=None, item=None, evidence_note=None)
 
     assert row_of(calculate(BASIC, [a], INTERSTICE), a).alerts == ()
 
@@ -491,10 +505,11 @@ def test_counters():
     everything = [ok, no_evidence, pending, rejected, outside]
     counters = calculate(version, everything, INTERSTICE).counters
 
-    assert counters.activities == 5
-    assert counters.with_evidence == 4  # all but no_evidence
+    # SEG-01: rejected and outside the interstice are not valid and are not counted
+    assert counters.activities == 3
+    assert counters.with_evidence == 2  # ok and pending, not no_evidence
     assert counters.pending == 1
-    assert counters.not_scored == 2  # rejected, outside
+    assert counters.not_scored == 0
     assert counters.with_alerts == 1  # no_evidence
 
 
@@ -577,9 +592,9 @@ def test_activity_with_19_99_hours_is_not_scored_for_insufficient_load():
 
     result = calculate(COURSES, [a], INTERSTICE)
 
-    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
-    assert row_of(result, a).reasons == (NotScoredReason.CARGA_HORARIA_INSUFICIENTE,)
-    assert row_of(result, a).points == D("0")
+    # SEG-01: insufficient load is a validity reason; the activity has no row
+    assert not has_row(result, a)
+    assert result.validity[a.id].reason is InvalidReason.CARGA_HORARIA_INSUFICIENTE
     assert result.total == D("0")
 
 
@@ -623,8 +638,9 @@ def test_zero_hours_is_below_the_minimum_not_missing():
 
     result = calculate(COURSES, [a], INTERSTICE)
 
-    assert row_of(result, a).reasons == (NotScoredReason.CARGA_HORARIA_INSUFICIENTE,)
-    assert row_of(result, a).alerts == ()
+    # SEG-01
+    assert not has_row(result, a)
+    assert result.validity[a.id].reason is InvalidReason.CARGA_HORARIA_INSUFICIENTE
 
 
 def test_criterion_without_minimum_ignores_hours_and_never_alerts_on_them():
@@ -639,14 +655,16 @@ def test_criterion_without_minimum_ignores_hours_and_never_alerts_on_them():
     assert result.total == D("10")
 
 
-def test_insufficient_row_is_counted_as_not_scored_and_has_no_alerts():
+def test_insufficient_activity_has_no_row_and_is_not_counted():
+    # SEG-01: it was a "not scored" row with no alerts; now it is not valid and not counted
     low = act(g=4, item=4, hours=D("10"), evidence_note=None)
     ok = act(g=4, item=4, hours=D("30"))
 
     result = calculate(COURSES, [low, ok], INTERSTICE)
 
-    assert row_of(result, low).alerts == ()
-    assert result.counters.not_scored == 1
+    assert not has_row(result, low)
+    assert result.counters.not_scored == 0
+    assert result.counters.activities == 1
     assert result.total == D("5")
 
 
@@ -655,7 +673,7 @@ def test_awaiting_review_with_insufficient_hours_is_not_potential():
 
     result = calculate(COURSES, [a], INTERSTICE)
 
-    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
+    assert not has_row(result, a)  # SEG-01
     assert result.potential_total == D("0")
 
 
@@ -664,7 +682,7 @@ def test_outside_interstice_takes_precedence_over_insufficient_hours():
 
     result = calculate(COURSES, [a], INTERSTICE)
 
-    assert row_of(result, a).reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
+    assert result.validity[a.id].reason is InvalidReason.FORA_DO_INTERSTICIO  # SEG-01
 
 
 def test_missing_hours_alert_is_added_to_the_other_row_alerts():
@@ -813,7 +831,7 @@ def test_pit_hours_of_awaiting_review_and_rejected_offers_stay_out_of_the_summar
 
     assert row_of(result, pending).pit_hours == D("8.00")
     assert row_of(result, pending).status is RowStatus.POTENCIAL
-    assert row_of(result, rejected).pit_hours is None
+    assert not has_row(result, rejected)  # SEG-01: a rejected offer has no row
     assert result.group1_total_hours == D("4.00")
 
 
@@ -822,8 +840,8 @@ def test_offer_outside_the_interstice_has_no_pit_hours():
 
     result = calculate(pit_table(), [a], INTERSTICE)
 
-    assert row_of(result, a).reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
-    assert row_of(result, a).pit_hours is None
+    assert not has_row(result, a)  # SEG-01
+    assert result.validity[a.id].reason is InvalidReason.FORA_DO_INTERSTICIO
     assert result.group1_total_hours == D("0")
 
 

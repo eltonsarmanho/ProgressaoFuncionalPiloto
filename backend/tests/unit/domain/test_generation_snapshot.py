@@ -2,7 +2,6 @@
 
 import json
 from dataclasses import replace
-from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
@@ -89,7 +88,9 @@ def test_the_snapshot_lists_each_activity_with_group_item_quantity_points_and_st
 
 
 def test_an_activity_that_does_not_score_has_no_quantity_and_zero_points():
-    late = activity(2, 7, event_date=date(2019, 1, 1))
+    # SEG-01: outside the interstice is not valid and has no row; an item the table does not
+    # have is the case left of an activity that does not score
+    late = activity(2, 99)
 
     data, _, _, _ = snapshot(activities=[late])
 

@@ -1,6 +1,6 @@
 """SEG-05: documents of one process with the same text count their activity once."""
 
-from app.domain.rules.scoring_alerts import NotScoredReason
+from app.domain.rules.activity_validity import InvalidReason
 from app.domain.rules.scoring_engine import RowStatus
 from tests.integration.doc_usecases.support import seed_run
 from tests.integration.scoring.test_process_score_evidence import (
@@ -35,8 +35,9 @@ def test_the_later_activity_of_an_identical_document_is_a_duplicate(official_cho
     result = score(world).result
 
     assert row(result, first).status is not RowStatus.NAO_PONTUADA
-    assert row(result, second).status is RowStatus.NAO_PONTUADA
-    assert row(result, second).reasons == (NotScoredReason.DUPLICIDADE,)
+    # SEG-01: the duplicate is not valid and has no row
+    assert all(r.activity_id != second.id for r in result.rows)
+    assert result.validity[second.id].reason is InvalidReason.DUPLICIDADE
 
 
 def test_documents_with_different_text_keep_both_activities(official_chosen):

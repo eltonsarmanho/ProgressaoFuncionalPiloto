@@ -1,8 +1,10 @@
-"""Deterministic scoring engine (CALC-01, CALC-07..CALC-13, VERIF-08).
+"""Deterministic scoring engine (CALC-01, CALC-07..CALC-13, VERIF-08, SEG-01).
 
-Pure function of (table version, activities, interstice). Evaluation order per activity:
-criterion exists -> status REJEITADA -> period -> group counts in total -> duplicate ->
-points -> limits (criterion cap, then group cap, only on activities that count).
+Pure function of (table version, activities, interstice). Each activity is first classified as
+valid or not (`classify_activity`: rejected, outside the interstice, group outside the total,
+duplicate, hours below the minimum); only the valid ones become rows and enter the counters, and
+the result carries the validity of every activity. A valid activity is then evaluated: criterion
+exists -> points -> limits (criterion cap, then group cap, only on activities that count).
 Per-activity points stay uncapped; caps apply to the summed subtotals and are reported in
 `limit_adjustments` with the points before and after.
 
@@ -26,6 +28,7 @@ from app.domain.entities.scoring import (
     ScoringTableVersion,
     is_pit_criterion,
 )
+from app.domain.rules.activity_validity import Validity, classify_activity
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.process_verification import Alert, Severity
 from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
@@ -99,6 +102,8 @@ class ScoringResult:
     # `potential_total` split (REAL-08): activities with a date or period against those without
     potential_dated: Decimal = ZERO
     potential_undated: Decimal = ZERO
+    # the validity of every activity given to the engine, valid or not (SEG-03)
+    validity: Mapping[UUID, Validity] = field(default_factory=dict)
 
 
 def _row_alert(code: ScoringAlertCode, message: str, version: ScoringTableVersion) -> Alert:
@@ -161,7 +166,6 @@ def _evaluate(
     activity: Activity,
     version: ScoringTableVersion,
     interstice: Interstice,
-    duplicates: set[UUID],
     limit_adjustments: list[LimitAdjustment],
     evidence_count: int,
 ) -> ScoringRow:
@@ -170,27 +174,11 @@ def _evaluate(
         criterion = version.get_criterion(activity.group_number, activity.item_number)
     if criterion is None:
         return _not_scored(activity, NotScoredReason.SEM_ENQUADRAMENTO, evidence_count)
-    if activity.status is ActivityStatus.REJEITADA:
-        return _not_scored(activity, NotScoredReason.REJEITADA, evidence_count)
 
     yearly = is_yearly_unit(criterion.unit_label)
     state = evaluate_period(activity, interstice, yearly)
-    if state is PeriodState.FORA:
-        return _not_scored(activity, NotScoredReason.FORA_DO_INTERSTICIO, evidence_count)
-
-    group = version.get_group(criterion.group_number)
     pit = is_pit_criterion(version, criterion)
-    if group is not None and not group.counts_in_total and not pit:
-        return _not_scored(activity, NotScoredReason.GRUPO_NAO_CONTA, evidence_count)
-    if activity.id in duplicates:
-        return _not_scored(activity, NotScoredReason.DUPLICIDADE, evidence_count)
-
-    missing_hours = False
-    if criterion.min_hours is not None:
-        if activity.hours is None:
-            missing_hours = True
-        elif activity.hours < criterion.min_hours:
-            return _not_scored(activity, NotScoredReason.CARGA_HORARIA_INSUFICIENTE, evidence_count)
+    missing_hours = criterion.min_hours is not None and activity.hours is None
 
     # PIT hours come from the weekly load only; informed points never replace them
     scored_activity = replace(activity, points_override=None) if pit else activity
@@ -342,10 +330,11 @@ def calculate(
     """
     counts = evidence_counts or {}
     duplicates = find_duplicates(activities, contents)
+    validity = {a.id: classify_activity(a, version, interstice, duplicates) for a in activities}
+    valid = [a for a in activities if validity[a.id].is_valid]
     adjustments: list[LimitAdjustment] = []
     rows = tuple(
-        _evaluate(a, version, interstice, duplicates, adjustments, counts.get(a.id, 0))
-        for a in activities
+        _evaluate(a, version, interstice, adjustments, counts.get(a.id, 0)) for a in valid
     )
 
     subtotals = _subtotals(version, rows, adjustments)
@@ -357,9 +346,9 @@ def calculate(
         percent = (subtotals[1] * 100 / total).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
     counters = Counters(
-        activities=len(activities),
-        with_evidence=sum(1 for a in activities if has_evidence(a, counts.get(a.id, 0))),
-        pending=sum(1 for a in activities if a.status is ActivityStatus.AGUARDANDO_REVISAO),
+        activities=len(valid),
+        with_evidence=sum(1 for a in valid if has_evidence(a, counts.get(a.id, 0))),
+        pending=sum(1 for a in valid if a.status is ActivityStatus.AGUARDANDO_REVISAO),
         not_scored=sum(1 for r in rows if r.status is RowStatus.NAO_PONTUADA),
         with_alerts=sum(1 for r in rows if r.alerts),
     )
@@ -376,4 +365,5 @@ def calculate(
         hours_total,
         potential - undated,
         undated,
+        validity,
     )

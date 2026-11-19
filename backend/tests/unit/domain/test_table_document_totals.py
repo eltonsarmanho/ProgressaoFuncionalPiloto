@@ -7,7 +7,8 @@ from decimal import Decimal
 from app.domain.entities.activity import ActivityStatus
 from app.domain.entities.scoring import ScoringCriterion, ScoringMode
 from app.domain.rules.process_verification import Alert, Severity
-from app.domain.rules.scoring_alerts import ScoringAlertCode
+from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
+from app.domain.rules.scoring_engine import ZERO, RowStatus, ScoringRow
 from app.domain.rules.table_document import TableHeader, build_table_document
 from tests.unit.domain.scenario_211 import (
     INTERSTICE,
@@ -34,6 +35,15 @@ def build(activities=None, version=None, listed=None, process_alerts=()):
     shown = activities if listed is None else listed
     document = build_table_document(HEADER, version, result, shown, {}, process_alerts)
     return document, result
+
+
+def not_scored_row(activity, reason):
+    """A row the engine no longer emits for these reasons (SEG-01: they are validity reasons
+    now); the document keeps the wording for any row it is handed."""
+    return ScoringRow(
+        activity.id, activity.group_number, activity.item_number, None, None, "", ZERO,
+        RowStatus.NAO_PONTUADA, (reason,),
+    )  # fmt: skip
 
 
 def without_pit_group():
@@ -65,7 +75,9 @@ def test_the_total_is_the_engine_total_when_a_limit_cuts_the_rows():
 
 def test_the_counters_are_the_ones_of_the_engine_result():
     pending = activity(2, 7, title="Sugerida", status=ActivityStatus.AGUARDANDO_REVISAO)
-    late = activity(2, 7, title="Antiga", event_date=date(2019, 1, 1))
+    # SEG-01: an activity outside the interstice is not valid and is not counted; the activity
+    # whose item the table does not have is the not scored one
+    late = activity(2, 99, title="Antiga")
     bare = activity(3, 2, title="Sem prova", evidence_note=None)
     validated = [activity(2, 3), bare]
 
@@ -201,8 +213,11 @@ def test_an_insufficient_course_load_appears_with_the_text_of_the_screen():
     group_four = replace(version.groups[3], criteria=(course,))
     table = replace(version, groups=(*version.groups[:3], group_four, *version.groups[4:]))
     short = activity(4, 4, title="Curso curto", hours=Decimal("10"))
-
-    document, _ = build(activities=[short], version=table)
+    version, activities, result = scenario_result([short], table)
+    row = not_scored_row(short, NotScoredReason.CARGA_HORARIA_INSUFICIENTE)
+    document = build_table_document(
+        HEADER, version, replace(result, rows=(row,)), activities, {}
+    )
 
     shown = [x for x in document.alerts if x.code == "CARGA_HORARIA_INSUFICIENTE"]
     assert [(x.message, x.subject) for x in shown] == [
@@ -212,8 +227,11 @@ def test_an_insufficient_course_load_appears_with_the_text_of_the_screen():
 
 def test_an_activity_out_of_the_interstice_is_explained_by_its_reason():
     late = activity(2, 7, title="Antiga", event_date=date(2019, 1, 1))
-
-    document, _ = build(activities=[late])
+    version, activities, result = scenario_result([late])
+    row = not_scored_row(late, NotScoredReason.FORA_DO_INTERSTICIO)
+    document = build_table_document(
+        HEADER, version, replace(result, rows=(row,)), activities, {}
+    )
 
     assert [(x.code, x.message, x.subject) for x in document.alerts] == [
         ("FORA_DO_INTERSTICIO", "Fora do interstício", "Antiga")
@@ -221,7 +239,7 @@ def test_an_activity_out_of_the_interstice_is_explained_by_its_reason():
 
 
 def test_alerts_of_activities_left_out_of_the_document_are_not_listed():
-    late = activity(2, 7, title="Antiga", event_date=date(2019, 1, 1))
+    late = activity(2, 99, title="Antiga")  # SEG-01: a row that stays, the item is unknown
     kept = activity(3, 2, title="Na lista")
 
     document, _ = build(activities=[late, kept], listed=[kept])

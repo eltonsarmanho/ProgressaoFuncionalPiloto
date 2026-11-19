@@ -232,10 +232,11 @@ def test_scoring_result_has_rows_reasons_alerts_and_decimal_text(
     assert body["potential_total"] == "0.00"
     assert (body["potential_dated"], body["potential_undated"]) == ("0.00", "0.00")
     assert body["group1_percent"] == "0.00"
+    # SEG-01: the activity outside the interstice is not valid, has no row and is not counted
     assert body["counters"] == {
-        "activities": 2, "with_evidence": 1, "pending": 0, "not_scored": 1, "with_alerts": 1,
+        "activities": 1, "with_evidence": 0, "pending": 0, "not_scored": 0, "with_alerts": 1,
     }  # fmt: skip
-    scored, outside = body["rows"]
+    [scored] = body["rows"]
     assert (scored["title"], scored["group_number"], scored["item_number"]) == ("Orientação", 2, 7)
     assert (scored["unit_points"], scored["effective_quantity"]) == ("5.00", "4.00")
     assert (scored["formula_text"], scored["points"], scored["status"]) == (
@@ -243,11 +244,6 @@ def test_scoring_result_has_rows_reasons_alerts_and_decimal_text(
     )  # fmt: skip
     assert [(a["code"], a["severity"]) for a in scored["alerts"]] == [("SEM_COMPROVANTE", "ALERTA")]
     assert scored["alerts"][0]["norm_reference"]
-    assert (outside["status"], outside["reasons"], outside["points"]) == (
-        "NAO_PONTUADA",
-        ["FORA_DO_INTERSTICIO"],
-        "0.00",
-    )
     assert body["alerts"] and alert_map(body)["TABELA_PENDENTE_VALIDACAO"] == (
         "REQUER_ANALISE_NORMATIVA"
     )

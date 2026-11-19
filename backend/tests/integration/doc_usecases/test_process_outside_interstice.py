@@ -9,8 +9,7 @@ from app.application.use_cases.scoring import ActivityData
 from app.domain.entities.activity import ActivityStatus
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.document import DocAlertCode, DocumentStatus, RunStatus
-from app.domain.rules.scoring_alerts import NotScoredReason
-from app.domain.rules.scoring_engine import RowStatus
+from app.domain.rules.activity_validity import InvalidReason
 from tests.integration.doc_usecases.support import link
 from tests.integration.doc_usecases.test_process_document import (
     banca_payload,
@@ -259,11 +258,10 @@ def test_the_score_does_not_count_the_rejected_activity(official_chosen, docs):
     reprocess(docs, document)
 
     after = w.calc.execute(w.docente, w.process.id)
-    [row] = after.result.rows
+    # SEG-01: the rejected activity is not valid and has no row
+    assert after.result.rows == ()
     assert after.result.total == 0
-    assert row.status is RowStatus.NAO_PONTUADA
-    assert row.points == 0
-    assert row.reasons == (NotScoredReason.REJEITADA,)
+    assert after.result.validity[draft.id].reason is InvalidReason.REJEITADA
 
 
 def test_the_generated_documents_do_not_read_the_rejected_activity_or_its_evidence(

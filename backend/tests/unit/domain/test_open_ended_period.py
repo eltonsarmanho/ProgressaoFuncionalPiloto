@@ -14,9 +14,10 @@ from app.domain.entities.scoring import (
     ScoringTableVersion,
     TableStatus,
 )
+from app.domain.rules.activity_validity import InvalidReason
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.quantity_rules import is_open_ended
-from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
+from app.domain.rules.scoring_alerts import ScoringAlertCode
 from app.domain.rules.scoring_engine import RowStatus, calculate
 from app.domain.rules.scoring_periods import PeriodState, activity_interval, evaluate_period
 
@@ -130,12 +131,15 @@ def test_the_engine_reads_a_start_only_yearly_item_as_open_ended():
 
 def test_the_engine_keeps_the_single_day_of_a_start_only_item_that_is_not_yearly():
     course = scored(7, 10, period_start=date(2024, 8, 9))
-    row = calculate(TABLE, [course], INTERSTICE).rows[0]
-    assert row.status is RowStatus.NAO_PONTUADA
-    assert row.reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
+    result = calculate(TABLE, [course], INTERSTICE)
+    # SEG-01: outside the interstice is a validity reason; the activity has no row
+    assert result.rows == ()
+    assert result.validity[course.id].reason is InvalidReason.FORA_DO_INTERSTICIO
 
 
 def test_the_engine_leaves_a_yearly_item_after_the_interstice_out():
     director = scored(6, 6, period_start=date(2026, 11, 24))
-    row = calculate(TABLE, [director], INTERSTICE).rows[0]
-    assert row.reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
+    result = calculate(TABLE, [director], INTERSTICE)
+    # SEG-01
+    assert result.rows == ()
+    assert result.validity[director.id].reason is InvalidReason.FORA_DO_INTERSTICIO

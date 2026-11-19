@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.domain.entities.activity import ActivityStatus
+from app.domain.rules.activity_validity import InvalidReason
 from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
 from app.domain.rules.scoring_engine import RowStatus, calculate
 from tests.unit.domain.test_scoring_engine import BASIC, INTERSTICE, act, row_of
@@ -90,13 +90,15 @@ def test_counters_with_evidence_add_links_and_notes():
 
 
 def test_activities_that_are_not_scored_still_report_their_links_and_count_as_evidenced():
-    rejected = act(evidence_note=None, status=ActivityStatus.REJEITADA)
+    # SEG-01: a rejected or outside activity is not valid and has no row; the not scored row
+    # left is the one without category
+    uncategorized = act(g=None, item=None, evidence_note=None)
 
-    result = calculate(BASIC, [rejected], INTERSTICE, {rejected.id: 2})
+    result = calculate(BASIC, [uncategorized], INTERSTICE, {uncategorized.id: 2})
 
-    row = row_of(result, rejected)
+    row = row_of(result, uncategorized)
     assert row.status is RowStatus.NAO_PONTUADA
-    assert row.reasons == (NotScoredReason.REJEITADA,)
+    assert row.reasons == (NotScoredReason.SEM_ENQUADRAMENTO,)
     assert row.evidence_count == 2
     assert result.counters.with_evidence == 1
 
@@ -135,6 +137,7 @@ def test_duplicates_sharing_a_linked_document_are_still_excluded_without_double_
     result = calculate(BASIC, [older, newer], INTERSTICE, {older.id: 1, newer.id: 1})
 
     assert row_of(result, older).status is RowStatus.PONTUADA
-    assert row_of(result, newer).status is RowStatus.NAO_PONTUADA
-    assert row_of(result, newer).reasons == (NotScoredReason.DUPLICIDADE,)
+    # SEG-01: the residual duplicate is not valid and has no row
+    assert all(r.activity_id != newer.id for r in result.rows)
+    assert result.validity[newer.id].reason is InvalidReason.DUPLICIDADE
     assert result.total == row_of(result, older).points

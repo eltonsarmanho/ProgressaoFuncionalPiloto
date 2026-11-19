@@ -11,8 +11,8 @@ from app.domain.entities.activity import ActivityStatus, Candidate, Level
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.process import ProcessStatus
 from app.domain.errors import Conflict, NotFound, StaleVersion, ValidationFailed
+from app.domain.rules.activity_validity import InvalidReason
 from app.domain.rules.interstice import Interstice
-from app.domain.rules.scoring_alerts import NotScoredReason
 from app.domain.rules.scoring_engine import RowStatus, calculate
 
 D = Decimal
@@ -267,9 +267,10 @@ def test_distinct_mark_releases_the_duplicate_and_audits_the_justification(world
     )
     with world.uow_factory() as uow:
         both = uow.activities.list_for_process(world.process.id)
-    assert calculate(world.official_version, both, INTERSTICE).rows[1].reasons == (
-        NotScoredReason.DUPLICIDADE,
-    )
+    # SEG-01: the duplicate is not valid and has no row
+    before = calculate(world.official_version, both, INTERSTICE)
+    assert len(before.rows) == 1
+    assert before.validity[twin.id].reason is InvalidReason.DUPLICIDADE
 
     world.mark_distinct.execute(world.admin, twin.id, twin.version, "Outro aluno")
 

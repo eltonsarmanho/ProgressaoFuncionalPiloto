@@ -366,7 +366,10 @@ def test_distinct_mark_releases_a_duplicate_in_the_result(client, headers, chose
         quantidade=1,
     )
     scoring_url = f"/api/processes/{chosen['id']}/scoring"
-    assert [r["reasons"] for r in client.get(scoring_url).json()["rows"]] == [[], ["DUPLICIDADE"]]
+    # SEG-01: the duplicate is not valid; it has no row, so only the first one scores
+    before = client.get(scoring_url).json()
+    assert [r["reasons"] for r in before["rows"]] == [[]]
+    assert before["total"] == "5.00"
 
     url = f"/api/activities/{twin['id']}/distinct"
     ok = client.post(

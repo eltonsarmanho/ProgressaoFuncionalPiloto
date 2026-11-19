@@ -142,6 +142,8 @@ T42 → T43 → T44
 
 ### T2: O motor avalia só as atividades válidas
 
+**Status**: Done
+
 **What**: `calculate` classifica cada atividade uma vez, avalia só as válidas, devolve o mapa `validity` no resultado e conta os contadores só sobre as válidas; `_evaluate` perde as saídas antecipadas que `classify_activity` cobre.
 **Where**: `backend/app/domain/rules/scoring_engine.py` (modify)
 **Depends on**: T1
@@ -155,10 +157,10 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_scoring_engine_validity.py`: atividade fora do interstício, rejeitada, com carga insuficiente e duplicada não geram linha nem contam nos contadores `activities`, `not_scored` e `pending`; o total e os subtotais não mudam em relação à regra antiga para o mesmo conjunto de válidas; atividade sem categoria continua como linha `SEM_ENQUADRAMENTO`; atividade validada com categoria pontua com o valor unitário da tabela e a quantidade informada sem outra ação; `ScoringResult.validity` traz o estado de cada atividade
-- [ ] Os testes de caracterização e os golden existentes passam sem alteração de valor esperado, exceto os que listavam `NAO_PONTUADA` por motivo agora tratado como não válida (cada exceção é anotada no corpo do teste com o requisito SEG-01)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: contagem antes e depois registrada; nenhum teste apagado sem substituto
+- [x] Testes primeiro em `backend/tests/unit/domain/test_scoring_engine_validity.py`: atividade fora do interstício, rejeitada, com carga insuficiente e duplicada não geram linha nem contam nos contadores `activities`, `not_scored` e `pending`; o total e os subtotais não mudam em relação à regra antiga para o mesmo conjunto de válidas; atividade sem categoria continua como linha `SEM_ENQUADRAMENTO`; atividade validada com categoria pontua com o valor unitário da tabela e a quantidade informada sem outra ação; `ScoringResult.validity` traz o estado de cada atividade
+- [x] Os testes de caracterização e os golden existentes passam sem alteração de valor esperado, exceto os que listavam `NAO_PONTUADA` por motivo agora tratado como não válida (cada exceção é anotada no corpo do teste com o requisito SEG-01)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: contagem antes e depois registrada; nenhum teste apagado sem substituto
 
 **Tests**: unit
 **Gate**: full

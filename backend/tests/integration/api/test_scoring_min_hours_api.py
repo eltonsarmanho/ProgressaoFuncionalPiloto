@@ -42,8 +42,9 @@ def score_course(client, act_as, reference, uow_factory):
         created = client.post(f"/api/processes/{process_id}/activities", json=body, headers=headers)
         assert created.status_code == 201, created.text
         result = client.get(f"/api/processes/{process_id}/scoring").json()
-        (row,) = result["rows"]
-        return result, row
+        rows = result["rows"]
+        assert len(rows) <= 1
+        return result, (rows[0] if rows else None)  # SEG-01: a not valid course has no row
 
     return score
 
@@ -51,11 +52,9 @@ def score_course(client, act_as, reference, uow_factory):
 def test_nineteen_hours_do_not_score_with_the_insufficient_hours_reason(score_course):
     result, row = score_course(19)
 
-    assert (row["status"], row["reasons"], row["points"]) == (
-        "NAO_PONTUADA",
-        ["CARGA_HORARIA_INSUFICIENTE"],
-        "0.00",
-    )
+    # SEG-01: insufficient hours make the course not valid, so it has no row and no counter
+    assert row is None
+    assert result["counters"]["activities"] == 0
     assert result["total"] == "0.00"
 
 

@@ -183,20 +183,17 @@ def test_extra_activities_stay_out_of_the_total(real_case):
     assert after["group1_total_hours"] == "92.00"
     assert after["potential_total"] == "5.00"
     by_title = {r["title"]: r for r in after["rows"]}
-    old = by_title["Orientação anterior ao interstício"]
-    assert (old["status"], old["reasons"], old["points"]) == (
-        "NAO_PONTUADA", ["FORA_DO_INTERSTICIO"], "0.00",
-    )  # fmt: skip
-    duplicate = by_title["ITEM 2.7 número 1"]
-    assert (duplicate["status"], duplicate["reasons"]) == ("NAO_PONTUADA", ["DUPLICIDADE"])
+    # SEG-01: outside the interstice and the duplicate are not valid, so they have no row
+    assert "Orientação anterior ao interstício" not in by_title
+    assert "ITEM 2.7 número 1" not in by_title
     waiting = by_title["Sugestão da IA"]
     assert (waiting["status"], waiting["points"], waiting["activity_status"]) == (
         "POTENCIAL", "5.00", "AGUARDANDO_REVISAO",
     )  # fmt: skip
     assert pending.status.value == "AGUARDANDO_REVISAO"
-    assert after["counters"]["activities"] == before["counters"]["activities"] + 3
+    assert after["counters"]["activities"] == before["counters"]["activities"] + 1
     assert after["counters"]["pending"] == 1
-    assert after["counters"]["not_scored"] == 2
+    assert after["counters"]["not_scored"] == before["counters"]["not_scored"]
     month_activity = next(
         a for a in case["client"].get(f"/api/processes/{case['process']['id']}/activities").json()
         if a["title"] == "Orientação anterior ao interstício"

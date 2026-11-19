@@ -1,6 +1,7 @@
 """TAB-02, TAB-03: header, group bands and rows of the scoring table document."""
 
 from dataclasses import replace
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from app.domain.rules.table_document import MAX_TITLE_CHARS, TableHeader, build_table_document
@@ -129,17 +130,35 @@ def test_rows_follow_the_items_of_the_group_and_keep_the_order_inside_an_item():
 
 
 def test_two_activities_with_the_same_title_in_one_item_are_two_rows():
-    one, two = activity(3, 2, title="Banca de TCC"), activity(3, 2, title="Banca de TCC")
+    # SEG-01: two same-title activities are one when they are duplicates; two rows only when
+    # the second is marked as distinct
+    one = activity(3, 2, title="Banca de TCC")
+    two = activity(
+        3, 2, title="Banca de TCC", distinct_justification="Outra banca",
+        created_at=datetime(2025, 1, 2, tzinfo=UTC),
+    )  # fmt: skip
 
     document = build(activities=[one, two])
 
     assert len(document.bands[1].rows) == 2
 
 
-def test_an_activity_that_does_not_score_keeps_its_row_with_zero_points_and_its_status():
-    late = activity(2, 7, title="Fora do prazo", event_date=INTERSTICE.start.replace(year=2019))
+def test_a_duplicate_of_another_activity_has_no_row():
+    # SEG-01
+    one = activity(3, 2, title="Banca de TCC")
+    two = activity(3, 2, title="Banca de TCC", created_at=datetime(2025, 1, 2, tzinfo=UTC))
 
-    document = build(activities=[late])
+    document = build(activities=[one, two])
+
+    assert [r.activity_id for r in document.bands[1].rows] == [one.id]
+
+
+def test_an_activity_that_does_not_score_keeps_its_row_with_zero_points_and_its_status():
+    # SEG-01: outside the interstice has no row; the activity that does not score is the one
+    # whose item the table does not have
+    unlisted = activity(2, 99, title="Item fora da tabela")
+
+    document = build(activities=[unlisted])
     row = document.bands[0].rows[0]
 
     assert (row.points, row.unit_points, row.quantity, row.status) == (

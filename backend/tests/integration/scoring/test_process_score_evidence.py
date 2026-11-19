@@ -7,6 +7,7 @@ from decimal import Decimal
 from app.application.use_cases.scoring import ActivityData
 from app.domain.entities.activity import ActivitySource, ActivityStatus
 from app.domain.repositories.ports import ActivityEvidence
+from app.domain.rules.activity_validity import InvalidReason
 from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
 from app.domain.rules.scoring_engine import RowStatus
 from tests.integration.documents.factories import make_document
@@ -165,8 +166,8 @@ def test_duplicates_linked_to_the_same_document_are_not_counted_twice(official_c
 
     result = score(world).result
 
-    statuses = sorted(row(result, a).status.value for a in (first, second))
-    assert statuses == ["NAO_PONTUADA", "PONTUADA"]
-    excluded = next(row(result, a) for a in (first, second) if row(result, a).reasons)
-    assert excluded.reasons == (NotScoredReason.DUPLICIDADE,)
+    # SEG-01: the duplicate is not valid and has no row; the other one scores alone
+    assert [r.status.value for r in result.rows] == ["PONTUADA"]
+    reasons = [result.validity[a.id].reason for a in (first, second)]
+    assert sorted(str(r) for r in reasons if r) == [InvalidReason.DUPLICIDADE.value]
     assert result.total == D("10")

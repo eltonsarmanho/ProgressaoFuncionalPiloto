@@ -189,13 +189,8 @@ def test_narrowing_the_interstice_and_reprocessing_retires_the_old_draft_without
     row = listed(client, process)["atual.pdf"]
     assert (row["outside_interstice"], row["activity_count"]) == (True, 0)
     assert [a["status"] for a in activities(client, process)] == ["REJEITADA"]
-    # the retired draft stays as the rejected, zero-point row any rejected draft is
-    [row] = score(client, process)["rows"]
-    assert (row["activity_status"], row["status"], row["points"]) == (
-        "REJEITADA",
-        "NAO_PONTUADA",
-        "0.00",
-    )
+    # SEG-01: the retired draft stays rejected, so it is not valid and has no score row
+    assert score(client, process)["rows"] == []
 
 
 def test_a_validated_activity_leaves_every_stage_when_reprocessing_puts_its_document_outside(
@@ -226,10 +221,6 @@ def test_a_validated_activity_leaves_every_stage_when_reprocessing_puts_its_docu
     assert (row["outside_interstice"], row["activity_count"]) == (True, 0)
     [rejected] = activities(client, process)
     assert rejected["status"] == "REJEITADA"
-    [scored] = score(client, process)["rows"]
-    assert (scored["activity_status"], scored["status"], scored["points"]) == (
-        "REJEITADA",
-        "NAO_PONTUADA",
-        "0.00",
-    )
+    # SEG-01: the rejected activity is not valid and has no score row
+    assert score(client, process)["rows"] == []
     assert score(client, process)["total"] == "0.00"
