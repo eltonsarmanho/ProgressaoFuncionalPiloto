@@ -1154,6 +1154,8 @@ T42 → T43 → T44
 
 ### T38: A página da Etapa 3 usa a nova tela
 
+**Status**: Done
+
 **What**: `ProcessActivities` chama `merge-duplicates` uma vez ao abrir, carrega a lista e mostra o `ActivityWorkspace`; o avanço fica bloqueado com atividade válida sem categoria.
 **Where**: `frontend/src/pages/ProcessActivities.tsx` (modify)
 **Depends on**: T36, T37
@@ -1167,9 +1169,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/pages/ProcessActivities.test.tsx`: abrir a página chama `merge-duplicates` uma vez (não em recarga por validar) e depois a lista; com 3 atividades sem categoria o avanço para a Etapa 4 fica bloqueado com "3 atividades precisam de categoria"; escolher a categoria na linha libera o avanço sem recarregar; processo somente leitura não chama a mesclagem; a falha da mesclagem não impede carregar a lista
-- [ ] Gate check passes: `cd frontend && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/pages/ProcessActivities.test.tsx`: abrir a página chama `merge-duplicates` uma vez (não em recarga por validar) e depois a lista; com 3 atividades sem categoria o avanço para a Etapa 4 fica bloqueado com "3 atividades precisam de categoria"; escolher a categoria na linha libera o avanço sem recarregar; processo somente leitura não chama a mesclagem; a falha da mesclagem não impede carregar a lista
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick

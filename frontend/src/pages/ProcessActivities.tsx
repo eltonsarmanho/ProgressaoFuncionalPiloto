@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { Link, useParams } from "react-router";
+import { isValid, validityOf } from "../activityList";
 import { errorMessage, request } from "../api/client";
-import type { Activity, DocumentSummary, ScoringGroup, ScoringResult, ScoringVersion, TableChoice } from "../api/types";
-import { ActivityReviewList } from "../components/ActivityReviewList";
+import type { Activity, DocumentSummary, Process, ScoringGroup, ScoringResult, ScoringVersion, TableChoice } from "../api/types";
+import { ActivityWorkspace } from "../components/ActivityWorkspace";
 import { StepNav } from "../components/StepNav";
+import { needsCategoryMessage } from "../labels";
 
 type Loaded = {
   activities: Activity[];
@@ -12,13 +14,31 @@ type Loaded = {
   groups: ScoringGroup[];
 };
 
+type Preparation = { id: string; done: Promise<void> };
+
+/**
+ * DUP-04: the merge of the duplicates runs once each time the page opens, before the first load of
+ * the list, and never in a reload after a write. A read-only process is not merged; a failure of
+ * the merge (or of reading the process) leaves the list as it is: the review still opens.
+ */
+function prepare(id: string, cache: RefObject<Preparation | null>): Promise<void> {
+  if (cache.current?.id === id) return cache.current.done;
+  const done = (async () => {
+    const process = await request<Process>("GET", `/api/processes/${id}`).catch(() => null);
+    if (process?.status === "CONCLUIDO" || process?.status === "ARQUIVADO") return;
+    await request("POST", `/api/processes/${id}/activities/merge-duplicates`).catch(() => null);
+  })();
+  cache.current = { id, done };
+  return done;
+}
+
 async function load(id: string): Promise<Loaded> {
   const [activities, documents, table] = await Promise.all([
     request<Activity[]>("GET", `/api/processes/${id}/activities`),
     request<DocumentSummary[]>("GET", `/api/processes/${id}/documents`),
     request<TableChoice>("GET", `/api/processes/${id}/scoring/table`),
   ]);
-  // The potential score and the criteria are extras of the review: without them the list still works.
+  // The scoring rows and the criteria are extras of the review: without them the list still works.
   const result = await request<ScoringResult>("GET", `/api/processes/${id}/scoring`).catch(() => null);
   const versionId = table.chosen?.version.id ?? table.suggested?.version.id;
   const version = versionId
@@ -27,16 +47,22 @@ async function load(id: string): Promise<Loaded> {
   return { activities, result, documents, groups: version?.groups ?? [] };
 }
 
-/** Etapa 3: review of the activities (human validation), their documents and the batch validation. */
+/**
+ * Etapa 3: review of the activities in two sections (valid and not valid), with the batch
+ * validation and the documents. The way to Etapa 4 stays closed while a valid activity lacks its
+ * category (SEC-05).
+ */
 export function ProcessActivities() {
   const { id = "" } = useParams();
   const [data, setData] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloads, setReloads] = useState(0);
+  const preparation = useRef<Preparation | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    load(id)
+    prepare(id, preparation)
+      .then(() => load(id))
       .then((loaded) => {
         if (cancelled) return;
         setData(loaded);
@@ -50,9 +76,15 @@ export function ProcessActivities() {
     };
   }, [id, reloads]);
 
+  const missing = data ? data.activities.filter((a) => isValid(a) && validityOf(a).needs_category).length : 0;
+
   return (
     <>
-      <StepNav current={3} processId={id} />
+      <StepNav
+        current={3}
+        processId={id}
+        blocked={missing > 0 ? { step: 3, message: needsCategoryMessage(missing) } : undefined}
+      />
       <h1>Etapa 3 · Atividades</h1>
       {error && (
         <p role="alert" className="error">
@@ -61,7 +93,7 @@ export function ProcessActivities() {
       )}
       {data && (
         <div className="card">
-          <ActivityReviewList
+          <ActivityWorkspace
             processId={id}
             activities={data.activities}
             rows={data.result?.rows ?? []}
@@ -72,7 +104,13 @@ export function ProcessActivities() {
         </div>
       )}
       <p>
-        <Link to={`/processos/${id}/pontuacao`}>Ir para a Etapa 4 · Pontuação</Link>
+        {missing > 0 ? (
+          <span aria-disabled="true" className="muted">
+            Ir para a Etapa 4 · Pontuação
+          </span>
+        ) : (
+          <Link to={`/processos/${id}/pontuacao`}>Ir para a Etapa 4 · Pontuação</Link>
+        )}
       </p>
     </>
   );
