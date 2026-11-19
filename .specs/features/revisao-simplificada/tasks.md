@@ -255,6 +255,8 @@ T42 → T43 → T44
 
 ### T6: `eligible_activities` recebe a validade
 
+**Status**: Done
+
 **What**: A seleção das atividades dos documentos passa a exigir validada, com grupo e item, e válida; assim Tabela, Relatório e Comprovante usam a mesma regra.
 **Where**: `backend/app/domain/rules/activity_order.py` (modify)
 **Depends on**: T5
@@ -268,10 +270,10 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_activity_order.py`: validada e válida entra; validada e não válida (por exemplo, fora do interstício) não entra; aguardando revisão não entra; sem categoria não entra; a ordem de `table_order` não muda
-- [ ] Todo chamador de `eligible_activities` passa a validade (o teste de arquitetura e o `ruff` pegam o que faltar)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `backend/tests/unit/domain/test_activity_order.py`: validada e válida entra; validada e não válida (por exemplo, fora do interstício) não entra; aguardando revisão não entra; sem categoria não entra; a ordem de `table_order` não muda
+- [x] Todo chamador de `eligible_activities` passa a validade (o teste de arquitetura e o `ruff` pegam o que faltar)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: full

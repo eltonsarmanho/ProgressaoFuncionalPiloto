@@ -25,7 +25,7 @@ from app.domain.entities.report import (
     TemplateSection,
 )
 from app.domain.errors import NotFound
-from app.domain.rules.activity_order import eligible_activities, table_order
+from app.domain.rules.activity_order import table_order, validated_activities
 from app.domain.rules.pt_format import format_date, format_decimal, format_hours, format_period
 from app.domain.rules.report_grounding import WordingVocabulary
 from app.domain.rules.scoring_periods import is_start_only
@@ -194,7 +194,7 @@ def propose_draft(
 ) -> ReportDraft:
     """The unsaved draft (version 0): one section per template section, in the template order."""
     by_section: dict[str, list[Activity]] = {s.key: [] for s in template.sections}
-    for activity in eligible_activities(activities):
+    for activity in validated_activities(activities):
         target = group_target(group_map, activity)
         if target is not None and target.section_key in by_section:
             by_section[target.section_key].append(activity)
@@ -244,7 +244,7 @@ def reconcile_draft(
     template follows the activity; the text of the AI is kept and the text typed by the user is
     never touched.
     """
-    current = {a.id: a for a in eligible_activities(activities)}
+    current = {a.id: a for a in validated_activities(activities)}
     known = {e.activity_id for s in draft.sections for e in s.entries}
     arrivals: dict[str, list[Activity]] = {s.key: [] for s in draft.sections}
     for activity in sorted((a for a in current.values() if a.id not in known), key=table_order):

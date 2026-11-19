@@ -30,7 +30,7 @@ from app.domain.entities.comprovante import (
 from app.domain.entities.generated import GenerationAlertCode, GenerationCode
 from app.domain.errors import GenerationRefused, NotFound, ValidationFailed
 from app.domain.repositories.ports import ActivityEvidence
-from app.domain.rules.activity_order import eligible_activities, table_order
+from app.domain.rules.activity_order import table_order, validated_activities
 
 NO_VOUCHER_NOTE = "Sem comprovante anexado"
 MAX_ATTACHED_PAGES = 400
@@ -61,7 +61,7 @@ def derive_layout(
     Groups and items follow the table; inside an item activities follow their date; the pages
     of an activity follow the order of its links.
     """
-    arranged = sorted(eligible_activities(activities), key=table_order)
+    arranged = sorted(validated_activities(activities), key=table_order)
     pages: dict[UUID, list[LayoutPage]] = {a.id: [] for a in arranged}
     keys: list[EvidenceKey] = []
     for found in evidences:
@@ -96,7 +96,7 @@ def _arrange(
     position = {a.activity_id: index for index, a in enumerate(layout.activities)}
     pages = {a.activity_id: a.pages for a in layout.activities}
     ordered = sorted(
-        eligible_activities(activities),
+        validated_activities(activities),
         key=lambda a: (
             a.group_number,
             a.item_number,
@@ -304,7 +304,7 @@ def layout_staleness(
     a validated activity the layout does not have has joined. Ids follow the layout order
     (table order for the ones that joined).
     """
-    current = {a.id: a for a in eligible_activities(activities)}
+    current = {a.id: a for a in validated_activities(activities)}
     arranged = {a.activity_id for a in layout.activities}
     base = set(layout.base_evidence_keys)
     linked = {
@@ -339,7 +339,7 @@ def current_layout(
     the current one, and the validated activities the layout does not know follow with the
     pages of their links.
     """
-    current = {a.id: a for a in eligible_activities(activities)}
+    current = {a.id: a for a in validated_activities(activities)}
     kept = tuple(
         replace(entry, group_number=now.group_number, item_number=now.item_number)
         for entry in layout.activities
@@ -395,7 +395,7 @@ def validate_layout(
     leaves the link between the activity and the page alone. Returns the layout with the group
     and item of the scoring on each activity.
     """
-    current = {a.id: a for a in eligible_activities(activities)}
+    current = {a.id: a for a in validated_activities(activities)}
     documents = {document.id: document for document in process_documents}
     checked: list[LayoutActivity] = []
     previous = (0, 0)

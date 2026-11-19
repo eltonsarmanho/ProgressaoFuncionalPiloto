@@ -101,7 +101,8 @@ def load_generation_inputs(uow: UnitOfWork, process: FunctionalProcess) -> Gener
     unit = uow.units.get(process.unit_id)
     if professor is None or unit is None:
         raise NotFound("Docente ou unidade do processo não encontrado")
-    activities = sorted(eligible_activities(score.activities), key=table_order)
+    eligible = eligible_activities(score.activities, score.result.validity)
+    activities = sorted(eligible, key=table_order)
     documents = uow.documents.list_for_process(process.id)
     ignored = {d.id for d in documents if d.outside_interstice}
     evidences = tuple(
