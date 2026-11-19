@@ -216,15 +216,15 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 | SEG-04 | P1: Só as válidas seguem | Design | Implemented |
 | SEG-05 | P1: Só as válidas seguem | Design | Implementing |
 | EDT-01 | P1: Editar atividade com poucos campos | Design | Pending |
-| EDT-02 | P1: Editar atividade com poucos campos | Design | Pending |
-| EDT-03 | P1: Editar atividade com poucos campos | Design | Pending |
+| EDT-02 | P1: Editar atividade com poucos campos | Design | Implementing |
+| EDT-03 | P1: Editar atividade com poucos campos | Design | Implementing |
 | EDT-04 | P1: Editar atividade com poucos campos | Design | Pending |
 | EDT-05 | P1: Editar atividade com poucos campos | Design | Pending |
-| EDT-06 | P1: Editar atividade com poucos campos | Design | Pending |
+| EDT-06 | P1: Editar atividade com poucos campos | Design | Implemented |
 | EDT-07 | P1: Editar atividade com poucos campos | Design | Pending |
 | QTD-01 | P1: Quantidade e valor manual na Etapa 4 | Design | Pending |
-| QTD-02 | P1: Quantidade e valor manual na Etapa 4 | Design | Pending |
-| QTD-03 | P1: Quantidade e valor manual na Etapa 4 | Design | Pending |
+| QTD-02 | P1: Quantidade e valor manual na Etapa 4 | Design | Implementing |
+| QTD-03 | P1: Quantidade e valor manual na Etapa 4 | Design | Implemented |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 

@@ -240,7 +240,9 @@ def test_the_score_does_not_count_the_rejected_activity(official_chosen, docs):
     w = official_chosen
     document = process_banca(docs, "pontuada")
     draft = activity_of(docs, document)
-    # the user moved the date into the interstice that will be set below
+    # EDT-02: the date has to be inside the interstice when it is edited, so the interstice that
+    # the process gets later is set first and the user moves the date into it
+    set_interstice(docs, AFTER_THE_BANCA)
     edited = w.update.execute(
         w.docente,
         draft.id,
@@ -251,7 +253,6 @@ def test_the_score_does_not_count_the_rejected_activity(official_chosen, docs):
         None,
     )
     validate(w, edited)
-    set_interstice(docs, AFTER_THE_BANCA)
     before = w.calc.execute(w.docente, w.process.id)
     assert before.result.total > 0
 

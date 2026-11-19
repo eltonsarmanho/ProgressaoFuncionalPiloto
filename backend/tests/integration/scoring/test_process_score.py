@@ -110,7 +110,9 @@ def test_counters_count_alerts_and_not_scored(official_chosen):
     add(world, "Sem comprovante", 2, 8, quantity=D("1"))
     add(world, "Sem categoria", None, None, evidence_note="ok")
     # SEG-01: an activity outside the interstice is not valid and is not counted
-    add(world, "Fora", 2, 9, event_date=date(2020, 1, 1), evidence_note="ok")
+    # EDT-02: a manual activity cannot be dated outside the interstice, so this one is imported
+    add(world, "Fora", 2, 9, source=ActivitySource.IMPORTADA, event_date=date(2020, 1, 1),
+        evidence_note="ok")  # fmt: skip
 
     counters = world.calc.execute(world.admin, world.process.id).result.counters
 

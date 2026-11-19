@@ -47,6 +47,7 @@ from app.domain.rules.scoring_engine import (
     has_evidence,
     is_pit_criterion,
 )
+from app.domain.rules.scoring_periods import PeriodState, evaluate_period, is_yearly_unit
 from app.domain.rules.scoring_table_choice import verify_table_choice
 from app.domain.rules.scoring_verification import (
     MinimumComparison,
@@ -394,6 +395,36 @@ def _skip_reason(validity: Validity) -> str | None:
     return NO_CATEGORY if validity.needs_category else None
 
 
+def _check_inside_interstice(
+    activity: Activity, version: ScoringTableVersion | None, process: FunctionalProcess
+) -> None:
+    """The date of an activity edited by hand has to touch the interstice (EDT-02, EDT-03).
+
+    An item measured by year only needs the period to cross it. An activity with no date, or an
+    interstice that cannot be checked, passes. Not used for an activity read from a document: that
+    one is created as it was read and shows up as not valid (SEC-06).
+    """
+    interstice = Interstice(process.start_date, process.end_date)
+    criterion = None
+    if version is not None and activity.group_number and activity.item_number:
+        criterion = version.get_criterion(activity.group_number, activity.item_number)
+    yearly = criterion is not None and is_yearly_unit(criterion.unit_label)
+    if evaluate_period(activity, interstice, yearly) is not PeriodState.FORA:
+        return
+    if activity.event_date is not None:
+        field = "event_date"
+    elif activity.period_start and activity.period_start > interstice.end:
+        field = "period_start"
+    else:
+        field = "period_end" if activity.period_end else "period_start"
+    raise ValidationFailed(
+        field, f"A data deve estar entre {_day(interstice.start)} e {_day(interstice.end)}"
+    )
+
+
+_DATE_FIELDS = ("event_date", "period_start", "period_end", "period_precision")
+
+
 def _fields(data: ActivityData) -> dict:
     return {f.name: getattr(data, f.name) for f in fields(data)}
 
@@ -426,6 +457,8 @@ class CreateActivity(_ActivityUseCase):
                 extraction_run_id=extraction_run_id,
                 **_fields(data),
             )
+            if source is ActivitySource.MANUAL:
+                _check_inside_interstice(activity, self._chosen_version(uow, process), process)
             uow.activities.add(activity)
             self._audit.record(
                 uow,
@@ -471,9 +504,13 @@ class UpdateActivity(_ExistingActivityUseCase):
     ) -> Activity:
         with self._uow_factory() as uow:
             current, process = self._load(uow, actor, activity_id)
-            data = normalize_activity(data, self._chosen_version(uow, process))
+            version = self._chosen_version(uow, process)
+            data = normalize_activity(data, version)
             updated = replace(current, **_fields(data))
             self._check_version(current, expected_version)
+            # A date that stays as it was is not judged again: only the one the body brings.
+            if any(getattr(updated, f) != getattr(current, f) for f in _DATE_FIELDS):
+                _check_inside_interstice(updated, version, process)
             uow.activities.update(updated, expected_version)
             self._audit.record(
                 uow,

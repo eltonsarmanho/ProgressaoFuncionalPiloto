@@ -650,6 +650,8 @@ T42 → T43 → T44
 
 ### T20: Data dentro do interstício e quantidade válida na edição
 
+**Status**: Done
+
 **What**: A criação manual e `UpdateActivity` recusam data fora do interstício (422 no campo da data, com a faixa na mensagem); nas categorias por ano o período só precisa tocar o interstício; a criação a partir de documento não passa por essa checagem.
 **Where**: `backend/app/application/use_cases/scoring.py` (modify)
 **Depends on**: T19
@@ -663,9 +665,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_activity_edit_rules_api.py`: data de 2023 num processo de 2024 a 2026 → 422 em `event_date` com "A data deve estar entre dd/mm/aaaa e dd/mm/aaaa" e a atividade intacta; o primeiro e o último dia passam; categoria por ano cujo período cruza o interstício passa e o que não o toca → 422 em `period_start`/`period_end`; criação manual fora → 422; a criação a partir de documento (`source` `SUGERIDA_IA`) fora do interstício é aceita (nasce e fica não válida); quantidade negativa ou não numérica → 422 em `quantidade`; mudar a quantidade recalcula a pontuação e grava a auditoria sem justificativa; editar sem alterar a data de uma atividade já fora do interstício é recusado só se o corpo trouxer essa data
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam; os existentes que criavam atividades manuais com datas fora do interstício ajustados com anotação EDT-02
+- [x] Testes primeiro em `backend/tests/integration/api/test_activity_edit_rules_api.py`: data de 2023 num processo de 2024 a 2026 → 422 em `event_date` com "A data deve estar entre dd/mm/aaaa e dd/mm/aaaa" e a atividade intacta; o primeiro e o último dia passam; categoria por ano cujo período cruza o interstício passa e o que não o toca → 422 em `period_start`/`period_end`; criação manual fora → 422; a criação a partir de documento (`source` `SUGERIDA_IA`) fora do interstício é aceita (nasce e fica não válida); quantidade negativa ou não numérica → 422 em `quantidade`; mudar a quantidade recalcula a pontuação e grava a auditoria sem justificativa; editar sem alterar a data de uma atividade já fora do interstício é recusado só se o corpo trouxer essa data
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; os existentes que criavam atividades manuais com datas fora do interstício ajustados com anotação EDT-02
 
 **Tests**: integration
 **Gate**: full

@@ -6,6 +6,7 @@ per period of 24, 24, 24 and 20 (92 in total), group I outside the total. The to
 from the filled FASI table and no longer applies; this is not a result approved in a real process.
 """
 
+from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 from uuid import UUID
@@ -13,7 +14,7 @@ from uuid import UUID
 import pytest
 
 from app.application.use_cases.scoring import ActivityData
-from app.domain.entities.activity import ActivitySource
+from app.domain.entities.activity import ActivitySource, ActivityStatus, PeriodPrecision
 from app.domain.entities.user import Role
 from tests.integration.api.factories import FASI_2022_2024
 
@@ -156,15 +157,26 @@ def test_rows_carry_formula_points_and_pit_hours(real_case):
 def test_extra_activities_stay_out_of_the_total(real_case):
     case = real_case
     before = score(case)
-    post(
-        case, title="Orientação anterior ao interstício", group_number=2, item_number=7,
-        quantidade=1, event_date="2022-06", evidence_note="Declaração",
+    container = case["client"].app.state.container
+    # EDT-02: a manual activity cannot be dated outside the interstice any more, so the one
+    # before it is created as an imported one (as the data of older processes came) and validated
+    earlier = container.create_activity.execute(
+        case["actor"],
+        UUID(case["process"]["id"]),
+        ActivityData(
+            title="Orientação anterior ao interstício", group_number=2, item_number=7,
+            quantity=Decimal(1), event_date=date(2022, 6, 1),
+            period_precision=PeriodPrecision.MONTH, evidence_note="Declaração",
+        ),
+        source=ActivitySource.IMPORTADA,
     )  # fmt: skip
+    with container.uow_factory() as uow:
+        uow.activities.update(replace(earlier, status=ActivityStatus.VALIDADA), earlier.version)
+        uow.commit()
     post(
         case, title="  ITEM 2.7 número 1 ", group_number=2, item_number=7, quantidade=1,
         event_date="2023-04-15", evidence_note="Declaração",
     )  # fmt: skip
-    container = case["client"].app.state.container
     pending = container.create_activity.execute(
         case["actor"],
         UUID(case["process"]["id"]),
