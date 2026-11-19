@@ -1003,3 +1003,18 @@ fieldset.grid legend {
   color: #1a7f37;
   font-weight: 700;
 }
+
+/* Revisão simplificada (Etapa 3): seções, barra de ações e lista das puladas. */
+.activity-section {
+  margin-top: 1rem;
+}
+
+.activity-toolbar {
+  flex-wrap: wrap;
+}
+
+.skipped-list {
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+}

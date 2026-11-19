@@ -1042,6 +1042,8 @@ T42 → T43 → T44
 
 ### T34: Seção "Atividades válidas"
 
+**Status**: Done
+
 **What**: Seção com filtros, 25 por vez com "Mostrar mais", seleção, "Validar selecionadas", "Validar as confiáveis" (com a lista das puladas) e vínculo de documento.
 **Where**: `frontend/src/components/ValidActivitiesSection.tsx` (novo)
 **Depends on**: T31, T33
@@ -1055,9 +1057,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ValidActivitiesSection.test.tsx`: com 120 atividades mostra 25 e "Mostrar mais" mostra mais 25; os chips contam sobre a lista inteira; a busca e o filtro por grupo funcionam; o título traz o total; "Nenhuma atividade válida ainda" quando vazia; validar em lote chama a rota e mostra "12 validadas; 3 ficaram sem categoria" com a lista; "N atividades precisam de categoria" aparece quando há selo
-- [ ] Gate check passes: `cd frontend && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/ValidActivitiesSection.test.tsx`: com 120 atividades mostra 25 e "Mostrar mais" mostra mais 25; os chips contam sobre a lista inteira; a busca e o filtro por grupo funcionam; o título traz o total; "Nenhuma atividade válida ainda" quando vazia; validar em lote chama a rota e mostra "12 validadas; 3 ficaram sem categoria" com a lista; "N atividades precisam de categoria" aparece quando há selo
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick

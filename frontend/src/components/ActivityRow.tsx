@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import { activityBody } from "../activityBody";
+import { validityOf } from "../activityList";
 import { ApiError, errorMessage, fieldErrors, request } from "../api/client";
-import type { Activity, ActivityStatus, ScoringGroup, Validity } from "../api/types";
+import type { Activity, ActivityStatus, ScoringGroup } from "../api/types";
 import {
   BADGE_AWAITING_VALIDATION,
   BADGE_NEEDS_CATEGORY,
@@ -13,18 +14,6 @@ import {
 import { CategoryPicker, type CategoryValue } from "./CategoryPicker";
 import { MergedNote } from "./MergedNote";
 import { ReasonText } from "./ReasonText";
-
-/** An activity the list sent without `validity` (a stale answer) is read as a valid one. */
-function validityOf(activity: Activity): Validity {
-  return (
-    activity.validity ?? {
-      state: "VALIDA",
-      reason: null,
-      needs_category: activity.group_number == null || activity.item_number == null,
-      params: {},
-    }
-  );
-}
 
 function whenText(a: Activity): string {
   if (a.event_date) return formatDocumentDate(a.event_date, a.period_precision);
