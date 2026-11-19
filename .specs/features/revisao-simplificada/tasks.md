@@ -113,6 +113,8 @@ T42 → T43 → T44
 
 ### T1: `classify_activity` e `Validity` no domínio
 
+**Status**: Done
+
 **What**: Função pura que decide se a atividade é válida ou não válida, com o motivo, os parâmetros do motivo e se precisa de categoria.
 **Where**: `backend/app/domain/rules/activity_validity.py` (novo)
 **Depends on**: None
@@ -126,10 +128,10 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes em `backend/tests/unit/domain/test_activity_validity.py`: rejeitada → `NAO_VALIDA/REJEITADA`; data um dia antes e um dia depois do interstício → `FORA_DO_INTERSTICIO` com `event_date` e `interstice_*` nos parâmetros, e o primeiro e o último dia são válidos; categoria por ano cujo período cruza o interstício → válida, e o que não o toca → fora; sem categoria → `VALIDA` com `needs_category`; grupo que não conta (sem ser PIT) → `GRUPO_NAO_CONTA`; duplicidade residual → `DUPLICIDADE`; carga igual ao mínimo → válida e abaixo → `CARGA_HORARIA_INSUFICIENTE` com `hours` e `min_hours`; sem carga informada → válida; sem tabela só avalia rejeitada, data como dia e categoria; a ordem dos motivos é a do motor
-- [ ] `classify_activity` não importa FastAPI nem SQLAlchemy (teste de arquitetura passa)
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes em `backend/tests/unit/domain/test_activity_validity.py`: rejeitada → `NAO_VALIDA/REJEITADA`; data um dia antes e um dia depois do interstício → `FORA_DO_INTERSTICIO` com `event_date` e `interstice_*` nos parâmetros, e o primeiro e o último dia são válidos; categoria por ano cujo período cruza o interstício → válida, e o que não o toca → fora; sem categoria → `VALIDA` com `needs_category`; grupo que não conta (sem ser PIT) → `GRUPO_NAO_CONTA`; duplicidade residual → `DUPLICIDADE`; carga igual ao mínimo → válida e abaixo → `CARGA_HORARIA_INSUFICIENTE` com `hours` e `min_hours`; sem carga informada → válida; sem tabela só avalia rejeitada, data como dia e categoria; a ordem dos motivos é a do motor
+- [x] `classify_activity` não importa FastAPI nem SQLAlchemy (teste de arquitetura passa)
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

@@ -21,7 +21,11 @@ from enum import StrEnum
 from uuid import UUID
 
 from app.domain.entities.activity import Activity, ActivityStatus
-from app.domain.entities.scoring import ScoringCriterion, ScoringMode, ScoringTableVersion
+from app.domain.entities.scoring import (
+    ScoringCriterion,
+    ScoringTableVersion,
+    is_pit_criterion,
+)
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.process_verification import Alert, Severity
 from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
@@ -95,17 +99,6 @@ class ScoringResult:
     # `potential_total` split (REAL-08): activities with a date or period against those without
     potential_dated: Decimal = ZERO
     potential_undated: Decimal = ZERO
-
-
-def is_pit_criterion(version: ScoringTableVersion, criterion: ScoringCriterion) -> bool:
-    """Group I weekly-load criterion of a table whose group I is outside the total."""
-    group = version.get_group(criterion.group_number)
-    return (
-        criterion.group_number == 1
-        and criterion.mode is ScoringMode.CARGA_SEMANAL
-        and group is not None
-        and not group.counts_in_total
-    )
 
 
 def _row_alert(code: ScoringAlertCode, message: str, version: ScoringTableVersion) -> Alert:
