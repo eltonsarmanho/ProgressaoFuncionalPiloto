@@ -454,6 +454,8 @@ T42 → T43 → T44
 
 ### T13: `duplicate_pairs` com cadeias
 
+**Status**: Done
+
 **What**: Função que devolve os pares (duplicada, original) pela mesma regra de `find_duplicates` e agrupa cadeias A, B, C num grupo só.
 **Where**: `backend/app/domain/rules/scoring_duplicates.py` (modify)
 **Depends on**: None
@@ -467,9 +469,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_scoring_duplicates.py`: o conjunto de duplicadas de `duplicate_pairs` é o mesmo de `find_duplicates` para as mesmas entradas; A~B e B~C formam um grupo de três; atividades `distinct_justification` não formam par; `duplicate_groups` devolve grupos ordenados por criação
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam; os existentes de `find_duplicates` seguem verdes
+- [x] Testes primeiro em `backend/tests/unit/domain/test_scoring_duplicates.py`: o conjunto de duplicadas de `duplicate_pairs` é o mesmo de `find_duplicates` para as mesmas entradas; A~B e B~C formam um grupo de três; atividades `distinct_justification` não formam par; `duplicate_groups` devolve grupos ordenados por criação
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam; os existentes de `find_duplicates` seguem verdes
 
 **Tests**: unit
 **Gate**: quick

@@ -57,10 +57,14 @@ def _same_item(one: Activity, two: Activity) -> bool:
     return None not in item and item == (two.group_number, two.item_number)
 
 
-def find_duplicates(
+def duplicate_pairs(
     activities: Iterable[Activity], contents: Mapping[UUID, Set[ContentKey]] | None = None
-) -> set[UUID]:
-    """`contents` maps an activity id to the (document, text hash) pairs of its evidences."""
+) -> list[tuple[UUID, UUID]]:
+    """`(duplicate, original)` for each duplicate, in creation order of the duplicate.
+
+    The original is the first earlier activity that matches it. `contents` maps an activity id
+    to the (document, text hash) pairs of its evidences.
+    """
     contents = contents or {}
     dated = [
         a
@@ -70,7 +74,7 @@ def find_duplicates(
     ordered = sorted(dated, key=_creation_order)
     titles = {a.id: normalize_title(a.title) for a in ordered}
 
-    duplicates: set[UUID] = set()
+    pairs: list[tuple[UUID, UUID]] = []
     for index, later in enumerate(ordered):
         if (later.distinct_justification or "").strip():
             continue
@@ -89,6 +93,42 @@ def find_duplicates(
                     and _shares_content(contents.get(earlier.id, ()), contents.get(later.id, ()))
                 )
             ):
-                duplicates.add(later.id)
+                pairs.append((later.id, earlier.id))
                 break
-    return duplicates
+    return pairs
+
+
+def find_duplicates(
+    activities: Iterable[Activity], contents: Mapping[UUID, Set[ContentKey]] | None = None
+) -> set[UUID]:
+    """`contents` maps an activity id to the (document, text hash) pairs of its evidences."""
+    return {duplicate for duplicate, _ in duplicate_pairs(activities, contents)}
+
+
+def duplicate_groups(
+    activities: Iterable[Activity], contents: Mapping[UUID, Set[ContentKey]] | None = None
+) -> list[tuple[Activity, ...]]:
+    """The activities that are duplicates of one another, a chain A~B, B~C in one group (DUP-01).
+
+    Each group lists its activities in creation order, and the groups come ordered by the
+    creation of their first activity.
+    """
+    activities = list(activities)
+    pairs = duplicate_pairs(activities, contents)
+    parent = {a.id: a.id for a in activities}
+
+    def root(activity_id: UUID) -> UUID:
+        while parent[activity_id] != activity_id:
+            parent[activity_id] = parent[parent[activity_id]]
+            activity_id = parent[activity_id]
+        return activity_id
+
+    for duplicate, original in pairs:
+        parent[root(duplicate)] = root(original)
+
+    members = {activity_id for pair in pairs for activity_id in pair}
+    grouped: dict[UUID, list[Activity]] = {}
+    for activity in sorted(activities, key=_creation_order):
+        if activity.id in members:
+            grouped.setdefault(root(activity.id), []).append(activity)
+    return sorted((tuple(group) for group in grouped.values()), key=lambda g: _creation_order(g[0]))
