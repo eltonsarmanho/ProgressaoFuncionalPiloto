@@ -138,6 +138,14 @@
 - **Date**: 2026-11-18
 - **Status**: superseded in part by AD-019 (atividades editadas ou validadas); o seletor da Etapa 3 e o `DOCENTE_DIVERGENTE` seguem valendo
 
+### AD-018
+- **Decision**: O processo passa a poder ser arquivado e excluído do Painel. Excluir é definitivo, só para ADMIN ou dono, em qualquer status, com confirmação que lista o que sai (documentos de entrada, atividades, documentos gerados); apaga na mesma transação tudo o que depende do processo e, depois do commit, os arquivos do disco; a auditoria guarda o evento `DELETE` com os valores anteriores e nunca é apagada. Documento em leitura, geração ou redação em andamento recusa a exclusão (409 `OPERACAO_EM_ANDAMENTO`). Docente e unidade permanecem.
+- **Reason**: Pedido do usuário em 2026-11-18 e 2026-11-19 ("Aplique Mudança de Deletar e Arquivar no menu principal"). Revisa a linha "arquivamento em vez de exclusão" da `fundacao` para processos.
+- **Trade-off**: Não há lixeira nem desarquivar. A migração `0007` troca a função dos gatilhos de imutabilidade dos documentos gerados para deixar passar o `DELETE` só sob `app.process_purge`; o valor `DELETE` de `audit_action` não se desfaz. O botão Excluir aparece para todos e o 403 vira mensagem no modal, porque o resumo do processo não traz o dono.
+- **Scope**: `gestao-processos`
+- **Date**: 2026-11-19
+- **Status**: active
+
 ### AD-019
 - **Decision**: Quando o reprocessamento torna um documento fora do interstício, o sistema rejeita, com auditoria (`DOCUMENTO_FORA_DO_INTERSTICIO`), todas as atividades ligadas só a esse documento, inclusive as já editadas ou validadas pelo usuário; a atividade que tem também evidência de outro documento permanece, sem a evidência do documento fora. Substitui a parte de AD-017 que mantinha as atividades editadas ou validadas.
 - **Reason**: Pedido do usuário em 2026-11-18 ("Remover"): o documento fora do interstício é identificado só na Etapa 2 e não segue para as próximas etapas.

@@ -238,7 +238,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | Idempotency / retry / duplicate handling | DOC-03 (SIAPE único); criação de processo não é idempotente por desenho (Res. 4.644, art. 6º permite processos simultâneos) |
 | Auth boundaries & rate limits | AUTH-03, AUTH-04, AUTH-06, AUTH-08, AUTH-09 |
 | Concurrency / ordering | Edge case de gravação simultânea (409) |
-| Data lifecycle / expiry | AUTH-05 (sessão); arquivamento em vez de exclusão para docente/processo/unidade; retenção de auditoria sem expiração nesta feature |
+| Data lifecycle / expiry | AUTH-05 (sessão); arquivamento em vez de exclusão para docente/unidade; o processo também pode ser excluído definitivamente (AD-018, `gestao-processos`); retenção de auditoria sem expiração nesta feature |
 | Observability | AUD-04 (logs sem dados pessoais); INFRA-01 (health check) |
 | External-dependency failure | N/A because a fundação não chama serviços externos (MariTalk entra em `inteligencia-documental`); postgres coberto por INFRA-03 |
 | State-transition integrity | PROC-12, PROC-13; transições de status listadas em Assumptions |

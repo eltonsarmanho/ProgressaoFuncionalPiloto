@@ -18,6 +18,7 @@ Use exclusivamente a skill `tlc-spec-driven` (Specify → Design → Tasks → E
 6. **Confiança.** Confiança do documento acima de 70% só tira o aviso de revisão na tela; nada é validado sozinho.
 7. **Pontuação manual.** Quando a pontuação não vem do cálculo automático, o usuário informa o valor unitário à mão (`unit_points_override`).
 8. **Conclusão do processo.** Depois de gerar os três documentos finais, o usuário pode concluir e excluir os documentos de entrada para liberar espaço no servidor; os documentos gerados e o histórico ficam.
+9. **Arquivar e excluir processo.** Pelo Painel, o ADMIN ou o dono arquiva (somente leitura) ou exclui o processo. A exclusão é definitiva e pede confirmação com a lista do que sai: apaga documentos, arquivos, atividades e documentos gerados, mantém a auditoria e é recusada enquanto houver leitura, geração ou redação em andamento. Docente e unidade permanecem.
 
 ## Dados e segurança
 
