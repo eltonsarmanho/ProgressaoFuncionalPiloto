@@ -44,8 +44,10 @@ def test_three_selected_drafts_become_validated_with_the_same_justification_and_
 
     result = bulk.execute(world.docente, world.process.id, [a.id for a in drafts], "Conferi todas")
 
-    assert [a.status for a in result] == [ActivityStatus.VALIDADA] * 3
-    assert [a.id for a in result] == [a.id for a in drafts]
+    # VAL-04: the use case answers {activities, skipped}; the validated ones are in `activities`
+    assert [a.status for a in result.activities] == [ActivityStatus.VALIDADA] * 3
+    assert [a.id for a in result.activities] == [a.id for a in drafts]
+    assert result.skipped == []
     for activity in drafts:
         assert reload(world, activity).status is ActivityStatus.VALIDADA
         created, status_event = audit_of(world, activity)
@@ -127,7 +129,7 @@ def test_already_validated_activities_are_left_alone_and_get_no_new_event(world,
 
     result = bulk.execute(world.docente, world.process.id, [pending.id, done.id], "Agora")
 
-    assert [a.status for a in result] == [ActivityStatus.VALIDADA] * 2
+    assert [a.status for a in result.activities] == [ActivityStatus.VALIDADA] * 2  # VAL-04
     assert len(audit_of(world, done)) == 2  # creation and the earlier validation
     assert audit_of(world, done)[-1].justification == "Antes"
     assert len(audit_of(world, pending)) == 2
@@ -138,7 +140,7 @@ def test_a_repeated_id_is_validated_once(world, bulk):
 
     result = bulk.execute(world.docente, world.process.id, [only.id, only.id], "Conferi")
 
-    assert len(result) == 1
+    assert len(result.activities) == 1  # VAL-04: the result is {activities, skipped}
     assert len(audit_of(world, only)) == 2
 
 

@@ -537,6 +537,23 @@ class ChangeActivityStatus(_ExistingActivityUseCase):
             return uow.activities.get(activity_id)
 
 
+@dataclass(frozen=True)
+class SkippedActivity:
+    """An activity the batch left as it was: `reason` is `SEM_CATEGORIA` or the reason of the
+    validity (`FORA_DO_INTERSTICIO`, `REJEITADA`, ...)."""
+
+    id: UUID
+    reason: str
+
+
+@dataclass(frozen=True)
+class BulkValidation:
+    """`activities` are the selected ones that are validated now; `skipped` the ones left out."""
+
+    activities: list[Activity]
+    skipped: list[SkippedActivity]
+
+
 class BulkValidateActivities(_ActivityUseCase):
     def execute(
         self,
@@ -544,18 +561,19 @@ class BulkValidateActivities(_ActivityUseCase):
         process_id: UUID,
         activity_ids: Sequence[UUID],
         justification: str | None,
-    ) -> list[Activity]:
+    ) -> BulkValidation:
         """Validates the selected activities with one audit event each (UIM-14).
 
         The justification is optional; when sent, it goes into every event.
 
-        All or nothing, in one unit of work: an activity of another process (404) or a version
-        changed by someone else (409) anywhere in the list validates none (REV-04, VER-09).
-        The ones already validated are left alone. A validation only happens here, on an
-        explicit call (REV-03).
+        The ones that cannot be validated (no category, or not valid) are not validated and come
+        back in `skipped` with the reason (VAL-04). An activity of another process (404) or a
+        version changed by someone else (409) anywhere in the list validates none, all in one
+        unit of work (REV-04, VER-09). The ones already validated are left alone. A validation
+        only happens here, on an explicit call (REV-03).
         """
         with self._uow_factory() as uow:
-            self._writable(uow, actor, process_id)
+            process = self._writable(uow, actor, process_id)
             justification = (justification or "").strip() or None
             selected = []
             for activity_id in dict.fromkeys(activity_ids):
@@ -563,24 +581,31 @@ class BulkValidateActivities(_ActivityUseCase):
                 if activity is None or activity.process_id != process_id:
                     raise NotFound(ACTIVITY_NOT_FOUND)
                 selected.append(activity)
+            classify = _classifier(uow, process)
+            validated: list[Activity] = []
+            skipped: list[SkippedActivity] = []
             for current in selected:
-                if current.status is ActivityStatus.VALIDADA:
-                    continue
-                uow.activities.update(
-                    replace(current, status=ActivityStatus.VALIDADA), current.version
-                )
-                self._audit.record(
-                    uow,
-                    actor.id,
-                    ACTIVITY_ENTITY,
-                    current.id,
-                    AuditAction.STATUS,
-                    {"status": current.status},
-                    {"status": ActivityStatus.VALIDADA},
-                    justification,
-                )
+                if current.status is not ActivityStatus.VALIDADA:
+                    reason = _skip_reason(classify(current))
+                    if reason is not None:
+                        skipped.append(SkippedActivity(current.id, reason))
+                        continue
+                    uow.activities.update(
+                        replace(current, status=ActivityStatus.VALIDADA), current.version
+                    )
+                    self._audit.record(
+                        uow,
+                        actor.id,
+                        ACTIVITY_ENTITY,
+                        current.id,
+                        AuditAction.STATUS,
+                        {"status": current.status},
+                        {"status": ActivityStatus.VALIDADA},
+                        justification,
+                    )
+                validated.append(current)
             uow.commit()
-            return [uow.activities.get(a.id) for a in selected]
+            return BulkValidation([uow.activities.get(a.id) for a in validated], skipped)
 
 
 class MarkActivitiesDistinct(_ExistingActivityUseCase):

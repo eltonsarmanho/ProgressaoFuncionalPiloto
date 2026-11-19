@@ -75,7 +75,7 @@ async def validate_batch(
         body.activity_ids,
         body.justificativa,
     )
-    return await _present(container, validated)
+    return await _present(container, validated.activities)
 
 
 @router.post("/processes/{process_id}/activities/merge-duplicates", response_model=MergeOut)

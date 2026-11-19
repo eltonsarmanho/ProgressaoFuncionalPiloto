@@ -594,6 +594,8 @@ T42 → T43 → T44
 
 ### T18: Validação em lote com `skipped`
 
+**Status**: Done
+
 **What**: `BulkValidateActivities` valida as que podem e devolve `skipped` com o motivo das que ficaram de fora; versão alterada (409) e atividade de outro processo (404) continuam derrubando tudo.
 **Where**: `backend/app/application/use_cases/scoring.py` (modify)
 **Depends on**: T17
@@ -607,9 +609,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_bulk_validate_skipped.py`: um lote com 3 atividades com categoria e 2 sem valida as 3 e devolve as 2 em `skipped` com o motivo `SEM_CATEGORIA`; uma não válida entra em `skipped` com o motivo da validade; um 409 de versão alterada não valida nenhuma; "Validar as confiáveis" (mesma rota) segue a regra
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `backend/tests/integration/test_bulk_validate_skipped.py`: um lote com 3 atividades com categoria e 2 sem valida as 3 e devolve as 2 em `skipped` com o motivo `SEM_CATEGORIA`; uma não válida entra em `skipped` com o motivo da validade; um 409 de versão alterada não valida nenhuma; "Validar as confiáveis" (mesma rota) segue a regra
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: integration
 **Gate**: full
