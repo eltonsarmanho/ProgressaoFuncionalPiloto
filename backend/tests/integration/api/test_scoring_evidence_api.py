@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import date
+from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
@@ -34,11 +35,11 @@ def test_scoring_rows_carry_evidence_count_and_the_counter_follows_the_links(
     choose(client, headers, process, scoring_tables["OFICIAL"])
     linked = add_activity(
         uow_factory, process, title="Com vinculo", group_number=2, item_number=7,
-        event_date=date(2023, 5, 10),
+        event_date=date(2023, 5, 10), quantity=Decimal(1),
     )  # fmt: skip
     add_activity(
         uow_factory, process, title="Sem nada", group_number=2, item_number=8,
-        event_date=date(2023, 6, 10),
+        event_date=date(2023, 6, 10), quantity=Decimal(1),
     )  # fmt: skip
     with uow_factory() as uow:
         admin_id = uow.users.get_by_email("admin@ufpa.br").id

@@ -227,6 +227,8 @@ T42 → T43 → T44
 
 ### T5: A Etapa 4 usa a validade, com e sem tabela
 
+**Status**: Done
+
 **What**: `compute_process_score` e `_without_table` trazem só as atividades válidas nas linhas e nos contadores e repassam o mapa `validity` no resultado.
 **Where**: `backend/app/application/use_cases/scoring.py` (modify)
 **Depends on**: T2
@@ -240,9 +242,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_scoring_validity_api.py`: uma co-orientação de mestrado com categoria II.5, validada, aparece na Etapa 4 com 8,00 pontos sem outra ação; uma atividade fora do interstício, uma rejeitada e uma com carga insuficiente não aparecem nas linhas nem nos contadores; sem tabela escolhida, só as válidas contam e as demais não entram; trocar a data de uma atividade fora para dentro a inclui no cálculo seguinte
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam; os de `test_scoring_process_api.py` ajustados só nos casos de SEG-01 anotados
+- [x] Testes primeiro em `backend/tests/integration/api/test_scoring_validity_api.py`: uma co-orientação de mestrado com categoria II.5, validada, aparece na Etapa 4 com 8,00 pontos sem outra ação; uma atividade fora do interstício, uma rejeitada e uma com carga insuficiente não aparecem nas linhas nem nos contadores; sem tabela escolhida, só as válidas contam e as demais não entram; trocar a data de uma atividade fora para dentro a inclui no cálculo seguinte
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; os de `test_scoring_process_api.py` ajustados só nos casos de SEG-01 anotados
 
 **Tests**: integration
 **Gate**: full

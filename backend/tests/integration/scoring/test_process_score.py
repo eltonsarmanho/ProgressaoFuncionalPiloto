@@ -106,8 +106,8 @@ def test_result_has_subtotals_total_potential_rows_and_pending_table_alert(offic
 
 def test_counters_count_alerts_and_not_scored(official_chosen):
     world = official_chosen
-    add(world, "Com comprovante", 2, 7, evidence_note="ok")
-    add(world, "Sem comprovante", 2, 8)
+    add(world, "Com comprovante", 2, 7, evidence_note="ok", quantity=D("1"))
+    add(world, "Sem comprovante", 2, 8, quantity=D("1"))
     add(world, "Sem categoria", None, None, evidence_note="ok")
     # SEG-01: an activity outside the interstice is not valid and is not counted
     add(world, "Fora", 2, 9, event_date=date(2020, 1, 1), evidence_note="ok")

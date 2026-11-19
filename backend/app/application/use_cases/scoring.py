@@ -31,6 +31,7 @@ from app.domain.entities.scoring import ScoringMode, ScoringTableVersion
 from app.domain.entities.user import User
 from app.domain.errors import Conflict, NotFound, StaleVersion, ValidationFailed
 from app.domain.repositories.ports import UnitOfWork
+from app.domain.rules.activity_validity import classify_activity
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.process_verification import Alert
 from app.domain.rules.scoring_alerts import NotScoredReason
@@ -585,8 +586,16 @@ class ProcessScore:
     minimum: MinimumComparison
 
 
-def _without_table(activities: list[Activity], evidence_counts: dict[UUID, int]) -> ScoringResult:
-    """No table chosen: total 0 and every activity not scored with reason SEM_TABELA."""
+def _without_table(
+    activities: list[Activity], evidence_counts: dict[UUID, int], interstice: Interstice
+) -> ScoringResult:
+    """No table chosen: total 0 and every valid activity not scored with reason SEM_TABELA.
+
+    The activities that are not valid (rejected, outside the interstice) do not enter either; the
+    validity without a table leaves out what depends on it (hours, group, duplicates) (SEG-04).
+    """
+    validity = {a.id: classify_activity(a, None, interstice, set()) for a in activities}
+    valid = [a for a in activities if validity[a.id].is_valid]
     rows = tuple(
         ScoringRow(
             activity_id=a.id,
@@ -600,18 +609,19 @@ def _without_table(activities: list[Activity], evidence_counts: dict[UUID, int])
             reasons=(NotScoredReason.SEM_TABELA,),
             evidence_count=evidence_counts.get(a.id, 0),
         )
-        for a in activities
+        for a in valid
     )
     counters = Counters(
-        activities=len(activities),
-        with_evidence=sum(1 for a in activities if has_evidence(a, evidence_counts.get(a.id, 0))),
-        pending=sum(1 for a in activities if a.status is ActivityStatus.AGUARDANDO_REVISAO),
-        not_scored=len(activities),
+        activities=len(valid),
+        with_evidence=sum(1 for a in valid if has_evidence(a, evidence_counts.get(a.id, 0))),
+        pending=sum(1 for a in valid if a.status is ActivityStatus.AGUARDANDO_REVISAO),
+        not_scored=len(valid),
         with_alerts=0,
     )
     return ScoringResult(
-        rows, {number: ZERO for number in GROUPS}, ZERO, ZERO, None, counters, ()
-    )
+        rows, {number: ZERO for number in GROUPS}, ZERO, ZERO, None, counters, (),
+        validity=validity,
+    )  # fmt: skip
 
 
 def compute_process_score(uow: UnitOfWork, process: FunctionalProcess) -> ProcessScore:
@@ -631,7 +641,9 @@ def compute_process_score(uow: UnitOfWork, process: FunctionalProcess) -> Proces
             process.id,
             None,
             state.suggested,
-            _without_table(activities, evidence_counts),
+            _without_table(
+                activities, evidence_counts, Interstice(process.start_date, process.end_date)
+            ),
             tuple(activities),
             state.alerts,
             no_table,

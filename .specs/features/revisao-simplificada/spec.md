@@ -185,8 +185,8 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| VAL-01 | P1: Validar pontua | Design | Implementing |
-| VAL-02 | P1: Validar pontua | Design | Implemented |
+| VAL-01 | P1: Validar pontua | Design | Implemented |
+| VAL-02 | P1: Validar pontua | Design | Implementing |
 | VAL-03 | P1: Validar pontua | Design | Pending |
 | VAL-04 | P1: Validar pontua | Design | Pending |
 | VAL-05 | P1: Validar pontua | Design | Pending |
@@ -213,7 +213,7 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 | SEG-01 | P1: Só as válidas seguem | Design | Implementing |
 | SEG-02 | P1: Só as válidas seguem | Design | Pending |
 | SEG-03 | P1: Só as válidas seguem | Design | Implementing |
-| SEG-04 | P1: Só as válidas seguem | Design | Implementing |
+| SEG-04 | P1: Só as válidas seguem | Design | Implemented |
 | SEG-05 | P1: Só as válidas seguem | Design | Pending |
 | EDT-01 | P1: Editar atividade com poucos campos | Design | Pending |
 | EDT-02 | P1: Editar atividade com poucos campos | Design | Pending |
