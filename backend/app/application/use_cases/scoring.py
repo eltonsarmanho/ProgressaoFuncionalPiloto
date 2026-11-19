@@ -706,6 +706,38 @@ def _listing_order(activity: Activity):
     )
 
 
+@dataclass(frozen=True)
+class ActivityListing:
+    """The activities of a process as the Etapa 3 shows them (SEC-02, SEC-06..SEC-09).
+
+    `activities` are the ones to list, without the merged ones. The maps are by activity id:
+    `validity` (of the whole process, whatever the filters), `merged` (the duplicates merged into
+    an activity, only for the ones that have any) and `predicted_points` (what the activity
+    scores or would score once validated; absent when it has no category, is not valid, belongs
+    to the group outside the total or the process has no table).
+    """
+
+    activities: list[Activity]
+    validity: dict[UUID, Validity]
+    merged: dict[UUID, list[Activity]]
+    predicted_points: dict[UUID, Decimal]
+
+
+def _describe_process(uow: UnitOfWork, process: FunctionalProcess) -> ActivityListing:
+    """Everything of the process in one calculation: validity, merged ones and the prediction."""
+    score = compute_process_score(uow, process)
+    merged: dict[UUID, list[Activity]] = {}
+    for activity in uow.activities.list_for_process(process.id, include_merged=True):
+        if activity.merged_into_id is not None:
+            merged.setdefault(activity.merged_into_id, []).append(activity)
+    predicted = {
+        row.activity_id: row.points
+        for row in score.result.rows
+        if row.status in (RowStatus.PONTUADA, RowStatus.POTENCIAL) and row.pit_hours is None
+    }
+    return ActivityListing(list(score.activities), score.result.validity, merged, predicted)
+
+
 class ListActivities(_ScoringUseCase):
     def execute(
         self,
@@ -713,12 +745,22 @@ class ListActivities(_ScoringUseCase):
         process_id: UUID,
         group_number: int | None = None,
         status: ActivityStatus | None = None,
-    ) -> list[Activity]:
-        """All activities of the process by group, item and date; unclassified ones last."""
+    ) -> ActivityListing:
+        """All activities of the process by group, item and date; unclassified ones last.
+
+        The merged activities are not listed; each kept one carries them. The validity is the one
+        of the engine (AD-006: computed on demand), so a corrected activity comes back valid.
+        """
         with self._uow_factory() as uow:
-            self._readable(uow, actor, process_id)
-            found = uow.activities.list_for_process(process_id, group_number, status)
-            return sorted(found, key=_listing_order)
+            process = self._readable(uow, actor, process_id)
+            described = _describe_process(uow, process)
+            kept = [
+                a
+                for a in described.activities
+                if (group_number is None or a.group_number == group_number)
+                and (status is None or a.status is status)
+            ]
+            return replace(described, activities=kept)
 
 
 @dataclass(frozen=True)
@@ -823,10 +865,19 @@ class CalculateProcessScore(_ScoringUseCase):
 
 
 class GetActivity(_ScoringUseCase):
-    def execute(self, actor: User, activity_id: UUID) -> Activity:
+    def execute(self, actor: User, activity_id: UUID) -> ActivityListing:
+        """One activity with the same description as in the list."""
         with self._uow_factory() as uow:
             activity = uow.activities.get(activity_id)
             if activity is None:
                 raise NotFound(ACTIVITY_NOT_FOUND)
-            self._readable(uow, actor, activity.process_id)
-            return activity
+            process = self._readable(uow, actor, activity.process_id)
+            described = _describe_process(uow, process)
+            if activity.id in described.validity:
+                return replace(
+                    described,
+                    activities=[a for a in described.activities if a.id == activity.id],
+                )
+            # a merged activity is not in the list: it is described on its own
+            validity = {activity.id: _classifier(uow, process)(activity)}
+            return ActivityListing([activity], validity, {}, {})

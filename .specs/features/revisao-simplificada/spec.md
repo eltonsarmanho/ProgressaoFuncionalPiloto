@@ -198,8 +198,8 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 | SEC-05 | P1: Etapa 3 em duas seções | Design | Pending |
 | SEC-06 | P1: Etapa 3 em duas seções | Design | Implementing |
 | SEC-07 | P1: Etapa 3 em duas seções | Design | Implementing |
-| SEC-08 | P1: Etapa 3 em duas seções | Design | Pending |
-| SEC-09 | P1: Etapa 3 em duas seções | Design | Pending |
+| SEC-08 | P1: Etapa 3 em duas seções | Design | Implementing |
+| SEC-09 | P1: Etapa 3 em duas seções | Design | Implementing |
 | SEC-10 | P1: Etapa 3 em duas seções | Design | Pending |
 | SEC-11 | P1: Etapa 3 em duas seções | Design | Pending |
 | SEC-12 | P1: Etapa 3 em duas seções | Design | Pending |

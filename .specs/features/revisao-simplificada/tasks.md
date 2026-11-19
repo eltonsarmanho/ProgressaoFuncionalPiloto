@@ -790,6 +790,8 @@ T42 → T43 → T44
 
 ### T25: `ListActivities` devolve a validade
 
+**Status**: Done
+
 **What**: O caso de uso devolve cada atividade com a validade, as mescladas nela e os pontos previstos (da linha de cálculo, sem exigir validação); as mescladas não aparecem como linhas.
 **Where**: `backend/app/application/use_cases/scoring.py` (modify)
 **Depends on**: T24, T22
@@ -803,9 +805,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_list_activities_validity.py`: cada motivo (rejeitada, fora do interstício, carga insuficiente) sai com `reason` e `params` corretos; sem categoria sai `VALIDA` com `needs_category`; `predicted_points` traz o valor previsto para atividade aguardando validação com categoria e nulo sem categoria; as mescladas ficam fora da lista e a mantida traz `merged`; ao corrigir uma atividade não válida, a listagem seguinte a traz como válida; reabrir uma rejeitada a devolve a `AGUARDANDO_REVISAO` e válida; sem tabela escolhida a validade sai sem carga horária e sem grupo
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `backend/tests/integration/test_list_activities_validity.py`: cada motivo (rejeitada, fora do interstício, carga insuficiente) sai com `reason` e `params` corretos; sem categoria sai `VALIDA` com `needs_category`; `predicted_points` traz o valor previsto para atividade aguardando validação com categoria e nulo sem categoria; as mescladas ficam fora da lista e a mantida traz `merged`; ao corrigir uma atividade não válida, a listagem seguinte a traz como válida; reabrir uma rejeitada a devolve a `AGUARDANDO_REVISAO` e válida; sem tabela escolhida a validade sai sem carga horária e sem grupo
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: integration
 **Gate**: full

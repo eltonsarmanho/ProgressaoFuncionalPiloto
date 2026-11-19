@@ -50,7 +50,7 @@ async def list_activities(
     found = await run_in_threadpool(
         container.list_activities.execute, actor, process_id, group, status
     )
-    return await _present(container, found)
+    return await _present(container, found.activities)
 
 
 @router.post("/processes/{process_id}/activities", response_model=ActivityOut, status_code=201)
@@ -110,8 +110,8 @@ async def separate_activity(
 
 @router.get("/activities/{activity_id}", response_model=ActivityOut)
 async def get_activity(activity_id: UUID, actor: UserDep, container: ContainerDep) -> ActivityOut:
-    activity = await run_in_threadpool(container.get_activity.execute, actor, activity_id)
-    return (await _present(container, [activity]))[0]
+    found = await run_in_threadpool(container.get_activity.execute, actor, activity_id)
+    return (await _present(container, found.activities))[0]
 
 
 @router.put("/activities/{activity_id}", response_model=ActivityOut)

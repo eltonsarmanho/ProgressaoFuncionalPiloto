@@ -122,6 +122,7 @@ def world(uow_factory):
         change_status=scoring.ChangeActivityStatus(uow_factory, audit, policy),
         mark_distinct=scoring.MarkActivitiesDistinct(uow_factory, audit, policy),
         list_activities=scoring.ListActivities(uow_factory, audit, policy),
+        get_activity=scoring.GetActivity(uow_factory, audit, policy),
         calc=scoring.CalculateProcessScore(uow_factory, audit, policy),
     )
 
