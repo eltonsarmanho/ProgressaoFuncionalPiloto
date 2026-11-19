@@ -15,7 +15,7 @@ from app.domain.entities.scoring import (
 )
 from app.domain.rules.activity_validity import InvalidReason, ValidityState
 from app.domain.rules.interstice import Interstice
-from app.domain.rules.scoring_alerts import NotScoredReason
+from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
 from app.domain.rules.scoring_engine import RowStatus, calculate
 
 D = Decimal
@@ -175,3 +175,87 @@ def test_the_result_carries_the_validity_of_every_activity():
     assert result.validity[found["duplicate"].id].reason is InvalidReason.DUPLICIDADE
     assert result.validity[found["first"].id].state is ValidityState.VALIDA
     assert result.validity[uncategorized.id].needs_category is True
+
+
+# --- the quantity assumed to be one (VAL-02) -----------------------------------------------
+
+ASSUMED = ScoringAlertCode.QUANTIDADE_ASSUMIDA
+
+QUANTITY_TABLE = ScoringTableVersion(
+    table_id=None,
+    name="Tabela de teste",
+    valid_from=date(2020, 1, 1),
+    valid_to=None,
+    norm_reference="Res. 4.644/2015-CONSEPE, Anexo I",
+    status=TableStatus.OFICIAL,
+    groups=(
+        ScoringGroup(
+            2, "Grupo 2", True, None,
+            (
+                ScoringCriterion(2, 7, "por unidade", "por aluno", ScoringMode.POR_UNIDADE,
+                                 unit_points=D("8")),
+                ScoringCriterion(2, 8, "por bloco", "por bloco", ScoringMode.POR_BLOCO_DE_HORAS,
+                                 unit_points=D("2"), hours_per_block=D("10")),
+                ScoringCriterion(2, 9, "por ano", "por ano de função", ScoringMode.POR_UNIDADE,
+                                 unit_points=D("4")),
+                ScoringCriterion(2, 10, "informado", "valor informado", ScoringMode.VALOR_INFORMADO,
+                                 max_points=D("30")),
+            ),
+        ),
+    ),
+)  # fmt: skip
+
+
+def alert_codes(result, activity):
+    return [a.code for a in row_of(result, activity).alerts]
+
+
+def row_of(result, activity):
+    return next(r for r in result.rows if r.activity_id == activity.id)
+
+
+def without_quantity(item, **kwargs) -> Activity:
+    made = act(item=item, **kwargs)
+    made.quantity = None
+    return made
+
+
+def test_a_per_unit_item_without_quantity_scores_one_unit_with_the_alert():
+    a = without_quantity(7)
+
+    result = calculate(QUANTITY_TABLE, [a], INTERSTICE)
+
+    assert row_of(result, a).points == D("8")
+    assert row_of(result, a).effective_quantity == D("1")
+    assert ASSUMED in alert_codes(result, a)
+
+
+def test_the_alert_is_a_warning_with_a_message_and_the_norm_reference():
+    a = without_quantity(7)
+
+    result = calculate(QUANTITY_TABLE, [a], INTERSTICE)
+
+    alert = next(x for x in row_of(result, a).alerts if x.code is ASSUMED)
+    assert alert.severity.value == "ALERTA"
+    assert alert.message
+    assert alert.norm_reference == "Res. 4.644/2015-CONSEPE, Anexo I"
+
+
+def test_a_per_unit_item_with_the_quantity_informed_has_no_alert():
+    a = act(item=7, quantity="3")
+
+    result = calculate(QUANTITY_TABLE, [a], INTERSTICE)
+
+    assert row_of(result, a).points == D("24")
+    assert ASSUMED not in alert_codes(result, a)
+
+
+def test_the_alert_is_only_for_per_unit_items():
+    block = without_quantity(8, hours=D("30"))
+    yearly = without_quantity(9)
+    informed = without_quantity(10, informed_points=D("5"))
+
+    result = calculate(QUANTITY_TABLE, [block, yearly, informed], INTERSTICE)
+
+    for a in (block, yearly, informed):
+        assert ASSUMED not in alert_codes(result, a)

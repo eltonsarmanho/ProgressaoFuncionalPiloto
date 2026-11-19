@@ -199,6 +199,8 @@ T42 → T43 → T44
 
 ### T4: O motor emite `QUANTIDADE_ASSUMIDA`
 
+**Status**: Done
+
 **What**: Quando o item é por unidade e a atividade não tem quantidade, a linha pontua com quantidade 1 e carrega o alerta `QUANTIDADE_ASSUMIDA`.
 **Where**: `backend/app/domain/rules/scoring_engine.py` (modify)
 **Depends on**: T2, T3
@@ -212,9 +214,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_scoring_engine_validity.py`: item por unidade sem quantidade → pontos de 1 unidade e o alerta; com quantidade informada → sem o alerta; item por bloco, por hora e por ano sem quantidade → sem o alerta (a regra é só do item por unidade)
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `backend/tests/unit/domain/test_scoring_engine_validity.py`: item por unidade sem quantidade → pontos de 1 unidade e o alerta; com quantidade informada → sem o alerta; item por bloco, por hora e por ano sem quantidade → sem o alerta (a regra é só do item por unidade)
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick

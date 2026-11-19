@@ -25,6 +25,7 @@ from uuid import UUID
 from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.entities.scoring import (
     ScoringCriterion,
+    ScoringMode,
     ScoringTableVersion,
     is_pit_criterion,
 )
@@ -193,6 +194,9 @@ def _evaluate(
             "fim do interstício, no máximo a quantidade informada."
         )
         alerts.append(_row_alert(ScoringAlertCode.DATA_FIM_AUSENTE, message, version))
+    if criterion.mode is ScoringMode.POR_UNIDADE and not yearly and activity.quantity is None:
+        message = "A atividade não tem quantidade; pontuada com 1 unidade."
+        alerts.append(_row_alert(ScoringAlertCode.QUANTIDADE_ASSUMIDA, message, version))
     if missing_hours:
         message = (
             f"O item exige carga horária mínima de {criterion.min_hours:f} h e as horas não "
