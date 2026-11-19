@@ -130,6 +130,7 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 2. The system SHALL não incluir no Comprovante páginas cuja única atividade é não válida ou mesclada  <!-- ubiquitous -->
 3. WHEN o docente corrige uma atividade não válida e ela passa a válida THEN the system SHALL incluí-la no cálculo e nas gerações seguintes  <!-- event-driven -->
 4. WHEN a Etapa 4 mostra os contadores THEN the frontend SHALL contá-los só sobre as atividades válidas  <!-- event-driven -->
+5. IF há atividade válida sem categoria THEN the system SHALL recusar a geração da Tabela, do Relatório e do Comprovante com 422 `ATIVIDADE_SEM_CATEGORIA`  <!-- unwanted-behavior -->
 
 **Independent Test**: Gerar a Tabela de um processo com atividades fora do interstício e ver que nenhuma linha delas aparece; corrigir a data de uma e ver a linha na próxima geração.
 
@@ -213,6 +214,7 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 | SEG-02 | P1: Só as válidas seguem | Design | Pending |
 | SEG-03 | P1: Só as válidas seguem | Design | Pending |
 | SEG-04 | P1: Só as válidas seguem | Design | Pending |
+| SEG-05 | P1: Só as válidas seguem | Design | Pending |
 | EDT-01 | P1: Editar atividade com poucos campos | Design | Pending |
 | EDT-02 | P1: Editar atividade com poucos campos | Design | Pending |
 | EDT-03 | P1: Editar atividade com poucos campos | Design | Pending |
@@ -228,7 +230,7 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Implemented → Verified
 
-**Coverage:** 39 total, 0 mapped to tasks, 39 unmapped ⚠️ (a Design e as Tasks mapeiam)
+**Coverage:** 40 total, 0 mapped to tasks, 40 unmapped ⚠️ (a Design e as Tasks mapeiam)
 
 ---
 
