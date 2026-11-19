@@ -216,8 +216,8 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 | SEG-04 | P1: Só as válidas seguem | Design | Implemented |
 | SEG-05 | P1: Só as válidas seguem | Design | Implementing |
 | EDT-01 | P1: Editar atividade com poucos campos | Design | Implemented |
-| EDT-02 | P1: Editar atividade com poucos campos | Design | Implementing |
-| EDT-03 | P1: Editar atividade com poucos campos | Design | Implementing |
+| EDT-02 | P1: Editar atividade com poucos campos | Design | Implemented |
+| EDT-03 | P1: Editar atividade com poucos campos | Design | Implemented |
 | EDT-04 | P1: Editar atividade com poucos campos | Design | Implemented |
 | EDT-05 | P1: Editar atividade com poucos campos | Design | Implemented |
 | EDT-06 | P1: Editar atividade com poucos campos | Design | Implemented |

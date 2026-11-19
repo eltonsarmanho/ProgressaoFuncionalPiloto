@@ -1239,6 +1239,8 @@ T42 → T43 → T44
 
 ### T41: Erros de data no formulário
 
+**Status**: Done
+
 **What**: O erro 422 de data fora do interstício aparece no campo da data com a faixa, e o formulário mantém o que o usuário digitou.
 **Where**: `frontend/src/components/ActivityForm.tsx` (modify)
 **Depends on**: T40
@@ -1252,9 +1254,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ActivityForm.test.tsx`: 422 em `event_date` mostra "A data deve estar entre dd/mm/aaaa e dd/mm/aaaa" no campo; 422 em `period_start` ou `period_end` mostra no campo do período; o formulário não fecha e os valores seguem; 409 mostra a mensagem de versão alterada
-- [ ] Gate check passes: `cd frontend && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/ActivityForm.test.tsx`: 422 em `event_date` mostra "A data deve estar entre dd/mm/aaaa e dd/mm/aaaa" no campo; 422 em `period_start` ou `period_end` mostra no campo do período; o formulário não fecha e os valores seguem; 409 mostra a mensagem de versão alterada
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick

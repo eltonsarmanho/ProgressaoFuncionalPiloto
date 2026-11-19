@@ -234,3 +234,82 @@ describe("EDT-04: atividade nova", () => {
     expect(onSaved).not.toHaveBeenCalled();
   });
 });
+
+describe("EDT-02, EDT-03: erros de data no formulário", () => {
+  const RANGE = "A data deve estar entre 01/01/2024 e 31/12/2025";
+  const issue = (field: string, message = RANGE) => ({ status: 422, body: { detail: [{ field, code: "VALIDACAO", message }] } });
+
+  it("422 em event_date mostra a faixa no campo da data, ligada a ele, com o foco nele", async () => {
+    const { onSaved, user } = edit(SAVED, { "PUT /api/activities/a1": issue("event_date") });
+    await user.clear(screen.getByLabelText("Data"));
+    await user.type(screen.getByLabelText("Data"), "2023-03-15");
+    await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
+    const message = await screen.findByText(RANGE);
+    expect(message).toHaveAttribute("id", "event_date-error");
+    expect(screen.getByLabelText("Data")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText("Data").getAttribute("aria-describedby")).toContain("event_date-error");
+    expect(screen.getByLabelText("Data")).toHaveFocus();
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it("o formulário não fecha nem perde o que foi digitado depois do erro", async () => {
+    const { user } = edit(SAVED, { "PUT /api/activities/a1": issue("event_date") });
+    await user.clear(screen.getByLabelText("Título"));
+    await user.type(screen.getByLabelText("Título"), "Título novo");
+    await user.clear(screen.getByLabelText("Data"));
+    await user.type(screen.getByLabelText("Data"), "2023-03-15");
+    await user.selectOptions(screen.getByLabelText("Categoria"), "3.2");
+    await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
+    await screen.findByText(RANGE);
+    expect(screen.getByRole("form", { name: "Editar atividade" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Título")).toHaveValue("Título novo");
+    expect(screen.getByLabelText("Data")).toHaveValue("2023-03-15");
+    expect(screen.getByLabelText("Categoria")).toHaveValue("3.2");
+    expect(screen.getByRole("button", { name: "Salvar atividade" })).toBeEnabled();
+  });
+
+  it("422 em period_start ou period_end mostra a faixa no campo do período", async () => {
+    const { user } = edit({ ...SAVED, item_number: 9 }, {
+      "PUT /api/activities/a1": {
+        status: 422,
+        body: { detail: [{ field: "period_start", message: RANGE }, { field: "period_end", message: "A data deve estar entre 01/01/2024 e 31/12/2025" }] },
+      },
+    });
+    await user.type(screen.getByLabelText("Início"), "2021-01-01");
+    await user.type(screen.getByLabelText("Fim"), "2021-12-31");
+    await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
+    await screen.findAllByText(RANGE);
+    expect(document.getElementById("period_start-error")).toHaveTextContent(RANGE);
+    expect(document.getElementById("period_end-error")).toHaveTextContent(RANGE);
+    expect(screen.getByLabelText("Início")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText("Início")).toHaveValue("2021-01-01");
+    expect(screen.getByLabelText("Início")).toHaveFocus();
+  });
+
+  it("corrigir a data e salvar de novo limpa o erro", async () => {
+    let fail = true;
+    const { onSaved, user } = edit(SAVED, {
+      "PUT /api/activities/a1": () => (fail ? issue("event_date") : { status: 200, body: SAVED }),
+    });
+    await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
+    await screen.findByText(RANGE);
+    fail = false;
+    await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
+    await vi.waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText(RANGE)).not.toBeInTheDocument();
+  });
+
+  it("422 em campo que o formulário não mostra aparece como alerta, sem sumir", async () => {
+    const { user } = edit(OFFERING, { "PUT /api/activities/g1": issue("academic_period", "Período letivo deve ser AAAA.N") });
+    await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Período letivo deve ser AAAA.N");
+  });
+
+  it("409 mostra a mensagem de versão alterada e mantém o formulário aberto", async () => {
+    const { onSaved, user } = edit(SAVED, { "PUT /api/activities/a1": { status: 409, body: { detail: "A atividade foi alterada; recarregue" } } });
+    await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("A atividade foi alterada; recarregue");
+    expect(screen.getByRole("form", { name: "Editar atividade" })).toBeInTheDocument();
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+});

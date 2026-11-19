@@ -36,9 +36,6 @@ function toForm(a?: Activity): Form {
   };
 }
 
-/** The 422 field names that have an input here; an error for any other is shown as a general alert. */
-const SHOWN = ["title", "group_number", "item_number", "categoria", "event_date", "period_start", "period_end", "quantidade", "horas", "academic_period", "level"];
-
 const number = (v: string): number | string => (Number.isNaN(Number(v)) ? v : Number(v));
 
 /**
@@ -80,6 +77,14 @@ export function ActivityForm({
   const showDates = !offering && !newGroupOne;
   const showHours = showDates && criterion?.min_hours != null;
   const showQuantity = !isEdit && !newGroupOne;
+  /** The 422 field names that have an input right now; an error for any other is shown as a general alert. */
+  const shown = [
+    "title", "group_number", "item_number", "categoria",
+    ...(showDates ? (yearly ? ["period_start", "period_end"] : ["event_date"]) : []),
+    ...(showHours ? ["horas"] : []),
+    ...(showQuantity ? ["quantidade"] : []),
+    ...(newGroupOne ? ["academic_period", "level", "horas"] : []),
+  ];
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -97,11 +102,11 @@ export function ActivityForm({
     else put("item_number", form.item_number === "" ? null : Number(form.item_number));
 
     if (showDates) {
-      const shown = yearly ? ["period_start", "period_end"] : ["event_date"];
-      const hidden = yearly ? ["event_date"] : ["period_start", "period_end"];
-      for (const field of shown) put(field, form[field as keyof Form].trim());
+      const dateFields = yearly ? ["period_start", "period_end"] : ["event_date"];
+      const otherFields = yearly ? ["event_date"] : ["period_start", "period_end"];
+      for (const field of dateFields) put(field, form[field as keyof Form].trim());
       // A date or a period, not both: the one that is not shown goes only when the shown one was filled.
-      if (shown.some((field) => form[field as keyof Form].trim() !== "")) for (const field of hidden) delete body[field];
+      if (dateFields.some((field) => form[field as keyof Form].trim() !== "")) for (const field of otherFields) delete body[field];
     }
     if (showHours) put("horas", form.horas.trim() === "" ? null : number(form.horas.trim()));
     if (showQuantity) put("quantidade", form.quantidade.trim() === "" ? null : number(form.quantidade.trim()));
@@ -121,7 +126,9 @@ export function ActivityForm({
     } catch (err) {
       const byField = fieldErrors(err);
       setErrors(byField);
-      const hidden = Object.entries(byField).find(([field]) => !SHOWN.includes(field));
+      const first = Object.keys(byField).find((field) => shown.includes(field));
+      if (first) document.getElementById(first)?.focus();
+      const hidden = Object.entries(byField).find(([field]) => !shown.includes(field));
       if (Object.keys(byField).length === 0) setError(errorMessage(err));
       else if (hidden) setError(hidden[1]);
     } finally {
