@@ -10,7 +10,6 @@ from app.domain.entities.activity import ActivityStatus
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.document import DocAlertCode, DocumentStatus, RunStatus
 from app.domain.rules.activity_validity import InvalidReason
-from tests.integration.doc_usecases.support import link
 from tests.integration.doc_usecases.test_process_document import (
     banca_payload,
     banca_text,
@@ -214,9 +213,12 @@ def test_an_activity_with_evidence_from_another_document_stays_without_the_outsi
     w = docs.world
     document = process_banca(docs, "fora-depois")
     other = process_banca(docs, "continua")
+    # DUP-04: the second reading gives the same activity, so the reading merges it and the proof
+    # of the other document is already on the shared activity
     shared = activity_of(docs, document)
     validate(w, shared)
-    kept = link(w, shared, other, page=1, excerpt="outro trecho")
+    [kept] = state(docs, other).evidences
+    assert kept.activity_id == shared.id
     [outside_evidence] = state(docs, document).evidences
     set_interstice(docs, AFTER_THE_BANCA)
 

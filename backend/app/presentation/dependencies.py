@@ -312,7 +312,9 @@ def build_container(
         separate_activity=SeparateActivity(uow_factory, audit, policy, merger),
         storage=storage,
         inspector=inspector,
-        process_document=ProcessDocument(uow_factory, audit, storage, analyzer, create_activity),
+        process_document=ProcessDocument(
+            uow_factory, audit, storage, analyzer, create_activity, merger
+        ),
         recover_stuck_jobs=RecoverStuckJobs(uow_factory, audit, clock, settings.max_job_attempts),
         upload_documents=UploadDocuments(
             uow_factory, audit, policy, storage, inspector, clock, limits

@@ -18,6 +18,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
+from app.application.services.activity_merge import MergeDuplicateActivities
 from app.application.services.audit_service import AuditService
 from app.application.services.document_analyzer import (
     AnalysisResult,
@@ -127,12 +128,14 @@ class ProcessDocument:
         storage: FileStorage,
         analyzer: DocumentAnalyzer,
         create_activity: CreateActivity,
+        merger: MergeDuplicateActivities | None = None,
     ):
         self._uow_factory = uow_factory
         self._audit = audit
         self._storage = storage
         self._analyzer = analyzer
         self._create_activity = create_activity
+        self._merger = merger or MergeDuplicateActivities(audit)
 
     def execute(self, job_id: UUID, now: datetime) -> None:
         """Runs one claimed job to its end; never raises for a failure of the document itself.
@@ -155,6 +158,7 @@ class ProcessDocument:
             if run is None:  # deleted while it was processed: nothing is left to finish
                 return
             self._create_suggestions(job, result, run)
+            self._merge_duplicates(job)
             self._finish(job_id, result.status, result.status_code, now)
             logger.info(
                 "document_id=%s job_id=%s status=%s code=%s pages=%d methods=%s "
@@ -349,6 +353,17 @@ class ProcessDocument:
                     },
                 )
                 uow.commit()
+
+    def _merge_duplicates(self, job: _Job) -> None:
+        """Once the activities of the reading are created and linked: a repeated activity of
+        another document, or of this one read again, becomes one with both proofs (DUP-04).
+
+        Its own unit of work, so a failure changes nothing of the merge; the reading (run, pages,
+        activities and links) was committed before and stays.
+        """
+        with self._uow_factory() as uow:
+            self._merger.merge_process(uow, job.process.id, job.uploader.id)
+            uow.commit()
 
     def _create(
         self, job: _Job, suggested: SuggestedActivity, run: ExtractionRun

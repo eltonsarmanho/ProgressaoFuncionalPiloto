@@ -706,6 +706,8 @@ T42 → T43 → T44
 
 ### T22: A leitura de documentos mescla as duplicadas
 
+**Status**: Done
+
 **What**: `ProcessDocument` chama `merge_process` ao fim da leitura e do reprocessamento; a atividade criada de documento fora do interstício nasce e aparece como não válida.
 **Where**: `backend/app/application/use_cases/document_processing.py` (modify)
 **Depends on**: T21
@@ -719,9 +721,9 @@ T42 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_document_merge.py`: dois documentos que levam à mesma atividade resultam em uma só com as duas provas; reprocessar um documento que passa a duplicar mescla; uma atividade lida com data fora do interstício é criada (sem erro) e a validade a classifica como `FORA_DO_INTERSTICIO`; uma falha da mesclagem não perde a leitura do documento (o documento fica em erro tratável, sem atividade pela metade)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam; os de `inteligencia-documental` seguem verdes
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_document_merge.py`: dois documentos que levam à mesma atividade resultam em uma só com as duas provas; reprocessar um documento que passa a duplicar mescla; uma atividade lida com data fora do interstício é criada (sem erro) e a validade a classifica como `FORA_DO_INTERSTICIO`; uma falha da mesclagem não perde a leitura do documento (o documento fica em erro tratável, sem atividade pela metade)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; os de `inteligencia-documental` seguem verdes
 
 **Tests**: integration
 **Gate**: full
