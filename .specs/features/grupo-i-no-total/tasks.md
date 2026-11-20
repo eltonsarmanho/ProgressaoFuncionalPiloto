@@ -612,7 +612,7 @@ graph LR
 
 #### T17: Linhas da pontuação com período, nível e `outside_total`; versões com `superseded_by_id`
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ScoreRowOut` ganha `academic_period`, `level` (da atividade) e `outside_total` (da linha) (D9); `VersionRefOut` ganha `superseded_by_id` (lido da entidade pelo `of_version`, chega a `GET /scoring-tables`, às versões e a `TableRefOut`).
 **Where**: `backend/app/presentation/schemas/scoring.py` (modify)
@@ -627,10 +627,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_scoring_pit_hours_api.py`: com a versão nova, a linha do Grupo I traz `academic_period`, `level`, `outside_total: false` e `pit_hours` igual a `points`; com a versão antiga, `outside_total: true` e `points` "0.00"; linha de outro grupo com `outside_total: false` e `level` nulo
-- [ ] Teste em `backend/tests/integration/api/` (lista de tabelas): `GET /api/scoring-tables` traz `superseded_by_id` preenchido na antiga e nulo na nova
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `backend/tests/integration/api/test_scoring_pit_hours_api.py`: com a versão nova, a linha do Grupo I traz `academic_period`, `level`, `outside_total: false` e `pit_hours` igual a `points`; com a versão antiga, `outside_total: true` e `points` "0.00"; linha de outro grupo com `outside_total: false` e `level` nulo
+- [x] Teste em `backend/tests/integration/api/` (lista de tabelas): `GET /api/scoring-tables` traz `superseded_by_id` preenchido na antiga e nulo na nova
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: integration
 **Gate**: full

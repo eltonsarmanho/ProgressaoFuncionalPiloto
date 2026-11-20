@@ -136,7 +136,7 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 | GI-04 | P1: Grupo I conta no total | Tasks | Implementing |
 | GI-05 | P1: Grupo I conta no total | Tasks | Implementing |
 | GI-06 | P1: Grupo I conta no total | Tasks | Implementing |
-| GI-07 | P1: Grupo I conta no total | Tasks | Implementing |
+| GI-07 | P1: Grupo I conta no total | Implementing | Implementing |
 | GI-08 | P1: Grupo I conta no total | Tasks | Implementing |
 | GI-09 | P1: Grupo I conta no total | Tasks | Implementing |
 | GI-10 | P1: Grupo I conta no total | Tasks | Implementing |
@@ -153,12 +153,12 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 | GRES-01 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
 | GRES-02 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
 | GRES-03 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
-| GRES-04 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
+| GRES-04 | P1: Resumo da Etapa 4 em painel | Tasks | Implementing |
 | GRES-05 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
 | GRES-06 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
 | GRES-07 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
 | GRES-08 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
-| GRES-09 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
+| GRES-09 | P1: Resumo da Etapa 4 em painel | Tasks | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 

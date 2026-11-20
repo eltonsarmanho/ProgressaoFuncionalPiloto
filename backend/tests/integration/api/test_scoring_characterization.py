@@ -24,6 +24,7 @@ ROW_KEYS = {
     "activity_id", "title", "activity_status", "evidence_note", "group_number", "item_number",
     "unit_points", "effective_quantity", "formula_text", "points", "pit_hours", "status",
     "reasons", "alerts", "evidence_count",
+    "outside_total", "academic_period", "level",  # GI-07, GRES-04, GRES-09 (D9)
 }  # fmt: skip
 
 

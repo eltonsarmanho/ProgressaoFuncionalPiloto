@@ -10,7 +10,7 @@ from pydantic import BaseModel, PlainSerializer
 
 from app.application.use_cases.scoring import ProcessScore, TableRef, TableSuggestion
 from app.application.use_cases.scoring_admin import TableView, VersionView
-from app.domain.entities.activity import ActivityStatus
+from app.domain.entities.activity import ActivityStatus, Level
 from app.domain.entities.scoring import (
     ScoringCriterion,
     ScoringGroup,
@@ -73,6 +73,7 @@ class VersionRefOut(BaseModel):
     valid_to: date | None
     norm_reference: str
     status: TableStatus
+    superseded_by_id: UUID | None
 
     @classmethod
     def of_version(cls, v: ScoringTableVersion) -> "VersionRefOut":
@@ -180,6 +181,9 @@ class ScoreRowOut(BaseModel):
     formula_text: str
     points: Money
     pit_hours: Money | None
+    outside_total: bool
+    academic_period: str | None
+    level: Level | None
     status: RowStatus
     reasons: list[NotScoredReason]
     alerts: list[AlertOut]
@@ -253,6 +257,9 @@ class ProcessScoreOut(BaseModel):
                     formula_text=r.formula_text,
                     points=r.points,
                     pit_hours=r.pit_hours,
+                    outside_total=r.outside_total,
+                    academic_period=activities[r.activity_id].academic_period,
+                    level=activities[r.activity_id].level,
                     status=r.status,
                     reasons=list(r.reasons),
                     alerts=[AlertOut.of(a) for a in r.alerts],

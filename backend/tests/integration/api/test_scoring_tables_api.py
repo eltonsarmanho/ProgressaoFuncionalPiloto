@@ -149,3 +149,23 @@ def test_routes_require_a_session(client, scoring_tables):
         f"/api/scoring-versions/{scoring_tables["OFICIAL"].id}",
     ):
         assert client.get(url).status_code == 401
+
+
+def test_a_superseded_version_lists_the_version_that_replaced_it(
+    client, docente, scoring_tables, uow_factory
+):
+    # GI-07: superseded_by_id is filled on the old version and null on the new one
+    from tests.support.scoring_variants import add_legacy_ufpa_version
+
+    new = scoring_tables["OFICIAL"]
+    with uow_factory() as uow:
+        old = add_legacy_ufpa_version(uow, new)
+        uow.scoring_tables.set_superseded(old.id, new.id)
+        uow.commit()
+
+    official = tables_by_name(client)[OFFICIAL_NAME]
+
+    by_id = {v["id"]: v["superseded_by_id"] for v in official["versions"]}
+    assert by_id == {str(old.id): str(new.id), str(new.id): None}
+    one = client.get(f"/api/scoring-versions/{old.id}").json()
+    assert one["superseded_by_id"] == str(new.id)

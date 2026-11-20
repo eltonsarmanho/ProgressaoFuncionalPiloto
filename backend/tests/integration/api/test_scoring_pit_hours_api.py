@@ -1,5 +1,6 @@
-"""PIT-02, GI-06: GET /processes/{id}/scoring exposes PIT hours per row, per period and in total,
-on the previous version of the official table (group I outside the total)."""
+"""PIT-02, GI-06, GI-07, GRES-04, GRES-09: GET /processes/{id}/scoring exposes PIT hours per row,
+per period and in total, with the term, the level and the flag of the total on every row: on the
+previous version of the official table (group I outside the total) and on the seeded one."""
 
 import pytest
 
@@ -9,17 +10,18 @@ from tests.integration.api.factories import add_professor, process_payload
 from tests.support.scoring_variants import add_legacy_ufpa_version
 
 
-@pytest.fixture
-def scored(client, act_as, reference, uow_factory):
-    """The previous version of the official table (group I outside the total, GI-06) chosen for a
-    FASI process with three group I offers and one II.7."""
+def scored_process(client, act_as, reference, uow_factory, previous: bool):
+    """A FASI process with three group I offers and one II.7, on the previous version of the
+    official table (group I outside the total, GI-06) or on the seeded one (group I inside)."""
     seed_scoring_tables(uow_factory())
     _, headers = act_as("admin@ufpa.br", Role.ADMIN)
     with uow_factory() as uow:
         table = next(
             t for t in uow.scoring_tables.list_tables() if t.name == "Tabela de Pontuação da UFPA"
         )
-        version = add_legacy_ufpa_version(uow, uow.scoring_tables.list_versions(table.id)[0])
+        version = uow.scoring_tables.list_versions(table.id)[0]
+        if previous:
+            version = add_legacy_ufpa_version(uow, version)
         uow.commit()
     professor = add_professor(uow_factory, reference["FASI"])
     process = client.post("/api/processes", json=process_payload(professor), headers=headers)
@@ -49,6 +51,16 @@ def scored(client, act_as, reference, uow_factory):
     return client.get(f"/api/processes/{process['id']}/scoring").json()
 
 
+@pytest.fixture
+def scored(client, act_as, reference, uow_factory):
+    return scored_process(client, act_as, reference, uow_factory, previous=True)
+
+
+@pytest.fixture
+def scored_new(client, act_as, reference, uow_factory):
+    return scored_process(client, act_as, reference, uow_factory, previous=False)
+
+
 def test_group_one_rows_carry_pit_hours_with_two_places_and_zero_points(scored):
     group_one = [r for r in scored["rows"] if r["group_number"] == 1]
 
@@ -73,6 +85,52 @@ def test_group_one_stays_out_of_the_total_and_the_subtotals(scored):
     assert subtotals[1] == "0.00"
     assert subtotals[2] == "5.00"
     assert scored["total"] == "5.00"
+
+
+def test_previous_version_rows_carry_term_level_and_the_outside_total_flag(scored):
+    # GRES-09: the hours are shown and the row scores 0
+    group_one = {r["title"]: r for r in scored["rows"] if r["group_number"] == 1}
+
+    flags = {
+        t: (r["academic_period"], r["level"], r["outside_total"]) for t, r in group_one.items()
+    }
+    assert flags == {
+        "Disciplina A": ("2023.1", "GRADUACAO", True),
+        "Disciplina B": ("2023.1", "GRADUACAO", True),
+        "Disciplina C": ("2023.2", "POS_GRADUACAO", True),
+    }
+    assert {r["points"] for r in group_one.values()} == {"0.00"}
+
+
+def test_new_version_rows_carry_term_level_and_the_hours_as_points(scored_new):
+    # GI-07, GRES-04: the offer counts in the total and its hours are its points
+    group_one = {r["title"]: r for r in scored_new["rows"] if r["group_number"] == 1}
+
+    flags = {
+        t: (r["academic_period"], r["level"], r["outside_total"]) for t, r in group_one.items()
+    }
+    assert flags == {
+        "Disciplina A": ("2023.1", "GRADUACAO", False),
+        "Disciplina B": ("2023.1", "GRADUACAO", False),
+        "Disciplina C": ("2023.2", "POS_GRADUACAO", False),
+    }
+    assert {t: (r["pit_hours"], r["points"]) for t, r in group_one.items()} == {
+        "Disciplina A": ("8.00", "8.00"),
+        "Disciplina B": ("4.00", "4.00"),
+        "Disciplina C": ("12.00", "12.00"),
+    }
+    assert scored_new["total"] == "29.00"
+
+
+@pytest.fixture(params=[True, False], ids=["previous", "new"])
+def scored_either(request, client, act_as, reference, uow_factory):
+    return scored_process(client, act_as, reference, uow_factory, previous=request.param)
+
+
+def test_rows_outside_group_one_have_no_term_no_level_and_count_in_the_total(scored_either):
+    [other] = [r for r in scored_either["rows"] if r["group_number"] == 2]
+
+    assert (other["academic_period"], other["level"], other["outside_total"]) == (None, None, False)
 
 
 @pytest.fixture
