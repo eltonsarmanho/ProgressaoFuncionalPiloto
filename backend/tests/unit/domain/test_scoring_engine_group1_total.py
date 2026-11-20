@@ -263,3 +263,33 @@ def test_the_group1_share_raises_no_alert():
     assert result.group1_percent == D("77.42")
     assert result.limit_adjustments == ()
     assert all(row.alerts == () for row in result.rows)
+
+
+# --- GI-09: offer with only an academic period (engine side) -----------------------------------
+
+
+def undated_offer(hours, period):
+    return offer(hours, period=period, event_date=None)
+
+
+def test_an_undated_offer_whose_whole_year_is_outside_the_interstice_adds_nothing():
+    for make in BOTH:
+        old = undated_offer("68", "2019.1")
+
+        result = calculate(make(), [old], INTERSTICE)
+
+        assert not has_row(result, old)
+        assert result.validity[old.id].reason is InvalidReason.FORA_DO_INTERSTICIO
+        assert result.group_subtotals[1] == D("0")
+        assert result.total == D("0")
+        assert result.group1_total_hours == D("0")
+        assert result.group1_hours_by_period == {}
+
+
+def test_an_undated_offer_of_a_year_that_crosses_the_interstice_still_counts():
+    crossing = undated_offer("68", "2022.1")  # the interstice starts on 23/11/2022
+
+    result = calculate(synthetic_group_inside_version(), [crossing], INTERSTICE)
+
+    assert has_row(result, crossing)
+    assert result.group_subtotals[1] == D("8.00")

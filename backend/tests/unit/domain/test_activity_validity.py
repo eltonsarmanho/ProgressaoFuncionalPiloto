@@ -310,3 +310,78 @@ def test_the_duplicate_comes_before_the_hours():
     a = act(item=8, hours=D("1"))
 
     assert classify(a, duplicates={a.id}).reason is InvalidReason.DUPLICIDADE
+
+
+# --- group I offer with only an academic period (GI-04, GI-09) and the group I matrix -------------
+
+
+def synthetic_group1_table(counts: bool) -> ScoringTableVersion:
+    """Synthetic table (not the official one): group I with a weekly load item and an item that is
+    not a weekly load, the group inside or outside the total."""
+    weekly = criterion(1, 1, unit="horas semanais", mode=ScoringMode.CARGA_SEMANAL)
+    return table(ScoringGroup(1, "Grupo 1", counts, None, (weekly, criterion(1, 3))))
+
+
+def offer(period: str | None, **kwargs) -> Activity:
+    return act(group=1, item=1, event_date=None, academic_period=period, **kwargs)
+
+
+def test_an_offer_of_2019_without_dates_is_not_valid_outside_the_interstice_with_its_period():
+    result = classify(offer("2019.1"), synthetic_group1_table(False))
+
+    assert result.state is ValidityState.NAO_VALIDA
+    assert result.reason is InvalidReason.FORA_DO_INTERSTICIO
+    assert result.params["academic_period"] == "2019.1"
+    assert result.params["interstice_start"] == INTERSTICE.start
+    assert result.params["interstice_end"] == INTERSTICE.end
+
+
+def test_an_offer_of_2019_without_dates_is_outside_the_interstice_without_a_chosen_table_too():
+    result = classify_activity(offer("2019.1"), None, INTERSTICE, set())
+
+    assert result.reason is InvalidReason.FORA_DO_INTERSTICIO
+    assert result.params["academic_period"] == "2019.1"
+    assert result.params["interstice_start"] == INTERSTICE.start
+    assert result.params["interstice_end"] == INTERSTICE.end
+
+
+def test_an_offer_of_a_year_that_crosses_the_interstice_is_valid():
+    assert classify(offer("2024.1"), synthetic_group1_table(True)).state is ValidityState.VALIDA
+
+
+def test_a_dated_outside_activity_carries_its_date_and_no_academic_period():
+    result = classify(act(event_date=date(2020, 1, 1)))
+
+    assert result.reason is InvalidReason.FORA_DO_INTERSTICIO
+    assert result.params["event_date"] == date(2020, 1, 1)
+    assert "academic_period" not in result.params
+
+
+def test_the_group1_weekly_load_offer_is_valid_with_the_group_outside_and_inside_the_total():
+    for counts in (False, True):
+        result = classify(offer("2025.1"), synthetic_group1_table(counts))
+
+        assert result.state is ValidityState.VALIDA, counts
+
+
+def test_a_group1_item_that_is_not_a_weekly_load_is_not_counted_with_the_group_outside():
+    result = classify(act(group=1, item=3), synthetic_group1_table(False))
+
+    assert result.state is ValidityState.NAO_VALIDA
+    assert result.reason is InvalidReason.GRUPO_NAO_CONTA
+
+
+def test_a_group1_item_that_is_not_a_weekly_load_is_valid_with_the_group_inside():
+    result = classify(act(group=1, item=3), synthetic_group1_table(True))
+
+    assert result.state is ValidityState.VALIDA
+
+
+def test_a_dated_offer_outside_is_not_valid_in_both_versions():
+    for counts in (False, True):
+        result = classify(
+            act(group=1, item=1, event_date=date(2020, 1, 1), academic_period="2025.1"),
+            synthetic_group1_table(counts),
+        )
+
+        assert result.reason is InvalidReason.FORA_DO_INTERSTICIO, counts

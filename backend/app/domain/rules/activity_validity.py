@@ -56,12 +56,16 @@ def _invalid(reason: InvalidReason, params: Mapping[str, Any] | None = None) -> 
     return Validity(ValidityState.NAO_VALIDA, reason, False, params or {})
 
 
-def _outside_params(activity: Activity, interstice: Interstice) -> dict[str, date | None]:
-    when: dict[str, date | None]
+def _outside_params(activity: Activity, interstice: Interstice) -> dict[str, date | str | None]:
+    """What the reason is written from: the date, the period of dates, or (a group I offer with
+    neither) its academic period, always with the interstice."""
+    when: dict[str, date | str | None]
     if activity.event_date is not None:
         when = {"event_date": activity.event_date}
-    else:
+    elif activity.period_start is not None or activity.period_end is not None:
         when = {"period_start": activity.period_start, "period_end": activity.period_end}
+    else:
+        when = {"academic_period": activity.academic_period}
     return {**when, "interstice_start": interstice.start, "interstice_end": interstice.end}
 
 

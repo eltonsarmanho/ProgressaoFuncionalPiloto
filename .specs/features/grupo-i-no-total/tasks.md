@@ -228,7 +228,7 @@ graph LR
 
 #### T4: Validade da oferta só com período letivo e matriz do Grupo I
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `classify_activity` devolve `FORA_DO_INTERSTICIO` para a oferta da T3 com `academic_period` e as datas do interstício nos parâmetros (`_outside_params` passa a incluir `academic_period` quando a atividade não tem data); a regra de `GRUPO_NAO_CONTA` não muda (AD-022). Testes da matriz de validade nas duas versões.
 **Where**: `backend/app/domain/rules/activity_validity.py` (modify)
@@ -243,10 +243,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_activity_validity.py`: oferta 2019.1 sem data → `NAO_VALIDA/FORA_DO_INTERSTICIO` com `academic_period` "2019.1", `interstice_start` e `interstice_end` nos parâmetros, também sem tabela escolhida; 2022.1 → válida; matriz com versões sintéticas: oferta do grupo 1 (`CARGA_SEMANAL`) válida com o grupo fora e dentro do total; critério sintético do grupo 1 que não é de carga semanal → `GRUPO_NAO_CONTA` com o grupo fora do total e válido com o grupo dentro (mata `GRUPO_NAO_CONTA` invertido); oferta com data fora → `FORA_DO_INTERSTICIO` nas duas versões
-- [ ] Teste de motor em `backend/tests/unit/domain/test_scoring_engine_group1_total.py`: a oferta 2019.1 sem data não vira linha, não entra no subtotal, no total nem nas horas, nas duas versões (GI-09)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam; nenhum teste existente muda de valor esperado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_activity_validity.py`: oferta 2019.1 sem data → `NAO_VALIDA/FORA_DO_INTERSTICIO` com `academic_period` "2019.1", `interstice_start` e `interstice_end` nos parâmetros, também sem tabela escolhida; 2022.1 → válida; matriz com versões sintéticas: oferta do grupo 1 (`CARGA_SEMANAL`) válida com o grupo fora e dentro do total; critério sintético do grupo 1 que não é de carga semanal → `GRUPO_NAO_CONTA` com o grupo fora do total e válido com o grupo dentro (mata `GRUPO_NAO_CONTA` invertido); oferta com data fora → `FORA_DO_INTERSTICIO` nas duas versões
+- [x] Teste de motor em `backend/tests/unit/domain/test_scoring_engine_group1_total.py`: a oferta 2019.1 sem data não vira linha, não entra no subtotal, no total nem nas horas, nas duas versões (GI-09)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam; nenhum teste existente muda de valor esperado
 
 **Tests**: unit
 **Gate**: quick
