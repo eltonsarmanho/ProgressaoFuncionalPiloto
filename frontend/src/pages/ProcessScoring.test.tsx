@@ -459,6 +459,38 @@ describe("ProcessScoring", () => {
       expect(bars.getByText(/^II · Orientação/)).toBeInTheDocument();
     });
 
+    it("GI-05: Editar pontuação da oferta do Grupo I diz que cada hora de PIT vale 1 ponto só quando o grupo conta no total", async () => {
+      const counted = (): ScoringResult => ({
+        ...result("8.00", [{ ...PIT_ROW("p1", "Cálculo I", "8.00"), points: "8.00", outside_total: false }]),
+        group1_hours_by_period: { "2023.1": "8.00" },
+        group1_total_hours: "8.00",
+      });
+      const NEW_VERSION = {
+        ...OFFICIAL_VERSION,
+        groups: [{ ...OFFICIAL_VERSION.groups[0], counts_in_total: true }, OFFICIAL_VERSION.groups[1]],
+      };
+      const user = userEvent.setup();
+      mockFetch({
+        ...baseRoutes(counted),
+        "GET /api/scoring-versions/v-fasi": { status: 200, body: NEW_VERSION },
+        "GET /api/activities/p1": { status: 200, body: { ...ACTIVITY, id: "p1", group_number: 1, item_number: 1 } },
+      });
+      const first = renderPage();
+      await user.click(await screen.findByRole("button", { name: "Editar pontuação de Cálculo I" }));
+      expect(await screen.findByText(/cada hora de PIT vale 1 ponto/)).toBeInTheDocument();
+      first.unmount();
+
+      mockFetch({
+        ...baseRoutes(official),
+        "GET /api/scoring-versions/v-fasi": { status: 200, body: OFFICIAL_VERSION },
+        "GET /api/activities/p1": { status: 200, body: { ...ACTIVITY, id: "p1", group_number: 1, item_number: 1 } },
+      });
+      renderPage();
+      await user.click(await screen.findByRole("button", { name: "Editar pontuação de Cálculo I" }));
+      expect(await screen.findByText(/não aceitam valor manual/)).toBeInTheDocument();
+      expect(screen.queryByText(/vale 1 ponto/)).not.toBeInTheDocument();
+    });
+
     it("GRES-05: com a versão que tira o Grupo I do total e nenhum lançamento, diz que não há disciplina", async () => {
       mockFetch({
         ...baseRoutes(() => result("40.00", [ROW])),

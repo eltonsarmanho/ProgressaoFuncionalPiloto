@@ -50,7 +50,7 @@ const ACTIVITY: Activity = {
   version: 3,
 };
 
-function setup(over: { activity?: Partial<Activity>; mode?: Criterion["mode"]; pit?: boolean; routes?: Parameters<typeof mockFetch>[0] } = {}) {
+function setup(over: { activity?: Partial<Activity>; mode?: Criterion["mode"]; pit?: boolean; outsideTotal?: boolean; routes?: Parameters<typeof mockFetch>[0] } = {}) {
   setCsrfToken("tok");
   const mock = mockFetch(over.routes ?? { "PUT /api/activities/a1": { status: 200, body: { ...ACTIVITY, version: 4 } } });
   const onSaved = vi.fn();
@@ -60,6 +60,7 @@ function setup(over: { activity?: Partial<Activity>; mode?: Criterion["mode"]; p
       activity={{ ...ACTIVITY, ...over.activity }}
       criterion={CRITERION(over.mode ?? "POR_UNIDADE")}
       pit={over.pit ?? false}
+      outsideTotal={over.outsideTotal ?? false}
       onSaved={onSaved}
       onCancel={onCancel}
     />,
@@ -141,6 +142,27 @@ describe("UIM-22: editor do valor unitário", () => {
     expect(screen.queryByLabelText("Valor unitário")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Salvar pontuação" })).not.toBeInTheDocument();
     expect(screen.getByText(note)).toBeInTheDocument();
+  });
+
+  it("GI-05: no Grupo I que conta no total a nota diz que cada hora de PIT vale 1 ponto e não há campo de pontos", () => {
+    setup({ mode: "CARGA_SEMANAL", pit: true, outsideTotal: false });
+    expect(screen.getByText(/cada hora de PIT vale 1 ponto/)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Valor unitário")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Quantidade")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Salvar pontuação" })).not.toBeInTheDocument();
+  });
+
+  it("GI-05: no Grupo I fora do total (versão antiga) a nota é a de sempre, sem a frase dos pontos", () => {
+    setup({ mode: "CARGA_SEMANAL", pit: true, outsideTotal: true });
+    expect(
+      screen.getByText("As horas de PIT do Grupo I são calculadas da carga horária e não aceitam valor manual."),
+    ).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/vale 1 ponto/);
+  });
+
+  it("em outro grupo (sem PIT) a nota não fala de horas de PIT", () => {
+    setup({ mode: "CARGA_SEMANAL", pit: false });
+    expect(document.body.textContent).not.toMatch(/PIT/);
   });
 
   it("em VALOR_INFORMADO nenhum texto do editor diz que o valor é lido do documento (CATXT-01)", () => {

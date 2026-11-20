@@ -927,7 +927,7 @@ graph LR
 
 #### T28: Nota do editor de pontuação do Grupo I
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ScoreEditor` recebe `outsideTotal` junto de `pit`; quando `pit` e não `outsideTotal`, a nota diz que cada hora de PIT vale 1 ponto; o editor continua sem campo de pontos para o Grupo I. `ProcessScoring.edit` passa `outsideTotal: row.outside_total`.
 **Where**: `frontend/src/components/ScoreEditor.tsx` (modify)
@@ -942,9 +942,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ScoreEditor.test.tsx`: linha do Grupo I na versão nova mostra "cada hora de PIT vale 1 ponto" e não tem campo de pontos; versão antiga, a nota de hoje; outro grupo sem a nota
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/ScoreEditor.test.tsx`: linha do Grupo I na versão nova mostra "cada hora de PIT vale 1 ponto" e não tem campo de pontos; versão antiga, a nota de hoje; outro grupo sem a nota
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: front

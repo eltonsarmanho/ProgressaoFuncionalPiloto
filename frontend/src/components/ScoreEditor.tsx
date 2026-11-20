@@ -6,9 +6,12 @@ import { formatDecimal } from "../labels";
 import { FieldError, errorProps } from "./FieldError";
 
 /** Why the unit value cannot be typed for this item (UIM-22); null when it can. */
-function noteFor(criterion: Criterion | undefined, pit: boolean): string | null {
+function noteFor(criterion: Criterion | undefined, pit: boolean, outsideTotal: boolean): string | null {
   if (!criterion) return "A atividade ainda não tem item de pontuação: escolha o item em Editar.";
-  if (pit) return "As horas de PIT do Grupo I são calculadas da carga horária e não aceitam valor manual.";
+  if (pit) {
+    const base = "As horas de PIT do Grupo I são calculadas da carga horária e não aceitam valor manual";
+    return outsideTotal ? `${base}.` : `${base}; cada hora de PIT vale 1 ponto.`;
+  }
   if (criterion.mode === "CARGA_SEMANAL") {
     return "A pontuação deste item segue a carga semanal da tabela: é calculada pelas horas da atividade e não tem valor a digitar nesta tela.";
   }
@@ -28,12 +31,15 @@ export function ScoreEditor({
   activity,
   criterion,
   pit,
+  outsideTotal = false,
   onSaved,
   onCancel,
 }: {
   activity: Activity;
   criterion: Criterion | undefined;
   pit: boolean;
+  /** True when the row shows hours and scores 0 (group I of a version that keeps it out of the total). */
+  outsideTotal?: boolean;
   onSaved: () => void;
   onCancel: () => void;
 }) {
@@ -44,7 +50,7 @@ export function ScoreEditor({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const note = noteFor(criterion, pit);
+  const note = noteFor(criterion, pit, outsideTotal);
 
   async function save(unit: number | null) {
     setBusy(true);

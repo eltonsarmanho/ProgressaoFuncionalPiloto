@@ -20,7 +20,7 @@ import { ScoringTable } from "../components/ScoringTable";
 import { StepNav } from "../components/StepNav";
 import { TablePicker } from "../components/TablePicker";
 
-type Pending = { kind: "new" } | { kind: "edit" | "points"; activity: Activity; pit?: boolean };
+type Pending = { kind: "new" } | { kind: "edit" | "points"; activity: Activity; pit?: boolean; outsideTotal?: boolean };
 
 const MANUAL_CODE = "VALOR_UNITARIO_MANUAL";
 
@@ -70,7 +70,7 @@ export function ProcessScoring() {
   async function edit(kind: "edit" | "points", row: ScoringRow) {
     try {
       const activity = await request<Activity>("GET", `/api/activities/${row.activity_id}`);
-      setPending({ kind, activity, pit: row.pit_hours != null });
+      setPending({ kind, activity, pit: row.pit_hours != null, outsideTotal: row.outside_total });
     } catch (err) {
       setError(errorMessage(err));
     }
@@ -255,6 +255,7 @@ export function ProcessScoring() {
               .find((g) => g.number === pending.activity.group_number)
               ?.criteria.find((c) => c.item_number === pending.activity.item_number)}
             pit={pending.pit ?? false}
+            outsideTotal={pending.outsideTotal ?? false}
             onSaved={done}
             onCancel={() => setPending(null)}
           />
