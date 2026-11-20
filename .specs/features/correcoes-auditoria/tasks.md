@@ -756,7 +756,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T24: Estados reais na GP-DEL-07
 
-**Status**: Pending
+**Status**: Done
 
 **What**: O critério 7 da exclusão de processo troca "tarefa `PROCESSING`" por "tarefa de leitura `PENDENTE` ou `PROCESSANDO`", como `_ACTIVE_JOB` (`repositories.py:1121`).
 **Where**: `.specs/features/gestao-processos/spec.md` (modify, linha 45)
@@ -771,8 +771,8 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] `grep -n "PROCESSING" .specs/features/gestao-processos/spec.md` sem saída e a linha cita `PENDENTE` e `PROCESSANDO`
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] `grep -n "PROCESSING" .specs/features/gestao-processos/spec.md` sem saída e a linha cita `PENDENTE` e `PROCESSANDO`
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
 
 **Tests**: none
 **Gate**: quick

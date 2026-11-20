@@ -42,7 +42,7 @@ No Painel o usuário vê os processos, mas não consegue arquivar nem excluir um
 4. WHEN o banco confirmou THEN the system SHALL remover do disco os arquivos dos documentos de entrada e dos gerados; IF algum arquivo não puder ser removido THEN the system SHALL registrar o aviso no log (sem caminho completo nem dado pessoal) e a exclusão SHALL continuar válida.
 5. The system SHALL gravar um evento de auditoria `DELETE` do processo, com os valores anteriores do processo, e SHALL manter todos os eventos de auditoria anteriores (a auditoria nunca é apagada).
 6. IF o usuário não é ADMIN nem dono THEN the system SHALL responder 403; IF o processo não existe ou não é legível THEN 404.
-7. IF há documento de entrada em processamento (tarefa `PROCESSING`) OR geração de documento `GERANDO` OR redação em andamento THEN the system SHALL responder 409 `OPERACAO_EM_ANDAMENTO` e não apagar nada.
+7. IF há documento de entrada em processamento (tarefa de leitura `PENDENTE` ou `PROCESSANDO`) OR geração de documento `GERANDO` OR redação em andamento THEN the system SHALL responder 409 `OPERACAO_EM_ANDAMENTO` e não apagar nada.
 8. WHEN a exclusão termina THEN o card SHALL sair da lista e os totais SHALL ser atualizados, sem recarregar a página.
 9. IF qualquer passo da transação falha THEN nada SHALL ser apagado (tudo ou nada) e nenhum arquivo SHALL ser removido.
 10. WHEN o processo foi excluído THEN qualquer rota do processo SHALL responder 404.
