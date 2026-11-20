@@ -1,6 +1,8 @@
 """ATV-01, ATV-05..ATV-09, ATV-11..ATV-14: activity routes."""
 
 import uuid
+from dataclasses import replace
+from decimal import Decimal
 
 import pytest
 
@@ -486,3 +488,52 @@ def test_writes_require_csrf_and_every_route_a_session(client, headers, chosen):
         ("POST", f"{url}/distinct"),
     ):
         assert client.request(method, target).status_code == 401
+
+
+# --- CAEDI-04: the body the frontend sends (`activityBody`) after a title edit -----------------
+
+_ACTIVITY_BODY_TEXT = (
+    "title", "description", "event_date", "period_start", "period_end", "evidence_note",
+    "academic_period", "level",
+)  # fmt: skip
+_ACTIVITY_BODY_NUMBER = (
+    "group_number", "item_number", "quantidade", "horas", "course_hours", "informed_points",
+    "points_override",
+)  # fmt: skip
+
+
+def activity_body(activity: dict) -> dict:
+    """What `frontend/src/activityBody.ts` resends: every non-empty field, numbers as numbers."""
+    sent = {"title": activity["title"], "description": activity.get("description") or ""}
+    for field in _ACTIVITY_BODY_TEXT:
+        if activity.get(field) not in (None, ""):
+            sent[field] = activity[field]
+    for field in _ACTIVITY_BODY_NUMBER:
+        if activity.get(field) is not None:
+            sent[field] = float(activity[field])
+    return sent
+
+
+def test_editing_the_title_with_the_whole_body_clears_a_stored_refused_manual_score(
+    client, headers, chosen, uow_factory
+):
+    created = create(client, headers, chosen, group_number=2, item_number=7, quantidade=4)
+    with uow_factory() as uow:
+        stored = uow.activities.get(uuid.UUID(created["id"]))
+        uow.activities.update(
+            replace(stored, informed_points=Decimal("3"), points_override=Decimal("24")),
+            stored.version,
+        )
+        uow.commit()
+    current = client.get(f"/api/activities/{created['id']}").json()
+    assert current["points_override"] == "24.00"
+    sent = {
+        **activity_body(current), "title": "Título novo", "expected_version": current["version"]
+    }  # fmt: skip
+    assert (sent["informed_points"], sent["points_override"]) == (3.0, 24.0)
+
+    response = client.put(f"/api/activities/{created['id']}", json=sent, headers=headers)
+
+    assert response.status_code == 200, response.text
+    assert response.json()["title"] == "Título novo"
+    assert response.json()["points_override"] is None

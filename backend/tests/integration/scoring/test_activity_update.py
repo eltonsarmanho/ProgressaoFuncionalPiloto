@@ -400,3 +400,99 @@ def test_activity_outside_access_is_not_found(world, activity, actor):
         )
     with pytest.raises(NotFound):
         world.mark_distinct.execute(user, activity.id, activity.version, "x")
+
+
+# --- CAEDI-01..03: a stored manual score the item does not accept -----------------------------
+
+_REFUSAL = (
+    "Esta tabela não aceita pontuação manual neste item; nos itens por unidade ou por bloco de "
+    "horas, informe o valor unitário"
+)
+_PIT_REFUSAL = (
+    "No Grupo I, as horas de PIT são calculadas da carga horária; não há pontos a informar"
+)
+_UNACCEPTED_KINDS = {
+    "por_unidade": (dict(group_number=2, item_number=7, quantity=D("4")), _REFUSAL),
+    "pit": (
+        dict(group_number=1, academic_period="2023.1", level=Level.GRADUACAO, hours=D("68")),
+        _PIT_REFUSAL,
+    ),
+    "sem_item": (dict(), _REFUSAL),
+}
+
+
+def stored_with_override(world, **fields):
+    """An activity whose `points_override` was written by the repository, as old data was."""
+    created = world.create.execute(
+        world.admin,
+        world.process.id,
+        ActivityData(title="Disciplina", event_date=date(2023, 5, 10), **fields),
+    )
+    with world.uow_factory() as uow:
+        uow.activities.update(replace(created, points_override=D("24")), created.version)
+        uow.commit()
+        return uow.activities.get(created.id)
+
+
+def reload(world, activity):
+    with world.uow_factory() as uow:
+        return uow.activities.get(activity.id)
+
+
+@pytest.mark.parametrize("kind", _UNACCEPTED_KINDS)
+def test_editing_with_the_same_refused_manual_score_clears_it_and_audits_the_old_value(
+    official_chosen, kind
+):
+    world = official_chosen
+    stored = stored_with_override(world, **_UNACCEPTED_KINDS[kind][0])
+    assert stored.points_override == D("24")
+
+    updated = world.update.execute(
+        world.admin, stored.id, as_data(stored, title="Título novo"), stored.version, None
+    )
+
+    assert (updated.title, updated.points_override) == ("Título novo", None)
+    assert reload(world, stored).points_override is None
+    event = events(world, stored)[-1]
+    assert event.action is AuditAction.UPDATE
+    assert event.changes["points_override"] == {"before": "24", "after": None}
+
+
+@pytest.mark.parametrize("kind", _UNACCEPTED_KINDS)
+def test_editing_with_a_different_refused_manual_score_is_422_and_saves_nothing(
+    official_chosen, kind
+):
+    world = official_chosen
+    fields, message = _UNACCEPTED_KINDS[kind]
+    stored = stored_with_override(world, **fields)
+
+    with pytest.raises(ValidationFailed) as error:
+        world.update.execute(
+            world.admin,
+            stored.id,
+            as_data(stored, title="Título novo", points_override=D("25")),
+            stored.version,
+            None,
+        )
+
+    assert (error.value.field, error.value.message) == ("points_override", message)
+    after = reload(world, stored)
+    assert (after.title, after.points_override, after.version) == (
+        "Disciplina",
+        D("24"),
+        stored.version,
+    )
+
+
+def test_editing_keeps_the_stored_manual_score_where_the_item_accepts_it(points_chosen):
+    world = points_chosen
+    stored = stored_with_override(
+        world, group_number=1, academic_period="2023.1", level=Level.GRADUACAO, hours=D("68")
+    )
+
+    updated = world.update.execute(
+        world.admin, stored.id, as_data(stored, title="Título novo"), stored.version, None
+    )
+
+    assert (updated.title, updated.points_override) == ("Título novo", D("24"))
+    assert reload(world, stored).points_override == D("24")

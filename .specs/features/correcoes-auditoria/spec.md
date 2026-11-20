@@ -245,10 +245,10 @@ O docente não consegue concluir um processo real: nenhuma tela leva o processo 
 | CATXT-02 | P1: Textos que dizem o que o sistema faz | Execute | Implementing |
 | CATXT-03 | P1: Textos que dizem o que o sistema faz | Execute | Implementing |
 | CATXT-04 | P1: Textos que dizem o que o sistema faz | Execute | Implementing |
-| CAEDI-01 | P1: Editar atividade com pontuação manual gravada | Tasks | Pending |
-| CAEDI-02 | P1: Editar atividade com pontuação manual gravada | Tasks | Pending |
-| CAEDI-03 | P1: Editar atividade com pontuação manual gravada | Tasks | Pending |
-| CAEDI-04 | P1: Editar atividade com pontuação manual gravada | Tasks | Pending |
+| CAEDI-01 | P1: Editar atividade com pontuação manual gravada | Execute | Implementing |
+| CAEDI-02 | P1: Editar atividade com pontuação manual gravada | Execute | Implementing |
+| CAEDI-03 | P1: Editar atividade com pontuação manual gravada | Execute | Implementing |
+| CAEDI-04 | P1: Editar atividade com pontuação manual gravada | Execute | Implementing |
 | CADOC-01 | P2: Documentação de estado | Tasks | Pending |
 | CADOC-02 | P2: Documentação de estado | Tasks | Pending |
 | CADOC-03 | P2: Documentação de estado | Tasks | Pending |

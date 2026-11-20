@@ -393,7 +393,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T11: Editar atividade com pontuação manual gravada que o item não aceita
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `UpdateActivity` passa a `normalize_activity` o `points_override` gravado; quando o corpo reenvia o mesmo valor e o critério não o aceita (PIT, não `CARGA_SEMANAL`, sem item), a atividade é gravada com `points_override` nulo em vez de 422; valor diferente segue recusado; critério que aceita mantém o valor. A auditoria `UPDATE` já guarda antes e depois.
 **Where**: `backend/app/application/use_cases/scoring.py` (modify: `UpdateActivity`, `:515-547`, e a checagem de `_check_criterion_inputs`)
@@ -408,11 +408,11 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_activity_update.py`: atividade da oficial com `points_override = 24` gravado pelo repositório (item por unidade, item PIT e sem item) editada com o mesmo valor → sucesso, `points_override is None`, título novo gravado e o evento `UPDATE` com `points_override` antes `"24"` e depois `None`; reenvio com `25` → 422 em `points_override` e nada gravado; na tabela sintética com Grupo I em pontos (carga semanal não PIT), reenvio igual mantém `24`
-- [ ] Teste em `backend/tests/integration/api/test_activities_api.py`: `PUT /api/activities/{id}` com o corpo no formato de `activityBody` (todos os campos, inclusive `informed_points` e `points_override`) e título novo → 200, título novo e `points_override` nulo
-- [ ] Os testes falham antes da mudança e passam depois
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: contagem antes e depois registrada
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_activity_update.py`: atividade da oficial com `points_override = 24` gravado pelo repositório (item por unidade, item PIT e sem item) editada com o mesmo valor → sucesso, `points_override is None`, título novo gravado e o evento `UPDATE` com `points_override` antes `"24"` e depois `None`; reenvio com `25` → 422 em `points_override` e nada gravado; na tabela sintética com Grupo I em pontos (carga semanal não PIT), reenvio igual mantém `24`
+- [x] Teste em `backend/tests/integration/api/test_activities_api.py`: `PUT /api/activities/{id}` com o corpo no formato de `activityBody` (todos os campos, inclusive `informed_points` e `points_override`) e título novo → 200, título novo e `points_override` nulo
+- [x] Os testes falham antes da mudança e passam depois
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: contagem antes e depois registrada
 
 **Tests**: integration
 **Gate**: full

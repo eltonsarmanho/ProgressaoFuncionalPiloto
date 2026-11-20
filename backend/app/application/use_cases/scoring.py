@@ -504,6 +504,24 @@ class _ExistingActivityUseCase(_ActivityUseCase):
             raise StaleVersion("A atividade foi alterada por outro usuário; recarregue")
 
 
+def _normalize_for_update(
+    data: ActivityData, current: Activity, version: ScoringTableVersion | None
+) -> ActivityData:
+    """Normalize an edit; a stored manual score the item refuses is cleared, not rejected.
+
+    The edit form resends the stored `points_override` with every other field. When the item no
+    longer accepts it (a value kept from an older table or item), the same value coming back is
+    dropped, and the UPDATE audit event keeps the previous one (CAEDI-01). A different value
+    that the item refuses is still a 422 (CAEDI-02).
+    """
+    try:
+        return normalize_activity(data, version)
+    except ValidationFailed as refusal:
+        if refusal.field != "points_override" or data.points_override != current.points_override:
+            raise
+    return normalize_activity(replace(data, points_override=None), version)
+
+
 class UpdateActivity(_ExistingActivityUseCase):
     def execute(
         self,
@@ -516,7 +534,7 @@ class UpdateActivity(_ExistingActivityUseCase):
         with self._uow_factory() as uow:
             current, process = self._load(uow, actor, activity_id)
             version = self._chosen_version(uow, process)
-            data = normalize_activity(data, version)
+            data = _normalize_for_update(data, current, version)
             updated = replace(current, **_fields(data))
             self._check_version(current, expected_version)
             # A date that stays as it was is not judged again: only the one the body brings.
