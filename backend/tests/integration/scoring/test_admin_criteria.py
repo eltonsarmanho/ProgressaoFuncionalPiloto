@@ -1,6 +1,7 @@
 """ADM-03, ADM-04, SEL-08: criteria edits with the norm reference and the in-use guard."""
 
 import uuid
+from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 
@@ -138,3 +139,41 @@ def test_superseded_version_is_read_only_even_when_no_process_uses_it(world, adm
 
     assert "somente leitura" in str(error.value)
     assert criterion(world, unused.id, 2, 7).unit_points == Decimal("5")
+
+
+@pytest.fixture
+def superseded_pair(world, unused):
+    """GI-07: the unused version superseded by a synthetic twin that starts the same day."""
+    twin = replace(unused, id=uuid.uuid4(), name="Versão sintética que a substitui")
+    with world.uow_factory() as uow:
+        uow.scoring_tables.add_version(twin)
+        uow.scoring_tables.set_superseded(unused.id, twin.id)
+        uow.commit()
+    return unused, twin
+
+
+def test_version_marked_as_superseded_is_read_only_when_no_process_uses_it(
+    world, admin_uc, superseded_pair
+):
+    old, _ = superseded_pair
+
+    with pytest.raises(Conflict) as error:
+        admin_uc.update_criteria.execute(
+            world.admin, old.id, 2, 7, {"unit_points": "12"}, REFERENCE
+        )
+
+    assert "substituída" in str(error.value)
+    assert criterion(world, old.id, 2, 7).unit_points == Decimal("5")
+    assert [e for e in events(world, old.id) if e.action is AuditAction.UPDATE] == []
+
+
+def test_the_version_that_supersedes_it_still_accepts_the_criterion_edit(
+    world, admin_uc, superseded_pair
+):
+    _, twin = superseded_pair
+
+    admin_uc.update_criteria.execute(
+        world.admin, twin.id, 2, 7, {"unit_points": "12"}, REFERENCE
+    )
+
+    assert criterion(world, twin.id, 2, 7).unit_points == Decimal("12")

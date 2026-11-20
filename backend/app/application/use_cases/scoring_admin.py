@@ -339,6 +339,10 @@ class UpdateVersionCriteria:
             current = version.get_criterion(group, item)
             if current is None:
                 raise NotFound("Critério não encontrado")
+            if version.is_superseded:
+                raise Conflict(
+                    "Versão substituída é somente leitura; altere a versão que a substitui"
+                )
             if any(
                 v.valid_from > version.valid_from
                 for v in uow.scoring_tables.list_versions(version.table_id)

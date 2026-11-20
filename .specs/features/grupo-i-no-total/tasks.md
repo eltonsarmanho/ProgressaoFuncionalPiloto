@@ -1227,7 +1227,7 @@ graph LR
 
 #### T38: FT4, a versão substituída não aceita edição de critério
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Observação G5 do Verifier, fora do texto da spec: `UpdateVersionCriteria` só recusa a edição quando outra versão tem `valid_from` maior; a versão substituída e a nova começam no mesmo dia, então um administrador edita critérios da versão substituída enquanto nenhum processo a usa. A versão substituída guarda a tabela antiga intacta (GI-06, AD-002), então a edição passa a ser recusada com `Conflict`, antes da checagem de uso, sem alterar nada nem gravar auditoria.
 **Where**: `backend/app/application/use_cases/scoring_admin.py` (modify) e `backend/tests/integration/scoring/test_admin_criteria.py` (modify)
@@ -1242,10 +1242,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Teste primeiro (que falha antes): versão marcada como substituída, sem processo que a use, com a nova de mesmo início; `update_criteria` levanta `Conflict`, o critério segue com o valor antigo e não há evento `UPDATE` de auditoria
-- [ ] A edição de critério da versão nova (não substituída) continua aceita no mesmo cenário
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+- [x] Teste primeiro (que falha antes): versão marcada como substituída, sem processo que a use, com a nova de mesmo início; `update_criteria` levanta `Conflict`, o critério segue com o valor antigo e não há evento `UPDATE` de auditoria
+- [x] A edição de critério da versão nova (não substituída) continua aceita no mesmo cenário
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
 
 **Tests**: integration
 **Gate**: full
