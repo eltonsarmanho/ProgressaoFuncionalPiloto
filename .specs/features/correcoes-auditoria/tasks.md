@@ -535,7 +535,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T16: Feature `pontuacao` sem a sigla
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Reescreve sem a sigla e sem a expressão que a CAREF-05 proíbe: a linha de Assumptions de `spec.md:48` (passa a dizer que o item de valor informado de tabelas antigas, inexistente na tabela oficial, era exceção do Grupo I até a `correcoes-auditoria`, que a removeu); `tasks.md:422` e `:449`; `validation.md:47` e `:243`. Registro histórico: muda só o texto que nomeia o item.
 **Where**: `.specs/features/pontuacao/spec.md` (modify; também os registros de tarefas e de validação da mesma feature, mesmo commit)
@@ -550,9 +550,9 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] `grep -rnE "\bI\.3\b" .specs/features/pontuacao` e `grep -rniE "avalia[cç][aã]o (pelo corpo )?discente" .specs/features/pontuacao` sem saída
-- [ ] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py pontuacao` sem erro novo
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] `grep -rnE "\bI\.3\b" .specs/features/pontuacao` e `grep -rniE "avalia[cç][aã]o (pelo corpo )?discente" .specs/features/pontuacao` sem saída
+- [x] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py pontuacao` sem erro novo
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
 
 **Tests**: none
 **Gate**: quick

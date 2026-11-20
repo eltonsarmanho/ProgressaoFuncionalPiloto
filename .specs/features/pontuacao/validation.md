@@ -44,7 +44,7 @@ Paths relative to `backend/tests/` (B) or `frontend/src/` (F). Result ✅ = asse
 | TAB-04 | FASI PENDENTE_VALIDACAO, same numbering, ref text | unit/test_seed_fasi.py:32-33, :93-98 exact ref text; :59-60 real-case points; integration/test_seed_scoring.py:74-83 | ✅ |
 | TAB-05 | 17 divergences II-VII plus VIII.5,6,7,38,39 flagged with note | unit/test_seed_fasi.py:36-38 `flagged == DIVERGENT_II_TO_VII \| GROUP_VIII_ANOMALIES`; :41-48 only flagged differ from IFCH; :70-77 notes | ✅ |
 | TAB-06 | Group I counts: IFCH no, FASI yes | unit/test_seed_ifch.py:54 `counts_in_total is False`; unit/test_seed_fasi.py:82; api/test_scoring_tables_api.py:99-100 | ✅ |
-| TAB-07 | FASI I.1/I.2 CARGA_SEMANAL 17 weeks prep 1/2; I.3 VALOR_INFORMADO cap 10 | unit/test_seed_fasi.py:84-90 | ✅ |
+| TAB-07 | FASI I.1/I.2 CARGA_SEMANAL 17 weeks prep 1/2; informed value item of old tables (absent from the official table) VALOR_INFORMADO cap 10 | unit/test_seed_fasi.py:84-90 | ✅ |
 | TAB-08 | list tables, versions, groups, criteria in order | api/test_scoring_tables_api.py:32-47, :68-79, :135 (every role reads) | ✅ |
 
 ### SEL - Tabela aplicada ao processo
@@ -66,7 +66,7 @@ Paths relative to `backend/tests/` (B) or `frontend/src/` (F). Result ✅ = asse
 | ID | Spec-defined outcome | `file:line` + assertion | Result |
 | -- | -------------------- | ----------------------- | ------ |
 | ATV-01 | manual activity persisted, origin MANUAL, VALIDADA | integration/scoring/test_activity_create.py:59-69; api/test_activities_api.py:58 (201) | ✅ |
-| ATV-02 | Group I: `AAAA.N`, level, hours required (422 on the field); item I.1 GRADUACAO, I.2 POS | test_activity_create.py:84-103 `(group, item) == (1, item)`; :106-123 fields `academic_period`, `level`, `horas`; api/test_activities_api.py:112; I.3 exemption :253-259 (recorded in spec Assumptions) | ✅ |
+| ATV-02 | Group I: `AAAA.N`, level, hours required (422 on the field); item I.1 GRADUACAO, I.2 POS | test_activity_create.py:84-103 `(group, item) == (1, item)`; :106-123 fields `academic_period`, `level`, `horas`; api/test_activities_api.py:112; informed value item exemption :253-259 (recorded in spec Assumptions; removed by correcoes-auditoria) | ✅ |
 | ATV-03 | non-MANUAL origin → `AGUARDANDO_REVISAO` | test_activity_create.py:72-81 `status is AGUARDANDO_REVISAO`; unit/domain/test_activity_entity.py:18-20; api/test_activities_api.py:78-90 (public API cannot set source) | ✅ |
 | ATV-04 | only three stored statuses | unit/domain/test_activity_entity.py:31 `test_stored_status_admits_only_the_three_spec_values`, :35 unknown rejected | ✅ |
 | ATV-05 | no group/item or unknown item → saved, `SEM_ENQUADRAMENTO` | test_activity_create.py:126-137 | ✅ |
@@ -240,7 +240,7 @@ Depth: expanded (49 mutations: 44 backend + 5 frontend; isolated `git worktree` 
 | quantity None counts as 1 in POR_UNIDADE | Spec silent (CALC-02); no contradiction. |
 | `points_override` only in CARGA_SEMANAL | Matches CALC-06 (`test_scoring_points.py:120-126`). |
 | `potential_total` plain sum without caps; `group1_percent` null at total 0 | Spec silent; no contradiction. |
-| I.3 exempt from the Group I period/level/hours rule | Spec Assumption (spec.md:46). |
+| Informed value item of old tables (absent from the official table) exempt from the Group I period/level/hours rule | Spec Assumption (spec.md:46). |
 | New tables/versions/imports default to `PENDENTE_VALIDACAO` | Spec silent; consistent with TAB-04's cautious intent. |
 | Criteria edit on a superseded version → 409 "somente leitura" | Stricter than ADM-03, supported by ADM-10. Accepted. |
 | CSV upload bypasses `api/client.ts` | Behavior verified (`ScoringAdminForms.test.tsx:119`, `:139`). Accepted. |
