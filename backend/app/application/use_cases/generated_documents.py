@@ -314,6 +314,9 @@ _FAILURE_MESSAGES: Mapping[GenerationCode, str] = {
     GenerationCode.IMAGEM_GRANDE_DEMAIS: "Uma imagem de origem passa do limite de megapixels.",
     GenerationCode.ORIGINAIS_EXCLUIDOS: "Os documentos de entrada deste processo foram excluídos.",
     GenerationCode.TABELA_NAO_ESCOLHIDA: "O processo não tem tabela de pontuação escolhida.",
+    GenerationCode.ATIVIDADE_SEM_CATEGORIA: (
+        "Há atividades sem categoria na Etapa 3. Escolha a categoria de cada uma."
+    ),
     GenerationCode.ERRO_INTERNO: "Erro interno ao gerar o documento. Tente gerar de novo.",
 }
 

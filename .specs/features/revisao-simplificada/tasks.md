@@ -1768,9 +1768,9 @@ T62 → T43 → T44
 
 ### T61: FT6, `ATIVIDADE_SEM_CATEGORIA` no worker de geração
 
-**Status**: Pending
+**Status**: Done
 
-**What**: O Verifier (G6) viu que, no worker de geração, `ATIVIDADE_SEM_CATEGORIA` cai em `ERRO_INTERNO` por faltar em `_FAILURE_MESSAGES`. Mapeia o código com mensagem em português e adiciona o rótulo equivalente no frontend se faltar; AD-022 perde a pergunta aberta (2).
+**What**: O Verifier (G6) viu que, no worker de geração, `ATIVIDADE_SEM_CATEGORIA` cai em `ERRO_INTERNO` por faltar em `_FAILURE_MESSAGES`. Mapeia o código com mensagem em português e adiciona o rótulo equivalente no frontend se faltar (já existe em `labels.ts:320`, com teste em `labels.test.ts:157`: nada a mudar no frontend); AD-022 perde a pergunta aberta (2).
 **Where**: `backend/app/application/use_cases/generated_documents.py` (modify), `backend/tests/integration/doc_usecases/test_run_generation_table.py` (modify) e `.specs/STATE.md` (modify, junto com a T43)
 **Depends on**: T60
 **Reuses**: `_FAILURE_MESSAGES` e os testes de falha do worker; `GenerationRefused`
@@ -1783,11 +1783,11 @@ T62 → T43 → T44
 
 **Done when**:
 
-- [ ] Teste primeiro (que falha antes): uma atividade válida sem categoria que aparece depois do pedido faz o worker marcar a geração `FALHOU` com o código `ATIVIDADE_SEM_CATEGORIA` e a mensagem em português, não `ERRO_INTERNO`
-- [ ] O rótulo do código existe no frontend (`labels.ts`), com teste se faltava
-- [ ] A pergunta aberta (2) do AD-022 sai de `STATE.md`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest <arquivos tocados> -q`
-- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+- [x] Teste primeiro (que falha antes): uma atividade válida sem categoria que aparece depois do pedido faz o worker marcar a geração `FALHOU` com o código `ATIVIDADE_SEM_CATEGORIA` e a mensagem em português, não `ERRO_INTERNO`
+- [x] O rótulo do código existe no frontend (`labels.ts`), com teste se faltava
+- [x] A pergunta aberta (2) do AD-022 sai de `STATE.md`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest <arquivos tocados> -q`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
 
 **Tests**: integration
 **Gate**: full

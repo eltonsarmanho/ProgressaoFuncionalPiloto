@@ -57,6 +57,25 @@ def test_an_original_deleted_after_the_request_fails_with_a_fixed_message_and_no
     assert stored_files(gen) == []
 
 
+def test_a_valid_activity_without_category_after_the_request_fails_with_its_code(gen):
+    # SEG-05: the request went through; the worker finds the activity and says so, not ERRO_INTERNO
+    add_activity(gen.world, title="Orientação com categoria")
+    requested = gen.request().execute(gen.world.admin, gen.world.process.id, DocumentKind.TABELA)
+    add_activity(gen.world, title="Sem categoria", group_number=None, item_number=None)
+
+    assert gen.run().run_next() is True
+
+    with gen.world.uow_factory() as uow:
+        failed = uow.generations.get(requested.id)
+    assert failed.state is GenerationState.FALHOU
+    assert failed.error_code is GenerationCode.ATIVIDADE_SEM_CATEGORIA
+    assert failed.error_message == (
+        "Há atividades sem categoria na Etapa 3. Escolha a categoria de cada uma."
+    )
+    assert failed.version_number is None and failed.files == ()
+    assert stored_files(gen) == []
+
+
 class FailingWriter:
     """Writes the first format and breaks on the second."""
 
