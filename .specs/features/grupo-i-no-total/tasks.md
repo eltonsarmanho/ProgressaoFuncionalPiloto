@@ -171,7 +171,7 @@ graph LR
 
 #### T2: O motor pontua o Grupo I quando o grupo conta no total
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Em `_evaluate`, a variável `pit` se divide em `load = is_group1_load_criterion(criterion)` (descarta `points_override` e preenche `pit_hours = result.points` nas duas versões) e `outside = is_pit_criterion(version, criterion)` (zera `points` e marca `outside_total`); `ScoringRow` ganha `outside_total: bool = False`; o docstring do módulo deixa de dizer que o Grupo I "não conta" e descreve as duas versões (D4, D5, D7). `_pit_hours_by_period` e `_subtotals` não mudam de lógica.
 **Where**: `backend/app/domain/rules/scoring_engine.py` (modify)
@@ -186,10 +186,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_scoring_engine_group1_total.py` (novo), com versões sintéticas declaradas no nome: (GI-01) 68 h de graduação = 8,00 pontos, 34 h = 4,00, 68 h de pós-graduação = 12,00, e CH `0,0425` h na graduação = `0,01` (pino do `ROUND_HALF_UP`; mata `ROUND_HALF_EVEN` e `ROUND_DOWN`); `points == pit_hours` e `outside_total` falso em toda linha de carga semanal do grupo 1; (GI-02) subtotal do grupo 1 = soma das ofertas `PONTUADA`, oferta `POTENCIAL` fora do subtotal e o total = soma dos grupos I a VIII; (GI-03) `group1_hours_by_period` e `group1_total_hours` iguais ao subtotal na versão sem teto, e uma versão sintética com `max_points` no grupo 1 mostra horas maiores que o subtotal (documenta S4 do design); (GI-04) oferta com data fora do interstício não é linha, sai do subtotal, do total e das horas, nas duas versões; (GI-05) `points_override` gravado é ignorado nas duas versões; (GI-06) o mesmo conjunto calculado com a versão de grupo 1 fora do total dá `points` 0, `pit_hours` preenchido, `outside_total` verdadeiro, subtotal 1 = 0 e o total dos grupos II a VIII, idêntico ao de hoje; (GI-08) `group1_percent` = subtotal 1 × 100 ÷ total na versão nova e nenhum alerta por ele; a soma das linhas arredondadas é o subtotal (edge case)
-- [ ] Os testes existentes de `test_scoring_engine.py`, `test_scoring_engine_validity.py` e `scenario_211.py` passam sem mudar valor esperado (a versão do cenário tem o grupo 1 fora do total: GI-06)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: contagem antes e depois registrada; nenhum teste apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_scoring_engine_group1_total.py` (novo), com versões sintéticas declaradas no nome: (GI-01) 68 h de graduação = 8,00 pontos, 34 h = 4,00, 68 h de pós-graduação = 12,00, e CH `0,0425` h na graduação = `0,01` (pino do `ROUND_HALF_UP`; mata `ROUND_HALF_EVEN` e `ROUND_DOWN`); `points == pit_hours` e `outside_total` falso em toda linha de carga semanal do grupo 1; (GI-02) subtotal do grupo 1 = soma das ofertas `PONTUADA`, oferta `POTENCIAL` fora do subtotal e o total = soma dos grupos I a VIII; (GI-03) `group1_hours_by_period` e `group1_total_hours` iguais ao subtotal na versão sem teto, e uma versão sintética com `max_points` no grupo 1 mostra horas maiores que o subtotal (documenta S4 do design); (GI-04) oferta com data fora do interstício não é linha, sai do subtotal, do total e das horas, nas duas versões; (GI-05) `points_override` gravado é ignorado nas duas versões; (GI-06) o mesmo conjunto calculado com a versão de grupo 1 fora do total dá `points` 0, `pit_hours` preenchido, `outside_total` verdadeiro, subtotal 1 = 0 e o total dos grupos II a VIII, idêntico ao de hoje; (GI-08) `group1_percent` = subtotal 1 × 100 ÷ total na versão nova e nenhum alerta por ele; a soma das linhas arredondadas é o subtotal (edge case)
+- [x] Os testes existentes de `test_scoring_engine.py`, `test_scoring_engine_validity.py` e `scenario_211.py` passam sem mudar valor esperado (a versão do cenário tem o grupo 1 fora do total: GI-06)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: contagem antes e depois registrada; nenhum teste apagado
 
 **Tests**: unit
 **Gate**: quick

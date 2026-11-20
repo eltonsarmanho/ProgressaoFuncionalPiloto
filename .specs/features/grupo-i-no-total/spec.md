@@ -130,14 +130,14 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| GI-01 | P1: Grupo I conta no total | Tasks | Pending |
-| GI-02 | P1: Grupo I conta no total | Tasks | Pending |
-| GI-03 | P1: Grupo I conta no total | Tasks | Pending |
-| GI-04 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-01 | P1: Grupo I conta no total | Tasks | Implementing |
+| GI-02 | P1: Grupo I conta no total | Tasks | Implementing |
+| GI-03 | P1: Grupo I conta no total | Tasks | Implementing |
+| GI-04 | P1: Grupo I conta no total | Tasks | Implementing |
 | GI-05 | P1: Grupo I conta no total | Tasks | Implementing |
-| GI-06 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-06 | P1: Grupo I conta no total | Tasks | Implementing |
 | GI-07 | P1: Grupo I conta no total | Tasks | Implementing |
-| GI-08 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-08 | P1: Grupo I conta no total | Tasks | Implementing |
 | GI-09 | P1: Grupo I conta no total | Tasks | Pending |
 | GI-10 | P1: Grupo I conta no total | Tasks | Pending |
 | GI-11 | P1: Grupo I conta no total | Tasks | Pending |

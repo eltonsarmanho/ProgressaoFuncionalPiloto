@@ -131,8 +131,7 @@ def test_group_one_percentage_of_total(points_chosen):
             group_number=1,
             academic_period="2023.1",
             level=Level.GRADUACAO,
-            hours=D("68"),
-            points_override=D("20"),
+            hours=D("170"),  # GI-05: 20 points come from the hours (2 x 170 / 17), not informed
             event_date=INSIDE,
         ),
         "Declaração da unidade",
@@ -144,9 +143,9 @@ def test_group_one_percentage_of_total(points_chosen):
     assert result.group_subtotals[1] == D("20")
     assert result.total == D("100")
     assert result.group1_percent == D("20.00")
-    assert [a.code for a in result.rows[0].alerts].count(
-        ScoringAlertCode.PONTOS_AJUSTADOS_MANUALMENTE
-    ) == 1
+    assert ScoringAlertCode.PONTOS_AJUSTADOS_MANUALMENTE not in [
+        a.code for a in result.rows[0].alerts
+    ]
 
 
 @pytest.mark.parametrize(

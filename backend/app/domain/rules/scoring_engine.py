@@ -8,11 +8,12 @@ exists -> points -> limits (criterion cap, then group cap, only on activities th
 Per-activity points stay uncapped; caps apply to the summed subtotals and are reported in
 `limit_adjustments` with the points before and after.
 
-Group I of the official table is reported in PIT hours, not points (PIT-01, PIT-02): a
-CARGA_SEMANAL criterion of group I in a group that does not count in the total yields a row
-with `points = 0` and `pit_hours`, summed per academic period in `group1_hours_by_period`.
-Tables whose group I counts in the total keep the points calculation (processes that chose
-them are unchanged).
+Group I is measured in PIT hours, and every CARGA_SEMANAL criterion of group I yields `pit_hours`
+(summed per academic period in `group1_hours_by_period`), whatever the version (GI-01..GI-03).
+Two versions exist. When the group counts in the total, each hour is one point: the row has
+`points = pit_hours` and enters the subtotal and the total. When the group does not count (the
+old version), the row has `points = 0` and `outside_total = True`, so the hours are shown only.
+Informed points never replace the PIT calculation, in either version (GI-05).
 """
 
 from collections import defaultdict
@@ -27,6 +28,7 @@ from app.domain.entities.scoring import (
     ScoringCriterion,
     ScoringMode,
     ScoringTableVersion,
+    is_group1_load_criterion,
     is_pit_criterion,
 )
 from app.domain.rules.activity_validity import Validity, classify_activity
@@ -67,7 +69,8 @@ class ScoringRow:
     reasons: tuple[NotScoredReason, ...] = ()
     alerts: tuple[Alert, ...] = ()
     evidence_count: int = 0  # documents linked to the activity (VINC-04)
-    pit_hours: Decimal | None = None  # group I rows only: PIT hours of the offer
+    pit_hours: Decimal | None = None  # group I weekly-load rows only: PIT hours of the offer
+    outside_total: bool = False  # the row shows hours and scores 0 (group I outside the total)
 
 
 @dataclass(frozen=True)
@@ -191,11 +194,12 @@ def _evaluate(
 
     yearly = is_yearly_unit(criterion.unit_label)
     state = evaluate_period(activity, interstice, yearly)
-    pit = is_pit_criterion(version, criterion)
+    load = is_group1_load_criterion(criterion)
+    outside = is_pit_criterion(version, criterion)
     missing_hours = criterion.min_hours is not None and activity.hours is None
 
     # PIT hours come from the weekly load only; informed points never replace them
-    scored_activity = replace(activity, points_override=None) if pit else activity
+    scored_activity = replace(activity, points_override=None) if load else activity
     open_ended = yearly and is_start_only(activity)
     if open_ended:
         scored_activity = replace(scored_activity, quantity=_open_quantity(activity, interstice))
@@ -244,20 +248,6 @@ def _evaluate(
         )
 
     scored = activity.status is ActivityStatus.VALIDADA
-    if pit:
-        return ScoringRow(
-            activity_id=activity.id,
-            group_number=activity.group_number,
-            item_number=activity.item_number,
-            unit_points=_row_unit_points(criterion, result),
-            effective_quantity=result.effective_quantity,
-            formula_text=result.formula_text,
-            points=ZERO,
-            status=RowStatus.PONTUADA if scored else RowStatus.POTENCIAL,
-            alerts=tuple(alerts),
-            evidence_count=evidence_count,
-            pit_hours=result.points,
-        )
     return ScoringRow(
         activity_id=activity.id,
         group_number=activity.group_number,
@@ -265,10 +255,12 @@ def _evaluate(
         unit_points=_row_unit_points(criterion, result),
         effective_quantity=result.effective_quantity,
         formula_text=result.formula_text,
-        points=result.points,
+        points=ZERO if outside else result.points,
         status=RowStatus.PONTUADA if scored else RowStatus.POTENCIAL,
         alerts=tuple(alerts),
         evidence_count=evidence_count,
+        pit_hours=result.points if load else None,
+        outside_total=outside,
     )
 
 

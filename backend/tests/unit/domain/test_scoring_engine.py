@@ -353,12 +353,14 @@ def test_activity_without_evidence_note_keeps_points_and_gets_sem_comprovante():
 
 
 def test_manual_points_on_weekly_load_raise_pontos_ajustados_manualmente():
+    # GI-05: group I never takes informed points, so the weekly load of another group is used
     criterion = ScoringCriterion(
-        1, 1, "Aulas", "h", ScoringMode.CARGA_SEMANAL, weeks_per_semester=17, prep_ratio=D("1")
-    )
-    a = act(g=1, item=1, hours=D("68"), points_override=D("24"), level=Level.GRADUACAO)
+        2, 1, "Carga semanal", "h", ScoringMode.CARGA_SEMANAL,
+        weeks_per_semester=17, prep_ratio=D("1"),
+    )  # fmt: skip
+    a = act(g=2, item=1, hours=D("68"), points_override=D("24"), level=Level.GRADUACAO)
 
-    result = calculate(table(group(1, criterion)), [a], INTERSTICE)
+    result = calculate(table(group(2, criterion)), [a], INTERSTICE)
 
     assert row_of(result, a).points == D("24")
     assert ScoringAlertCode.PONTOS_AJUSTADOS_MANUALMENTE in codes(result, a)
@@ -548,11 +550,12 @@ def _synthetic_miniature_table() -> ScoringTableVersion:
 
 
 def test_derived_scenario_2022_2024_in_miniature_with_a_synthetic_table():
+    # GI-05: group I points come from the hours (2 x h / 17, 3 x h / 17), never from informed points
     activities = [
-        act(g=1, item=1, hours=D("68"), points_override=D("24"), level=Level.GRADUACAO),
-        act(g=1, item=1, hours=D("68"), points_override=D("24"), level=Level.GRADUACAO),
-        act(g=1, item=2, hours=D("68"), points_override=D("24"), level=Level.POS_GRADUACAO),
-        act(g=1, item=1, hours=D("20"), points_override=D("20"), level=Level.GRADUACAO),
+        act(g=1, item=1, hours=D("204"), level=Level.GRADUACAO),  # 24
+        act(g=1, item=1, hours=D("204"), level=Level.GRADUACAO),  # 24
+        act(g=1, item=2, hours=D("136"), level=Level.POS_GRADUACAO),  # 24
+        act(g=1, item=1, hours=D("170"), level=Level.GRADUACAO),  # 20
     ]
     activities += [act(g=2, item=7) for _ in range(4)]
     activities += [act(g=2, item=8) for _ in range(4)]
@@ -856,16 +859,17 @@ def test_rows_of_other_groups_have_no_pit_hours_and_result_without_group1_is_emp
     assert result.group1_total_hours == D("0")
 
 
-def test_group1_that_counts_in_total_keeps_the_legacy_points_calculation():
-    legacy = table(group(1, pit_criterion(1, "1"), counts=True))
+def test_group1_that_counts_in_total_gives_points_and_the_pit_hours():
+    # GI-01, GI-03: the hours are exposed in both versions (before, only with the group outside)
+    version = table(group(1, pit_criterion(1, "1"), counts=True))
     a = offer("68")
 
-    result = calculate(legacy, [a], INTERSTICE)
+    result = calculate(version, [a], INTERSTICE)
 
     assert row_of(result, a).points == D("8.00")
-    assert row_of(result, a).pit_hours is None
+    assert row_of(result, a).pit_hours == D("8.00")
     assert result.group_subtotals[1] == D("8.00")
-    assert result.group1_total_hours == D("0")
+    assert result.group1_total_hours == D("8.00")
 
 
 # --- potential split by date (REAL-08) ------------------------------------------------------
