@@ -127,6 +127,12 @@ function baseRoutes(scoring: () => ScoringResult) {
   };
 }
 
+/** GRES-03: the line of a group in the "Pontos por grupo" block of the panel. */
+function groupLine(name: string) {
+  const list = screen.getByRole("list", { name: "Pontos por grupo" });
+  return within(list).getAllByRole("listitem").find((li) => li.textContent?.startsWith(name)) as HTMLElement;
+}
+
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={["/processos/proc-1/pontuacao"]}>
@@ -144,7 +150,7 @@ describe("ProcessScoring", () => {
     const row = (await screen.findByText("Orientação de TCC", { selector: "td" })).closest("tr")!;
     expect(row).toHaveTextContent("40,00");
     expect(screen.getByRole("columnheader", { name: "Pontuação unitária" })).toBeInTheDocument();
-    expect(screen.getByText("Grupo II · Orientação", { selector: "dt" }).nextElementSibling).toHaveTextContent("40,00");
+    expect(groupLine("II · Orientação")).toHaveTextContent("40,00");
     expect(screen.getByText("Total geral", { selector: "dt" }).nextElementSibling).toHaveTextContent("40,00");
     const nav = screen.getByRole("navigation", { name: "Etapas do processo" });
     expect(within(nav).getAllByRole("listitem")[3]).toHaveAttribute("aria-current", "step");
@@ -281,7 +287,7 @@ describe("ProcessScoring", () => {
 
       await waitFor(() => expect(screen.getByText("Total geral", { selector: "dt" }).nextElementSibling).toHaveTextContent("10,00"));
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-      expect(screen.getByText("Grupo II · Orientação", { selector: "dt" }).nextElementSibling).toHaveTextContent("10,00");
+      expect(groupLine("II · Orientação")).toHaveTextContent("10,00");
       const put = calls.find((c) => c.method === "PUT")!;
       expect(JSON.parse(put.init!.body as string)).toMatchObject({ unit_points_override: 2.5, quantidade: 4, expected_version: 3 });
     });
@@ -409,6 +415,9 @@ describe("ProcessScoring", () => {
       formula_text: null,
       points: "0.00",
       pit_hours: hours,
+      outside_total: true,
+      academic_period: "2023.1",
+      level: "GRADUACAO",
       alerts: [],
     });
     const WEEKLY_LOAD = {
@@ -436,24 +445,29 @@ describe("ProcessScoring", () => {
       expect(head).not.toHaveTextContent("Subtotal");
     });
 
-    it("mostra o resumo com 'Total geral (Grupos II a VIII)' e as horas de PIT à parte", async () => {
+    it("GRES-01, GRES-04, GRES-09: o painel diz 'Grupos II a VIII' e mostra a Docência em horas, fora do total", async () => {
       mockFetch({ ...baseRoutes(official), "GET /api/scoring-versions/v-fasi": { status: 200, body: OFFICIAL_VERSION } });
       renderPage();
-      expect((await screen.findByText("Total geral (Grupos II a VIII)", { selector: "dt" })).nextElementSibling).toHaveTextContent("40,00");
-      const hours = screen.getByRole("group", { name: "Horas de PIT do Grupo I" });
-      expect(within(hours).getByText("PIT 2023.1", { selector: "dt" }).nextElementSibling).toHaveTextContent("12,00 horas");
-      expect(within(hours).getByText("Total de horas de PIT", { selector: "dt" }).nextElementSibling).toHaveTextContent("12,00 horas");
+      expect((await screen.findByText("Total geral", { selector: "dt" })).nextElementSibling).toHaveTextContent("40,00");
+      expect(screen.getByText("Total geral", { selector: "dt" }).nextElementSibling).toHaveTextContent("Grupos II a VIII");
+      const teaching = screen.getByRole("region", { name: "Docência (PIT)" });
+      expect(within(teaching).getByRole("heading", { level: 4 })).toHaveTextContent("Período letivo 2023.1");
+      expect(within(teaching).getByText("Total do período: 12,00 horas")).toBeInTheDocument();
+      expect(within(teaching).getByText("Total do Grupo I: 12,00 horas (fora do total)")).toBeInTheDocument();
+      const bars = within(screen.getByRole("list", { name: "Pontos por grupo" }));
+      expect(bars.queryByText(/^I · /)).not.toBeInTheDocument();
+      expect(bars.getByText(/^II · Orientação/)).toBeInTheDocument();
     });
 
-    it("com a versão que tira o Grupo I do total e nenhum lançamento, mostra 0,00 hora", async () => {
+    it("GRES-05: com a versão que tira o Grupo I do total e nenhum lançamento, diz que não há disciplina", async () => {
       mockFetch({
         ...baseRoutes(() => result("40.00", [ROW])),
         "GET /api/scoring-versions/v-fasi": { status: 200, body: OFFICIAL_VERSION },
       });
       renderPage();
-      expect(await screen.findByText("Total geral (Grupos II a VIII)", { selector: "dt" })).toBeInTheDocument();
-      const hours = screen.getByRole("group", { name: "Horas de PIT do Grupo I" });
-      expect(within(hours).getByText("Total de horas de PIT", { selector: "dt" }).nextElementSibling).toHaveTextContent("0,00 horas");
+      expect((await screen.findByText("Total geral", { selector: "dt" })).nextElementSibling).toHaveTextContent("Grupos II a VIII");
+      const teaching = screen.getByRole("region", { name: "Docência (PIT)" });
+      expect(within(teaching).getByText("Nenhuma disciplina lançada no Grupo I")).toBeInTheDocument();
     });
 
     it("com Grupo I fora do total mas sem carga semanal (tipo IFCH), não mostra as horas de PIT", async () => {
@@ -468,8 +482,8 @@ describe("ProcessScoring", () => {
       });
       renderPage();
       expect(await screen.findByText("Total geral", { selector: "dt" })).toBeInTheDocument();
-      expect(screen.queryByRole("group", { name: "Horas de PIT do Grupo I" })).not.toBeInTheDocument();
-      expect(screen.queryByText("Total de horas de PIT")).not.toBeInTheDocument();
+      expect(screen.queryByRole("region", { name: "Docência (PIT)" })).not.toBeInTheDocument();
+      expect(screen.queryByText(/Total do Grupo I/)).not.toBeInTheDocument();
     });
 
     it("explica em português o alerta DATA_FIM_AUSENTE de uma função sem data final (TER-05)", async () => {

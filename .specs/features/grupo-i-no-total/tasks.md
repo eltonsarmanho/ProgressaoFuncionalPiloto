@@ -840,7 +840,7 @@ graph LR
 
 #### T25: `ScoringPanel` substitui `ScoringSummary` na Etapa 4
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Componente que monta os blocos na ordem (faixa, barras, Docência, potencial e a faixa única de contadores `ul.counts` com atividades, com comprovante, pendentes, não pontuadas e com divergências), cada bloco em `<section aria-labelledby>` com `h3`; região viva `role="status"` visualmente oculta que anuncia "Total geral atualizado: 303,00 pontos" só quando o total muda depois da primeira carga. `ProcessScoring.tsx` troca `ScoringSummary` por `ScoringPanel` e renomeia `group1InHours` para `group1OutsideTotal`. `ScoringSummary.tsx` e o teste dele saem, com os comportamentos portados para os testes dos blocos.
 **Where**: `frontend/src/components/ScoringPanel.tsx` (novo)
@@ -855,10 +855,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ScoringPanel.test.tsx`: os blocos aparecem na ordem; a faixa de contadores é uma lista única com os cinco contadores; a região viva fica vazia na abertura e anuncia o total novo depois de um recálculo que o muda, e não anuncia quando o total não muda; o painel não tem elemento focável próprio; versão antiga sem barra do I e com "Grupos II a VIII"
-- [ ] `ProcessScoring.test.tsx` passa com o painel (as asserções que liam o `ScoringSummary` passam a ler os blocos: GRES-01..09); `ScoringSummary.test.tsx` removido só depois de cada asserção dele ter equivalente num teste de bloco, conferido item a item no corpo do commit
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: contagem antes e depois registrada; nenhuma asserção perdida
+- [x] Testes primeiro em `frontend/src/components/ScoringPanel.test.tsx`: os blocos aparecem na ordem; a faixa de contadores é uma lista única com os cinco contadores; a região viva fica vazia na abertura e anuncia o total novo depois de um recálculo que o muda, e não anuncia quando o total não muda; o painel não tem elemento focável próprio; versão antiga sem barra do I e com "Grupos II a VIII"
+- [x] `ProcessScoring.test.tsx` passa com o painel (as asserções que liam o `ScoringSummary` passam a ler os blocos: GRES-01..09); `ScoringSummary.test.tsx` removido só depois de cada asserção dele ter equivalente num teste de bloco, conferido item a item no corpo do commit
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagem antes e depois registrada; nenhuma asserção perdida
 
 **Tests**: unit
 **Gate**: front

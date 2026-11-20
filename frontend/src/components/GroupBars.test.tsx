@@ -31,6 +31,12 @@ describe("GroupBars", () => {
     expect(lines[7]).toHaveTextContent("56,00");
   });
 
+  it("GRES-03: cada um dos oito grupos mostra o seu subtotal em pt-BR, na ordem de I a VIII", () => {
+    render(<GroupBars subtotals={SUBTOTALS} total="303.00" group1OutsideTotal={false} />);
+    const values = items().map((li) => li.querySelector(".group-bar-value")?.textContent);
+    expect(values).toEqual(["92,00", "52,00", "7,00", "62,00", "0,00", "30,00", "4,00", "56,00"]);
+  });
+
   it("GRES-09: na versão antiga o grupo I não tem barra (sete linhas, de II a VIII)", () => {
     render(<GroupBars subtotals={SUBTOTALS} total="211.00" group1OutsideTotal />);
     const lines = items();

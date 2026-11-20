@@ -15,7 +15,7 @@ import { ActivityForm } from "../components/ActivityForm";
 import { AlertList } from "../components/AlertList";
 import { Modal } from "../components/Modal";
 import { ScoreEditor } from "../components/ScoreEditor";
-import { ScoringSummary } from "../components/ScoringSummary";
+import { ScoringPanel } from "../components/ScoringPanel";
 import { ScoringTable } from "../components/ScoringTable";
 import { StepNav } from "../components/StepNav";
 import { TablePicker } from "../components/TablePicker";
@@ -118,10 +118,10 @@ export function ProcessScoring() {
 
   const groupNames = version ? Object.fromEntries(version.groups.map((g) => [g.number, g.name])) : undefined;
   const groupOne = version?.groups.find((g) => g.number === 1);
-  // PIT hours only where group I is outside the total and has a weekly-load criterion (PIT-02/03).
-  const group1InHours = groupOne
-    ? !groupOne.counts_in_total && groupOne.criteria.some((c) => c.mode === "CARGA_SEMANAL")
-    : undefined;
+  // The PIT hours exist where group I has a weekly-load criterion; group I is outside the total only
+  // in the old version (it does not count in the total).
+  const group1Load = groupOne ? groupOne.criteria.some((c) => c.mode === "CARGA_SEMANAL") : undefined;
+  const group1OutsideTotal = groupOne ? !groupOne.counts_in_total && group1Load === true : undefined;
 
   const alerts: Alert[] = [];
   const seen = new Set<string>();
@@ -151,7 +151,7 @@ export function ProcessScoring() {
         <>
           <section className="card" aria-labelledby="summary-title">
             <h2 id="summary-title">Resumo</h2>
-            <ScoringSummary result={result} groupNames={groupNames} group1InHours={group1InHours} />
+            <ScoringPanel result={result} groupNames={groupNames} group1OutsideTotal={group1OutsideTotal} group1Load={group1Load} />
           </section>
 
           <section className="card" aria-labelledby="activities-title">
