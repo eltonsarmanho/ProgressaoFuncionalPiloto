@@ -134,9 +134,9 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 | GI-02 | P1: Grupo I conta no total | Tasks | Pending |
 | GI-03 | P1: Grupo I conta no total | Tasks | Pending |
 | GI-04 | P1: Grupo I conta no total | Tasks | Pending |
-| GI-05 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-05 | P1: Grupo I conta no total | Tasks | Implementing |
 | GI-06 | P1: Grupo I conta no total | Tasks | Pending |
-| GI-07 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-07 | P1: Grupo I conta no total | Tasks | Implementing |
 | GI-08 | P1: Grupo I conta no total | Tasks | Pending |
 | GI-09 | P1: Grupo I conta no total | Tasks | Pending |
 | GI-10 | P1: Grupo I conta no total | Tasks | Pending |

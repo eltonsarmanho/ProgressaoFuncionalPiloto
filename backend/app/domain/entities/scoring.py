@@ -59,6 +59,12 @@ class ScoringTableVersion:
     minimums: dict[str, Any] | None = None
     notes: str | None = None
     id: UUID | None = field(default=None, compare=False)  # persistence identity only
+    # Set when a newer version replaces this one; not part of the rules, so not compared.
+    superseded_by_id: UUID | None = field(default=None, compare=False)
+
+    @property
+    def is_superseded(self) -> bool:
+        return self.superseded_by_id is not None
 
     def covers(self, moment: date) -> bool:
         before_end = self.valid_to is None or moment <= self.valid_to
@@ -72,6 +78,11 @@ class ScoringTableVersion:
         if found is None:
             return None
         return next((c for c in found.criteria if c.item_number == item), None)
+
+
+def is_group1_load_criterion(criterion: ScoringCriterion) -> bool:
+    """Group I weekly-load criterion (PIT hours), whether or not the group counts in the total."""
+    return criterion.group_number == 1 and criterion.mode is ScoringMode.CARGA_SEMANAL
 
 
 def is_pit_criterion(version: ScoringTableVersion, criterion: ScoringCriterion) -> bool:

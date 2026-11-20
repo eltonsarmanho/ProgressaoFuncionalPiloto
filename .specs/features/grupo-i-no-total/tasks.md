@@ -142,7 +142,7 @@ graph LR
 
 #### T1: Predicado `is_group1_load_criterion` e marca de versão substituída na entidade
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Em `domain/entities/scoring.py`, a função `is_group1_load_criterion(criterion) -> bool` (grupo 1 e modo `CARGA_SEMANAL`, em qualquer versão; `is_pit_criterion` fica como está) e, em `ScoringTableVersion`, o campo `superseded_by_id: UUID | None = field(default=None, compare=False)` com a propriedade `is_superseded` (D1, D3, D5).
 **Where**: `backend/app/domain/entities/scoring.py` (modify)
@@ -157,10 +157,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_scoring_entities.py`: critério `CARGA_SEMANAL` do grupo 1 é carga do Grupo I com o grupo fora do total e com o grupo dentro do total; critério `POR_UNIDADE` do grupo 1 e `CARGA_SEMANAL` de outro grupo não são; `is_pit_criterion` continua verdadeiro só com o grupo fora do total; versão sem `superseded_by_id` não é substituída e com ele é; duas versões iguais que diferem só em `superseded_by_id` são iguais na comparação
-- [ ] Teste de arquitetura passa (o domínio não importa FastAPI nem SQLAlchemy)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_scoring_entities.py`: critério `CARGA_SEMANAL` do grupo 1 é carga do Grupo I com o grupo fora do total e com o grupo dentro do total; critério `POR_UNIDADE` do grupo 1 e `CARGA_SEMANAL` de outro grupo não são; `is_pit_criterion` continua verdadeiro só com o grupo fora do total; versão sem `superseded_by_id` não é substituída e com ele é; duas versões iguais que diferem só em `superseded_by_id` são iguais na comparação
+- [x] Teste de arquitetura passa (o domínio não importa FastAPI nem SQLAlchemy)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
