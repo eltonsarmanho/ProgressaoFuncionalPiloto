@@ -131,12 +131,21 @@ describe("UIM-22: editor do valor unitário", () => {
   it.each([
     ["CARGA_SEMANAL", false, /carga semanal da tabela/],
     ["CARGA_SEMANAL", true, /horas de PIT/],
-    ["VALOR_INFORMADO", false, /pontos informados da atividade, lidos do documento/],
+    [
+      "VALOR_INFORMADO",
+      false,
+      "Neste item a pontuação é um valor informado na atividade, não calculado pela tabela: esta tela não o altera.",
+    ],
   ] as const)("em %s (PIT: %s) não oferece o campo e explica numa nota curta", (mode, pit, note) => {
     setup({ mode, pit });
     expect(screen.queryByLabelText("Valor unitário")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Salvar pontuação" })).not.toBeInTheDocument();
     expect(screen.getByText(note)).toBeInTheDocument();
+  });
+
+  it("em VALOR_INFORMADO nenhum texto do editor diz que o valor é lido do documento (CATXT-01)", () => {
+    setup({ mode: "VALOR_INFORMADO" });
+    expect(document.body.textContent).not.toMatch(/lidos\sdo\sdocumento/);
   });
 
   it.each([["CARGA_SEMANAL"], ["VALOR_INFORMADO"]] as const)(

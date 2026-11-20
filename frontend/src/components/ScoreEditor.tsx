@@ -13,7 +13,7 @@ function noteFor(criterion: Criterion | undefined, pit: boolean): string | null 
     return "A pontuação deste item segue a carga semanal da tabela: é calculada pelas horas da atividade e não tem valor a digitar nesta tela.";
   }
   if (criterion.mode === "VALOR_INFORMADO") {
-    return "Neste item os pontos são os pontos informados da atividade, lidos do documento: esta tela não os altera.";
+    return "Neste item a pontuação é um valor informado na atividade, não calculado pela tabela: esta tela não o altera.";
   }
   return null;
 }

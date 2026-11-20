@@ -364,7 +364,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T10: Nota do item de valor informado no editor de pontuação
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `noteFor` devolve, para `VALOR_INFORMADO`, "Neste item a pontuação é um valor informado na atividade, não calculado pela tabela: esta tela não o altera."
 **Where**: `frontend/src/components/ScoreEditor.tsx` (modify, `:15-17`; teste no arquivo de teste do componente, linha 134)
@@ -379,10 +379,10 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] Teste primeiro em `frontend/src/components/ScoreEditor.test.tsx`: o caso `VALOR_INFORMADO` espera o texto exato novo, e um teste afirma que nenhum texto do editor contém "lidos do documento"
-- [ ] `grep -rn "lidos do documento" frontend/src` sem saída
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: contagem antes e depois registrada
+- [x] Teste primeiro em `frontend/src/components/ScoreEditor.test.tsx`: o caso `VALOR_INFORMADO` espera o texto exato novo, e um teste afirma que nenhum texto do editor contém "lidos do documento"
+- [x] `grep -rn "lidos do documento" frontend/src` sem saída
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagem antes e depois registrada
 
 **Tests**: unit
 **Gate**: quick
