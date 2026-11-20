@@ -728,7 +728,7 @@ graph LR
 
 #### T21: `PanelHeadline` com o total, o mínimo e o percentual do Grupo I
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Componente de leitura: `dl` com o Total geral em pontos e o rótulo "Grupos I a VIII" (ou "Grupos II a VIII" quando `group1OutsideTotal`), ao lado a situação do mínimo em texto curto ("Atinge o mínimo (100,00)", "Não atinge o mínimo (100,00)") e, sem mínimo, "Mínimo não definido" em texto comum, sem classe de destaque; o percentual do Grupo I sobre o total ("—" sem total), que o resumo de hoje mostra e a GI-08 manda manter.
 **Where**: `frontend/src/components/PanelHeadline.tsx` (novo)
@@ -743,9 +743,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/PanelHeadline.test.tsx`: total "303,00" com "Grupos I a VIII"; versão antiga com "Grupos II a VIII" (mata o rótulo trocado); mínimo atingido e não atingido em texto; "Mínimo não definido" sem a classe de valor em destaque; percentual "30,36%" e "—" sem total
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/PanelHeadline.test.tsx`: total "303,00" com "Grupos I a VIII"; versão antiga com "Grupos II a VIII" (mata o rótulo trocado); mínimo atingido e não atingido em texto; "Mínimo não definido" sem a classe de valor em destaque; percentual "30,36%" e "—" sem total
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: front
