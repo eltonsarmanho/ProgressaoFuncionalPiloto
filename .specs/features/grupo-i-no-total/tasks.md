@@ -134,6 +134,18 @@ graph LR
     T34
 ```
 
+### Phase 9: Correções da volta 1 do Verifier
+
+As tarefas desta fase corrigem as lacunas G1, G3, G4 e G5 do `validation.md` (volta 1) e rodam antes da volta 2 da T34. A G2 (GRES-08 sem teste de navegador versionado) não vira tarefa: a matriz de teste já deixa a medição a 360 e 320 px no Chrome headless fora do gate, a cargo do Verifier, que a repete na volta 2.
+
+```mermaid
+graph LR
+    T35
+    T36
+    T37
+    T38
+```
+
 ---
 
 ## Task Breakdown
@@ -1127,6 +1139,121 @@ graph LR
 
 ---
 
+### Phase 9: Correções da volta 1 do Verifier
+
+#### T35: FT1, fronteiras 31/12 e 01/01 do ano inteiro
+
+**Status**: Done
+
+**What**: O Verifier (validation.md, G1) viu que os mutantes M03 (`<` virando `<=`) e M04 (`>` virando `>=`) em `scoring_periods.py:103` sobrevivem com efeito observável: as fronteiras com o interstício começando em 31/12 e terminando em 01/01 não têm teste. Dois testes, sem mudança de código: (a) `Interstice(2022-12-31, 2024-12-30)` com a oferta 2022.2 dá `SEM_DATA`; (b) `Interstice(2023-01-02, 2025-01-01)` com a oferta 2025.1 dá `SEM_DATA`.
+**Where**: `backend/tests/unit/domain/test_scoring_periods.py` (modify)
+**Depends on**: T33 (fase 7)
+**Reuses**: `_offer` e `Interstice` do arquivo de teste
+**Requirement**: GI-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Os dois testes passam contra o código e falham contra M03 e M04, provado em cópia isolada
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os dois novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(domain): pin the year guard on the interstice start of December 31 and end of January 1`
+
+---
+
+#### T36: FT2, barra do grupo com total zero e parcela positiva
+
+**Status**: Pending
+
+**What**: O Verifier (validation.md, G3) viu que o mutante F04 (sem a guarda `!(whole > 0)` em `widthOf`) sobrevive porque o teste de "total 0" zera também as parcelas. A spec (GRES-03) manda desenhar barra vazia com total 0, sem NaN nem Infinity; o teste novo passa uma parcela positiva com total "0.00" e espera `"0%"`.
+**Where**: `frontend/src/components/GroupBars.test.tsx` (modify)
+**Depends on**: T33 (fase 7)
+**Reuses**: `SUBTOTALS` e os auxiliares `items` e `fill` do arquivo de teste
+**Requirement**: GRES-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O teste novo passa contra o código e falha contra o mutante F04 (guarda `whole > 0` removida), provado em cópia isolada
+- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [ ] Test count: nenhum teste apagado ou enfraquecido; o novo passa
+
+**Tests**: unit
+**Gate**: front
+
+**Commit**: `test(frontend): pin the empty group bar when the total is zero but a part is not`
+
+---
+
+#### T37: FT3, o mínimo não definido herda o tamanho do texto comum no CSS
+
+**Status**: Pending
+
+**What**: O Verifier (validation.md, G4) viu que o tamanho de texto comum de GRES-02 só é fixado pela ausência de classe no componente; o tamanho real é do CSS. Teste estático em `styles.test.ts`: a regra `.panel-headline dd` não declara `font-size` nem `font-weight`, e só `.panel-value` (o total) e `.panel-minimum` (mínimo definido) as declaram.
+**Where**: `frontend/src/styles.test.ts` (modify)
+**Depends on**: T33 (fase 7)
+**Reuses**: o auxiliar `rule` do bloco `GRES-08` do arquivo de teste
+**Requirement**: GRES-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O teste novo passa contra o CSS e falha quando `.panel-headline dd` ganha `font-size` ou `font-weight`, provado em cópia isolada
+- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [ ] Test count: nenhum teste apagado ou enfraquecido; o novo passa
+
+**Tests**: unit
+**Gate**: front
+
+**Commit**: `test(frontend): pin the plain text size of the undefined minimum in the css`
+
+---
+
+#### T38: FT4, a versão substituída não aceita edição de critério
+
+**Status**: Pending
+
+**What**: Observação G5 do Verifier, fora do texto da spec: `UpdateVersionCriteria` só recusa a edição quando outra versão tem `valid_from` maior; a versão substituída e a nova começam no mesmo dia, então um administrador edita critérios da versão substituída enquanto nenhum processo a usa. A versão substituída guarda a tabela antiga intacta (GI-06, AD-002), então a edição passa a ser recusada com `Conflict`, antes da checagem de uso, sem alterar nada nem gravar auditoria.
+**Where**: `backend/app/application/use_cases/scoring_admin.py` (modify) e `backend/tests/integration/scoring/test_admin_criteria.py` (modify)
+**Depends on**: T33 (fase 7)
+**Reuses**: `add_superseded_twin` de `test_admin_versions.py` (reescrito no arquivo de critérios), `criterion` e `events` do arquivo de teste
+**Requirement**: GI-06, GI-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Teste primeiro (que falha antes): versão marcada como substituída, sem processo que a use, com a nova de mesmo início; `update_criteria` levanta `Conflict`, o critério segue com o valor antigo e não há evento `UPDATE` de auditoria
+- [ ] A edição de critério da versão nova (não substituída) continua aceita no mesmo cenário
+- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(admin): refuse the criterion edit of a superseded version`
+
+---
+
 ## Requirement coverage
 
 | Requisito | Tarefas | Requisito | Tarefas |
@@ -1136,10 +1263,10 @@ graph LR
 | GI-03 | T2, T11, T34 | GTAB-05 | T12, T34 |
 | GI-04 | T2, T4, T34 | GTAB-06 | T14, T16, T34 |
 | GI-05 | T1, T2, T6, T28, T34 | GTAB-07 | T12, T14, T16, T34 |
-| GI-06 | T2, T9, T11, T31, T34 | GTAB-08 | T12, T13, T15, T16, T34 |
-| GI-07 | T1, T5, T7, T8, T9, T10, T17, T19, T29, T32, T34 | GRES-01 | T20, T21, T34 |
-| GI-08 | T2, T11, T21, T34 | GRES-02 | T20, T21, T34 |
-| GI-09 | T3, T4, T20, T34 | GRES-03 | T22, T34 |
+| GI-06 | T2, T9, T11, T31, T38, T34 | GTAB-08 | T12, T13, T15, T16, T34 |
+| GI-07 | T1, T5, T7, T8, T9, T10, T17, T19, T29, T32, T38, T34 | GRES-01 | T20, T21, T34 |
+| GI-08 | T2, T11, T21, T34 | GRES-02 | T20, T21, T37, T34 |
+| GI-09 | T3, T4, T20, T35, T34 | GRES-03 | T22, T36, T34 |
 | GI-10 | T10, T33, T34 | GRES-04 | T17, T19, T20, T23, T34 |
 | GI-11 | T18, T19, T30, T34 | GRES-05 | T20, T23, T34 |
 | GI-12 | T9, T31, T34 | GRES-06 | T24, T34 |
@@ -1191,6 +1318,10 @@ Cobertura: 29 de 29 requisitos mapeados.
 | T32 | T31 | T31 → T32 | ✅ Match |
 | T33 | T32 | T32 → T33 | ✅ Match |
 | T34 | T33 (fase 7) | - (fase anterior) | ✅ Match |
+| T35 | T33 (fase 7) | - (fase anterior) | ✅ Match |
+| T36 | T33 (fase 7) | - (fase anterior) | ✅ Match |
+| T37 | T33 (fase 7) | - (fase anterior) | ✅ Match |
+| T38 | T33 (fase 7) | - (fase anterior) | ✅ Match |
 
 ---
 
@@ -1224,3 +1355,7 @@ Cobertura: 29 de 29 requisitos mapeados.
 | T30 | Frontend page | unit | unit | ✅ OK |
 | T31-T33 | Docs | none | none | ✅ OK |
 | T34 | Verification report | none | none | ✅ OK |
+| T35 | Domain rules (teste) | unit | unit | ✅ OK |
+| T36 | Frontend component (teste) | unit | unit | ✅ OK |
+| T37 | CSS (teste estático) | unit (estático) | unit | ✅ OK |
+| T38 | Use case (admin) | integration | integration | ✅ OK |

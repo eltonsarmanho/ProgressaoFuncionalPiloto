@@ -196,6 +196,20 @@ def test_offer_of_the_year_of_an_interstice_that_ends_on_december_31st_is_sem_da
     assert evaluate_period(_offer("2024.1"), interstice) is PeriodState.SEM_DATA
 
 
+def test_offer_of_the_year_before_an_interstice_that_starts_on_december_31st_is_sem_data():
+    # 31/12/2022 is the interstice's first day, so the year of 2022.2 still has one day inside
+    interstice = Interstice(date(2022, 12, 31), date(2024, 12, 30))
+
+    assert evaluate_period(_offer("2022.2"), interstice) is PeriodState.SEM_DATA
+
+
+def test_offer_of_the_year_after_an_interstice_that_ends_on_january_1st_is_sem_data():
+    # 01/01/2025 is the interstice's last day, so the year of 2025.1 still has one day inside
+    interstice = Interstice(date(2023, 1, 2), date(2025, 1, 1))
+
+    assert evaluate_period(_offer("2025.1"), interstice) is PeriodState.SEM_DATA
+
+
 def test_offer_with_a_date_outside_is_judged_by_the_date_not_by_its_period():
     activity = _offer("2023.1", event_date=date(2020, 5, 1))
 
