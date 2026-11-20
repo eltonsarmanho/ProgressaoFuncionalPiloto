@@ -1,5 +1,7 @@
 # Tabela Oficial — Specification
 
+> **Nota de substituição:** PIT-01, PIT-02 e PIT-03 e TELA-01 e TELA-02 (Grupo I em horas, fora do total) são substituídos pela feature `grupo-i-no-total` (AD-023) quando ela for implementada; até lá valem como estão. A nota recíproca está em `grupo-i-no-total/spec.md`.
+
 **Escopo:** Large (muda a fonte das pontuações, regras já verificadas e testes; sem domínio novo).
 **Substitui:** TAB-03, TAB-04, TAB-05, TAB-06, TAB-07 e CALC-14 da feature `pontuacao`, e as regras de sugestão (CLS-02) da `inteligencia-documental`.
 **Fonte:** planilha `Modelos/tabela-progressao-docente.xlsx` (fornecida pelo usuário em 2026-11-17), Res. 4.644/2015 e Res. 4.074/2010.
@@ -158,35 +160,35 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story       | Phase  | Status  |
 | -------------- | ----------- | ------ | ------- |
-| OFI-01 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
-| OFI-02 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
-| OFI-03 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
-| OFI-04 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
-| OFI-05 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
-| OFI-06 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
-| OFI-07 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
-| OFI-08 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
-| OFI-09 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
-| OFI-10 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
-| OFI-11 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
-| OFI-12 | P1: Tabela oficial da UFPA como única fonte | Design | Implemented |
-| PIT-01 | P1: Grupo I em horas de PIT, fora do total | Design | Implemented |
-| PIT-02 | P1: Grupo I em horas de PIT, fora do total | Design | Implemented |
-| PIT-03 | P1: Grupo I em horas de PIT, fora do total | Design | Implemented |
-| MAP-01 | P1: Regras de sugestão na numeração oficial | Design | Implemented |
-| MAP-02 | P1: Regras de sugestão na numeração oficial | Design | Implemented |
-| MAP-03 | P1: Regras de sugestão na numeração oficial | Design | Implemented |
-| MAP-04 | P1: Regras de sugestão na numeração oficial | Design | Implemented |
-| ACE-01 | P1: Aceitação recalculada | Design | Implemented |
+| OFI-01 | P1: Tabela oficial da UFPA como única fonte | Design | Verified |
+| OFI-02 | P1: Tabela oficial da UFPA como única fonte | Design | Verified |
+| OFI-03 | P1: Tabela oficial da UFPA como única fonte | Design | Verified |
+| OFI-04 | P1: Tabela oficial da UFPA como única fonte | Design | Verified |
+| OFI-05 | P1: Tabela oficial da UFPA como única fonte | Design | Verified |
+| OFI-06 | P1: Tabela oficial da UFPA como única fonte | Design | Verified |
+| OFI-07 | P1: Tabela oficial da UFPA como única fonte | Design | Verified |
+| OFI-08 | P1: Tabela oficial da UFPA como única fonte | Design | Verified |
+| OFI-09 | P1: Tabela oficial da UFPA como única fonte | Design | Verified |
+| OFI-10 | P1: Tabela oficial da UFPA como única fonte | Design | Verified |
+| OFI-11 | P1: Tabela oficial da UFPA como única fonte | Design | Verified |
+| OFI-12 | P1: Tabela oficial da UFPA como única fonte | Design | Verified |
+| PIT-01 | P1: Grupo I em horas de PIT, fora do total | Design | Verified |
+| PIT-02 | P1: Grupo I em horas de PIT, fora do total | Design | Verified |
+| PIT-03 | P1: Grupo I em horas de PIT, fora do total | Design | Verified |
+| MAP-01 | P1: Regras de sugestão na numeração oficial | Design | Verified |
+| MAP-02 | P1: Regras de sugestão na numeração oficial | Design | Verified |
+| MAP-03 | P1: Regras de sugestão na numeração oficial | Design | Verified |
+| MAP-04 | P1: Regras de sugestão na numeração oficial | Design | Verified |
+| ACE-01 | P1: Aceitação recalculada | Design | Verified |
 | ACE-02 | P1: Aceitação recalculada | Design | Pending |
-| TELA-01 | P1: Etapa 4 com o Grupo I em horas | Design | Implemented |
-| TELA-02 | P1: Etapa 4 com o Grupo I em horas | Design | Implemented |
+| TELA-01 | P1: Etapa 4 com o Grupo I em horas | Design | Verified |
+| TELA-02 | P1: Etapa 4 com o Grupo I em horas | Design | Verified |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Implemented → Verified
 
-**Coverage:** 23 total, 22 Implemented (com teste), 1 Pending (ACE-02: sem teste dedicado, é critério de processo; a suíte atualizada está verde e cada valor alterado está no corpo dos commits)
+**Coverage:** 23 total, 22 Verified (`validation.md`, veredito PASS e uma linha por requisito em "Spec-Anchored Acceptance Criteria"), 1 Pending (ACE-02: PARTIAL na validação, por definição; sem teste dedicado, é critério de processo; a suíte atualizada está verde e cada valor alterado está no corpo dos commits)
 
 ---
 

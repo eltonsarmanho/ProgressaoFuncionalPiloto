@@ -700,7 +700,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T22: Rastreabilidade e nota de substituição da tabela oficial
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Os 22 requisitos `Implemented` passam a `Verified` citando `tabela-oficial/validation.md` (veredito PASS e a linha por requisito); ACE-02 fica `Pending` com a nota PARTIAL; o cabeçalho ganha a nota de substituição: PIT-01..03 e TELA-01..02 são substituídos pela feature `grupo-i-no-total` (AD-023) quando ela for implementada.
 **Where**: `.specs/features/tabela-oficial/spec.md` (modify)
@@ -715,9 +715,9 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] 22 `Verified`, 1 `Pending` (ACE-02), nota de cobertura citando a validação; nota de substituição no topo com PIT-01..03, TELA-01..02, `grupo-i-no-total` e AD-023
-- [ ] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py tabela-oficial` sem erro novo
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] 22 `Verified`, 1 `Pending` (ACE-02), nota de cobertura citando a validação; nota de substituição no topo com PIT-01..03, TELA-01..02, `grupo-i-no-total` e AD-023
+- [x] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py tabela-oficial` sem erro novo
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
 
 **Tests**: none
 **Gate**: quick
