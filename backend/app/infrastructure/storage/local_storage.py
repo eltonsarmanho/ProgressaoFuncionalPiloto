@@ -5,6 +5,7 @@ never part of a path; only the whitelisted extension survives. Directories are 0
 0600, and a stored file is never rewritten.
 """
 
+import errno
 import os
 import re
 from pathlib import Path
@@ -62,3 +63,19 @@ class LocalFileStorage:
     def delete(self, process_id: UUID, internal_name: str) -> None:
         """Removes the file; deleting a missing file is not an error."""
         self.path(process_id, internal_name).unlink(missing_ok=True)
+
+    def remove_process_dir(self, process_id: UUID) -> bool:
+        """Removes the directory of the process when it is empty; returns whether it went away.
+
+        A directory that still holds anything (a file this storage did not write included) or
+        that does not exist is left alone; there is no recursive removal.
+        """
+        try:
+            self._process_dir(process_id).rmdir()
+        except (FileNotFoundError, NotADirectoryError):
+            return False
+        except OSError as error:
+            if error.errno == errno.ENOTEMPTY or error.errno == errno.EEXIST:
+                return False
+            raise
+        return True

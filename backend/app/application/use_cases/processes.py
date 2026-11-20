@@ -286,7 +286,8 @@ class DeleteProcess(_DeletionUseCase):
 
     def execute(self, actor: User, process_id: UUID) -> None:
         """Deletes the process and all that depends on it in one transaction (GP-DEL-03), then
-        the files from the disk; a file that cannot be removed only logs (GP-DEL-04)."""
+        the files from the disk, then the directory of the process when it is left empty; a file
+        or directory that cannot be removed only logs (GP-DEL-04)."""
         with self._uow_factory() as uow:
             process = self._deletable(uow, actor, process_id)
             if uow.process_purge.busy_reasons(process_id):
@@ -309,4 +310,16 @@ class DeleteProcess(_DeletionUseCase):
                     "process delete: could not remove a %s file of owner_id=%s",
                     file.area.value,
                     file.owner_id,
+                )
+        for area, storage in (
+            (StoredFileArea.INPUT, self._originals),
+            (StoredFileArea.GENERATED, self._generated),
+        ):
+            try:
+                storage.remove_process_dir(process_id)
+            except OSError:
+                logger.warning(
+                    "process delete: could not remove the %s directory of process_id=%s",
+                    area.value,
+                    process_id,
                 )

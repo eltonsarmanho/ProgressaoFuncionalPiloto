@@ -420,6 +420,11 @@ class FileStorage(Protocol):
 
     def delete(self, process_id: UUID, internal_name: str) -> None: ...
 
+    def remove_process_dir(self, process_id: UUID) -> bool:
+        """Removes the directory of the process only when it is empty; returns whether it went
+        away. A missing or non-empty directory is left alone."""
+        ...
+
 
 class FileInspector(Protocol):
     def inspect(self, path: Path) -> FileFacts: ...
@@ -702,6 +707,11 @@ class GeneratedFileStorage(Protocol):
     def path(self, process_id: UUID, internal_name: str) -> Path: ...
 
     def delete(self, process_id: UUID, internal_name: str) -> None: ...
+
+    def remove_process_dir(self, process_id: UUID) -> bool:
+        """Removes the directory of the process only when it is empty; returns whether it went
+        away. A missing or non-empty directory is left alone."""
+        ...
 
     def free_bytes(self) -> int:
         """Free space of the volume that holds the files (ESPACO_INSUFICIENTE)."""

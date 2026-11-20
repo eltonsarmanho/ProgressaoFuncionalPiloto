@@ -114,3 +114,33 @@ def test_other_processes_directory_is_separate(storage):
     name = storage.save(first, ".pdf", CONTENT)
     with pytest.raises(StoredFileNotFound):
         storage.open(second, name)
+
+
+def test_remove_process_dir_removes_the_empty_directory_only(storage, tmp_path):
+    process_id = uuid4()
+    name = storage.save(process_id, ".pdf", CONTENT)
+    directory = tmp_path / "storage" / "uploads" / str(process_id)
+
+    assert storage.remove_process_dir(process_id) is False
+    assert (directory / name).is_file()
+
+    storage.delete(process_id, name)
+    assert storage.remove_process_dir(process_id) is True
+    assert not directory.exists()
+    assert (tmp_path / "storage" / "uploads").is_dir()
+
+
+def test_remove_process_dir_of_a_missing_directory_is_not_an_error(storage):
+    assert storage.remove_process_dir(uuid4()) is False
+
+
+def test_remove_process_dir_never_removes_a_foreign_file(storage, tmp_path):
+    process_id = uuid4()
+    storage.save(process_id, ".pdf", CONTENT)
+    directory = tmp_path / "storage" / "uploads" / str(process_id)
+    (directory / "outro.txt").write_text("alheio")
+    for child in list(directory.glob("*.pdf")):
+        child.unlink()
+
+    assert storage.remove_process_dir(process_id) is False
+    assert (directory / "outro.txt").read_text() == "alheio"

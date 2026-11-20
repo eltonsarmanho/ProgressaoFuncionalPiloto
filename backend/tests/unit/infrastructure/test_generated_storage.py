@@ -173,3 +173,32 @@ def test_free_bytes_is_the_free_space_of_the_volume_even_before_the_first_file(s
     free = storage.free_bytes()
     assert free > 0
     assert abs(free - expected) < 50_000_000
+
+
+def test_remove_process_dir_removes_the_empty_directory_only(storage, tmp_path):
+    process_id = uuid4()
+    _, name = write_and_commit(storage, process_id)
+    directory = tmp_path / "storage" / "generated" / str(process_id)
+
+    assert storage.remove_process_dir(process_id) is False
+    assert (directory / name).is_file()
+
+    storage.delete(process_id, name)
+    assert storage.remove_process_dir(process_id) is True
+    assert not directory.exists()
+    assert (tmp_path / "storage" / "generated").is_dir()
+
+
+def test_remove_process_dir_of_a_missing_directory_is_not_an_error(storage):
+    assert storage.remove_process_dir(uuid4()) is False
+
+
+def test_remove_process_dir_never_removes_a_foreign_file(storage, tmp_path):
+    process_id = uuid4()
+    _, name = write_and_commit(storage, process_id)
+    directory = tmp_path / "storage" / "generated" / str(process_id)
+    storage.delete(process_id, name)
+    (directory / "outro.txt").write_text("alheio")
+
+    assert storage.remove_process_dir(process_id) is False
+    assert (directory / "outro.txt").read_text() == "alheio"

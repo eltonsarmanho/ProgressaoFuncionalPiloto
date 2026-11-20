@@ -6,6 +6,7 @@ same directory, so the content is never read into memory (a Comprovante has up t
 failed generation leaves no partial file under a final name. Directories are 0700, files 0600.
 """
 
+import errno
 import os
 import re
 import shutil
@@ -62,6 +63,22 @@ class LocalGeneratedStorage:
     def delete(self, process_id: UUID, internal_name: str) -> None:
         """Removes the file; deleting a missing file is not an error."""
         self.path(process_id, internal_name).unlink(missing_ok=True)
+
+    def remove_process_dir(self, process_id: UUID) -> bool:
+        """Removes the directory of the process when it is empty; returns whether it went away.
+
+        A directory that still holds anything (a file this storage did not write included) or
+        that does not exist is left alone; there is no recursive removal.
+        """
+        try:
+            self._process_dir(process_id).rmdir()
+        except (FileNotFoundError, NotADirectoryError):
+            return False
+        except OSError as error:
+            if error.errno in (errno.ENOTEMPTY, errno.EEXIST):
+                return False
+            raise
+        return True
 
     def free_bytes(self) -> int:
         """Free space of the volume that holds the files (ESPACO_INSUFICIENTE)."""

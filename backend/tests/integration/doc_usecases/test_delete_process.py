@@ -159,6 +159,75 @@ def test_the_files_of_inputs_and_generated_documents_leave_the_disk(case):
     assert disk_files(case) == []
 
 
+def process_dirs(case, process_id):
+    root = Path(case.gen.docs.storage_root)
+    return [d for d in (root / "uploads" / str(process_id), root / "generated" / str(process_id))]
+
+
+def test_the_empty_storage_directories_of_the_process_are_removed(case):
+    process_id = case.world.process.id
+    assert all(d.is_dir() for d in process_dirs(case, process_id))
+
+    delete(case).execute(case.world.admin, process_id)
+
+    assert not any(d.exists() for d in process_dirs(case, process_id))
+    root = Path(case.gen.docs.storage_root)
+    assert (root / "uploads").is_dir() and (root / "generated").is_dir()
+
+
+def test_the_directory_of_the_other_process_stays(case):
+    world = case.world
+    other_doc = store_original(case.gen, world.ifch_process, pdf("other"))
+
+    delete(case).execute(world.admin, world.process.id)
+
+    root = Path(case.gen.docs.storage_root)
+    assert (root / "uploads" / str(world.ifch_process.id) / other_doc.internal_name).is_file()
+
+
+def test_a_directory_holding_a_foreign_file_is_kept_with_that_file(case):
+    world = case.world
+    uploads_dir, generated_dir = process_dirs(case, world.process.id)
+    stray = uploads_dir / "nao-e-nosso.txt"
+    stray.write_text("alheio")
+
+    delete(case).execute(world.admin, world.process.id)
+
+    assert not process_exists(world, world.process.id)
+    assert stray.read_text() == "alheio"
+    assert uploads_dir.is_dir()
+    assert not generated_dir.exists()
+
+
+def test_a_directory_that_cannot_be_removed_only_logs_and_the_deletion_stands(case, caplog):
+    world = case.world
+
+    class Stuck:
+        def __init__(self, inner):
+            self._inner = inner
+
+        def delete(self, process_id, internal_name):
+            self._inner.delete(process_id, internal_name)
+
+        def remove_process_dir(self, process_id):
+            raise PermissionError(f"{case.gen.docs.storage_root}/uploads/{process_id}")
+
+    use_case = DeleteProcess(
+        world.uow_factory, world.audit, world.policy, Stuck(case.gen.originals), case.gen.generated
+    )
+
+    with caplog.at_level(logging.WARNING):
+        use_case.execute(world.admin, world.process.id)
+
+    assert not process_exists(world, world.process.id)
+    uploads_dir, generated_dir = process_dirs(case, world.process.id)
+    assert uploads_dir.is_dir() and not generated_dir.exists()
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert len(warnings) == 1
+    assert str(world.process.id) in warnings[0].getMessage()
+    assert str(case.gen.docs.storage_root) not in caplog.text
+
+
 def test_the_owner_docente_can_delete(case):
     world = case.world
     delete(case).execute(world.docente, world.process.id)
@@ -311,6 +380,9 @@ def test_a_file_that_cannot_be_removed_only_logs_and_the_deletion_stands(case, c
             if internal_name == failing:
                 raise PermissionError(f"{self._inner.path(process_id, internal_name)}")
             self._inner.delete(process_id, internal_name)
+
+        def remove_process_dir(self, process_id):
+            self._inner.remove_process_dir(process_id)
 
     use_case = DeleteProcess(
         world.uow_factory, world.audit, world.policy, Flaky(case.gen.originals), case.gen.generated
