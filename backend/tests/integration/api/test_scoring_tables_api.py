@@ -45,8 +45,9 @@ def test_lists_the_seeded_tables_with_versions_validity_status_and_reference(
     assert version["valid_to"] is None
     assert version["norm_reference"] == (
         "Tabela oficial de pontuação para progressão docente da UFPA "
-        "(planilha fornecida pelo usuário em 2026-11-17)"
-    )
+        "(planilha fornecida em 2026-11-17), com o Grupo I somado ao total a 1 ponto por hora "
+        "de PIT por decisão do usuário em 2026-11-19"
+    )  # GI-07: the seeded version is the one with group I in the total
     assert version["in_use"] is False
 
 
@@ -91,13 +92,13 @@ def test_decimals_are_text_with_two_places_and_never_numbers(client, docente, sc
     assert (groups[1][2]["weeks_per_semester"], groups[1][2]["prep_ratio"]) == (17, "2.00")
 
 
-def test_group_one_is_outside_the_total_and_the_minimums_are_exposed(
+def test_every_group_counts_in_the_total_and_the_minimums_are_exposed(
     client, docente, scoring_tables
 ):
     official = version_detail(client, scoring_tables, "OFICIAL")
 
-    assert official["groups"][0]["counts_in_total"] is False
-    assert all(g["counts_in_total"] for g in official["groups"][1:])
+    # GI-07: was "group I is outside the total" (PIT-01); the seeded version counts it.
+    assert all(g["counts_in_total"] for g in official["groups"])
     assert official["status"] == "OFICIAL"
     assert official["minimums"]["by_current_class"] == {"A": 60, "B": 80, "C": 100, "D": 120}
 

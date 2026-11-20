@@ -10,6 +10,7 @@ from app.application.use_cases.scoring_admin import InvalidCsv
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.scoring import ScoringMode, TableStatus
 from app.domain.errors import Conflict, Forbidden, NotFound, ValidationFailed
+from tests.support.scoring_variants import add_legacy_ufpa_version
 
 HEADER = "grupo,item,descricao,unidade,modo,pontos,horas_por_bloco,limite"
 REFERENCE = "Res. 6.000/2026"
@@ -74,6 +75,12 @@ def test_group_names_limits_and_counts_in_total_come_from_the_latest_version(wor
 
 
 def test_ifch_group_one_still_does_not_count_after_an_import(world, admin_uc):
+    # GI-07: the table the import starts from must have group I outside the total, so it is the
+    # previous version (group I in hours) that replaces the copy of the seeded one as the base.
+    with world.uow_factory() as uow:
+        legacy = add_legacy_ufpa_version(uow, world.other_version)
+        uow.scoring_tables.set_superseded(world.other_version.id, legacy.id)
+        uow.commit()
     text = HEADER + "\n2,7,Ok,x,POR_UNIDADE,1,,"
     do_import(world, admin_uc, text=text, table_id=world.other_version.table_id)
 

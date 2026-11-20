@@ -1,10 +1,13 @@
-"""ACE-01, PIT-01, PIT-02: cenário derivado de 2022-2024 on the official table, through the API.
+"""ACE-01, PIT-01, PIT-02, GI-06: cenário derivado de 2022-2024 on the previous version of the
+official table, through the API.
 
-The quantities of the cenário derivado (synthetic, 2022-2024) are entered on the official table
-(tabela-oficial spec, Acceptance story): in this cenário derivado the subtotals II to VIII are 52,
-7, 62, 0, 30, 4 and 56 and the total is 211, with PIT hours per period of 24, 24, 24 and 20 (92 in
-total), group I outside the total. The total 414 came from the filled FASI table and no longer
-applies; this is not a result approved in a real process.
+The quantities of the cenário derivado (synthetic, 2022-2024) are entered on the version of the
+official table that kept group I outside the total (tabela-oficial spec, Acceptance story): in
+this cenário derivado the subtotals II to VIII are 52, 7, 62, 0, 30, 4 and 56 and the total is 211,
+with PIT hours per period of 24, 24, 24 and 20 (92 in total), group I outside the total. GI-06:
+the seeded version now counts group I in the total (303 points); these tests choose the previous
+one (`legacy_table`), whose results do not change. The total 414 came from the filled FASI table
+and no longer applies; this is not a result approved in a real process.
 """
 
 from dataclasses import replace
@@ -27,7 +30,7 @@ PIT_HOURS = ["8.00"] * 11 + ["4.00"]
 
 
 @pytest.fixture
-def case(client, act_as, scoring_tables, reference):
+def case(client, act_as, legacy_table, reference):
     actor, headers = act_as("admin@ufpa.br", Role.ADMIN)
     professor = client.post(
         "/api/professors",
@@ -52,7 +55,7 @@ def case(client, act_as, scoring_tables, reference):
     process = process.json()
     chosen = client.put(
         f"/api/processes/{process['id']}/scoring/table",
-        json={"version_id": str(scoring_tables["OFICIAL"].id)},
+        json={"version_id": str(legacy_table.id)},
         headers=headers,
     )
     assert chosen.status_code == 200, chosen.text

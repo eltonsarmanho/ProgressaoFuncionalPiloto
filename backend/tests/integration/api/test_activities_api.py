@@ -195,13 +195,13 @@ def test_points_override_with_justification_on_a_group1_weekly_load_item_is_422(
 
 
 def test_predicted_points_of_a_group1_offer_exist_only_where_group1_counts_in_the_total(
-    client, headers, points_chosen, scoring_tables
+    client, headers, points_chosen, legacy_table
 ):
     """GI-05, D4: the Etapa 3 list shows the predicted points of a group I offer (the PIT hours,
     68 h of graduation = 8 points) only in a version where group I counts in the total.
 
-    The process starts on the synthetic table whose group I counts, then switches to the official
-    table, whose group I is still in hours outside the total in this version.
+    The process starts on the synthetic table whose group I counts, then switches to the previous
+    version of the official table, whose group I is in hours outside the total.
     """
     created = create(
         client, headers, points_chosen,
@@ -215,7 +215,7 @@ def test_predicted_points_of_a_group1_offer_exist_only_where_group1_counts_in_th
         return row["predicted_points"]
 
     assert predicted() == "8.00"
-    switch = {"version_id": str(scoring_tables["OFICIAL"].id), "justificativa": "Teste"}
+    switch = {"version_id": str(legacy_table.id), "justificativa": "Teste"}
     response = client.put(
         f"/api/processes/{points_chosen['id']}/scoring/table", json=switch, headers=headers
     )

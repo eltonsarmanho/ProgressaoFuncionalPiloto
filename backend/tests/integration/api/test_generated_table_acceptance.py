@@ -1,5 +1,6 @@
 """TAB-01, TAB-04, TAB-05, TAB-06, TAB-07, TAB-08 (T89): the scoring table of the cenário derivado
-(211 pontos), asked through the API, downloaded as DOCX and PDF and read back.
+(211 pontos, on the previous version of the table: GI-06), asked through the API, downloaded as
+DOCX and PDF and read back.
 
 The cenário derivado is the one of `test_scoring_golden.py` (subtotals II to VIII of 52, 7, 62, 0,
 30, 4 and 56, total 211, PIT hours of 24, 24, 24 and 20, 92 in total), all synthetic.

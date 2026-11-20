@@ -2,7 +2,9 @@
 
 The official table is the only seeded table and belongs to both FASI and IFCH, so tests that
 need "a table that is not the unit's one" or "a table whose group I counts points" build them
-here from the official version.
+here from the official version. The seeded official version has group I inside the total
+(GI-07); `add_legacy_ufpa_version` recreates the version it replaced, with group I outside the
+total, for the tests of the previous rules (GI-06).
 """
 
 import uuid
@@ -16,6 +18,16 @@ OTHER_TABLE = "Tabela Sintética Alternativa de Teste"
 POINTS_TABLE = "Tabela Sintética com Grupo I em Pontos"
 INFORMED_GROUP = 8
 INFORMED_ITEM = 38  # the item after the last of group VIII of the official table (37)
+LEGACY_UFPA_NAME = "Tabela oficial de pontuação UFPA"
+LEGACY_UFPA_REFERENCE = (
+    "Tabela oficial de pontuação para progressão docente da UFPA "
+    "(planilha fornecida pelo usuário em 2026-11-17)"
+)
+LEGACY_UFPA_NOTES = (
+    "Versão anterior à do Grupo I no total: o Grupo I é medido em horas de PIT por semestre e "
+    "não entra no total (a fórmula do TOTAL da planilha soma só os Grupos II a VIII); o item "
+    "VI.14 vale 6 pontos por ano (fórmula C*6 da célula)."
+)
 
 
 def _with_criteria(version: ScoringTableVersion, group_number, criteria, **group_changes):
@@ -71,3 +83,29 @@ def add_points_table(uow, official: ScoringTableVersion) -> ScoringTableVersion:
     )
     uow.scoring_tables.add_version(copy)
     return copy
+
+
+def add_legacy_ufpa_version(uow, official: ScoringTableVersion) -> ScoringTableVersion:
+    """The version the seeded one replaced, in the same table (GI-06).
+
+    Same rules as `official` except the ones GI-07 and GI-12 changed: group I in PIT hours
+    outside the total (points 0, hours reported) and VI.14 at 6 points a year. It keeps the
+    old name, so it is told apart from the seeded version, and it is not marked as superseded:
+    a test that wants the previous rules chooses it by id. `official` may be the seeded version
+    or any version of the same table; the copy is persisted next to it.
+    """
+    group6 = tuple(
+        replace(c, unit_points=Decimal("6")) if c.item_number == 14 else c
+        for c in official.get_group(6).criteria
+    )
+    outside = _with_criteria(official, 1, official.get_group(1).criteria, counts_in_total=False)
+    legacy = replace(
+        _with_criteria(outside, 6, group6),
+        id=uuid.uuid4(),
+        name=LEGACY_UFPA_NAME,
+        norm_reference=LEGACY_UFPA_REFERENCE,
+        notes=LEGACY_UFPA_NOTES,
+        superseded_by_id=None,
+    )
+    uow.scoring_tables.add_version(legacy)
+    return legacy

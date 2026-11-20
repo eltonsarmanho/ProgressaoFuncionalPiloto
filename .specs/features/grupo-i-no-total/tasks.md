@@ -376,7 +376,7 @@ graph LR
 
 #### T9: `ufpa.json` descreve a versão nova, com VI.14 a 3 e o campo `supersedes`
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `seed_data/ufpa.json` passa a descrever a versão nova: `version_name` "Tabela oficial de pontuação UFPA, Grupo I no total", `valid_from` igual ao da antiga, `status` `OFICIAL`, grupo 1 com `counts_in_total: true`, VI.14 com `unit_points` 3 e `review_note` reescrita (decisão do usuário em 2026-11-19), `notes` e `norm_reference` com o texto aprovado na spec (pergunta 8), `minimums` copiado e o campo novo `supersedes` com o nome da versão antiga. `seed.py` lê `supersedes` (só o lê; a marca e a troca vêm na T10). O auxiliar de teste `add_legacy_ufpa_version(uow, official)` em `tests/support/scoring_variants.py` recria a versão antiga na mesma tabela (nome antigo, grupo 1 fora do total, VI.14 = 6) para os testes da versão anterior (GI-06).
 **Where**: `backend/app/infrastructure/database/seed_data/ufpa.json` (modify)
@@ -391,11 +391,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/test_seed_ufpa.py` e `test_seed_ufpa_items.py`: VI.14 = 3 (GI-12); grupo 1 conta no total e não tem `max_points` no grupo nem em I.1 e I.2 (pino de S4); nome, `norm_reference`, `notes` e `supersedes` da versão nova; `minimums` iguais aos de antes
-- [ ] Testes em `backend/tests/integration/test_seed_scoring.py`: banco vazio recebe só a versão nova; seed duas vezes não duplica; com a versão antiga presente (via `add_legacy_ufpa_version`), o seed insere a nova ao lado sem tocar a antiga
-- [ ] Testes existentes que mudam e o requisito que justifica: `test_seed_ufpa.py` (`DECIDED_BY_USER` (6, 14) 6 → 3, soma do grupo VI 332 → 329 e total 1314 → 1311, `test_group_one_is_pit_hours_outside_the_total` → grupo 1 no total, metadados): GI-12, GI-07; `test_seed_ufpa_items.py` (VI.14 = 3): GI-12; `test_seed_scoring.py` (metadados da versão): GI-07; testes que fixam o Grupo I fora do total com a tabela semeada — `test_scoring_golden.py`, `test_scoring_characterization.py`, `test_scoring_pit_hours_api.py`, `test_generated_table_acceptance.py`, `test_run_generation_table.py`, os de `tests/integration/scoring/` que usam `official_version` para horas fora do total — passam a escolher a versão de `add_legacy_ufpa_version` e continuam com os valores de hoje (211, 92 horas fora do total): GI-06; teste que depender do VI.14 a 6 com a tabela semeada passa a 3: GI-12. Cada mudança anotada no corpo do teste com o requisito
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: contagem antes e depois registrada; nenhum teste apagado sem substituto
+- [x] Testes primeiro em `backend/tests/unit/test_seed_ufpa.py` e `test_seed_ufpa_items.py`: VI.14 = 3 (GI-12); grupo 1 conta no total e não tem `max_points` no grupo nem em I.1 e I.2 (pino de S4); nome, `norm_reference`, `notes` e `supersedes` da versão nova; `minimums` iguais aos de antes
+- [x] Testes em `backend/tests/integration/test_seed_scoring.py`: banco vazio recebe só a versão nova; seed duas vezes não duplica; com a versão antiga presente (via `add_legacy_ufpa_version`), o seed insere a nova ao lado sem tocar a antiga
+- [x] Testes existentes que mudam e o requisito que justifica: `test_seed_ufpa.py` (`DECIDED_BY_USER` (6, 14) 6 → 3, soma do grupo VI 332 → 329 e total 1314 → 1311, `test_group_one_is_pit_hours_outside_the_total` → grupo 1 no total, metadados): GI-12, GI-07; `test_seed_ufpa_items.py` (VI.14 = 3): GI-12; `test_seed_scoring.py` (metadados da versão): GI-07; testes que fixam o Grupo I fora do total com a tabela semeada — `test_scoring_golden.py`, `test_scoring_characterization.py`, `test_scoring_pit_hours_api.py`, `test_generated_table_acceptance.py`, `test_run_generation_table.py`, os de `tests/integration/scoring/` que usam `official_version` para horas fora do total — passam a escolher a versão de `add_legacy_ufpa_version` e continuam com os valores de hoje (211, 92 horas fora do total): GI-06; teste que depender do VI.14 a 6 com a tabela semeada passa a 3: GI-12. Cada mudança anotada no corpo do teste com o requisito
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: contagem antes e depois registrada; nenhum teste apagado sem substituto
 
 **Tests**: integration
 **Gate**: full

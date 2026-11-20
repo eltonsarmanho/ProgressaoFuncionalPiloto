@@ -2,7 +2,7 @@
 
 The expected values below were written from `Modelos/tabela-progressao-docente.xlsx`
 (cell formulas, not the seed), with the five decisions of the user applied: II.10 = 10,
-VI.14 = 6, VIII.4 = 15, VIII.8 = 15, VIII.12 = 2. Each row is
+VI.14 = 3 (GI-12, decision of 2026-11-19), VIII.4 = 15, VIII.8 = 15, VIII.12 = 2. Each row is
 `(item, points, unit label, start of the description, end of the description)`; texts are
 whitespace-normalized and the numbering prefix is dropped. The sums per group are not enough:
 two compensating errors (II.1 <-> II.2) keep them intact.
@@ -79,7 +79,7 @@ GROUP_VI = [
     (11, 8, "por ano de exercício", "Membro de Comitê Editoria", "os por ano de exercício)."),
     (12, 3, "por ano de exercício", "Vice-Coordenador de Curso", "pósio, jornada, encontro."),
     (13, 5, "por ano de exercício", "Membro titular ou suplent", "os por ano de exercício)."),
-    (14, 6, "por ano", "Membro titular ou suplent", "ões. ( 3 pontos por ano)."),
+    (14, 3, "por ano", "Membro titular ou suplent", "ões. ( 3 pontos por ano)."),
 ]
 
 GROUP_VII = [
@@ -174,7 +174,7 @@ def test_expected_table_has_97_scored_items_and_the_ministries_leave_item():
     assert len(ITEMS) == 98
     assert [g for g, *_ in ITEMS].count(8) == 37
     assert sum(1 for _, _, points, *_ in ITEMS if points) == 97
-    assert sum(points for _, _, points, *_ in ITEMS) == 1314
+    assert sum(points for _, _, points, *_ in ITEMS) == 1311  # GI-12: VI.14 = 3, was 6
 
 
 def test_seed_has_no_item_outside_the_expected_table(groups):
@@ -213,7 +213,7 @@ def test_the_duplicated_points_text_of_the_sheet_is_collapsed_to_one(groups, key
     assert len(re.findall(r"\(\s*\d+\s*pontos?\s*\)", description)) == 1
 
 
-def test_group_one_rows_are_pit_hours_with_no_points(groups):
+def test_group_one_rows_are_pit_hours_with_no_points_and_count_in_the_total(groups):
     rows = groups[1]["criteria"]
     assert [
         (c["item_number"], c["mode"], c["unit_label"], c["unit_points"], c["weeks_per_semester"],
@@ -223,4 +223,4 @@ def test_group_one_rows_are_pit_hours_with_no_points(groups):
         (1, "CARGA_SEMANAL", "horas (PIT)", None, 17, 1, None),
         (2, "CARGA_SEMANAL", "horas (PIT)", None, 17, 2, None),
     ]  # fmt: skip
-    assert groups[1]["counts_in_total"] is False
+    assert groups[1]["counts_in_total"] is True  # GI-07: was False (PIT-01)

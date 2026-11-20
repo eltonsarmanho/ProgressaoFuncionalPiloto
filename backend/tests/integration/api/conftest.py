@@ -12,7 +12,11 @@ from app.infrastructure.security.argon2_hasher import Argon2PasswordHasher
 from app.main import create_app
 from tests.integration.api.factories import add_professor, process_payload
 from tests.integration.api.generated_support import scenario  # noqa: F401  (fixture)
-from tests.support.scoring_variants import add_other_table, add_points_table
+from tests.support.scoring_variants import (
+    add_legacy_ufpa_version,
+    add_other_table,
+    add_points_table,
+)
 
 PASSWORD = "senha-correta-1"
 
@@ -140,6 +144,21 @@ def scoring_tables(uow_factory, reference):
         other = add_other_table(uow, official)
         uow.commit()
         return {"OFICIAL": official, "OUTRA": other}
+
+
+@pytest.fixture
+def legacy_table(uow_factory, scoring_tables):
+    """The version the seeded one replaced (GI-06): group I outside the total, VI.14 = 6.
+
+    It lives in the same table as the seeded version, which is marked as superseded by it, so in
+    a test that uses this fixture the previous rules are also the only suggested version. A test
+    that wants them chooses this version by id.
+    """
+    with uow_factory() as uow:
+        legacy = add_legacy_ufpa_version(uow, scoring_tables["OFICIAL"])
+        uow.scoring_tables.set_superseded(scoring_tables["OFICIAL"].id, legacy.id)
+        uow.commit()
+    return legacy
 
 
 @pytest.fixture

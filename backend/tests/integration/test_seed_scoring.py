@@ -1,5 +1,6 @@
 """OFI-01, OFI-08..OFI-12: idempotent seed of the official UFPA table and archiving of old ones."""
 
+import json
 import uuid
 from dataclasses import replace
 from datetime import date
@@ -24,6 +25,7 @@ from app.domain.repositories.ports import ScoringTableRecord
 from app.infrastructure.database import seed
 from app.infrastructure.database.seed import seed_reference_data, seed_scoring_tables
 from tests.integration.test_seed import ADMIN_EMAIL, FakeHasher
+from tests.support.scoring_variants import add_legacy_ufpa_version
 
 OFFICIAL = "Tabela de Pontuação da UFPA"
 LEGACY = ("Tabela de Pontuação do IFCH", "Tabela de Pontuação da FASI")
@@ -124,15 +126,20 @@ def test_official_version_metadata_and_structure(uow_factory, seeded):
     _, versions, _ = _by_table(uow_factory)[OFFICIAL]
     version = versions[0]
 
+    assert version.name == "Tabela oficial de pontuação UFPA, Grupo I no total"
     assert version.valid_from == date(2015, 3, 24)
     assert version.valid_to is None
     assert version.norm_reference == (
         "Tabela oficial de pontuação para progressão docente da UFPA "
-        "(planilha fornecida pelo usuário em 2026-11-17)"
+        "(planilha fornecida em 2026-11-17), com o Grupo I somado ao total a 1 ponto por hora "
+        "de PIT por decisão do usuário em 2026-11-19"
     )
     assert [g.number for g in version.groups] == list(range(1, 9))
     assert [len(g.criteria) for g in version.groups] == COUNTS
-    assert version.get_group(1).counts_in_total is False
+    # GI-07: group I counts in the total in the seeded version (was False).
+    assert version.get_group(1).counts_in_total is True
+    assert version.get_criterion(6, 14).unit_points == Decimal("3")  # GI-12
+    assert version.superseded_by_id is None
 
 
 def test_minimums_are_stored_with_the_norm_reference(uow_factory, seeded):
@@ -163,6 +170,68 @@ def test_seed_twice_does_not_duplicate_anything(engine, uow_factory, seeded):
         "scoring_criteria": sum(COUNTS),
     }
     assert _counts(engine) == first
+
+
+def _seeded_json() -> dict:
+    return json.loads((seed.SEED_DATA / seed.OFFICIAL_TABLE_SEED).read_text(encoding="utf-8"))
+
+
+def test_a_database_with_the_previous_version_gets_the_new_one_beside_it_untouched(
+    engine, uow_factory, units
+):
+    """GI-07: the seed inserts the new version next to the previous one (same table, same name
+    of table) and neither changes nor marks it; the marking is the next step (AdoptSuperseding)."""
+    data = _seeded_json()
+    table = ScoringTableRecord(
+        id=uuid.uuid4(), name=data["table_name"], unit_ids=(units["FASI"], units["IFCH"])
+    )
+    template = seed._scoring_version(data, table.id)
+    with uow_factory() as uow:
+        uow.scoring_tables.add_table(table)
+        legacy = add_legacy_ufpa_version(uow, template)
+        uow.commit()
+    with uow_factory() as uow:
+        before = uow.scoring_tables.get_version(legacy.id)
+
+    seed_scoring_tables(uow_factory())
+
+    _, versions, _ = _by_table(uow_factory)[OFFICIAL]
+    assert sorted(v.name for v in versions) == [
+        "Tabela oficial de pontuação UFPA",
+        "Tabela oficial de pontuação UFPA, Grupo I no total",
+    ]
+    kept = next(v for v in versions if v.id == legacy.id)
+    assert kept == before
+    assert kept.get_group(1).counts_in_total is False
+    assert kept.get_criterion(6, 14).unit_points == Decimal("6")
+    new = next(v for v in versions if v.id != legacy.id)
+    assert new.get_group(1).counts_in_total is True
+    assert new.get_criterion(6, 14).unit_points == Decimal("3")
+    assert _counts(engine)["scoring_tables"] == 1
+    again = _counts(engine)
+    seed_scoring_tables(uow_factory())
+    assert _counts(engine) == again  # idempotent with the previous version present
+
+
+def test_the_legacy_helper_recreates_the_previous_rules_next_to_the_seeded_version(
+    uow_factory, seeded
+):
+    _, versions, _ = _by_table(uow_factory)[OFFICIAL]
+    official = versions[0]
+
+    with uow_factory() as uow:
+        legacy = add_legacy_ufpa_version(uow, official)
+        uow.commit()
+
+    with uow_factory() as uow:
+        loaded = uow.scoring_tables.get_version(legacy.id)
+    assert loaded.table_id == official.table_id
+    assert loaded.name == "Tabela oficial de pontuação UFPA"
+    assert loaded.get_group(1).counts_in_total is False
+    assert loaded.get_criterion(6, 14).unit_points == Decimal("6")
+    assert loaded.superseded_by_id is None
+    assert [g.counts_in_total for g in loaded.groups[1:]] == [True] * 7
+    assert [len(g.criteria) for g in loaded.groups] == COUNTS
 
 
 def test_the_old_ifch_and_fasi_seeds_are_gone(engine, uow_factory, seeded):

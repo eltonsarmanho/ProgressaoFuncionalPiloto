@@ -17,7 +17,11 @@ from app.domain.entities.scoring import TableStatus
 from app.domain.entities.user import Role, User
 from app.infrastructure.database.seed import seed_reference_data, seed_scoring_tables
 from tests.integration.test_seed import FakeHasher
-from tests.support.scoring_variants import add_other_table, add_points_table
+from tests.support.scoring_variants import (
+    add_legacy_ufpa_version,
+    add_other_table,
+    add_points_table,
+)
 
 
 class FixedClock:
@@ -135,6 +139,27 @@ def points_chosen(world):
         uow.commit()
     world.choose.execute(world.admin, world.process.id, world.points_version.id, None, "Teste")
     return world
+
+
+def choose_legacy_version(world):
+    """Persist the version the seeded one replaced (group I outside the total, VI.14 = 6) and
+    choose it for the main process (GI-06).
+
+    The seeded version is marked as superseded by it, so the previous rules are also the only
+    suggested version. Returns `world` with `legacy_version` set.
+    """
+    with world.uow_factory() as uow:
+        world.legacy_version = add_legacy_ufpa_version(uow, world.official_version)
+        uow.scoring_tables.set_superseded(world.official_version.id, world.legacy_version.id)
+        uow.commit()
+    world.choose.execute(world.admin, world.process.id, world.legacy_version.id, None, None)
+    return world
+
+
+@pytest.fixture
+def legacy_chosen(world):
+    """The previous version of the official table chosen for the main process (GI-06)."""
+    return choose_legacy_version(world)
 
 
 def make_official_pending(world) -> None:

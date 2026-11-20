@@ -1,11 +1,12 @@
 {
   "table_name": "Tabela de Pontuação da UFPA",
-  "version_name": "Tabela oficial de pontuação UFPA",
+  "version_name": "Tabela oficial de pontuação UFPA, Grupo I no total",
+  "supersedes": "Tabela oficial de pontuação UFPA",
   "valid_from": "2015-03-24",
   "valid_to": null,
-  "norm_reference": "Tabela oficial de pontuação para progressão docente da UFPA (planilha fornecida pelo usuário em 2026-11-17)",
+  "norm_reference": "Tabela oficial de pontuação para progressão docente da UFPA (planilha fornecida em 2026-11-17), com o Grupo I somado ao total a 1 ponto por hora de PIT por decisão do usuário em 2026-11-19",
   "status": "OFICIAL",
-  "notes": "Transcrita da planilha Modelos/tabela-progressao-docente.xlsx, fonte única de verdade por decisão do usuário em 2026-11-17. O Grupo I é medido em horas de PIT por semestre e não entra no total (a fórmula do TOTAL da planilha soma só os Grupos II a VIII). Nos itens II.10, VI.14, VIII.4, VIII.8 e VIII.12 o texto e a fórmula da planilha divergem; valem as decisões do usuário (review_note). O item VII.11 pontua 1 ponto a cada 30 horas e o VIII.37 não tem pontos. Os itens IV.3 a IV.5 exigem carga horária mínima de 20 h.",
+  "notes": "Transcrita da planilha Modelos/tabela-progressao-docente.xlsx, fonte única de verdade por decisão do usuário em 2026-11-17. O Grupo I (horas de PIT por semestre) entra no total a 1 ponto por hora, sem limite, por decisão do usuário em 2026-11-19; a fórmula do TOTAL da planilha soma só os Grupos II a VIII. Nos itens II.10, VIII.4, VIII.8 e VIII.12 o texto e a fórmula da planilha divergem; valem as decisões do usuário (review_note). O item VI.14 vale 3 pontos por ano, como diz o texto da planilha, por decisão do usuário em 2026-11-19 (a fórmula da célula dava 6). O item VII.11 pontua 1 ponto a cada 30 horas e o VIII.37 não tem pontos. Os itens IV.3 a IV.5 exigem carga horária mínima de 20 h.",
   "minimums": {
     "structure": "Res. 4.644/2015-CONSEPE",
     "norm_reference": "Res. 4.644/2015-CONSEPE, art. 12",
@@ -20,7 +21,7 @@
     {
       "number": 1,
       "name": "Docência/atividades de ensino/desempenho didático, avaliado com a participação do corpo discente",
-      "counts_in_total": false,
+      "counts_in_total": true,
       "max_points": null,
       "criteria": [
         {
@@ -833,14 +834,14 @@
           "description": "Membro titular ou suplente de Conselho Escolar, Membro de Comitê de Usuários de Bibliotecas, Assessoria Técnica e Consultorias autorizadas em plenária do conselho e congregação da unidade, membro de Banca de Seleção de Bolsistas e Professores Temporários, Supervisores e preceptores de residência médica, outras Comissões. ( 3 pontos por ano).",
           "unit_label": "por ano",
           "mode": "POR_UNIDADE",
-          "unit_points": 6,
+          "unit_points": 3,
           "hours_per_block": null,
           "weeks_per_semester": null,
           "prep_ratio": null,
           "max_points": null,
           "accepted_evidence": "",
           "rules": "É vedada a dupla pontuação no caso de membro e presidente da mesma Comissão.",
-          "review_note": "A planilha traz '3 pontos por ano' no texto e a fórmula C*6 na célula; decisão do usuário em 2026-11-17: 6 pontos.",
+          "review_note": "A planilha traz '3 pontos por ano' no texto e a fórmula C*6 na célula; decisão do usuário em 2026-11-19: 3 pontos por ano, como o texto da planilha (revoga os 6 pontos de 2026-11-17).",
           "min_hours": null
         }
       ]

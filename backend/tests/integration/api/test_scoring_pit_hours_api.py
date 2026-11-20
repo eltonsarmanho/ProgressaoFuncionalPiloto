@@ -1,22 +1,26 @@
-"""PIT-02: GET /processes/{id}/scoring exposes PIT hours per row, per period and in total."""
+"""PIT-02, GI-06: GET /processes/{id}/scoring exposes PIT hours per row, per period and in total,
+on the previous version of the official table (group I outside the total)."""
 
 import pytest
 
 from app.domain.entities.user import Role
 from app.infrastructure.database.seed import seed_scoring_tables
 from tests.integration.api.factories import add_professor, process_payload
+from tests.support.scoring_variants import add_legacy_ufpa_version
 
 
 @pytest.fixture
 def scored(client, act_as, reference, uow_factory):
-    """Official table chosen for a FASI process with three group I offers and one II.7."""
+    """The previous version of the official table (group I outside the total, GI-06) chosen for a
+    FASI process with three group I offers and one II.7."""
     seed_scoring_tables(uow_factory())
     _, headers = act_as("admin@ufpa.br", Role.ADMIN)
     with uow_factory() as uow:
         table = next(
             t for t in uow.scoring_tables.list_tables() if t.name == "Tabela de Pontuação da UFPA"
         )
-        version = uow.scoring_tables.list_versions(table.id)[0]
+        version = add_legacy_ufpa_version(uow, uow.scoring_tables.list_versions(table.id)[0])
+        uow.commit()
     professor = add_professor(uow_factory, reference["FASI"])
     process = client.post("/api/processes", json=process_payload(professor), headers=headers)
     assert process.status_code == 201, process.text

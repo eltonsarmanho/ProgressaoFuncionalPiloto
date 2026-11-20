@@ -2,7 +2,8 @@
 
 Characterization of the screen response (AD-006: recomputed on demand) so that extracting
 compute_process_score cannot change what the screen shows. The scenario is the cenário derivado
-of test_scoring_golden (total 211); no real data.
+of test_scoring_golden on the previous version of the table, group I outside the total (total 211;
+GI-06); no real data.
 """
 
 from uuid import UUID

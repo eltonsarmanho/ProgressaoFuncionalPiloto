@@ -294,12 +294,12 @@ def test_unknown_table_lists_the_available_ones(folder, tmp_path, engine, migrat
 def test_explicit_table_and_version_are_used(folder, tmp_path, engine, migrated_url):
     report = run(
         folder, tmp_path, migrated_url, KeyedAi(),
-        table=OFFICIAL, table_version="Tabela oficial de pontuação UFPA",
+        table=OFFICIAL, table_version="Tabela oficial de pontuação UFPA, Grupo I no total",
     )
 
     assert report.process["table"] == {
-        "name": OFFICIAL, "version": "Tabela oficial de pontuação UFPA"
-    }
+        "name": OFFICIAL, "version": "Tabela oficial de pontuação UFPA, Grupo I no total"
+    }  # GI-07: the seeded version has a new name
 
 
 def test_real_ai_without_credentials_is_refused_before_any_work(

@@ -28,6 +28,7 @@ from tests.integration.doc_usecases.generation_support import (
     link,
     link_pages,
 )
+from tests.integration.scoring.conftest import choose_legacy_version
 
 SUBTOTALS = ["52,00", "7,00", "62,00", "0,00", "30,00", "4,00", "56,00"]
 
@@ -59,6 +60,9 @@ def pdf_text(path) -> str:
 
 @pytest.fixture
 def scenario(gen):
+    """The cenário derivado (211) on the previous version of the table: GI-06. The seeded
+    version counts group I in the total (303); the 211 and the subtotals II to VIII are the same."""
+    choose_legacy_version(gen.world)
     add_scenario_211(gen.world)
     return gen
 

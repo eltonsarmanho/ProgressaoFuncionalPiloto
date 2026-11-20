@@ -1,4 +1,4 @@
-"""OFI-01..OFI-06, OFI-10: official UFPA scoring table seed data (ufpa.json)."""
+"""OFI-01..OFI-06, OFI-10, GI-07, GI-12: official UFPA scoring table seed data (ufpa.json)."""
 
 import json
 from decimal import Decimal
@@ -8,8 +8,9 @@ import pytest
 
 DIR = Path(__file__).resolve().parents[2] / "app/infrastructure/database/seed_data"
 COUNTS = [2, 16, 9, 6, 5, 14, 11, 37]
-GROUP_SUMS = [158, 44, 40, 75, 332, 258, 407]  # groups II to VIII
-DECIDED_BY_USER = {(2, 10): 10, (6, 14): 6, (8, 4): 15, (8, 8): 15, (8, 12): 2}
+# groups II to VIII; GI-12: VI.14 is 3 points a year, so group VI is 329 (was 332 with 6)
+GROUP_SUMS = [158, 44, 40, 75, 329, 258, 407]
+DECIDED_BY_USER = {(2, 10): 10, (6, 14): 3, (8, 4): 15, (8, 8): 15, (8, 12): 2}
 
 
 @pytest.fixture(scope="module")
@@ -35,7 +36,7 @@ def test_item_numbers_are_sequential_from_one(data):
 def test_group_sums_ii_to_viii_and_grand_total(data):
     sums = [sum(Decimal(str(c["unit_points"])) for c in g["criteria"]) for g in data["groups"][1:]]
     assert sums == GROUP_SUMS
-    assert sum(sums) == 1314
+    assert sum(sums) == 1311  # GI-12: was 1314 with VI.14 = 6
 
 
 @pytest.mark.parametrize("key,points", sorted(DECIDED_BY_USER.items()))
@@ -88,9 +89,10 @@ def test_ministries_leave_item_has_no_points_and_keeps_the_text(data):
     assert "Ministérios da Educação" in item["description"]
 
 
-def test_group_one_is_pit_hours_outside_the_total(data):
+def test_group_one_is_pit_hours_counting_in_the_total(data):
+    # GI-07: was "outside the total" (PIT-01); the new version counts group I, at 1 point an hour.
     group1 = data["groups"][0]
-    assert group1["counts_in_total"] is False
+    assert group1["counts_in_total"] is True
     first, second = group1["criteria"]
     assert (first["mode"], first["weeks_per_semester"], Decimal(str(first["prep_ratio"]))) == (
         "CARGA_SEMANAL", 17, 1,
@@ -102,19 +104,46 @@ def test_group_one_is_pit_hours_outside_the_total(data):
     assert second["description"].startswith("Aulas Efetivas em Curso de Pós-Graduação")
 
 
+def test_group_one_has_no_points_ceiling_in_the_group_nor_in_its_two_items(data):
+    # S4: GI-03 ("hours equal the points") only holds while nothing caps group I.
+    group1 = data["groups"][0]
+    assert group1["max_points"] is None
+    assert [c["max_points"] for c in group1["criteria"]] == [None, None]
+
+
 def test_groups_ii_to_viii_count_in_the_total(data):
     assert all(g["counts_in_total"] is True for g in data["groups"][1:])
 
 
 def test_table_and_version_metadata(data):
     assert data["table_name"] == "Tabela de Pontuação da UFPA"
+    assert data["version_name"] == "Tabela oficial de pontuação UFPA, Grupo I no total"
     assert data["status"] == "OFICIAL"
     assert data["valid_from"] == "2015-03-24"
     assert data["valid_to"] is None
     assert data["norm_reference"] == (
         "Tabela oficial de pontuação para progressão docente da UFPA "
-        "(planilha fornecida pelo usuário em 2026-11-17)"
+        "(planilha fornecida em 2026-11-17), com o Grupo I somado ao total a 1 ponto por hora "
+        "de PIT por decisão do usuário em 2026-11-19"
     )
+
+
+def test_the_version_names_the_one_it_supersedes(data):
+    assert data["supersedes"] == "Tabela oficial de pontuação UFPA"
+    assert data["supersedes"] != data["version_name"]
+
+
+def test_notes_say_group_one_counts_and_vi_14_is_three_points(data):
+    assert "Grupo I" in data["notes"]
+    assert "entra no total" in data["notes"]
+    assert "VI.14" in data["notes"] and "3 pontos por ano" in data["notes"]
+    assert "não entra no total" not in data["notes"]
+
+
+def test_vi_14_review_note_records_the_decision_of_2026_11_19(data):
+    note = criteria(data)[(6, 14)]["review_note"]
+    assert "2026-11-19" in note
+    assert "3 pontos" in note
 
 
 def test_minimums_by_class_with_the_resolution_reference(data):
