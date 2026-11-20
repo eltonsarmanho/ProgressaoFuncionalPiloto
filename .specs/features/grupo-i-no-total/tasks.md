@@ -1041,7 +1041,7 @@ graph LR
 
 #### T32: Regra 11 do `CLAUDE.md`, `STATE.md` e rastreabilidade
 
-**Status**: Pending
+**Status**: Done
 
 **What**: A regra 11 do `CLAUDE.md` passa a dizer que o Grupo I (I.1 e I.2) conta no total a 1 ponto por hora de PIT na versão "Tabela oficial de pontuação UFPA, Grupo I no total", que a versão anterior está substituída e que o VI.14 vale 3 (sem citar item fora da tabela oficial); AD-023 ganha a linha de implementação concluída e o Handoff de `STATE.md` é atualizado; `spec.md` desta feature com a rastreabilidade em `Implemented` e a cobertura 29/29; `design.md` com o status de implementação.
 **Where**: `CLAUDE.md` (modify)
@@ -1056,10 +1056,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Regra 11 reescrita; AD-023 e Handoff atualizados; os 29 requisitos com tarefa e status `Implemented`
-- [ ] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py grupo-i-no-total` sem erro
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: contagem final registrada (backend e frontend)
+- [x] Regra 11 reescrita; AD-023 e Handoff atualizados; os 29 requisitos com tarefa e status `Implemented`
+- [x] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py grupo-i-no-total` sem erro
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagem final registrada (backend e frontend)
 
 **Tests**: none
 **Gate**: build

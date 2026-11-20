@@ -1,7 +1,7 @@
 # Grupo I no total, Tabela sem Status nem Comprovante e resumo da Etapa 4 Design
 
 **Spec**: `.specs/features/grupo-i-no-total/spec.md`
-**Status**: Approved (o usuário aprovou o desenho revisado em 2026-11-19; AD-023 registrada em `STATE.md`)
+**Status**: Approved (o usuário aprovou o desenho revisado em 2026-11-19; AD-023 registrada em `STATE.md`). Implementação: T1 a T33 concluídas em 2026-11-20 e commitadas; falta a verificação independente (T34).
 
 Decisões do projeto que este desenho segue: AD-001 (a regra fica no `domain`, sem FastAPI nem SQLAlchemy), AD-002 (regra institucional é dado versionado, com referência normativa), AD-006 (o resultado é calculado na hora, nunca gravado), AD-007 (tabela de pontuação relacional), AD-011 (DOCX com python-docx, PDF com reportlab, mesmo conteúdo e mesma ordem) e AD-012 (versão gerada é imutável: só as gerações novas usam a regra nova). AD-022 segue valendo: `GRUPO_NAO_CONTA` e `classify_activity` não mudam. Este desenho pede uma AD nova, **AD-023** (ver D1 e D2), que substitui a decisão de 2026-11-17 do Grupo I em horas fora do total; ela só entra em `STATE.md` depois da aprovação.
 

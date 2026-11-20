@@ -130,26 +130,26 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| GI-01 | P1: Grupo I conta no total | Tasks | Implementing |
-| GI-02 | P1: Grupo I conta no total | Tasks | Implementing |
-| GI-03 | P1: Grupo I conta no total | Tasks | Implementing |
-| GI-04 | P1: Grupo I conta no total | Tasks | Implementing |
-| GI-05 | P1: Grupo I conta no total | Tasks | Implementing |
-| GI-06 | P1: Grupo I conta no total | Tasks | Implementing |
+| GI-01 | P1: Grupo I conta no total | Implemented | Implemented |
+| GI-02 | P1: Grupo I conta no total | Implemented | Implemented |
+| GI-03 | P1: Grupo I conta no total | Implemented | Implemented |
+| GI-04 | P1: Grupo I conta no total | Implemented | Implemented |
+| GI-05 | P1: Grupo I conta no total | Implemented | Implemented |
+| GI-06 | P1: Grupo I conta no total | Implemented | Implemented |
 | GI-07 | P1: Grupo I conta no total | Implemented | Implemented |
-| GI-08 | P1: Grupo I conta no total | Implementing | Implementing |
-| GI-09 | P1: Grupo I conta no total | Tasks | Implementing |
-| GI-10 | P1: Grupo I conta no total | Tasks | Implementing |
+| GI-08 | P1: Grupo I conta no total | Implemented | Implemented |
+| GI-09 | P1: Grupo I conta no total | Implemented | Implemented |
+| GI-10 | P1: Grupo I conta no total | Implemented | Implemented |
 | GI-11 | P1: Grupo I conta no total | Implemented | Implemented |
-| GI-12 | P1: Grupo I conta no total | Tasks | Implementing |
-| GTAB-01 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implementing | Implementing |
-| GTAB-02 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implementing | Implementing |
-| GTAB-03 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implementing | Implementing |
-| GTAB-04 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implementing | Implementing |
-| GTAB-05 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Implementing |
-| GTAB-06 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implementing | Implementing |
-| GTAB-07 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implementing | Implementing |
-| GTAB-08 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implementing | Implementing |
+| GI-12 | P1: Grupo I conta no total | Implemented | Implemented |
+| GTAB-01 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
+| GTAB-02 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
+| GTAB-03 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
+| GTAB-04 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
+| GTAB-05 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
+| GTAB-06 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
+| GTAB-07 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
+| GTAB-08 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
 | GRES-01 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
 | GRES-02 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
 | GRES-03 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
@@ -164,7 +164,7 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Implemented → Verified
 
-**Coverage:** 29 total, 0 mapped to tasks, 29 unmapped ⚠️ (as Tasks mapeiam)
+**Coverage:** 29 total, 29 mapped to tasks, 0 unmapped ✅
 
 ---
 
