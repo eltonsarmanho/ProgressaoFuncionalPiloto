@@ -402,7 +402,7 @@ def test_unit_points_override_still_meets_the_criterion_cap():
 
 
 def test_unit_points_override_per_block_multiplies_the_blocks():
-    version = _fasi_miniature()
+    version = _synthetic_miniature_table()
     a = act(g=4, item=4, hours=D("10"), unit_points_override=D("2"))
 
     row = row_of(calculate(version, [a], INTERSTICE), a)
@@ -520,10 +520,10 @@ def test_same_input_gives_the_same_result():
     assert calculate(BASIC, activities, INTERSTICE) == calculate(BASIC, activities, INTERSTICE)
 
 
-# --- real case in miniature (CALC-14) ---------------------------------------------------------
+# --- cenário derivado em miniatura (CALC-14), tabela sintética --------------------------------
 
 
-def _fasi_miniature() -> ScoringTableVersion:
+def _synthetic_miniature_table() -> ScoringTableVersion:
     weekly = lambda item, prep: ScoringCriterion(  # noqa: E731
         1, item, f"I.{item}", "h", ScoringMode.CARGA_SEMANAL,
         weeks_per_semester=17, prep_ratio=D(prep),
@@ -547,7 +547,7 @@ def _fasi_miniature() -> ScoringTableVersion:
     )  # fmt: skip
 
 
-def test_real_case_fasi_2022_2024_in_miniature():
+def test_derived_scenario_2022_2024_in_miniature_with_a_synthetic_table():
     activities = [
         act(g=1, item=1, hours=D("68"), points_override=D("24"), level=Level.GRADUACAO),
         act(g=1, item=1, hours=D("68"), points_override=D("24"), level=Level.GRADUACAO),
@@ -564,12 +564,12 @@ def test_real_case_fasi_2022_2024_in_miniature():
     activities += [act(g=7, item=10) for _ in range(2)]
     activities += [act(g=8, item=n) for n in (11, 12, 13, 66)]
 
-    result = calculate(_fasi_miniature(), activities, INTERSTICE)
+    result = calculate(_synthetic_miniature_table(), activities, INTERSTICE)
 
     assert [result.group_subtotals[n] for n in range(1, 9)] == [
         D("92"), D("120"), D("15"), D("95"), D("0"), D("30"), D("6"), D("56"),
     ]  # fmt: skip
-    assert result.total == D("414")
+    assert result.total == D("414")  # of the synthetic table above, not of the official one
     assert result.group1_percent == D("22.22")
     assert result.potential_total == D("0")
     assert result.counters.not_scored == 0

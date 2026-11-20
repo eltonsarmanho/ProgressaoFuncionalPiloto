@@ -423,7 +423,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T12: Cenário em miniatura com nome de cenário derivado
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `test_real_case_fasi_2022_2024_in_miniature` passa a `test_derived_scenario_2022_2024_in_miniature_with_a_synthetic_table`, `_fasi_miniature` a `_synthetic_miniature_table`, e o comentário de seção a "cenário derivado em miniatura (CALC-14), tabela sintética"; o total esperado não muda e o comentário diz que ele vem da tabela sintética.
 **Where**: `backend/tests/unit/domain/test_scoring_engine.py` (modify, `:522-560`)
@@ -438,9 +438,9 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] `grep -niE "real[ _]case|caso real" backend/tests/unit/domain/test_scoring_engine.py` sem saída
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: igual ao anterior
+- [x] `grep -niE "real[ _]case|caso real" backend/tests/unit/domain/test_scoring_engine.py` sem saída
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: igual ao anterior
 
 **Tests**: unit
 **Gate**: quick
