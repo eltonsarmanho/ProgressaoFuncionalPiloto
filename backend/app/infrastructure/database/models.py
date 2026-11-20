@@ -231,6 +231,9 @@ class ScoringTableVersionModel(Base):
     minimums: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     notes: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    superseded_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scoring_table_versions.id")
+    )
 
 
 class ScoringGroupModel(Base):

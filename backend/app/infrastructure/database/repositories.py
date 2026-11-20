@@ -618,6 +618,7 @@ class SqlScoringTableRepository:
                     minimums=m.minimums,
                     notes=m.notes,
                     groups=tuple(entities),
+                    superseded_by_id=m.superseded_by_id,
                 )
             )
         return result
@@ -699,6 +700,16 @@ class SqlScoringTableRepository:
                 minimums=version.minimums,
                 notes=version.notes,
             )
+        ).rowcount
+        if rowcount == 0:
+            raise NotFound("Versão da tabela não encontrada")
+
+    def set_superseded(self, version_id: UUID, superseded_by_id: UUID | None) -> None:
+        """Marks the version as replaced by `superseded_by_id` (None clears the mark)."""
+        rowcount = self._s.execute(
+            update(ScoringTableVersionModel)
+            .where(ScoringTableVersionModel.id == version_id)
+            .values(superseded_by_id=superseded_by_id)
         ).rowcount
         if rowcount == 0:
             raise NotFound("Versão da tabela não encontrada")

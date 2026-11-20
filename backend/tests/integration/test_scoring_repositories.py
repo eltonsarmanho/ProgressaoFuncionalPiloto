@@ -184,6 +184,69 @@ def test_update_version_changes_validity_and_status(uow_factory, base):
     assert loaded.status is TableStatus.OFICIAL
 
 
+def _two_versions(uow_factory, base):
+    table, old = add_table(uow_factory, base)
+    newer = make_version(table.id, name="v2")
+    with uow_factory() as uow:
+        uow.scoring_tables.add_version(newer)
+        uow.commit()
+    return table, old, newer
+
+
+def test_a_new_version_has_no_superseded_mark(uow_factory, base):
+    table, version = add_table(uow_factory, base)
+    with uow_factory() as uow:
+        assert uow.scoring_tables.get_version(version.id).superseded_by_id is None
+        assert uow.scoring_tables.get_version(version.id).is_superseded is False
+
+
+def test_set_superseded_is_returned_by_get_list_and_list_for_unit(uow_factory, base):
+    table, old, newer = _two_versions(uow_factory, base)
+    with uow_factory() as uow:
+        uow.scoring_tables.set_superseded(old.id, newer.id)
+        uow.commit()
+
+    with uow_factory() as uow:
+        loaded = uow.scoring_tables.get_version(old.id)
+        listed = {v.id: v for v in uow.scoring_tables.list_versions(table.id)}
+        for_unit = {v.id: v for v in uow.scoring_tables.list_versions_for_unit(base["unit"].id)}
+        untouched = uow.scoring_tables.get_version(newer.id)
+    assert loaded.superseded_by_id == newer.id and loaded.is_superseded
+    assert listed[old.id].superseded_by_id == newer.id
+    assert listed[newer.id].superseded_by_id is None
+    assert for_unit[old.id].superseded_by_id == newer.id
+    assert for_unit[newer.id].superseded_by_id is None
+    assert untouched.superseded_by_id is None
+
+
+def test_set_superseded_with_none_clears_the_mark_and_an_unknown_version_is_not_found(
+    uow_factory, base
+):
+    _, old, newer = _two_versions(uow_factory, base)
+    with uow_factory() as uow:
+        uow.scoring_tables.set_superseded(old.id, newer.id)
+        uow.scoring_tables.set_superseded(old.id, None)
+        uow.commit()
+    with uow_factory() as uow:
+        assert uow.scoring_tables.get_version(old.id).superseded_by_id is None
+        with pytest.raises(NotFound):
+            uow.scoring_tables.set_superseded(uuid.uuid4(), newer.id)
+
+
+def test_update_version_keeps_the_superseded_mark(uow_factory, base):
+    _, old, newer = _two_versions(uow_factory, base)
+    with uow_factory() as uow:
+        uow.scoring_tables.set_superseded(old.id, newer.id)
+        uow.commit()
+    with uow_factory() as uow:
+        uow.scoring_tables.update_version(replace(old, valid_to=date(2024, 12, 31)))
+        uow.commit()
+    with uow_factory() as uow:
+        loaded = uow.scoring_tables.get_version(old.id)
+    assert loaded.valid_to == date(2024, 12, 31)
+    assert loaded.superseded_by_id == newer.id
+
+
 def test_update_criterion_changes_points_and_rejects_unknown_item(uow_factory, base):
     _, version = add_table(uow_factory, base)
     edited = replace(version.get_criterion(2, 2), unit_points=D("35"), review_note=None)

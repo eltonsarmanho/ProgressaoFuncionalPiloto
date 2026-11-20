@@ -259,7 +259,7 @@ graph LR
 
 #### T5: Migração `0009_version_superseded`, modelo e repositório
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Migração que só acrescenta `scoring_table_versions.superseded_by_id` (UUID nulo, chave estrangeira para a própria tabela, `NO ACTION`; `downgrade` é `DROP COLUMN`); coluna em `ScoringTableVersionModel` (`models.py`); `_versions` em `repositories.py` mapeia o campo para a entidade; método `set_superseded(version_id, superseded_by_id)` no repositório e na porta `ScoringTableRepository` (`domain/repositories/ports.py`); `add_version` e `update_version` não mexem na coluna.
 **Where**: `backend/alembic/versions/0009_version_superseded.py` (novo)
@@ -274,11 +274,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_migration_version_superseded.py` (novo): `upgrade` cria a coluna nula com a chave estrangeira; `downgrade` a remove e preserva as versões; apontar para versão inexistente é recusado pelo banco
-- [ ] Testes em `backend/tests/integration/test_scoring_repositories.py`: `set_superseded` grava e `get_version`, `list_versions` e `list_versions_for_unit` devolvem `superseded_by_id`; versão nova vem com `None`; `update_version` não apaga a marca
-- [ ] `alembic upgrade head` chega à `0009`; `test_migrations.py` passa
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam; nenhum teste apagado
+- [x] Testes primeiro em `backend/tests/integration/test_migration_version_superseded.py` (novo): `upgrade` cria a coluna nula com a chave estrangeira; `downgrade` a remove e preserva as versões; apontar para versão inexistente é recusado pelo banco
+- [x] Testes em `backend/tests/integration/test_scoring_repositories.py`: `set_superseded` grava e `get_version`, `list_versions` e `list_versions_for_unit` devolvem `superseded_by_id`; versão nova vem com `None`; `update_version` não apaga a marca
+- [x] `alembic upgrade head` chega à `0009`; `test_migrations.py` passa
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; nenhum teste apagado
 
 **Tests**: integration
 **Gate**: full
