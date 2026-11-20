@@ -6,7 +6,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.application.use_cases.scoring import ActivityData
+from app.application.use_cases.scoring import ActivityData, compute_process_score
 from app.domain.entities.activity import ActivityStatus, Candidate, Level
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.process import ProcessStatus
@@ -77,6 +77,35 @@ def test_changing_scoring_inputs_without_justification_is_saved_and_audited(
     assert event.action is AuditAction.UPDATE
     assert event.justification is None
     assert set(event.changes) == set(changes)
+
+
+def test_changing_the_category_of_a_validated_activity_recalculates_and_keeps_it_validated(
+    world, activity
+):
+    """Edge case of the spec: the status stays VALIDADA and the points follow the new item."""
+    assert activity.status is ActivityStatus.VALIDADA
+    old, new = (
+        world.official_version.get_criterion(2, 7),
+        world.official_version.get_criterion(2, 8),
+    )
+    assert old.unit_points != new.unit_points  # the test would prove nothing otherwise
+
+    def scored_points():
+        with world.uow_factory() as uow:
+            score = compute_process_score(uow, uow.processes.get(world.process.id))
+        [row] = score.result.rows
+        return row.status, row.points, score.result.total
+
+    before = scored_points()
+
+    changed = world.update.execute(
+        world.admin, activity.id, as_data(activity, item_number=8), activity.version, None
+    )
+
+    assert changed.status is ActivityStatus.VALIDADA
+    after = scored_points()
+    assert before == (RowStatus.PONTUADA, old.unit_points * 4, old.unit_points * 4)
+    assert after == (RowStatus.PONTUADA, new.unit_points * 4, new.unit_points * 4)
 
 
 def test_points_override_change_needs_no_justification(points_chosen):

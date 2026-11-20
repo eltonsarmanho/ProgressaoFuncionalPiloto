@@ -151,6 +151,39 @@ def test_correcting_a_not_valid_activity_makes_the_next_listing_valid(official_c
     assert validity_of(world, outside).state is ValidityState.VALIDA
 
 
+@pytest.mark.parametrize(
+    ("source", "status"),
+    [
+        (ActivitySource.IMPORTADA, ActivityStatus.AGUARDANDO_REVISAO),
+        (ActivitySource.MANUAL, ActivityStatus.VALIDADA),
+    ],
+)
+def test_correcting_the_hours_returns_the_activity_to_the_valid_ones_with_the_status_it_had(
+    official_chosen, source, status
+):
+    world = official_chosen
+    minimum = world.official_version.get_criterion(4, 3).min_hours
+    short = add(
+        world, "Curso curto", group=4, item=3, hours=minimum - 1, quantity=None, source=source
+    )
+    assert short.status is status
+    assert validity_of(world, short).reason is InvalidReason.CARGA_HORARIA_INSUFICIENTE
+
+    world.update.execute(
+        world.admin,
+        short.id,
+        ActivityData(
+            title="Curso curto", group_number=4, item_number=3, hours=minimum, event_date=INSIDE
+        ),
+        short.version,
+        None,
+    )
+
+    [only] = listing(world).activities
+    assert validity_of(world, only).state is ValidityState.VALIDA
+    assert only.status is status
+
+
 def test_reopening_a_rejected_activity_returns_it_to_waiting_and_valid(official_chosen):
     world = official_chosen
     rejected = add(world, "Rejeitada")

@@ -1798,7 +1798,7 @@ T62 → T43 → T44
 
 ### T62: FT7, testes de status final e decisões do Verifier na spec
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Fecha G7 e SP1 a SP10 do Verifier. (a) Testes: trocar a categoria de atividade validada recalcula e mantém `VALIDADA`; carga horária corrigida devolve a atividade às válidas com o status que tinha. (b) `spec.md` registra, como "Decisões do Verifier", o comportamento já implementado (ordem dos motivos, `GRUPO_NAO_CONTA` e `DUPLICIDADE`, período por ano e precisão de mês, ordem das validações na rota de status, data inalterada, mais de duas validadas, Etapa 3 sem tabela, faixa da quantidade, vocabulário de `skipped`, cláusula da prévia da conclusão). Descreve o que existe; nenhum requisito novo, nenhum comportamento muda.
 **Where**: `backend/tests/integration/scoring/test_activity_update.py` (modify), `backend/tests/integration/scoring/test_list_activities_validity.py` (modify) e `.specs/features/revisao-simplificada/spec.md` (modify, junto com a T43)
@@ -1813,10 +1813,11 @@ T62 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro: a troca de categoria de uma `VALIDADA` mantém `VALIDADA` e recalcula os pontos; a carga horária corrigida devolve a atividade às válidas com o status que tinha
-- [ ] `spec.md` com a seção "Decisões do Verifier" cobrindo SP1 a SP10, sem requisito novo
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest <arquivos tocados> -q`
-- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+- [x] Testes primeiro: a troca de categoria de uma `VALIDADA` mantém `VALIDADA` e recalcula os pontos; a carga horária corrigida devolve a atividade às válidas com o status que tinha
+- [x] `spec.md` com a seção "Decisões do Verifier (rodada 1)" cobrindo SP1 a SP10 e o período aberto da T57, sem requisito novo (o arquivo sobe no commit da T43, junto com a `STATE.md`, o `CLAUDE.md` e o `design.md`)
+- [x] Os testes novos falham contra o mutante que muda o status na edição (`status=AGUARDANDO_REVISAO` em `UpdateActivity`), provado em cópia
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest <arquivos tocados> -q`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
 
 **Tests**: integration
 **Gate**: full
