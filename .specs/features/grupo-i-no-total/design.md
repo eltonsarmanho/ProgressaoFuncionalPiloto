@@ -21,7 +21,7 @@ Decisões do projeto que este desenho segue: AD-001 (a regra fica no `domain`, s
 | D8 | Painel da Etapa 4 como componentes pequenos de leitura (sem estado, sem controle novo), no lugar de `ScoringSummary`. Os valores vêm da API como estão: o frontend não soma pontos nem horas (a barra proporcional é só desenho) | Calcular totais por semestre no navegador | O princípio de `table_document.py` vale também para a tela: tela e documento não podem divergir. As horas por período e o total vêm de `group1_hours_by_period` e `group1_total_hours` |
 | D10 | **Oferta só com período letivo** (GI-09): no domínio, `evaluate_period` passa a julgar uma oferta do Grupo I sem data nem período de datas pelo ano do `academic_period` (AAAA.N): fora do interstício só quando o ano inteiro (1/1 a 31/12) está fora dele. Vale nas duas versões e na validade (`classify_activity` devolve `FORA_DO_INTERSTICIO`) | Datas de semestre (fevereiro a junho, agosto a dezembro) | Os calendários variam por ano e por unidade; inventar datas pode excluir uma disciplina válida. O ano inteiro só exclui o que está certamente fora. A oferta de um ano que cruza o interstício continua dentro |
 | D11 | **Mínimo de referência** comparado com o total geral, que inclui o Grupo I (`scoring_verification.py` lê o total; nada muda além do total, que agora soma o grupo 1) | Comparar com o total sem o Grupo I | Resposta do usuário à pergunta 2; o painel diz "Grupos I a VIII" ao lado do mínimo |
-| D12 | **Aviso de Tabela desatualizada** na Etapa 5 (GI-11): a API da lista de documentos gerados devolve, por geração, `table_version_id` lido do instantâneo (`snapshot.table_version.id`, que já existe) e o processo devolve a versão escolhida; o frontend compara e mostra o aviso na última Tabela `PRONTO` diferente. Sem coluna nova | Gravar a versão numa coluna nova de `generated_documents` | O instantâneo já guarda a versão (`generation_snapshot.py`); as gerações antigas também a têm |
+| D12 | **Aviso de Tabela desatualizada** na Etapa 5 (GI-11): a API da lista de documentos gerados devolve, por geração, `table_version_id` lido do instantâneo (`snapshot.table_version.id`, que já existe) e a versão escolhida vem de `GET /scoring/table`, que já existe (o `ProcessOut` não a expõe); o frontend compara e mostra o aviso na última Tabela `PRONTO` diferente. Sem coluna nova | Gravar a versão numa coluna nova de `generated_documents` | O instantâneo já guarda a versão (`generation_snapshot.py`); as gerações antigas também a têm |
 | D9 | A API de pontuação entrega por linha `academic_period`, `level` e `outside_total` (o bloco Docência precisa de disciplina, nível e período) | Uma lista nova `group1_offers` na resposta | As linhas já têm título, status e `pit_hours`; acrescentar três campos é menos código e a tabela de atividades da Etapa 4 usa os mesmos campos |
 
 ---
@@ -38,7 +38,7 @@ graph TD
     CH --> ENG[calculate: grupo 1 conta, linhas com pit_hours e outside_total]
     ENG --> VAL[classify_activity: sem mudança]
     ENG --> API[ProcessScoreOut: linhas com período, nível e outside_total]
-    API --> PAINEL[ScoringPanel: faixa, barras, Docência, potencial, contadores]
+    API --> PAINEL[ScoringPanel: faixa com total, mínimo e percentual do Grupo I, barras, Docência, potencial, contadores]
     API --> TAB[ScoringTable: linhas do Grupo I]
     ENG --> DOC[build_table_document: seção I, 5 colunas, horas por semestre]
     DOC --> DOCX[table_docx]
@@ -56,11 +56,11 @@ graph TD
 | `classify_activity` | `activity_validity.py:95` | A condição `not counts_in_total and not is_pit_criterion` já dá válida na versão nova e continua dando `GRUPO_NAO_CONTA` só para critério que não é de carga semanal em grupo fora do total. Nenhuma linha de código muda; entram testes |
 | `seed_scoring_tables` | `database/seed.py:145` | Insere a versão pelo nome e não toca a existente |
 | `build_table_document`, `table_text`, `format_period`, `two_places` | `table_document.py`, `table_text.py`, `pt_format.py` | A seção I é a faixa de grupo que já existe para os grupos que contam; só a linha do Grupo I é especial |
-| `TablePicker` | `frontend/src/components/TablePicker.tsx` | Ganha o aviso de tabela mais nova (D3, "Processo na versão antiga") |
+| `TablePicker` | `frontend/src/components/TablePicker.tsx` | Deixa de listar versões substituídas; sem aviso nem botão de troca (D3) |
 | Padrão de foco e região viva da Etapa 3 | `ActivityWorkspace.tsx:112` (`role="status"` visualmente oculto), `role="alert"` para erro | O painel não tem controle; só anuncia a mudança do total |
 | `GROUP_NAMES`, `MINIMUM_LABELS`, `formatDecimal`, `roman` | `frontend/src/labels.ts` | Nomes curtos dos grupos nas barras (resolve os "rótulos longos") |
 
-Pontos de integração: `generated_documents.py` (`_table`, `_comprovante`, `_numbering_alert`), `repositories.py:629` e `:641` (ordenação das versões), `presentation/schemas/scoring.py` (`ScoreRowOut`), `frontend/src/api/types.ts`. Nenhuma tabela, coluna ou migração nova; o `alembic` continua em `0008`.
+Pontos de integração: `generated_documents.py` (`_table`, `_comprovante`, `_numbering_alert`), `repositories.py:629` e `:641` (ordenação das versões), `presentation/schemas/scoring.py` (`ScoreRowOut`), `frontend/src/api/types.ts`. Uma coluna nova, `scoring_table_versions.superseded_by_id`, pela migração `0009` (D2); nenhuma tabela nova.
 
 ---
 
@@ -248,7 +248,7 @@ Gate do backend: `cd backend && ruff check . && pytest -q`; do frontend: `npm te
 | GI-10 | Processos `RASCUNHO` e `EM_ANDAMENTO` com a antiga passam para a nova, com um evento de auditoria cada; `CONCLUIDO` e `ARQUIVADO` não mudam; segunda execução não muda nada nem audita de novo; falha no meio não troca nenhum (uma transação) | integração |
 | GI-11 | Última Tabela `PRONTO` com `table_version` diferente da escolhida mostra o aviso; igual não mostra; Relatório e Comprovante não mostram | integração de API e componente |
 | GTAB-08 | Nem DOCX nem PDF têm "Comprovante", "comprovante", "Status", "Pontuada", "Potencial", "Não pontuada" em célula, alerta ou rodapé; `NUMERACAO_DIVERGENTE` e `SEM_COMPROVANTE` não são emitidos para a Tabela; o motivo `FORA_DO_INTERSTICIO` continua em Alertas | unitário dos escritores e do documento |
-| GI-08 | `group1_percent` na versão nova e nenhum alerta por ele | unitário do motor |
+| GI-08 | `group1_percent` na versão nova e nenhum alerta por ele (motor); o percentual aparece na faixa do topo do painel, `PanelHeadline` (componente) | unitário do motor e componente |
 | Validade (AD-022) | Matriz de `classify_activity`: grupo 1 válido nas duas versões; critério do grupo 1 que não é carga semanal, `GRUPO_NAO_CONTA` na antiga e válido na nova | unitário (`test_activity_validity.py`) |
 | GTAB-01 | A faixa "I. Docência/..." e o subtotal abrem a lista de grupos, no DOCX e no PDF | unitário do documento e dos escritores |
 | GTAB-02 | Linha por oferta: item `I.1`/`I.2`, título e período, horas, `1,00`, total; ordem período depois título; título de 400 caracteres cortado | unitário do documento |
@@ -306,4 +306,4 @@ Gate do backend: `cd backend && ruff check . && pytest -q`; do frontend: `npm te
 - O texto do alerta de data das ofertas do Grupo I (corrigido em `0422ac3` antes desta feature).
 - Digitação de pontos de itens `VALOR_INFORMADO` (pergunta aberta da AD-022; não existe I.3 na tabela oficial).
 - Paginação do bloco Docência (esperam-se poucos períodos e ofertas).
-- Deploy e push: só com a autorização do usuário; a versão nova entra na VM pelo seed na partida seguinte ao deploy, sem migração.
+- Deploy e push: só com a autorização do usuário; a migração `0009` (só esquema) roda no `alembic upgrade head` e a versão nova entra pelo seed na mesma partida, seguida da troca automática (D3); dump do banco antes.
