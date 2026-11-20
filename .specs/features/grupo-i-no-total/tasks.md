@@ -812,7 +812,7 @@ graph LR
 
 #### T24: `PotentialCards` só com potencial maior que 0
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Componente de leitura: três cartões pequenos (potencial total, com data no interstício, sem data — aguardando revisão) exibidos só quando `potential_total` é maior que 0; com todos em 0, nada é renderizado.
 **Where**: `frontend/src/components/PotentialCards.tsx` (novo)
@@ -827,9 +827,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/PotentialCards.test.tsx`: potencial 12,00 mostra os três cartões com os valores; potencial 0 com os outros 0 não renderiza nada
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/PotentialCards.test.tsx`: potencial 12,00 mostra os três cartões com os valores; potencial 0 com os outros 0 não renderiza nada
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: front

@@ -155,7 +155,7 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 | GRES-03 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
 | GRES-04 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
 | GRES-05 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
-| GRES-06 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
+| GRES-06 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
 | GRES-07 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
 | GRES-08 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
 | GRES-09 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
