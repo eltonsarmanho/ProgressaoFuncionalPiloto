@@ -728,7 +728,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T23: Nota de substituição e cenário derivado nos documentos gerados
 
-**Status**: Pending
+**Status**: Done
 
 **What**: O cabeçalho de `documentos-gerados/spec.md` ganha a nota de substituição de TAB-03 e TAB-05 pela `grupo-i-no-total` (AD-023); as citações de 211 pontos (linhas 100 e 399) dizem "cenário derivado".
 **Where**: `.specs/features/documentos-gerados/spec.md` (modify)
@@ -743,9 +743,9 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] Nota de substituição no topo com TAB-03, TAB-05, `grupo-i-no-total` e AD-023; `grep -nE "\b211\b" .specs/features/documentos-gerados/spec.md` mostra "cenário derivado" em cada linha
-- [ ] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py documentos-gerados` sem erro novo
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Nota de substituição no topo com TAB-03, TAB-05, `grupo-i-no-total` e AD-023; `grep -nE "\b211\b" .specs/features/documentos-gerados/spec.md` mostra "cenário derivado" em cada linha
+- [x] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py documentos-gerados` sem erro novo
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
 
 **Tests**: none
 **Gate**: quick

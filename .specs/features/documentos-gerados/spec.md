@@ -1,5 +1,7 @@
 # Documentos Gerados — Specification
 
+> **Nota de substituição:** TAB-03 e TAB-05 (sete colunas com status e comprovante; horas de PIT "sem somá-las aos pontos") são substituídos pela feature `grupo-i-no-total` (AD-023) quando ela for implementada; até lá valem como estão. A nota recíproca está em `grupo-i-no-total/spec.md`.
+
 **Escopo:** Complex (domínio novo: montagem de PDF a partir de originais, DOCX, redação por IA com revisão humana, histórico imutável de documentos).
 **Depende de:** `fundacao` (processo e a transição de status `ProcessStatus`, acesso, auditoria), `pontuacao` e `tabela-oficial` (resultado calculado, AD-006), `inteligencia-documental` (documentos, páginas, vínculos atividade-página, job em processo, AD-008, AD-009).
 **Fontes:** o prompt do projeto (módulos 7 a 9), `Modelos/Comprovante Documentos_2020_2024.pdf`, `Modelos/RELATÓRIO DE ATIVIDADES Completo.pdf`, `Modelos/Modelo Relatorio Atividades 1.pdf`, `Modelos/Modelo Relatorio Atividades 2.docx` (recebido em 2026-11-18), `Modelos/ANEXO II - Modelo Relatório de Atividades - Julho 2016.pdf`, `Modelos/ordenamentodecomoosdocumentosdevemestarsequenciadosnorelatrio.pdf`.
@@ -97,7 +99,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 7. IF o processo não tem atividade VALIDADA THEN the system SHALL recusar a geração com o código `SEM_ATIVIDADES_VALIDADAS`.  <!-- unwanted-behavior -->
 8. IF o processo ainda não tem versão de tabela escolhida THEN the system SHALL recusar a geração com o código `TABELA_NAO_ESCOLHIDA`.  <!-- unwanted-behavior -->
 
-**Independent Test**: Com as atividades do cenário de aceitação de 211 pontos, gerar a Tabela e conferir no DOCX e no PDF o total 211, os subtotais 52, 7, 62, 0, 30, 4 e 56 e as horas 24, 24, 24 e 20 (total 92).
+**Independent Test**: Com as atividades do cenário derivado de aceitação de 211 pontos, gerar a Tabela e conferir no DOCX e no PDF o total 211, os subtotais 52, 7, 62, 0, 30, 4 e 56 e as horas 24, 24, 24 e 20 (total 92).
 
 ---
 
@@ -396,7 +398,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 ## Success Criteria
 
-- [ ] A Tabela gerada para o cenário de aceitação mostra 211 pontos, os subtotais 52, 7, 62, 0, 30, 4 e 56 e as horas 24, 24, 24, 20 (92), no DOCX e no PDF.
+- [ ] A Tabela gerada para o cenário derivado de aceitação mostra 211 pontos, os subtotais 52, 7, 62, 0, 30, 4 e 56 e as horas 24, 24, 24, 20 (92), no DOCX e no PDF.
 - [ ] O Comprovante de um processo sintético tem páginas idênticas às originais, numeração contínua e sumário correto, com pico de memória abaixo de 320 MB em 400 páginas digitalizadas sintéticas.
 - [ ] Nenhuma descrição aceita no Relatório contém número, data ou nome que não esteja nos campos da atividade.
 - [ ] Uma versão gerada é baixada de novo, byte a byte igual, depois de mudanças no processo.
