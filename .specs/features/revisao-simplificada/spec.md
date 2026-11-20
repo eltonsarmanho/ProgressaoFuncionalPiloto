@@ -203,46 +203,46 @@ O Verifier (T44, `validation.md`) achou pontos em que a spec não dizia o result
 
 | Requirement ID | Story | Phase | Tasks | Status |
 | -------------- | ----- | ----- | ----- | ------ |
-| VAL-01 | P1: Validar pontua | Tasks | T2, T5, T62 | Implemented |
-| VAL-02 | P1: Validar pontua | Tasks | T3, T4, T28 | Implemented |
-| VAL-03 | P1: Validar pontua | Tasks | T17 | Implemented |
-| VAL-04 | P1: Validar pontua | Tasks | T18, T19, T34 | Implemented |
-| VAL-05 | P1: Validar pontua | Tasks | T17 | Implemented |
-| VAL-06 | P1: Validar pontua | Tasks | T1, T17, T33, T34 | Implemented |
-| SEC-01 | P1: Etapa 3 em duas seções | Tasks | T23, T24, T27, T36, T38, T39 | Implemented |
-| SEC-02 | P1: Etapa 3 em duas seções | Tasks | T1, T25, T26, T34 | Implemented |
-| SEC-03 | P1: Etapa 3 em duas seções | Tasks | T31, T34, T48 | Implemented |
-| SEC-04 | P1: Etapa 3 em duas seções | Tasks | T30, T33, T45, T46, T47, T51, T52 | Implemented |
-| SEC-05 | P1: Etapa 3 em duas seções | Tasks | T34, T37, T38, T47, T49, T51, T53, T54, T55, T58 | Implemented |
-| SEC-06 | P1: Etapa 3 em duas seções | Tasks | T1, T22, T25, T35 | Implemented |
-| SEC-07 | P1: Etapa 3 em duas seções | Tasks | T1, T24, T25, T28, T29, T35 | Implemented |
-| SEC-08 | P1: Etapa 3 em duas seções | Tasks | T25, T26, T36, T62 | Implemented |
-| SEC-09 | P1: Etapa 3 em duas seções | Tasks | T25, T35, T36 | Implemented |
-| SEC-10 | P1: Etapa 3 em duas seções | Tasks | T35 | Implemented |
-| SEC-11 | P1: Etapa 3 em duas seções | Tasks | T34, T35, T48, T53 | Implemented |
-| SEC-12 | P1: Etapa 3 em duas seções | Tasks | T33, T35, T36, T45, T46, T49, T52, T53, T55, T60 | Implemented |
-| DUP-01 | P1: Duplicadas mescladas | Tasks | T13, T14 | Implemented |
-| DUP-02 | P1: Duplicadas mescladas | Tasks | T9, T10, T11, T12, T14 | Implemented |
-| DUP-03 | P1: Duplicadas mescladas | Tasks | T10, T12, T14, T59 | Implemented |
-| DUP-04 | P1: Duplicadas mescladas | Tasks | T16, T21, T22, T38 | Implemented |
-| DUP-05 | P1: Duplicadas mescladas | Tasks | T14 | Implemented |
-| DUP-06 | P1: Duplicadas mescladas | Tasks | T14 | Implemented |
-| DUP-07 | P1: Duplicadas mescladas | Tasks | T15, T16, T24, T32 | Implemented |
-| SEG-01 | P1: Só as válidas seguem | Tasks | T1, T2, T5, T6, T8, T56 | Implemented |
-| SEG-02 | P1: Só as válidas seguem | Tasks | T6, T8, T59 | Implemented |
-| SEG-03 | P1: Só as válidas seguem | Tasks | T2, T6, T8, T26 | Implemented |
-| SEG-04 | P1: Só as válidas seguem | Tasks | T2, T5 | Implemented |
-| SEG-05 | P1: Só as válidas seguem | Tasks | T7, T8, T28, T61 | Implemented |
-| EDT-01 | P1: Editar atividade com poucos campos | Tasks | T40, T50 | Implemented |
-| EDT-02 | P1: Editar atividade com poucos campos | Tasks | T20, T41, T49 | Implemented |
-| EDT-03 | P1: Editar atividade com poucos campos | Tasks | T20, T41, T57, T62 | Implemented |
-| EDT-04 | P1: Editar atividade com poucos campos | Tasks | T40 | Implemented |
-| EDT-05 | P1: Editar atividade com poucos campos | Tasks | T40 | Implemented |
-| EDT-06 | P1: Editar atividade com poucos campos | Tasks | T20, T40 | Implemented |
-| EDT-07 | P1: Editar atividade com poucos campos | Tasks | T40 | Implemented |
-| QTD-01 | P1: Quantidade e valor manual na Etapa 4 | Tasks | T42, T50 | Implemented |
-| QTD-02 | P1: Quantidade e valor manual na Etapa 4 | Tasks | T20, T42, T50 | Implemented |
-| QTD-03 | P1: Quantidade e valor manual na Etapa 4 | Tasks | T20, T42, T49 | Implemented |
+| VAL-01 | P1: Validar pontua | Tasks | T2, T5, T62 | Verified |
+| VAL-02 | P1: Validar pontua | Tasks | T3, T4, T28 | Verified |
+| VAL-03 | P1: Validar pontua | Tasks | T17 | Verified |
+| VAL-04 | P1: Validar pontua | Tasks | T18, T19, T34 | Verified |
+| VAL-05 | P1: Validar pontua | Tasks | T17 | Verified |
+| VAL-06 | P1: Validar pontua | Tasks | T1, T17, T33, T34 | Verified |
+| SEC-01 | P1: Etapa 3 em duas seções | Tasks | T23, T24, T27, T36, T38, T39 | Verified |
+| SEC-02 | P1: Etapa 3 em duas seções | Tasks | T1, T25, T26, T34 | Verified |
+| SEC-03 | P1: Etapa 3 em duas seções | Tasks | T31, T34, T48 | Verified |
+| SEC-04 | P1: Etapa 3 em duas seções | Tasks | T30, T33, T45, T46, T47, T51, T52 | Verified |
+| SEC-05 | P1: Etapa 3 em duas seções | Tasks | T34, T37, T38, T47, T49, T51, T53, T54, T55, T58 | Verified |
+| SEC-06 | P1: Etapa 3 em duas seções | Tasks | T1, T22, T25, T35 | Verified |
+| SEC-07 | P1: Etapa 3 em duas seções | Tasks | T1, T24, T25, T28, T29, T35 | Verified |
+| SEC-08 | P1: Etapa 3 em duas seções | Tasks | T25, T26, T36, T62 | Verified |
+| SEC-09 | P1: Etapa 3 em duas seções | Tasks | T25, T35, T36 | Verified |
+| SEC-10 | P1: Etapa 3 em duas seções | Tasks | T35 | Verified |
+| SEC-11 | P1: Etapa 3 em duas seções | Tasks | T34, T35, T48, T53 | Verified |
+| SEC-12 | P1: Etapa 3 em duas seções | Tasks | T33, T35, T36, T45, T46, T49, T52, T53, T55, T60 | Verified |
+| DUP-01 | P1: Duplicadas mescladas | Tasks | T13, T14 | Verified |
+| DUP-02 | P1: Duplicadas mescladas | Tasks | T9, T10, T11, T12, T14 | Verified |
+| DUP-03 | P1: Duplicadas mescladas | Tasks | T10, T12, T14, T59 | Verified |
+| DUP-04 | P1: Duplicadas mescladas | Tasks | T16, T21, T22, T38 | Verified |
+| DUP-05 | P1: Duplicadas mescladas | Tasks | T14 | Verified |
+| DUP-06 | P1: Duplicadas mescladas | Tasks | T14 | Verified |
+| DUP-07 | P1: Duplicadas mescladas | Tasks | T15, T16, T24, T32 | Verified |
+| SEG-01 | P1: Só as válidas seguem | Tasks | T1, T2, T5, T6, T8, T56 | Verified |
+| SEG-02 | P1: Só as válidas seguem | Tasks | T6, T8, T59 | Verified |
+| SEG-03 | P1: Só as válidas seguem | Tasks | T2, T6, T8, T26 | Verified |
+| SEG-04 | P1: Só as válidas seguem | Tasks | T2, T5 | Verified |
+| SEG-05 | P1: Só as válidas seguem | Tasks | T7, T8, T28, T61 | Verified |
+| EDT-01 | P1: Editar atividade com poucos campos | Tasks | T40, T50 | Verified |
+| EDT-02 | P1: Editar atividade com poucos campos | Tasks | T20, T41, T49 | Verified |
+| EDT-03 | P1: Editar atividade com poucos campos | Tasks | T20, T41, T57, T62 | Verified |
+| EDT-04 | P1: Editar atividade com poucos campos | Tasks | T40 | Verified |
+| EDT-05 | P1: Editar atividade com poucos campos | Tasks | T40 | Verified |
+| EDT-06 | P1: Editar atividade com poucos campos | Tasks | T20, T40 | Verified |
+| EDT-07 | P1: Editar atividade com poucos campos | Tasks | T40 | Verified |
+| QTD-01 | P1: Quantidade e valor manual na Etapa 4 | Tasks | T42, T50 | Verified |
+| QTD-02 | P1: Quantidade e valor manual na Etapa 4 | Tasks | T20, T42, T50 | Verified |
+| QTD-03 | P1: Quantidade e valor manual na Etapa 4 | Tasks | T20, T42, T49 | Verified |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 

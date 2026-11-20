@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Design**: `.specs/features/revisao-simplificada/design.md`
 **Spec**: `.specs/features/revisao-simplificada/spec.md`
-**Status**: Draft (aguarda a aprovação das tarefas)
+**Status**: Verified (PASS, 2026-11-19)
 
 Regras de execução desta feature: cada tarefa escreve primeiro os testes que derivam dos critérios de aceitação da spec e só então o código (os itens `Done when` começam pelo teste); só dados sintéticos; `Documentos/` e `Modelos/` nunca são abertos; um commit por tarefa (Conventional Commits, com `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`), marcando a tarefa neste arquivo e a rastreabilidade da spec no mesmo commit; sem push, deploy nem acesso à VM sem autorização explícita (a migração `0008` vai à VM só no deploy autorizado). A fase 1 muda a regra do que entra nos documentos: as versões já geradas não mudam (AD-012).
 
@@ -1857,6 +1857,8 @@ T62 → T43 → T44
 
 ### T44: Verificador independente
 
+**Status**: Done
+
 **What**: Agente diferente do autor confere os 40 requisitos com evidência (testes e leitura do código) e injeta mutantes (esquecer de excluir a não válida da Tabela, aceitar validar sem categoria, mesclar sem mover as provas, aplicar a checagem de data à leitura de documentos, não reverter a mesclagem que falha, paginar errado); escreve o relatório.
 **Where**: `.specs/features/revisao-simplificada/validation.md` (novo)
 **Depends on**: T43
@@ -1870,11 +1872,11 @@ T62 → T43 → T44
 
 **Done when**:
 
-- [ ] `validation.md` com o veredito PASS, a evidência `arquivo:linha` por requisito, o resultado do sensor de mutação e o intervalo de commits
-- [ ] Mutantes sobreviventes e lacunas viram tarefas de correção; o ciclo corrigir e reverificar tem no máximo 3 voltas
-- [ ] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_state.py revisao-simplificada` sem erro
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: contagem final registrada
+- [x] `validation.md` com o veredito PASS, a evidência `arquivo:linha` por requisito, o resultado do sensor de mutação e o intervalo de commits
+- [x] Mutantes sobreviventes e lacunas viram tarefas de correção; o ciclo corrigir e reverificar tem no máximo 3 voltas
+- [x] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_state.py revisao-simplificada` sem erro
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagem final registrada
 
 **Tests**: none
 **Gate**: build

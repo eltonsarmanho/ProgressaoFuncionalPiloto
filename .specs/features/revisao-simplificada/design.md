@@ -1,7 +1,7 @@
 # Revisão simplificada das atividades Design
 
 **Spec**: `.specs/features/revisao-simplificada/spec.md`
-**Status**: Implemented (o usuário aprovou o desenho completo em 2026-11-19; AD-022 registrada em `STATE.md`; Verified pendente da reverificação da T44, volta 1 de 3)
+**Status**: Verified (PASS em 2026-11-19, volta 1 de 3; o usuário aprovou o desenho completo em 2026-11-19; AD-022 registrada em `STATE.md`; `validation.md`)
 
 Decisões do projeto que este desenho segue: AD-001 (a regra de validade fica no `domain`, sem FastAPI nem SQLAlchemy), AD-006 (o resultado da pontuação é calculado na hora, nunca gravado: a validade também), AD-019 (atividade ligada só a documento fora do interstício é rejeitada com auditoria: aparece como "Rejeitada" nas não válidas) e AD-018 (o `DELETE` do processo apaga tudo: a coluna nova não pode travá-lo).
 
