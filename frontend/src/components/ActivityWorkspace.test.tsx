@@ -326,3 +326,90 @@ describe("SEC-12: o erro da linha sobrevive à recarga e não se repete", () => 
     await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
   });
 });
+
+describe("SEC-12: o foco nos caminhos de falha da linha", () => {
+  const STALE = { detail: "A atividade foi alterada; recarregue" };
+  /** A browser drops the focus of a button or select that is disabled while the request runs. */
+  const dropFocus = () => (document.activeElement as HTMLElement | null)?.blur();
+  const needs = () => activity({ id: "n1", title: "Sem categoria", group_number: null, item_number: null, predicted_points: null, validity: { ...VALID, needs_category: true } });
+
+  it("422 de categoria no seletor da linha devolve o foco ao seletor, já habilitado", async () => {
+    const { user } = setup([needs()], (c) => c, {
+      "PUT /api/activities/n1": () => {
+        dropFocus();
+        return { status: 422, body: { detail: [{ field: "categoria", code: "VALIDACAO", message: "Escolha a categoria antes de validar" }] } };
+      },
+    });
+    await user.selectOptions(screen.getByRole("combobox", { name: "Categoria de Sem categoria" }), "3.2");
+    await screen.findByText("Escolha a categoria antes de validar");
+    const picker = screen.getByRole("combobox", { name: "Categoria de Sem categoria" });
+    await waitFor(() => expect(picker).toBeEnabled());
+    expect(picker).toHaveFocus();
+  });
+
+  it.each([
+    ["Validar", 409],
+    ["Validar", 500],
+    ["Rejeitar", 500],
+  ])("%s com falha (%i) devolve o foco ao botão acionado, já habilitado", async (name, status) => {
+    const { user } = setup([activity({ id: "v1", title: "Banca válida" })], (c) => c, {
+      "POST /api/activities/v1/status": () => {
+        dropFocus();
+        return { status, body: STALE };
+      },
+    });
+    await user.click(screen.getByRole("button", { name: `${name} Banca válida` }));
+    await screen.findByRole("alert");
+    const button = screen.getByRole("button", { name: `${name} Banca válida` });
+    await waitFor(() => expect(button).toBeEnabled());
+    expect(button).toHaveFocus();
+  });
+
+  it("Reabrir com falha devolve o foco ao botão Reabrir", async () => {
+    const { user } = setup(START(), (c) => c, {
+      "POST /api/activities/r1/status": () => {
+        dropFocus();
+        return { status: 500, body: { detail: "falha" } };
+      },
+    });
+    await openInvalid(user);
+    await user.click(screen.getByRole("button", { name: "Reabrir Orientação rejeitada" }));
+    await screen.findByRole("alert");
+    const button = screen.getByRole("button", { name: "Reabrir Orientação rejeitada" });
+    await waitFor(() => expect(button).toBeEnabled());
+    expect(button).toHaveFocus();
+  });
+
+  it("409 cuja recarga tira a linha da seção leva o foco ao título da seção, nunca ao body", async () => {
+    const rejected = activity({ id: "v1", title: "Banca válida", status: "REJEITADA", validity: REJECTED, predicted_points: null });
+    const { user } = setup([activity({ id: "v1", title: "Banca válida" })], (current) => current.map((a) => (a.id === "v1" ? rejected : a)), {
+      "POST /api/activities/v1/status": () => {
+        dropFocus();
+        return { status: 409, body: STALE };
+      },
+    });
+    await user.click(screen.getByRole("button", { name: "Validar Banca válida" }));
+    await waitFor(() => expect(screen.getByRole("heading", { level: 2, name: "Atividades válidas (0)" })).toBeInTheDocument());
+    expect(document.activeElement).toBe(screen.getByRole("heading", { level: 2, name: "Atividades válidas (0)" }));
+  });
+
+  it("depois de uma recarga que falha o foco pendente é descartado e não se move numa recarga seguinte", async () => {
+    setCsrfToken("tok");
+    const validated = activity({ id: "v1", title: "Banca um", status: "VALIDADA" });
+    mockFetch({ "POST /api/activities/v1/status": { status: 200, body: validated } });
+    const two = [activity({ id: "v1", title: "Banca um" }), activity({ id: "v2", title: "Banca dois" })];
+    const onChanged = vi.fn();
+    const view = (activities: Activity[], loadFailures: number) => (
+      <ActivityWorkspace processId="p1" activities={activities} rows={[]} groups={GROUPS} documents={[]} onChanged={onChanged} loadFailures={loadFailures} />
+    );
+    const user = userEvent.setup();
+    const { rerender } = render(view(two, 0));
+    await user.click(screen.getByRole("button", { name: "Validar Banca um" }));
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+    rerender(view(two, 1));
+    (document.activeElement as HTMLElement).blur();
+    expect(document.activeElement).toBe(document.body);
+    rerender(view([two[1]], 1));
+    expect(document.activeElement).toBe(document.body);
+  });
+});

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { activityBody } from "../activityBody";
 import { validityOf } from "../activityList";
 import { ApiError, errorMessage, fieldErrors, request } from "../api/client";
@@ -30,7 +30,7 @@ export type RowFeedback = {
   /** The write succeeded; called before the list reloads, while the row is still on the page. */
   done: (activityId: string, message: string) => void;
   /** The write failed: the workspace shows the message, with the title, where a reload cannot remove it. */
-  fail: (title: string, message: string) => void;
+  fail: (activityId: string, title: string, message: string) => void;
 };
 
 /**
@@ -65,6 +65,14 @@ export function ActivityRow({
   const [busy, setBusy] = useState(false);
   const pickerRef = useRef<HTMLSelectElement>(null);
   const titleRef = useRef<HTMLParagraphElement>(null);
+  // A disabled control cannot take the focus: after a failure it goes back once `busy` is released.
+  const refocus = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    if (busy || !refocus.current) return;
+    refocus.current();
+    refocus.current = null;
+  }, [busy]);
 
   const validity = validityOf(activity);
   const isValid = validity.state === "VALIDA";
@@ -79,7 +87,7 @@ export function ActivityRow({
     : itemLabel(activity.group_number, activity.item_number);
 
   /** A write of this row: an error goes to the workspace (the row itself without one); a stale list is reloaded (409, or 422 of status or category). */
-  async function write(action: () => Promise<unknown>, success: string) {
+  async function write(action: () => Promise<unknown>, success: string, trigger: HTMLElement | null) {
     setNotice(null);
     setCategoryError(undefined);
     setBusy(true);
@@ -92,15 +100,18 @@ export function ActivityRow({
     } catch (err) {
       const byField = fieldErrors(err);
       const message = Object.values(byField)[0] ?? errorMessage(err);
-      if (byField.categoria && pickerShown) {
+      const toPicker = Boolean(byField.categoria) && pickerShown;
+      if (toPicker) {
         // The select of the row says it; a second message would only repeat it.
         setCategoryError(byField.categoria);
-        pickerRef.current?.focus();
       } else if (feedback) {
-        feedback.fail(activity.title, message);
+        feedback.fail(activity.id, activity.title, message);
       } else {
         setNotice(message);
       }
+      // The control that was used, or the title when the reload takes it away.
+      const back = toPicker ? pickerRef.current : trigger;
+      refocus.current = () => (back?.isConnected ? back : titleRef.current)?.focus();
       const stale = err instanceof ApiError && (err.status === 409 || "status" in byField || "categoria" in byField);
       if (stale) onChanged();
     } finally {
@@ -113,10 +124,11 @@ export function ActivityRow({
     REJEITADA: "rejeitada",
     AGUARDANDO_REVISAO: "reaberta",
   };
-  const changeStatus = (status: ActivityStatus) =>
+  const changeStatus = (status: ActivityStatus, trigger: HTMLElement) =>
     write(
       () => request("POST", `/api/activities/${activity.id}/status`, { status, expected_version: activity.version }),
       `${activity.title} ${STATUS_RESULT[status] ?? "atualizada"}`,
+      trigger,
     );
   const chooseCategory = (value: CategoryValue) =>
     write(
@@ -127,6 +139,7 @@ export function ActivityRow({
           expected_version: activity.version,
         }),
       `Categoria definida em ${activity.title}`,
+      pickerRef.current,
     );
 
   return (
@@ -201,7 +214,7 @@ export function ActivityRow({
             className="btn btn-primary"
             aria-label={`Validar ${activity.title}`}
             disabled={busy}
-            onClick={() => void changeStatus("VALIDADA")}
+            onClick={(event) => void changeStatus("VALIDADA", event.currentTarget)}
           >
             Validar
           </button>
@@ -212,7 +225,7 @@ export function ActivityRow({
             className="btn btn-danger"
             aria-label={`Rejeitar ${activity.title}`}
             disabled={busy}
-            onClick={() => void changeStatus("REJEITADA")}
+            onClick={(event) => void changeStatus("REJEITADA", event.currentTarget)}
           >
             Rejeitar
           </button>
@@ -223,7 +236,7 @@ export function ActivityRow({
             className="btn btn-secondary"
             aria-label={`Reabrir ${activity.title}`}
             disabled={busy}
-            onClick={() => void changeStatus("AGUARDANDO_REVISAO")}
+            onClick={(event) => void changeStatus("AGUARDANDO_REVISAO", event.currentTarget)}
           >
             Reabrir
           </button>

@@ -1500,7 +1500,7 @@ T54 → T43 → T44
 
 ### T52: TF8, foco nos caminhos de falha da linha
 
-**Status**: Pending
+**Status**: Done
 
 **What**: O foco chega ao destino mesmo quando a ação falha: o seletor de categoria recebe o foco no 422 depois de sair do estado ocupado; Validar, Rejeitar e Reabrir que falham devolvem o foco ao botão acionado; o foco pendente de uma recarga que falha é descartado.
 **Where**: `frontend/src/components/ActivityRow.tsx` e `frontend/src/components/ActivityWorkspace.tsx` (modify)
@@ -1515,9 +1515,9 @@ T54 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro (que falham antes), com `toHaveFocus`: um 422 de `categoria` deixa o foco no seletor de categoria (já habilitado); um 409 ou 5xx ao Validar, Rejeitar ou Reabrir deixa o foco no botão acionado, já habilitado; quando a recarga falha, o foco pendente é limpo e não se move depois
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+- [x] Testes primeiro (que falham antes), com `toHaveFocus`: um 422 de `categoria` deixa o foco no seletor de categoria (já habilitado); um 409 ou 5xx ao Validar, Rejeitar ou Reabrir deixa o foco no botão acionado, já habilitado; quando a recarga falha, o foco pendente é limpo e não se move depois
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
 
 **Tests**: unit
 **Gate**: build

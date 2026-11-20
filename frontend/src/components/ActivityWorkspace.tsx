@@ -24,6 +24,7 @@ export function ActivityWorkspace({
   groups,
   documents,
   onChanged,
+  loadFailures = 0,
 }: {
   processId: string;
   activities: Activity[];
@@ -31,6 +32,8 @@ export function ActivityWorkspace({
   groups: ScoringGroup[];
   documents: DocumentSummary[];
   onChanged: () => void;
+  /** Counts the reloads that failed: the focus a failed reload was to move is dropped. */
+  loadFailures?: number;
 }) {
   const [editing, setEditing] = useState<Activity | null>(null);
   const [announcement, setAnnouncement] = useState("");
@@ -40,21 +43,34 @@ export function ActivityWorkspace({
 
   const titleOf = (id: string) => titlesIn(root.current).find((t) => t.dataset.activityTitle === id);
 
-  /** Announces the result and remembers where the focus goes if the row leaves the page with the reload. */
+  /** Remembers where the focus goes if the row leaves the page with the reload. */
+  const remember = (id: string) => {
+    const row = titleOf(id)?.closest("li");
+    const neighbor = row?.nextElementSibling ?? row?.previousElementSibling;
+    pending.current = {
+      id,
+      neighborId: neighbor?.querySelector<HTMLElement>("[data-activity-title]")?.dataset.activityTitle ?? null,
+      section: row?.closest("section")?.getAttribute("aria-labelledby") ?? null,
+    };
+  };
+
+  /** Announces the result, or shows the error where a reload cannot remove it. */
   const feedback: RowFeedback = {
     done: (id, message) => {
       setAnnouncement(message);
       setRowError(null);
-      const row = titleOf(id)?.closest("li");
-      const neighbor = row?.nextElementSibling ?? row?.previousElementSibling;
-      pending.current = {
-        id,
-        neighborId: neighbor?.querySelector<HTMLElement>("[data-activity-title]")?.dataset.activityTitle ?? null,
-        section: row?.closest("section")?.getAttribute("aria-labelledby") ?? null,
-      };
+      remember(id);
     },
-    fail: (title, message) => setRowError({ title, message }),
+    fail: (id, title, message) => {
+      setRowError({ title, message });
+      remember(id);
+    },
   };
+
+  // A reload that failed leaves the list as it was: the focus it was to move must not move later.
+  useEffect(() => {
+    pending.current = null;
+  }, [loadFailures]);
 
   // After a reload the row may be gone (it changed section): the focus goes to its new place, to the
   // neighbor it left or to the title of its section, and never stays on the <body>.

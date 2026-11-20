@@ -69,6 +69,7 @@ export function ProcessActivities() {
   const [data, setData] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloads, setReloads] = useState(0);
+  const [loadFailures, setLoadFailures] = useState(0);
   const preparation = useRef<Preparation | null>(null);
 
   useEffect(() => {
@@ -81,7 +82,9 @@ export function ProcessActivities() {
         setError(null);
       })
       .catch((err) => {
-        if (!cancelled) setError(errorMessage(err));
+        if (cancelled) return;
+        setError(errorMessage(err));
+        setLoadFailures((n) => n + 1);
       });
     return () => {
       cancelled = true;
@@ -124,6 +127,7 @@ export function ProcessActivities() {
             groups={data.groups}
             documents={data.documents}
             onChanged={() => setReloads((n) => n + 1)}
+            loadFailures={loadFailures}
           />
         </div>
       )}
