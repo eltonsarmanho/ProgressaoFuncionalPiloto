@@ -145,6 +145,12 @@ Nenhum controle novo no painel; as ações (Editar, Validar, Rejeitar, Nova ativ
 
 **Responsividade a 360 px**: a faixa e os cartões usam `flex-wrap` e `grid` com `minmax(0, 1fr)`; a linha da barra é `grid-template-columns: minmax(0, 1fr) auto` com a barra ocupando a linha de baixo; título de disciplina com `overflow-wrap: anywhere` e `min-width: 0`; nenhuma largura em px acima de 360 (o `styles.test.ts` já varre isso e ganha asserções das classes novas). A medição real a 360 e 320 px no Chrome headless com `iframe`, como a do SEC-12 (`revisao-simplificada/design.md`), repete-se à mão e fica fora do gate.
 
+**Medição a 360 e 320 px (GRES-08, T26)**: feita no Google Chrome 146 já instalado (`/usr/bin/google-chrome`, `--headless=new`), sem baixar nada. Uma página descartável (fora do repositório) montou a Etapa 4 compilada (`dist/`) em `iframe` de largura fixa, com `fetch` trocado por dados sintéticos: Grupo I com 12 ofertas em quatro períodos (a primeira de cada período com título de 250 caracteres), uma oferta aguardando validação, uma sem período letivo, uma atividade de outro grupo com título longo, total de 7 dígitos (`1234777,00`), potencial maior que 0 e todos os blocos do painel.
+
+- **Resultado.** A 360 px: `documentElement.scrollWidth` 345 e `clientWidth` 345 (os 15 px a menos são a barra de rolagem vertical do modo headless), 5 blocos, 8 barras, 14 ofertas listadas e nenhum elemento com borda direita além da largura. A 320 px: 305 e 305, sem elemento além da borda. A 200 px também não houve rolagem.
+- **Controle negativo.** Com `.group-bar-track { width: 600px }` injetado no mesmo `iframe` de 360 px, o script acusa `scrollWidth` 633 contra `clientWidth` 345 e lista `DIV.group-bar-track` e `DIV.group-bar-fill` além da borda, o que mostra que o método percebe o problema.
+- **Limite.** Manual e fora do gate (o projeto não tem teste de navegador); o `styles.test.ts` cobre por regra de CSS que nada fixa largura acima de 360 px.
+
 **Acessibilidade**
 
 - Cada bloco é `<section aria-labelledby>` com `h3` sob o `h2` "Resumo"; a faixa é `dl` (rótulo e valor); as ofertas, `ul` dentro de um `h4` por período; as barras, `ul` com o texto do valor.

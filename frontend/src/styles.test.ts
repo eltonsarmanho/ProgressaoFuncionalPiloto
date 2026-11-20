@@ -186,3 +186,103 @@ describe("SEC-05: a região viva vazia do StepNav não ocupa espaço", () => {
     expect(css).toMatch(/\.step-blocked\s*{[^}]*margin:\s*-0\.5rem 0 1rem/);
   });
 });
+
+describe("GRES-08: o painel da Etapa 4 cabe em 360 px sem rolagem horizontal da página", () => {
+  const PANEL_CLASSES = [
+    "scoring-panel",
+    "panel-block",
+    "panel-headline",
+    "panel-value",
+    "panel-scope",
+    "panel-minimum",
+    "group-bars",
+    "group-bar",
+    "group-bar-name",
+    "group-bar-value",
+    "group-bar-track",
+    "group-bar-fill",
+    "teaching",
+    "teaching-period",
+    "teaching-offers",
+    "teaching-title",
+    "teaching-level",
+    "teaching-hours",
+    "teaching-total",
+    "potential-cards",
+  ];
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .map((m) => ({ selector: m[1].replace(/@media[^{]*$/, "").trim(), body: m[2] }))
+    .filter((r) => PANEL_CLASSES.some((c) => new RegExp(`\\.${c}(?![\\w-])`).test(r.selector)));
+  const rule = (selector: string) => {
+    const found = rules.find((r) => r.selector === selector);
+    expect(found, selector).toBeDefined();
+    return found!.body;
+  };
+
+  it("há regras para cada classe do painel", () => {
+    for (const c of PANEL_CLASSES) {
+      expect(
+        rules.some((r) => new RegExp(`\\.${c}(?![\\w-])`).test(r.selector)),
+        c,
+      ).toBe(true);
+    }
+  });
+
+  it("nenhuma regra do painel impõe largura mínima ou fixa acima de 360 px", () => {
+    const wide = rules.flatMap((r) =>
+      [...r.body.matchAll(/(?:^|[\s;])(width|min-width|flex-basis)\s*:\s*([\d.]+)(px|rem|em)/g)]
+        .map((m) => ({ selector: r.selector, prop: m[1], px: toPx(m[2], m[3]) }))
+        .filter((d) => d.px > 360),
+    );
+    const gridMins = rules.flatMap((r) =>
+      [...r.body.matchAll(/minmax\(\s*([\d.]+)(px|rem|em)/g)]
+        .map((m) => ({ selector: r.selector, px: toPx(m[1], m[2]) }))
+        .filter((d) => d.px > 360),
+    );
+    expect([...wide, ...gridMins]).toEqual([]);
+  });
+
+  it("nenhuma regra do painel força rolagem horizontal, tabela ou linha sem quebra", () => {
+    for (const r of rules) {
+      expect(r.body, r.selector).not.toMatch(/overflow(-x)?\s*:\s*(auto|scroll)/);
+      expect(r.body, r.selector).not.toMatch(/white-space\s*:\s*nowrap/);
+      expect(r.body, r.selector).not.toMatch(/display\s*:\s*(table|inline-table)|table-layout/);
+    }
+  });
+
+  it("a linha da barra é uma grade 'minmax(0, 1fr) auto' e a barra ocupa a linha de baixo", () => {
+    expect(rule(".group-bar")).toMatch(/display\s*:\s*grid/);
+    expect(rule(".group-bar")).toMatch(/grid-template-columns\s*:\s*minmax\(0,\s*1fr\)\s+auto/);
+    expect(rule(".group-bar")).toMatch(/min-width\s*:\s*0/);
+    expect(rule(".group-bar-track")).toMatch(/grid-column\s*:\s*1\s*\/\s*-1/);
+  });
+
+  it("os cartões do potencial usam a grade com minmax(0, 1fr)", () => {
+    expect(rule(".potential-cards")).toMatch(/display\s*:\s*grid/);
+    expect(css).toMatch(/\.potential-cards\s*{[^}]*grid-template-columns\s*:\s*(?:repeat\(\d+,\s*)?minmax\(0,\s*1fr\)/);
+  });
+
+  it("a faixa do total e as linhas de oferta quebram (flex-wrap) em vez de estourar a largura", () => {
+    expect(rule(".panel-headline")).toMatch(/flex-wrap\s*:\s*wrap/);
+    expect(rule(".teaching-offers li")).toMatch(/flex-wrap\s*:\s*wrap/);
+  });
+
+  it("o nome do grupo e a disciplina têm min-width: 0 e overflow-wrap: anywhere", () => {
+    for (const selector of [".group-bar-name", ".teaching-title"]) {
+      expect(rule(selector), selector).toMatch(/min-width\s*:\s*0/);
+      expect(rule(selector), selector).toMatch(/overflow-wrap\s*:\s*anywhere/);
+    }
+  });
+
+  it("o tom discreto (muted) tem contraste AA (4,5:1) sobre o fundo do cartão", () => {
+    const token = (name: string) => css.match(new RegExp(`--${name}\\s*:\\s*#([0-9a-f]{6})`, "i"))![1];
+    const luminance = (hex: string) => {
+      const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+      const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+      return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+    };
+    const [a, b] = [luminance(token("muted")), luminance(token("card"))].sort((x, y) => y - x);
+    expect((a + 0.05) / (b + 0.05)).toBeGreaterThanOrEqual(4.5);
+    expect(css).toMatch(/\.muted\s*{[^}]*color:\s*var\(--muted\)/);
+  });
+});

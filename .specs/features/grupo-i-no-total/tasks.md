@@ -869,7 +869,7 @@ graph LR
 
 #### T26: CSS do painel a 360 px
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Classes do painel em `styles.css`: faixa e cartões com `flex-wrap` e `grid` com `minmax(0, 1fr)`; linha da barra com `grid-template-columns: minmax(0, 1fr) auto` e a barra na linha de baixo; título de disciplina com `overflow-wrap: anywhere` e `min-width: 0`; `muted` com contraste AA; nenhuma largura em px acima de 360.
 **Where**: `frontend/src/styles.css` (modify)
@@ -884,9 +884,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/styles.test.ts`: as classes novas existem; nenhuma tem largura em px acima de 360; a linha da barra e os títulos têm `min-width: 0` e `overflow-wrap: anywhere`; a grade usa `minmax(0, 1fr)`
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/styles.test.ts`: as classes novas existem; nenhuma tem largura em px acima de 360; a linha da barra e os títulos têm `min-width: 0` e `overflow-wrap: anywhere`; a grade usa `minmax(0, 1fr)`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: front

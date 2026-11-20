@@ -150,14 +150,14 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 | GTAB-06 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implementing | Implementing |
 | GTAB-07 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implementing | Implementing |
 | GTAB-08 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implementing | Implementing |
-| GRES-01 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
-| GRES-02 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
-| GRES-03 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
-| GRES-04 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
-| GRES-05 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
-| GRES-06 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
-| GRES-07 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
-| GRES-08 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
+| GRES-01 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
+| GRES-02 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
+| GRES-03 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
+| GRES-04 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
+| GRES-05 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
+| GRES-06 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
+| GRES-07 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
+| GRES-08 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
 | GRES-09 | P1: Resumo da Etapa 4 em painel | Implementing | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`

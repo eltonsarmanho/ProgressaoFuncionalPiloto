@@ -1086,3 +1086,174 @@ a.btn {
 .step-blocked:empty {
   margin: 0;
 }
+
+/* GRES-01..09: the scoring panel of Etapa 4. Nothing here is wider than a 360 px screen. */
+.scoring-panel {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.panel-block {
+  min-width: 0;
+}
+
+.panel-block h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.panel-headline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin: 0;
+}
+
+.panel-headline > div {
+  min-width: 0;
+}
+
+.panel-headline dt {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.panel-headline dd {
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.panel-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.panel-scope {
+  font-size: 0.9rem;
+}
+
+.panel-minimum {
+  font-weight: 700;
+}
+
+.group-bars {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.group-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.15rem 0.75rem;
+  min-width: 0;
+}
+
+.group-bar-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.group-bar-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.group-bar-track {
+  grid-column: 1 / -1;
+  height: 0.5rem;
+  border-radius: 4px;
+  background: var(--border);
+}
+
+.group-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--primary);
+}
+
+.teaching {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.teaching-period {
+  min-width: 0;
+}
+
+.teaching-period h4 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.95rem;
+}
+
+.teaching-offers {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.teaching-offers li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.75rem;
+  align-items: baseline;
+  min-width: 0;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.teaching-title {
+  flex: 1 1 10rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.teaching-level {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.teaching-hours {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.teaching-total {
+  margin: 0.25rem 0 0;
+  font-weight: 600;
+}
+
+.potential-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.potential-cards > div {
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.potential-cards dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.potential-cards dd {
+  margin: 0.15rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+@media (min-width: 640px) {
+  .potential-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
