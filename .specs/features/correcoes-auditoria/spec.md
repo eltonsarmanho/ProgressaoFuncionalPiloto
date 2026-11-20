@@ -221,51 +221,51 @@ O docente não consegue concluir um processo real: nenhuma tela leva o processo 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| CAINI-01 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
-| CAINI-02 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
-| CAINI-03 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
-| CAINI-04 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
-| CAINI-05 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
-| CAINI-06 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
-| CAINI-07 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
-| CAINI-08 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
-| CAINI-09 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
-| CAINI-10 | P1: Etapa 5 explica a conclusão | Execute | Implementing |
-| CAINI-11 | P1: Etapa 5 explica a conclusão | Execute | Implementing |
-| CAINI-12 | P2: Iniciar pelo Painel | Execute | Implementing |
-| CAINI-13 | P2: Iniciar pelo Painel | Execute | Implementing |
-| CAINI-14 | P2: Iniciar pelo Painel | Execute | Implementing |
-| CAREF-01 | P1: O Grupo I tem só I.1 e I.2 | Execute | Implementing |
-| CAREF-02 | P1: O Grupo I tem só I.1 e I.2 | Execute | Implementing |
-| CAREF-03 | P1: O Grupo I tem só I.1 e I.2 | Execute | Implementing |
-| CAREF-04 | P1: O Grupo I tem só I.1 e I.2 | Execute | Implementing |
-| CAREF-05 | P1: O Grupo I tem só I.1 e I.2 | Execute | Implementing |
-| CAREF-06 | P1: O Grupo I tem só I.1 e I.2 | Execute | Implementing |
-| CATXT-01 | P1: Textos que dizem o que o sistema faz | Execute | Implementing |
-| CATXT-02 | P1: Textos que dizem o que o sistema faz | Execute | Implementing |
-| CATXT-03 | P1: Textos que dizem o que o sistema faz | Execute | Implementing |
-| CATXT-04 | P1: Textos que dizem o que o sistema faz | Execute | Implementing |
-| CAEDI-01 | P1: Editar atividade com pontuação manual gravada | Execute | Implementing |
-| CAEDI-02 | P1: Editar atividade com pontuação manual gravada | Execute | Implementing |
-| CAEDI-03 | P1: Editar atividade com pontuação manual gravada | Execute | Implementing |
-| CAEDI-04 | P1: Editar atividade com pontuação manual gravada | Execute | Implementing |
-| CADOC-01 | P2: Documentação de estado | Execute | Implementing |
-| CADOC-02 | P2: Documentação de estado | Execute | Implementing |
-| CADOC-03 | P2: Documentação de estado | Execute | Implementing |
-| CADOC-04 | P2: Documentação de estado | Execute | Implementing |
-| CADOC-05 | P2: Documentação de estado | Execute | Implementing |
-| CADOC-06 | P2: Documentação de estado | Execute | Implementing |
-| CADOC-07 | P2: Documentação de estado | Execute | Implementing |
-| CADOC-08 | P2: Documentação de estado | Execute | Implementing |
-| CADOC-09 | P2: Documentação de estado | Execute | Implementing |
-| CADOC-10 | P2: Documentação de estado | Execute | Implementing |
-| CADOC-11 | P2: Documentação de estado | Execute | Implementing |
+| CAINI-01 | P1: Iniciar o processo na Etapa 1 | Execute | Verified |
+| CAINI-02 | P1: Iniciar o processo na Etapa 1 | Execute | Verified |
+| CAINI-03 | P1: Iniciar o processo na Etapa 1 | Execute | Verified |
+| CAINI-04 | P1: Iniciar o processo na Etapa 1 | Execute | Verified |
+| CAINI-05 | P1: Iniciar o processo na Etapa 1 | Execute | Verified |
+| CAINI-06 | P1: Iniciar o processo na Etapa 1 | Execute | Verified |
+| CAINI-07 | P1: Iniciar o processo na Etapa 1 | Execute | Verified |
+| CAINI-08 | P1: Iniciar o processo na Etapa 1 | Execute | Verified |
+| CAINI-09 | P1: Iniciar o processo na Etapa 1 | Execute | Verified |
+| CAINI-10 | P1: Etapa 5 explica a conclusão | Execute | Verified |
+| CAINI-11 | P1: Etapa 5 explica a conclusão | Execute | Verified |
+| CAINI-12 | P2: Iniciar pelo Painel | Execute | Verified |
+| CAINI-13 | P2: Iniciar pelo Painel | Execute | Verified |
+| CAINI-14 | P2: Iniciar pelo Painel | Execute | Verified |
+| CAREF-01 | P1: O Grupo I tem só I.1 e I.2 | Execute | Verified |
+| CAREF-02 | P1: O Grupo I tem só I.1 e I.2 | Execute | Verified |
+| CAREF-03 | P1: O Grupo I tem só I.1 e I.2 | Execute | Verified |
+| CAREF-04 | P1: O Grupo I tem só I.1 e I.2 | Execute | Verified |
+| CAREF-05 | P1: O Grupo I tem só I.1 e I.2 | Execute | Verified |
+| CAREF-06 | P1: O Grupo I tem só I.1 e I.2 | Execute | Verified |
+| CATXT-01 | P1: Textos que dizem o que o sistema faz | Execute | Verified |
+| CATXT-02 | P1: Textos que dizem o que o sistema faz | Execute | Verified |
+| CATXT-03 | P1: Textos que dizem o que o sistema faz | Execute | Verified |
+| CATXT-04 | P1: Textos que dizem o que o sistema faz | Execute | Verified |
+| CAEDI-01 | P1: Editar atividade com pontuação manual gravada | Execute | Verified |
+| CAEDI-02 | P1: Editar atividade com pontuação manual gravada | Execute | Verified |
+| CAEDI-03 | P1: Editar atividade com pontuação manual gravada | Execute | Verified |
+| CAEDI-04 | P1: Editar atividade com pontuação manual gravada | Execute | Verified |
+| CADOC-01 | P2: Documentação de estado | Execute | Verified |
+| CADOC-02 | P2: Documentação de estado | Execute | Verified |
+| CADOC-03 | P2: Documentação de estado | Execute | Verified |
+| CADOC-04 | P2: Documentação de estado | Execute | Verified |
+| CADOC-05 | P2: Documentação de estado | Execute | Verified |
+| CADOC-06 | P2: Documentação de estado | Execute | Verified |
+| CADOC-07 | P2: Documentação de estado | Execute | Verified |
+| CADOC-08 | P2: Documentação de estado | Execute | Verified |
+| CADOC-09 | P2: Documentação de estado | Execute | Verified |
+| CADOC-10 | P2: Documentação de estado | Execute | Verified |
+| CADOC-11 | P2: Documentação de estado | Execute | Verified |
 
 **ID format:** `[CATEGORY]-[NUMBER]`, com a categoria prefixada por `CA` (esta feature).
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Implemented → Verified
 
-**Coverage:** 39 total, 39 mapped to tasks (ver `tasks.md`), 0 unmapped.
+**Coverage:** 39 total, 39 mapped to tasks (ver `tasks.md`), 0 unmapped; 39 `Verified` pelo Verifier independente (`validation.md`, veredito PASS em 2026-11-20, sensor de 39 mutantes: 38 mortos, 1 equivalente; lacunas de baixa severidade G1 e G2 em CAINI-01 e CAREF-04).
 
 ---
 

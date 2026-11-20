@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 26,
+  "next_id": 28,
   "lessons": [
     {
       "id": "L-001",
@@ -455,6 +455,42 @@
       ],
       "created": "2026-11-20T00:35:51Z",
       "last_seen": "2026-11-20T00:35:51Z"
+    },
+    {
+      "id": "L-026",
+      "key": "spec_precision_gap::write the placement of a new ui control as a testable condition container landmark or sibling element because a vague position phrase leaves no assertion that can fail",
+      "text": "Write the placement of a new UI control as a testable condition (container, landmark or sibling element), because a vague position phrase leaves no assertion that can fail.",
+      "signal": "spec_precision_gap",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "correcoes-auditoria"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "CAINI-01 ProcessStep1.tsx:189-196 (frontend)"
+      ],
+      "created": "2026-11-20T04:37:32Z",
+      "last_seen": "2026-11-20T04:37:32Z"
+    },
+    {
+      "id": "L-027",
+      "key": "spec_precision_gap::when a requirement fixes the exact names of constants or fixtures pin them with an assertion or a recorded grep because renaming a constant breaks no behavior test",
+      "text": "When a requirement fixes the exact names of constants or fixtures, pin them with an assertion or a recorded grep, because renaming a constant breaks no behavior test.",
+      "signal": "spec_precision_gap",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "correcoes-auditoria"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "CAREF-04 scoring_variants.py:15-18 (tests)"
+      ],
+      "created": "2026-11-20T04:37:32Z",
+      "last_seen": "2026-11-20T04:37:32Z"
     }
   ]
 }

@@ -164,6 +164,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: SP5 backend/tests/integration/api/test_activity_edit_rules_api.py:179-198 (spec)
 - last seen: 2026-11-20T00:35:51Z
 
+### L-026 - Write the placement of a new UI control as a testable condition (container, landmark or sibling element), because a vague position phrase leaves no assertion that can fail.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: correcoes-auditoria
+- evidence: CAINI-01 ProcessStep1.tsx:189-196 (frontend)
+- last seen: 2026-11-20T04:37:32Z
+
+### L-027 - When a requirement fixes the exact names of constants or fixtures, pin them with an assertion or a recorded grep, because renaming a constant breaks no behavior test.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: correcoes-auditoria
+- evidence: CAREF-04 scoring_variants.py:15-18 (tests)
+- last seen: 2026-11-20T04:37:32Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

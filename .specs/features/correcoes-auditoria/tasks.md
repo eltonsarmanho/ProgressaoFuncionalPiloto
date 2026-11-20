@@ -844,7 +844,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T27: Verificador independente
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Agente diferente do autor confere os 39 requisitos com evidência (`arquivo:linha` de teste e de código), checa que cada teste afirma o valor que a spec define, roda os `grep` de CAREF-05 e CADOC-04, e roda o sensor de mutação em cópia isolada (worktree temporário, nunca `git stash`), com mutantes de comportamento, por exemplo: o botão "Iniciar processo" aparecendo em `EM_ANDAMENTO`; enviar `justificativa` no início; não recarregar em 409; a Etapa 5 mostrando o botão de concluir em `RASCUNHO`; devolver o ramo de valor informado em `_apply_group1`; limpar `points_override` também quando o valor muda; manter o 422 com valor igual; limpar o valor que o critério aceita; voltar a mensagem antiga de CATXT-02. Confere que a árvore real volta ao estado anterior ao sensor. Escreve o relatório; mutantes sobreviventes e lacunas viram tarefas de correção (no máximo 3 voltas de corrigir e reverificar).
 **Where**: `.specs/features/correcoes-auditoria/validation.md` (novo)
@@ -859,17 +859,17 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] `validation.md` com o veredito PASS, a evidência `arquivo:linha` por requisito, o resultado do sensor de mutação (mortos, sobreviventes, equivalentes) e o intervalo de commits
-- [ ] Mutantes sobreviventes e lacunas viram tarefas de correção neste arquivo; o ciclo corrigir e reverificar tem no máximo 3 voltas
-- [ ] Rastreabilidade da spec atualizada para `Verified` só nos requisitos com PASS
-- [ ] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_state.py correcoes-auditoria` sem erro
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: contagem final registrada
+- [x] `validation.md` com o veredito PASS, a evidência `arquivo:linha` por requisito, o resultado do sensor de mutação (mortos, sobreviventes, equivalentes) e o intervalo de commits
+- [x] Mutantes sobreviventes e lacunas viram tarefas de correção neste arquivo; o ciclo corrigir e reverificar tem no máximo 3 voltas
+- [x] Rastreabilidade da spec atualizada para `Verified` só nos requisitos com PASS
+- [x] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_state.py correcoes-auditoria` sem erro
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagem final registrada
 
 **Tests**: none
 **Gate**: build
 
-**Commit**: `docs(specs): verify the audit corrections`
+**Commit**: `docs(specs): validate the correcoes-auditoria feature`
 
 ---
 
