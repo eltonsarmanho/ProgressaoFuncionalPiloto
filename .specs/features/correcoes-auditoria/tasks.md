@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Design**: sem `design.md` (Design pulado: nenhuma decisão de arquitetura nova; a rota de status, o caso de uso de edição e o motor já existem; as escolhas de comportamento estão nas Assumptions da spec)
 **Spec**: `.specs/features/correcoes-auditoria/spec.md`
-**Status**: Draft, aguardando aprovação do usuário.
+**Status**: Approved (usuário, 2026-11-20: "aprovado com as recomendações")
 
 Regras de execução desta feature: cada tarefa com código escreve primeiro os testes que derivam dos critérios de aceitação da spec e só então o código (os itens `Done when` começam pelo teste); só dados sintéticos; `Documentos/`, `Modelos/`, `requeriment.txt`, `test/` e `corpus-reports/` nunca são abertos; um commit por tarefa (Conventional Commits, terminando com `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`, como manda o `CLAUDE.md`), marcando a tarefa neste arquivo e a rastreabilidade da spec no mesmo commit; sem push, deploy nem acesso à VM sem autorização explícita. Nenhum arquivo escrito por estas tarefas contém a sigla que a CAREF-05 proíbe: quando o texto precisar falar do caso, diga "item de valor informado de tabelas antigas, inexistente na tabela oficial". Sem migração.
 

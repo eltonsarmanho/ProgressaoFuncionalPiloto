@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Design**: `.specs/features/grupo-i-no-total/design.md`
 **Spec**: `.specs/features/grupo-i-no-total/spec.md`
-**Status**: Draft (aguardando aprovação do usuário)
+**Status**: Approved (usuário, 2026-11-20: "aprovado com as recomendações"; rodapé da Tabela só com "Atividades" e "Com divergências")
 
 Regras de execução desta feature:
 
