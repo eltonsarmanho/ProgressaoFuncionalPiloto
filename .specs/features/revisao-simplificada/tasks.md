@@ -104,13 +104,13 @@ T39 → T42
 ### Phase 7b: Frontend, correções da revisão do lote 5
 
 ```
-T42 → T45 → T46 → T47 → T48 → T49 → T50 → T51 → T52 → T53 → T54
+T42 → T45 → T46 → T47 → T48 → T49 → T50 → T51 → T52 → T53 → T54 → T55
 ```
 
 ### Phase 8: Documentação e verificação
 
 ```
-T54 → T43 → T44
+T55 → T43 → T44
 ```
 
 ---
@@ -1582,11 +1582,40 @@ T54 → T43 → T44
 
 ---
 
+### T55: TF11, o foco pendente de uma falha sem recarga é descartado
+
+**Status**: Pending
+
+**What**: Dois pontos de baixa gravidade da segunda revisão. (1) `feedback.fail` de `ActivityWorkspace` só arma o foco pendente (`remember(id)`) quando a falha recarrega a lista; uma falha sem recarga (5xx) não deixa foco armado para uma recarga posterior de outra ação mover o foco ao título de uma linha que o usuário não tocou. (2) O teste do `StepNav` verifica no DOM que a mensagem de bloqueio, sem bloqueio, não tem nós de texto, e que com bloqueio mostra a mensagem.
+**Where**: `frontend/src/components/ActivityWorkspace.tsx` (modify), `frontend/src/components/ActivityWorkspace.test.tsx` e `frontend/src/components/StepNav.test.tsx` (modify)
+**Depends on**: T54
+**Reuses**: `pending`, `remember`, `reloads` de `feedback.fail`; os testes de foco da T52
+**Requirement**: SEC-12, SEC-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Teste primeiro (que falha antes): uma ação da linha A falha com 5xx sem recarregar; depois uma validação em lote de outras linhas recarrega a lista; o foco não vai ao título da linha A
+- [ ] Teste em `StepNav.test.tsx`: sem bloqueio, `container.querySelector(".step-blocked:empty")` não é nulo (o `<p id="step-blocked-message">` não tem nós de texto); com bloqueio, o `<p>` mostra a mensagem
+- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): drop the stale pending focus after a failed row action`
+
+---
+
 ### T43: Documentação da feature
 
 **What**: AD-022 em `STATE.md` (coluna `merged_into_id`, validade no servidor, mesclagem na escrita), regra 10 em `CLAUDE.md` e rastreabilidade da spec marcada como `Implemented`.
 **Where**: `.specs/STATE.md` (modify)
-**Depends on**: T54
+**Depends on**: T55
 **Reuses**: AD-018 como modelo; o texto do Design
 **Requirement**: DUP-02, SEG-01, VAL-01
 
@@ -1641,7 +1670,7 @@ T54 → T43 → T44
 
 | Requisito | Tarefas | Requisito | Tarefas |
 | --- | --- | --- | --- |
-| VAL-01 | T2, T5 | SEC-12 | T33, T35, T36, T45, T46, T49, T52, T53 |
+| VAL-01 | T2, T5 | SEC-12 | T33, T35, T36, T45, T46, T49, T52, T53, T55 |
 | VAL-02 | T3, T4, T28 | DUP-01 | T13, T14 |
 | VAL-03 | T17 | DUP-02 | T9, T10, T11, T12, T14 |
 | VAL-04 | T18, T19, T34 | DUP-03 | T10, T12, T14 |
@@ -1651,7 +1680,7 @@ T54 → T43 → T44
 | SEC-02 | T1, T25, T26, T34 | DUP-07 | T15, T16, T24, T32 |
 | SEC-03 | T31, T34, T48 | SEG-01 | T1, T2, T5, T6, T8 |
 | SEC-04 | T30, T33, T45, T46, T47, T51, T52 | SEG-02 | T6, T8 |
-| SEC-05 | T34, T37, T38, T47, T49, T51, T53, T54 | SEG-03 | T2, T6, T8, T26 |
+| SEC-05 | T34, T37, T38, T47, T49, T51, T53, T54, T55 | SEG-03 | T2, T6, T8, T26 |
 | SEC-06 | T1, T22, T25, T35 | SEG-04 | T2, T5 |
 | SEC-07 | T1, T24, T25, T28, T29, T35 | SEG-05 | T7, T8, T28 |
 | SEC-08 | T25, T26, T36 | EDT-01 | T40, T50 |
@@ -1699,5 +1728,5 @@ T54 → T43 → T44
 | T29-T38 | Frontend components/pages | unit | unit | ✅ OK |
 | T39 | Removal of a component | none (build gate) | none | ✅ OK |
 | T40-T42 | Frontend components | unit | unit | ✅ OK |
-| T45-T54 | Frontend components/pages | unit | unit | ✅ OK |
+| T45-T55 | Frontend components/pages | unit | unit | ✅ OK |
 | T43, T44 | Docs | none | none | ✅ OK |
