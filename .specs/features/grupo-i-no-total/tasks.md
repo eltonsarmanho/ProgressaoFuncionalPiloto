@@ -641,7 +641,7 @@ graph LR
 
 #### T18: `table_version_id` em cada geração listada
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `GeneratedDocumentOut` ganha `table_version_id: UUID | None`, lido de `snapshot.table_version.id` (nulo sem instantâneo ou sem id), para a Etapa 5 comparar com a versão escolhida (D12). Sem coluna nova.
 **Where**: `backend/app/presentation/schemas/generated.py` (modify)
@@ -656,10 +656,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/presentation/test_generated_schemas.py`: geração com instantâneo traz o id da versão; sem instantâneo (em andamento ou falhou) traz nulo; instantâneo com `id` nulo traz nulo
-- [ ] Teste em `backend/tests/integration/api/` (lista de gerações): `GET /api/processes/{id}/generated-documents?kind=TABELA` traz `table_version_id` da versão usada
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `backend/tests/unit/presentation/test_generated_schemas.py`: geração com instantâneo traz o id da versão; sem instantâneo (em andamento ou falhou) traz nulo; instantâneo com `id` nulo traz nulo
+- [x] Teste em `backend/tests/integration/api/` (lista de gerações): `GET /api/processes/{id}/generated-documents?kind=TABELA` traz `table_version_id` da versão usada
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: integration
 **Gate**: full

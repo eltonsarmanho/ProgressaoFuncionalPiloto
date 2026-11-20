@@ -22,6 +22,7 @@ DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 ROW_KEYS = {
     "id", "process_id", "kind", "state", "version_number", "requested_at", "started_at",
     "finished_at", "error_code", "error_message", "alerts", "files",
+    "table_version_id",  # GI-11
 }  # fmt: skip
 
 
@@ -114,6 +115,22 @@ def test_the_list_puts_the_running_row_first_and_shows_the_ready_versions_with_t
     ]
     only_tables = client.get(generations_url(scenario.process), params={"kind": "TABELA"}).json()
     assert [r["id"] for r in only_tables] == [ready["id"]]
+
+
+def test_the_list_gives_each_table_the_version_of_the_scoring_table_it_used(
+    client, scenario, scoring_tables
+):
+    # GI-11: the running row has no snapshot yet, the ready table has the chosen version
+    ready = generate(client, scenario.headers, scenario.process, "TABELA")
+    assert ask(client, scenario.headers, scenario.process, "TABELA").status_code == 202
+
+    rows = client.get(generations_url(scenario.process), params={"kind": "TABELA"}).json()
+
+    assert [(r["state"], r["table_version_id"]) for r in rows] == [
+        ("GERANDO", None),
+        ("PRONTO", str(scoring_tables["OFICIAL"].id)),
+    ]
+    assert rows[1]["id"] == ready["id"]
 
 
 def test_the_detail_of_a_ready_version_has_the_summary_of_what_it_used(client, scenario):

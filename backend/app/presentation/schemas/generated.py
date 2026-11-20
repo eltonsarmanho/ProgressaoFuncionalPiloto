@@ -109,6 +109,11 @@ def _date(value: str | None) -> date | None:
     return date.fromisoformat(value) if value else None
 
 
+def _table_version_id(snapshot: Mapping[str, Any] | None) -> UUID | None:
+    found = ((snapshot or {}).get("table_version") or {}).get("id")
+    return UUID(found) if found else None
+
+
 class GeneratedDocumentOut(BaseModel):
     """One row: running, ready (with number and files) or failed (with code and message)."""
 
@@ -124,6 +129,7 @@ class GeneratedDocumentOut(BaseModel):
     error_message: str | None
     alerts: list[AlertOut]
     files: list[GeneratedFileOut]
+    table_version_id: UUID | None  # the version of the scoring table the snapshot used (GI-11)
 
     @classmethod
     def of(cls, row: GeneratedDocument) -> "GeneratedDocumentOut":
@@ -140,6 +146,7 @@ class GeneratedDocumentOut(BaseModel):
             error_message=row.error_message,
             alerts=[AlertOut.of(a) for a in row.alerts],
             files=[GeneratedFileOut.of(f) for f in row.files],
+            table_version_id=_table_version_id(row.snapshot),
         )
 
 

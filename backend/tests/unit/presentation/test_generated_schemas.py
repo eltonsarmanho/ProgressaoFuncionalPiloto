@@ -320,3 +320,28 @@ def test_the_conclusion_result_uses_the_documented_names_and_the_partial_alert()
         "bytes_liberados": 900,
         "alertas": [{"code": "EXCLUSAO_PARCIAL", "message": "Falta 1 arquivo."}],
     }
+
+
+# --- the table version of each generation (GI-11) ----------------------------------------------
+
+
+def test_a_generation_with_a_snapshot_returns_the_id_of_the_table_version_it_used():
+    version_id = uuid.uuid4()
+    snapshot = {"table_version": {"id": str(version_id), "name": "Tabela oficial"}}
+
+    body = GeneratedDocumentOut.of(ready_row(snapshot=snapshot)).model_dump(mode="json")
+
+    assert body["table_version_id"] == str(version_id)
+
+
+def test_a_generation_without_a_snapshot_returns_no_table_version_id():
+    running = ready_row(state=GenerationState.GERANDO, snapshot=None)
+    failed = ready_row(state=GenerationState.FALHOU, snapshot={})
+
+    assert GeneratedDocumentOut.of(running).table_version_id is None
+    assert GeneratedDocumentOut.of(failed).table_version_id is None
+
+
+def test_a_snapshot_whose_table_version_has_no_id_returns_no_table_version_id():
+    # ready_row()'s snapshot has `table_version.id` None
+    assert GeneratedDocumentOut.of(ready_row()).table_version_id is None
