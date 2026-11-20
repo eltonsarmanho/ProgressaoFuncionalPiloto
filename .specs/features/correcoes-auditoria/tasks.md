@@ -480,7 +480,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T14: Regra 11 do `CLAUDE.md`
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Na regra 11, a frase sobre o Grupo I passa a "O Grupo I tem só os itens I.1 e I.2, em horas de PIT."; o resto da regra não muda.
 **Where**: `CLAUDE.md` (modify, linha 23)
@@ -495,9 +495,9 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] `grep -n "O Grupo I tem só os itens I.1 e I.2, em horas de PIT." CLAUDE.md` mostra a linha da regra 11
-- [ ] `grep -nE "\bI\.3\b" CLAUDE.md` sem saída
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] `grep -n "O Grupo I tem só os itens I.1 e I.2, em horas de PIT." CLAUDE.md` mostra a linha da regra 11
+- [x] `grep -nE "\bI\.3\b" CLAUDE.md` sem saída
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
 
 **Tests**: none
 **Gate**: quick
