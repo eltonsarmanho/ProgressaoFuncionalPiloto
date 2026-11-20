@@ -700,7 +700,7 @@ graph LR
 
 #### T20: Rótulos do painel e do motivo por período letivo
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Em `labels.ts`: `LEVEL_LABELS` (`GRADUACAO` "Graduação", `POS_GRADUACAO` "Pós-graduação"); textos do painel ("Grupos I a VIII", "Grupos II a VIII", "Mínimo não definido", "Atinge o mínimo", "Não atinge o mínimo", "Aguardando validação", "Nenhuma disciplina lançada no Grupo I", "Sem período letivo", "Docência (PIT)"); `GROUP_NAMES` curtos usados nas barras; o texto do motivo `FORA_DO_INTERSTICIO` escreve "período letivo 2019.1" quando os parâmetros trazem `academic_period` e não trazem data (T4).
 **Where**: `frontend/src/labels.ts` (modify)
@@ -715,9 +715,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/labels.test.ts`: os dois níveis; o motivo fora do interstício com `academic_period` "2019.1" e sem datas diz "período letivo 2019.1" e as datas do interstício; com datas, o texto de hoje
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/labels.test.ts`: os dois níveis; o motivo fora do interstício com `academic_period` "2019.1" e sem datas diz "período letivo 2019.1" e as datas do interstício; com datas, o texto de hoje
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: front

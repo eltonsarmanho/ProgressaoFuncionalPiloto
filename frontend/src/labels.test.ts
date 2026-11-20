@@ -5,7 +5,11 @@ import {
   ALERT_CODE_LABELS,
   BADGE_AWAITING_VALIDATION,
   BADGE_NEEDS_CATEGORY,
+  GROUP_NAMES,
   INVALID_REASON_LABELS,
+  LEVEL_LABELS,
+  MINIMUM_LABELS,
+  PANEL_LABELS,
   invalidReasonText,
   needsCategoryMessage,
   DOCUMENT_CODE_LABELS,
@@ -104,6 +108,18 @@ describe("SEC-07: o texto de cada motivo de atividade não válida", () => {
     expect(text).toBe("Fora do interstício: período 10/01/2022 a 20/12/2022; interstício 01/01/2024 a 31/12/2025");
   });
 
+  it("GI-09, GRES-04: oferta só com período letivo diz 'período letivo AAAA.N' e o interstício", () => {
+    const text = invalidReasonText(invalid("FORA_DO_INTERSTICIO", { academic_period: "2019.1", ...INTERSTICE }));
+    expect(text).toBe("Fora do interstício: período letivo 2019.1; interstício 01/01/2024 a 31/12/2025");
+  });
+
+  it("GI-09: com data, o texto continua o da data, mesmo se a atividade também tem período letivo", () => {
+    const text = invalidReasonText(
+      invalid("FORA_DO_INTERSTICIO", { event_date: "2023-03-15", academic_period: "2023.1", ...INTERSTICE }),
+    );
+    expect(text).toBe("Fora do interstício: data 15/03/2023; interstício 01/01/2024 a 31/12/2025");
+  });
+
   it("carga horária insuficiente: 'Carga horária insuficiente: N h; o item exige M h'", () => {
     expect(invalidReasonText(invalid("CARGA_HORARIA_INSUFICIENTE", { hours: "19", min_hours: "20" }))).toBe(
       "Carga horária insuficiente: 19 h; o item exige 20 h",
@@ -163,5 +179,36 @@ describe("SEG-05, VAL-02: códigos novos têm rótulo", () => {
   it("o alerta QUANTIDADE_ASSUMIDA existe na lista de códigos e tem rótulo", () => {
     expect(SCORING_ALERT_CODES).toContain("QUANTIDADE_ASSUMIDA");
     expect(ALERT_CODE_LABELS.QUANTIDADE_ASSUMIDA).toBe("Quantidade assumida como 1: confira");
+  });
+});
+
+describe("GRES-01, 02, 04, 05, 09: rótulos do painel da Etapa 4", () => {
+  it("os dois níveis da oferta têm nome em português", () => {
+    expect(LEVEL_LABELS).toEqual({ GRADUACAO: "Graduação", POS_GRADUACAO: "Pós-graduação" });
+  });
+
+  it("os textos do painel são os da spec", () => {
+    expect(PANEL_LABELS).toEqual({
+      totalWithGroup1: "Grupos I a VIII",
+      totalWithoutGroup1: "Grupos II a VIII",
+      minimumUndefined: "Mínimo não definido",
+      minimumMet: "Atinge o mínimo",
+      minimumNotMet: "Não atinge o mínimo",
+      awaitingValidation: "Aguardando validação",
+      noOffers: "Nenhuma disciplina lançada no Grupo I",
+      noAcademicPeriod: "Sem período letivo",
+      teaching: "Docência (PIT)",
+    });
+  });
+
+  it("o texto do mínimo do painel é o mesmo de MINIMUM_LABELS", () => {
+    expect(MINIMUM_LABELS.ATINGE).toBe(PANEL_LABELS.minimumMet);
+    expect(MINIMUM_LABELS.NAO_ATINGE).toBe(PANEL_LABELS.minimumNotMet);
+    expect(MINIMUM_LABELS.NAO_DEFINIDO).toBe(PANEL_LABELS.minimumUndefined);
+  });
+
+  it("as barras usam nomes curtos de grupo, um por grupo de I a VIII", () => {
+    expect(Object.keys(GROUP_NAMES)).toEqual(["1", "2", "3", "4", "5", "6", "7", "8"]);
+    expect(GROUP_NAMES[1]).toBe("Docência");
   });
 });

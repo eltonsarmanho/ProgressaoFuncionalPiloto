@@ -1,5 +1,5 @@
 import type { DocumentKind, EntrySource, GenerationAlert, GenerationAlertCode, GenerationCode, GenerationState } from "./api/generated";
-import type { DocumentStatus, InvalidReason, Modality, ProcessStatus, Severity, Validity } from "./api/types";
+import type { DocumentStatus, InvalidReason, Level, Modality, ProcessStatus, Severity, Validity } from "./api/types";
 
 export const STATUS_LABELS: Record<ProcessStatus, string> = {
   RASCUNHO: "Rascunho",
@@ -87,9 +87,13 @@ const hoursText = (value: string | undefined) => `${formatDecimal(value)} h`;
 export function invalidReasonText(validity: Pick<Validity, "reason" | "params">): string {
   const { reason, params } = validity;
   if (reason === "FORA_DO_INTERSTICIO") {
+    // A group I offer with neither date nor period of dates is judged by its academic period (GI-09).
+    const byAcademicPeriod = !params.event_date && !params.period_start && !params.period_end && params.academic_period;
     const when = params.event_date
       ? `data ${formatDate(params.event_date)}`
-      : `período ${params.period_start ? formatDate(params.period_start) : "—"} a ${params.period_end ? formatDate(params.period_end) : "—"}`;
+      : byAcademicPeriod
+        ? `período letivo ${params.academic_period}`
+        : `período ${params.period_start ? formatDate(params.period_start) : "—"} a ${params.period_end ? formatDate(params.period_end) : "—"}`;
     const interstice =
       params.interstice_start && params.interstice_end
         ? `; interstício ${formatDate(params.interstice_start)} a ${formatDate(params.interstice_end)}`
@@ -117,6 +121,25 @@ export const MINIMUM_LABELS: Record<string, string> = {
   NAO_ATINGE: "Não atinge o mínimo",
   NAO_DEFINIDO: "Mínimo não definido",
 };
+
+/** GRES-04: the level of a group I offer. */
+export const LEVEL_LABELS: Record<Level, string> = {
+  GRADUACAO: "Graduação",
+  POS_GRADUACAO: "Pós-graduação",
+};
+
+/** The texts of the scoring panel of Etapa 4 (GRES-01..09). */
+export const PANEL_LABELS = {
+  totalWithGroup1: "Grupos I a VIII",
+  totalWithoutGroup1: "Grupos II a VIII",
+  minimumUndefined: MINIMUM_LABELS.NAO_DEFINIDO,
+  minimumMet: MINIMUM_LABELS.ATINGE,
+  minimumNotMet: MINIMUM_LABELS.NAO_ATINGE,
+  awaitingValidation: BADGE_AWAITING_VALIDATION,
+  noOffers: "Nenhuma disciplina lançada no Grupo I",
+  noAcademicPeriod: "Sem período letivo",
+  teaching: "Docência (PIT)",
+} as const;
 
 export const TABLE_STATUS_LABELS: Record<string, string> = {
   OFICIAL: "Oficial",

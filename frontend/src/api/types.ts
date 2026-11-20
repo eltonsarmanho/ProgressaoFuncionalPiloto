@@ -236,6 +236,8 @@ export type Validity = {
     event_date?: string;
     period_start?: string;
     period_end?: string;
+    /** A group I offer with neither a date nor a period of dates: its academic period, e.g. "2019.1". */
+    academic_period?: string;
     /** With the date or the period, for FORA_DO_INTERSTICIO only. */
     interstice_start?: string;
     interstice_end?: string;
