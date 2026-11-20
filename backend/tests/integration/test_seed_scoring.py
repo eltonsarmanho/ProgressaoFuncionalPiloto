@@ -112,6 +112,31 @@ def _choose_version_in_a_process(uow_factory, units, table_id: uuid.UUID) -> uui
         return version.id
 
 
+def _choose_in_a_draft_process(uow_factory, units, version_id: uuid.UUID) -> uuid.UUID:
+    """A draft process of FASI that chose the given version; returns the process id."""
+    with uow_factory() as uow:
+        admin = User(uuid.uuid4(), "criador2@ufpa.br", "Criador", Role.ADMIN, "x")
+        uow.users.add(admin)
+        professor = Professor(
+            id=uuid.uuid4(), full_name="Docente", siape="1000002", titration=Titration.DOUTORADO,
+            position="Professor do Magistério Superior",
+            career_structure_id=uow.career_versions.structure_id("MAGISTERIO_SUPERIOR"),
+            unit_id=units["FASI"], faculty="FASI", campus="Campus", work_regime=WorkRegime.DE,
+        )  # fmt: skip
+        uow.professors.add(professor)
+        process = FunctionalProcess(
+            id=uuid.uuid4(), professor_id=professor.id, unit_id=units["FASI"],
+            modality=Modality.PROMOCAO, current_class="C", current_denomination="Adjunto",
+            current_level=4, target_class="D", target_denomination="Associado", target_level=1,
+            start_date=date(2022, 11, 23), end_date=date(2024, 11, 23),
+            opening_date=date(2025, 3, 10), created_by=admin.id,
+        )  # fmt: skip
+        uow.processes.add(process)
+        uow.processes.set_scoring_table_version(process.id, version_id)
+        uow.commit()
+        return process.id
+
+
 def test_empty_database_gets_only_the_official_table_for_fasi_and_ifch(uow_factory, seeded):
     tables = _by_table(uow_factory)
 
@@ -211,6 +236,56 @@ def test_a_database_with_the_previous_version_gets_the_new_one_beside_it_untouch
     again = _counts(engine)
     seed_scoring_tables(uow_factory())
     assert _counts(engine) == again  # idempotent with the previous version present
+
+
+def _process_events(engine, process_id) -> list:
+    with engine.connect() as conn:
+        return conn.execute(
+            text(
+                "SELECT user_id, changes, justification FROM audit_logs "
+                "WHERE entity = 'process' AND entity_id = :i ORDER BY id"
+            ),
+            {"i": str(process_id)},
+        ).all()
+
+
+def test_seeding_over_the_previous_version_marks_it_and_moves_the_draft_process_once(
+    engine, uow_factory, units
+):
+    """GI-07, GI-10: the seed hands the process of the previous version to the new one, with
+    one audit event, and a second start (the entrypoint runs the seed on every start) does not."""
+    data = _seeded_json()
+    table = ScoringTableRecord(
+        id=uuid.uuid4(), name=data["table_name"], unit_ids=(units["FASI"], units["IFCH"])
+    )
+    template = seed._scoring_version(data, table.id)
+    with uow_factory() as uow:
+        uow.scoring_tables.add_table(table)
+        legacy = add_legacy_ufpa_version(uow, template)
+        uow.commit()
+    process_id = _choose_in_a_draft_process(uow_factory, units, legacy.id)
+
+    seed_scoring_tables(uow_factory())
+
+    with uow_factory() as uow:
+        versions = {v.name: v for v in uow.scoring_tables.list_versions(table.id)}
+        chosen = uow.processes.get(process_id).scoring_table_version_id
+    new = versions[data["version_name"]]
+    assert versions[data["supersedes"]].superseded_by_id == new.id
+    assert new.superseded_by_id is None
+    assert chosen == new.id
+    [event] = _process_events(engine, process_id)
+    assert event.user_id is None
+    assert event.justification == "AD-023: Grupo I no total"
+    assert event.changes == {
+        "scoring_table_version_id": {"before": str(legacy.id), "after": str(new.id)}
+    }
+
+    seed_scoring_tables(uow_factory())  # the second start
+
+    assert len(_process_events(engine, process_id)) == 1
+    with uow_factory() as uow:
+        assert uow.processes.get(process_id).scoring_table_version_id == new.id
 
 
 def test_the_legacy_helper_recreates_the_previous_rules_next_to_the_seeded_version(

@@ -39,7 +39,7 @@ from app.domain.entities.generated import (
     GenerationState,
     WordingJob,
 )
-from app.domain.entities.process import FunctionalProcess
+from app.domain.entities.process import FunctionalProcess, ProcessStatus
 from app.domain.entities.professor import Professor
 from app.domain.entities.report import DraftEntry, DraftSection, EntrySource, ReportDraft
 from app.domain.entities.scoring import (
@@ -350,6 +350,19 @@ class SqlProcessRepository:
     def list(self) -> Sequence[FunctionalProcess]:
         models = self._s.scalars(
             select(FunctionalProcessModel).order_by(FunctionalProcessModel.created_at)
+        ).all()
+        return [self._to_entity(m) for m in models]
+
+    def list_using_version(
+        self, version_id: UUID, statuses: Sequence[ProcessStatus]
+    ) -> Sequence[FunctionalProcess]:
+        models = self._s.scalars(
+            select(FunctionalProcessModel)
+            .where(
+                FunctionalProcessModel.scoring_table_version_id == version_id,
+                FunctionalProcessModel.status.in_(statuses),
+            )
+            .order_by(FunctionalProcessModel.created_at)
         ).all()
         return [self._to_entity(m) for m in models]
 

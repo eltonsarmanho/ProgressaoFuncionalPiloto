@@ -406,7 +406,7 @@ graph LR
 
 #### T10: Caso de uso `AdoptSupersedingVersion` chamado pelo seed
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Caso de uso da aplicação, numa transação e idempotente: marca a versão antiga UFPA (nome de `supersedes`) com `superseded_by_id` = versão nova e passa para a nova todo processo `RASCUNHO` ou `EM_ANDAMENTO` que usa a antiga, gravando um evento de auditoria `UPDATE` por processo (campo `scoring_table_version_id`, justificativa "AD-023: Grupo I no total", ator nulo = sistema); `CONCLUIDO` e `ARQUIVADO` não mudam. `seed_scoring_tables` o chama depois de inserir a versão; sem versão antiga (instalação nova), não faz nada. A porta de processos ganha a consulta dos processos por versão e estado, implementada em `repositories.py`.
 **Where**: `backend/app/application/use_cases/scoring_adoption.py` (novo)
@@ -421,10 +421,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_adopt_superseding_version.py` (novo): processos `RASCUNHO` e `EM_ANDAMENTO` com a antiga passam para a nova, cada um com um evento de auditoria (antes e depois de `scoring_table_version_id`, justificativa, `user_id` nulo); `CONCLUIDO` e `ARQUIVADO` ficam com a antiga e sem evento (mata "troca alcançando concluído"); a antiga fica com `superseded_by_id`; segunda execução não muda nada nem audita de novo; falha simulada no meio (repositório que levanta na segunda troca) não troca nenhum processo nem marca a versão; sem versão antiga, nada acontece; processo com outra tabela não muda; documentos já gerados não mudam (GI-10)
-- [ ] Teste em `backend/tests/integration/test_seed_scoring.py`: seed sobre banco com a versão antiga e um processo em rascunho deixa a antiga substituída e o processo na nova; segunda partida não gera evento novo
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam; nenhum teste apagado
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_adopt_superseding_version.py` (novo): processos `RASCUNHO` e `EM_ANDAMENTO` com a antiga passam para a nova, cada um com um evento de auditoria (antes e depois de `scoring_table_version_id`, justificativa, `user_id` nulo); `CONCLUIDO` e `ARQUIVADO` ficam com a antiga e sem evento (mata "troca alcançando concluído"); a antiga fica com `superseded_by_id`; segunda execução não muda nada nem audita de novo; falha simulada no meio (repositório que levanta na segunda troca) não troca nenhum processo nem marca a versão; sem versão antiga, nada acontece; processo com outra tabela não muda; documentos já gerados não mudam (GI-10)
+- [x] Teste em `backend/tests/integration/test_seed_scoring.py`: seed sobre banco com a versão antiga e um processo em rascunho deixa a antiga substituída e o processo na nova; segunda partida não gera evento novo
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; nenhum teste apagado
 
 **Tests**: integration
 **Gate**: full

@@ -36,7 +36,7 @@ from app.domain.entities.generated import (
     GenerationState,
     WordingJob,
 )
-from app.domain.entities.process import FunctionalProcess
+from app.domain.entities.process import FunctionalProcess, ProcessStatus
 from app.domain.entities.professor import Professor
 from app.domain.entities.report import DraftEntry, DraftSection, ReportDocument, ReportDraft
 from app.domain.entities.scoring import ScoringCriterion, ScoringTableVersion
@@ -103,6 +103,12 @@ class ProcessRepository(Protocol):
     def list(self) -> Sequence[FunctionalProcess]: ...
 
     def set_scoring_table_version(self, process_id: UUID, version_id: UUID | None) -> None: ...
+
+    def list_using_version(
+        self, version_id: UUID, statuses: Sequence[ProcessStatus]
+    ) -> Sequence[FunctionalProcess]:
+        """The processes that chose the version and are in one of the statuses, oldest first."""
+        ...
 
 
 class AcademicUnitRepository(Protocol):

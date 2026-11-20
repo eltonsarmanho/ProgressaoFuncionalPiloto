@@ -10,6 +10,8 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
+from app.application.services.audit_service import AuditService
+from app.application.use_cases.scoring_adoption import AdoptSupersedingVersion
 from app.domain.entities.academic_unit import AcademicUnit, UnitKind
 from app.domain.entities.scoring import (
     ScoringCriterion,
@@ -21,6 +23,7 @@ from app.domain.entities.scoring import (
 from app.domain.entities.user import Role, User
 from app.domain.repositories.ports import PasswordHasher, ScoringTableRecord
 from app.domain.rules.career_catalog import MAGISTERIO_SUPERIOR_VERSIONS
+from app.infrastructure.clock import SystemClock
 from app.infrastructure.database.repositories import SqlUnitOfWork
 
 STRUCTURE_CODE = "MAGISTERIO_SUPERIOR"
@@ -145,8 +148,11 @@ def _archive_legacy_tables(uow: SqlUnitOfWork) -> None:
 def seed_scoring_tables(uow: SqlUnitOfWork) -> None:
     """Create the official UFPA scoring table for FASI and IFCH and archive the old ones.
 
-    OFI-01, OFI-08..OFI-11. Idempotent: an existing table keeps its units; an existing
-    version is left untouched. Requires the units created by `seed_reference_data`.
+    OFI-01, OFI-08..OFI-11, GI-07, GI-10. Idempotent: an existing table keeps its units; an
+    existing version is left untouched. When the version names one it supersedes (`supersedes`),
+    that one is marked and the processes still editable move to the new one, in the same
+    transaction (AdoptSupersedingVersion). Requires the units created by
+    `seed_reference_data`.
     """
     with uow:
         units = {u.acronym: u for u in uow.units.list()}
@@ -167,6 +173,9 @@ def seed_scoring_tables(uow: SqlUnitOfWork) -> None:
         existing = {v.name for v in uow.scoring_tables.list_versions(table.id)}
         if data["version_name"] not in existing:
             uow.scoring_tables.add_version(_scoring_version(data, table.id))
+        AdoptSupersedingVersion(AuditService(SystemClock())).execute(
+            uow, table.id, data.get("supersedes"), data["version_name"]
+        )
         _archive_legacy_tables(uow)
         uow.commit()
 
