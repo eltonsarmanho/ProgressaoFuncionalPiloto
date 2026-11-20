@@ -124,7 +124,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 1. WHEN os lançamentos do cenário derivado de 2022–2024 são cadastrados na tabela oficial (II.7 × 4; II.8 × 4; II.12 × 4; III.2 × 1; III.3 × 1; IV.1 × 4; IV.4 × 1 curso de 21 horas; VI.6 × 1; VII.10 × 2; VIII.9, VIII.10, VIII.11 e VIII.36 × 1; Grupo I com 4 períodos: três ofertas de 68 h em cada um dos três primeiros e ofertas de 68 h, 68 h e 34 h no quarto) THEN the system SHALL retornar subtotais II a VIII de 52, 7, 62, 0, 30, 4 e 56 e total geral de 211, e horas de PIT por período de 24, 24, 24 e 20.
 2. The system SHALL manter verdes todos os testes que dependiam das tabelas do IFCH e da FASI, atualizados para a tabela oficial, sem remover nem enfraquecer asserção que não codificasse um valor das tabelas antigas, e SHALL registrar no corpo do commit cada asserção cujo valor mudou.
 
-**Independent Test**: Rodar o teste de aceitação e conferir 211.
+**Independent Test**: Rodar o teste de aceitação e conferir 211 pontos do cenário derivado.
 
 ---
 

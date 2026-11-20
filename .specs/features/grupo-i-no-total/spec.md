@@ -1,6 +1,6 @@
 # Grupo I no total, Tabela sem Status nem Comprovante e resumo da Etapa 4 Specification
 
-> **Nota de substituição:** esta feature substitui PIT-01, PIT-02 e PIT-03 e TELA-01 e TELA-02 da feature `tabela-oficial` (Grupo I em horas, fora do total), TAB-03 e TAB-05 da feature `documentos-gerados` (sete colunas com status e comprovante; horas "sem somá-las aos pontos"), os critérios de 211 pontos de `tabela-oficial` e `documentos-gerados` (passam a 303 com o Grupo I) e a decisão de 2026-11-17 que a sustentava. O usuário reverteu a decisão em 2026-11-19, depois de gerar os documentos reais: o Grupo I entra no total, a 1 ponto por hora de PIT.
+> **Nota de substituição:** esta feature substitui PIT-01, PIT-02 e PIT-03 e TELA-01 e TELA-02 da feature `tabela-oficial` (Grupo I em horas, fora do total), TAB-03 e TAB-05 da feature `documentos-gerados` (sete colunas com status e comprovante; horas "sem somá-las aos pontos"), os critérios de 211 pontos de cenário derivado de `tabela-oficial` e `documentos-gerados` (passam a 303 pontos de cenário derivado com o Grupo I) e a decisão de 2026-11-17 que a sustentava. O usuário reverteu a decisão em 2026-11-19, depois de gerar os documentos reais: o Grupo I entra no total, a 1 ponto por hora de PIT.
 
 ## Problem Statement
 

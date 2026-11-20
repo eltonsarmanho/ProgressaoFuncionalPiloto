@@ -783,7 +783,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T25: Varredura final da sigla e das citações de 211 e 303
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Roda na raiz os `grep` de CAREF-05 e `grep -rnE "\b(211|303)\b"` em `.specs/features/*/spec.md`, `.specs/features/*/design.md`, `.specs/STATE.md` e `docs/` (mesmas exclusões de CAREF-05); corrige o que restar: sigla em qualquer arquivo, e citação de 211 ou 303 pontos sem "cenário derivado" na mesma frase. Hoje a lista conhecida da sigla é: `CLAUDE.md`, `backend/app/application/use_cases/scoring.py`, `backend/tests/integration/api/conftest.py`, `backend/tests/support/scoring_variants.py`, `.specs/STATE.md`, `.specs/audits/2026-11-19-auditoria-requisitos.md`, `.specs/features/grupo-i-no-total/design.md`, `.specs/features/revisao-simplificada/design.md`, `.specs/features/pontuacao/spec.md`, `.specs/features/pontuacao/tasks.md` e `.specs/features/pontuacao/validation.md` (cobertos por T6, T8, T14 a T19); a varredura confirma zero.
 **Where**: arquivos apontados pela varredura (esperado: nenhum além dos já tratados)
@@ -798,16 +798,18 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] `grep -rnE "\bI\.3\b" . --exclude-dir={node_modules,.venv,Documentos,Modelos,test,corpus-reports,.git,dist} --exclude=requeriment.txt` sem saída
-- [ ] O mesmo comando com `-iE "avalia[cç][aã]o (pelo corpo )?discente"` e com `-iE "student.?evaluation"` sem saída
-- [ ] Toda linha de `grep -rnE "\b(211|303)\b"` nos arquivos de CADOC-05 que cita pontos diz "cenário derivado"
-- [ ] Se nada sobrou, a tarefa registra a saída vazia neste arquivo e o commit leva só a marcação
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] `grep -rnE "\bI\.3\b" . --exclude-dir={node_modules,.venv,Documentos,Modelos,test,corpus-reports,.git,dist} --exclude=requeriment.txt` sem saída
+- [x] O mesmo comando com `-iE "avalia[cç][aã]o (pelo corpo )?discente"` e com `-iE "student.?evaluation"` sem saída
+- [x] Toda linha de `grep -rnE "\b(211|303)\b"` nos arquivos de CADOC-05 que cita pontos diz "cenário derivado"
+- [x] Se nada sobrou, a tarefa registra a saída vazia neste arquivo e o commit leva só a marcação
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
 
 **Tests**: none
 **Gate**: quick
 
 **Commit**: `docs: label every 211 and 303 point citation as a derived scenario`
+
+**Resultado da varredura (2026-11-20)**: os três `grep` de CAREF-05 voltaram com saída vazia depois de corrigir o que a varredura achou: a descrição do IFCH em `docs/referencias/normas/FONTES.md:11`, o nome de teste antigo citado em `tabela-oficial/validation.md:137` e as citações de 211 e 303 pontos sem "cenário derivado" em `grupo-i-no-total/spec.md`, `grupo-i-no-total/design.md`, `tabela-oficial/spec.md`, `documentos-gerados/design.md` e `STATE.md`. Resta uma linha com 211 sem a expressão: o exemplo JSON de `documentos-gerados/design.md:365`, rotulado como "cenário derivado" na frase que o introduz.
 
 ---
 

@@ -148,7 +148,7 @@ Nenhum controle novo no painel; as ações (Editar, Validar, Rejeitar, Nova ativ
 **Acessibilidade**
 
 - Cada bloco é `<section aria-labelledby>` com `h3` sob o `h2` "Resumo"; a faixa é `dl` (rótulo e valor); as ofertas, `ul` dentro de um `h4` por período; as barras, `ul` com o texto do valor.
-- Região viva: `role="status"` visualmente oculto, como na Etapa 3. Anuncia "Total geral atualizado: 303,00 pontos" só quando o total muda depois da primeira carga (validar, rejeitar, trocar de tabela), nunca na abertura. Erro continua em `role="alert"` (o que já existe em `ProcessScoring`).
+- Região viva: `role="status"` visualmente oculto, como na Etapa 3. Anuncia "Total geral atualizado: 303,00 pontos" (valor do cenário derivado) só quando o total muda depois da primeira carga (validar, rejeitar, trocar de tabela), nunca na abertura. Erro continua em `role="alert"` (o que já existe em `ProcessScoring`).
 - Foco: o painel não tem controle e não recebe foco; o `Modal` já devolve o foco ao botão de origem. Após uma ação na tabela de atividades o foco não se perde porque a recarga não troca a linha de seção (a tabela da Etapa 4 é única).
 - `LEVEL_LABELS` novo em `labels.ts`: `GRADUACAO` "Graduação", `POS_GRADUACAO` "Pós-graduação".
 
@@ -212,7 +212,7 @@ Não mudam de conteúdo. Conferido no código: `report_templates.json` já tem a
 | Remover o plano da `_table` mexe em testes de instantâneo e de `NUMERACAO_DIVERGENTE` | `generated_documents.py:538,567` | Testes antigos quebram por motivo certo | Trocar esses testes junto com a mudança; as versões antigas guardadas com o alerta continuam legíveis (rótulo mantido) |
 | O PDF com 5 colunas muda as quebras de página e as larguras | `table_pdf.py:47`, `table_docx.py:41` | Título longo ou subtotal grande quebra a linha | Teste com título de 400 caracteres e subtotal de 7 dígitos nos dois formatos; conferência visual do PDF e do DOCX (LibreOffice) no verificador |
 | Teste que procura "Não pontuada" no documento inteiro | `table_text.py` (`counters_line`) | Falso negativo | O rodapé perde os contadores de status (D6); os testes da GTAB-04 e GTAB-08 olham células e rodapé |
-| Specs de `documentos-gerados` (TAB-03, TAB-05), `tabela-oficial` (PIT-01..03, TELA-01..02) e `pontuacao` (premissa do item de valor informado de tabelas antigas, inexistente na tabela oficial, CALC-05/06) e o critério dos 211 pontos ficam contraditórios | `.specs/features/documentos-gerados/spec.md:93,95`, `tabela-oficial/spec.md`, `pontuacao/spec.md:48` | Rastreabilidade enganosa | A nota de substituição da spec já cita TAB-03, TAB-05 e os 211; a Tasks acrescenta a nota recíproca nas specs antigas |
+| Specs de `documentos-gerados` (TAB-03, TAB-05), `tabela-oficial` (PIT-01..03, TELA-01..02) e `pontuacao` (premissa do item de valor informado de tabelas antigas, inexistente na tabela oficial, CALC-05/06) e o critério dos 211 pontos do cenário derivado ficam contraditórios | `.specs/features/documentos-gerados/spec.md:93,95`, `tabela-oficial/spec.md`, `pontuacao/spec.md:48` | Rastreabilidade enganosa | A nota de substituição da spec já cita TAB-03, TAB-05 e os 211 pontos do cenário derivado; a Tasks acrescenta a nota recíproca nas specs antigas |
 | Processos em andamento no ar | VM | O processo real em rascunho muda de total no deploy | Dump antes do deploy, auditoria da troca, aviso na Etapa 5; deploy só com autorização |
 
 ---
@@ -220,7 +220,7 @@ Não mudam de conteúdo. Conferido no código: `report_templates.json` já tem a
 ## Decisões da spec que parecem erradas ou ambíguas (a spec não foi alterada)
 
 - **S1 (GI-05), aplicada na spec em 2026-11-19.** O texto manda recusar `points_override` "numa versão em que o Grupo I é medido em horas de PIT". A versão nova também mede em horas de PIT (cada hora vale 1 ponto), mas conta no total; lida ao pé da letra, a recusa não valeria nela. Ajuste proposto: "em qualquer critério de carga semanal do Grupo I, esteja o grupo dentro ou fora do total" (D5).
-- **S2 (nota de substituição), aplicada na spec em 2026-11-19.** A nota lista PIT-01..03 e TELA-01..02 de `tabela-oficial`, mas também ficam superados TAB-03 e TAB-05 de `documentos-gerados` (sete colunas, comprovante por linha, horas "sem somá-las aos pontos") e os critérios de 211 pontos e 92 horas de `tabela-oficial` e `documentos-gerados` (passam a 303 com o Grupo I; as horas seguem 24, 24, 24 e 20). Ajuste: ampliar a nota e atualizar os dois testes de ouro.
+- **S2 (nota de substituição), aplicada na spec em 2026-11-19.** A nota lista PIT-01..03 e TELA-01..02 de `tabela-oficial`, mas também ficam superados TAB-03 e TAB-05 de `documentos-gerados` (sete colunas, comprovante por linha, horas "sem somá-las aos pontos") e os critérios de 211 pontos e 92 horas do cenário derivado de `tabela-oficial` e `documentos-gerados` (passam a 303 pontos do cenário derivado com o Grupo I; as horas seguem 24, 24, 24 e 20). Ajuste: ampliar a nota e atualizar os dois testes de ouro.
 - **S3 (GTAB-06 e GTAB-07).** O título "Horas de PIT por semestre (Grupo I)" vale para a versão nova; a versão antiga, que a GTAB-07 manda gerar "como antes", mantém o título com "fora do total de pontos", que é verdadeiro nela.
 - **S4 (GI-03).** "Iguais aos pontos do Grupo I" só vale sem teto no grupo ou no critério. A tabela oficial não tem teto; o teste fixa isso e a regra fica dita.
 - **S5 (GI-04), resolvida por GI-09.** A oferta fora do interstício só deixa de pontuar quando tem data; a oferta que só tem período letivo não é conferida. Com o Grupo I no total isso passaria a mexer no total (resolvido por GI-09).
@@ -257,7 +257,7 @@ Gate do backend: `cd backend && ruff check . && pytest -q`; do frontend: `npm te
 | GTAB-05 | Linha sem pontos com `0,00`; o motivo aparece em Alertas; o rodapé não tem contadores de status (GTAB-08) | unitário do documento |
 | GTAB-06 | Título e colunas da seção de horas na versão nova; total em horas | unitário dos escritores |
 | GTAB-07 | Versão antiga: sem seção I, sem Status e Comprovante, título antigo da seção de horas | unitário do documento |
-| Aceitação | Cenário de 2022 a 2024: Grupo I 24, 24, 24 e 20, total 303, Tabela baixada em DOCX e PDF com a seção I; substitui os dois testes de ouro de 211 | integração de API (`test_scoring_golden.py`, `test_generated_table_acceptance.py`) |
+| Aceitação | Cenário derivado de 2022 a 2024: Grupo I 24, 24, 24 e 20, total 303, Tabela baixada em DOCX e PDF com a seção I; substitui os dois testes de ouro de 211 pontos do cenário derivado | integração de API (`test_scoring_golden.py`, `test_generated_table_acceptance.py`) |
 | D6 | Tabela gerada sem `layout` e sem plano; Comprovante e Tabela sem `NUMERACAO_DIVERGENTE` depois de mudar o arranjo | integração de documentos |
 | GRES-01, 02 | Faixa com total e rótulo "Grupos I a VIII"; "Mínimo não definido" sem destaque | componente |
 | GRES-03 | Uma linha por grupo com nome curto e valor em texto; grupo com 0,00 em tom discreto; barra `aria-hidden`; total 0 sem divisão por zero | componente |
@@ -276,7 +276,7 @@ Gate do backend: `cd backend && ruff check . && pytest -q`; do frontend: `npm te
 
 ## Fases de tarefas (o detalhe vem na fase Tasks)
 
-1. **Motor e dados**: migração `0009`, `superseded_by_id`, `is_group1_load_criterion`, `outside_total`, `pit_hours` nas duas versões, recusa do override, regra do ano inteiro (GI-09), `predicted_points`, filtro das substituídas na sugestão, na escolha e no admin, `ufpa.json`, seed e `AdoptSupersedingVersion` (GI-10), testes de ouro (303) e matriz da validade.
+1. **Motor e dados**: migração `0009`, `superseded_by_id`, `is_group1_load_criterion`, `outside_total`, `pit_hours` nas duas versões, recusa do override, regra do ano inteiro (GI-09), `predicted_points`, filtro das substituídas na sugestão, na escolha e no admin, `ufpa.json`, seed e `AdoptSupersedingVersion` (GI-10), testes de ouro (303 pontos do cenário derivado) e matriz da validade.
 2. **Tabela**: `table_document` (cinco colunas, linha e ordem do Grupo I, seção de horas, sem `SEM_COMPROVANTE` nem contadores de status), `table_text`, `table_docx`, `table_pdf`, `generated_documents` sem plano nem `NUMERACAO_DIVERGENTE`, testes dos escritores e conferência visual.
 3. **API**: campos novos de `ScoreRowOut`, `table_version_id` nas gerações, 422 `VERSAO_SUBSTITUIDA`, tipos do frontend.
 4. **Frontend**: `ScoringPanel` e blocos (com as não validadas etiquetadas), `ScoringTable`, `ScoreEditor`, `TablePicker` sem a substituída, aviso da Etapa 5, `labels.ts`, CSS e `styles.test.ts`, remoção de `ScoringSummary`.

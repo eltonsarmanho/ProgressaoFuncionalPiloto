@@ -357,7 +357,7 @@ A exclusão da conclusão não muda o modelo de `document_pages` (as linhas são
 
 Gatilhos, no padrão do `extraction_runs`: `generated_documents` só aceita `UPDATE` quando `OLD.state = 'GERANDO'` e recusa `DELETE`; `generated_files` recusa `UPDATE` e `DELETE`. Sem `ON DELETE CASCADE` para o processo (a versão é o registro do que foi entregue). Os documentos de origem não têm FK no arranjo: o `document_id` guardado no JSON que aponta para um documento excluído vira `ORIGINAL_INDISPONIVEL` na geração e entrada inválida no arranjo (edge case da spec).
 
-Instantâneo (`snapshot`), igual nos três tipos com acréscimos por tipo:
+Instantâneo (`snapshot`), igual nos três tipos com acréscimos por tipo (o exemplo usa os 211 pontos e as 92 horas do cenário derivado):
 
 ```json
 {"table_version": {"id": "...", "name": "...", "norm_reference": "..."},
