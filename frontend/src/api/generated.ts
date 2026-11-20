@@ -82,6 +82,8 @@ export type GeneratedDocument = {
   error_message: string | null;
   alerts: GenerationAlert[];
   files: GeneratedFile[];
+  /** The scoring table version the snapshot used; null without a snapshot (running or failed). */
+  table_version_id: string | null;
 };
 
 /** What a version used, in short; the full snapshot stays on the server. */

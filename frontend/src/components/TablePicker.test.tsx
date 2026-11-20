@@ -15,6 +15,7 @@ const FASI: ChosenTable = {
     valid_to: null,
     norm_reference: "Res. FASI 2022, Anexo I",
     status: "PENDENTE_VALIDACAO",
+    superseded_by_id: null,
   },
 };
 const IFCH: ChosenTable = {
@@ -27,6 +28,7 @@ const IFCH: ChosenTable = {
     valid_to: "2024-12-31",
     norm_reference: "Res. IFCH 2020",
     status: "OFICIAL",
+    superseded_by_id: null,
   },
 };
 const TABLES: ScoringTableInfo[] = [

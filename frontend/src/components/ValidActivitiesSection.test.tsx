@@ -44,7 +44,8 @@ function many(n: number, { needs = 0, done = 0 }: { needs?: number; done?: numbe
 
 const ROW = (id: string, status: ScoringRow["status"] = "POTENCIAL"): ScoringRow => ({
   activity_id: id, title: "x", activity_status: "AGUARDANDO_REVISAO", evidence_note: null, group_number: 3, item_number: 2,
-  unit_points: "4.00", effective_quantity: "1.00", formula_text: null, points: "4.00", pit_hours: null, status, reasons: [], alerts: [],
+  unit_points: "4.00", effective_quantity: "1.00", formula_text: null, points: "4.00", pit_hours: null, outside_total: false, academic_period: null, level: null,
+  status, reasons: [], alerts: [],
 });
 
 const DOCS = [{ id: "d1", original_name: "ata-defesa.pdf" }, { id: "d2", original_name: "portaria.pdf" }] as DocumentSummary[];

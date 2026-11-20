@@ -14,6 +14,7 @@ const VERSION_INFO = {
   valid_to: null,
   norm_reference: "Res. FASI 2022, Anexo I",
   status: "PENDENTE_VALIDACAO" as const,
+  superseded_by_id: null,
 };
 const CHOSEN = { table_name: "Tabela FASI", version: VERSION_INFO };
 
@@ -81,6 +82,9 @@ const ROW: ScoringResult["rows"][number] = {
   formula_text: "4 x 10",
   points: "40.00",
   pit_hours: null,
+  outside_total: false,
+  academic_period: null,
+  level: null,
   status: "PONTUADA",
   reasons: [],
   alerts: [

@@ -124,6 +124,12 @@ export type ScoringRow = {
   points: string;
   /** Group I only: PIT hours of the offer (null elsewhere). */
   pit_hours: string | null;
+  /** True when the row shows hours and scores 0 (group I of a version that keeps it out of the total). */
+  outside_total: boolean;
+  /** The academic period of the activity, e.g. "2023.1" (group I offers). */
+  academic_period: string | null;
+  /** The level of the offer (group I); null elsewhere. */
+  level: Level | null;
   status: RowStatus;
   reasons: string[];
   alerts: Alert[];
@@ -141,7 +147,7 @@ export type ScoringResult = {
   /** Potential points of activities without date, awaiting review (REAL-08). */
   potential_undated: string;
   group1_percent: string | null;
-  /** Group I PIT hours summed per academic period (e.g. "2023.1"), outside the total. */
+  /** Group I PIT hours summed per academic period (e.g. "2023.1"). */
   group1_hours_by_period: Record<string, string>;
   group1_total_hours: string;
   counters: {
@@ -165,6 +171,8 @@ export type VersionInfo = {
   valid_to: string | null;
   norm_reference: string;
   status: TableStatus;
+  /** Set when a newer version replaced this one: it is neither suggested nor choosable. */
+  superseded_by_id: string | null;
 };
 
 export type ChosenTable = { table_name: string; version: VersionInfo };

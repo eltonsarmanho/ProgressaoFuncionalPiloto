@@ -141,6 +141,7 @@ export function generated(over: Partial<GeneratedDocument> = {}): GeneratedDocum
       { format: "DOCX", size_bytes: 40_960, sha256: "a".repeat(64) },
       { format: "PDF", size_bytes: 61_440, sha256: "b".repeat(64) },
     ],
+    table_version_id: null,
     ...over,
   };
 }

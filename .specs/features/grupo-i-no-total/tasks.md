@@ -670,7 +670,7 @@ graph LR
 
 #### T19: Tipos do frontend
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ScoringRow` ganha `academic_period: string | null`, `level: Level | null`, `outside_total: boolean`; a versão de tabela (`VersionRef` e afins) ganha `superseded_by_id: string | null`; `GeneratedDocument` ganha `table_version_id: string | null`. Fixtures de teste do frontend que constroem esses tipos recebem os campos novos.
 **Where**: `frontend/src/api/types.ts` (modify)
@@ -685,9 +685,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Tipos compilam e as fixtures dos testes existentes (`ScoringTable.test.tsx`, `ScoringSummary.test.tsx`, `ProcessScoring.test.tsx`, `ProcessGenerated.test.tsx`, `TablePicker.test.tsx`) recebem os campos novos sem mudar o que asseguram
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado
+- [x] Tipos compilam e as fixtures dos testes existentes (`ScoringTable.test.tsx`, `ScoringSummary.test.tsx`, `ProcessScoring.test.tsx`, `ProcessGenerated.test.tsx`, `TablePicker.test.tsx`) recebem os campos novos sem mudar o que asseguram
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado
 
 **Tests**: none
 **Gate**: build

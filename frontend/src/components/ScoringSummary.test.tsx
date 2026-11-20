@@ -117,7 +117,8 @@ describe("ScoringSummary", () => {
         {
           activity_id: "g1", title: "Cálculo I", activity_status: "VALIDADA", evidence_note: null,
           group_number: 1, item_number: 1, unit_points: null, effective_quantity: null, formula_text: null,
-          points: "0.00", pit_hours: "8.00", status: "PONTUADA", reasons: [], alerts: [],
+          points: "0.00", pit_hours: "8.00", outside_total: true, academic_period: "2022.1", level: "GRADUACAO",
+          status: "PONTUADA", reasons: [], alerts: [],
         },
       ],
     };
