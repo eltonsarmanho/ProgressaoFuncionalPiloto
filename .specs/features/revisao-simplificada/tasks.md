@@ -107,10 +107,16 @@ T39 → T42
 T42 → T45 → T46 → T47 → T48 → T49 → T50 → T51 → T52 → T53 → T54 → T55
 ```
 
+### Phase 7c: Correções da rodada 1 do Verifier
+
+```
+T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62
+```
+
 ### Phase 8: Documentação e verificação
 
 ```
-T55 → T43 → T44
+T62 → T43 → T44
 ```
 
 ---
@@ -1611,11 +1617,216 @@ T55 → T43 → T44
 
 ---
 
+### T56: FT1, `excluded` sem rastro das não válidas aguardando validação
+
+**Status**: Pending
+
+**What**: O Verifier (validation.md, G1) viu que o mutante B27 (`_excluded` conta como "pendentes" a atividade não válida aguardando validação) sobrevive. Teste do caso: atividade fora do interstício e atividade com carga insuficiente em `AGUARDANDO_REVISAO` não geram `excluded` nem rastro no resumo da geração. Se o código estiver errado, corrige-o.
+**Where**: `backend/tests/integration/doc_usecases/test_generation_inputs.py` (modify) e `backend/tests/integration/api/test_generated_validity_acceptance.py` (modify)
+**Depends on**: T55
+**Reuses**: `add_activity` de `generation_support.py`; `insert` e `world` do teste de aceitação
+**Requirement**: SEG-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Teste primeiro: com as duas não válidas em `AGUARDANDO_REVISAO`, `inputs.excluded == {}` e `inputs.activities` vazio; no aceite, `summary["excluded"] == {}`, sem alerta `ATIVIDADES_FORA_DO_DOCUMENTO` e sem os títulos no documento
+- [ ] O teste passa contra o código e falha contra o mutante B27 (`is_valid` removido de `_excluded`), provado em cópia
+- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest <arquivos tocados> -q` (o gate completo roda uma vez na T43)
+- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(generation): cover the not valid activities awaiting validation in excluded`
+
+---
+
+### T57: FT2, período aberto na categoria por ano da atividade manual
+
+**Status**: Pending
+
+**What**: O Verifier (G2) viu que o mutante B43 (a checagem manual trata a categoria por ano como período fechado) sobrevive. Testes de API da criação e da edição manual de item por ano: `period_start` dentro ou antes do interstício e sem `period_end` é aceito; início depois do fim do interstício é 422. A spec registra o período aberto (SP3, SP5).
+**Where**: `backend/tests/integration/api/test_activity_edit_rules_api.py` (modify) e `.specs/features/revisao-simplificada/spec.md` (modify, junto com a T43 e a T62)
+**Depends on**: T56
+**Reuses**: os casos de EDT-03 do mesmo arquivo; `_check_inside_interstice` em `app/application/use_cases/scoring.py`
+**Requirement**: EDT-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Teste primeiro: criação e edição manual com `period_start` antes do início do interstício e dentro dele, sem `period_end`, respondem 2xx; com `period_start` depois do fim, 422 em `period_start`
+- [ ] O teste passa contra o código e falha contra o mutante B43 (`yearly = False`), provado em cópia
+- [ ] A spec descreve o período aberto como decisão do Verifier (texto no commit da T43, junto com a T62)
+- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_activity_edit_rules_api.py -q`
+- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(activities): cover the open period of a yearly category on manual writes`
+
+---
+
+### T58: FT3, o aviso de categoria conta todas as válidas sem categoria
+
+**Status**: Pending
+
+**What**: O Verifier (G3) viu que o mutante F3b sobrevive: o aviso "N atividades precisam de categoria" de `ValidActivitiesSection` usa a lista filtrada, e com busca ou filtro de grupo o número diverge do da navegação (`StepNav`). O aviso passa a contar todas as válidas sem categoria.
+**Where**: `frontend/src/components/ValidActivitiesSection.tsx` (modify) e `frontend/src/components/ValidActivitiesSection.test.tsx` (modify)
+**Depends on**: T57
+**Reuses**: `needsCategory` e a contagem do chip "Precisa de categoria" de `activityList.ts`
+**Requirement**: SEC-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Teste primeiro (que falha antes): 5 atividades, 3 sem categoria; com a busca e com o filtro de grupo ativos, o aviso diz "3 atividades precisam de categoria"
+- [ ] O aviso conta a lista inteira, igual ao `StepNav`
+- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): count every valid activity without category in the section warning`
+
+---
+
+### T59: FT4, a atividade mesclada fora da Tabela, do Relatório e do Comprovante
+
+**Status**: Pending
+
+**What**: O Verifier (G4) viu que nenhum teste gera os três documentos com uma atividade mesclada; a exclusão valia por herança da lista. Teste de aceitação com uma atividade mesclada na outra (com a evidência que ficou nela).
+**Where**: `backend/tests/integration/api/test_generated_validity_acceptance.py` (modify)
+**Depends on**: T58
+**Reuses**: `world`, `insert`, `link` e os leitores de documentos do teste de aceitação; `merge_process` do serviço de mesclagem
+**Requirement**: DUP-03, SEG-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Teste primeiro: duas atividades iguais, a mesclada com uma página exclusiva; Tabela, Relatório e Comprovante não trazem o título nem a página exclusiva da mesclada; a mantida aparece, uma vez, com as provas somadas
+- [ ] O teste falha se a mesclada entrar nos documentos (mutante em cópia: `eligible_activities` sem o filtro de mescladas)
+- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_generated_validity_acceptance.py -q`
+- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(generation): cover the merged activity in the three generated documents`
+
+---
+
+### T60: FT5, a Etapa 3 a 360 px: verificação ou limitação registrada
+
+**Status**: Pending
+
+**What**: O Verifier (G5) notou que "sem rolagem horizontal a 360 px" só tem prova estática do CSS (jsdom não calcula layout). Verifica-se se há navegador headless local sem baixar nada; se houver, mede-se a Etapa 3 a 360 px com 120 atividades sintéticas. O resultado, ou a limitação aceita com o passo a passo manual, vai em `design.md` ("Verificação a 360 px"). Nenhum teste muda.
+**Where**: `.specs/features/revisao-simplificada/design.md` (modify, junto com a T43)
+**Depends on**: T59
+**Reuses**: a regra de CSS de `ActivityWorkspace.test.tsx`
+**Requirement**: SEC-12
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Registrado se há navegador headless local utilizável (sem acesso à rede) e o que foi medido (`scrollWidth <= clientWidth`) ou, sem navegador, a limitação aceita com o passo a passo manual
+- [ ] Nenhum teste alterado; nada baixado da rede
+- [ ] Gate check passes: `git diff --stat` mostra só `design.md` (o gate completo roda uma vez na T43)
+- [ ] Test count: inalterada
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `docs(specs): record the 360 px check of the activities step`
+
+---
+
+### T61: FT6, `ATIVIDADE_SEM_CATEGORIA` no worker de geração
+
+**Status**: Pending
+
+**What**: O Verifier (G6) viu que, no worker de geração, `ATIVIDADE_SEM_CATEGORIA` cai em `ERRO_INTERNO` por faltar em `_FAILURE_MESSAGES`. Mapeia o código com mensagem em português e adiciona o rótulo equivalente no frontend se faltar; AD-022 perde a pergunta aberta (2).
+**Where**: `backend/app/application/use_cases/generated_documents.py` (modify), `backend/tests/integration/doc_usecases/test_run_generation_table.py` (modify) e `.specs/STATE.md` (modify, junto com a T43)
+**Depends on**: T60
+**Reuses**: `_FAILURE_MESSAGES` e os testes de falha do worker; `GenerationRefused`
+**Requirement**: SEG-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Teste primeiro (que falha antes): uma atividade válida sem categoria que aparece depois do pedido faz o worker marcar a geração `FALHOU` com o código `ATIVIDADE_SEM_CATEGORIA` e a mensagem em português, não `ERRO_INTERNO`
+- [ ] O rótulo do código existe no frontend (`labels.ts`), com teste se faltava
+- [ ] A pergunta aberta (2) do AD-022 sai de `STATE.md`
+- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest <arquivos tocados> -q`
+- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(generation): fail the worker with the code of an activity without category`
+
+---
+
+### T62: FT7, testes de status final e decisões do Verifier na spec
+
+**Status**: Pending
+
+**What**: Fecha G7 e SP1 a SP10 do Verifier. (a) Testes: trocar a categoria de atividade validada recalcula e mantém `VALIDADA`; carga horária corrigida devolve a atividade às válidas com o status que tinha. (b) `spec.md` registra, como "Decisões do Verifier", o comportamento já implementado (ordem dos motivos, `GRUPO_NAO_CONTA` e `DUPLICIDADE`, período por ano e precisão de mês, ordem das validações na rota de status, data inalterada, mais de duas validadas, Etapa 3 sem tabela, faixa da quantidade, vocabulário de `skipped`, cláusula da prévia da conclusão). Descreve o que existe; nenhum requisito novo, nenhum comportamento muda.
+**Where**: `backend/tests/integration/scoring/test_activity_update.py` (modify), `backend/tests/integration/scoring/test_list_activities_validity.py` (modify) e `.specs/features/revisao-simplificada/spec.md` (modify, junto com a T43)
+**Depends on**: T61
+**Reuses**: os testes de troca de item e de correção por data dos mesmos arquivos
+**Requirement**: VAL-01, SEC-08, EDT-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Testes primeiro: a troca de categoria de uma `VALIDADA` mantém `VALIDADA` e recalcula os pontos; a carga horária corrigida devolve a atividade às válidas com o status que tinha
+- [ ] `spec.md` com a seção "Decisões do Verifier" cobrindo SP1 a SP10, sem requisito novo
+- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest <arquivos tocados> -q`
+- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(activities): cover the final status after a category or hours correction`
+
+---
+
 ### T43: Documentação da feature
 
 **What**: AD-022 em `STATE.md` (coluna `merged_into_id`, validade no servidor, mesclagem na escrita), regra 10 em `CLAUDE.md` e rastreabilidade da spec marcada como `Implemented`.
 **Where**: `.specs/STATE.md` (modify)
-**Depends on**: T55
+**Depends on**: T62
 **Reuses**: AD-018 como modelo; o texto do Design
 **Requirement**: DUP-02, SEG-01, VAL-01
 
@@ -1670,22 +1881,22 @@ T55 → T43 → T44
 
 | Requisito | Tarefas | Requisito | Tarefas |
 | --- | --- | --- | --- |
-| VAL-01 | T2, T5 | SEC-12 | T33, T35, T36, T45, T46, T49, T52, T53, T55 |
+| VAL-01 | T2, T5, T62 | SEC-12 | T33, T35, T36, T45, T46, T49, T52, T53, T55, T60 |
 | VAL-02 | T3, T4, T28 | DUP-01 | T13, T14 |
 | VAL-03 | T17 | DUP-02 | T9, T10, T11, T12, T14 |
-| VAL-04 | T18, T19, T34 | DUP-03 | T10, T12, T14 |
+| VAL-04 | T18, T19, T34 | DUP-03 | T10, T12, T14, T59 |
 | VAL-05 | T17 | DUP-04 | T16, T21, T22, T38 |
 | VAL-06 | T1, T17, T33, T34 | DUP-05 | T14 |
 | SEC-01 | T23, T24, T27, T36, T38, T39 | DUP-06 | T14 |
 | SEC-02 | T1, T25, T26, T34 | DUP-07 | T15, T16, T24, T32 |
-| SEC-03 | T31, T34, T48 | SEG-01 | T1, T2, T5, T6, T8 |
-| SEC-04 | T30, T33, T45, T46, T47, T51, T52 | SEG-02 | T6, T8 |
-| SEC-05 | T34, T37, T38, T47, T49, T51, T53, T54, T55 | SEG-03 | T2, T6, T8, T26 |
+| SEC-03 | T31, T34, T48 | SEG-01 | T1, T2, T5, T6, T8, T56 |
+| SEC-04 | T30, T33, T45, T46, T47, T51, T52 | SEG-02 | T6, T8, T59 |
+| SEC-05 | T34, T37, T38, T47, T49, T51, T53, T54, T55, T58 | SEG-03 | T2, T6, T8, T26 |
 | SEC-06 | T1, T22, T25, T35 | SEG-04 | T2, T5 |
-| SEC-07 | T1, T24, T25, T28, T29, T35 | SEG-05 | T7, T8, T28 |
-| SEC-08 | T25, T26, T36 | EDT-01 | T40, T50 |
+| SEC-07 | T1, T24, T25, T28, T29, T35 | SEG-05 | T7, T8, T28, T61 |
+| SEC-08 | T25, T26, T36, T62 | EDT-01 | T40, T50 |
 | SEC-09 | T25, T35, T36 | EDT-02 | T20, T41, T49 |
-| SEC-10 | T35 | EDT-03 | T20, T41 |
+| SEC-10 | T35 | EDT-03 | T20, T41, T57, T62 |
 | SEC-11 | T34, T35, T48, T53 | EDT-04 | T40 |
 | QTD-01 | T42, T50 | EDT-05 | T40 |
 | QTD-02 | T20, T42, T50 | EDT-06 | T20, T40 |
@@ -1729,4 +1940,7 @@ T55 → T43 → T44
 | T39 | Removal of a component | none (build gate) | none | ✅ OK |
 | T40-T42 | Frontend components | unit | unit | ✅ OK |
 | T45-T55 | Frontend components/pages | unit | unit | ✅ OK |
+| T56, T57, T59, T61, T62 | Use cases and API (tests only, T61 also a service) | integration | integration | ✅ OK |
+| T58 | Frontend component | unit | unit | ✅ OK |
+| T60 | Docs | none | none | ✅ OK |
 | T43, T44 | Docs | none | none | ✅ OK |
