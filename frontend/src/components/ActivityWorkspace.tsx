@@ -68,7 +68,8 @@ export function ActivityWorkspace({
     fail: (id, title, message, reloads) => {
       setRowError((current) => ({ title, message, n: (current?.n ?? 0) + 1 }));
       ownReload.current = reloads;
-      remember(id);
+      // Only a failure that reloads the list may move the focus; otherwise a later reload of another action would.
+      if (reloads) remember(id);
     },
   };
 

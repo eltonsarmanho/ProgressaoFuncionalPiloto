@@ -1584,7 +1584,7 @@ T55 → T43 → T44
 
 ### T55: TF11, o foco pendente de uma falha sem recarga é descartado
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Dois pontos de baixa gravidade da segunda revisão. (1) `feedback.fail` de `ActivityWorkspace` só arma o foco pendente (`remember(id)`) quando a falha recarrega a lista; uma falha sem recarga (5xx) não deixa foco armado para uma recarga posterior de outra ação mover o foco ao título de uma linha que o usuário não tocou. (2) O teste do `StepNav` verifica no DOM que a mensagem de bloqueio, sem bloqueio, não tem nós de texto, e que com bloqueio mostra a mensagem.
 **Where**: `frontend/src/components/ActivityWorkspace.tsx` (modify), `frontend/src/components/ActivityWorkspace.test.tsx` e `frontend/src/components/StepNav.test.tsx` (modify)
@@ -1599,10 +1599,10 @@ T55 → T43 → T44
 
 **Done when**:
 
-- [ ] Teste primeiro (que falha antes): uma ação da linha A falha com 5xx sem recarregar; depois uma validação em lote de outras linhas recarrega a lista; o foco não vai ao título da linha A
-- [ ] Teste em `StepNav.test.tsx`: sem bloqueio, `container.querySelector(".step-blocked:empty")` não é nulo (o `<p id="step-blocked-message">` não tem nós de texto); com bloqueio, o `<p>` mostra a mensagem
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+- [x] Teste primeiro (que falha antes): uma ação da linha A falha com 5xx sem recarregar; depois uma validação em lote de outras linhas recarrega a lista; o foco não vai ao título da linha A
+- [x] Teste em `StepNav.test.tsx`: sem bloqueio, `container.querySelector(".step-blocked:empty")` não é nulo (o `<p id="step-blocked-message">` não tem nós de texto); com bloqueio, o `<p>` mostra a mensagem
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
 
 **Tests**: unit
 **Gate**: build

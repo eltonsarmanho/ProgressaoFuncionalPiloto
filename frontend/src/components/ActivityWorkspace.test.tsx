@@ -446,6 +446,25 @@ describe("SEC-12: anúncios repetidos e erro da linha", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Banca válida: Falha do servidor");
   });
 
+  it("uma falha que não recarrega (5xx) não deixa foco pendente: a recarga de outra ação não o leva à linha que falhou", async () => {
+    const copyList = (c: Activity[]) => [...c];
+    const two = [activity({ id: "v1", title: "Banca um" }), activity({ id: "v2", title: "Banca dois" })];
+    const { user } = setup(two, copyList, {
+      "POST /api/activities/v1/status": { status: 500, body: { detail: "Falha do servidor" } },
+      "POST /api/processes/p1/activities/validate-batch": () => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        return { status: 200, body: { activities: [activity({ id: "v2", title: "Banca dois", status: "VALIDADA" })], skipped: [] } };
+      },
+    });
+    await user.click(screen.getByRole("button", { name: "Validar Banca um" }));
+    await screen.findByRole("alert");
+    await user.click(screen.getByRole("checkbox", { name: "Selecionar Banca dois" }));
+    await user.click(screen.getByRole("button", { name: /^Validar as selecionadas/ }));
+    await screen.findByText("1 validada.");
+    expect(screen.getByText("Banca um")).not.toHaveFocus();
+    expect(document.activeElement).toBe(document.body);
+  });
+
   it("o erro da linha sobrevive à recarga da própria falha e some na recarga seguinte que dá certo", async () => {
     setCsrfToken("tok");
     mockFetch({ "POST /api/activities/v1/status": { status: 409, body: STALE } });

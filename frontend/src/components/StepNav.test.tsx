@@ -127,6 +127,26 @@ describe("SEC-05, SEC-12: a região viva e os itens fechados", () => {
     expect(live()).toHaveTextContent("3 atividades precisam de categoria");
   });
 
+  it("o <p> da mensagem não tem nós de texto sem bloqueio e mostra a mensagem com bloqueio", () => {
+    const { container, unmount } = render(
+      <MemoryRouter>
+        <StepNav processId="p1" current={3} />
+      </MemoryRouter>,
+    );
+    const empty = container.querySelector(".step-blocked:empty");
+    expect(empty).not.toBeNull();
+    expect(empty?.id).toBe("step-blocked-message");
+    expect(empty?.childNodes).toHaveLength(0);
+    unmount();
+    const { container: withBlock } = render(
+      <MemoryRouter>
+        <StepNav processId="p1" current={3} blocked={blocked} />
+      </MemoryRouter>,
+    );
+    expect(withBlock.querySelector(".step-blocked:empty")).toBeNull();
+    expect(withBlock.querySelector("p#step-blocked-message")).toHaveTextContent("3 atividades precisam de categoria");
+  });
+
   it("as etapas fechadas apontam a mensagem por aria-describedby; as abertas e as 'em breve' não", () => {
     const items = steps({ processId: "p1", current: 3, blocked });
     const id = live().id;
