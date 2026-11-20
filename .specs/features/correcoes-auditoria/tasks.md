@@ -590,7 +590,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T18: Design da revisão simplificada sem a sigla
 
-**Status**: Pending
+**Status**: Done
 
 **What**: A pergunta "Itens de valor informado" de `revisao-simplificada/design.md:180` deixa de citar a sigla e a expressão que a CAREF-05 proíbe; diz que a tabela oficial não tem item de valor informado e que o item de valor informado de tabelas antigas só existia na tabela antiga do IFCH e no rascunho da FASI.
 **Where**: `.specs/features/revisao-simplificada/design.md` (modify, linha 180)
@@ -605,8 +605,8 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] `grep -nE "\bI\.3\b" .specs/features/revisao-simplificada/design.md` e `grep -niE "avalia[cç][aã]o (pelo corpo )?discente" .specs/features/revisao-simplificada/design.md` sem saída
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] `grep -nE "\bI\.3\b" .specs/features/revisao-simplificada/design.md` e `grep -niE "avalia[cç][aã]o (pelo corpo )?discente" .specs/features/revisao-simplificada/design.md` sem saída
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
 
 **Tests**: none
 **Gate**: quick
