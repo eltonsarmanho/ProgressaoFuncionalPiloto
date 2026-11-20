@@ -508,7 +508,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T15: Relatório de auditoria sem a sigla
 
-**Status**: Pending
+**Status**: Done
 
 **What**: O título da seção 3 passa a "Inconsistências (do tipo do item de valor informado de tabelas antigas)"; a linha C3 descreve o achado como "item de valor informado de tabelas antigas, inexistente na tabela oficial, citado como item existente", com os arquivos sem a sigla; a C9 troca a expressão que a CAREF-05 proíbe por "item de valor informado". Nenhum achado muda de sentido.
 **Where**: `.specs/audits/2026-11-19-auditoria-requisitos.md` (modify, linhas 42, 48 e 54)
@@ -523,8 +523,8 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] `grep -nE "\bI\.3\b" .specs/audits/2026-11-19-auditoria-requisitos.md` e `grep -niE "avalia[cç][aã]o (pelo corpo )?discente" .specs/audits/2026-11-19-auditoria-requisitos.md` sem saída
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] `grep -nE "\bI\.3\b" .specs/audits/2026-11-19-auditoria-requisitos.md` e `grep -niE "avalia[cç][aã]o (pelo corpo )?discente" .specs/audits/2026-11-19-auditoria-requisitos.md` sem saída
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
 
 **Tests**: none
 **Gate**: quick

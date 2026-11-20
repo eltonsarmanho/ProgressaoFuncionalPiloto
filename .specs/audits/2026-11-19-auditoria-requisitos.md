@@ -39,19 +39,19 @@ Legenda da coluna "Conferido": **sim** = o líder reconferiu no código ou na VM
 
 `grupo-i-no-total` (28 requisitos, Design revisado aguardando aprovação), `banca-parecer`, `normativo`, `implantacao` (sem spec), T110 de `documentos-gerados`, 7 decisões pendentes de inteligência documental (`STATE.md`).
 
-## 3. Inconsistências (do tipo do I.3)
+## 3. Inconsistências (do tipo do item de valor informado de tabelas antigas)
 
 | # | Gravidade | Afirmação | Fato | Conferido | Correção |
 | - | --------- | --------- | ---- | --------- | -------- |
 | C1 | Alta | O item VI.14 diz "3 pontos por ano" no texto que o docente lê | O sistema dá 6 pontos por ano (decisão do usuário de 2026-11-17, registrada só em `review_note`). É o único item cujo texto diverge do valor | sim (`ufpa.json`, critério 6.14) | Mostrar o valor decidido junto do texto, ou anotar a descrição |
 | C2 | Alta | `STATE.md` e o design da revisão diziam que o servidor aceita `points_override` | Com a tabela oficial, `points_override` dá 422 em todos os 100 critérios; `informed_points` é gravado e não tem efeito | sim (`scoring.py:304-329`) | Corrigido nesta auditoria |
-| C3 | Alta | I.3 citado como item existente | Não existe na tabela oficial; só na tabela antiga do IFCH e no rascunho da FASI | sim | Corrigido em `STATE.md` e no design da revisão; ainda citado em `scoring.py:274-276,308-309`, `pontuacao/spec.md:48` e em nomes de testes |
+| C3 | Alta | Item de valor informado de tabelas antigas, inexistente na tabela oficial, citado como item existente | Não existe na tabela oficial; só na tabela antiga do IFCH e no rascunho da FASI | sim | Corrigido em `STATE.md` e no design da revisão; ainda citado em `scoring.py:274-276,308-309`, `pontuacao/spec.md:48` e em nomes de testes |
 | C4 | Alta | Handoff do `STATE.md` diz que o deploy não foi feito, que a tela de arquivar não está commitada e lista arquivos "uncommitted" | A VM está em `a136faf`; a tela está commitada; o `git status` está limpo; a feature corrente (`grupo-i-no-total`) não aparece | agente | Reescrever o Handoff |
 | C5 | Alta | Decisões de 2026-11-17 (planilha como fonte, Grupo I fora do total) e de 2026-11-19 (Grupo I no total) | Nenhuma tem AD no `STATE.md` | agente | AD-023 (a desta feature) com a de 11-17 marcada como substituída |
 | C6 | Média | `ScoreEditor` diz que os pontos de `VALOR_INFORMADO` são "lidos do documento" | Nenhum código de extração preenche esse campo (seria contra a regra 1). Hoje a frase não aparece, porque a tabela oficial não tem esse tipo de item | sim (`ScoreEditor.tsx:15-16`) | Trocar o texto ou remover o ramo |
 | C7 | Média | Design da inteligência documental: IV.1/IV.2 "por ano", V.1 "por projeto", VI.10/VI.12 "por designação" | A tabela e `quantity_rules.py` contam de outro jeito | agente | Alinhar o design ao código |
 | C8 | Média | AD-017 e AD-019 falam em "linha de 0 ponto" para rejeitada e fora do interstício | Depois da AD-022 essas atividades não chegam à Etapa 4 | agente | Anotar a substituição |
-| C9 | Média | Testes com nome "caso real" ou "avaliação discente" usam tabela sintética ou cenário derivado (o total 414 do teste em miniatura está obsoleto) | `test_scoring_engine.py:549`, `test_activity_create.py:325`, `test_scoring_golden.py` | agente | Renomear |
+| C9 | Média | Testes com nome "caso real" ou "item de valor informado" usam tabela sintética ou cenário derivado (o total 414 do teste em miniatura está obsoleto) | `test_scoring_engine.py:549`, `test_activity_create.py:325`, `test_scoring_golden.py` | agente | Renomear |
 | C10 | Média | Os 303 pontos da `grupo-i-no-total` vêm de 92 horas de um cenário derivado; os documentos reais somam 76 h; a dívida "16 pontos do Grupo I" é do modelo antigo | `FONTES.md:43`, `test_scoring_golden.py:91-92` | agente | Escrever "cenário derivado" em toda citação de 211 e 303; reescrever a dívida |
 | C11 | Média | `activityBody.ts` reenvia `informed_points` e `points_override` em toda edição: uma atividade antiga com `points_override` gravado receberia 422 em qualquer edição, sem campo para limpar | `frontend/src/activityBody.ts:4` | agente (risco não reproduzido) | Não reenviar campos sem tela, ou limpar ao editar |
 | C12 | Baixa | Regra 6 diz "acima de 70%"; o código usa "a partir de 70%" (`>= 0.70`) | `confidence.py`, `trust.ts` | agente | Alinhar o texto da regra |
