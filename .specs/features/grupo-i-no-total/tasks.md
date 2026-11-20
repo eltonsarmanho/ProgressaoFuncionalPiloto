@@ -582,7 +582,7 @@ graph LR
 
 #### T16: Aceitação da Tabela gerada com a seção I e 303 pontos
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Teste de aceitação ponta a ponta: o processo do cenário derivado na versão nova gera a Tabela pela API e o DOCX e o PDF baixados têm a seção I com uma linha por oferta, a "Pontuação geral: 303,00", as cinco colunas, o título novo da seção de horas e nada de Status ou Comprovante; na versão antiga, 211, sem seção I e sem as colunas removidas. Conferência visual do DOCX e do PDF (LibreOffice) registrada no corpo do commit, sem gerar arquivo no repositório.
 **Where**: `backend/tests/integration/api/test_generated_table_acceptance.py` (modify)
@@ -597,9 +597,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro: (versão nova) DOCX e PDF com a faixa "I. Docência/atividades de ensino/desempenho didático, avaliado com a participação do corpo discente", as linhas `I.1`/`I.2` ordenadas por período e título, "Pontuação geral: 303,00", cinco cabeçalhos, "Horas de PIT por semestre (Grupo I)" e nenhum "Comprovante", "Status", "Pontuada", "Potencial", "Não pontuada" ou "sem comprovante"; (versão antiga) 211, sem faixa I, cinco colunas, título antigo da seção de horas
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro: (versão nova) DOCX e PDF com a faixa "I. Docência/atividades de ensino/desempenho didático, avaliado com a participação do corpo discente", as linhas `I.1`/`I.2` ordenadas por período e título, "Pontuação geral: 303,00", cinco cabeçalhos, "Horas de PIT por semestre (Grupo I)" e nenhum "Comprovante", "Status", "Pontuada", "Potencial", "Não pontuada" ou "sem comprovante"; (versão antiga) 211, sem faixa I, cinco colunas, título antigo da seção de horas
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: integration
 **Gate**: full
