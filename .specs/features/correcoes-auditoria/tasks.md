@@ -672,7 +672,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T21: Rastreabilidade da inteligência documental
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Para cada requisito de `inteligencia-documental/spec.md` com status `Implementing` ou `In Tasks`, procurar em `validation.md` (passagens 1 a 4 e "Requirement Traceability Update") e em `verification-fora.md` uma linha do Verifier independente com PASS; só esses passam a `Verified`, e a nota de cobertura lista quais mudaram e a passagem que comprova (arquivo e seção). QUA-01..06, CER-01..05 e qualquer requisito sem PASS registrado ficam como estão.
 **Where**: `.specs/features/inteligencia-documental/spec.md` (modify, tabela de rastreabilidade e nota de cobertura)
@@ -687,9 +687,9 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] Cada requisito que mudou para `Verified` tem a passagem e a seção citadas; QUA-01..06 e CER-01..05 continuam `Implementing`
-- [ ] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py inteligencia-documental` sem erro novo
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Cada requisito que mudou para `Verified` tem a passagem e a seção citadas; QUA-01..06 e CER-01..05 continuam `Implementing`
+- [x] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py inteligencia-documental` sem erro novo
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
 
 **Tests**: none
 **Gate**: quick

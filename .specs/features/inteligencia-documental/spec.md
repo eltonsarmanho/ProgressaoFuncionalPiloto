@@ -471,123 +471,123 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story       | Phase  | Status  |
 | -------------- | ----------- | ------ | ------- |
-| DOC-01 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-02 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-03 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-04 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-05 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-06 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-07 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-08 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-09 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-10 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-11 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-12 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-13 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-14 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| DOC-15 | P1: Envio, guarda e segurança dos documentos | Design | Implementing |
-| PIPE-01 | P1: Processamento: texto, OCR e estados | Design | Implementing |
-| PIPE-02 | P1: Processamento: texto, OCR e estados | Design | Implementing |
-| PIPE-03 | P1: Processamento: texto, OCR e estados | Design | Implementing |
-| PIPE-04 | P1: Processamento: texto, OCR e estados | Design | Implementing |
-| PIPE-05 | P1: Processamento: texto, OCR e estados | Design | Implementing |
-| PIPE-06 | P1: Processamento: texto, OCR e estados | Design | Implementing |
-| PIPE-07 | P1: Processamento: texto, OCR e estados | Design | Implementing |
-| PIPE-08 | P1: Processamento: texto, OCR e estados | Design | Implementing |
-| PIPE-09 | P1: Processamento: texto, OCR e estados | Design | Implementing |
-| PIPE-10 | P1: Processamento: texto, OCR e estados | Design | Implementing |
-| PIPE-11 | P1: Processamento: texto, OCR e estados | Design | Implementing |
-| EXT-01 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-02 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-03 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-04 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-05 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-06 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-07 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-08 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-09 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-10 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-11 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-12 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| EXT-13 | P1: Extração estruturada com a MariTalk | Design | Implementing |
-| CLS-01 | P1: Classificação em item de pontuação | Design | Implementing |
-| CLS-02 | P1: Classificação em item de pontuação | Design | Implementing |
-| CLS-03 | P1: Classificação em item de pontuação | Design | Implementing |
-| CLS-04 | P1: Classificação em item de pontuação | Design | Implementing |
-| CLS-05 | P1: Classificação em item de pontuação | Design | Implementing |
-| CLS-06 | P1: Classificação em item de pontuação | Design | Implementing |
-| CLS-07 | P1: Classificação em item de pontuação | Design | Implementing |
-| CLS-08 | P1: Classificação em item de pontuação | Design | Implementing |
-| CLS-09 | P1: Classificação em item de pontuação | Design | Implementing |
-| CLS-10 | P1: Classificação em item de pontuação | Design | Implementing |
-| VINC-01 | P1: Atividades ligadas aos documentos | Design | Implementing |
-| VINC-02 | P1: Atividades ligadas aos documentos | Design | Implementing |
-| VINC-03 | P1: Atividades ligadas aos documentos | Design | Implementing |
-| VINC-04 | P1: Atividades ligadas aos documentos | Design | Implementing |
-| VINC-05 | P1: Atividades ligadas aos documentos | Design | Implementing |
-| VINC-06 | P1: Atividades ligadas aos documentos | Design | Implementing |
-| REV-01 | P1: Revisão humana | Design | Implementing |
-| REV-02 | P1: Revisão humana | Design | Implementing |
-| REV-03 | P1: Revisão humana | Design | Implementing |
-| REV-04 | P1: Revisão humana | Design | Implementing |
-| TELA-01 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
-| TELA-02 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
-| TELA-03 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
-| TELA-04 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
-| TELA-05 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
-| TELA-06 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
-| TELA-07 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
-| TELA-08 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
-| TELA-09 | P1: Etapas 2 e 3 na interface | Design | In Tasks |
-| ACC-01 | P2: Aceitação com os documentos reais | Design | In Tasks |
-| ACC-02 | P2: Aceitação com os documentos reais | Design | In Tasks |
-| ACC-03 | P2: Aceitação com os documentos reais | Design | Implementing |
-| ACC-04 | P2: Aceitação com os documentos reais | Design | In Tasks |
-| REAL-01 | P1: Correções da validação real | Design | Implementing |
-| REAL-02 | P1: Correções da validação real | Design | Implementing |
-| REAL-03 | P1: Correções da validação real | Design | Implementing |
-| REAL-04 | P1: Correções da validação real | Design | Implementing |
-| REAL-05 | P1: Correções da validação real | Design | Implementing |
-| REAL-06 | P1: Correções da validação real | Design | Implementing |
-| REAL-07 | P1: Correções da validação real | Design | Implementing |
-| REAL-08 | P1: Correções da validação real | Design | Implementing |
-| REAL-09 | P1: Correções da validação real | Design | Implementing |
-| REAL-10 | P1: Correções da validação real | Design | Implementing |
-| REAL-11 | P1: Correções da validação real | Design | Implementing |
-| REAL-12 | P1: Correções da validação real | Design | Implementing |
-| REAL-13 | P1: Correções da validação real | Design | Implementing |
-| REAL-14 | P1: Correções da validação real | Design | Implementing |
-| REAL-15 | P1: Correções da validação real | Design | Implementing |
-| REAL-16 | P1: Correções da validação real | Design | Implementing |
-| REAL-17 | P1: Correções da validação real | Design | Implementing |
-| REAL-18 | P1: Correções da validação real | Design | Implementing |
-| REAL-19 | P1: Correções da validação real | Design | Implementing |
-| REAL-20 | P1: Correções da validação real | Design | Implementing |
-| VER-01 | P1: Correções da verificação independente | Design | Implementing |
-| VER-02 | P1: Correções da verificação independente | Design | Implementing |
-| VER-03 | P1: Correções da verificação independente | Design | Implementing |
-| VER-04 | P1: Correções da verificação independente | Design | Implementing |
-| VER-05 | P1: Correções da verificação independente | Design | Implementing |
-| VER-06 | P1: Correções da verificação independente | Design | Implementing |
-| VER-07 | P1: Correções da verificação independente | Design | Implementing |
-| VER-08 | P1: Correções da verificação independente | Design | Implementing |
-| VER-09 | P1: Correções da verificação independente | Design | Implementing |
-| VER-10 | P1: Correções da verificação independente | Design | Implementing |
-| VER-11 | P1: Correções da verificação independente | Design | Implementing |
-| VER-12 | P1: Correções da verificação independente | Design | Implementing |
-| VER-13 | P1: Correções da verificação independente | Design | Implementing |
+| DOC-01 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| DOC-02 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| DOC-03 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| DOC-04 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| DOC-05 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| DOC-06 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| DOC-07 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| DOC-08 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| DOC-09 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| DOC-10 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| DOC-11 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| DOC-12 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| DOC-13 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| DOC-14 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| DOC-15 | P1: Envio, guarda e segurança dos documentos | Design | Verified |
+| PIPE-01 | P1: Processamento: texto, OCR e estados | Design | Verified |
+| PIPE-02 | P1: Processamento: texto, OCR e estados | Design | Verified |
+| PIPE-03 | P1: Processamento: texto, OCR e estados | Design | Verified |
+| PIPE-04 | P1: Processamento: texto, OCR e estados | Design | Verified |
+| PIPE-05 | P1: Processamento: texto, OCR e estados | Design | Verified |
+| PIPE-06 | P1: Processamento: texto, OCR e estados | Design | Verified |
+| PIPE-07 | P1: Processamento: texto, OCR e estados | Design | Verified |
+| PIPE-08 | P1: Processamento: texto, OCR e estados | Design | Verified |
+| PIPE-09 | P1: Processamento: texto, OCR e estados | Design | Verified |
+| PIPE-10 | P1: Processamento: texto, OCR e estados | Design | Verified |
+| PIPE-11 | P1: Processamento: texto, OCR e estados | Design | Verified |
+| EXT-01 | P1: Extração estruturada com a MariTalk | Design | Verified |
+| EXT-02 | P1: Extração estruturada com a MariTalk | Design | Verified |
+| EXT-03 | P1: Extração estruturada com a MariTalk | Design | Verified |
+| EXT-04 | P1: Extração estruturada com a MariTalk | Design | Verified |
+| EXT-05 | P1: Extração estruturada com a MariTalk | Design | Verified |
+| EXT-06 | P1: Extração estruturada com a MariTalk | Design | Verified |
+| EXT-07 | P1: Extração estruturada com a MariTalk | Design | Verified |
+| EXT-08 | P1: Extração estruturada com a MariTalk | Design | Verified |
+| EXT-09 | P1: Extração estruturada com a MariTalk | Design | Verified |
+| EXT-10 | P1: Extração estruturada com a MariTalk | Design | Verified |
+| EXT-11 | P1: Extração estruturada com a MariTalk | Design | Verified |
+| EXT-12 | P1: Extração estruturada com a MariTalk | Design | Verified |
+| EXT-13 | P1: Extração estruturada com a MariTalk | Design | Verified |
+| CLS-01 | P1: Classificação em item de pontuação | Design | Verified |
+| CLS-02 | P1: Classificação em item de pontuação | Design | Verified |
+| CLS-03 | P1: Classificação em item de pontuação | Design | Verified |
+| CLS-04 | P1: Classificação em item de pontuação | Design | Verified |
+| CLS-05 | P1: Classificação em item de pontuação | Design | Verified |
+| CLS-06 | P1: Classificação em item de pontuação | Design | Verified |
+| CLS-07 | P1: Classificação em item de pontuação | Design | Verified |
+| CLS-08 | P1: Classificação em item de pontuação | Design | Verified |
+| CLS-09 | P1: Classificação em item de pontuação | Design | Verified |
+| CLS-10 | P1: Classificação em item de pontuação | Design | Verified |
+| VINC-01 | P1: Atividades ligadas aos documentos | Design | Verified |
+| VINC-02 | P1: Atividades ligadas aos documentos | Design | Verified |
+| VINC-03 | P1: Atividades ligadas aos documentos | Design | Verified |
+| VINC-04 | P1: Atividades ligadas aos documentos | Design | Verified |
+| VINC-05 | P1: Atividades ligadas aos documentos | Design | Verified |
+| VINC-06 | P1: Atividades ligadas aos documentos | Design | Verified |
+| REV-01 | P1: Revisão humana | Design | Verified |
+| REV-02 | P1: Revisão humana | Design | Verified |
+| REV-03 | P1: Revisão humana | Design | Verified |
+| REV-04 | P1: Revisão humana | Design | Verified |
+| TELA-01 | P1: Etapas 2 e 3 na interface | Design | Verified |
+| TELA-02 | P1: Etapas 2 e 3 na interface | Design | Verified |
+| TELA-03 | P1: Etapas 2 e 3 na interface | Design | Verified |
+| TELA-04 | P1: Etapas 2 e 3 na interface | Design | Verified |
+| TELA-05 | P1: Etapas 2 e 3 na interface | Design | Verified |
+| TELA-06 | P1: Etapas 2 e 3 na interface | Design | Verified |
+| TELA-07 | P1: Etapas 2 e 3 na interface | Design | Verified |
+| TELA-08 | P1: Etapas 2 e 3 na interface | Design | Verified |
+| TELA-09 | P1: Etapas 2 e 3 na interface | Design | Verified |
+| ACC-01 | P2: Aceitação com os documentos reais | Design | Verified |
+| ACC-02 | P2: Aceitação com os documentos reais | Design | Verified |
+| ACC-03 | P2: Aceitação com os documentos reais | Design | Verified |
+| ACC-04 | P2: Aceitação com os documentos reais | Design | Verified |
+| REAL-01 | P1: Correções da validação real | Design | Verified |
+| REAL-02 | P1: Correções da validação real | Design | Verified |
+| REAL-03 | P1: Correções da validação real | Design | Verified |
+| REAL-04 | P1: Correções da validação real | Design | Verified |
+| REAL-05 | P1: Correções da validação real | Design | Verified |
+| REAL-06 | P1: Correções da validação real | Design | Verified |
+| REAL-07 | P1: Correções da validação real | Design | Verified |
+| REAL-08 | P1: Correções da validação real | Design | Verified |
+| REAL-09 | P1: Correções da validação real | Design | Verified |
+| REAL-10 | P1: Correções da validação real | Design | Verified |
+| REAL-11 | P1: Correções da validação real | Design | Verified |
+| REAL-12 | P1: Correções da validação real | Design | Verified |
+| REAL-13 | P1: Correções da validação real | Design | Verified |
+| REAL-14 | P1: Correções da validação real | Design | Verified |
+| REAL-15 | P1: Correções da validação real | Design | Verified |
+| REAL-16 | P1: Correções da validação real | Design | Verified |
+| REAL-17 | P1: Correções da validação real | Design | Verified |
+| REAL-18 | P1: Correções da validação real | Design | Verified |
+| REAL-19 | P1: Correções da validação real | Design | Verified |
+| REAL-20 | P1: Correções da validação real | Design | Verified |
+| VER-01 | P1: Correções da verificação independente | Design | Verified |
+| VER-02 | P1: Correções da verificação independente | Design | Verified |
+| VER-03 | P1: Correções da verificação independente | Design | Verified |
+| VER-04 | P1: Correções da verificação independente | Design | Verified |
+| VER-05 | P1: Correções da verificação independente | Design | Verified |
+| VER-06 | P1: Correções da verificação independente | Design | Verified |
+| VER-07 | P1: Correções da verificação independente | Design | Verified |
+| VER-08 | P1: Correções da verificação independente | Design | Verified |
+| VER-09 | P1: Correções da verificação independente | Design | Verified |
+| VER-10 | P1: Correções da verificação independente | Design | Verified |
+| VER-11 | P1: Correções da verificação independente | Design | Verified |
+| VER-12 | P1: Correções da verificação independente | Design | Verified |
+| VER-13 | P1: Correções da verificação independente | Design | Verified |
 | SEG-01 | P1: Correções da segunda rodada de validação | Design | Implementing |
-| SEG-02 | P1: Correções da segunda rodada de validação | Design | Implementing |
-| SEG-03 | P1: Correções da segunda rodada de validação | Design | Implementing |
-| SEG-04 | P1: Correções da segunda rodada de validação | Design | Implementing |
-| SEG-05 | P1: Correções da segunda rodada de validação | Design | Implementing |
-| SEG-06 | P1: Correções da segunda rodada de validação | Design | Implementing |
-| SEG-07 | P1: Correções da segunda rodada de validação | Design | Implementing |
-| SEG-08 | P1: Correções da segunda rodada de validação | Design | Implementing |
-| SEG-09 | P1: Correções da segunda rodada de validação | Design | Implementing |
-| SEG-10 | P1: Correções da segunda rodada de validação | Design | Implementing |
-| SEG-11 | P1: Correções da segunda rodada de validação | Design | Implementing |
-| SEG-12 | P1: Correções da segunda rodada de validação | Design | Implementing |
+| SEG-02 | P1: Correções da segunda rodada de validação | Design | Verified |
+| SEG-03 | P1: Correções da segunda rodada de validação | Design | Verified |
+| SEG-04 | P1: Correções da segunda rodada de validação | Design | Verified |
+| SEG-05 | P1: Correções da segunda rodada de validação | Design | Verified |
+| SEG-06 | P1: Correções da segunda rodada de validação | Design | Verified |
+| SEG-07 | P1: Correções da segunda rodada de validação | Design | Verified |
+| SEG-08 | P1: Correções da segunda rodada de validação | Design | Verified |
+| SEG-09 | P1: Correções da segunda rodada de validação | Design | Verified |
+| SEG-10 | P1: Correções da segunda rodada de validação | Design | Verified |
+| SEG-11 | P1: Correções da segunda rodada de validação | Design | Verified |
+| SEG-12 | P1: Correções da segunda rodada de validação | Design | Verified |
 | TER-01 | P1: Correções da terceira rodada de validação | Design | Verified |
 | TER-02 | P1: Correções da terceira rodada de validação | Design | Verified |
 | TER-03 | P1: Correções da terceira rodada de validação | Design | Verified |
@@ -649,7 +649,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 **FORA-03 note:** `Verified` em 2026-11-18. O usuário decidiu (AD-019) que as atividades já editadas ou validadas de um documento que passa a ficar fora do interstício também saem das Etapas 3 a 5 (T146); o processamento rejeita, com auditoria `DOCUMENTO_FORA_DO_INTERSTICIO`, as atividades ligadas só ao documento, e a que tem evidência de outro documento perde só a evidência do documento fora. O Verificador independente B de `documentos-gerados` aprovou (`.specs/features/documentos-gerados/verification-b.md`, seção FORA: `test_process_outside_interstice.py:148-284`, execução real no navegador, mutantes T01 a T11 todos mortos); o resumo está em `.specs/features/documentos-gerados/validation.md`. FORA-07 (reavaliação ao reprocessar) já estava `Verified` e foi reconferido pelo mesmo relatório.
 
-**Coverage:** 171 total, 171 mapped to tasks, 0 unmapped (FORA-01..09 na Phase 18, T141-T146); FORA-01..09 `Verified` (FORA-03 e FORA-07 pelo `verification-b.md` de `documentos-gerados`)
+**Verification note (correcoes-auditoria, CADOC-07):** 116 requisitos passaram de `Implementing` ou `In Tasks` para `Verified` por uma passagem do Verifier independente com PASS registrada. DOC-01..15, PIPE-01..11, EXT-01..13, CLS-01..10, VINC-01..06, REV-01..04, TELA-01..09, ACC-01..04, REAL-01..20 e VER-01..13 (105): `validation.md`, seção "History" (passagens 1 a 3, com DOC-04 e EXT-07 sem PARTIAL desde a passagem 2) e seção "Requirement Traceability Update" da passagem 3 (linha "DOC-01..VER-13 (other 103)" e linha "REAL-02, REAL-12", `Verified`). SEG-02..SEG-12 (11): `validation.md`, passagem 3, seção "Requirement Traceability Update" (linha "SEG-02..SEG-12", `Verified`). Ficam como estão: SEG-01 (PARTIAL na passagem 3, `Needs Fix` FT-19; a passagem 4 verificou TER-01, não SEG-01), UIM-01..23 (a verificação independente da Fase 17 em `validation.md` registra mutantes, sem veredito PASS), QUA-01..06 e CER-01..05 (sem passagem do Verifier).
+
+**Coverage:** 171 total, 171 mapped to tasks, 0 unmapped (FORA-01..09 na Phase 18, T141-T146); FORA-01..09 `Verified` (FORA-03 e FORA-07 pelo `verification-b.md` de `documentos-gerados`); 136 `Verified` e 35 `Implementing` (SEG-01, UIM-01..23, QUA-01..06, CER-01..05)
 
 ---
 
