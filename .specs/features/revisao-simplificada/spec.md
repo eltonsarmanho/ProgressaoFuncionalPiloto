@@ -181,56 +181,74 @@ Na Etapa 3 o docente revisa atividades que chegam dos documentos, e processos re
 
 ---
 
+## Decisões do Verifier (rodada 1)
+
+O Verifier (T44, `validation.md`) achou pontos em que a spec não dizia o resultado e os testes fixaram o comportamento que já existia. Esta seção registra esse comportamento como decisão. Nenhum requisito novo: cada item descreve o que o código faz e o teste que o guarda.
+
+1. **Ordem dos motivos (SP1).** Quando mais de um motivo se aplica, vale o primeiro da ordem do motor: rejeitada; data ou período fora do interstício; sem categoria (a atividade segue válida com o selo "Precisa de categoria"); grupo que não conta no total e que não é PIT; duplicidade residual; carga horária abaixo do mínimo do item. A rejeitada vem antes de "sem enquadramento": uma rejeitada sem item aparece como "Rejeitada por você". Sem tabela escolhida só se julgam a rejeição, a data (tomada como dia) e a categoria. Testes: `test_activity_validity.py` (seção "the order of the reasons is the engine's") e `test_scoring_engine.py`.
+2. **Motivos além dos três da SEC-06 (SP2).** A seção de não válidas também lista "Grupo não conta no total" (`GRUPO_NAO_CONTA`) e "Duplicidade" (`DUPLICIDADE`, a duplicada que a mesclagem ainda não alcançou, por exemplo em processo somente leitura, onde ela não roda). Os textos são os do rótulo curto, sem parâmetros. Teste: `labels.test.ts`.
+3. **Período por ano e precisão de mês (SP3, SP5).** Em categoria medida por ano, o período vale pelo que cruza o interstício; um período só com início é aberto e corre até o fim do interstício, então início antes ou dentro dele é aceito e início depois do fim é recusado (422 em `period_start`, na criação e na edição). Com precisão de mês o julgamento usa o mês inteiro (do dia 1 ao último dia). O texto do motivo mostra "período dd/mm/aaaa a dd/mm/aaaa" com as datas gravadas, e em mês aparece o dia 01, porque `validity.params` não carrega a precisão. Testes: `test_activity_edit_rules_api.py` (período aberto), `labels.test.ts`.
+4. **Ordem das validações na rota de status (SP4).** Atividade inexistente ou de processo fora do acesso (404), processo somente leitura (409), mesmo status (422 em `status`, "A atividade já está neste status"), versão desatualizada (409) e, só para `VALIDADA`, atividade não válida (422 em `status`, código `ATIVIDADE_NAO_VALIDA`) antes de sem categoria (422 em `categoria`). O alerta `QUANTIDADE_ASSUMIDA` tem gravidade `ALERTA`, a mensagem "A atividade não tem quantidade; pontuada com 1 unidade." e a norma da tabela. Testes: `test_activity_validate_rules_api.py`, `test_scoring_engine_validity.py`.
+5. **Data inalterada não é rejulgada (SP5).** Ao salvar outro campo de uma atividade que já estava fora do interstício (lida de documento, por exemplo), a data que não mudou não é julgada de novo; só a data, o período ou a precisão que o corpo traz diferentes da gravada passam pela checagem. Teste: `test_editing_a_title_keeps_a_date_that_was_already_outside_and_changing_it_is_refused`.
+6. **Mais de duas validadas na mesclagem (SP6).** Se o grupo de duplicadas tem mais de uma validada, fica a primeira validada na ordem de criação; sem validada, a primeira criada. Teste: `test_activity_merge.py`.
+7. **Etapa 3 sem tabela escolhida (SP7).** Sem tabela de pontuação, escolhida ou sugerida, não há categorias a escolher: o avanço à Etapa 4 fica livre e a página avisa que falta a tabela, com o link para a Etapa 4. A garantia final é a recusa da geração (SEG-05). Teste: `ProcessActivities.test.tsx`.
+8. **Faixa da quantidade (SP8).** A quantidade vai de 0 a 10000, os dois extremos incluídos (zero é aceito), e é inteira nos critérios por unidade; fora disso, 422 no campo `quantidade` ("Quantidade deve estar entre 0 e 10000" ou "Quantidade deve ser inteira neste critério"). A QTD-03 cita só a negativa e a não numérica. Teste: `test_activity_edit_rules_api.py`, `ScoreEditor.test.tsx`.
+9. **Vocabulário de `skipped` (SP9).** A validação em lote devolve em `skipped[].reason` `SEM_CATEGORIA` ou o motivo da validade (`REJEITADA`, `FORA_DO_INTERSTICIO`, `CARGA_HORARIA_INSUFICIENTE`, `GRUPO_NAO_CONTA`, `DUPLICIDADE`); o lote não valida atividade não válida nem sem categoria; a que já está validada fica como está e volta na lista das validadas. Teste: `test_bulk_validate_skipped.py`.
+10. **Formulário da oferta nova do Grupo I e contadores (SP10 a e c).** A EDT-04 não define o formulário de uma oferta nova do Grupo I. Com a categoria do Grupo I escolhida, o formulário pede Título, Categoria, período letivo, nível e horas semanais, sem Data nem Quantidade, e não envia o item (o servidor o deriva do nível). Os contadores da SEG-04 são os do servidor, que o frontend só exibe. Testes: `ActivityForm.test.tsx`, `test_scoring_validity_api.py`.
+11. **Prévia da conclusão (SP10 b).** A cláusula "e prévia da conclusão" da SEG-01 não tem resultado observável: a prévia (`GetConclusionPreview`) conta arquivos e bytes dos documentos de entrada e as versões geradas, e não lê atividades. Nada a afirmar nela, e nenhum teste a cobre.
+
+---
+
 ## Requirement Traceability
 
-| Requirement ID | Story | Phase | Status |
-| -------------- | ----- | ----- | ------ |
-| VAL-01 | P1: Validar pontua | Design | Implemented |
-| VAL-02 | P1: Validar pontua | Design | Implementing |
-| VAL-03 | P1: Validar pontua | Design | Implemented |
-| VAL-04 | P1: Validar pontua | Design | Implemented |
-| VAL-05 | P1: Validar pontua | Design | Implemented |
-| VAL-06 | P1: Validar pontua | Design | Implementing |
-| SEC-01 | P1: Etapa 3 em duas seções | Design | Implemented |
-| SEC-02 | P1: Etapa 3 em duas seções | Design | Implemented |
-| SEC-03 | P1: Etapa 3 em duas seções | Design | Implemented |
-| SEC-04 | P1: Etapa 3 em duas seções | Design | Implemented |
-| SEC-05 | P1: Etapa 3 em duas seções | Design | Implemented |
-| SEC-06 | P1: Etapa 3 em duas seções | Design | Implemented |
-| SEC-07 | P1: Etapa 3 em duas seções | Design | Implemented |
-| SEC-08 | P1: Etapa 3 em duas seções | Design | Implemented |
-| SEC-09 | P1: Etapa 3 em duas seções | Design | Implemented |
-| SEC-10 | P1: Etapa 3 em duas seções | Design | Implemented |
-| SEC-11 | P1: Etapa 3 em duas seções | Design | Implemented |
-| SEC-12 | P1: Etapa 3 em duas seções | Design | Implemented |
-| DUP-01 | P1: Duplicadas mescladas | Design | Implemented |
-| DUP-02 | P1: Duplicadas mescladas | Design | Implemented |
-| DUP-03 | P1: Duplicadas mescladas | Design | Implemented |
-| DUP-04 | P1: Duplicadas mescladas | Design | Implemented |
-| DUP-05 | P1: Duplicadas mescladas | Design | Implemented |
-| DUP-06 | P1: Duplicadas mescladas | Design | Implemented |
-| DUP-07 | P1: Duplicadas mescladas | Design | Implemented |
-| SEG-01 | P1: Só as válidas seguem | Design | Implemented |
-| SEG-02 | P1: Só as válidas seguem | Design | Implemented |
-| SEG-03 | P1: Só as válidas seguem | Design | Implemented |
-| SEG-04 | P1: Só as válidas seguem | Design | Implemented |
-| SEG-05 | P1: Só as válidas seguem | Design | Implementing |
-| EDT-01 | P1: Editar atividade com poucos campos | Design | Implemented |
-| EDT-02 | P1: Editar atividade com poucos campos | Design | Implemented |
-| EDT-03 | P1: Editar atividade com poucos campos | Design | Implemented |
-| EDT-04 | P1: Editar atividade com poucos campos | Design | Implemented |
-| EDT-05 | P1: Editar atividade com poucos campos | Design | Implemented |
-| EDT-06 | P1: Editar atividade com poucos campos | Design | Implemented |
-| EDT-07 | P1: Editar atividade com poucos campos | Design | Implemented |
-| QTD-01 | P1: Quantidade e valor manual na Etapa 4 | Design | Implemented |
-| QTD-02 | P1: Quantidade e valor manual na Etapa 4 | Design | Implemented |
-| QTD-03 | P1: Quantidade e valor manual na Etapa 4 | Design | Implemented |
+| Requirement ID | Story | Phase | Tasks | Status |
+| -------------- | ----- | ----- | ----- | ------ |
+| VAL-01 | P1: Validar pontua | Tasks | T2, T5, T62 | Implemented |
+| VAL-02 | P1: Validar pontua | Tasks | T3, T4, T28 | Implemented |
+| VAL-03 | P1: Validar pontua | Tasks | T17 | Implemented |
+| VAL-04 | P1: Validar pontua | Tasks | T18, T19, T34 | Implemented |
+| VAL-05 | P1: Validar pontua | Tasks | T17 | Implemented |
+| VAL-06 | P1: Validar pontua | Tasks | T1, T17, T33, T34 | Implemented |
+| SEC-01 | P1: Etapa 3 em duas seções | Tasks | T23, T24, T27, T36, T38, T39 | Implemented |
+| SEC-02 | P1: Etapa 3 em duas seções | Tasks | T1, T25, T26, T34 | Implemented |
+| SEC-03 | P1: Etapa 3 em duas seções | Tasks | T31, T34, T48 | Implemented |
+| SEC-04 | P1: Etapa 3 em duas seções | Tasks | T30, T33, T45, T46, T47, T51, T52 | Implemented |
+| SEC-05 | P1: Etapa 3 em duas seções | Tasks | T34, T37, T38, T47, T49, T51, T53, T54, T55, T58 | Implemented |
+| SEC-06 | P1: Etapa 3 em duas seções | Tasks | T1, T22, T25, T35 | Implemented |
+| SEC-07 | P1: Etapa 3 em duas seções | Tasks | T1, T24, T25, T28, T29, T35 | Implemented |
+| SEC-08 | P1: Etapa 3 em duas seções | Tasks | T25, T26, T36, T62 | Implemented |
+| SEC-09 | P1: Etapa 3 em duas seções | Tasks | T25, T35, T36 | Implemented |
+| SEC-10 | P1: Etapa 3 em duas seções | Tasks | T35 | Implemented |
+| SEC-11 | P1: Etapa 3 em duas seções | Tasks | T34, T35, T48, T53 | Implemented |
+| SEC-12 | P1: Etapa 3 em duas seções | Tasks | T33, T35, T36, T45, T46, T49, T52, T53, T55, T60 | Implemented |
+| DUP-01 | P1: Duplicadas mescladas | Tasks | T13, T14 | Implemented |
+| DUP-02 | P1: Duplicadas mescladas | Tasks | T9, T10, T11, T12, T14 | Implemented |
+| DUP-03 | P1: Duplicadas mescladas | Tasks | T10, T12, T14, T59 | Implemented |
+| DUP-04 | P1: Duplicadas mescladas | Tasks | T16, T21, T22, T38 | Implemented |
+| DUP-05 | P1: Duplicadas mescladas | Tasks | T14 | Implemented |
+| DUP-06 | P1: Duplicadas mescladas | Tasks | T14 | Implemented |
+| DUP-07 | P1: Duplicadas mescladas | Tasks | T15, T16, T24, T32 | Implemented |
+| SEG-01 | P1: Só as válidas seguem | Tasks | T1, T2, T5, T6, T8, T56 | Implemented |
+| SEG-02 | P1: Só as válidas seguem | Tasks | T6, T8, T59 | Implemented |
+| SEG-03 | P1: Só as válidas seguem | Tasks | T2, T6, T8, T26 | Implemented |
+| SEG-04 | P1: Só as válidas seguem | Tasks | T2, T5 | Implemented |
+| SEG-05 | P1: Só as válidas seguem | Tasks | T7, T8, T28, T61 | Implemented |
+| EDT-01 | P1: Editar atividade com poucos campos | Tasks | T40, T50 | Implemented |
+| EDT-02 | P1: Editar atividade com poucos campos | Tasks | T20, T41, T49 | Implemented |
+| EDT-03 | P1: Editar atividade com poucos campos | Tasks | T20, T41, T57, T62 | Implemented |
+| EDT-04 | P1: Editar atividade com poucos campos | Tasks | T40 | Implemented |
+| EDT-05 | P1: Editar atividade com poucos campos | Tasks | T40 | Implemented |
+| EDT-06 | P1: Editar atividade com poucos campos | Tasks | T20, T40 | Implemented |
+| EDT-07 | P1: Editar atividade com poucos campos | Tasks | T40 | Implemented |
+| QTD-01 | P1: Quantidade e valor manual na Etapa 4 | Tasks | T42, T50 | Implemented |
+| QTD-02 | P1: Quantidade e valor manual na Etapa 4 | Tasks | T20, T42, T50 | Implemented |
+| QTD-03 | P1: Quantidade e valor manual na Etapa 4 | Tasks | T20, T42, T49 | Implemented |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Implemented → Verified
 
-**Coverage:** 40 total, 0 mapped to tasks, 40 unmapped ⚠️ (a Design e as Tasks mapeiam)
+**Coverage:** 40 total, 40 mapped to tasks, 0 unmapped. Todos `Implemented`; `Verified` depende da T44 (Verificador independente, pendente).
 
 ---
 

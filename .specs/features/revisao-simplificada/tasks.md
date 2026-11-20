@@ -1828,8 +1828,10 @@ T62 → T43 → T44
 
 ### T43: Documentação da feature
 
-**What**: AD-022 em `STATE.md` (coluna `merged_into_id`, validade no servidor, mesclagem na escrita), regra 10 em `CLAUDE.md` e rastreabilidade da spec marcada como `Implemented`.
-**Where**: `.specs/STATE.md` (modify)
+**Status**: Done
+
+**What**: (inclui as edições de `spec.md` e `design.md` das T57, T60 e T62, e a pergunta aberta da T61 em `STATE.md`) AD-022 em `STATE.md` (coluna `merged_into_id`, validade no servidor, mesclagem na escrita), regra 10 em `CLAUDE.md` e rastreabilidade da spec marcada como `Implemented`.
+**Where**: `.specs/STATE.md`, `CLAUDE.md`, `.specs/features/revisao-simplificada/spec.md` e `design.md` (modify)
 **Depends on**: T62
 **Reuses**: AD-018 como modelo; o texto do Design
 **Requirement**: DUP-02, SEG-01, VAL-01
@@ -1841,10 +1843,10 @@ T62 → T43 → T44
 
 **Done when**:
 
-- [ ] AD-022 escrito em `STATE.md`; `CLAUDE.md` ganha a regra 10 (só as atividades válidas seguem; duplicadas mescladas; validar pontua); `spec.md` e `design.md` com o status atualizado; os 40 requisitos mapeados a tarefas
-- [ ] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py revisao-simplificada` sem erro
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: contagem final registrada
+- [x] AD-022 escrito em `STATE.md`; `CLAUDE.md` ganha a regra 10 (só as atividades válidas seguem; duplicadas mescladas; validar pontua); `spec.md` e `design.md` com o status atualizado; os 40 requisitos mapeados a tarefas
+- [x] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py revisao-simplificada` sem erro
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagem final registrada: backend 5281 passando (3 `deselected`), frontend 563 passando (41 arquivos)
 
 **Tests**: none
 **Gate**: build

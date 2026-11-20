@@ -1,13 +1,13 @@
 # Revisão simplificada das atividades Design
 
 **Spec**: `.specs/features/revisao-simplificada/spec.md`
-**Status**: Approved (o usuário aprovou o desenho completo em 2026-11-19; AD-022 vai para o STATE.md na tarefa T43)
+**Status**: Implemented (o usuário aprovou o desenho completo em 2026-11-19; AD-022 registrada em `STATE.md`; Verified pendente da reverificação da T44, volta 1 de 3)
 
 Decisões do projeto que este desenho segue: AD-001 (a regra de validade fica no `domain`, sem FastAPI nem SQLAlchemy), AD-006 (o resultado da pontuação é calculado na hora, nunca gravado: a validade também), AD-019 (atividade ligada só a documento fora do interstício é rejeitada com auditoria: aparece como "Rejeitada" nas não válidas) e AD-018 (o `DELETE` do processo apaga tudo: a coluna nova não pode travá-lo).
 
 ---
 
-## Decisões de arquitetura (AD-022, proposta)
+## Decisões de arquitetura (AD-022)
 
 | # | Escolha | Alternativa recusada | Por quê |
 | - | ------- | -------------------- | ------- |
@@ -178,3 +178,14 @@ type Validity = {
 - **Erro de escrita da linha.** O aviso de 409 ou 422 sobe para o `ActivityWorkspace` e fica numa região `role="alert"` que sobrevive à recarga em que a linha troca de seção; o 422 da categoria aparece só no seletor da linha.
 - **Texto do `ScoreEditor`.** Depois da EDT-01 nenhuma tela da Etapa 3 digita pontos informados (`informed_points`) nem pontos manuais de carga semanal (`points_override`); as notas desses itens não apontam mais para "Editar".
 - **Pergunta aberta.** Itens `VALOR_INFORMADO` (por exemplo o I.3) e itens de carga semanal que precisem de pontos digitados não têm hoje caminho de entrada na interface: o servidor aceita `informed_points` e `points_override`, mas nenhum formulário os mostra, e `unit_points_override` é recusado nesses modos. A decisão de onde digitá-los é do usuário.
+
+---
+
+## Verificação a 360 px (SEC-12, rodada 1 do Verifier)
+
+O jsdom não calcula layout, então os testes de componente só provam por regra de CSS que nada fixa a largura. A largura de 360 px foi medida em um navegador de verdade, o Google Chrome 146 já instalado na máquina de desenvolvimento (`/usr/bin/google-chrome`, modo `--headless=new`), sem baixar nada da rede.
+
+- **Método.** Uma página descartável (fora do repositório, removida depois) montou o app inteiro (`AppRoutes`, `Layout`, `StepNav`, Etapa 3) em um `iframe` de largura fixa, com `fetch` trocado por dados sintéticos: 120 atividades válidas (com títulos longos, nome de documento longo, uma delas com duplicada mesclada, 12 sem categoria) e 7 não válidas. Antes de medir, o script clicou "Mostrar mais" até mostrar as 120 e abriu a seção "Atividades não válidas".
+- **Resultado.** A 360 px: 127 linhas na página, `documentElement.scrollWidth` 345 e `clientWidth` 345 (os 15 px a menos são a barra de rolagem vertical do modo headless), nenhum elemento com borda direita além da largura. A 320 px: 305 e 305. A 1024 px: sem rolagem horizontal.
+- **Controle negativo.** A 200 px a mesma medição acusa rolagem (`scrollWidth` 225, `clientWidth` 185, com os campos do formulário passando da borda), o que mostra que o método percebe o problema.
+- **Limite.** A verificação é manual e fica fora do gate: o projeto não tem teste de navegador. Para repetir: abrir a Etapa 3 de um processo com 120 atividades no Chrome, ativar a emulação de dispositivo com 360 px de largura, clicar em "Mostrar mais" até o fim, abrir "Atividades não válidas" e conferir que não aparece barra de rolagem horizontal (no console, `document.documentElement.scrollWidth <= document.documentElement.clientWidth`). O modo headless tem janela mínima de 500 px, por isso a largura foi forçada com o `iframe`.
