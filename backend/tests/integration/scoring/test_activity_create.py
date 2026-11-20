@@ -204,9 +204,12 @@ def test_owner_docente_and_unit_secretaria_may_create(world):
         assert create(world, actor=actor).process_id == world.process.id
 
 
-def test_points_override_only_for_weekly_load_criteria_and_without_needing_a_justification(
+def test_points_override_is_refused_on_group1_weekly_load_and_on_per_unit_criteria(
     points_chosen,
 ):
+    # GI-05: was "points_override only for weekly-load criteria, without needing a justification"
+    # (saved and audited on group I of a table that counts points); every group I weekly-load
+    # criterion now refuses it, with or without a justification, and per-unit items still do.
     world = points_chosen
     weekly = {
         "group_number": 1,
@@ -216,23 +219,11 @@ def test_points_override_only_for_weekly_load_criteria_and_without_needing_a_jus
         "points_override": D("24"),
     }
 
-    activity = world.create.execute(world.admin, world.process.id, data(**weekly), "Declaração")
-    assert activity.points_override == D("24")
-    with world.uow_factory() as uow:
-        [event] = uow.audit.list_for("activity", str(activity.id))
-    assert event.justification == "Declaração"
-    assert event.changes["points_override"] == {"before": None, "after": "24"}
-
-    # UIM-16: no justification needed; the audit event simply has none
-    # DUP-04: another title, or the second offer would be merged into the first
-    without = world.create.execute(
-        world.admin, world.process.id, data(**{**weekly, "title": "Outra disciplina"})
-    )
-    assert without.points_override == D("24")
-    with world.uow_factory() as uow:
-        [event_without] = uow.audit.list_for("activity", str(without.id))
-    assert event_without.justification is None
-    assert event_without.changes["points_override"] == {"before": None, "after": "24"}
+    with pytest.raises(ValidationFailed) as with_justification:
+        world.create.execute(world.admin, world.process.id, data(**weekly), "Declaração")
+    assert with_justification.value.field == "points_override"
+    # UIM-16: no justification needed to be told the same
+    assert field_of_failure(world, **weekly) == "points_override"
     with pytest.raises(ValidationFailed) as per_unit:
         world.create.execute(
             world.admin,
@@ -241,6 +232,8 @@ def test_points_override_only_for_weekly_load_criteria_and_without_needing_a_jus
             "x",
         )
     assert per_unit.value.field == "points_override"
+    with world.uow_factory() as uow:
+        assert uow.activities.list_for_process(world.process.id) == []
 
 
 def test_unit_points_override_is_saved_audited_and_scored_by_the_engine(official_chosen):

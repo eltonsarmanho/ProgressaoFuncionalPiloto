@@ -163,27 +163,64 @@ def test_invalid_inputs_are_422_with_the_field_name(client, headers, chosen, cha
     field_error(client.post(activities_url(chosen), json=body(**changes), headers=headers), field)
 
 
-def test_points_override_without_justification_is_saved(client, headers, points_chosen):
-    """UIM-16: manual points need no justification."""
+def test_points_override_on_a_group1_weekly_load_item_is_422_even_when_group1_counts(
+    client, headers, points_chosen
+):
+    """UIM-16 was "manual points need no justification" on group I of a table that counts points.
+
+    GI-05: the group I weekly-load criteria refuse informed points in every table version, so
+    this and the next test now expect 422 on `points_override`.
+    """
     payload = body(
         points_override=5, group_number=1, academic_period="2023.1", level="GRADUACAO", horas=68
     )
 
-    response = client.post(activities_url(points_chosen), json=payload, headers=headers)
+    field_error(
+        client.post(activities_url(points_chosen), json=payload, headers=headers), "points_override"
+    )
 
-    assert response.status_code == 201
-    assert response.json()["points_override"] == "5.00"
 
-
-def test_points_override_with_justification_is_saved_for_weekly_load(
+def test_points_override_with_justification_on_a_group1_weekly_load_item_is_422(
     client, headers, points_chosen
 ):
-    created = create(
-        client, headers, points_chosen, group_number=1, academic_period="2023.1", level="GRADUACAO",
-        horas=68, points_override=24, justificativa="Declaração da unidade",
+    # GI-05 (was: saved for weekly load with a justification).
+    payload = body(
+        group_number=1, academic_period="2023.1", level="GRADUACAO", horas=68,
+        points_override=24, justificativa="Declaração da unidade",
     )  # fmt: skip
 
-    assert created["points_override"] == "24.00"
+    field_error(
+        client.post(activities_url(points_chosen), json=payload, headers=headers), "points_override"
+    )
+
+
+def test_predicted_points_of_a_group1_offer_exist_only_where_group1_counts_in_the_total(
+    client, headers, points_chosen, scoring_tables
+):
+    """GI-05, D4: the Etapa 3 list shows the predicted points of a group I offer (the PIT hours,
+    68 h of graduation = 8 points) only in a version where group I counts in the total.
+
+    The process starts on the synthetic table whose group I counts, then switches to the official
+    table, whose group I is still in hours outside the total in this version.
+    """
+    created = create(
+        client, headers, points_chosen,
+        group_number=1, academic_period="2023.1", level="GRADUACAO", horas=68,
+    )  # fmt: skip
+
+    def predicted():
+        [row] = [
+            a for a in client.get(activities_url(points_chosen)).json() if a["id"] == created["id"]
+        ]
+        return row["predicted_points"]
+
+    assert predicted() == "8.00"
+    switch = {"version_id": str(scoring_tables["OFICIAL"].id), "justificativa": "Teste"}
+    response = client.put(
+        f"/api/processes/{points_chosen['id']}/scoring/table", json=switch, headers=headers
+    )
+    assert response.status_code == 200, response.text
+    assert predicted() is None
 
 
 def test_activity_without_classification_is_saved(client, headers, chosen):

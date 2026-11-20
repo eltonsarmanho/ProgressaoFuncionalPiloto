@@ -108,7 +108,11 @@ def test_changing_the_category_of_a_validated_activity_recalculates_and_keeps_it
     assert after == (RowStatus.PONTUADA, new.unit_points * 4, new.unit_points * 4)
 
 
-def test_points_override_change_needs_no_justification(points_chosen):
+def test_points_override_added_to_a_group1_offer_is_422_without_a_justification_too(
+    points_chosen,
+):
+    # GI-05: was "points_override change needs no justification" (saved with before None and
+    # after 24); group I weekly-load criteria now refuse informed points in every table version.
     world = points_chosen
     activity = world.create.execute(
         world.admin,
@@ -122,19 +126,20 @@ def test_points_override_change_needs_no_justification(points_chosen):
             event_date=date(2023, 3, 1),
         ),
     )
+    audited = len(events(world, activity))
 
-    updated = world.update.execute(
-        world.admin,
-        activity.id,
-        as_data(activity, points_override=D("24")),
-        activity.version,
-        None,
-    )
+    with pytest.raises(ValidationFailed) as error:
+        world.update.execute(
+            world.admin,
+            activity.id,
+            as_data(activity, points_override=D("24")),
+            activity.version,
+            None,
+        )
 
-    assert updated.points_override == D("24")
-    event = events(world, activity)[-1]
-    assert event.changes["points_override"] == {"before": None, "after": "24"}
-    assert event.justification is None
+    assert error.value.field == "points_override"
+    assert reload(world, activity).points_override is None
+    assert len(events(world, activity)) == audited
 
 
 def test_unit_points_override_survives_a_quantity_change_and_clears_when_empty(world, activity):
@@ -484,7 +489,12 @@ def test_editing_with_a_different_refused_manual_score_is_422_and_saves_nothing(
     )
 
 
-def test_editing_keeps_the_stored_manual_score_where_the_item_accepts_it(points_chosen):
+def test_editing_clears_the_stored_manual_score_of_a_group1_offer_even_when_group1_counts(
+    points_chosen,
+):
+    # GI-05: was "editing keeps the stored manual score where the item accepts it"; a group I
+    # weekly-load item never accepts it now, so the stored value comes back and is cleared with
+    # the old value audited (CAEDI-01).
     world = points_chosen
     stored = stored_with_override(
         world, group_number=1, academic_period="2023.1", level=Level.GRADUACAO, hours=D("68")
@@ -494,5 +504,6 @@ def test_editing_keeps_the_stored_manual_score_where_the_item_accepts_it(points_
         world.admin, stored.id, as_data(stored, title="Título novo"), stored.version, None
     )
 
-    assert (updated.title, updated.points_override) == ("Título novo", D("24"))
-    assert reload(world, stored).points_override == D("24")
+    assert (updated.title, updated.points_override) == ("Título novo", None)
+    assert reload(world, stored).points_override is None
+    assert events(world, stored)[-1].changes["points_override"] == {"before": "24", "after": None}

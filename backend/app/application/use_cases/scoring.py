@@ -27,7 +27,11 @@ from app.domain.entities.audit import AuditAction
 from app.domain.entities.career import select_version
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor
-from app.domain.entities.scoring import ScoringMode, ScoringTableVersion
+from app.domain.entities.scoring import (
+    ScoringMode,
+    ScoringTableVersion,
+    is_group1_load_criterion,
+)
 from app.domain.entities.user import User
 from app.domain.errors import Conflict, NotFound, StaleVersion, ValidationFailed
 from app.domain.repositories.ports import UnitOfWork
@@ -45,7 +49,6 @@ from app.domain.rules.scoring_engine import (
     ScoringRow,
     calculate,
     has_evidence,
-    is_pit_criterion,
 )
 from app.domain.rules.scoring_periods import (
     ACADEMIC_PERIOD,
@@ -295,10 +298,10 @@ def _check_criterion_inputs(data: ActivityData, version: ScoringTableVersion | N
     if (
         data.points_override is not None
         and criterion is not None
-        and is_pit_criterion(version, criterion)
+        and is_group1_load_criterion(criterion)
     ):
-        # PIT-03: refused only where group I is reported in PIT hours (the official table);
-        # group I of the old FASI version keeps accepting informed points.
+        # PIT-03, GI-05: group I hours come from the weekly load in every table version, whether
+        # the group is outside the total or counts in it.
         raise ValidationFailed(
             "points_override",
             "No Grupo I, as horas de PIT são calculadas da carga horária; não há pontos a informar",
@@ -746,7 +749,7 @@ def _describe_process(uow: UnitOfWork, process: FunctionalProcess) -> ActivityLi
     predicted = {
         row.activity_id: row.points
         for row in score.result.rows
-        if row.status in (RowStatus.PONTUADA, RowStatus.POTENCIAL) and row.pit_hours is None
+        if row.status in (RowStatus.PONTUADA, RowStatus.POTENCIAL) and not row.outside_total
     }
     return ActivityListing(list(score.activities), score.result.validity, merged, predicted)
 

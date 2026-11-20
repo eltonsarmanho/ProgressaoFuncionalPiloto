@@ -289,7 +289,7 @@ graph LR
 
 #### T6: Recusa de pontos informados no Grupo I e pontos previstos da Etapa 3
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `_check_criterion_inputs` recusa `points_override` com `is_group1_load_criterion` (qualquer versão, mesma mensagem 422); `_describe_process` filtra `predicted_points` por `not row.outside_total` (hoje `pit_hours is None`), de modo que a Etapa 3 mostra os pontos previstos do Grupo I só na versão em que ele conta (D5, D4).
 **Where**: `backend/app/application/use_cases/scoring.py` (modify)
@@ -304,11 +304,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_activity_group1_pit.py`: criar e editar oferta do Grupo I com `points_override` dá 422 em `points_override` com a tabela oficial (grupo fora do total) e com a tabela sintética de grupo 1 em pontos (`points_chosen`), na graduação e na pós-graduação; oferta sem `points_override` é aceita
-- [ ] Teste em `backend/tests/integration/api/test_activities_api.py` (lista da Etapa 3): `predicted_points` da oferta do Grupo I vem preenchido (= horas) com a tabela sintética de grupo 1 em pontos e ausente com a oficial de grupo fora do total (mata o filtro voltando a `pit_hours is None`)
-- [ ] Testes existentes que mudam, todos por GI-05 (pontos digitados no Grupo I recusados em qualquer tabela, decisão do usuário à pergunta 5): `test_activity_group1_pit.py::test_group1_of_a_table_that_counts_points_still_accepts_informed_points` passa a esperar 422; `test_activities_api.py::test_points_override_without_justification_is_saved` e `::test_points_override_with_justification_is_saved_for_weekly_load` passam a esperar 422 no Grupo I (ou trocam para critério sintético de carga semanal de outro grupo, se o objetivo do teste for o salvamento do campo); `test_process_score.py` (atividade com `points_override=20`) passa a esperar os pontos do cálculo; cada mudança anotada no corpo do teste com "GI-05"
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: contagem antes e depois registrada; nenhum teste apagado sem substituto
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_activity_group1_pit.py`: criar e editar oferta do Grupo I com `points_override` dá 422 em `points_override` com a tabela oficial (grupo fora do total) e com a tabela sintética de grupo 1 em pontos (`points_chosen`), na graduação e na pós-graduação; oferta sem `points_override` é aceita
+- [x] Teste em `backend/tests/integration/api/test_activities_api.py` (lista da Etapa 3): `predicted_points` da oferta do Grupo I vem preenchido (= horas) com a tabela sintética de grupo 1 em pontos e ausente com a oficial de grupo fora do total (mata o filtro voltando a `pit_hours is None`)
+- [x] Testes existentes que mudam, todos por GI-05 (pontos digitados no Grupo I recusados em qualquer tabela, decisão do usuário à pergunta 5): `test_activity_group1_pit.py::test_group1_of_a_table_that_counts_points_still_accepts_informed_points` passa a esperar 422; `test_activities_api.py::test_points_override_without_justification_is_saved` e `::test_points_override_with_justification_is_saved_for_weekly_load` passam a esperar 422 no Grupo I (ou trocam para critério sintético de carga semanal de outro grupo, se o objetivo do teste for o salvamento do campo); `test_process_score.py` (atividade com `points_override=20`) passa a esperar os pontos do cálculo; cada mudança anotada no corpo do teste com "GI-05"
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: contagem antes e depois registrada; nenhum teste apagado sem substituto
 
 **Tests**: integration
 **Gate**: full

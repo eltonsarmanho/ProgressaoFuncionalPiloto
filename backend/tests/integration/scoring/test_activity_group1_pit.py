@@ -1,4 +1,5 @@
-"""PIT-03: informed points are refused on group I of a table that reports PIT hours."""
+"""PIT-03, GI-05: informed points are refused on every group I weekly-load criterion, whether
+the group is outside the total (PIT hours) or counts in it, in any table version."""
 
 import uuid
 from dataclasses import fields
@@ -158,11 +159,56 @@ def test_other_groups_are_not_affected_by_the_group1_rule(pit_world):
     assert error.value.field == "points_override"
 
 
-def test_group1_of_a_table_that_counts_points_still_accepts_informed_points(points_chosen):
+@pytest.mark.parametrize("level", [Level.GRADUACAO, Level.POS_GRADUACAO])
+def test_create_with_informed_points_in_a_group1_that_counts_in_the_total_is_422(
+    points_chosen, level
+):
+    # GI-05: was "a table that counts points still accepts informed points" (PIT-03 only refused
+    # them where group I was outside the total); now refused in any version.
     world = points_chosen
 
-    activity = world.create.execute(
-        world.admin, world.process.id, offer(points_override=D("24")), "Declaração"
-    )
+    with pytest.raises(ValidationFailed) as error:
+        world.create.execute(
+            world.admin,
+            world.process.id,
+            offer(level=level, points_override=D("24")),
+            "Declaração",
+        )
 
-    assert activity.points_override == D("24")
+    assert error.value.field == "points_override"
+    assert error.value.message == (
+        "No Grupo I, as horas de PIT são calculadas da carga horária; não há pontos a informar"
+    )
+    with world.uow_factory() as uow:
+        assert uow.activities.list_for_process(world.process.id) == []
+
+
+def test_update_adding_informed_points_to_a_group1_that_counts_in_the_total_is_422(
+    points_chosen,
+):
+    world = points_chosen
+    activity = world.create.execute(world.admin, world.process.id, offer())
+
+    with pytest.raises(ValidationFailed) as error:
+        world.update.execute(
+            world.admin,
+            activity.id,
+            as_data(activity, points_override=D("24")),
+            activity.version,
+            "Declaração",
+        )
+
+    assert error.value.field == "points_override"
+    with world.uow_factory() as uow:
+        assert uow.activities.get(activity.id).points_override is None
+
+
+def test_group1_offer_without_informed_points_is_accepted_in_a_group1_that_counts(
+    points_chosen,
+):
+    world = points_chosen
+
+    activity = world.create.execute(world.admin, world.process.id, offer())
+
+    assert activity.points_override is None
+    assert (activity.group_number, activity.item_number, activity.hours) == (1, 1, D("68"))
