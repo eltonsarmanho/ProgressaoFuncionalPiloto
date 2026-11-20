@@ -130,35 +130,35 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| GI-01 | P1: Grupo I conta no total | Implemented | Implemented |
-| GI-02 | P1: Grupo I conta no total | Implemented | Implemented |
-| GI-03 | P1: Grupo I conta no total | Implemented | Implemented |
-| GI-04 | P1: Grupo I conta no total | Implemented | Implemented |
-| GI-05 | P1: Grupo I conta no total | Implemented | Implemented |
-| GI-06 | P1: Grupo I conta no total | Implemented | Implemented |
-| GI-07 | P1: Grupo I conta no total | Implemented | Implemented |
-| GI-08 | P1: Grupo I conta no total | Implemented | Implemented |
-| GI-09 | P1: Grupo I conta no total | Implemented | Implemented |
-| GI-10 | P1: Grupo I conta no total | Implemented | Implemented |
-| GI-11 | P1: Grupo I conta no total | Implemented | Implemented |
-| GI-12 | P1: Grupo I conta no total | Implemented | Implemented |
-| GTAB-01 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
-| GTAB-02 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
-| GTAB-03 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
-| GTAB-04 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
-| GTAB-05 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
-| GTAB-06 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
-| GTAB-07 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
-| GTAB-08 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Implemented |
-| GRES-01 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
-| GRES-02 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
-| GRES-03 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
-| GRES-04 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
-| GRES-05 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
-| GRES-06 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
-| GRES-07 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
-| GRES-08 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
-| GRES-09 | P1: Resumo da Etapa 4 em painel | Implemented | Implemented |
+| GI-01 | P1: Grupo I conta no total | Implemented | Verified |
+| GI-02 | P1: Grupo I conta no total | Implemented | Verified |
+| GI-03 | P1: Grupo I conta no total | Implemented | Verified |
+| GI-04 | P1: Grupo I conta no total | Implemented | Verified |
+| GI-05 | P1: Grupo I conta no total | Implemented | Verified |
+| GI-06 | P1: Grupo I conta no total | Implemented | Verified |
+| GI-07 | P1: Grupo I conta no total | Implemented | Verified |
+| GI-08 | P1: Grupo I conta no total | Implemented | Verified |
+| GI-09 | P1: Grupo I conta no total | Implemented | Verified |
+| GI-10 | P1: Grupo I conta no total | Implemented | Verified |
+| GI-11 | P1: Grupo I conta no total | Implemented | Verified |
+| GI-12 | P1: Grupo I conta no total | Implemented | Verified |
+| GTAB-01 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Verified |
+| GTAB-02 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Verified |
+| GTAB-03 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Verified |
+| GTAB-04 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Verified |
+| GTAB-05 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Verified |
+| GTAB-06 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Verified |
+| GTAB-07 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Verified |
+| GTAB-08 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implemented | Verified |
+| GRES-01 | P1: Resumo da Etapa 4 em painel | Implemented | Verified |
+| GRES-02 | P1: Resumo da Etapa 4 em painel | Implemented | Verified |
+| GRES-03 | P1: Resumo da Etapa 4 em painel | Implemented | Verified |
+| GRES-04 | P1: Resumo da Etapa 4 em painel | Implemented | Verified |
+| GRES-05 | P1: Resumo da Etapa 4 em painel | Implemented | Verified |
+| GRES-06 | P1: Resumo da Etapa 4 em painel | Implemented | Verified |
+| GRES-07 | P1: Resumo da Etapa 4 em painel | Implemented | Verified |
+| GRES-08 | P1: Resumo da Etapa 4 em painel | Implemented | Verified |
+| GRES-09 | P1: Resumo da Etapa 4 em painel | Implemented | Verified |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 

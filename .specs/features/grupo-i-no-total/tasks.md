@@ -1111,7 +1111,7 @@ graph LR
 
 #### T34: Verificador independente
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Agente diferente do autor confere os 29 requisitos com evidência (testes e leitura do código), roda o sensor de discriminação em cópia isolada (worktree temporária, nunca `git stash`) com os mutantes do design (`counts_in_total` ignorado no subtotal; `ROUND_HALF_UP` trocado por `ROUND_HALF_EVEN` ou `ROUND_DOWN`; `GRUPO_NAO_CONTA` invertido; `outside_total` sempre falso ou sempre verdadeiro; `pit_hours` só na versão antiga; filtro de `predicted_points` voltando a `pit_hours is None`; `is_group1_load_criterion` trocado por `is_pit_criterion` na recusa do `points_override`; versão substituída de volta à sugestão ou à lista; troca automática alcançando processo `CONCLUIDO`; troca sem evento de auditoria; regra do ano inteiro trocada por "qualquer parte do ano fora"; aviso da Etapa 5 comparando com a versão errada; `SEM_COMPROVANTE` ou contador de status de volta na Tabela; ordem por título antes do período; coluna Status ou Comprovante de volta em um dos escritores; título da seção de horas igual nas duas versões; rótulo "II a VIII" na versão nova; barra com divisão por zero; oferta `POTENCIAL` somada no total do período; versão substituída aceita no `PUT /scoring/table`), mede o painel a 360 e 320 px no Chrome headless com controle negativo, confere visualmente o DOCX e o PDF da Tabela e escreve o relatório.
 **Where**: `.specs/features/grupo-i-no-total/validation.md` (novo)
@@ -1126,16 +1126,16 @@ graph LR
 
 **Done when**:
 
-- [ ] `validation.md` com o veredito PASS, a evidência `arquivo:linha` por requisito, o resultado do sensor e o intervalo de commits; a árvore real com `git status --porcelain` igual ao de antes do sensor
-- [ ] Mutantes sobreviventes e lacunas viram tarefas de correção; o ciclo corrigir e reverificar tem no máximo 3 voltas; lições distiladas com `lessons.py` quando houver falha fundamentada
-- [ ] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_state.py grupo-i-no-total` sem erro
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: contagem final registrada
+- [x] `validation.md` com o veredito PASS, a evidência `arquivo:linha` por requisito, o resultado do sensor e o intervalo de commits; a árvore real com `git status --porcelain` igual ao de antes do sensor
+- [x] Mutantes sobreviventes e lacunas viram tarefas de correção; o ciclo corrigir e reverificar tem no máximo 3 voltas; lições distiladas com `lessons.py` quando houver falha fundamentada
+- [x] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_state.py grupo-i-no-total` sem erro
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagem final registrada
 
 **Tests**: none
 **Gate**: build
 
-**Commit**: `docs(specs): verify the group I in the total`
+**Commit**: `docs(specs): validate the grupo-i-no-total feature` (volta 2 de 3: PASS)
 
 ---
 

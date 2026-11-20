@@ -174,6 +174,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: CAREF-04 scoring_variants.py:15-18 (tests)
 - last seen: 2026-11-20T04:37:32Z
 
+### L-028 - Test the fallback a component takes when an optional prop is omitted, or remove the fallback when no caller omits it.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: grupo-i-no-total
+- evidence: F24 frontend/src/components/ScoringPanel.tsx:40 (GRES-09) (frontend)
+- last seen: 2026-11-20T08:39:56Z
+
+### L-029 - Name the column headers of every generated document section in the spec, or pin them with an assertion, because a renamed header breaks no behavior test.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `generation` · harmful: 0
+- features: grupo-i-no-total
+- evidence: N8 backend/app/infrastructure/documents/table_text.py:10 (GTAB-06) (generation)
+- last seen: 2026-11-20T08:39:56Z
+
+### L-030 - When code adds a sort rule the spec does not state, such as accent folding, state it in the spec or pin it with a pair of titles that differ only by the accent.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `generation` · harmful: 0
+- features: grupo-i-no-total
+- evidence: N6 backend/app/domain/rules/table_document.py:157 (GTAB-02) (generation)
+- last seen: 2026-11-20T08:39:56Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
