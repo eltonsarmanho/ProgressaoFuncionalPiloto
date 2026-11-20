@@ -147,6 +147,24 @@ def test_unknown_version_is_422_on_version_id(client, admin, process, scoring_ta
     assert response.json()["detail"][0]["field"] == "version_id"
 
 
+def test_choosing_a_superseded_version_is_422_with_the_code_versao_substituida(
+    client, admin, process, scoring_tables, uow_factory
+):
+    """GI-07: `PUT /scoring/table` refuses a version another one replaced."""
+    _, headers = admin
+    official = scoring_tables["OFICIAL"]
+    with uow_factory() as uow:
+        uow.scoring_tables.set_superseded(official.id, scoring_tables["OUTRA"].id)
+        uow.commit()
+
+    response = choose(client, headers, process, official)
+
+    assert response.status_code == 422, response.text
+    [error] = response.json()["detail"]
+    assert (error["field"], error["code"]) == ("version_id", "VERSAO_SUBSTITUIDA")
+    assert client.get(table_url(process)).json()["chosen"] is None
+
+
 def test_choice_is_audited_in_the_process_history(client, admin, process, scoring_tables):
     _, headers = admin
     choose(client, headers, process, scoring_tables["OFICIAL"], justificativa="Confirmada")

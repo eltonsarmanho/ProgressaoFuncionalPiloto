@@ -1,6 +1,7 @@
 """SEL-02, SEL-04, SEL-05: suggest and choose the scoring table of a process."""
 
 import uuid
+from dataclasses import replace
 from datetime import date
 
 import pytest
@@ -184,3 +185,65 @@ def test_suggestion_picks_the_newest_validity_when_several_tables_fit_the_unit(w
 
     assert result.suggested.table_name == "Outra tabela da FASI"
     assert result.suggested.version.table_id == newer.table.id
+
+
+# --- GI-07: a superseded version is never suggested nor accepted -------------------------------
+
+
+def add_twin_version(world):
+    """A second version of the same table with the same start, so only the mark tells them apart."""
+    twin = replace(world.official_version, id=uuid.uuid4(), name="Versão sintética gêmea")
+    with world.uow_factory() as uow:
+        uow.scoring_tables.add_version(twin)
+        uow.commit()
+    return twin
+
+
+def mark_superseded(world, version, by):
+    with world.uow_factory() as uow:
+        uow.scoring_tables.set_superseded(version.id, by.id)
+        uow.commit()
+
+
+def test_the_suggestion_is_the_version_that_is_not_superseded_even_with_the_same_start(world):
+    twin = add_twin_version(world)
+
+    mark_superseded(world, world.official_version, twin)
+    suggested = world.suggest.execute(world.admin, world.process.id).suggested
+
+    assert suggested.version.id == twin.id
+
+
+def test_inverting_the_mark_inverts_the_suggestion(world):
+    twin = add_twin_version(world)
+
+    mark_superseded(world, twin, world.official_version)
+    suggested = world.suggest.execute(world.admin, world.process.id).suggested
+
+    assert suggested.version.id == world.official_version.id
+
+
+def test_with_only_superseded_versions_there_is_no_suggestion(world):
+    twin = add_twin_version(world)
+    mark_superseded(world, world.official_version, twin)
+    mark_superseded(world, twin, world.official_version)
+
+    assert world.suggest.execute(world.admin, world.process.id).suggested is None
+
+
+def test_choosing_a_superseded_version_is_422_with_its_code_and_saves_nothing(world):
+    twin = add_twin_version(world)
+    world.choose.execute(world.admin, world.process.id, twin.id, None, None)
+    mark_superseded(world, world.official_version, twin)
+    audited = len(audit_events(world, world.process))
+
+    with pytest.raises(ValidationFailed) as error:
+        world.choose.execute(
+            world.admin, world.process.id, world.official_version.id, None, "Voltar"
+        )
+
+    assert error.value.field == "version_id"
+    assert error.value.code == "VERSAO_SUBSTITUIDA"
+    assert error.value.message == "Esta versão da tabela foi substituída; use a versão atual"
+    assert stored_version_id(world, world.process) == twin.id
+    assert len(audit_events(world, world.process)) == audited

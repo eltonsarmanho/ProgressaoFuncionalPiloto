@@ -319,7 +319,7 @@ graph LR
 
 #### T7: Sugestão e escolha ignoram a versão substituída
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `suggest_version` descarta as versões com `is_superseded` antes do `max` (com início igual, a sugestão nunca é a substituída); `ChooseProcessTable` recusa versão substituída com `ValidationFailed("version_id", "Esta versão da tabela foi substituída; use a versão atual", code="VERSAO_SUBSTITUIDA")` antes de gravar e de auditar (D3).
 **Where**: `backend/app/application/use_cases/scoring.py` (modify)
@@ -334,10 +334,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_table_choice.py`: com duas versões da mesma tabela e mesmo `valid_from`, uma marcada como substituída, a sugestão é a outra; com a marca invertida, a sugestão inverte (mata "substituída de volta à sugestão"); escolher a substituída dá 422 com o código `VERSAO_SUBSTITUIDA` no campo `version_id`, o processo fica com a versão anterior e nenhuma auditoria é gravada
-- [ ] Teste de API em `backend/tests/integration/api/test_scoring_table_api.py` (ou o arquivo de API de escolha de tabela existente): `PUT /api/processes/{id}/scoring/table` com a substituída responde 422 com `code` `VERSAO_SUBSTITUIDA`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam; nenhum teste apagado
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_table_choice.py`: com duas versões da mesma tabela e mesmo `valid_from`, uma marcada como substituída, a sugestão é a outra; com a marca invertida, a sugestão inverte (mata "substituída de volta à sugestão"); escolher a substituída dá 422 com o código `VERSAO_SUBSTITUIDA` no campo `version_id`, o processo fica com a versão anterior e nenhuma auditoria é gravada
+- [x] Teste de API em `backend/tests/integration/api/test_scoring_table_api.py` (ou o arquivo de API de escolha de tabela existente): `PUT /api/processes/{id}/scoring/table` com a substituída responde 422 com `code` `VERSAO_SUBSTITUIDA`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; nenhum teste apagado
 
 **Tests**: integration
 **Gate**: full

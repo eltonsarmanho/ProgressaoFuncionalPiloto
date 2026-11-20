@@ -118,11 +118,14 @@ def _table_ref(uow: UnitOfWork, version: ScoringTableVersion | None) -> TableRef
 def suggest_version(
     uow: UnitOfWork, professor: Professor, process: FunctionalProcess
 ) -> ScoringTableVersion | None:
-    """Latest version of a table of the professor's unit valid on the interstice end (SEL-02)."""
+    """Latest version of a table of the professor's unit valid on the interstice end (SEL-02).
+
+    A superseded version is never suggested, even with the same start as its replacement (GI-07).
+    """
     candidates = [
         v
         for v in uow.scoring_tables.list_versions_for_unit(professor.unit_id)
-        if v.covers(process.end_date)
+        if v.covers(process.end_date) and not v.is_superseded
     ]
     return max(candidates, key=lambda v: v.valid_from, default=None)
 
@@ -179,6 +182,12 @@ class ChooseProcessTable(_ScoringUseCase):
             version = uow.scoring_tables.get_version(version_id)
             if version is None:
                 raise ValidationFailed("version_id", "Versão de tabela não encontrada")
+            if version.is_superseded:
+                raise ValidationFailed(
+                    "version_id",
+                    "Esta versão da tabela foi substituída; use a versão atual",
+                    code="VERSAO_SUBSTITUIDA",
+                )
             # A table of another unit needs no justification (UIM-18); the alert stays.
             justification = (justification or "").strip() or None
             if expected_version is not None and process.version != expected_version:
