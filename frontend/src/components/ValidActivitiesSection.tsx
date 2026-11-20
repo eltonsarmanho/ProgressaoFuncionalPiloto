@@ -56,6 +56,7 @@ export function ValidActivitiesSection({
   const [busy, setBusy] = useState(false);
   const [linking, setLinking] = useState<Activity | null>(null);
   const beyondId = useId();
+  const confidentRuleId = useId();
   const list = useRef<HTMLUListElement>(null);
   const focusFrom = useRef<number | null>(null);
 
@@ -174,13 +175,16 @@ export function ValidActivitiesSection({
               type="button"
               className="btn btn-primary"
               disabled={confident.length === 0 || busy}
-              title="Só sugestões da IA sem candidatos, sem aviso e de documentos lidos com confiança a partir de 70%"
+              aria-describedby={confidentRuleId}
               onClick={() => void validateBatch(confident, " As demais continuam aguardando a sua revisão.")}
             >
               Validar as confiáveis ({confident.length})
             </button>
           </div>
           <p className="muted">{plural(confident.length, "atividade elegível", "atividades elegíveis")} para a validação por confiança.</p>
+          <p id={confidentRuleId} className="muted">
+            Só sugestões da IA sem candidatos, sem aviso e de documentos lidos com confiança a partir de 70%.
+          </p>
           {beyondAll > 0 && (
             <p id={beyondId} className="muted">
               {`Selecionar todas inclui as ${validatable.length} atividades dos filtros, ${beyondAll} além das ${visible.length} mostradas.`}

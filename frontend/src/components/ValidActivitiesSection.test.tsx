@@ -451,3 +451,48 @@ describe("SEC-11: a seleção vale só para o que o filtro mostra", () => {
     expect(screen.queryByText(/além das/)).not.toBeInTheDocument();
   });
 });
+
+describe("SEC-12: o critério da validação por confiança é texto visível", () => {
+  it("o critério dos 70% está na tela e descreve o botão; o botão não usa title", () => {
+    setup(many(3));
+    const button = screen.getByRole("button", { name: /^Validar as confiáveis/ });
+    expect(button).not.toHaveAttribute("title");
+    const rule = screen.getByText("Só sugestões da IA sem candidatos, sem aviso e de documentos lidos com confiança a partir de 70%.");
+    expect(rule).toBeVisible();
+    expect(button).toHaveAccessibleDescription(rule.textContent ?? "");
+  });
+});
+
+describe("SEC-12: vincular documento, erros de campo", () => {
+  const open = async (routes: Parameters<typeof setup>[1] = {}) => {
+    const mock = setup([activity()], routes);
+    await mock.user.click(screen.getByRole("button", { name: "Vincular documento a Banca de mestrado de Maria" }));
+    return { ...mock, dialog: screen.getByRole("dialog", { name: "Vincular documento" }) };
+  };
+
+  it("sem escolher o documento o foco vai ao seletor e o erro é anunciado como alerta", async () => {
+    const { dialog, user } = await open();
+    await user.click(within(dialog).getByRole("button", { name: "Vincular" }));
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("Escolha o documento.");
+    expect(within(dialog).getByLabelText("Documento")).toHaveFocus();
+  });
+
+  it("422 na página leva o foco ao campo da página e é anunciado como alerta", async () => {
+    const { dialog, user } = await open({
+      "POST /api/activities/a1/evidences": { status: 422, body: { detail: [{ field: "page", message: "A página não existe no documento" }] } },
+    });
+    await user.selectOptions(within(dialog).getByLabelText("Documento"), "d1");
+    await user.click(within(dialog).getByRole("button", { name: "Vincular" }));
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("A página não existe no documento");
+    expect(within(dialog).getByLabelText("Página do documento")).toHaveFocus();
+  });
+
+  it("422 em um campo que o formulário não tem aparece como alerta geral", async () => {
+    const { dialog, user } = await open({
+      "POST /api/activities/a1/evidences": { status: 422, body: { detail: [{ field: "activity", message: "A atividade não aceita vínculos" }] } },
+    });
+    await user.selectOptions(within(dialog).getByLabelText("Documento"), "d1");
+    await user.click(within(dialog).getByRole("button", { name: "Vincular" }));
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("A atividade não aceita vínculos");
+  });
+});

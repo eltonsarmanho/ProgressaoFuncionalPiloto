@@ -36,6 +36,10 @@ function toForm(a?: Activity): Form {
   };
 }
 
+/** The id of the category select: the 422 fields `categoria`, `group_number` and `item_number` all point to it. */
+const CATEGORY_ID = "categoria";
+const CATEGORY_FIELDS = ["categoria", "group_number", "item_number"];
+
 const number = (v: string): number | string => (Number.isNaN(Number(v)) ? v : Number(v));
 
 /**
@@ -126,9 +130,12 @@ export function ActivityForm({
     } catch (err) {
       const byField = fieldErrors(err);
       setErrors(byField);
-      const first = Object.keys(byField).find((field) => shown.includes(field));
-      if (first) document.getElementById(first)?.focus();
-      const hidden = Object.entries(byField).find(([field]) => !shown.includes(field));
+      // A field has an input only if the form shows it and the input is on the page (no table, no select).
+      const inputId = (field: string) => (CATEGORY_FIELDS.includes(field) ? CATEGORY_ID : field);
+      const present = (field: string) => shown.includes(field) && document.getElementById(inputId(field)) != null;
+      const first = Object.keys(byField).find(present);
+      if (first) document.getElementById(inputId(first))?.focus();
+      const hidden = Object.entries(byField).find(([field]) => !present(field));
       if (Object.keys(byField).length === 0) setError(errorMessage(err));
       else if (hidden) setError(hidden[1]);
     } finally {
@@ -172,6 +179,7 @@ export function ActivityForm({
         <CategoryPicker
           groups={groups}
           value={{ group_number: form.group_number === "" ? null : Number(form.group_number), item_number: form.item_number === "" ? null : Number(form.item_number) }}
+          id={CATEGORY_ID}
           label="Categoria"
           hideLabel={false}
           error={errors.categoria ?? errors.group_number ?? errors.item_number}

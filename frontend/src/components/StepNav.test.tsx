@@ -110,3 +110,28 @@ describe("SEC-05: avanço bloqueado", () => {
     expect(screen.queryByText(/precisam? de categoria/)).not.toBeInTheDocument();
   });
 });
+
+describe("SEC-05, SEC-12: a região viva e os itens fechados", () => {
+  const blocked = { step: 3, message: "3 atividades precisam de categoria" };
+  const live = () => screen.getByRole("navigation", { name: "Etapas do processo" }).querySelector<HTMLElement>("[aria-live=polite]")!;
+
+  it("a região viva está sempre montada: vazia sem bloqueio e com a mensagem quando há", () => {
+    const { unmount } = render(
+      <MemoryRouter>
+        <StepNav processId="p1" current={3} />
+      </MemoryRouter>,
+    );
+    expect(live()).toBeEmptyDOMElement();
+    unmount();
+    steps({ processId: "p1", current: 3, blocked });
+    expect(live()).toHaveTextContent("3 atividades precisam de categoria");
+  });
+
+  it("as etapas fechadas apontam a mensagem por aria-describedby; as abertas e as 'em breve' não", () => {
+    const items = steps({ processId: "p1", current: 3, blocked });
+    const id = live().id;
+    expect(id).not.toBe("");
+    [3, 4].forEach((i) => expect(items[i]).toHaveAttribute("aria-describedby", id));
+    [0, 1, 2, 5, 8].forEach((i) => expect(items[i]).not.toHaveAttribute("aria-describedby"));
+  });
+});

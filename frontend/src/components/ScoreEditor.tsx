@@ -65,7 +65,13 @@ export function ScoreEditor({
     } catch (err) {
       const byField = fieldErrors(err);
       setErrors(byField);
+      // The first invalid field gets the focus; an error for a field the editor has no input for is a general alert.
+      const inputs = [byHours ? "horas" : "quantidade", "unit_points_override"];
+      const first = inputs.find((field) => byField[field]);
+      if (first) document.getElementById(first)?.focus();
+      const hidden = Object.entries(byField).find(([field]) => !inputs.includes(field));
       if (Object.keys(byField).length === 0) setError(errorMessage(err));
+      else if (hidden) setError(hidden[1]);
     } finally {
       setBusy(false);
     }
@@ -106,7 +112,7 @@ export function ScoreEditor({
                 onChange={(e) => setAmount(e.target.value)}
                 {...errorProps("horas", errors)}
               />
-              <FieldError id="horas-error" message={errors.horas} />
+              <FieldError id="horas-error" message={errors.horas} alert />
             </div>
           ) : (
             <div className="field">
@@ -119,7 +125,7 @@ export function ScoreEditor({
                 onChange={(e) => setAmount(e.target.value)}
                 {...errorProps("quantidade", errors)}
               />
-              <FieldError id="quantidade-error" message={errors.quantidade} />
+              <FieldError id="quantidade-error" message={errors.quantidade} alert />
             </div>
           )}
           <div className="field">
@@ -133,7 +139,7 @@ export function ScoreEditor({
               onChange={(e) => setValue(e.target.value)}
               {...errorProps("unit_points_override", errors)}
             />
-            <FieldError id="unit_points_override-error" message={errors.unit_points_override} />
+            <FieldError id="unit_points_override-error" message={errors.unit_points_override} alert />
           </div>
           {error && (
             <p role="alert" className="error">

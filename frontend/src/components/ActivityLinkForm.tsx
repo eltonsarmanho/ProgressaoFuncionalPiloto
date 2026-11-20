@@ -24,11 +24,15 @@ export function ActivityLinkForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
+  /** The input of each 422 field; the first invalid one gets the focus. */
+  const INPUT_ID: Record<string, string> = { document_id: "link-document", page: "link-page" };
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
     if (documentId === "") {
       setErrors({ document_id: "Escolha o documento." });
+      document.getElementById(INPUT_ID.document_id)?.focus();
       return;
     }
     setErrors({});
@@ -41,7 +45,11 @@ export function ActivityLinkForm({
     } catch (err) {
       const byField = fieldErrors(err);
       setErrors(byField);
+      const first = Object.keys(byField).find((field) => INPUT_ID[field]);
+      if (first) document.getElementById(INPUT_ID[first])?.focus();
+      const hidden = Object.entries(byField).find(([field]) => !INPUT_ID[field]);
       if (Object.keys(byField).length === 0) setError(errorMessage(err));
+      else if (hidden) setError(hidden[1]);
     }
   }
 
@@ -62,12 +70,12 @@ export function ActivityLinkForm({
                 </option>
               ))}
           </select>
-          <FieldError id="document_id-error" message={errors.document_id} />
+          <FieldError id="document_id-error" message={errors.document_id} alert />
         </div>
         <div className="field">
           <label htmlFor="link-page">Página do documento</label>
           <input id="link-page" type="number" min={1} value={page} onChange={(e) => setPage(e.target.value)} {...errorProps("page", errors)} />
-          <FieldError id="page-error" message={errors.page} />
+          <FieldError id="page-error" message={errors.page} alert />
         </div>
         {error && (
           <p role="alert" className="error">

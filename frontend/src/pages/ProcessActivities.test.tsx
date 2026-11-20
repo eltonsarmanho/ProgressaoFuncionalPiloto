@@ -175,6 +175,15 @@ describe("SEC-05: o avanço bloqueado sem categoria", () => {
     expect(count(calls, MERGE)).toBe(1);
   });
 
+  it("o item 'Ir para a Etapa 4' fechado e as etapas fechadas apontam a mensagem do bloqueio", async () => {
+    renderPage({ [LIST]: { status: 200, body: [noCategory("c1", "Uma")] } });
+    await screen.findByText("Uma");
+    const message = nav().querySelector<HTMLElement>("[aria-live=polite]")!;
+    expect(message).toHaveTextContent("1 atividade precisa de categoria");
+    expect(screen.getByText("Ir para a Etapa 4 · Pontuação")).toHaveAttribute("aria-describedby", message.id);
+    expect(within(nav()).getAllByRole("listitem")[3]).toHaveAttribute("aria-describedby", message.id);
+  });
+
   it("uma atividade sem categoria que não é válida não bloqueia o avanço", async () => {
     const out = activity({
       id: "o1", title: "Fora", group_number: null, item_number: null, predicted_points: null,

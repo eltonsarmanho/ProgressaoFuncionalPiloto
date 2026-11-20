@@ -4,7 +4,7 @@ import { isValid, validityOf } from "../activityList";
 import { errorMessage, request } from "../api/client";
 import type { Activity, DocumentSummary, Process, ScoringGroup, ScoringResult, ScoringVersion, TableChoice } from "../api/types";
 import { ActivityWorkspace } from "../components/ActivityWorkspace";
-import { StepNav } from "../components/StepNav";
+import { STEP_BLOCKED_ID, StepNav } from "../components/StepNav";
 import { needsCategoryMessage } from "../labels";
 
 type Loaded = {
@@ -113,7 +113,7 @@ export function ProcessActivities() {
       )}
       <p>
         {missing > 0 ? (
-          <span aria-disabled="true" className="muted">
+          <span aria-disabled="true" aria-describedby={STEP_BLOCKED_ID} className="muted">
             Ir para a Etapa 4 · Pontuação
           </span>
         ) : (

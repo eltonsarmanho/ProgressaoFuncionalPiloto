@@ -2,6 +2,9 @@ import { Link } from "react-router";
 
 const TOTAL_STEPS = 9;
 
+/** The id of the message of the block: the closed steps and the closed "go to the next step" point to it. */
+export const STEP_BLOCKED_ID = "step-blocked-message";
+
 const STEP_TITLES: Record<number, string> = {
   1: "Processo e interstício",
   2: "Documentos",
@@ -47,7 +50,7 @@ export function StepNav({
           const label = `Etapa ${n} · ${STEP_TITLES[n] ?? ""}`;
           if (blocked && n > blocked.step) {
             return (
-              <li key={n} className="step disabled" aria-disabled="true">
+              <li key={n} className="step disabled" aria-disabled="true" aria-describedby={STEP_BLOCKED_ID}>
                 {label}
               </li>
             );
@@ -65,11 +68,10 @@ export function StepNav({
           );
         })}
       </ol>
-      {blocked && (
-        <p className="step-blocked" aria-live="polite">
-          {blocked.message}
-        </p>
-      )}
+      {/* Always on the page, empty without a block, so a screen reader announces the message when it appears. */}
+      <p id={STEP_BLOCKED_ID} className="step-blocked" aria-live="polite" aria-atomic="true">
+        {blocked?.message}
+      </p>
     </nav>
   );
 }

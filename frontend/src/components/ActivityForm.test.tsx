@@ -313,3 +313,30 @@ describe("EDT-02, EDT-03: erros de data no formulário", () => {
     expect(onSaved).not.toHaveBeenCalled();
   });
 });
+
+describe("SEC-12: o foco do erro 422 acha o seletor de categoria", () => {
+  const detail = (...fields: [string, string][]) => ({
+    status: 422,
+    body: { detail: fields.map(([field, message]) => ({ field, code: "VALIDACAO", message })) },
+  });
+
+  it("422 em categoria leva o foco ao seletor de categoria e mostra o erro nele", async () => {
+    const { user } = edit(SAVED, { "PUT /api/activities/a1": detail(["categoria", "Escolha a categoria antes de validar"]) });
+    await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
+    await screen.findByText("Escolha a categoria antes de validar");
+    expect(screen.getByLabelText("Categoria")).toHaveFocus();
+    expect(screen.getByLabelText("Categoria")).toHaveAccessibleDescription("Escolha a categoria antes de validar");
+  });
+
+  it("sem tabela (sem seletor) o foco cai no próximo campo que existe e o erro da categoria vira alerta geral", async () => {
+    mockFetch({
+      "PUT /api/activities/a1": detail(["categoria", "Escolha a categoria antes de validar"], ["title", "Informe o título"]),
+    });
+    render(<ActivityForm processId="p1" groups={[]} activity={SAVED} onSaved={vi.fn()} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Salvar atividade" }));
+    await screen.findByText("Informe o título");
+    expect(screen.getByLabelText("Título")).toHaveFocus();
+    expect(screen.getByRole("alert")).toHaveTextContent("Escolha a categoria antes de validar");
+  });
+});

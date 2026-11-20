@@ -249,3 +249,29 @@ describe("QTD-01: Quantidade ou Horas, e o valor manual", () => {
     expect((await screen.findByText("Horas deve estar entre 0 e 10000")).id).toBe("horas-error");
   });
 });
+
+describe("SEC-12: erros 422 do editor de pontuação", () => {
+  const issue = (field: string, message: string) => ({ "PUT /api/activities/a1": { status: 422, body: { detail: [{ field, message }] } } });
+
+  it("o erro da quantidade recebe o foco no campo e é anunciado como alerta", async () => {
+    const { user } = setup({ routes: issue("quantidade", "Quantidade deve ser um inteiro entre 0 e 10000") });
+    await user.click(screen.getByRole("button", { name: "Salvar pontuação" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Quantidade deve ser um inteiro entre 0 e 10000");
+    expect(screen.getByLabelText("Quantidade")).toHaveFocus();
+  });
+
+  it("o erro do valor unitário recebe o foco no campo e é anunciado como alerta", async () => {
+    const { user } = setup({ routes: issue("unit_points_override", "Valor unitário deve estar entre 0 e 10000") });
+    await user.click(screen.getByRole("button", { name: "Salvar pontuação" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Valor unitário deve estar entre 0 e 10000");
+    expect(screen.getByLabelText("Valor unitário")).toHaveFocus();
+  });
+
+  it("o 422 de um campo que o editor não mostra aparece como alerta geral, sem falhar em silêncio", async () => {
+    const { onSaved, user } = setup({ routes: issue("horas", "Horas só valem nos itens medidos por horas") });
+    expect(screen.queryByLabelText("Horas")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Salvar pontuação" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Horas só valem nos itens medidos por horas");
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+});

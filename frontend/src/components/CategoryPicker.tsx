@@ -19,6 +19,7 @@ export function CategoryPicker({
   error,
   disabled = false,
   selectRef,
+  id: fixedId,
 }: {
   groups: ScoringGroup[];
   value: { group_number: number | null; item_number: number | null } | null;
@@ -30,8 +31,11 @@ export function CategoryPicker({
   error?: string;
   disabled?: boolean;
   selectRef?: Ref<HTMLSelectElement>;
+  /** A fixed id for the select, for a form that moves the focus to it; one is generated otherwise. */
+  id?: string;
 }) {
-  const id = useId();
+  const generatedId = useId();
+  const id = fixedId ?? generatedId;
   const errorId = `${id}-error`;
   const current = value?.group_number != null && value.item_number != null ? `${value.group_number}.${value.item_number}` : "";
 

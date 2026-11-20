@@ -1414,6 +1414,8 @@ T50 → T43 → T44
 
 ### T49: TF5, acessibilidade dos formulários e da navegação
 
+**Status**: Done
+
 **What**: O foco do erro 422 do formulário da atividade acha o seletor de categoria; os formulários de vínculo e de pontuação focam o primeiro campo inválido e mostram o erro como alerta; um 422 de campo sem entrada vira alerta geral; o `StepNav` tem região viva sempre montada e os itens fechados apontam a mensagem; o critério dos 70% de "Validar as confiáveis" é texto visível.
 **Where**: `frontend/src/components/ActivityForm.tsx` (modify), com `CategoryPicker.tsx`, `ActivityLinkForm.tsx`, `ScoreEditor.tsx`, `StepNav.tsx`, `FieldError.tsx` e `ValidActivitiesSection.tsx`
 **Depends on**: T48
@@ -1427,9 +1429,9 @@ T50 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro (que falham antes): 422 em `categoria` no `ActivityForm` leva o foco ao seletor de categoria; 422 em `document_id` ou `page` no `ActivityLinkForm` e em `quantidade`, `horas` ou `unit_points_override` no `ScoreEditor` leva o foco ao primeiro campo inválido e o erro tem `role="alert"`; 422 de um campo sem input no `ScoreEditor` mostra o alerta geral; o `StepNav` tem sempre um `role="status"` (vazio sem bloqueio) e os itens fechados e "Ir para a Etapa 4" têm `aria-describedby` com o id da mensagem; o critério dos 70% é um texto visível ligado ao botão por `aria-describedby`, sem `title`
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado; os novos passam
+- [x] Testes primeiro (que falham antes): 422 em `categoria` no `ActivityForm` leva o foco ao seletor de categoria; 422 em `document_id` ou `page` no `ActivityLinkForm` e em `quantidade`, `horas` ou `unit_points_override` no `ScoreEditor` leva o foco ao primeiro campo inválido e o erro tem `role="alert"`; 422 de um campo sem input no `ScoreEditor` mostra o alerta geral; o `StepNav` tem sempre uma região `aria-live="polite"` (vazia sem bloqueio; sem `role="status"`, para não duplicar o `status` das páginas) e os itens fechados e "Ir para a Etapa 4" têm `aria-describedby` com o id da mensagem; o critério dos 70% é um texto visível ligado ao botão por `aria-describedby`, sem `title`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado; os novos passam
 
 **Tests**: unit
 **Gate**: build
