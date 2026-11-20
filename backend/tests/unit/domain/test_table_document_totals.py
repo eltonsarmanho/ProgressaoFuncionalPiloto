@@ -34,7 +34,7 @@ HEADER = TableHeader(
 def build(activities=None, version=None, listed=None, process_alerts=()):
     version, activities, result = scenario_result(activities, version)
     shown = activities if listed is None else listed
-    document = build_table_document(HEADER, version, result, shown, {}, process_alerts)
+    document = build_table_document(HEADER, version, result, shown, process_alerts)
     return document, result
 
 
@@ -189,7 +189,7 @@ def test_no_alert_says_that_an_activity_has_no_voucher():
     bare = activity(3, 2, title="Sem prova", evidence_note=None)
     version, activities, result = scenario_result([bare])
 
-    document = build_table_document(HEADER, version, result, activities, {})
+    document = build_table_document(HEADER, version, result, activities)
 
     assert [a.code for a in result.rows[0].alerts] == [ScoringAlertCode.SEM_COMPROVANTE]
     assert document.alerts == ()
@@ -218,7 +218,7 @@ def test_the_total_of_the_scenario_with_group_one_inside_is_303():
     # GTAB-03
     version, activities, result = scenario_303_result()
 
-    document = build_table_document(HEADER, version, result, activities, {})
+    document = build_table_document(HEADER, version, result, activities)
 
     assert document.total == "303,00"
     assert [h.hours for h in document.pit_hours.periods] == ["24,00", "24,00", "24,00", "20,00"]
@@ -270,7 +270,7 @@ def test_an_insufficient_course_load_appears_with_the_text_of_the_screen():
     version, activities, result = scenario_result([short], table)
     row = not_scored_row(short, NotScoredReason.CARGA_HORARIA_INSUFICIENTE)
     document = build_table_document(
-        HEADER, version, replace(result, rows=(row,)), activities, {}
+        HEADER, version, replace(result, rows=(row,)), activities
     )
 
     shown = [x for x in document.alerts if x.code == "CARGA_HORARIA_INSUFICIENTE"]
@@ -284,7 +284,7 @@ def test_an_activity_out_of_the_interstice_is_explained_by_its_reason():
     version, activities, result = scenario_result([late])
     row = not_scored_row(late, NotScoredReason.FORA_DO_INTERSTICIO)
     document = build_table_document(
-        HEADER, version, replace(result, rows=(row,)), activities, {}
+        HEADER, version, replace(result, rows=(row,)), activities
     )
 
     assert [(x.code, x.message, x.subject) for x in document.alerts] == [

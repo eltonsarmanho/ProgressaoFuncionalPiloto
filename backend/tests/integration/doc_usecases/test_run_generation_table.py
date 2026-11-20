@@ -12,7 +12,7 @@ from docx import Document
 from app.application.services.generation_inputs import load_generation_inputs
 from app.domain.entities.activity import ActivityStatus
 from app.domain.entities.audit import AuditAction
-from app.domain.entities.comprovante import ComprovantePlan, TocLevel
+from app.domain.entities.comprovante import ComprovantePlan
 from app.domain.entities.generated import (
     DocumentFormat,
     DocumentKind,
@@ -146,7 +146,8 @@ def test_the_executor_takes_the_oldest_waiting_row_and_says_when_there_is_none(g
     assert gen.run().run_next() is False
 
 
-def test_the_table_quotes_the_comprovante_numbers_and_keeps_the_plan_hash(gen):
+def test_the_table_quotes_no_comprovante_number_and_still_keeps_the_plan_hash(gen):
+    # GTAB-04, GTAB-08: the plan itself leaves the table in the next task (GTAB-08, D6)
     world = gen.world
     with_page = add_activity(world, title="Com página", item_number=3)
     add_activity(world, title="Sem página", item_number=7)
@@ -163,11 +164,12 @@ def test_the_table_quotes_the_comprovante_numbers_and_keeps_the_plan_hash(gen):
         {"document_id": str(document.id), "page": 2}
     ]
     text = pdf_text(file_of(gen, done, DocumentFormat.PDF)[1])
-    assert text.count("sem comprovante") == 1
+    assert "sem comprovante" not in text
+    assert "Comprovante" not in text
 
 
-def voucher_cells(pdf_path, docx_path, title) -> tuple[str, str]:
-    """The text of the column Comprovante in the row of the activity, in the PDF and in the DOCX."""
+def row_cells(pdf_path, docx_path, title) -> tuple[list[str], list[str]]:
+    """The cells of the row of the activity, in the PDF and in the DOCX."""
     with pymupdf.open(pdf_path) as pdf:
         pdf_rows = [row for page in pdf for t in page.find_tables().tables for row in t.extract()]
     [pdf_row] = [row for row in pdf_rows if row[1] and title in row[1].replace("\n", " ")]
@@ -176,13 +178,12 @@ def voucher_cells(pdf_path, docx_path, title) -> tuple[str, str]:
         for row in Document(str(docx_path)).tables[0].rows
         if title in row.cells[1].text
     ]
-    return pdf_row[5].strip(), docx_row[5].strip()
+    return [c.strip() for c in pdf_row], [c.strip() for c in docx_row]
 
 
-def test_an_activity_of_several_pages_quotes_the_first_page_of_the_comprovante(gen):
-    # TAB-03: the spec is silent on which page of a multi-page activity the column quotes; the
-    # behavior is the first page of the activity in the Comprovante, and the range is in the
-    # table of contents of the Comprovante (CMP-04).
+def test_an_activity_of_several_pages_has_five_cells_and_no_page_number_in_the_table(gen):
+    # GTAB-04: the page of the Comprovante is not quoted; the row is item, title, quantity,
+    # unit points and total in both formats
     world = gen.world
     several = add_activity(world, title="Em duas páginas", item_number=3)
     document = add_document(world, page_count=4)
@@ -190,19 +191,15 @@ def test_an_activity_of_several_pages_quotes_the_first_page_of_the_comprovante(g
 
     done = generate(gen)
 
-    with world.uow_factory() as uow:
-        inputs = load_generation_inputs(uow, uow.processes.get(world.process.id))
-        plan: ComprovantePlan = plan_comprovante(inputs.layout, inputs.activities, TOC_CAPACITY)
-    [entry] = [
-        e for e in plan.toc if e.level is TocLevel.ATIVIDADE and e.activity_id == several.id
-    ]
-    assert entry.last_page == entry.first_page + 1
-    pdf_cell, docx_cell = voucher_cells(
+    pdf_cells, docx_cells = row_cells(
         file_of(gen, done, DocumentFormat.PDF)[1],
         file_of(gen, done, DocumentFormat.DOCX)[1],
         "Em duas páginas",
     )
-    assert (pdf_cell, docx_cell) == (str(entry.first_page), str(entry.first_page))
+    assert len(pdf_cells) == len(docx_cells) == 5
+    assert pdf_cells == docx_cells
+    assert pdf_cells[0] == "II.3"
+    assert re.fullmatch(r"\d+,\d\d", pdf_cells[2]) and re.fullmatch(r"\d+,\d\d", pdf_cells[4])
 
 
 def test_activities_left_out_are_counted_in_the_snapshot_and_alerted(gen):

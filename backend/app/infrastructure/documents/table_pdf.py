@@ -1,6 +1,6 @@
-"""The Tabela de Pontuação as PDF, drawn with reportlab (TAB-01, TAB-03 to TAB-06).
+"""The Tabela de Pontuação as PDF, drawn with reportlab (TAB-01, TAB-03 to TAB-06, GTAB-04).
 
-A4 landscape. The table has seven columns and a header row that repeats on every page; each group
+A4 landscape. The table has five columns and a header row that repeats on every page; each group
 is a band with the name of the table and the subtotal, empty groups included. The numbers come
 from the `TableDocument` already written; nothing is summed here.
 """
@@ -44,7 +44,7 @@ from app.infrastructure.documents.table_text import (
 
 FONT_SIZE = 8
 MARGIN = 15 * mm
-_FIXED_WIDTHS = (38, None, 58, 68, 52, 82, 78)  # points; the activity column takes the rest
+_FIXED_WIDTHS = (38, None, 64, 76, 64)  # points; the activity column takes the rest
 _GREY = colors.Color(0.9, 0.9, 0.9)
 _LIGHT = colors.Color(0.96, 0.96, 0.96)
 _LINE = colors.Color(0.4, 0.4, 0.4)
@@ -81,13 +81,12 @@ def _main_table(document: TableDocument, styles: PdfStyles, width: float) -> Tab
     def band_row(band: GroupBand) -> None:
         index = len(rows)
         rows.append(
-            [_p(band_title(band), styles.band), "", "", "",
-             _p(band_subtotal(band), styles.band), "", ""]
-        )  # fmt: skip
+            [_p(band_title(band), styles.band), "", "", _p(band_subtotal(band), styles.band), ""]
+        )
         commands.extend(
             [
-                ("SPAN", (0, index), (3, index)),
-                ("SPAN", (4, index), (6, index)),
+                ("SPAN", (0, index), (2, index)),
+                ("SPAN", (3, index), (4, index)),
                 ("BACKGROUND", (0, index), (-1, index), _LIGHT),
             ]
         )
@@ -97,12 +96,11 @@ def _main_table(document: TableDocument, styles: PdfStyles, width: float) -> Tab
     for band in document.bands:
         band_row(band)
         for row in band.rows:
-            cells = (row.item, row.title, row.quantity, row.unit_points, row.points,
-                     row.comprovante, row.status)  # fmt: skip
+            cells = (row.item, row.title, row.quantity, row.unit_points, row.points)
             rows.append([_p(cell, styles.cell) for cell in cells])
 
     index = len(rows)
-    rows.append([_p(total_line(document), styles.band), "", "", "", "", "", ""])
+    rows.append([_p(total_line(document), styles.band), "", "", "", ""])
     commands.extend(
         [("SPAN", (0, index), (-1, index)), ("BACKGROUND", (0, index), (-1, index), _GREY)]
     )

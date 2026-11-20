@@ -6,7 +6,6 @@ One process, the official table, synthetic data. The valid activity is the one o
 inserted straight: outside the interstice, rejected, below the minimum hours and a duplicate.
 """
 
-import re
 import uuid
 from datetime import UTC, date, datetime
 from decimal import Decimal
@@ -112,8 +111,7 @@ def test_the_tabela_has_only_the_valid_activity_and_no_not_scored_row(client, wo
     for title in (OUTSIDE, REJECTED, SHORT):
         assert title not in text, title
     assert text.count(world.activity["title"]) == 1  # the duplicate is not a second row
-    assert not re.search(r"Não pontuada(?!s)", text)  # no row with the status; the counter stays
-    assert "Não pontuadas: 0" in text
+    assert "Não pontuada" not in text  # GTAB-04, GTAB-08: no status in a row, no counter either
 
 
 def test_the_summary_counts_only_the_valid_activity(client, world):

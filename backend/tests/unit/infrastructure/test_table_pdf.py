@@ -9,6 +9,7 @@ from app.domain.rules.table_document import TableAlert
 from app.infrastructure.documents.table_pdf import write_table_pdf
 from tests.unit.domain.test_table_document_totals import HEADER
 from tests.unit.infrastructure.table_support import (
+    BIG_SUBTOTAL,
     INTERSTICE_TEXT,
     PIT_HOURS,
     SUBTOTALS,
@@ -17,17 +18,13 @@ from tests.unit.infrastructure.table_support import (
     long_table,
     scenario_table,
     table_with_title,
+    wide_band_table,
 )
 
-COLUMNS = [
-    "Item",
-    "Atividade",
-    "Quantidade",
-    "Pontuação unitária",
-    "Total",
-    "Comprovante",
-    "Status",
-]
+COLUMNS = ["Item", "Atividade", "Quantidade", "Pontuação unitária", "Total"]
+REMOVED_WORDS = (
+    "Pontuada", "Potencial", "Não pontuada", "sem comprovante", "Comprovante", "Status",
+)  # fmt: skip
 
 
 def render(tmp_path, document) -> pymupdf.Document:
@@ -50,7 +47,7 @@ def test_the_211_scenario_has_the_total_the_subtotals_and_the_pit_hours(tmp_path
     assert re.findall(r"\b\d\d,00\b", pit.split("Alertas")[0]) == [*PIT_HOURS, "92,00"]
 
 
-def test_the_table_has_the_seven_columns_in_the_order_of_the_spec(tmp_path):
+def test_the_table_has_the_five_columns_in_the_order_of_the_spec(tmp_path):
     pdf = render(tmp_path, scenario_table())
 
     tables = pdf[0].find_tables()
@@ -78,14 +75,42 @@ def test_the_header_names_the_professor_the_classes_the_unit_the_interstice_and_
     assert "Referência normativa: Res. de teste, Anexo I" in text
 
 
-def test_each_activity_is_a_row_with_item_quantity_points_voucher_and_status(tmp_path):
+def test_each_activity_is_a_row_with_item_quantity_and_points(tmp_path):
     text = text_of(render(tmp_path, scenario_table()))
 
     assert "II.3" in text
     assert "II.7" in text
-    assert "sem comprovante" in text
-    assert "Pontuada" in text
     assert "20,00" in text
+
+
+def test_no_cell_says_voucher_or_status_and_the_footer_has_no_voucher_nor_status_counters(
+    tmp_path,
+):
+    # GTAB-04, GTAB-08
+    pdf = render(tmp_path, scenario_table())
+    cells = " ".join(
+        " ".join(cell or "" for row in table.extract() for cell in row)
+        for page in pdf
+        for table in page.find_tables().tables
+    )
+    footer = next(
+        line for line in text_of(pdf).split("Pontuação geral:")[1:] if "Atividades:" in line
+    )
+
+    for word in REMOVED_WORDS:
+        assert word not in cells, word
+    for word in ("Com comprovante", "Pendentes", "Não pontuadas"):
+        assert word not in footer, word
+    assert "Com divergências:" in footer
+
+
+def test_a_title_of_400_characters_and_a_seven_digit_subtotal_keep_the_band_on_one_line(tmp_path):
+    # GTAB-04
+    pdf = render(tmp_path, wide_band_table())
+
+    assert len(pdf[0].search_for(f"Subtotal: {BIG_SUBTOTAL}")) == 1
+    assert len(pdf[0].search_for(f"Pontuação geral: {BIG_SUBTOTAL}")) == 1
+    assert "palavra0 palavra1" in text_of(pdf)
 
 
 def test_a_group_without_activity_still_has_its_band_with_zero(tmp_path):
@@ -100,9 +125,6 @@ def test_the_counters_are_written_as_the_engine_counted_them(tmp_path):
     text = text_of(render(tmp_path, document))
 
     assert f"Atividades: {c.activities}" in text
-    assert f"Com comprovante: {c.with_evidence}" in text
-    assert f"Pendentes: {c.pending}" in text
-    assert f"Não pontuadas: {c.not_scored}" in text
     assert f"Com divergências: {c.with_alerts}" in text
 
 
@@ -119,9 +141,6 @@ def test_each_counter_is_written_under_its_own_label(tmp_path):
     text = text_of(render(tmp_path, distinct_counters_table()))
 
     assert "Atividades: 21" in text
-    assert "Com comprovante: 17" in text
-    assert "Pendentes: 5" in text
-    assert "Não pontuadas: 3" in text
     assert "Com divergências: 2" in text
 
 

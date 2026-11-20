@@ -496,7 +496,7 @@ graph LR
 
 #### T13: Tabela com cinco colunas e rodapé sem contadores de status nem de comprovante
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Mudança única de colunas, por ser um só conceito em quatro arquivos: `TableRow` perde `comprovante` e `status` (saem `NO_VOUCHER` e `_STATUS_TEXT`) e `build_table_document` perde `comprovante_numbers`; em `table_text.py`, `COLUMNS = ("Item", "Atividade", "Quantidade", "Pontuação unitária", "Total")` e `counters_line` sem "Com comprovante", "Pendentes" e "Não pontuadas" (fica "Atividades" e "Com divergências"; ver nota de GTAB-08 no relatório); `table_docx.py` com `_FIXED_MM = (14, None, 26, 30, 26)`, faixa mesclando 0 a 2 e 3 a 4, total 0 a 4; `table_pdf.py` com `_FIXED_WIDTHS = (38, None, 64, 76, 64)`, `SPAN` 0..2 e 3..4 na faixa e 0..4 no total; a chamada em `generated_documents._table` deixa de passar os números.
 **Where**: `backend/app/domain/rules/table_document.py` (modify)
@@ -511,10 +511,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_table_docx.py` e `test_table_pdf.py`: cabeçalho com exatamente as cinco colunas, nas duas versões; nenhuma célula com "Pontuada", "Potencial", "Não pontuada", "sem comprovante", "Comprovante" ou "Status"; o rodapé não tem "Com comprovante", "Pendentes" nem "Não pontuadas" (olha o rodapé à parte das células); título de 400 caracteres e subtotal de 7 dígitos ("1.234.567,00") cabem sem quebrar a faixa nos dois formatos; a faixa da seção I mostra o subtotal
-- [ ] Testes existentes que mudam: `test_table_docx.py`, `test_table_pdf.py`, `table_support.py`, `test_table_document_rows.py`, `test_document_writer.py` (sete colunas, coluna Comprovante, rodapé com contadores) e `test_run_generation_table.py::test_the_table_quotes_the_comprovante_numbers_and_keeps_the_plan_hash` (a Tabela deixa de citar números; o plano sai na T15): GTAB-04, GTAB-08
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: contagem antes e depois registrada; nenhum teste apagado sem substituto
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_table_docx.py` e `test_table_pdf.py`: cabeçalho com exatamente as cinco colunas, nas duas versões; nenhuma célula com "Pontuada", "Potencial", "Não pontuada", "sem comprovante", "Comprovante" ou "Status"; o rodapé não tem "Com comprovante", "Pendentes" nem "Não pontuadas" (olha o rodapé à parte das células); título de 400 caracteres e subtotal de 7 dígitos ("1.234.567,00") cabem sem quebrar a faixa nos dois formatos; a faixa da seção I mostra o subtotal
+- [x] Testes existentes que mudam: `test_table_docx.py`, `test_table_pdf.py`, `table_support.py`, `test_table_document_rows.py`, `test_document_writer.py` (sete colunas, coluna Comprovante, rodapé com contadores) e `test_run_generation_table.py::test_the_table_quotes_the_comprovante_numbers_and_keeps_the_plan_hash` (a Tabela deixa de citar números; o plano sai na T15): GTAB-04, GTAB-08
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: contagem antes e depois registrada; nenhum teste apagado sem substituto
 
 **Tests**: unit
 **Gate**: full

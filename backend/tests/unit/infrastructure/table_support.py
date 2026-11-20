@@ -17,7 +17,7 @@ assert INTERSTICE.start.year == 2022
 
 def scenario_table(header=HEADER) -> TableDocument:
     version, activities, result = scenario_result()
-    return build_table_document(header, version, result, activities, {})
+    return build_table_document(header, version, result, activities)
 
 
 def long_table(rows: int = 1000, title: str = "Atividade sintética") -> TableDocument:
@@ -25,7 +25,7 @@ def long_table(rows: int = 1000, title: str = "Atividade sintética") -> TableDo
     document = scenario_table()
     band = document.bands[0]
     many = tuple(
-        TableRow(uuid4(), "II.3", f"{title} {n}", "1,00", "20,00", "20,00", str(n), "Pontuada")
+        TableRow(uuid4(), "II.3", f"{title} {n}", "1,00", "20,00", "20,00")
         for n in range(rows)
     )
     return replace(document, bands=(replace(band, rows=many), *document.bands[1:]))
@@ -36,7 +36,7 @@ def capped_table() -> TableDocument:
     the total say 40."""
     ten = [activity(2, 7, "10", title="Muitas orientações")]
     version, activities, result = scenario_result(ten, item_capped_table())
-    return build_table_document(HEADER, version, result, activities, {})
+    return build_table_document(HEADER, version, result, activities)
 
 
 def distinct_counters_table() -> TableDocument:
@@ -48,4 +48,15 @@ def table_with_title(title: str) -> TableDocument:
     """The document built, as in production, from one activity with the given title."""
     one = [activity(2, 7, "1", title=title)]
     version, activities, result = scenario_result(one)
-    return build_table_document(HEADER, version, result, activities, {})
+    return build_table_document(HEADER, version, result, activities)
+
+
+BIG_SUBTOTAL = "1.234.567,00"
+
+
+def wide_band_table() -> TableDocument:
+    """A row with a title cut at 400 characters under a band whose subtotal has seven digits."""
+    title = " ".join(f"palavra{n}" for n in range(1000))
+    document = table_with_title(title)
+    band = replace(document.bands[0], subtotal=BIG_SUBTOTAL)
+    return replace(document, bands=(band, *document.bands[1:]), total=BIG_SUBTOTAL)

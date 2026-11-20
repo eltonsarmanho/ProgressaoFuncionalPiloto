@@ -4,9 +4,7 @@ from app.domain.rules.pt_format import format_interstice
 from app.domain.rules.table_document import GroupBand, TableAlert, TableDocument
 
 TITLE = "TABELA DE PONTUAÇÃO"
-COLUMNS = (
-    "Item", "Atividade", "Quantidade", "Pontuação unitária", "Total", "Comprovante", "Status",
-)  # fmt: skip
+COLUMNS = ("Item", "Atividade", "Quantidade", "Pontuação unitária", "Total")
 PIT_HEADING = "Horas de PIT por semestre (Grupo I, fora do total de pontos)"
 PIT_COLUMNS = ("Período letivo", "Horas de PIT")
 PIT_TOTAL_LABEL = "Total em horas"
@@ -40,13 +38,7 @@ def total_line(document: TableDocument) -> str:
 
 def counters_line(document: TableDocument) -> str:
     c = document.counters
-    parts = (
-        f"Atividades: {c.activities}",
-        f"Com comprovante: {c.with_evidence}",
-        f"Pendentes: {c.pending}",
-        f"Não pontuadas: {c.not_scored}",
-        f"Com divergências: {c.with_alerts}",
-    )
+    parts = (f"Atividades: {c.activities}", f"Com divergências: {c.with_alerts}")
     return "   |   ".join(parts)
 
 

@@ -1,11 +1,16 @@
 """TAB-02, TAB-03: header, group bands and rows of the scoring table document."""
 
-from dataclasses import replace
+from dataclasses import fields, replace
 from datetime import UTC, datetime
 from decimal import Decimal
 
 from app.domain.entities.activity import Level
-from app.domain.rules.table_document import MAX_TITLE_CHARS, TableHeader, build_table_document
+from app.domain.rules.table_document import (
+    MAX_TITLE_CHARS,
+    TableHeader,
+    TableRow,
+    build_table_document,
+)
 from tests.unit.domain.scenario_211 import (
     INTERSTICE,
     activity,
@@ -23,12 +28,11 @@ HEADER = TableHeader(
     unit_name="Faculdade de Testes",
     interstice=INTERSTICE,
 )
-NO_NUMBERS: dict = {}
 
 
-def build(activities=None, version=None, numbers=None, header=HEADER):
+def build(activities=None, version=None, header=HEADER):
     version, activities, result = scenario_result(activities, version)
-    return build_table_document(header, version, result, activities, numbers or NO_NUMBERS)
+    return build_table_document(header, version, result, activities)
 
 
 def test_the_header_names_the_professor_the_classes_the_unit_and_the_interstice():
@@ -88,33 +92,20 @@ def test_group_one_counting_in_the_total_is_a_band_like_the_others():
     assert document.bands[0].subtotal == "0,00"
 
 
-def test_the_columns_of_a_row_are_item_title_quantity_unit_total_voucher_and_status():
+def test_the_columns_of_a_row_are_item_title_quantity_unit_and_total():
+    # GTAB-04: five columns; the voucher number and the status are not in the row
     a = activity(2, 7, "2", title="Orientação de TCC")
     version, activities, result = scenario_result([a])
 
-    document = build_table_document(HEADER, version, result, activities, {a.id: 14})
+    document = build_table_document(HEADER, version, result, activities)
     row = document.bands[0].rows[0]
 
     assert (row.item, row.title, row.quantity, row.unit_points, row.points) == (
         "II.7", "Orientação de TCC", "2,00", "16,00", "32,00",
     )  # fmt: skip
-    assert (row.comprovante, row.status) == ("14", "Pontuada")
-
-
-def test_a_row_without_a_voucher_number_reads_sem_comprovante():
-    a = activity(3, 2)
-
-    document = build(activities=[a])
-
-    assert document.bands[1].rows[0].comprovante == "sem comprovante"
-
-
-def test_a_row_takes_its_voucher_number_from_the_plan_by_activity():
-    first, second = activity(3, 2), activity(3, 2)
-
-    document = build(activities=[first, second], numbers={second.id: 9})
-
-    assert [r.comprovante for r in document.bands[1].rows] == ["sem comprovante", "9"]
+    assert {f.name for f in fields(TableRow)} == {
+        "activity_id", "item", "title", "quantity", "unit_points", "points",
+    }  # fmt: skip
 
 
 def test_rows_follow_the_items_of_the_group_and_keep_the_order_inside_an_item():
@@ -163,16 +154,14 @@ def test_an_activity_that_does_not_score_keeps_its_row_with_zero_points_and_its_
     document = build(activities=[unlisted])
     row = document.bands[0].rows[0]
 
-    assert (row.points, row.unit_points, row.quantity, row.status) == (
-        "0,00", "—", "—", "Não pontuada",
-    )  # fmt: skip
+    assert (row.points, row.unit_points, row.quantity) == ("0,00", "—", "—")
 
 
 def test_an_activity_outside_the_given_list_has_no_row():
     listed = activity(3, 2, title="Na lista")
     version, activities, result = scenario_result([listed, activity(3, 2, title="Fora da lista")])
 
-    document = build_table_document(HEADER, version, result, [listed], NO_NUMBERS)
+    document = build_table_document(HEADER, version, result, [listed])
 
     assert [r.title for r in document.bands[1].rows] == ["Na lista"]
 
@@ -233,7 +222,7 @@ def offer(title, period, hours="68", level=Level.GRADUACAO, item=1, **kwargs):
 
 def build_inside(activities=None):
     version, activities, result = scenario_303_result(activities)
-    return build_table_document(HEADER, version, result, activities, NO_NUMBERS)
+    return build_table_document(HEADER, version, result, activities)
 
 
 def section_one(activities=None):
@@ -327,7 +316,7 @@ def test_a_group_one_row_that_scores_nothing_keeps_zero_points_and_its_reason_in
     unlisted = offer("Disciplina sem item", "2023.1", item=99)
     version, activities, result = scenario_303_result([unlisted])
 
-    document = build_table_document(HEADER, version, result, activities, NO_NUMBERS)
+    document = build_table_document(HEADER, version, result, activities)
     row = document.bands[0].rows[0]
 
     assert (row.item, row.points) == ("I.99", "0,00")

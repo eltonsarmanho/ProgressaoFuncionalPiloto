@@ -1,5 +1,5 @@
-"""Content of the scoring table document (TAB-02 to TAB-06): header, group bands, rows, totals,
-counters, PIT hours and alerts.
+"""Content of the scoring table document (TAB-02 to TAB-06, GTAB-01 to GTAB-08): header, group
+bands, rows, totals, counters, PIT hours and alerts.
 
 Pure function of the scoring result: the document and the screen cannot disagree because the
 subtotals and the total are the engine's, never summed again here. The writers (DOCX, PDF) only
@@ -20,20 +20,13 @@ from app.domain.rules.pt_format import format_decimal, format_period
 from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
 from app.domain.rules.scoring_engine import (
     Counters,
-    RowStatus,
     ScoringResult,
     ScoringRow,
 )
 
-NO_VOUCHER = "sem comprovante"
 MAX_TITLE_CHARS = 400  # a table row cannot be taller than a page: a longer title is cut with "…"
 EMPTY_CELL = "—"
 _ROMAN = {1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI", 7: "VII", 8: "VIII"}
-_STATUS_TEXT = {
-    RowStatus.PONTUADA: "Pontuada",
-    RowStatus.POTENCIAL: "Potencial",
-    RowStatus.NAO_PONTUADA: "Não pontuada",
-}
 # The words the scoring screen shows for each reason a row is not scored (`REASON_LABELS`).
 _REASON_TEXT = {
     NotScoredReason.FORA_DO_INTERSTICIO: "Fora do interstício",
@@ -64,7 +57,7 @@ class TableHeader:
 
 @dataclass(frozen=True)
 class TableRow:
-    """One activity: the seven columns of the table, already written."""
+    """One activity: the five columns of the table, already written."""
 
     activity_id: UUID
     item: str
@@ -72,8 +65,6 @@ class TableRow:
     quantity: str
     unit_points: str
     points: str
-    comprovante: str
-    status: str
 
 
 @dataclass(frozen=True)
@@ -148,11 +139,8 @@ def _shown_title(title: str) -> str:
     return title[: MAX_TITLE_CHARS - 1] + "…"
 
 
-def _table_row(
-    row: ScoringRow, title: str, comprovante_numbers: Mapping[UUID, int], offer: bool = False
-) -> TableRow:
+def _table_row(row: ScoringRow, title: str, offer: bool = False) -> TableRow:
     """A group I offer row shows the PIT hours as quantity and one point per hour (D7)."""
-    number = comprovante_numbers.get(row.activity_id)
     hours = row.pit_hours
     return TableRow(
         activity_id=row.activity_id,
@@ -161,8 +149,6 @@ def _table_row(
         quantity=_cell(hours if offer else row.effective_quantity),
         unit_points=two_places(GROUP_ONE_UNIT_POINTS) if offer else _cell(row.unit_points),
         points=two_places(row.points),
-        comprovante=NO_VOUCHER if number is None else str(number),
-        status=_STATUS_TEXT[row.status],
     )
 
 
@@ -178,7 +164,6 @@ def _group_one_rows(
     found: list[ScoringRow],
     titles: Mapping[UUID, str],
     terms: Mapping[UUID, str | None],
-    comprovante_numbers: Mapping[UUID, int],
 ) -> tuple[TableRow, ...]:
     """One row per offer: the title cut as the others, then the term in words (GTAB-02)."""
     found.sort(key=lambda r: _term_key(terms[r.activity_id], titles[r.activity_id]))
@@ -187,7 +172,7 @@ def _group_one_rows(
         term = terms[row.activity_id]
         title = titles[row.activity_id]
         shown = title if term is None else f"{title} ({format_period(term)})"
-        rows.append(_table_row(row, shown, comprovante_numbers, offer=row.pit_hours is not None))
+        rows.append(_table_row(row, shown, offer=row.pit_hours is not None))
     return tuple(rows)
 
 
@@ -196,7 +181,6 @@ def _band_rows(
     result: ScoringResult,
     titles: Mapping[UUID, str],
     terms: Mapping[UUID, str | None],
-    comprovante_numbers: Mapping[UUID, int],
 ) -> tuple[TableRow, ...]:
     """Rows of the listed activities in the group, by item and then in the given order; the
     group I offers by term and title instead."""
@@ -206,9 +190,9 @@ def _band_rows(
         if row.activity_id in titles and row.group_number == group_number and not row.outside_total
     ]
     if group_number == GROUP_ONE:
-        return _group_one_rows(found, titles, terms, comprovante_numbers)
+        return _group_one_rows(found, titles, terms)
     found.sort(key=lambda row: row.item_number or 0)
-    return tuple(_table_row(r, titles[r.activity_id], comprovante_numbers) for r in found)
+    return tuple(_table_row(r, titles[r.activity_id]) for r in found)
 
 
 def _pit_hours(version: ScoringTableVersion, result: ScoringResult) -> PitHours | None:
@@ -258,10 +242,9 @@ def build_table_document(
     version: ScoringTableVersion,
     result: ScoringResult,
     activities: Sequence[Activity],
-    comprovante_numbers: Mapping[UUID, int],
     process_alerts: Sequence[Alert] = (),
 ) -> TableDocument:
-    """`activities` are the ones that go in the document; `comprovante_numbers` come from the plan.
+    """`activities` are the ones that go in the document.
 
     A group that counts in the total is a band, empty ones included, group I among them when the
     version counts it (one row per offer). A group outside the total (group I of the old version)
@@ -276,7 +259,7 @@ def build_table_document(
             numeral=roman(group.number),
             name=group.name,
             subtotal=two_places(result.group_subtotals[group.number]),
-            rows=_band_rows(group.number, result, titles, terms, comprovante_numbers),
+            rows=_band_rows(group.number, result, titles, terms),
         )
         for group in sorted(version.groups, key=lambda g: g.number)
         if group.counts_in_total

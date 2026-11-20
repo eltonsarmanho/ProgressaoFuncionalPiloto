@@ -1,4 +1,4 @@
-"""The Tabela de Pontuação as DOCX, written with python-docx (TAB-01, TAB-03 to TAB-06).
+"""The Tabela de Pontuação as DOCX, written with python-docx (TAB-01, TAB-03 to TAB-06, GTAB-04).
 
 A4 landscape. The column widths are written in `tblGrid` and in every cell with `tblLayout fixed`
 (with autofit, python-docx ignores the widths and LibreOffice splits the columns evenly); the
@@ -38,7 +38,7 @@ FONT_SIZE = 8
 MARGIN_MM = 15
 PAGE_MM = (297, 210)
 # Fixed widths in mm; the activity column takes the rest of the line.
-_FIXED_MM = (14, None, 22, 25, 20, 30, 28)
+_FIXED_MM = (14, None, 26, 30, 26)
 _GREY = "E6E6E6"
 _LIGHT = "F5F5F5"
 
@@ -77,8 +77,8 @@ def _band(table, widths: list[float], title: str, subtotal: str, fill: str, bold
     row = table.add_row()
     for cell, width in zip(row.cells, widths, strict=True):
         cell.width = Mm(width)
-    left = row.cells[0].merge(row.cells[3])
-    right = row.cells[4].merge(row.cells[6])
+    left = row.cells[0].merge(row.cells[2])
+    right = row.cells[3].merge(row.cells[4])
     _write_cell(left, title, bold=bold)
     _write_cell(right, subtotal, bold=bold)
     for cell in (left, right):
@@ -98,12 +98,11 @@ def _main_table(document, model: TableDocument) -> None:
         _band(table, widths, band_title(band), band_subtotal(band), _LIGHT)
         for item in band.rows:
             row = table.add_row()
-            cells = (item.item, item.title, item.quantity, item.unit_points, item.points,
-                     item.comprovante, item.status)  # fmt: skip
+            cells = (item.item, item.title, item.quantity, item.unit_points, item.points)
             for cell, text in zip(row.cells, cells, strict=True):
                 _write_cell(cell, text)
     row = table.add_row()
-    total = row.cells[0].merge(row.cells[6])
+    total = row.cells[0].merge(row.cells[4])
     _write_cell(total, total_line(model), bold=True)
     shade(total, _GREY)
     _set_widths(table, widths)

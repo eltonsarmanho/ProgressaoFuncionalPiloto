@@ -27,7 +27,6 @@ from app.domain.entities.comprovante import (
     ComprovantePlan,
     PageKind,
     SourceDocument,
-    TocLevel,
 )
 from app.domain.entities.document import Document
 from app.domain.entities.generated import (
@@ -536,17 +535,11 @@ class RunGeneration:
                 "Escolha a tabela de pontuação do processo antes de gerar.",
             )
         plan = plan_comprovante(inputs.layout, inputs.activities, self._toc_capacity)
-        numbers = {
-            e.activity_id: e.first_page
-            for e in plan.toc
-            if e.level is TocLevel.ATIVIDADE and e.first_page is not None
-        }
         model = build_table_document(
             inputs.header,
             version,
             inputs.score.result,
             inputs.activities,
-            numbers,
             inputs.score.alerts,
         )
         outputs = []

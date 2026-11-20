@@ -12,6 +12,7 @@ from app.domain.rules.table_document import TableAlert
 from app.infrastructure.documents.table_docx import write_table_docx
 from tests.unit.domain.test_table_document_totals import HEADER
 from tests.unit.infrastructure.table_support import (
+    BIG_SUBTOTAL,
     INTERSTICE_TEXT,
     PIT_HOURS,
     SUBTOTALS,
@@ -20,19 +21,15 @@ from tests.unit.infrastructure.table_support import (
     long_table,
     scenario_table,
     table_with_title,
+    wide_band_table,
 )
 
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 NS = {"w": W}
-COLUMNS = [
-    "Item",
-    "Atividade",
-    "Quantidade",
-    "Pontuação unitária",
-    "Total",
-    "Comprovante",
-    "Status",
-]
+COLUMNS = ["Item", "Atividade", "Quantidade", "Pontuação unitária", "Total"]
+REMOVED_WORDS = (
+    "Pontuada", "Potencial", "Não pontuada", "sem comprovante", "Comprovante", "Status",
+)  # fmt: skip
 
 
 def write(tmp_path, document):
@@ -79,10 +76,15 @@ def test_the_211_scenario_has_the_total_the_subtotals_and_the_pit_hours(tmp_path
     assert re.findall(r"\b\d\d,00\b", pit) == [*PIT_HOURS, "92,00"]
 
 
-def test_the_main_table_has_seven_columns_in_the_grid_and_in_the_header_row(tmp_path):
+def cell_texts(path) -> list[str]:
+    """Every cell of the main table, a merged one once."""
+    return ["".join(c.itertext()) for c in main_table(path).findall(".//w:tc", NS)]
+
+
+def test_the_main_table_has_five_columns_in_the_grid_and_in_the_header_row(tmp_path):
     table = main_table(write(tmp_path, scenario_table()))
 
-    assert len(table.findall("w:tblGrid/w:gridCol", NS)) == 7
+    assert len(table.findall("w:tblGrid/w:gridCol", NS)) == 5
     header = table.findall("w:tr", NS)[0]
     cells = ["".join(c.itertext()) for c in header.findall("w:tc", NS)]
     assert cells == COLUMNS
@@ -152,24 +154,47 @@ def test_a_group_without_activity_has_its_band_with_zero_and_the_bands_are_merge
     assert re.search(r"V\. Pesquisa Subtotal: 0,00", text_of(path))
     spans = main_table(path).findall(".//w:tc/w:tcPr/w:gridSpan", NS)
     assert len(spans) >= 2 * 7  # two merged cells in each of the seven bands (and the total row)
+    assert {int(s.get(f"{{{W}}}val")) for s in spans} == {2, 3, 5}  # title, subtotal, total row
 
 
-def test_the_counters_the_voucher_text_and_the_status_are_written(tmp_path):
+def test_the_counters_activities_and_divergences_and_the_rows_are_written(tmp_path):
     document = scenario_table()
     c = document.counters
     text = text_of(write(tmp_path, document))
 
-    for part in (
-        f"Atividades: {c.activities}",
-        f"Com comprovante: {c.with_evidence}",
-        f"Pendentes: {c.pending}",
-        f"Não pontuadas: {c.not_scored}",
-        f"Com divergências: {c.with_alerts}",
-        "sem comprovante",
-        "Pontuada",
-        "II.3",
-    ):
+    for part in (f"Atividades: {c.activities}", f"Com divergências: {c.with_alerts}", "II.3"):
         assert part in text
+
+
+def test_no_cell_says_voucher_or_status_and_the_footer_has_no_voucher_nor_status_counters(
+    tmp_path,
+):
+    # GTAB-04, GTAB-08
+    path = write(tmp_path, scenario_table())
+    cells = " ".join(cell_texts(path))
+    footer = next(
+        p.text for p in Document(str(path)).paragraphs if p.text.startswith("Atividades:")
+    )
+
+    for word in REMOVED_WORDS:
+        assert word not in cells, word
+    assert footer.count("|") == 1
+    for word in ("Com comprovante", "Pendentes", "Não pontuadas"):
+        assert word not in footer, word
+
+
+def test_a_title_of_400_characters_and_a_seven_digit_subtotal_keep_the_band_in_two_cells(
+    tmp_path,
+):
+    # GTAB-04: the band is one row with a cell for the title and one for the subtotal
+    path = write(tmp_path, wide_band_table())
+
+    rows = main_table(path).findall("w:tr", NS)
+    band = ["".join(c.itertext()) for c in rows[1].findall("w:tc", NS)]
+    assert band[1] == f"Subtotal: {BIG_SUBTOTAL}"
+    assert "palavra0 palavra1" in text_of(path)
+    title_cell = ["".join(c.itertext()) for c in rows[2].findall("w:tc", NS)][1]
+    assert len(title_cell) == 400 and title_cell.endswith("…")
 
 
 def test_the_total_and_the_subtotal_are_the_limited_ones_not_the_sum_of_the_rows(tmp_path):
@@ -184,14 +209,8 @@ def test_the_total_and_the_subtotal_are_the_limited_ones_not_the_sum_of_the_rows
 def test_each_counter_is_written_under_its_own_label(tmp_path):
     text = text_of(write(tmp_path, distinct_counters_table()))
 
-    for part in (
-        "Atividades: 21",
-        "Com comprovante: 17",
-        "Pendentes: 5",
-        "Não pontuadas: 3",
-        "Com divergências: 2",
-    ):
-        assert part in text
+    assert "Atividades: 21" in text
+    assert "Com divergências: 2" in text
 
 
 def test_the_pit_section_is_left_out_when_the_table_does_not_measure_hours(tmp_path):
