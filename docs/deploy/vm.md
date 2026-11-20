@@ -134,7 +134,7 @@ Usar só dados sintéticos (docente com SIAPE fictício, PDF sintético; nunca `
 
 ## Deploy do Grupo I no total (feature `grupo-i-no-total`)
 
-Esta seção só descreve o procedimento; nada dela foi executado. **Push e deploy só com a autorização explícita do usuário**, como nos outros deploys. A versão traz a migração `0009_version_superseded`, a versão nova da tabela oficial (o Grupo I conta no Total geral a 1 ponto por hora de PIT e o VI.14 vale 3 pontos por ano), a troca automática dos processos editáveis e a Tabela de Pontuação em cinco colunas, sem Comprovante nem status. Até o deploy, o sistema no ar segue com o Grupo I fora do total e o VI.14 a 6.
+Esta seção descreve o procedimento, executado em 2026-11-20 (registro em "Deploy executado em 2026-11-20", ao fim da seção). **Push e deploy só com a autorização explícita do usuário**, como nos outros deploys. A versão traz a migração `0009_version_superseded`, a versão nova da tabela oficial (o Grupo I conta no Total geral a 1 ponto por hora de PIT e o VI.14 vale 3 pontos por ano), a troca automática dos processos editáveis e a Tabela de Pontuação em cinco colunas, sem Comprovante nem status.
 
 ### O que muda na VM
 
@@ -163,6 +163,14 @@ Com `docker exec -it dashboard_db psql -U <superusuario> -d progressao`:
 4. Um evento de auditoria por processo trocado: `SELECT entity_id, changes, justification FROM audit_logs WHERE entity = 'process' AND justification = 'AD-023: Grupo I no total';` traz uma linha por processo trocado, com `changes->'scoring_table_version_id'` (`before` e `after`).
 5. Concluídos e arquivados intocados: o resultado do item 3 ainda mostra os `CONCLUIDO` e `ARQUIVADO` com a versão antiga, e nenhum deles aparece na consulta do item 4.
 6. `GET /api/health` 200 depois de `docker compose up -d --no-build` e `docker compose restart nginx`; na Etapa 4 do processo em rascunho o painel diz "Grupos I a VIII" e a lista de tabelas só oferece a versão nova. Fumaça só com dados sintéticos (nunca `Documentos/` nem `Modelos/`): gerar a Tabela e conferir a seção I, as cinco colunas e o Total geral com o Grupo I, no DOCX e no PDF.
+
+### Deploy executado em 2026-11-20
+
+- Commit publicado: `f18f162` (`git archive`; imagens construídas fora da VM com variáveis de mentira; quatro `.ttf`, `0009_version_superseded.py` e o seed novo conferidos na imagem; pacote do frontend limpo em `scripts/check_bundle_no_secrets.sh`). Gate antes do envio: backend `ruff` limpo e 5459 testes passados; frontend `lint`, `build` e 636 testes. `docker-compose.yml`, `deploy/`, `nginx/`, `Dockerfile` e `requirements.txt` não mudaram desde `a136faf`. Estavam junto, sem outra migração, os commits `ec3873a` (o `DELETE` remove diretórios vazios) e `0422ac3` (alerta de data das ofertas do Grupo I), além de `correcoes-auditoria` (Iniciar processo).
+- Antes: nenhuma geração `GERANDO` e nenhum documento `PROCESSANDO`. Retorno: imagens `progressao-funcional-backend:grupo-i-pre-f18f162` e `progressao-funcional-frontend:grupo-i-pre-f18f162` (as de `a136faf`), dump `backups/progressao-pre-grupo-i-no-total-2026-11-20.sql.gz` (modo 600, `gzip -t` ok) e cópias de `docker-compose.override.yml` e `.env` em `backups/`.
+- Depois: `alembic current` = `0009 (head)`; `GET /api/health` 200 (direto e pelo endereço público) depois de `docker compose up -d --no-build` e `docker compose restart nginx`; sem erro nos logs. A versão antiga ficou marcada como substituída; o processo real em `RASCUNHO` passou para a versão nova, com um evento de auditoria `AD-023: Grupo I no total`; 1 processo, 76 atividades e 6 documentos gerados seguem como estavam (a Tabela já gerada não mudou, e a Etapa 5 avisa para gerar de novo).
+- Fumaça sintética pelo endereço público (docente de SIAPE fictício, processo sintético, removidos ao fim): versão nova existe e a antiga está marcada; Grupo I só com I.1 e I.2 e dentro do total; VI.14 a 3; escolher a versão substituída dá 422 `VERSAO_SUBSTITUIDA`; pontos manuais no Grupo I dão 422; Iniciar processo (`RASCUNHO` para `EM_ANDAMENTO`); Tabela em `PRONTO` com DOCX de cinco colunas, seção I e sem Comprovante nem status, e PDF; a versão nova é a sugerida para a unidade FASI. 23 de 23 (a única falha da primeira rodada foi o roteiro usar a unidade CUNTINS, sem tabela ligada; refeito com a FASI).
+- Observação: o `ADD COLUMN` da `0009` desfaz-se com o `downgrade`, mas a troca dos processos é dado; o caminho seguro de volta é o dump.
 
 ### Voltar à versão anterior
 
