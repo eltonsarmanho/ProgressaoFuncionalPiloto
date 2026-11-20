@@ -155,6 +155,51 @@ def test_a_yearly_item_refuses_a_period_that_starts_after_the_interstice(
     assert errors(response, "period_start")["message"] == RANGE
 
 
+@pytest.mark.parametrize("start", ["2021-01-01", "2023-01-01"])
+def test_a_yearly_item_with_only_a_start_is_open_and_accepted_before_or_inside_the_interstice(
+    client, headers, chosen, yearly_item, start
+):
+    # the period with no end runs to the end of the interstice, so it touches it (EDT-03)
+    group, item = yearly_item
+    payload = body(group_number=group, item_number=item, quantidade=1, period_start=start)
+
+    response = client.post(activities_url(chosen), json=payload, headers=headers)
+
+    assert response.status_code == 201, response.text
+    assert response.json()["period_start"] == start
+
+
+def test_a_yearly_item_with_only_a_start_after_the_interstice_is_422_on_period_start(
+    client, headers, chosen, yearly_item
+):
+    group, item = yearly_item
+    payload = body(group_number=group, item_number=item, quantidade=1, period_start="2025-01-01")
+
+    response = client.post(activities_url(chosen), json=payload, headers=headers)
+
+    assert errors(response, "period_start")["message"] == RANGE
+    assert listed(client, chosen) == []
+
+
+def test_the_edit_of_a_yearly_item_keeps_the_open_period_rule(client, headers, chosen, yearly_item):
+    group, item = yearly_item
+    first = body(group_number=group, item_number=item, quantidade=1, period_start="2023-01-01")
+    created = client.post(activities_url(chosen), json=first, headers=headers).json()
+    url = f"/api/activities/{created['id']}"
+
+    before = client.put(
+        url, json=first | {"period_start": "2021-01-01", "expected_version": 1}, headers=headers
+    )
+    after = client.put(
+        url, json=first | {"period_start": "2025-01-01", "expected_version": 2}, headers=headers
+    )
+
+    assert before.status_code == 200, before.text
+    assert before.json()["period_start"] == "2021-01-01"
+    assert errors(after, "period_start")["message"] == RANGE
+    assert client.get(url).json()["period_start"] == "2021-01-01"
+
+
 # --- the edit (EDT-02, EDT-06) -----------------------------------------------------------------
 
 

@@ -1648,7 +1648,7 @@ T62 → T43 → T44
 
 ### T57: FT2, período aberto na categoria por ano da atividade manual
 
-**Status**: Pending
+**Status**: Done
 
 **What**: O Verifier (G2) viu que o mutante B43 (a checagem manual trata a categoria por ano como período fechado) sobrevive. Testes de API da criação e da edição manual de item por ano: `period_start` dentro ou antes do interstício e sem `period_end` é aceito; início depois do fim do interstício é 422. A spec registra o período aberto (SP3, SP5).
 **Where**: `backend/tests/integration/api/test_activity_edit_rules_api.py` (modify) e `.specs/features/revisao-simplificada/spec.md` (modify, junto com a T43 e a T62)
@@ -1663,11 +1663,11 @@ T62 → T43 → T44
 
 **Done when**:
 
-- [ ] Teste primeiro: criação e edição manual com `period_start` antes do início do interstício e dentro dele, sem `period_end`, respondem 2xx; com `period_start` depois do fim, 422 em `period_start`
-- [ ] O teste passa contra o código e falha contra o mutante B43 (`yearly = False`), provado em cópia
-- [ ] A spec descreve o período aberto como decisão do Verifier (texto no commit da T43, junto com a T62)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_activity_edit_rules_api.py -q`
-- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+- [x] Teste primeiro: criação e edição manual com `period_start` antes do início do interstício e dentro dele, sem `period_end`, respondem 2xx; com `period_start` depois do fim, 422 em `period_start`
+- [x] O teste passa contra o código e falha contra o mutante B43 (`yearly = False`), provado em cópia
+- [x] A spec descreve o período aberto como decisão do Verifier (texto no commit da T43, junto com a T62)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_activity_edit_rules_api.py -q`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
 
 **Tests**: integration
 **Gate**: full
