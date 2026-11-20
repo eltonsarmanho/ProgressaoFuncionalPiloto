@@ -104,13 +104,13 @@ T39 → T42
 ### Phase 7b: Frontend, correções da revisão do lote 5
 
 ```
-T42 → T45 → T46 → T47 → T48 → T49 → T50
+T42 → T45 → T46 → T47 → T48 → T49 → T50 → T51 → T52 → T53 → T54
 ```
 
 ### Phase 8: Documentação e verificação
 
 ```
-T50 → T43 → T44
+T54 → T43 → T44
 ```
 
 ---
@@ -1470,11 +1470,123 @@ T50 → T43 → T44
 
 ---
 
+### T51: TF7, `hasTable` vem da tabela escolhida, não das categorias
+
+**Status**: Pending
+
+**What**: `hasTable` da Etapa 3 deriva de `GET /scoring/table` (`chosen` ou `suggested` não nulos) e fica em `Loaded`; se a tabela existe mas a leitura das versões falha, o avanço continua bloqueado e a página mostra o erro de carga das categorias, sem o aviso falso de "nenhuma tabela".
+**Where**: `frontend/src/pages/ProcessActivities.tsx` (modify)
+**Depends on**: T50
+**Reuses**: `load`, `needsCategoryMessage`, `errorMessage`
+**Requirement**: SEC-05, SEC-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Testes primeiro em `frontend/src/pages/ProcessActivities.test.tsx` (que falham antes): com `GET /scoring/table` com tabela escolhida, `GET /scoring-versions/:id` falhando e uma atividade válida sem categoria, a página não mostra "Nenhuma tabela de pontuação foi escolhida", mostra o erro de carga das categorias e mantém o avanço bloqueado; sem tabela (`chosen` e `suggested` nulos) o comportamento da T47 segue igual
+- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): derive the table presence from the chosen table`
+
+---
+
+### T52: TF8, foco nos caminhos de falha da linha
+
+**Status**: Pending
+
+**What**: O foco chega ao destino mesmo quando a ação falha: o seletor de categoria recebe o foco no 422 depois de sair do estado ocupado; Validar, Rejeitar e Reabrir que falham devolvem o foco ao botão acionado; o foco pendente de uma recarga que falha é descartado.
+**Where**: `frontend/src/components/ActivityRow.tsx` e `frontend/src/components/ActivityWorkspace.tsx` (modify)
+**Depends on**: T51
+**Reuses**: `pickerRef`, `pending`, `errorMessage`
+**Requirement**: SEC-12, SEC-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Testes primeiro (que falham antes), com `toHaveFocus`: um 422 de `categoria` deixa o foco no seletor de categoria (já habilitado); um 409 ou 5xx ao Validar, Rejeitar ou Reabrir deixa o foco no botão acionado, já habilitado; quando a recarga falha, o foco pendente é limpo e não se move depois
+- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): return the focus after a failed row action`
+
+---
+
+### T53: TF9, anúncios repetidos, erro da linha e filtros
+
+**Status**: Pending
+
+**What**: Salvar a mesma atividade duas vezes anuncia as duas vezes; o erro da linha é limpo quando a lista recarrega com sucesso e ao iniciar outra ação, e o alerta é remontado a cada falha para reanunciar o mesmo texto; a mensagem de bloqueio da seção não duplica a região viva do `StepNav`; a mensagem "Nenhuma atividade encontrada com estes filtros." é anunciada.
+**Where**: `frontend/src/components/ActivityWorkspace.tsx` e `frontend/src/components/ValidActivitiesSection.tsx` (modify)
+**Depends on**: T52
+**Reuses**: a região viva da T45, `rowError` da T46
+**Requirement**: SEC-12, SEC-05, SEC-11
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Testes primeiro (que falham antes): salvar a mesma atividade duas vezes faz a região de status mudar de conteúdo nas duas (vazia entre elas ou com contador); o erro da linha some quando a lista recarrega com sucesso e quando outra ação começa; duas falhas iguais seguidas remontam o alerta (o elemento novo é outro nó); o `<p className="error">` da seção não tem `aria-live` e o texto segue visível; a mensagem "Nenhuma atividade encontrada com estes filtros." tem `role="status"`
+- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): announce repeated saves, row errors and empty filters`
+
+---
+
+### T54: TF10, `StepNav` sem espaço extra
+
+**Status**: Pending
+
+**What**: A região viva do `StepNav`, sempre montada e vazia sem bloqueio, não soma margem em nenhuma página: `.step-blocked:empty` zera a margem, sem `display: none`.
+**Where**: `frontend/src/styles.css` (modify), com `frontend/src/components/StepNav.tsx`
+**Depends on**: T53
+**Reuses**: os testes de CSS de `styles` que já checam regras de layout
+**Requirement**: SEC-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Testes primeiro (que falham antes), no mesmo estilo dos testes de CSS existentes: `styles.css` tem a regra `.step-blocked:empty` com `margin: 0` e não usa `display: none` nela; a região segue no DOM, vazia, sem bloqueio
+- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): drop the extra space of the empty step message`
+
+---
+
 ### T43: Documentação da feature
 
 **What**: AD-022 em `STATE.md` (coluna `merged_into_id`, validade no servidor, mesclagem na escrita), regra 10 em `CLAUDE.md` e rastreabilidade da spec marcada como `Implemented`.
 **Where**: `.specs/STATE.md` (modify)
-**Depends on**: T50
+**Depends on**: T54
 **Reuses**: AD-018 como modelo; o texto do Design
 **Requirement**: DUP-02, SEG-01, VAL-01
 
@@ -1529,7 +1641,7 @@ T50 → T43 → T44
 
 | Requisito | Tarefas | Requisito | Tarefas |
 | --- | --- | --- | --- |
-| VAL-01 | T2, T5 | SEC-12 | T33, T35, T36, T45, T46, T49 |
+| VAL-01 | T2, T5 | SEC-12 | T33, T35, T36, T45, T46, T49, T52, T53 |
 | VAL-02 | T3, T4, T28 | DUP-01 | T13, T14 |
 | VAL-03 | T17 | DUP-02 | T9, T10, T11, T12, T14 |
 | VAL-04 | T18, T19, T34 | DUP-03 | T10, T12, T14 |
@@ -1538,14 +1650,14 @@ T50 → T43 → T44
 | SEC-01 | T23, T24, T27, T36, T38, T39 | DUP-06 | T14 |
 | SEC-02 | T1, T25, T26, T34 | DUP-07 | T15, T16, T24, T32 |
 | SEC-03 | T31, T34, T48 | SEG-01 | T1, T2, T5, T6, T8 |
-| SEC-04 | T30, T33, T45, T46, T47 | SEG-02 | T6, T8 |
-| SEC-05 | T34, T37, T38, T47, T49 | SEG-03 | T2, T6, T8, T26 |
+| SEC-04 | T30, T33, T45, T46, T47, T51, T52 | SEG-02 | T6, T8 |
+| SEC-05 | T34, T37, T38, T47, T49, T51, T53, T54 | SEG-03 | T2, T6, T8, T26 |
 | SEC-06 | T1, T22, T25, T35 | SEG-04 | T2, T5 |
 | SEC-07 | T1, T24, T25, T28, T29, T35 | SEG-05 | T7, T8, T28 |
 | SEC-08 | T25, T26, T36 | EDT-01 | T40, T50 |
 | SEC-09 | T25, T35, T36 | EDT-02 | T20, T41, T49 |
 | SEC-10 | T35 | EDT-03 | T20, T41 |
-| SEC-11 | T34, T35, T48 | EDT-04 | T40 |
+| SEC-11 | T34, T35, T48, T53 | EDT-04 | T40 |
 | QTD-01 | T42, T50 | EDT-05 | T40 |
 | QTD-02 | T20, T42, T50 | EDT-06 | T20, T40 |
 | QTD-03 | T20, T42, T49 | EDT-07 | T40 |
@@ -1587,5 +1699,5 @@ T50 → T43 → T44
 | T29-T38 | Frontend components/pages | unit | unit | ✅ OK |
 | T39 | Removal of a component | none (build gate) | none | ✅ OK |
 | T40-T42 | Frontend components | unit | unit | ✅ OK |
-| T45-T50 | Frontend components/pages | unit | unit | ✅ OK |
+| T45-T54 | Frontend components/pages | unit | unit | ✅ OK |
 | T43, T44 | Docs | none | none | ✅ OK |
