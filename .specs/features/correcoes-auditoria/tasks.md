@@ -133,7 +133,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T2: Modal "Iniciar processo"
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Componente `StartProcessDialog` (props: `processId`, `version`, `onStarted(status, version)`, `onStale()`, `onClose()`) com o título "Iniciar processo", o texto de CAINI-03, os botões "Iniciar" e "Cancelar", sem justificativa; "Iniciar" envia o `POST` de CAINI-04, desabilita o botão enquanto espera, mostra a mensagem do servidor em `role="alert"` em erro e chama `onStale` só em 409.
 **Where**: `frontend/src/components/ProcessDialogs.tsx` (modify; os testes ficam no arquivo de teste novo ao lado, citado no Done when)
@@ -148,9 +148,9 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ProcessDialogs.test.tsx` (novo): o modal mostra o título, o texto exato de CAINI-03, "Iniciar" e "Cancelar" e nenhum campo com rótulo de justificativa; "Iniciar" chama `request("POST", "/api/processes/<id>/status", {status: "EM_ANDAMENTO", expected_version: <versão>})` sem a chave `justificativa`; 200 chama `onStarted("EM_ANDAMENTO", <versão devolvida>)`; 409 mostra a mensagem do servidor em `role="alert"` e chama `onStale`; 404 e 422 mostram a mensagem, não chamam `onStale` e deixam "Iniciar" habilitado; "Cancelar" chama `onClose` sem requisição
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: contagem antes e depois registrada; nenhum teste apagado
+- [x] Testes primeiro em `frontend/src/components/ProcessDialogs.test.tsx` (novo): o modal mostra o título, o texto exato de CAINI-03, "Iniciar" e "Cancelar" e nenhum campo com rótulo de justificativa; "Iniciar" chama `request("POST", "/api/processes/<id>/status", {status: "EM_ANDAMENTO", expected_version: <versão>})` sem a chave `justificativa`; 200 chama `onStarted("EM_ANDAMENTO", <versão devolvida>)`; 409 mostra a mensagem do servidor em `role="alert"` e chama `onStale`; 404 e 422 mostram a mensagem, não chamam `onStale` e deixam "Iniciar" habilitado; "Cancelar" chama `onClose` sem requisição
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagem antes e depois registrada; nenhum teste apagado
 
 **Tests**: unit
 **Gate**: quick

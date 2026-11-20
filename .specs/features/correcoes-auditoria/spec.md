@@ -223,11 +223,11 @@ O docente não consegue concluir um processo real: nenhuma tela leva o processo 
 | -------------- | ----- | ----- | ------ |
 | CAINI-01 | P1: Iniciar o processo na Etapa 1 | Tasks | Pending |
 | CAINI-02 | P1: Iniciar o processo na Etapa 1 | Tasks | Pending |
-| CAINI-03 | P1: Iniciar o processo na Etapa 1 | Tasks | Pending |
-| CAINI-04 | P1: Iniciar o processo na Etapa 1 | Tasks | Pending |
+| CAINI-03 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
+| CAINI-04 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
 | CAINI-05 | P1: Iniciar o processo na Etapa 1 | Tasks | Pending |
 | CAINI-06 | P1: Iniciar o processo na Etapa 1 | Tasks | Pending |
-| CAINI-07 | P1: Iniciar o processo na Etapa 1 | Tasks | Pending |
+| CAINI-07 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
 | CAINI-08 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
 | CAINI-09 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
 | CAINI-10 | P1: Etapa 5 explica a conclusão | Tasks | Pending |

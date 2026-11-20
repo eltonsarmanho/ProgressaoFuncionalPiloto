@@ -57,6 +57,64 @@ export function ArchiveProcessDialog({
   );
 }
 
+/** CAINI-03/04: starts a draft process; the only question is the confirmation, no justification. */
+export function StartProcessDialog({
+  processId,
+  version,
+  onStarted,
+  onStale,
+  onClose,
+}: {
+  processId: string;
+  version: number;
+  onStarted: (status: ProcessStatus, version: number) => void;
+  /** The version moved on or the process already left the draft (409): load it again. */
+  onStale: () => void;
+  onClose: () => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function confirm() {
+    setError(null);
+    setBusy(true);
+    try {
+      const updated = await request<{ status: ProcessStatus; version: number }>(
+        "POST",
+        `/api/processes/${processId}/status`,
+        { status: "EM_ANDAMENTO", expected_version: version },
+      );
+      onStarted(updated.status, updated.version);
+    } catch (err) {
+      setError(errorMessage(err));
+      setBusy(false);
+      if (isConflict(err)) onStale();
+    }
+  }
+
+  return (
+    <Modal title="Iniciar processo" onClose={onClose}>
+      <p>
+        Depois de iniciado, o processo não volta a rascunho e cada alteração na Etapa 1 passa a pedir
+        justificativa.
+      </p>
+      {error && (
+        <p role="alert" className="error">
+          {error}
+        </p>
+      )}
+      <div className="btn-row">
+        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void confirm()}>
+          Iniciar
+        </button>
+        <button type="button" className="btn btn-secondary" onClick={onClose}>
+          Cancelar
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 type DeletePreview = { documents: number; activities: number; generated_documents: number };
 
 const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
