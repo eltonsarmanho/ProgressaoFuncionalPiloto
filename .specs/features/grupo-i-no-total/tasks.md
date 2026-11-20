@@ -1171,7 +1171,7 @@ graph LR
 
 #### T36: FT2, barra do grupo com total zero e parcela positiva
 
-**Status**: Pending
+**Status**: Done
 
 **What**: O Verifier (validation.md, G3) viu que o mutante F04 (sem a guarda `!(whole > 0)` em `widthOf`) sobrevive porque o teste de "total 0" zera também as parcelas. A spec (GRES-03) manda desenhar barra vazia com total 0, sem NaN nem Infinity; o teste novo passa uma parcela positiva com total "0.00" e espera `"0%"`.
 **Where**: `frontend/src/components/GroupBars.test.tsx` (modify)
@@ -1186,9 +1186,9 @@ graph LR
 
 **Done when**:
 
-- [ ] O teste novo passa contra o código e falha contra o mutante F04 (guarda `whole > 0` removida), provado em cópia isolada
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado ou enfraquecido; o novo passa
+- [x] O teste novo passa contra o código e falha contra o mutante F04 (guarda `whole > 0` removida), provado em cópia isolada
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado ou enfraquecido; o novo passa
 
 **Tests**: unit
 **Gate**: front

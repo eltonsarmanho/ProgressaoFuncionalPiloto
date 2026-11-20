@@ -71,4 +71,12 @@ describe("GroupBars", () => {
     }
     expect(container.innerHTML).not.toMatch(/NaN|Infinity/);
   });
+
+  it("GRES-03: total 0 com uma parcela positiva também dá barra vazia, sem NaN nem Infinity", () => {
+    const { container } = render(
+      <GroupBars subtotals={[{ group_number: 2, subtotal: "5.00" }]} total="0.00" group1OutsideTotal={false} />,
+    );
+    expect(fill(items()[0]).style.width).toBe("0%");
+    expect(container.innerHTML).not.toMatch(/NaN|Infinity/);
+  });
 });
