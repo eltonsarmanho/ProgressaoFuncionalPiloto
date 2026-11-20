@@ -1,6 +1,7 @@
 """ADM-05, ADM-06, ADM-07: new versions copy a source, close the open one, reject overlaps."""
 
 import uuid
+from dataclasses import replace
 from datetime import date
 
 import pytest
@@ -138,3 +139,76 @@ def test_non_admin_gets_403(world, admin_uc, actor):
         new_version(world, admin_uc, actor=getattr(world, actor))
 
     assert len(versions(world, world.official_version.table_id)) == 1
+
+
+# --- GI-07: a superseded version leaves the open-version, overlap and base rules ---------------
+
+
+def add_superseded_twin(world):
+    """The official version marked as superseded by a twin that starts the same day, open too."""
+    twin = replace(world.official_version, id=uuid.uuid4(), name="Versão sintética que a substitui")
+    with world.uow_factory() as uow:
+        uow.scoring_tables.add_version(twin)
+        uow.scoring_tables.set_superseded(world.official_version.id, twin.id)
+        uow.commit()
+    return twin
+
+
+def test_a_new_version_closes_the_superseding_one_and_neither_conflicts_nor_touches_the_old(
+    world, admin_uc
+):
+    twin = add_superseded_twin(world)
+
+    created = new_version(world, admin_uc)
+
+    by_id = {v.id: v for v in versions(world, world.official_version.table_id)}
+    assert created.version.id in by_id
+    assert by_id[twin.id].valid_to == date(2026, 2, 28)
+    assert by_id[world.official_version.id].valid_to is None  # the superseded one is left alone
+    assert by_id[world.official_version.id].superseded_by_id == twin.id
+    with world.uow_factory() as uow:
+        assert [
+            e.action for e in uow.audit.list_for("scoring_version", str(world.official_version.id))
+        ] == []
+
+
+def test_without_the_mark_two_open_versions_still_conflict(world, admin_uc):
+    twin = replace(world.official_version, id=uuid.uuid4(), name="Gêmea sem marca")
+    with world.uow_factory() as uow:
+        uow.scoring_tables.add_version(twin)
+        uow.commit()
+
+    with pytest.raises(Conflict):
+        new_version(world, admin_uc)
+
+
+def test_latest_version_skips_the_superseded_one_with_the_same_start(world):
+    from app.application.use_cases.scoring_admin import latest_version
+
+    twin = add_superseded_twin(world)
+
+    both = versions(world, world.official_version.table_id)
+    assert latest_version(both).id == twin.id
+    assert latest_version(list(reversed(both))).id == twin.id
+
+
+def test_the_csv_import_takes_its_base_from_the_version_that_is_not_superseded(world, admin_uc):
+    twin = add_superseded_twin(world)
+    note = "Nota sintética da versão que substitui"
+    with world.uow_factory() as uow:
+        uow.scoring_tables.update_version(replace(twin, notes=note))
+        uow.commit()
+    assert world.official_version.notes != note
+    csv = "\n".join(
+        [
+            "grupo,item,descricao,unidade,modo,pontos,horas_por_bloco,limite",
+            "1,1,Aulas,horas,CARGA_SEMANAL,,,",
+            "2,7,Orientação,por aluno,POR_UNIDADE,5,,",
+        ]
+    )
+
+    view = admin_uc.import_csv.execute(
+        world.admin, world.official_version.table_id, NEW_START, None, REFERENCE, csv
+    )
+
+    assert view.version.notes == note

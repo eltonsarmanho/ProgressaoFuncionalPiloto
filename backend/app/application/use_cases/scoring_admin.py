@@ -133,7 +133,9 @@ def empty_groups() -> tuple[ScoringGroup, ...]:
 
 
 def latest_version(versions: Sequence[ScoringTableVersion]) -> ScoringTableVersion | None:
-    return max(versions, key=lambda v: v.valid_from, default=None)
+    """The version that starts last, leaving out the superseded ones (GI-07)."""
+    current = [v for v in versions if not v.is_superseded]
+    return max(current, key=lambda v: v.valid_from, default=None)
 
 
 class CreateScoringTable:
@@ -412,7 +414,10 @@ def add_version_closing_open(
     uow: UnitOfWork, audit: AuditService, actor: User, version: ScoringTableVersion, extra: dict
 ) -> None:
     """Close the open version if needed, reject overlaps, persist and audit the new version."""
-    existing = list(uow.scoring_tables.list_versions(version.table_id))
+    # A superseded version is out of the open-version and overlap rules (GI-07).
+    existing = [
+        v for v in uow.scoring_tables.list_versions(version.table_id) if not v.is_superseded
+    ]
     existing = close_open_version(uow, audit, actor, existing, version.valid_from)
     for other in existing:
         if _overlaps(version, other):

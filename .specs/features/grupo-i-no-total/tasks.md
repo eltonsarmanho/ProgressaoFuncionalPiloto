@@ -348,7 +348,7 @@ graph LR
 
 #### T8: Administração de tabelas ignora a versão substituída
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `latest_version` (base da cópia e do import CSV) descarta as substituídas; `add_version_closing_open` passa a `close_open_version` e à checagem de `_overlaps` só as versões não substituídas, de modo que a versão antiga com o mesmo início não gera `Conflict` nem é fechada (D3).
 **Where**: `backend/app/application/use_cases/scoring_admin.py` (modify)
@@ -363,9 +363,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_admin_versions.py`: com a versão antiga marcada como substituída e a nova aberta, criar versão com início posterior fecha a nova (não a antiga) e não dá `Conflict` por causa da antiga; `latest_version` com as duas de mesmo início devolve a não substituída; o import CSV parte da não substituída; sem marca, o comportamento atual (Conflict por sobreposição) continua
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam; nenhum teste apagado
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_admin_versions.py`: com a versão antiga marcada como substituída e a nova aberta, criar versão com início posterior fecha a nova (não a antiga) e não dá `Conflict` por causa da antiga; `latest_version` com as duas de mesmo início devolve a não substituída; o import CSV parte da não substituída; sem marca, o comportamento atual (Conflict por sobreposição) continua
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; nenhum teste apagado
 
 **Tests**: integration
 **Gate**: full
