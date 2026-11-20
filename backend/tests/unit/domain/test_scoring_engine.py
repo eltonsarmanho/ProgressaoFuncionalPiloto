@@ -293,14 +293,15 @@ def test_cap_ignores_activities_that_do_not_count():
 
 def test_informed_value_above_the_criterion_cap_is_reported_per_activity():
     criterion = ScoringCriterion(
-        1, 3, "Avaliação discente", "nota", ScoringMode.VALOR_INFORMADO, max_points=D("10")
-    )
-    a = act(g=1, item=3, informed_points=D("14"))
+        8, 38, "Item de valor informado (sintético)", "pontos", ScoringMode.VALOR_INFORMADO,
+        max_points=D("10"),
+    )  # fmt: skip
+    a = act(g=8, item=38, informed_points=D("14"))
 
-    result = calculate(table(group(1, criterion)), [a], INTERSTICE)
+    result = calculate(table(group(8, criterion)), [a], INTERSTICE)
 
     assert row_of(result, a).points == D("10")
-    assert result.group_subtotals[1] == D("10")
+    assert result.group_subtotals[8] == D("10")
     adjustment = result.limit_adjustments[0]
     assert (adjustment.scope, adjustment.activity_id) == ("ATIVIDADE", a.id)
     assert (adjustment.before, adjustment.after) == (D("14"), D("10"))

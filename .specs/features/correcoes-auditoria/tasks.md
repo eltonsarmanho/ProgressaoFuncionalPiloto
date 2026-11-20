@@ -276,7 +276,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T7: Item de valor informado sintético fora do Grupo I nos testes do motor
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `test_informed_value_above_the_criterion_cap_is_reported_per_activity` passa a usar um critério `ScoringCriterion(8, <n>, "Item de valor informado (sintético)", "pontos", VALOR_INFORMADO, max_points=10)` num grupo 8, com a atividade em `g=8`; a asserção do ajuste de limite não muda.
 **Where**: `backend/tests/unit/domain/test_scoring_engine.py` (modify, `:294-300`)
@@ -291,10 +291,10 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] O teste usa o grupo 8 e mantém as mesmas asserções de limite (antes 14, depois 10)
-- [ ] `grep -niE "avalia[cç][aã]o (pelo corpo )?discente" backend/tests/unit/domain/test_scoring_engine.py` sem saída
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: igual ao anterior
+- [x] O teste usa o grupo 8 e mantém as mesmas asserções de limite (antes 14, depois 10)
+- [x] `grep -niE "avalia[cç][aã]o (pelo corpo )?discente" backend/tests/unit/domain/test_scoring_engine.py` sem saída
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: igual ao anterior
 
 **Tests**: unit
 **Gate**: quick
