@@ -155,6 +155,18 @@ describe("SEC-05: aviso de categoria", () => {
     expect(screen.getByText("3 atividades precisam de categoria")).toBeInTheDocument();
   });
 
+  it("o aviso conta todas as sem categoria, com a busca ativa e com o filtro de grupo ativo", async () => {
+    const { user } = setup(many(5, { needs: 3 }));
+    await user.type(screen.getByLabelText("Buscar por título"), "Atividade 004");
+    expect(rowsShown()).toBe(1);
+    expect(screen.getByText("3 atividades precisam de categoria")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Limpar filtros" }));
+    await user.selectOptions(screen.getByLabelText("Filtrar por grupo"), "3");
+    expect(rowsShown()).toBe(1);
+    expect(screen.getByText("3 atividades precisam de categoria")).toBeInTheDocument();
+  });
+
   it("sem atividade sem categoria não mostra o aviso", () => {
     setup(many(5));
     expect(screen.queryByText(/precisam? de categoria/)).not.toBeInTheDocument();

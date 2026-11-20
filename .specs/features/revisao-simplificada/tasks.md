@@ -1676,12 +1676,12 @@ T62 → T43 → T44
 
 ---
 
-### T58: FT3, o aviso de categoria conta todas as válidas sem categoria
+### T58: FT3, teste do aviso de categoria com busca e filtro ativos
 
-**Status**: Pending
+**Status**: Done
 
-**What**: O Verifier (G3) viu que o mutante F3b sobrevive: o aviso "N atividades precisam de categoria" de `ValidActivitiesSection` usa a lista filtrada, e com busca ou filtro de grupo o número diverge do da navegação (`StepNav`). O aviso passa a contar todas as válidas sem categoria.
-**Where**: `frontend/src/components/ValidActivitiesSection.tsx` (modify) e `frontend/src/components/ValidActivitiesSection.test.tsx` (modify)
+**What**: O Verifier (G3) viu que o mutante F3b sobrevive: o aviso "N atividades precisam de categoria" de `ValidActivitiesSection` usa a lista filtrada, e com busca ou filtro de grupo o número diverge do da navegação (`StepNav`). Confirmado na leitura do código: `ValidActivitiesSection.tsx:73` já conta sobre `activities` (a lista inteira), igual ao `StepNav`; o que faltava era o teste. A tarefa vira só de teste.
+**Where**: `frontend/src/components/ValidActivitiesSection.test.tsx` (modify)
 **Depends on**: T57
 **Reuses**: `needsCategory` e a contagem do chip "Precisa de categoria" de `activityList.ts`
 **Requirement**: SEC-05
@@ -1693,15 +1693,15 @@ T62 → T43 → T44
 
 **Done when**:
 
-- [ ] Teste primeiro (que falha antes): 5 atividades, 3 sem categoria; com a busca e com o filtro de grupo ativos, o aviso diz "3 atividades precisam de categoria"
-- [ ] O aviso conta a lista inteira, igual ao `StepNav`
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+- [x] Teste primeiro: 5 atividades, 3 sem categoria; com a busca e com o filtro de grupo ativos, o aviso diz "3 atividades precisam de categoria"
+- [x] O teste passa contra o código e falha contra o mutante F3b (`filtered.filter` em vez de `activities.filter`), provado em cópia
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
 
 **Tests**: unit
 **Gate**: build
 
-**Commit**: `fix(frontend): count every valid activity without category in the section warning`
+**Commit**: `test(frontend): cover the category warning with a search and a group filter on`
 
 ---
 
