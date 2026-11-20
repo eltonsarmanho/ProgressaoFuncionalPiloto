@@ -21,6 +21,7 @@ from app.application.use_cases.scoring import ActivityData
 from app.domain.entities.activity import ActivitySource, ActivityStatus, PeriodPrecision
 from app.domain.entities.user import Role
 from tests.integration.api.factories import FASI_2022_2024
+from tests.support.scoring_variants import add_legacy_ufpa_version
 
 EXPECTED_SUBTOTALS = ["0.00", "52.00", "7.00", "62.00", "0.00", "30.00", "4.00", "56.00"]
 EXPECTED_HOURS_BY_PERIOD = {
@@ -29,8 +30,8 @@ EXPECTED_HOURS_BY_PERIOD = {
 PIT_HOURS = ["8.00"] * 11 + ["4.00"]
 
 
-@pytest.fixture
-def case(client, act_as, legacy_table, reference):
+def _case(client, act_as, reference, version):
+    """A FASI process of the cenário derivado (2022-11-23 to 2024-11-23) with `version` chosen."""
     actor, headers = act_as("admin@ufpa.br", Role.ADMIN)
     professor = client.post(
         "/api/professors",
@@ -55,11 +56,23 @@ def case(client, act_as, legacy_table, reference):
     process = process.json()
     chosen = client.put(
         f"/api/processes/{process['id']}/scoring/table",
-        json={"version_id": str(legacy_table.id)},
+        json={"version_id": str(version.id)},
         headers=headers,
     )
     assert chosen.status_code == 200, chosen.text
     return {"actor": actor, "headers": headers, "process": process, "client": client}
+
+
+@pytest.fixture
+def case(client, act_as, legacy_table, reference):
+    """The cenário derivado on the previous version of the table (group I outside the total)."""
+    return _case(client, act_as, reference, legacy_table)
+
+
+@pytest.fixture
+def case_303(client, act_as, scoring_tables, reference):
+    """The cenário derivado on the seeded version (group I inside the total)."""
+    return _case(client, act_as, reference, scoring_tables["OFICIAL"])
 
 
 def post(case, **body):
@@ -223,3 +236,78 @@ def test_extra_activities_stay_out_of_the_total(derived_case):
 
 def test_the_result_is_the_same_on_every_query(derived_case):
     assert score(derived_case) == score(derived_case)
+
+
+# --- GI-01, GI-02, GI-03, GI-06, GI-08: the same cenário derivado with group I inside the total ---
+
+EXPECTED_SUBTOTALS_303 = ["92.00", "52.00", "7.00", "62.00", "0.00", "30.00", "4.00", "56.00"]
+
+
+@pytest.fixture
+def derived_case_303(case_303):
+    add_derived_case(case_303)
+    return case_303
+
+
+def test_303_group_i_scores_its_pit_hours_and_the_total_is_211_plus_92(derived_case_303):
+    body = score(derived_case_303)
+
+    assert [s["subtotal"] for s in body["subtotals"]] == EXPECTED_SUBTOTALS_303
+    assert body["total"] == "303.00"
+    assert body["group1_hours_by_period"] == EXPECTED_HOURS_BY_PERIOD
+    assert body["group1_total_hours"] == "92.00"
+    assert body["group1_percent"] == "30.36"
+    assert body["potential_total"] == "0.00"
+    assert body["counters"]["activities"] == 38
+
+
+def test_303_the_minimum_is_compared_with_the_total_that_includes_group_i(derived_case_303):
+    body = score(derived_case_303)
+
+    assert body["minimum"] == {"status": "ATINGE", "minimum": "100.00", "total": "303.00"}
+    assert body["alerts"] == []  # GI-08: no alert for the share of group I
+
+
+def test_303_every_group_i_row_has_as_points_its_pit_hours(derived_case_303):
+    rows = [r for r in score(derived_case_303)["rows"] if r["group_number"] == 1]
+
+    assert [r["pit_hours"] for r in rows] == PIT_HOURS
+    assert [r["points"] for r in rows] == PIT_HOURS
+    assert {r["status"] for r in rows} == {"PONTUADA"}
+
+
+def test_303_the_result_is_the_same_on_every_query(derived_case_303):
+    assert score(derived_case_303) == score(derived_case_303)
+
+
+def test_the_same_process_on_the_previous_version_keeps_211_and_group_i_outside(
+    derived_case_303, uow_factory
+):
+    """GI-06: the previous version still calculates as before; choosing it back and forth for
+    the same activities gives 211 with it and 303 with the seeded one."""
+    case = derived_case_303
+    chosen = case["process"]
+    with uow_factory() as uow:
+        seeded = uow.scoring_tables.get_version(
+            UUID(score(case)["chosen"]["version"]["id"])
+        )
+        legacy = add_legacy_ufpa_version(uow, seeded)
+        uow.commit()
+    url = f"/api/processes/{chosen['id']}/scoring/table"
+
+    def choose(version):
+        response = case["client"].put(
+            url, json={"version_id": str(version.id)}, headers=case["headers"]
+        )
+        assert response.status_code == 200, response.text
+
+    choose(legacy)
+    previous = score(case)
+    choose(seeded)
+    current = score(case)
+
+    assert previous["total"] == "211.00"
+    assert [s["subtotal"] for s in previous["subtotals"]] == EXPECTED_SUBTOTALS
+    assert previous["group1_total_hours"] == "92.00"
+    assert {r["points"] for r in previous["rows"] if r["group_number"] == 1} == {"0.00"}
+    assert current["total"] == "303.00"

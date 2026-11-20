@@ -435,7 +435,7 @@ graph LR
 
 #### T11: Cenário derivado de 2022 a 2024 com 303 pontos na versão nova
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Teste de aceitação da API sobre a tabela semeada (versão nova): o cenário derivado de 2022 a 2024 dá Grupo I 24, 24, 24 e 20 por período, subtotal 92, total geral 211 + 92 = 303 e o mínimo comparado com 303 (D11); a variante de `scenario_211.py` com o grupo 1 no total (`scenario_303`) para os testes de domínio da Fase 3. Os testes de 211 ficam na versão antiga (T9).
 **Where**: `backend/tests/integration/api/test_scoring_golden.py` (modify)
@@ -450,10 +450,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro: (versão nova) `GET /scoring` dá subtotal do grupo 1 "92.00", `total` "303.00", `group1_hours_by_period` 24, 24, 24 e 20, `group1_total_hours` "92.00", `group1_percent` "30.36", `minimum.total` "303.00", linhas do Grupo I com `points == pit_hours`; (versão antiga, escolhida antes) o mesmo processo continua com 211 e o Grupo I fora do total (GI-06); o resultado é o mesmo a cada consulta
-- [ ] `scenario_211.py` ganha a variante com o grupo 1 no total, usada pelos testes da Fase 3, com o total 303 provado em teste unitário
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam; os de 211 seguem verdes na versão antiga
+- [x] Testes primeiro: (versão nova) `GET /scoring` dá subtotal do grupo 1 "92.00", `total` "303.00", `group1_hours_by_period` 24, 24, 24 e 20, `group1_total_hours` "92.00", `group1_percent` "30.36", `minimum.total` "303.00", linhas do Grupo I com `points == pit_hours`; (versão antiga, escolhida antes) o mesmo processo continua com 211 e o Grupo I fora do total (GI-06); o resultado é o mesmo a cada consulta
+- [x] `scenario_211.py` ganha a variante com o grupo 1 no total, usada pelos testes da Fase 3, com o total 303 provado em teste unitário
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; os de 211 seguem verdes na versão antiga
 
 **Tests**: integration
 **Gate**: full

@@ -1,7 +1,8 @@
 """Cenário derivado (synthetic) of the generated documents: 211 points and 92 PIT hours.
 
 Subtotals II to VIII of 52, 7, 62, 0, 30, 4 and 56, group I outside the total with PIT hours
-of 24, 24, 24 and 20 per academic period. Made-up names only.
+of 24, 24, 24 and 20 per academic period. Made-up names only. The same scenario with group I
+inside the total (`scenario_303_result`, GI-01..GI-03) gives 211 + 92 = 303 points.
 """
 
 from dataclasses import replace
@@ -78,6 +79,15 @@ def official_like_table() -> ScoringTableVersion:
     )
 
 
+def official_like_table_group1_inside() -> ScoringTableVersion:
+    """The same table with group I counting in the total, at 1 point per PIT hour (GI-07)."""
+    table = official_like_table()
+    inside = replace(table.groups[0], counts_in_total=True)
+    return replace(
+        table, name="Tabela de teste 2022, Grupo I no total", groups=(inside, *table.groups[1:])
+    )
+
+
 def item_capped_table(max_points: str = "40") -> ScoringTableVersion:
     """The official-like table with item 7 of group II limited to `max_points`: ten orientations
     score 160 in the rows and 40 in the subtotal of the engine."""
@@ -128,3 +138,8 @@ def scenario_result(activities=None, version=None):
     version = version or official_like_table()
     activities = scenario_activities() if activities is None else activities
     return version, activities, calculate(version, activities, INTERSTICE)
+
+
+def scenario_303_result(activities=None):
+    """The cenário derivado on the table with group I inside the total: 303 points."""
+    return scenario_result(activities, official_like_table_group1_inside())
