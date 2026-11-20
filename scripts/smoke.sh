@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# End-to-end smoke test of the compose stack (INFRA-01, INFRA-04, INFRA-05).
+# End-to-end smoke test of the compose stack (INFRA-01, INFRA-04, INFRA-05, DOC-03).
 # Uses its own generated env file and project name; never reads the project .env.
 # Always tears down with `down -v` on exit.
 set -euo pipefail
@@ -116,6 +116,22 @@ code="$(curl -sS -o /dev/null -w '%{http_code}' -b "$JAR" -H 'Content-Type: appl
 [ "$code" = "201" ] || fail "creating professor returned $code"
 compose exec -T backend sh -c 'echo smoke > /app/storage/smoke.txt' || fail "cannot write to storage volume"
 echo "    professor $SIAPE created; file written to storage volume"
+
+echo "==> upload body limit (DOC-03: 120 MB at nginx)"
+head -c $((25 * 1024 * 1024)) /dev/zero > "$WORK/body25.bin"
+head -c $((121 * 1024 * 1024)) /dev/zero > "$WORK/body121.bin"
+no_process="00000000-0000-0000-0000-000000000000"
+upload_code() {
+  curl -sS -o /dev/null -w '%{http_code}' -b "$JAR" -H "X-CSRF-Token: $CSRF" \
+    -F "file=@$1;type=application/pdf" "$BASE/api/processes/$no_process/documents"
+}
+# 25 MB passes nginx and reaches the backend, which answers 404 for the unknown process.
+code="$(upload_code "$WORK/body25.bin")"
+[ "$code" = "404" ] || fail "25 MB upload returned $code (expected 404 from the backend, not nginx 413)"
+# Above 120 MB nginx refuses the request before it reaches the backend.
+code="$(upload_code "$WORK/body121.bin")"
+[ "$code" = "413" ] || fail "121 MB upload returned $code (expected 413 from nginx)"
+echo "    25 MB reaches the backend (404); 121 MB gets 413 from nginx"
 
 echo "==> down (without -v) and up again"
 compose down

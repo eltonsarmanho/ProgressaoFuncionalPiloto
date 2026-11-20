@@ -150,3 +150,36 @@ def test_result_keeps_the_source_line_of_each_criterion():
     result = parse_criteria_csv(csv("2,7,Ok,x,POR_UNIDADE,10,,", "", "2,8,Ok,x,POR_UNIDADE,1,,"))
 
     assert result.lines == (2, 4)
+
+
+MIN_HOURS_HEADER = HEADER + ",min_hours"
+
+
+def test_min_hours_column_is_optional_and_empty_means_no_minimum():
+    without = parse_criteria_csv(csv("4,4,Curso,x,POR_UNIDADE,5,,"))
+    blank = parse_criteria_csv(csv("4,4,Curso,x,POR_UNIDADE,5,,,", header=MIN_HOURS_HEADER))
+
+    assert without.errors == () and blank.errors == ()
+    assert without.criteria[0].min_hours is None
+    assert blank.criteria[0].min_hours is None
+
+
+def test_min_hours_column_carries_the_minimum_course_load():
+    result = parse_criteria_csv(
+        csv(
+            "4,4,Curso,x,POR_UNIDADE,5,,,20",
+            "4,5,Curso,x,POR_UNIDADE,5,,,19.99",
+            "4,6,Evento,x,POR_UNIDADE,5,,,",
+            header=MIN_HOURS_HEADER,
+        )
+    )
+
+    assert result.errors == ()
+    assert [c.min_hours for c in result.criteria] == [Decimal("20"), Decimal("19.99"), None]
+
+
+@pytest.mark.parametrize("value", ["abc", "-1", "1,5"])
+def test_invalid_min_hours_is_an_error_on_that_line_and_field(value):
+    text = csv(f'4,4,Curso,x,POR_UNIDADE,5,,,"{value}"', header=MIN_HOURS_HEADER)
+
+    assert errors_of(text) == [(2, "min_hours")]

@@ -92,6 +92,78 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: SEL-02 M32 backend/app/application/use_cases/scoring.py:114 (scoring)
 - last seen: 2026-11-17T14:54:33Z
 
+### L-014 - Bound the rendered pixel size of user-supplied vector files at upload, not only the megapixels of raster images
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `upload-validation` · harmful: 0
+- features: inteligencia-documental
+- evidence: DOC-04; validation.md G1; backend/app/infrastructure/files/inspector.py:45 (upload-validation)
+- last seen: 2026-11-18T00:46:05Z
+
+### L-015 - A retry counter that is stored but never read is not a retry limit: test that a job past the limit ends failed and is never requeued
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `worker` · harmful: 0
+- features: inteligencia-documental
+- evidence: PIPE-03; validation.md G2; backend/app/infrastructure/database/repositories.py:1093 (worker)
+- last seen: 2026-11-18T00:46:05Z
+
+### L-016 - Test settings wiring from the environment to the limits in use, not only the limits object with its defaults
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `config-wiring` · harmful: 0
+- features: inteligencia-documental
+- evidence: M111, M112; backend/app/presentation/dependencies.py:184 (config-wiring)
+- last seen: 2026-11-18T00:46:05Z
+
+### L-017 - Test a function that counts what a document leaves out with a not valid item in every status it can have, not only the rejected one.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `generation` · harmful: 0
+- features: revisao-simplificada
+- evidence: B27 backend/app/application/services/generation_inputs.py:89 (generation)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-018 - Exercise each flag a rule hands to a shared predicate on every call path that sets it, such as an open-ended period on the manual edit and not only on the classification.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `scoring` · harmful: 0
+- features: revisao-simplificada
+- evidence: B43 backend/app/application/use_cases/scoring.py:422 (scoring)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-019 - Assert a count shown in a filtered list while a filter is active, not only with the default filters.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: revisao-simplificada
+- evidence: F3b frontend/src/components/ValidActivitiesSection.tsx:73 (frontend)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-020 - Test an exclusion flag at every output layer (list, score, generated documents), not only where the flag is set.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `generation` · harmful: 0
+- features: revisao-simplificada
+- evidence: DUP-03 SEG-02 backend/tests/integration/api/test_generated_validity_acceptance.py:58-95 (generation)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-021 - A no-horizontal-scroll requirement at a given width needs a rendered browser check, because a jsdom regex over the CSS does not prove it.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: revisao-simplificada
+- evidence: SEC-12 frontend/src/components/ActivityWorkspace.test.tsx:173-179 (frontend)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-022 - Map a refusal code in the failure table of the background worker too when a use case shared with the request path can raise it.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `generation` · harmful: 0
+- features: revisao-simplificada
+- evidence: SEG-05 backend/app/application/use_cases/generated_documents.py:307-318 (generation)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-023 - State the precedence order in the spec when several rejection reasons can apply to the same item.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: revisao-simplificada
+- evidence: SP1 backend/tests/unit/domain/test_activity_validity.py:290-312 (spec)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-024 - List every value of a user-facing reason enum in the spec with its text, including the values the implementation adds.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: revisao-simplificada
+- evidence: SP2 frontend/src/labels.test.ts:129-130 (spec)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-025 - Say in the spec whether a field the user did not change is validated again on edit.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: revisao-simplificada
+- evidence: SP5 backend/tests/integration/api/test_activity_edit_rules_api.py:179-198 (spec)
+- last seen: 2026-11-20T00:35:51Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

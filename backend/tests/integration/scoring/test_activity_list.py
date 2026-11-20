@@ -11,9 +11,9 @@ from app.domain.errors import NotFound
 
 
 @pytest.fixture
-def listed(fasi_chosen):
+def listed(official_chosen):
     """Six activities created out of order; returns title -> id."""
-    world = fasi_chosen
+    world = official_chosen
     specs = [
         ("sem classificação", None, None, date(2023, 1, 5)),
         ("III.2", 3, 2, date(2023, 2, 1)),
@@ -41,8 +41,9 @@ def listed(fasi_chosen):
     return world
 
 
-def titles(activities):
-    return [a.title for a in activities]
+def titles(listing):
+    """SEC-02: the use case answers an ActivityListing; `activities` are the listed rows."""
+    return [a.title for a in listing.activities]
 
 
 def test_lists_every_activity_ordered_by_group_item_and_date(listed):
@@ -85,13 +86,13 @@ def test_filters_combine(listed):
     )
 
     assert titles(validated_in_2) == ["II.7 tardia", "II.7 sem data", "II.8 tardia"]
-    assert rejected_in_3 == []
+    assert rejected_in_3.activities == []
 
 
 def test_only_activities_of_that_process_are_listed(listed, add_process):
     other = add_process()
 
-    assert listed.list_activities.execute(listed.admin, other.id) == []
+    assert listed.list_activities.execute(listed.admin, other.id).activities == []
 
 
 @pytest.mark.parametrize("actor", ["other_docente", "other_secretaria"])
@@ -102,7 +103,7 @@ def test_process_outside_access_is_not_found(listed, actor):
 
 def test_owner_docente_and_unit_secretaria_may_list(listed):
     for actor in (listed.docente, listed.secretaria):
-        assert len(listed.list_activities.execute(actor, listed.process.id)) == 6
+        assert len(listed.list_activities.execute(actor, listed.process.id).activities) == 6
 
 
 def test_unknown_process_is_not_found(listed):

@@ -22,6 +22,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import CITEXT, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -30,10 +31,13 @@ from app.domain.entities.academic_unit import UnitKind
 from app.domain.entities.activity import ActivitySource, ActivityStatus, Level, PeriodPrecision
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.career import Modality
+from app.domain.entities.document import DocumentStatus, RunStatus, TextMethod
+from app.domain.entities.generated import DocumentFormat, DocumentKind, GenerationState
 from app.domain.entities.process import ProcessStatus
 from app.domain.entities.professor import Titration, WorkRegime
 from app.domain.entities.scoring import ScoringMode, TableStatus
 from app.domain.entities.user import Role
+from app.domain.repositories.ports import JobStatus
 
 
 def _enum(enum_cls: type, name: str) -> Enum:
@@ -264,6 +268,7 @@ class ScoringCriterionModel(Base):
     hours_per_block: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
     weeks_per_semester: Mapped[int | None] = mapped_column(SmallInteger)
     prep_ratio: Mapped[Decimal | None] = mapped_column(Numeric(4, 2))
+    min_hours: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
     max_points: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
     accepted_evidence: Mapped[str] = mapped_column(Text)
     rules: Mapped[str] = mapped_column(Text)
@@ -272,6 +277,13 @@ class ScoringCriterionModel(Base):
 
 class ActivityModel(Base):
     __tablename__ = "activities"
+    __table_args__ = (
+        Index(
+            "ix_activities_merged_into",
+            "merged_into_id",
+            postgresql_where=text("merged_into_id IS NOT NULL"),
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
     process_id: Mapped[uuid.UUID] = mapped_column(
@@ -294,6 +306,7 @@ class ActivityModel(Base):
     course_hours: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
     informed_points: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
     points_override: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
+    unit_points_override: Mapped[Decimal | None] = mapped_column(Numeric(9, 2))
     evidence_note: Mapped[str | None] = mapped_column(String(500))
     source: Mapped[ActivitySource] = mapped_column(_enum(ActivitySource, "activity_source"))
     status: Mapped[ActivityStatus] = mapped_column(_enum(ActivityStatus, "activity_status"))
@@ -302,6 +315,12 @@ class ActivityModel(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     version: Mapped[int] = mapped_column(Integer, default=1)
+    extraction_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("extraction_runs.id", ondelete="SET NULL")
+    )
+    merged_into_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("activities.id")
+    )
 
 
 class ActivityCandidateModel(Base):
@@ -313,3 +332,245 @@ class ActivityCandidateModel(Base):
     group_number: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
     item_number: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
     justification: Mapped[str] = mapped_column(Text)
+
+
+class DocumentModel(Base):
+    __tablename__ = "documents"
+    __table_args__ = (UniqueConstraint("process_id", "sha256", name="uq_documents_process_sha256"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    process_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_processes.id"), index=True
+    )
+    original_name: Mapped[str] = mapped_column(String(255))
+    internal_name: Mapped[str] = mapped_column(String(64), unique=True)
+    mime: Mapped[str] = mapped_column(String(40))
+    size_bytes: Mapped[int] = mapped_column(BigInteger)
+    sha256: Mapped[str] = mapped_column(CHAR(64))
+    page_count: Mapped[int] = mapped_column(SmallInteger)
+    status: Mapped[DocumentStatus] = mapped_column(_enum(DocumentStatus, "document_status"))
+    status_code: Mapped[str | None] = mapped_column(String(40))
+    manual_type: Mapped[str | None] = mapped_column(String(40))
+    manual_category: Mapped[str | None] = mapped_column(String(60))
+    suggested_type: Mapped[str | None] = mapped_column(String(40))
+    suggested_category: Mapped[str | None] = mapped_column(String(60))
+    confidence: Mapped[Decimal | None] = mapped_column(Numeric(3, 2))
+    uploaded_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    uploaded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    # Set when the conclusion removed the file (DEL-05); only ever goes from NULL to a date.
+    file_deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ExtractionRunModel(Base):
+    """Immutable except for `status`: a trigger refuses any other change (EXT-13)."""
+
+    __tablename__ = "extraction_runs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    status: Mapped[RunStatus] = mapped_column(_enum(RunStatus, "extraction_run_status"))
+    model: Mapped[str] = mapped_column(String(60))
+    duration_ms: Mapped[int] = mapped_column(Integer)
+    raw_json: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    warnings: Mapped[list[str]] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class DocumentPageModel(Base):
+    __tablename__ = "document_pages"
+    __table_args__ = (UniqueConstraint("run_id", "page_number", name="uq_document_pages_run_page"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("extraction_runs.id", ondelete="CASCADE")
+    )
+    page_number: Mapped[int] = mapped_column(SmallInteger)
+    method: Mapped[TextMethod] = mapped_column(_enum(TextMethod, "text_method"))
+    char_count: Mapped[int] = mapped_column(Integer)
+    ocr_confidence: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    text: Mapped[str] = mapped_column(Text)
+
+
+class ProcessingJobModel(Base):
+    __tablename__ = "processing_jobs"
+    __table_args__ = (
+        Index(
+            "uq_processing_jobs_active_document",
+            "document_id",
+            unique=True,
+            postgresql_where=text("status IN ('PENDENTE', 'PROCESSANDO')"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE")
+    )
+    status: Mapped[JobStatus] = mapped_column(_enum(JobStatus, "job_status"))
+    attempts: Mapped[int] = mapped_column(SmallInteger, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(40))
+
+
+class ActivityEvidenceModel(Base):
+    __tablename__ = "activity_evidences"
+    __table_args__ = (
+        UniqueConstraint(
+            "activity_id", "document_id", "page_number", name="uq_activity_evidences_page"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    activity_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("activities.id", ondelete="CASCADE"), index=True
+    )
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    page_number: Mapped[int] = mapped_column(SmallInteger)
+    excerpt: Mapped[str] = mapped_column(String(300))
+    run_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("extraction_runs.id", ondelete="SET NULL")
+    )
+    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    origin_activity_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("activities.id")
+    )
+
+
+class GeneratedDocumentModel(Base):
+    """A generated version; a trigger refuses any change once it left GERANDO (VER-01)."""
+
+    __tablename__ = "generated_documents"
+    __table_args__ = (
+        UniqueConstraint(
+            "process_id", "kind", "version_number", name="uq_generated_documents_version"
+        ),
+        Index(
+            "uq_generated_documents_generating",
+            "process_id",
+            "kind",
+            unique=True,
+            postgresql_where=text("state = 'GERANDO'"),
+        ),
+        Index("ix_generated_documents_history", "process_id", "kind", text("requested_at DESC")),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    process_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_processes.id")
+    )
+    kind: Mapped[DocumentKind] = mapped_column(_enum(DocumentKind, "generated_kind"))
+    state: Mapped[GenerationState] = mapped_column(_enum(GenerationState, "generated_state"))
+    version_number: Mapped[int | None] = mapped_column(Integer)
+    requested_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    requested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(40))
+    error_message: Mapped[str | None] = mapped_column(String(300))
+    snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    alerts: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
+    plan_hash: Mapped[str | None] = mapped_column(CHAR(64))
+
+
+class GeneratedFileModel(Base):
+    """One file of a generated version; never updated or deleted (trigger)."""
+
+    __tablename__ = "generated_files"
+    __table_args__ = (
+        UniqueConstraint("generated_document_id", "format", name="uq_generated_files_format"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    generated_document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("generated_documents.id")
+    )
+    format: Mapped[DocumentFormat] = mapped_column(_enum(DocumentFormat, "generated_format"))
+    internal_name: Mapped[str] = mapped_column(String(64), unique=True)
+    sha256: Mapped[str] = mapped_column(CHAR(64))
+    size_bytes: Mapped[int] = mapped_column(BigInteger)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ReportWordingJobModel(Base):
+    """Background request to word one section of the report (REL-13)."""
+
+    __tablename__ = "report_wording_jobs"
+    __table_args__ = (
+        Index(
+            "uq_report_wording_jobs_generating",
+            "process_id",
+            "section_key",
+            unique=True,
+            postgresql_where=text("state = 'GERANDO'"),
+        ),
+        Index(
+            "ix_report_wording_jobs_history", "process_id", "section_key", text("requested_at DESC")
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    process_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_processes.id")
+    )
+    section_key: Mapped[str] = mapped_column(String(20))
+    state: Mapped[GenerationState] = mapped_column(_enum(GenerationState, "generated_state"))
+    requested_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    requested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(40))
+    warnings: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
+
+
+class ReportDraftModel(Base):
+    """The saved draft of the report: one per process, edited with an optimistic lock."""
+
+    __tablename__ = "report_drafts"
+    __table_args__ = (UniqueConstraint("process_id", name="uq_report_drafts_process"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    process_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_processes.id")
+    )
+    template_id: Mapped[str] = mapped_column(String(60))
+    template_version: Mapped[int] = mapped_column(Integer)
+    content: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    version: Mapped[int] = mapped_column(Integer)
+    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ComprovanteLayoutModel(Base):
+    """The saved arrangement of the Comprovante: one per process, optimistic lock by `version`."""
+
+    __tablename__ = "comprovante_layouts"
+    __table_args__ = (UniqueConstraint("process_id", name="uq_comprovante_layouts_process"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    process_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_processes.id")
+    )
+    content: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    version: Mapped[int] = mapped_column(Integer)
+    updated_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 
-export type MockResponse = { status: number; body?: unknown };
+/** `body` is sent as JSON; `raw` is sent as is, as HTML (an nginx error page). */
+export type MockResponse = { status: number; body?: unknown; raw?: string };
 export type Route = (init: RequestInit | undefined) => MockResponse;
 
 /** Stub global fetch with a "METHOD /path" -> response table; records every call. */
@@ -12,7 +13,8 @@ export function mockFetch(routes: Record<string, MockResponse | Route>) {
     calls.push({ method, path, init });
     const entry = routes[`${method} ${path}`];
     if (!entry) throw new Error(`Unexpected request: ${method} ${path}`);
-    const { status, body } = typeof entry === "function" ? entry(init) : entry;
+    const { status, body, raw } = typeof entry === "function" ? entry(init) : entry;
+    if (raw !== undefined) return new Response(raw, { status, headers: { "Content-Type": "text/html" } });
     return new Response(body === undefined ? null : JSON.stringify(body), {
       status,
       headers: { "Content-Type": "application/json" },

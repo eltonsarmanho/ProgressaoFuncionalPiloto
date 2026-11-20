@@ -2,7 +2,8 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { ScoringTableInfo } from "../api/types";
-import { ME, mockFetch } from "../test/fetchMock";
+import { setCsrfToken } from "../api/client";
+import { mockFetch } from "../test/fetchMock";
 import { ScoringAdminForms } from "./ScoringAdminForms";
 
 const TABLE: ScoringTableInfo = {
@@ -15,7 +16,8 @@ const TABLE: ScoringTableInfo = {
 const VERSION = { id: "v-fasi", name: "FASI 2022" };
 
 function setup(routes: Parameters<typeof mockFetch>[0]) {
-  const mock = mockFetch({ "GET /api/auth/me": { status: 200, body: ME }, ...routes });
+  setCsrfToken("csrf-abc");
+  const mock = mockFetch({ ...routes });
   const onChanged = vi.fn();
   render(<ScoringAdminForms table={TABLE} version={VERSION} onChanged={onChanged} />);
   return { ...mock, onChanged, user: userEvent.setup() };
@@ -101,6 +103,13 @@ describe("ADMUI-02: importar CSV", () => {
     await user.type(screen.getByLabelText("Referência normativa do CSV"), "Res. 7.000/2026");
   }
 
+  it("OFI-06: a ajuda lista a coluna opcional min_hours (carga horária mínima)", () => {
+    setup({});
+
+    const help = screen.getByText(/^Colunas:/);
+    expect(help).toHaveTextContent("min_hours (opcional, carga horária mínima em horas; vazio ou ausente = sem mínimo)");
+  });
+
   it("envia o arquivo e os campos em multipart com o token CSRF e atualiza a lista", async () => {
     const { calls, onChanged, user } = setup({
       "POST /api/scoring-tables/t-fasi/versions/import": { status: 201, body: { id: "v-csv" } },
@@ -117,6 +126,10 @@ describe("ADMUI-02: importar CSV", () => {
     expect(body.get("norm_reference")).toBe("Res. 7.000/2026");
     expect(body.get("status")).toBe("PENDENTE_VALIDACAO");
     expect(new Headers(sent.init?.headers).get("X-CSRF-Token")).toBe("csrf-abc");
+    expect(new Headers(sent.init?.headers).has("Content-Type")).toBe(false);
+    expect(calls.map((c) => `${c.method} ${c.path}`)).toEqual([
+      "POST /api/scoring-tables/t-fasi/versions/import",
+    ]);
   });
 
   it("lista a linha e o campo de cada erro do arquivo", async () => {

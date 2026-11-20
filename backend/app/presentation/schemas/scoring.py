@@ -36,6 +36,7 @@ class CriterionOut(BaseModel):
     hours_per_block: Money | None
     weeks_per_semester: int | None
     prep_ratio: Money | None
+    min_hours: Money | None
     max_points: Money | None
     accepted_evidence: str
     rules: str
@@ -178,9 +179,11 @@ class ScoreRowOut(BaseModel):
     effective_quantity: Money | None
     formula_text: str
     points: Money
+    pit_hours: Money | None
     status: RowStatus
     reasons: list[NotScoredReason]
     alerts: list[AlertOut]
+    evidence_count: int
 
 
 class LimitAdjustmentOut(BaseModel):
@@ -206,7 +209,11 @@ class ProcessScoreOut(BaseModel):
     subtotals: list[GroupSubtotalOut]
     total: Money
     potential_total: Money
+    potential_dated: Money
+    potential_undated: Money
     group1_percent: Money | None
+    group1_hours_by_period: dict[str, Money]
+    group1_total_hours: Money
     counters: CountersOut
     rows: list[ScoreRowOut]
     limit_adjustments: list[LimitAdjustmentOut]
@@ -227,7 +234,11 @@ class ProcessScoreOut(BaseModel):
             ],
             total=result.total,
             potential_total=result.potential_total,
+            potential_dated=result.potential_dated,
+            potential_undated=result.potential_undated,
             group1_percent=result.group1_percent,
+            group1_hours_by_period=result.group1_hours_by_period,
+            group1_total_hours=result.group1_total_hours,
             counters=CountersOut(**asdict(result.counters)),
             rows=[
                 ScoreRowOut(
@@ -241,9 +252,11 @@ class ProcessScoreOut(BaseModel):
                     effective_quantity=r.effective_quantity,
                     formula_text=r.formula_text,
                     points=r.points,
+                    pit_hours=r.pit_hours,
                     status=r.status,
                     reasons=list(r.reasons),
                     alerts=[AlertOut.of(a) for a in r.alerts],
+                    evidence_count=r.evidence_count,
                 )
                 for r in result.rows
             ],

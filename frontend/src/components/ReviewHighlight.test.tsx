@@ -14,6 +14,7 @@ function criterion(item: number, review_note: string | null): Criterion {
     hours_per_block: null,
     weeks_per_semester: null,
     prep_ratio: null,
+    min_hours: null,
     max_points: null,
     accepted_evidence: null,
     rules: null,
@@ -67,5 +68,19 @@ describe("ADMUI-03: critérios marcados para revisão", () => {
 
     expect(screen.queryByText(/marcados? para revisão/)).not.toBeInTheDocument();
     expect(screen.getByText("Critério 10")).toBeInTheDocument();
+  });
+
+  it("OFI-06: mostra a carga horária mínima do critério, ou '—' quando não há", () => {
+    const withMinimum: ScoringGroup[] = [
+      { ...GROUPS[0], criteria: [{ ...criterion(4, null), min_hours: "20.00" }, criterion(6, null)] },
+    ];
+    render(<ReviewHighlight groups={withMinimum} />);
+
+    expect(screen.getByRole("columnheader", { name: "Carga mínima (h)" })).toBeInTheDocument();
+    const four = screen.getByRole("row", { name: /Critério 4/ });
+    const minimumCell = (row: HTMLElement) => row.querySelector('td[data-label="Carga mínima (h)"]');
+    expect(minimumCell(four)).toHaveTextContent("20,00");
+    const six = screen.getByRole("row", { name: /Critério 6/ });
+    expect(minimumCell(six)).toHaveTextContent("—");
   });
 });

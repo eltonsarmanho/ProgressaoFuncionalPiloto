@@ -58,6 +58,7 @@ class Activity:
     course_hours: Decimal | None = None
     informed_points: Decimal | None = None
     points_override: Decimal | None = None
+    unit_points_override: Decimal | None = None  # unit value typed by hand (UIM-21)
     evidence_note: str | None = None
     source: ActivitySource = ActivitySource.MANUAL
     status: ActivityStatus = ActivityStatus.VALIDADA
@@ -66,6 +67,12 @@ class Activity:
     created_at: datetime | None = field(default=None)
     updated_at: datetime | None = None
     version: int = 1
+    extraction_run_id: UUID | None = None  # the run that suggested it (PIPE-09)
+    merged_into_id: UUID | None = None  # the activity this one was merged into (DUP-02)
+
+    @property
+    def is_merged(self) -> bool:
+        return self.merged_into_id is not None
 
 
 def initial_status(source: ActivitySource) -> ActivityStatus:

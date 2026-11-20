@@ -41,8 +41,8 @@ def field_of_failure(world, **kw) -> str:
     return error.value.field
 
 
-def test_manual_activity_is_validated_and_persisted_as_given(fasi_chosen):
-    world = fasi_chosen
+def test_manual_activity_is_validated_and_persisted_as_given(official_chosen):
+    world = official_chosen
 
     activity = world.create.execute(
         world.secretaria,
@@ -70,8 +70,8 @@ def test_manual_activity_is_validated_and_persisted_as_given(fasi_chosen):
 
 
 @pytest.mark.parametrize("source", [ActivitySource.SUGERIDA_IA, ActivitySource.IMPORTADA])
-def test_non_manual_origin_waits_for_review(fasi_chosen, source):
-    world = fasi_chosen
+def test_non_manual_origin_waits_for_review(official_chosen, source):
+    world = official_chosen
 
     activity = world.create.execute(
         world.admin, world.process.id, data(group_number=2, item_number=7), source=source
@@ -84,8 +84,8 @@ def test_non_manual_origin_waits_for_review(fasi_chosen, source):
 @pytest.mark.parametrize(
     ("level", "item"), [(Level.GRADUACAO, 1), (Level.POS_GRADUACAO, 2)]
 )
-def test_group_one_derives_item_from_level(fasi_chosen, level, item):
-    world = fasi_chosen
+def test_group_one_derives_item_from_level(official_chosen, level, item):
+    world = official_chosen
 
     activity = create(
         world,
@@ -112,7 +112,7 @@ def test_group_one_derives_item_from_level(fasi_chosen, level, item):
         ({"hours": None}, "horas"),
     ],
 )
-def test_group_one_requires_period_level_and_hours(fasi_chosen, changes, field):
+def test_group_one_requires_period_level_and_hours(official_chosen, changes, field):
     base = {
         "group_number": 1,
         "academic_period": "2023.1",
@@ -120,52 +120,52 @@ def test_group_one_requires_period_level_and_hours(fasi_chosen, changes, field):
         "hours": D("68"),
     }
 
-    assert field_of_failure(fasi_chosen, **{**base, **changes}) == field
+    assert field_of_failure(official_chosen, **{**base, **changes}) == field
 
 
 @pytest.mark.parametrize(
     "kw", [{}, {"group_number": 2}, {"item_number": 7}, {"group_number": 2, "item_number": 999}]
 )
-def test_missing_or_unknown_item_is_saved_as_sem_enquadramento(fasi_chosen, kw):
-    world = fasi_chosen
+def test_missing_or_unknown_item_is_saved_as_sem_enquadramento(official_chosen, kw):
+    world = official_chosen
 
     activity = create(world, **kw)
 
     assert activity.status is ActivityStatus.VALIDADA
-    row = calculate(world.fasi_version, [activity], INTERSTICE).rows[0]
+    row = calculate(world.official_version, [activity], INTERSTICE).rows[0]
     assert row.reasons == (NotScoredReason.SEM_ENQUADRAMENTO,)
     assert row.points == 0
 
 
 @pytest.mark.parametrize("quantity", [D("-1"), D("10000.01"), D("1.5")])
-def test_invalid_quantity_is_422_on_quantidade(fasi_chosen, quantity):
+def test_invalid_quantity_is_422_on_quantidade(official_chosen, quantity):
     assert (
-        field_of_failure(fasi_chosen, group_number=2, item_number=7, quantity=quantity)
+        field_of_failure(official_chosen, group_number=2, item_number=7, quantity=quantity)
         == "quantidade"
     )
 
 
-def test_quantity_limits_are_inclusive(fasi_chosen):
-    assert create(fasi_chosen, group_number=2, item_number=7, quantity=D("0")).quantity == 0
-    big = create(fasi_chosen, group_number=2, item_number=7, quantity=D("10000"))
+def test_quantity_limits_are_inclusive(official_chosen):
+    assert create(official_chosen, group_number=2, item_number=7, quantity=D("0")).quantity == 0
+    big = create(official_chosen, group_number=2, item_number=7, quantity=D("10000"))
     assert big.quantity == D("10000")
 
 
 @pytest.mark.parametrize("hours", [D("-0.5"), D("10001")])
-def test_invalid_hours_is_422_on_horas(fasi_chosen, hours):
-    assert field_of_failure(fasi_chosen, group_number=4, item_number=4, hours=hours) == "horas"
+def test_invalid_hours_is_422_on_horas(official_chosen, hours):
+    assert field_of_failure(official_chosen, group_number=4, item_number=4, hours=hours) == "horas"
 
 
-def test_title_and_evidence_note_limits(fasi_chosen):
-    assert len(create(fasi_chosen, title="t" * 300).title) == 300
-    assert len(create(fasi_chosen, evidence_note="n" * 500).evidence_note) == 500
-    assert field_of_failure(fasi_chosen, title="t" * 301) == "title"
-    assert field_of_failure(fasi_chosen, evidence_note="n" * 501) == "evidence_note"
+def test_title_and_evidence_note_limits(official_chosen):
+    assert len(create(official_chosen, title="t" * 300).title) == 300
+    assert len(create(official_chosen, evidence_note="n" * 500).evidence_note) == 500
+    assert field_of_failure(official_chosen, title="t" * 301) == "title"
+    assert field_of_failure(official_chosen, evidence_note="n" * 501) == "evidence_note"
 
 
-def test_month_precision_is_kept(fasi_chosen):
+def test_month_precision_is_kept(official_chosen):
     activity = create(
-        fasi_chosen,
+        official_chosen,
         event_date=None,
         period_start=date(2022, 12, 1),
         period_end=date(2022, 12, 1),
@@ -199,8 +199,10 @@ def test_owner_docente_and_unit_secretaria_may_create(world):
         assert create(world, actor=actor).process_id == world.process.id
 
 
-def test_points_override_only_for_weekly_load_criteria_and_with_justification(fasi_chosen):
-    world = fasi_chosen
+def test_points_override_only_for_weekly_load_criteria_and_without_needing_a_justification(
+    points_chosen,
+):
+    world = points_chosen
     weekly = {
         "group_number": 1,
         "academic_period": "2023.1",
@@ -216,9 +218,16 @@ def test_points_override_only_for_weekly_load_criteria_and_with_justification(fa
     assert event.justification == "Declaração"
     assert event.changes["points_override"] == {"before": None, "after": "24"}
 
-    with pytest.raises(ValidationFailed) as no_reason:
-        world.create.execute(world.admin, world.process.id, data(**weekly))
-    assert no_reason.value.field == "justificativa"
+    # UIM-16: no justification needed; the audit event simply has none
+    # DUP-04: another title, or the second offer would be merged into the first
+    without = world.create.execute(
+        world.admin, world.process.id, data(**{**weekly, "title": "Outra disciplina"})
+    )
+    assert without.points_override == D("24")
+    with world.uow_factory() as uow:
+        [event_without] = uow.audit.list_for("activity", str(without.id))
+    assert event_without.justification is None
+    assert event_without.changes["points_override"] == {"before": None, "after": "24"}
     with pytest.raises(ValidationFailed) as per_unit:
         world.create.execute(
             world.admin,
@@ -227,6 +236,66 @@ def test_points_override_only_for_weekly_load_criteria_and_with_justification(fa
             "x",
         )
     assert per_unit.value.field == "points_override"
+
+
+def test_unit_points_override_is_saved_audited_and_scored_by_the_engine(official_chosen):
+    """UIM-21: the typed unit value feeds the deterministic engine; no justification."""
+    world = official_chosen
+
+    activity = create(
+        world, group_number=2, item_number=7, quantity=D("3"), unit_points_override=D("2.5")
+    )
+
+    assert activity.unit_points_override == D("2.5")
+    with world.uow_factory() as uow:
+        [event] = uow.audit.list_for("activity", str(activity.id))
+        stored = uow.activities.get(activity.id)
+    assert event.justification is None
+    assert event.changes["unit_points_override"] == {"before": None, "after": "2.5"}
+    version = world.official_version
+    assert calculate(version, [stored], INTERSTICE).rows[0].points == D("7.5")
+
+
+@pytest.mark.parametrize(
+    "kw",
+    [
+        {"group_number": 2, "item_number": 7, "unit_points_override": D("-1")},
+        {"group_number": 2, "item_number": 7, "unit_points_override": D("10001")},
+        {"unit_points_override": D("2")},  # no item chosen
+        {"group_number": 2, "item_number": 99, "unit_points_override": D("2")},  # not in the table
+    ],
+)
+def test_unit_points_override_out_of_range_or_without_a_per_unit_item_is_422(official_chosen, kw):
+    assert field_of_failure(official_chosen, **kw) == "unit_points_override"
+
+
+@pytest.mark.parametrize("value", [D("0"), D("10000")])
+def test_unit_points_override_accepts_the_range_limits(official_chosen, value):
+    activity = create(
+        official_chosen, group_number=2, item_number=7, quantity=D("1"), unit_points_override=value
+    )
+
+    assert activity.unit_points_override == value
+
+
+def test_unit_points_override_is_refused_for_weekly_load_and_informed_value_items(points_chosen):
+    world = points_chosen
+    weekly = {
+        "group_number": 1,
+        "academic_period": "2023.1",
+        "level": Level.GRADUACAO,
+        "hours": D("68"),
+        "unit_points_override": D("2"),
+    }
+    informed = {
+        "group_number": 1,
+        "item_number": 3,
+        "informed_points": D("8"),
+        "unit_points_override": D("2"),
+    }
+
+    assert field_of_failure(world, **weekly) == "unit_points_override"
+    assert field_of_failure(world, **informed) == "unit_points_override"
 
 
 def test_points_override_needs_a_chosen_table(world):
@@ -241,17 +310,20 @@ def test_points_override_needs_a_chosen_table(world):
     assert error.value.field == "points_override"
 
 
-def test_candidate_items_are_saved_with_their_justification(fasi_chosen):
+def test_candidate_items_are_saved_with_or_without_a_justification(official_chosen):
+    """UIM-16: the justification of a candidate item is optional."""
     candidate = Candidate(4, 2, "Também se enquadra em extensão")
+    bare = Candidate(5, 1, "")
 
-    activity = create(fasi_chosen, group_number=3, item_number=2, candidates=(candidate,))
+    activity = create(
+        official_chosen, group_number=3, item_number=2, candidates=(candidate, bare)
+    )
 
-    assert activity.candidates == (candidate,)
-    assert field_of_failure(fasi_chosen, candidates=(Candidate(4, 2, " "),)) == "candidates"
+    assert activity.candidates == (candidate, bare)
 
 
-def test_group_one_student_evaluation_item_keeps_informed_points(fasi_chosen):
-    activity = create(fasi_chosen, group_number=1, item_number=3, informed_points=D("8"))
+def test_group_one_student_evaluation_item_keeps_informed_points(points_chosen):
+    activity = create(points_chosen, group_number=1, item_number=3, informed_points=D("8"))
 
     assert (activity.group_number, activity.item_number) == (1, 3)
     assert activity.informed_points == D("8")

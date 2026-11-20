@@ -1,8 +1,8 @@
 """SQLAlchemy implementations of the domain ports (AD-001)."""
 
 import uuid
-from collections.abc import Sequence
-from dataclasses import asdict
+from collections.abc import Callable, Sequence
+from dataclasses import asdict, replace
 from datetime import date, datetime
 from types import TracebackType
 from typing import Any, Self
@@ -16,8 +16,32 @@ from app.domain.entities.academic_unit import AcademicUnit
 from app.domain.entities.activity import Activity, ActivityStatus, Candidate
 from app.domain.entities.audit import AuditEvent
 from app.domain.entities.career import CareerClass, CareerVersion
+from app.domain.entities.comprovante import (
+    ComprovanteLayout,
+    EvidenceKey,
+    LayoutActivity,
+    LayoutPage,
+)
+from app.domain.entities.document import (
+    Document,
+    DocumentStatus,
+    ExtractionRun,
+    PageText,
+    RunStatus,
+)
+from app.domain.entities.generated import (
+    DocumentKind,
+    GeneratedDocument,
+    GeneratedFile,
+    GenerationAlert,
+    GenerationAlertCode,
+    GenerationCode,
+    GenerationState,
+    WordingJob,
+)
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor
+from app.domain.entities.report import DraftEntry, DraftSection, EntrySource, ReportDraft
 from app.domain.entities.scoring import (
     ScoringCriterion,
     ScoringGroup,
@@ -26,17 +50,39 @@ from app.domain.entities.scoring import (
 from app.domain.entities.user import Session as UserSession
 from app.domain.entities.user import User
 from app.domain.errors import Conflict, NotFound, StaleVersion
-from app.domain.repositories.ports import ScoringTableRecord
+from app.domain.repositories.ports import (
+    DEFAULT_MAX_JOB_ATTEMPTS,
+    EXHAUSTED_CODE,
+    ActivityEvidence,
+    BusyReason,
+    JobStatus,
+    ProcessDeletionCounts,
+    ProcessingJob,
+    ScoringTableRecord,
+    StoredFile,
+    StoredFileArea,
+)
+from app.domain.rules.scoring_duplicates import content_hash, has_readable_text
 from app.infrastructure.database.models import (
     AcademicUnitModel,
     ActivityCandidateModel,
+    ActivityEvidenceModel,
     ActivityModel,
     AuditLogModel,
     CareerStructureModel,
     CareerVersionModel,
+    ComprovanteLayoutModel,
+    DocumentModel,
+    DocumentPageModel,
+    ExtractionRunModel,
     FunctionalProcessModel,
+    GeneratedDocumentModel,
+    GeneratedFileModel,
     LoginAttemptModel,
+    ProcessingJobModel,
     ProfessorModel,
+    ReportDraftModel,
+    ReportWordingJobModel,
     ScoringCriterionModel,
     ScoringGroupModel,
     ScoringTableModel,
@@ -67,7 +113,10 @@ def _insert(session: Session, table: Table, values: dict[str, Any], what: str) -
 
 def _versioned_update(
     session: Session,
-    model: type[ProfessorModel] | type[FunctionalProcessModel] | type[ActivityModel],
+    model: type[ProfessorModel]
+    | type[FunctionalProcessModel]
+    | type[ActivityModel]
+    | type[DocumentModel],
     entity_id: UUID,
     expected_version: int,
     values: dict[str, Any],
@@ -468,6 +517,7 @@ _CRITERION_FIELDS = (
     "hours_per_block",
     "weeks_per_semester",
     "prep_ratio",
+    "min_hours",
     "max_points",
     "accepted_evidence",
     "rules",
@@ -525,6 +575,12 @@ class SqlScoringTableRepository:
             delete(ScoringTableUnitModel).where(ScoringTableUnitModel.table_id == table_id)
         )
         self._insert_units(table_id, unit_ids)
+
+    def set_table_archived(self, table_id: UUID, archived: bool) -> None:
+        model = self._s.get(ScoringTableModel, table_id)
+        if model is None:
+            raise NotFound("Tabela de pontuação não encontrada")
+        model.archived = archived
 
     def _versions(self, models: Sequence[ScoringTableVersionModel]) -> list[ScoringTableVersion]:
         result = []
@@ -706,11 +762,14 @@ _ACTIVITY_FIELDS = (
     "course_hours",
     "informed_points",
     "points_override",
+    "unit_points_override",
     "evidence_note",
     "source",
     "status",
     "distinct_justification",
     "created_by",
+    "extraction_run_id",
+    "merged_into_id",
 )
 
 
@@ -719,21 +778,33 @@ class SqlActivityRepository:
         self._s = session
 
     def _to_entity(self, m: ActivityModel) -> Activity:
-        candidates = self._s.scalars(
+        return self._to_entities([m])[0]
+
+    def _to_entities(self, models: Sequence[ActivityModel]) -> list[Activity]:
+        """The candidates of all the activities come in one query, not one per activity (SEC-01)."""
+        if not models:
+            return []
+        rows = self._s.scalars(
             select(ActivityCandidateModel)
-            .where(ActivityCandidateModel.activity_id == m.id)
+            .where(ActivityCandidateModel.activity_id.in_([m.id for m in models]))
             .order_by(ActivityCandidateModel.group_number, ActivityCandidateModel.item_number)
         ).all()
-        return Activity(
-            id=m.id,
-            created_at=m.created_at,
-            updated_at=m.updated_at,
-            version=m.version,
-            candidates=tuple(
-                Candidate(c.group_number, c.item_number, c.justification) for c in candidates
-            ),
-            **{f: getattr(m, f) for f in _ACTIVITY_FIELDS},
-        )
+        candidates: dict[UUID, list[Candidate]] = {}
+        for c in rows:
+            candidates.setdefault(c.activity_id, []).append(
+                Candidate(c.group_number, c.item_number, c.justification)
+            )
+        return [
+            Activity(
+                id=m.id,
+                created_at=m.created_at,
+                updated_at=m.updated_at,
+                version=m.version,
+                candidates=tuple(candidates.get(m.id, ())),
+                **{f: getattr(m, f) for f in _ACTIVITY_FIELDS},
+            )
+            for m in models
+        ]
 
     def _replace_candidates(self, activity: Activity) -> None:
         self._s.execute(
@@ -775,14 +846,38 @@ class SqlActivityRepository:
         process_id: UUID,
         group_number: int | None = None,
         status: ActivityStatus | None = None,
+        include_merged: bool = False,
     ) -> Sequence[Activity]:
         stmt = select(ActivityModel).where(ActivityModel.process_id == process_id)
+        if not include_merged:
+            stmt = stmt.where(ActivityModel.merged_into_id.is_(None))
         if group_number is not None:
             stmt = stmt.where(ActivityModel.group_number == group_number)
         if status is not None:
             stmt = stmt.where(ActivityModel.status == status)
         models = self._s.scalars(stmt.order_by(ActivityModel.created_at, ActivityModel.id)).all()
-        return [self._to_entity(m) for m in models]
+        return self._to_entities(models)
+
+    def list_merged_into(self, activity_id: UUID) -> Sequence[Activity]:
+        models = self._s.scalars(
+            select(ActivityModel)
+            .where(ActivityModel.merged_into_id == activity_id)
+            .order_by(ActivityModel.created_at, ActivityModel.id)
+        ).all()
+        return self._to_entities(models)
+
+    def set_merged_into(
+        self, activity: Activity, target_id: UUID | None, expected_version: int
+    ) -> None:
+        activity.version = _versioned_update(
+            self._s,
+            ActivityModel,
+            activity.id,
+            expected_version,
+            {"merged_into_id": target_id, "updated_at": func.now()},
+            "Atividade",
+        )
+        activity.merged_into_id = target_id
 
 
 class SqlAuditRepository:
@@ -815,6 +910,1296 @@ class SqlAuditRepository:
         ]
 
 
+_DOCUMENT_FIELDS = (
+    "process_id",
+    "original_name",
+    "internal_name",
+    "mime",
+    "size_bytes",
+    "sha256",
+    "page_count",
+    "status",
+    "status_code",
+    "manual_type",
+    "manual_category",
+    "suggested_type",
+    "suggested_category",
+    "confidence",
+    "uploaded_by",
+)
+# Columns a document update may change; the owner, process and upload time never change.
+_DOCUMENT_UPDATABLE = tuple(f for f in _DOCUMENT_FIELDS if f not in ("process_id", "uploaded_by"))
+
+
+class SqlDocumentRepository:
+    def __init__(self, session: Session):
+        self._s = session
+
+    @staticmethod
+    def _to_entity(m: DocumentModel) -> Document:
+        return Document(
+            id=m.id,
+            uploaded_at=m.uploaded_at,
+            version=m.version,
+            updated_at=m.updated_at,
+            file_deleted_at=m.file_deleted_at,
+            **{f: getattr(m, f) for f in _DOCUMENT_FIELDS},
+        )
+
+    def get(self, document_id: UUID) -> Document | None:
+        m = self._s.get(DocumentModel, document_id, populate_existing=True)
+        return self._to_entity(m) if m else None
+
+    def add(self, document: Document) -> None:
+        values = {f: getattr(document, f) for f in _DOCUMENT_FIELDS}
+        values.update(id=document.id, version=document.version)
+        if document.uploaded_at is not None:
+            values["uploaded_at"] = document.uploaded_at
+        try:
+            with self._s.begin_nested():
+                self._s.execute(insert(DocumentModel.__table__).values(**values))
+        except IntegrityError as exc:
+            if not _is_unique_violation(exc):
+                raise
+            existing = self.exists_hash(document.process_id, document.sha256)
+            if existing is not None:
+                raise Conflict(
+                    f"Arquivo já enviado neste processo (documento {existing})"
+                ) from None
+            raise Conflict("Documento já cadastrado") from None
+
+    def update(self, document: Document, expected_version: int) -> None:
+        values = {f: getattr(document, f) for f in _DOCUMENT_UPDATABLE}
+        values["updated_at"] = func.now()
+        document.version = _versioned_update(
+            self._s, DocumentModel, document.id, expected_version, values, "Documento"
+        )
+
+    def list_for_process(
+        self,
+        process_id: UUID,
+        status: DocumentStatus | None = None,
+        document_type: str | None = None,
+    ) -> Sequence[Document]:
+        stmt = select(DocumentModel).where(DocumentModel.process_id == process_id)
+        if status is not None:
+            stmt = stmt.where(DocumentModel.status == status)
+        if document_type is not None:
+            effective = func.coalesce(DocumentModel.manual_type, DocumentModel.suggested_type)
+            stmt = stmt.where(effective == document_type)
+        models = self._s.scalars(stmt.order_by(DocumentModel.uploaded_at, DocumentModel.id)).all()
+        return [self._to_entity(m) for m in models]
+
+    def exists_hash(self, process_id: UUID, sha256: str) -> UUID | None:
+        return self._s.scalar(
+            select(DocumentModel.id).where(
+                DocumentModel.process_id == process_id, DocumentModel.sha256 == sha256
+            )
+        )
+
+    def delete(self, document_id: UUID) -> None:
+        """Pages, runs, jobs and links go with it (cascade); activities stay (DOC-10)."""
+        rowcount = self._s.execute(
+            delete(DocumentModel).where(DocumentModel.id == document_id)
+        ).rowcount
+        if rowcount == 0:
+            raise NotFound("Documento não encontrado")
+
+    def count_for_process(self, process_id: UUID) -> int:
+        return self._s.scalar(
+            select(func.count())
+            .select_from(DocumentModel)
+            .where(DocumentModel.process_id == process_id)
+        )
+
+    def mark_file_deleted(self, document_id: UUID, now: datetime) -> None:
+        """Only goes from NULL to a date: a second mark keeps the first (DEL-05, DEL-06)."""
+        rowcount = self._s.execute(
+            update(DocumentModel)
+            .where(DocumentModel.id == document_id)
+            .values(file_deleted_at=func.coalesce(DocumentModel.file_deleted_at, now))
+        ).rowcount
+        if rowcount == 0:
+            raise NotFound("Documento não encontrado")
+
+    def count_uploads_by_user_since(self, user_id: UUID, since: datetime) -> int:
+        return self._s.scalar(
+            select(func.count())
+            .select_from(DocumentModel)
+            .where(DocumentModel.uploaded_by == user_id, DocumentModel.uploaded_at >= since)
+        )
+
+
+class SqlExtractionRepository:
+    def __init__(self, session: Session):
+        self._s = session
+
+    def add_run(self, run: ExtractionRun) -> None:
+        values = dict(
+            id=run.id,
+            document_id=run.document_id,
+            status=run.status,
+            model=run.model,
+            duration_ms=run.duration_ms,
+            raw_json=run.raw_json,
+            warnings=list(run.warnings),
+        )
+        if run.created_at is not None:
+            values["created_at"] = run.created_at
+        self._s.execute(insert(ExtractionRunModel).values(**values))
+
+    def mark_run_status(self, run_id: UUID, status: RunStatus) -> None:
+        rowcount = self._s.execute(
+            update(ExtractionRunModel).where(ExtractionRunModel.id == run_id).values(status=status)
+        ).rowcount
+        if rowcount == 0:
+            raise NotFound("Execução não encontrada")
+
+    def list_runs(self, document_id: UUID) -> Sequence[ExtractionRun]:
+        models = self._s.scalars(
+            select(ExtractionRunModel)
+            .where(ExtractionRunModel.document_id == document_id)
+            .order_by(ExtractionRunModel.created_at, ExtractionRunModel.id)
+        ).all()
+        return [
+            ExtractionRun(
+                id=m.id,
+                document_id=m.document_id,
+                model=m.model,
+                duration_ms=m.duration_ms,
+                raw_json=m.raw_json,
+                warnings=tuple(m.warnings),
+                status=m.status,
+                created_at=m.created_at,
+            )
+            for m in models
+        ]
+
+    def replace_pages(self, document_id: UUID, pages: Sequence[PageText]) -> None:
+        self._s.execute(
+            delete(DocumentPageModel).where(DocumentPageModel.document_id == document_id)
+        )
+        for page in pages:
+            self._s.execute(
+                insert(DocumentPageModel).values(
+                    id=uuid.uuid4(),
+                    document_id=document_id,
+                    run_id=page.run_id,
+                    page_number=page.page_number,
+                    method=page.method,
+                    char_count=page.char_count,
+                    ocr_confidence=page.ocr_confidence,
+                    text=page.text,
+                )
+            )
+
+    def delete_pages(self, document_id: UUID) -> None:
+        self._s.execute(
+            delete(DocumentPageModel).where(DocumentPageModel.document_id == document_id)
+        )
+
+    def list_pages(self, document_id: UUID) -> Sequence[PageText]:
+        models = self._s.scalars(
+            select(DocumentPageModel)
+            .where(DocumentPageModel.document_id == document_id)
+            .order_by(DocumentPageModel.page_number)
+        ).all()
+        return [
+            PageText(
+                document_id=m.document_id,
+                run_id=m.run_id,
+                page_number=m.page_number,
+                method=m.method,
+                char_count=m.char_count,
+                ocr_confidence=m.ocr_confidence,
+                text=m.text,
+            )
+            for m in models
+        ]
+
+
+_ACTIVE_JOB = (JobStatus.PENDENTE, JobStatus.PROCESSANDO)
+
+
+class SqlJobRepository:
+    def __init__(self, session: Session):
+        self._s = session
+
+    @staticmethod
+    def _to_entity(m: ProcessingJobModel) -> ProcessingJob:
+        return ProcessingJob(
+            id=m.id,
+            document_id=m.document_id,
+            status=m.status,
+            attempts=m.attempts,
+            created_at=m.created_at,
+            started_at=m.started_at,
+            finished_at=m.finished_at,
+            error_code=m.error_code,
+        )
+
+    def add(self, job: ProcessingJob) -> None:
+        values = dict(
+            id=job.id,
+            document_id=job.document_id,
+            status=job.status,
+            attempts=job.attempts,
+            started_at=job.started_at,
+            finished_at=job.finished_at,
+            error_code=job.error_code,
+        )
+        if job.created_at is not None:
+            values["created_at"] = job.created_at
+        try:
+            with self._s.begin_nested():
+                self._s.execute(insert(ProcessingJobModel).values(**values))
+        except IntegrityError as exc:
+            if _is_unique_violation(exc):
+                raise Conflict("O documento já tem uma tarefa de processamento ativa") from None
+            raise
+
+    def get(self, job_id: UUID) -> ProcessingJob | None:
+        m = self._s.get(ProcessingJobModel, job_id, populate_existing=True)
+        return self._to_entity(m) if m else None
+
+    def claim_next(self, now: datetime) -> ProcessingJob | None:
+        m = self._s.scalars(
+            select(ProcessingJobModel)
+            .where(ProcessingJobModel.status == JobStatus.PENDENTE)
+            .order_by(ProcessingJobModel.created_at, ProcessingJobModel.id)
+            .limit(1)
+            .with_for_update(skip_locked=True)
+        ).first()
+        if m is None:
+            return None
+        m.status = JobStatus.PROCESSANDO
+        m.attempts += 1
+        m.started_at = now
+        m.finished_at = None
+        m.error_code = None
+        self._s.flush()
+        return self._to_entity(m)
+
+    def finish(
+        self, job_id: UUID, status: JobStatus, now: datetime, error_code: str | None = None
+    ) -> None:
+        rowcount = self._s.execute(
+            update(ProcessingJobModel)
+            .where(ProcessingJobModel.id == job_id)
+            .values(status=status, finished_at=now, error_code=error_code)
+        ).rowcount
+        if rowcount == 0:
+            raise NotFound("Tarefa não encontrada")
+
+    def recover_stuck(self, max_attempts: int = DEFAULT_MAX_JOB_ATTEMPTS) -> int:
+        return self._s.execute(
+            update(ProcessingJobModel)
+            .where(
+                ProcessingJobModel.status == JobStatus.PROCESSANDO,
+                ProcessingJobModel.attempts < max_attempts,
+            )
+            .values(status=JobStatus.PENDENTE, started_at=None)
+        ).rowcount
+
+    def exhaust_stuck(self, max_attempts: int, now: datetime) -> list[ProcessingJob]:
+        rows = self._s.scalars(
+            update(ProcessingJobModel)
+            .where(
+                ProcessingJobModel.status == JobStatus.PROCESSANDO,
+                ProcessingJobModel.attempts >= max_attempts,
+            )
+            .values(status=JobStatus.FALHOU, finished_at=now, error_code=EXHAUSTED_CODE)
+            .returning(ProcessingJobModel)
+        ).all()
+        return [self._to_entity(m) for m in rows]
+
+    def active_for_document(self, document_id: UUID) -> ProcessingJob | None:
+        m = self._s.scalars(
+            select(ProcessingJobModel).where(
+                ProcessingJobModel.document_id == document_id,
+                ProcessingJobModel.status.in_(_ACTIVE_JOB),
+            )
+        ).first()
+        return self._to_entity(m) if m else None
+
+    def active_for_process(self, process_id: UUID) -> Sequence[ProcessingJob]:
+        models = self._s.scalars(
+            select(ProcessingJobModel)
+            .join(DocumentModel, DocumentModel.id == ProcessingJobModel.document_id)
+            .where(
+                DocumentModel.process_id == process_id,
+                ProcessingJobModel.status.in_(_ACTIVE_JOB),
+            )
+            .order_by(ProcessingJobModel.created_at, ProcessingJobModel.id)
+        ).all()
+        return [self._to_entity(m) for m in models]
+
+
+class SqlEvidenceRepository:
+    def __init__(self, session: Session):
+        self._s = session
+
+    @staticmethod
+    def _to_entity(m: ActivityEvidenceModel) -> ActivityEvidence:
+        return ActivityEvidence(
+            id=m.id,
+            activity_id=m.activity_id,
+            document_id=m.document_id,
+            page_number=m.page_number,
+            excerpt=m.excerpt,
+            created_by=m.created_by,
+            run_id=m.run_id,
+            created_at=m.created_at,
+            origin_activity_id=m.origin_activity_id,
+        )
+
+    def add(self, evidence: ActivityEvidence) -> None:
+        values = dict(
+            id=evidence.id,
+            activity_id=evidence.activity_id,
+            document_id=evidence.document_id,
+            page_number=evidence.page_number,
+            excerpt=evidence.excerpt,
+            run_id=evidence.run_id,
+            created_by=evidence.created_by,
+            origin_activity_id=evidence.origin_activity_id,
+        )
+        if evidence.created_at is not None:
+            values["created_at"] = evidence.created_at
+        _insert(self._s, ActivityEvidenceModel.__table__, values, "Vínculo")
+
+    def remove(self, evidence_id: UUID) -> None:
+        rowcount = self._s.execute(
+            delete(ActivityEvidenceModel).where(ActivityEvidenceModel.id == evidence_id)
+        ).rowcount
+        if rowcount == 0:
+            raise NotFound("Vínculo não encontrado")
+
+    def list_for_activity(self, activity_id: UUID) -> Sequence[ActivityEvidence]:
+        models = self._s.scalars(
+            select(ActivityEvidenceModel)
+            .where(ActivityEvidenceModel.activity_id == activity_id)
+            .order_by(ActivityEvidenceModel.created_at, ActivityEvidenceModel.id)
+        ).all()
+        return [self._to_entity(m) for m in models]
+
+    def list_for_document(self, document_id: UUID) -> Sequence[ActivityEvidence]:
+        models = self._s.scalars(
+            select(ActivityEvidenceModel)
+            .where(ActivityEvidenceModel.document_id == document_id)
+            .order_by(ActivityEvidenceModel.created_at, ActivityEvidenceModel.id)
+        ).all()
+        return [self._to_entity(m) for m in models]
+
+    def list_for_activities(self, activity_ids: Sequence[UUID]) -> Sequence[ActivityEvidence]:
+        if not activity_ids:
+            return []
+        models = self._s.scalars(
+            select(ActivityEvidenceModel)
+            .where(ActivityEvidenceModel.activity_id.in_(activity_ids))
+            .order_by(ActivityEvidenceModel.created_at, ActivityEvidenceModel.id)
+        ).all()
+        return [self._to_entity(m) for m in models]
+
+    def clear_excerpts_for_document(self, document_id: UUID) -> None:
+        """The column is NOT NULL, so the excerpt becomes ''; document and page stay."""
+        self._s.execute(
+            update(ActivityEvidenceModel)
+            .where(ActivityEvidenceModel.document_id == document_id)
+            .values(excerpt="")
+        )
+
+    def move(
+        self, evidence_ids: Sequence[UUID], to_activity_id: UUID, origin_activity_id: UUID
+    ) -> list[UUID]:
+        if not evidence_ids:
+            return []
+        taken = {
+            (document_id, page_number)
+            for document_id, page_number in self._s.execute(
+                select(ActivityEvidenceModel.document_id, ActivityEvidenceModel.page_number).where(
+                    ActivityEvidenceModel.activity_id == to_activity_id
+                )
+            )
+        }
+        candidates = self._s.scalars(
+            select(ActivityEvidenceModel)
+            .where(ActivityEvidenceModel.id.in_(evidence_ids))
+            .order_by(ActivityEvidenceModel.created_at, ActivityEvidenceModel.id)
+        ).all()
+        moved: list[UUID] = []
+        for evidence in candidates:
+            page = (evidence.document_id, evidence.page_number)
+            if page in taken:
+                continue
+            taken.add(page)
+            self._s.execute(
+                update(ActivityEvidenceModel)
+                .where(ActivityEvidenceModel.id == evidence.id)
+                .values(
+                    activity_id=to_activity_id,
+                    origin_activity_id=evidence.origin_activity_id or origin_activity_id,
+                )
+            )
+            moved.append(evidence.id)
+        return moved
+
+    def restore_from(self, origin_activity_id: UUID) -> list[UUID]:
+        ids = self._s.scalars(
+            select(ActivityEvidenceModel.id)
+            .where(ActivityEvidenceModel.origin_activity_id == origin_activity_id)
+            .order_by(ActivityEvidenceModel.created_at, ActivityEvidenceModel.id)
+        ).all()
+        if ids:
+            self._s.execute(
+                update(ActivityEvidenceModel)
+                .where(ActivityEvidenceModel.id.in_(ids))
+                .values(activity_id=origin_activity_id, origin_activity_id=None)
+            )
+        return list(ids)
+
+    def counts_for_activities(self, activity_ids: Sequence[UUID]) -> dict[UUID, int]:
+        if not activity_ids:
+            return {}
+        rows = self._s.execute(
+            select(ActivityEvidenceModel.activity_id, func.count())
+            .where(ActivityEvidenceModel.activity_id.in_(activity_ids))
+            .group_by(ActivityEvidenceModel.activity_id)
+        ).all()
+        counts = {activity_id: 0 for activity_id in activity_ids}
+        counts.update({activity_id: count for activity_id, count in rows})
+        return counts
+
+    def counts_for_documents(self, document_ids: Sequence[UUID]) -> dict[UUID, int]:
+        if not document_ids:
+            return {}
+        rows = self._s.execute(
+            select(
+                ActivityEvidenceModel.document_id,
+                func.count(func.distinct(ActivityEvidenceModel.activity_id)),
+            )
+            .join(ActivityModel, ActivityModel.id == ActivityEvidenceModel.activity_id)
+            .where(
+                ActivityEvidenceModel.document_id.in_(document_ids),
+                ActivityModel.status != ActivityStatus.REJEITADA,
+                ActivityModel.merged_into_id.is_(None),
+            )
+            .group_by(ActivityEvidenceModel.document_id)
+        ).all()
+        counts = {document_id: 0 for document_id in document_ids}
+        counts.update({document_id: count for document_id, count in rows})
+        return counts
+
+    def content_keys_for_activities(
+        self, activity_ids: Sequence[UUID]
+    ) -> dict[UUID, set[tuple[UUID, str]]]:
+        if not activity_ids:
+            return {}
+        links = self._s.execute(
+            select(ActivityEvidenceModel.activity_id, ActivityEvidenceModel.document_id)
+            .where(ActivityEvidenceModel.activity_id.in_(activity_ids))
+            .distinct()
+        ).all()
+        document_ids = {document_id for _, document_id in links}
+        pages: dict[UUID, list[str]] = {}
+        for document_id, text in self._s.execute(
+            select(DocumentPageModel.document_id, DocumentPageModel.text)
+            .where(DocumentPageModel.document_id.in_(document_ids))
+            .order_by(DocumentPageModel.document_id, DocumentPageModel.page_number)
+        ):
+            pages.setdefault(document_id, []).append(text)
+        hashes = {
+            document_id: content_hash(texts)
+            for document_id, texts in pages.items()
+            if has_readable_text(texts)
+        }
+        keys: dict[UUID, set[tuple[UUID, str]]] = {}
+        for activity_id, document_id in links:
+            if document_id in hashes:
+                keys.setdefault(activity_id, set()).add((document_id, hashes[document_id]))
+        return keys
+
+
+def _alerts_to_json(alerts: Sequence[GenerationAlert], text_key: str) -> list[dict[str, str]]:
+    """`[{code, <text_key>?}]`; the text is left out when empty."""
+    return [{"code": a.code.value, **({text_key: a.message} if a.message else {})} for a in alerts]
+
+
+def _alerts_from_json(
+    rows: Sequence[dict[str, str]] | None, text_key: str
+) -> tuple[GenerationAlert, ...]:
+    return tuple(
+        GenerationAlert(GenerationAlertCode(r["code"]), r.get(text_key, "")) for r in rows or ()
+    )
+
+
+INTERRUPTED_MESSAGE = "A geração foi interrompida pela reinicialização do servidor."
+
+
+class SqlGenerationRepository:
+    """Generated documents and their files (VER-01)."""
+
+    def __init__(self, session: Session):
+        self._s = session
+
+    def _to_entities(self, models: Sequence[GeneratedDocumentModel]) -> list[GeneratedDocument]:
+        files: dict[UUID, list[GeneratedFile]] = {}
+        if models:
+            rows = self._s.scalars(
+                select(GeneratedFileModel)
+                .where(GeneratedFileModel.generated_document_id.in_([m.id for m in models]))
+                .order_by(GeneratedFileModel.format)
+            ).all()
+            for row in rows:
+                files.setdefault(row.generated_document_id, []).append(
+                    GeneratedFile(row.format, row.internal_name, row.sha256, row.size_bytes)
+                )
+        return [
+            GeneratedDocument(
+                id=m.id,
+                process_id=m.process_id,
+                kind=m.kind,
+                state=m.state,
+                version_number=m.version_number,
+                requested_by=m.requested_by,
+                requested_at=m.requested_at,
+                started_at=m.started_at,
+                finished_at=m.finished_at,
+                error_code=GenerationCode(m.error_code) if m.error_code else None,
+                error_message=m.error_message,
+                snapshot=m.snapshot,
+                alerts=_alerts_from_json(m.alerts, "message"),
+                plan_hash=m.plan_hash,
+                files=tuple(files.get(m.id, ())),
+            )
+            for m in models
+        ]
+
+    def add(self, generation: GeneratedDocument) -> None:
+        values = dict(
+            id=generation.id,
+            process_id=generation.process_id,
+            kind=generation.kind,
+            state=generation.state,
+            version_number=generation.version_number,
+            requested_by=generation.requested_by,
+            requested_at=generation.requested_at,
+            started_at=generation.started_at,
+            finished_at=generation.finished_at,
+            error_code=generation.error_code.value if generation.error_code else None,
+            error_message=generation.error_message,
+            snapshot=generation.snapshot,
+            alerts=_alerts_to_json(generation.alerts, "message") if generation.alerts else None,
+            plan_hash=generation.plan_hash,
+        )
+        try:
+            with self._s.begin_nested():
+                self._s.execute(insert(GeneratedDocumentModel).values(**values))
+        except IntegrityError as exc:
+            if _is_unique_violation(exc):
+                raise Conflict(
+                    "Já há uma geração em andamento deste documento",
+                    GenerationCode.GERACAO_EM_ANDAMENTO.value,
+                ) from None
+            raise
+
+    def get(self, generation_id: UUID) -> GeneratedDocument | None:
+        m = self._s.get(GeneratedDocumentModel, generation_id, populate_existing=True)
+        return self._to_entities([m])[0] if m else None
+
+    def list_for_process(
+        self, process_id: UUID, kind: DocumentKind | None = None
+    ) -> Sequence[GeneratedDocument]:
+        stmt = select(GeneratedDocumentModel).where(GeneratedDocumentModel.process_id == process_id)
+        if kind is not None:
+            stmt = stmt.where(GeneratedDocumentModel.kind == kind)
+        running_first = (GeneratedDocumentModel.state != GenerationState.GERANDO).asc()
+        models = self._s.scalars(
+            stmt.order_by(
+                running_first,
+                GeneratedDocumentModel.requested_at.desc(),
+                GeneratedDocumentModel.id,
+            )
+        ).all()
+        return self._to_entities(models)
+
+    def claim_next(self, now: datetime) -> GeneratedDocument | None:
+        m = self._s.scalars(
+            select(GeneratedDocumentModel)
+            .where(
+                GeneratedDocumentModel.state == GenerationState.GERANDO,
+                GeneratedDocumentModel.started_at.is_(None),
+            )
+            .order_by(GeneratedDocumentModel.requested_at, GeneratedDocumentModel.id)
+            .limit(1)
+            .with_for_update(skip_locked=True)
+        ).first()
+        if m is None:
+            return None
+        m.started_at = now
+        self._s.flush()
+        return self._to_entities([m])[0]
+
+    def _close(self, generation_id: UUID, values: dict[str, Any]) -> None:
+        """GERANDO to a final state; a row already final or unknown is refused."""
+        rowcount = self._s.execute(
+            update(GeneratedDocumentModel)
+            .where(
+                GeneratedDocumentModel.id == generation_id,
+                GeneratedDocumentModel.state == GenerationState.GERANDO,
+            )
+            .values(**values)
+        ).rowcount
+        if rowcount == 0:
+            if self._s.get(GeneratedDocumentModel, generation_id) is None:
+                raise NotFound("Geração não encontrada")
+            raise Conflict("A geração já terminou")
+
+    def finish_ready(
+        self,
+        generation_id: UUID,
+        now: datetime,
+        files: Sequence[GeneratedFile],
+        snapshot: dict[str, Any],
+        alerts: Sequence[GenerationAlert],
+        plan_hash: str | None = None,
+    ) -> GeneratedDocument:
+        row = self._s.get(GeneratedDocumentModel, generation_id, populate_existing=True)
+        if row is None:
+            raise NotFound("Geração não encontrada")
+        # Only one row of a process and kind is GERANDO at a time, so no other finish competes
+        # for the number; the unique index would refuse a duplicate anyway.
+        next_version = (
+            self._s.scalar(
+                select(func.coalesce(func.max(GeneratedDocumentModel.version_number), 0)).where(
+                    GeneratedDocumentModel.process_id == row.process_id,
+                    GeneratedDocumentModel.kind == row.kind,
+                )
+            )
+            + 1
+        )
+        self._close(
+            generation_id,
+            dict(
+                state=GenerationState.PRONTO,
+                version_number=next_version,
+                finished_at=now,
+                snapshot=snapshot,
+                alerts=_alerts_to_json(alerts, "message"),
+                plan_hash=plan_hash,
+            ),
+        )
+        for file in files:
+            self._s.execute(
+                insert(GeneratedFileModel).values(
+                    id=uuid.uuid4(),
+                    generated_document_id=generation_id,
+                    format=file.format,
+                    internal_name=file.internal_name,
+                    sha256=file.sha256,
+                    size_bytes=file.size_bytes,
+                )
+            )
+        done = self.get(generation_id)
+        assert done is not None
+        return done
+
+    def finish_failed(
+        self, generation_id: UUID, now: datetime, error_code: GenerationCode, error_message: str
+    ) -> None:
+        self._close(
+            generation_id,
+            dict(
+                state=GenerationState.FALHOU,
+                finished_at=now,
+                error_code=error_code.value,
+                error_message=error_message,
+            ),
+        )
+
+    def recover_interrupted(self, now: datetime) -> Sequence[GeneratedDocument]:
+        models = self._s.scalars(
+            update(GeneratedDocumentModel)
+            .where(
+                GeneratedDocumentModel.state == GenerationState.GERANDO,
+                GeneratedDocumentModel.started_at.is_not(None),
+            )
+            .values(
+                state=GenerationState.FALHOU,
+                finished_at=now,
+                error_code=GenerationCode.INTERROMPIDA.value,
+                error_message=INTERRUPTED_MESSAGE,
+            )
+            .returning(GeneratedDocumentModel)
+        ).all()
+        return self._to_entities(sorted(models, key=lambda m: (m.requested_at, m.id)))
+
+    def latest_ready_by_kind(self, process_id: UUID) -> dict[DocumentKind, GeneratedDocument]:
+        models = self._s.scalars(
+            select(GeneratedDocumentModel)
+            .where(
+                GeneratedDocumentModel.process_id == process_id,
+                GeneratedDocumentModel.state == GenerationState.PRONTO,
+            )
+            .order_by(GeneratedDocumentModel.version_number.desc())
+        ).all()
+        newest: dict[DocumentKind, GeneratedDocumentModel] = {}
+        for m in models:
+            newest.setdefault(m.kind, m)
+        entities = self._to_entities(list(newest.values()))
+        return {e.kind: e for e in entities}
+
+
+class SqlWordingJobRepository:
+    """Background requests to word one section of the report (REL-13 to REL-15)."""
+
+    def __init__(self, session: Session):
+        self._s = session
+
+    @staticmethod
+    def _to_entity(m: ReportWordingJobModel) -> WordingJob:
+        return WordingJob(
+            id=m.id,
+            process_id=m.process_id,
+            section_key=m.section_key,
+            state=m.state,
+            requested_by=m.requested_by,
+            requested_at=m.requested_at,
+            started_at=m.started_at,
+            finished_at=m.finished_at,
+            error_code=GenerationCode(m.error_code) if m.error_code else None,
+            warnings=_alerts_from_json(m.warnings, "reason"),
+        )
+
+    def add(self, job: WordingJob) -> None:
+        values = dict(
+            id=job.id,
+            process_id=job.process_id,
+            section_key=job.section_key,
+            state=job.state,
+            requested_by=job.requested_by,
+            requested_at=job.requested_at,
+            started_at=job.started_at,
+            finished_at=job.finished_at,
+            error_code=job.error_code.value if job.error_code else None,
+            warnings=_alerts_to_json(job.warnings, "reason") if job.warnings else None,
+        )
+        try:
+            with self._s.begin_nested():
+                self._s.execute(insert(ReportWordingJobModel).values(**values))
+        except IntegrityError as exc:
+            if _is_unique_violation(exc):
+                raise Conflict(
+                    "Já há uma redação em andamento nesta seção",
+                    GenerationCode.REDACAO_EM_ANDAMENTO.value,
+                ) from None
+            raise
+
+    def get(self, job_id: UUID) -> WordingJob | None:
+        m = self._s.get(ReportWordingJobModel, job_id, populate_existing=True)
+        return self._to_entity(m) if m else None
+
+    def claim_next(self, now: datetime) -> WordingJob | None:
+        m = self._s.scalars(
+            select(ReportWordingJobModel)
+            .where(
+                ReportWordingJobModel.state == GenerationState.GERANDO,
+                ReportWordingJobModel.started_at.is_(None),
+            )
+            .order_by(ReportWordingJobModel.requested_at, ReportWordingJobModel.id)
+            .limit(1)
+            .with_for_update(skip_locked=True)
+        ).first()
+        if m is None:
+            return None
+        m.started_at = now
+        self._s.flush()
+        return self._to_entity(m)
+
+    def finish(
+        self,
+        job_id: UUID,
+        now: datetime,
+        state: GenerationState,
+        error_code: GenerationCode | None = None,
+        warnings: Sequence[GenerationAlert] = (),
+    ) -> None:
+        rowcount = self._s.execute(
+            update(ReportWordingJobModel)
+            .where(
+                ReportWordingJobModel.id == job_id,
+                ReportWordingJobModel.state == GenerationState.GERANDO,
+            )
+            .values(
+                state=state,
+                finished_at=now,
+                error_code=error_code.value if error_code else None,
+                warnings=_alerts_to_json(warnings, "reason") if warnings else None,
+            )
+        ).rowcount
+        if rowcount == 0:
+            if self._s.get(ReportWordingJobModel, job_id) is None:
+                raise NotFound("Tarefa de redação não encontrada")
+            raise Conflict("A tarefa de redação já terminou")
+
+    def recover_interrupted(self, now: datetime) -> Sequence[WordingJob]:
+        models = self._s.scalars(
+            update(ReportWordingJobModel)
+            .where(
+                ReportWordingJobModel.state == GenerationState.GERANDO,
+                ReportWordingJobModel.started_at.is_not(None),
+            )
+            .values(
+                state=GenerationState.FALHOU,
+                finished_at=now,
+                error_code=GenerationCode.INTERROMPIDA.value,
+            )
+            .returning(ReportWordingJobModel)
+        ).all()
+        return [self._to_entity(m) for m in sorted(models, key=lambda m: (m.requested_at, m.id))]
+
+    def latest_by_section(self, process_id: UUID) -> dict[str, WordingJob]:
+        models = self._s.scalars(
+            select(ReportWordingJobModel)
+            .where(ReportWordingJobModel.process_id == process_id)
+            .order_by(ReportWordingJobModel.requested_at.desc(), ReportWordingJobModel.id)
+        ).all()
+        newest: dict[str, ReportWordingJobModel] = {}
+        for m in models:
+            newest.setdefault(m.section_key, m)
+        return {key: self._to_entity(m) for key, m in newest.items()}
+
+
+def _draft_to_content(sections: Sequence[DraftSection]) -> dict[str, Any]:
+    return {
+        "sections": [
+            {
+                "key": section.key,
+                "title": section.title,
+                "free_text": section.free_text,
+                "warnings": _alerts_to_json(section.warnings, "reason"),
+                "entries": [
+                    {
+                        "activity_id": str(entry.activity_id),
+                        "text": entry.text,
+                        "source": entry.source.value,
+                        "warnings": _alerts_to_json(entry.warnings, "reason"),
+                    }
+                    for entry in section.entries
+                ],
+            }
+            for section in sections
+        ]
+    }
+
+
+def _draft_sections(content: dict[str, Any]) -> tuple[DraftSection, ...]:
+    return tuple(
+        DraftSection(
+            key=section["key"],
+            title=section["title"],
+            free_text=section["free_text"],
+            warnings=_alerts_from_json(section["warnings"], "reason"),
+            entries=tuple(
+                DraftEntry(
+                    activity_id=UUID(entry["activity_id"]),
+                    text=entry["text"],
+                    source=EntrySource(entry["source"]),
+                    warnings=_alerts_from_json(entry["warnings"], "reason"),
+                )
+                for entry in section["entries"]
+            ),
+        )
+        for section in content["sections"]
+    )
+
+
+class SqlReportDraftRepository:
+    """The saved report draft: one row per process, the sections in a JSONB column."""
+
+    def __init__(self, session: Session):
+        self._s = session
+
+    @staticmethod
+    def _to_entity(m: ReportDraftModel) -> ReportDraft:
+        return ReportDraft(
+            process_id=m.process_id,
+            template_id=m.template_id,
+            template_version=m.template_version,
+            sections=_draft_sections(m.content),
+            version=m.version,
+        )
+
+    def get(self, process_id: UUID) -> ReportDraft | None:
+        m = self._s.scalars(
+            select(ReportDraftModel)
+            .where(ReportDraftModel.process_id == process_id)
+            .execution_options(populate_existing=True)
+        ).first()
+        return self._to_entity(m) if m else None
+
+    def create(self, draft: ReportDraft, user_id: UUID, expected_version: int) -> ReportDraft:
+        if expected_version != 0:
+            raise StaleVersion("O rascunho ainda não foi salvo; recarregue")
+        try:
+            with self._s.begin_nested():
+                self._s.execute(
+                    insert(ReportDraftModel).values(
+                        id=uuid.uuid4(),
+                        process_id=draft.process_id,
+                        template_id=draft.template_id,
+                        template_version=draft.template_version,
+                        content=_draft_to_content(draft.sections),
+                        version=1,
+                        created_by=user_id,
+                        updated_by=user_id,
+                    )
+                )
+        except IntegrityError as exc:
+            if _is_unique_violation(exc):
+                raise Conflict("O processo já tem um rascunho do Relatório salvo") from None
+            raise
+        return replace(draft, version=1)
+
+    def _lock(self, process_id: UUID) -> ReportDraftModel:
+        """The row of the process, locked until the end of the transaction, with fresh values.
+
+        Every change takes the lock before it reads the content: the wording does not move the
+        version, so only the lock keeps an edit from writing over it.
+        """
+        m = self._s.scalars(
+            select(ReportDraftModel)
+            .where(ReportDraftModel.process_id == process_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        ).first()
+        if m is None:
+            raise NotFound("Rascunho não encontrado")
+        return m
+
+    def _edit(
+        self,
+        process_id: UUID,
+        expected_version: int,
+        user_id: UUID,
+        change: Callable[[tuple[DraftSection, ...]], tuple[DraftSection, ...]],
+    ) -> ReportDraft:
+        m = self._lock(process_id)
+        if m.version != expected_version:
+            raise StaleVersion("O rascunho foi alterado por outro usuário; recarregue")
+        sections = change(_draft_sections(m.content))
+        m.content = _draft_to_content(sections)
+        m.version += 1
+        m.updated_by = user_id
+        m.updated_at = func.now()
+        self._s.flush()
+        return self._to_entity(m)
+
+    def edit(
+        self,
+        process_id: UUID,
+        expected_version: int,
+        change: Callable[[tuple[DraftSection, ...]], tuple[DraftSection, ...]],
+        user_id: UUID,
+    ) -> ReportDraft:
+        return self._edit(process_id, expected_version, user_id, change)
+
+    def update_entry(
+        self, process_id: UUID, expected_version: int, entry: DraftEntry, user_id: UUID
+    ) -> ReportDraft:
+        def change(sections: tuple[DraftSection, ...]) -> tuple[DraftSection, ...]:
+            if all(e.activity_id != entry.activity_id for s in sections for e in s.entries):
+                raise NotFound("Atividade não encontrada no rascunho")
+            return tuple(
+                replace(
+                    s,
+                    entries=tuple(
+                        entry if e.activity_id == entry.activity_id else e for e in s.entries
+                    ),
+                )
+                for s in sections
+            )
+
+        return self._edit(process_id, expected_version, user_id, change)
+
+    def update_section(
+        self,
+        process_id: UUID,
+        expected_version: int,
+        section_key: str,
+        free_text: str,
+        user_id: UUID,
+    ) -> ReportDraft:
+        def change(sections: tuple[DraftSection, ...]) -> tuple[DraftSection, ...]:
+            if all(s.key != section_key for s in sections):
+                raise NotFound("Seção não encontrada")
+            return tuple(
+                replace(s, free_text=free_text) if s.key == section_key else s for s in sections
+            )
+
+        return self._edit(process_id, expected_version, user_id, change)
+
+    def move_entry(
+        self,
+        process_id: UUID,
+        expected_version: int,
+        section_key: str,
+        entry: DraftEntry,
+        user_id: UUID,
+    ) -> ReportDraft:
+        def change(sections: tuple[DraftSection, ...]) -> tuple[DraftSection, ...]:
+            if all(s.key != section_key for s in sections):
+                raise NotFound("Seção não encontrada")
+            if all(e.activity_id != entry.activity_id for s in sections for e in s.entries):
+                raise NotFound("Atividade não encontrada no rascunho")
+            return tuple(
+                replace(
+                    s,
+                    entries=(
+                        *(e for e in s.entries if e.activity_id != entry.activity_id),
+                        *((entry,) if s.key == section_key else ()),
+                    ),
+                )
+                for s in sections
+            )
+
+        return self._edit(process_id, expected_version, user_id, change)
+
+    def apply_wording_locked(self, process_id: UUID, section: DraftSection) -> ReportDraft:
+        m = self._lock(process_id)
+        sections = _draft_sections(m.content)
+        if all(s.key != section.key for s in sections):
+            raise NotFound("Seção não encontrada")
+        worded = {e.activity_id: e for e in section.entries}
+
+        def apply(current: DraftSection) -> DraftSection:
+            if current.key != section.key:
+                return current
+            entries = tuple(
+                worded.get(e.activity_id, e) if e.source is not EntrySource.USUARIO else e
+                for e in current.entries
+            )
+            return replace(current, entries=entries, warnings=section.warnings)
+
+        m.content = _draft_to_content(tuple(apply(s) for s in sections))
+        self._s.flush()
+        return self._to_entity(m)
+
+
+def _layout_to_content(layout: ComprovanteLayout) -> dict[str, Any]:
+    return {
+        "activities": [
+            {
+                "activity_id": str(activity.activity_id),
+                "group_number": activity.group_number,
+                "item_number": activity.item_number,
+                "pages": [
+                    {
+                        "document_id": str(page.document_id),
+                        "page": page.page,
+                        "repeat_justification": page.repeat_justification,
+                    }
+                    for page in activity.pages
+                ],
+            }
+            for activity in layout.activities
+        ],
+        "base_evidence_keys": [
+            {"activity_id": str(k.activity_id), "document_id": str(k.document_id), "page": k.page}
+            for k in layout.base_evidence_keys
+        ],
+    }
+
+
+class SqlLayoutRepository:
+    """The saved arrangement of the Comprovante: one row per process, JSONB content."""
+
+    def __init__(self, session: Session):
+        self._s = session
+
+    @staticmethod
+    def _to_entity(m: ComprovanteLayoutModel) -> ComprovanteLayout:
+        content = m.content
+        return ComprovanteLayout(
+            process_id=m.process_id,
+            activities=tuple(
+                LayoutActivity(
+                    activity_id=UUID(a["activity_id"]),
+                    group_number=a["group_number"],
+                    item_number=a["item_number"],
+                    pages=tuple(
+                        LayoutPage(UUID(p["document_id"]), p["page"], p["repeat_justification"])
+                        for p in a["pages"]
+                    ),
+                )
+                for a in content["activities"]
+            ),
+            base_evidence_keys=tuple(
+                EvidenceKey(UUID(k["activity_id"]), UUID(k["document_id"]), k["page"])
+                for k in content["base_evidence_keys"]
+            ),
+            version=m.version,
+        )
+
+    def get(self, process_id: UUID) -> ComprovanteLayout | None:
+        m = self._s.scalars(
+            select(ComprovanteLayoutModel)
+            .where(ComprovanteLayoutModel.process_id == process_id)
+            .execution_options(populate_existing=True)
+        ).first()
+        return self._to_entity(m) if m else None
+
+    def create(
+        self, layout: ComprovanteLayout, user_id: UUID, expected_version: int
+    ) -> ComprovanteLayout:
+        if expected_version != 0:
+            raise StaleVersion("O arranjo ainda não foi salvo; recarregue")
+        try:
+            with self._s.begin_nested():
+                self._s.execute(
+                    insert(ComprovanteLayoutModel).values(
+                        id=uuid.uuid4(),
+                        process_id=layout.process_id,
+                        content=_layout_to_content(layout),
+                        version=1,
+                        updated_by=user_id,
+                    )
+                )
+        except IntegrityError as exc:
+            if _is_unique_violation(exc):
+                raise Conflict("O processo já tem um arranjo do Comprovante salvo") from None
+            raise
+        return replace(layout, version=1)
+
+    def update(
+        self, layout: ComprovanteLayout, user_id: UUID, expected_version: int
+    ) -> ComprovanteLayout:
+        m = self._s.scalars(
+            select(ComprovanteLayoutModel)
+            .where(ComprovanteLayoutModel.process_id == layout.process_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        ).first()
+        if m is None:
+            raise NotFound("Arranjo não encontrado")
+        if m.version != expected_version:
+            raise StaleVersion("O arranjo foi alterado por outro usuário; recarregue")
+        m.content = _layout_to_content(layout)
+        m.version += 1
+        m.updated_by = user_id
+        m.updated_at = func.now()
+        self._s.flush()
+        return replace(layout, version=m.version)
+
+
+class SqlProcessPurgeRepository:
+    """Deletes a process and everything below it in one transaction (GP-D2, GP-D3).
+
+    The generated documents refuse any DELETE by trigger; `SET LOCAL app.process_purge` opens the
+    exception for this transaction only (migration 0007).
+    """
+
+    def __init__(self, session: Session):
+        self._s = session
+
+    def _ids(self, model: Any, process_id: UUID):
+        return select(model.id).where(model.process_id == process_id)
+
+    def busy_reasons(self, process_id: UUID) -> list[BusyReason]:
+        # Locks the process row first: a dependent inserted from now on waits for this
+        # transaction, so what is checked here is what gets deleted.
+        self._s.execute(
+            select(FunctionalProcessModel.id)
+            .where(FunctionalProcessModel.id == process_id)
+            .with_for_update()
+        )
+        reasons = []
+        if self._s.scalar(
+            select(
+                exists()
+                .where(
+                    ProcessingJobModel.document_id.in_(self._ids(DocumentModel, process_id)),
+                    ProcessingJobModel.status.in_(_ACTIVE_JOB),
+                )
+            )
+        ):
+            reasons.append(BusyReason.DOCUMENTO_PROCESSANDO)
+        if self._s.scalar(
+            select(
+                exists().where(
+                    GeneratedDocumentModel.process_id == process_id,
+                    GeneratedDocumentModel.state == GenerationState.GERANDO,
+                )
+            )
+        ):
+            reasons.append(BusyReason.GERACAO_EM_ANDAMENTO)
+        if self._s.scalar(
+            select(
+                exists().where(
+                    ReportWordingJobModel.process_id == process_id,
+                    ReportWordingJobModel.state == GenerationState.GERANDO,
+                )
+            )
+        ):
+            reasons.append(BusyReason.REDACAO_EM_ANDAMENTO)
+        return reasons
+
+    def _count(self, model: Any, process_id: UUID) -> int:
+        return self._s.scalar(
+            select(func.count()).select_from(model).where(model.process_id == process_id)
+        )
+
+    def counts(self, process_id: UUID) -> ProcessDeletionCounts:
+        return ProcessDeletionCounts(
+            documents=self._count(DocumentModel, process_id),
+            activities=self._count(ActivityModel, process_id),
+            generated_documents=self._count(GeneratedDocumentModel, process_id),
+        )
+
+    def delete_all(self, process_id: UUID) -> list[StoredFile]:
+        # The row lock makes a concurrent insert of a dependent wait (and then fail) instead of
+        # slipping in between the checks and the deletes.
+        locked = self._s.scalar(
+            select(FunctionalProcessModel.id)
+            .where(FunctionalProcessModel.id == process_id)
+            .with_for_update()
+        )
+        if locked is None:
+            raise NotFound("Processo não encontrado")
+        stored = [
+            StoredFile(StoredFileArea.INPUT, process_id, name, document_id)
+            for document_id, name in self._s.execute(
+                select(DocumentModel.id, DocumentModel.internal_name).where(
+                    DocumentModel.process_id == process_id,
+                    DocumentModel.file_deleted_at.is_(None),
+                )
+            )
+        ]
+        generated = self._ids(GeneratedDocumentModel, process_id)
+        stored += [
+            StoredFile(StoredFileArea.GENERATED, process_id, name, generation_id)
+            for generation_id, name in self._s.execute(
+                select(GeneratedFileModel.generated_document_id, GeneratedFileModel.internal_name)
+                .where(GeneratedFileModel.generated_document_id.in_(generated))
+            )
+        ]
+        self._s.execute(select(func.set_config("app.process_purge", "on", True)))
+        for statement in (
+            delete(ReportWordingJobModel).where(ReportWordingJobModel.process_id == process_id),
+            delete(ComprovanteLayoutModel).where(ComprovanteLayoutModel.process_id == process_id),
+            delete(ReportDraftModel).where(ReportDraftModel.process_id == process_id),
+            delete(GeneratedFileModel).where(GeneratedFileModel.generated_document_id.in_(generated)),
+            delete(GeneratedDocumentModel).where(GeneratedDocumentModel.process_id == process_id),
+            # Candidates and evidences go by cascade.
+            delete(ActivityModel).where(ActivityModel.process_id == process_id),
+            # Runs, pages and jobs go by cascade.
+            delete(DocumentModel).where(DocumentModel.process_id == process_id),
+            delete(FunctionalProcessModel).where(FunctionalProcessModel.id == process_id),
+        ):
+            self._s.execute(statement)
+        return stored
+
+
 class SqlUnitOfWork:
     """One SQLAlchemy session per unit of work; rolls back unless committed."""
 
@@ -833,6 +2218,15 @@ class SqlUnitOfWork:
         self.scoring_tables = SqlScoringTableRepository(self._session)
         self.activities = SqlActivityRepository(self._session)
         self.audit = SqlAuditRepository(self._session)
+        self.documents = SqlDocumentRepository(self._session)
+        self.extractions = SqlExtractionRepository(self._session)
+        self.jobs = SqlJobRepository(self._session)
+        self.evidences = SqlEvidenceRepository(self._session)
+        self.generations = SqlGenerationRepository(self._session)
+        self.wording_jobs = SqlWordingJobRepository(self._session)
+        self.report_drafts = SqlReportDraftRepository(self._session)
+        self.comprovante_layouts = SqlLayoutRepository(self._session)
+        self.process_purge = SqlProcessPurgeRepository(self._session)
         return self
 
     def __exit__(

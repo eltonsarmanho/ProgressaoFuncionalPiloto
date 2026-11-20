@@ -35,6 +35,7 @@ class ScoringCriterion:
     accepted_evidence: str = ""
     rules: str = ""
     review_note: str | None = None
+    min_hours: Decimal | None = None  # minimum course load; below it the activity does not score
 
 
 @dataclass(frozen=True)
@@ -71,3 +72,14 @@ class ScoringTableVersion:
         if found is None:
             return None
         return next((c for c in found.criteria if c.item_number == item), None)
+
+
+def is_pit_criterion(version: ScoringTableVersion, criterion: ScoringCriterion) -> bool:
+    """Group I weekly-load criterion of a table whose group I is outside the total."""
+    group = version.get_group(criterion.group_number)
+    return (
+        criterion.group_number == 1
+        and criterion.mode is ScoringMode.CARGA_SEMANAL
+        and group is not None
+        and not group.counts_in_total
+    )

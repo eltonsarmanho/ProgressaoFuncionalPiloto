@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { errorMessage, request } from "../api/client";
 import type { ProcessStatus, ProcessSummary } from "../api/types";
+import { ArchiveProcessDialog, DeleteProcessDialog } from "../components/ProcessDialogs";
 import { MODALITY_LABELS, SEVERITIES, SEVERITY_LABELS, STATUS_LABELS, formatDate } from "../labels";
 
 const STATUSES = Object.keys(STATUS_LABELS) as ProcessStatus[];
@@ -9,12 +10,29 @@ const STATUSES = Object.keys(STATUS_LABELS) as ProcessStatus[];
 export function Dashboard() {
   const [processes, setProcesses] = useState<ProcessSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [archiving, setArchiving] = useState<ProcessSummary | null>(null);
+  const [deleting, setDeleting] = useState<ProcessSummary | null>(null);
 
-  useEffect(() => {
-    request<ProcessSummary[]>("GET", "/api/processes")
+  function load() {
+    return request<ProcessSummary[]>("GET", "/api/processes")
       .then(setProcesses)
       .catch((err) => setError(errorMessage(err)));
+  }
+
+  useEffect(() => {
+    void load();
   }, []);
+
+  function archived(id: string, status: ProcessStatus, version: number) {
+    setProcesses((list) => list?.map((p) => (p.id === id ? { ...p, status, version } : p)) ?? null);
+    setArchiving(null);
+  }
+
+  function deleted(id: string, alreadyGone: boolean) {
+    setProcesses((list) => list?.filter((p) => p.id !== id) ?? null);
+    setDeleting(null);
+    if (alreadyGone) void load();
+  }
 
   if (error) return <p role="alert" className="error">{error}</p>;
   if (!processes) return <p className="muted">Carregando…</p>;
@@ -64,9 +82,47 @@ export function Dashboard() {
                   </li>
                 ))}
               </ul>
+              <div className="btn-row">
+                {p.status !== "ARQUIVADO" && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    aria-label={`Arquivar processo de ${p.professor_name}`}
+                    title={`Arquivar processo de ${p.professor_name}`}
+                    onClick={() => setArchiving(p)}
+                  >
+                    Arquivar
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  aria-label={`Excluir processo de ${p.professor_name}`}
+                  title={`Excluir processo de ${p.professor_name}`}
+                  onClick={() => setDeleting(p)}
+                >
+                  Excluir
+                </button>
+              </div>
             </li>
           ))}
         </ul>
+      )}
+
+      {archiving && (
+        <ArchiveProcessDialog
+          process={archiving}
+          onArchived={(status, version) => archived(archiving.id, status, version)}
+          onStale={() => void load()}
+          onClose={() => setArchiving(null)}
+        />
+      )}
+      {deleting && (
+        <DeleteProcessDialog
+          process={deleting}
+          onDeleted={(alreadyGone) => deleted(deleting.id, alreadyGone)}
+          onClose={() => setDeleting(null)}
+        />
       )}
     </>
   );

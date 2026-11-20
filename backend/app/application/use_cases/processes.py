@@ -1,5 +1,6 @@
 """Functional process use cases (PROC-01..PROC-04, PROC-12..PROC-14; AUTH-08/09; AUD-01/03)."""
 
+import logging
 import uuid
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass, fields, replace
@@ -11,13 +12,23 @@ from app.application.services.audit_service import AuditService
 from app.application.use_cases.units import require_active_unit
 from app.domain.entities.audit import AuditAction, AuditEvent
 from app.domain.entities.career import Modality
+from app.domain.entities.generated import GenerationCode
 from app.domain.entities.process import FunctionalProcess, ProcessStatus, can_transition
 from app.domain.entities.user import Role, User
 from app.domain.errors import Conflict, Forbidden, NotFound, StaleVersion, ValidationFailed
-from app.domain.repositories.ports import UnitOfWork
+from app.domain.repositories.ports import (
+    FileStorage,
+    GeneratedFileStorage,
+    ProcessDeletionCounts,
+    StoredFileArea,
+    UnitOfWork,
+)
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.process_verification import Alert, ProcessSnapshot, verify_process
 
+logger = logging.getLogger("app.processes")
+
+BUSY_CODE = "OPERACAO_EM_ANDAMENTO"
 ENTITY = "process"
 NOT_FOUND = "Processo não encontrado"
 _AUDIT_EXCLUDED = {"id", "created_at", "updated_at", "version", "created_by"}
@@ -179,6 +190,26 @@ class UpdateProcess(_ProcessUseCase):
             return evaluate(uow, uow.processes.get(process.id))
 
 
+def is_process_owner(process: FunctionalProcess, actor: User) -> bool:
+    """"Dono" (spec Assumptions): the DOCENTE linked to the professor, or the creator."""
+    return process.created_by == actor.id or (
+        actor.professor_id is not None and actor.professor_id == process.professor_id
+    )
+
+
+def check_status_change(
+    current: FunctionalProcess, actor: User, target: ProcessStatus, expected_version: int
+) -> None:
+    """Raises unless the actor may move the process to `target` now (PROC-12, DEL-15): the table
+    of transitions with the roles, then the expected version. Shared by the generic status
+    change and by the conclusion."""
+    if not can_transition(current.status, target, actor.role, is_process_owner(current, actor)):
+        if target is ProcessStatus.ARQUIVADO and current.status is not target:
+            raise Forbidden("Apenas ADMIN ou o dono do processo podem arquivá-lo")
+        raise Conflict(f"Transição de status não permitida: {current.status} -> {target}")
+    _check_version(current, expected_version)
+
+
 class ChangeProcessStatus(_ProcessUseCase):
     def execute(
         self,
@@ -190,15 +221,12 @@ class ChangeProcessStatus(_ProcessUseCase):
     ) -> ProcessResult:
         with self._uow_factory() as uow:
             current = self._readable(uow, actor, process_id)
-            # "Dono" (spec Assumptions): the DOCENTE linked to the professor, or the creator.
-            is_owner = current.created_by == actor.id or (
-                actor.professor_id is not None and actor.professor_id == current.professor_id
-            )
-            if not can_transition(current.status, target, actor.role, is_owner):
-                if target is ProcessStatus.ARQUIVADO and current.status is not target:
-                    raise Forbidden("Apenas ADMIN ou o dono do processo podem arquivá-lo")
-                raise Conflict(f"Transição de status não permitida: {current.status} -> {target}")
-            _check_version(current, expected_version)
+            if target is ProcessStatus.CONCLUIDO:
+                raise Conflict(
+                    "Concluir o processo exclui os documentos de entrada: use a conclusão",
+                    code=GenerationCode.CONCLUSAO_EXIGE_EXCLUSAO.value,
+                )
+            check_status_change(current, actor, target, expected_version)
             process = replace(current, status=target)
             uow.processes.update(process, expected_version)
             self._audit.record(
@@ -221,3 +249,64 @@ class GetProcessHistory(_ProcessUseCase):
         with self._uow_factory() as uow:
             self._readable(uow, actor, process_id)
             return uow.audit.list_for(ENTITY, str(process_id))
+
+
+class _DeletionUseCase(_ProcessUseCase):
+    def _deletable(self, uow: UnitOfWork, actor: User, process_id: UUID) -> FunctionalProcess:
+        """The process when the actor may delete it: ADMIN, its creator or the linked DOCENTE."""
+        process = self._readable(uow, actor, process_id)
+        is_owner = process.created_by == actor.id or (
+            actor.professor_id is not None and actor.professor_id == process.professor_id
+        )
+        if actor.role is not Role.ADMIN and not is_owner:
+            raise Forbidden("Apenas ADMIN ou o dono do processo podem excluí-lo")
+        return process
+
+
+class GetProcessDeletePreview(_DeletionUseCase):
+    def execute(self, actor: User, process_id: UUID) -> ProcessDeletionCounts:
+        """GP-D7: how many documents, activities and generated documents a deletion removes."""
+        with self._uow_factory() as uow:
+            self._deletable(uow, actor, process_id)
+            return uow.process_purge.counts(process_id)
+
+
+class DeleteProcess(_DeletionUseCase):
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        policy: AccessPolicy,
+        originals: FileStorage,
+        generated: GeneratedFileStorage,
+    ):
+        super().__init__(uow_factory, audit, policy)
+        self._originals = originals
+        self._generated = generated
+
+    def execute(self, actor: User, process_id: UUID) -> None:
+        """Deletes the process and all that depends on it in one transaction (GP-DEL-03), then
+        the files from the disk; a file that cannot be removed only logs (GP-DEL-04)."""
+        with self._uow_factory() as uow:
+            process = self._deletable(uow, actor, process_id)
+            if uow.process_purge.busy_reasons(process_id):
+                raise Conflict(
+                    "Há documento em processamento, geração ou redação em andamento neste "
+                    "processo; aguarde terminar para excluí-lo",
+                    code=BUSY_CODE,
+                )
+            self._audit.record(
+                uow, actor.id, ENTITY, process.id, AuditAction.DELETE, audit_view(process), {}
+            )
+            stored = uow.process_purge.delete_all(process_id)
+            uow.commit()
+        for file in stored:
+            storage = self._originals if file.area is StoredFileArea.INPUT else self._generated
+            try:
+                storage.delete(file.process_id, file.internal_name)
+            except OSError:
+                logger.warning(
+                    "process delete: could not remove a %s file of owner_id=%s",
+                    file.area.value,
+                    file.owner_id,
+                )

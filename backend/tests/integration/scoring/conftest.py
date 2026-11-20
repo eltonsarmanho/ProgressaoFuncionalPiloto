@@ -1,6 +1,7 @@
 """Fixtures for scoring use case tests: seeded units and tables, professors, actors, process."""
 
 import uuid
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from types import SimpleNamespace
 
@@ -12,9 +13,11 @@ from app.application.use_cases import scoring, scoring_admin
 from app.domain.entities.career import Modality
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor, Titration, WorkRegime
+from app.domain.entities.scoring import TableStatus
 from app.domain.entities.user import Role, User
 from app.infrastructure.database.seed import seed_reference_data, seed_scoring_tables
 from tests.integration.test_seed import FakeHasher
+from tests.support.scoring_variants import add_other_table, add_points_table
 
 
 class FixedClock:
@@ -67,6 +70,9 @@ def _process(uow, professor, created_by, **kw) -> FunctionalProcess:
     return process
 
 
+OFFICIAL_TABLE = "Tabela de Pontuação da UFPA"
+
+
 @pytest.fixture
 def world(uow_factory):
     seed_reference_data(uow_factory(), "seed-admin@ufpa.br", "x", FakeHasher())
@@ -86,10 +92,12 @@ def world(uow_factory):
         )
         process = _process(uow, prof, admin)
         ifch_process = _process(uow, other_prof, admin)
-        tables = {t.name: t for t in uow.scoring_tables.list_tables()}
-        versions = {
-            name: uow.scoring_tables.list_versions(t.id)[0] for name, t in tables.items()
-        }
+        official = next(
+            uow.scoring_tables.list_versions(t.id)[0]
+            for t in uow.scoring_tables.list_tables()
+            if t.name == OFFICIAL_TABLE
+        )
+        other = add_other_table(uow, official)
         uow.commit()
     return SimpleNamespace(
         uow_factory=uow_factory,
@@ -105,8 +113,8 @@ def world(uow_factory):
         professor=prof,
         process=process,
         ifch_process=ifch_process,
-        fasi_version=versions["Tabela de Pontuação da FASI"],
-        ifch_version=versions["Tabela de Pontuação do IFCH"],
+        official_version=official,
+        other_version=other,
         suggest=scoring.SuggestScoringTable(uow_factory, audit, policy),
         choose=scoring.ChooseProcessTable(uow_factory, audit, policy),
         create=scoring.CreateActivity(uow_factory, audit, policy),
@@ -114,8 +122,28 @@ def world(uow_factory):
         change_status=scoring.ChangeActivityStatus(uow_factory, audit, policy),
         mark_distinct=scoring.MarkActivitiesDistinct(uow_factory, audit, policy),
         list_activities=scoring.ListActivities(uow_factory, audit, policy),
+        get_activity=scoring.GetActivity(uow_factory, audit, policy),
         calc=scoring.CalculateProcessScore(uow_factory, audit, policy),
     )
+
+
+@pytest.fixture
+def points_chosen(world):
+    """A table whose group I counts in points chosen for the main process."""
+    with world.uow_factory() as uow:
+        world.points_version = add_points_table(uow, world.official_version)
+        uow.commit()
+    world.choose.execute(world.admin, world.process.id, world.points_version.id, None, "Teste")
+    return world
+
+
+def make_official_pending(world) -> None:
+    """The official table is OFICIAL; mark it pending, as the old FASI table was."""
+    with world.uow_factory() as uow:
+        uow.scoring_tables.update_version(
+            replace(world.official_version, status=TableStatus.PENDENTE_VALIDACAO)
+        )
+        uow.commit()
 
 
 @pytest.fixture
@@ -132,9 +160,9 @@ def add_process(world):
 
 
 @pytest.fixture
-def fasi_chosen(world):
-    """The FASI table version chosen for the main process."""
-    world.choose.execute(world.admin, world.process.id, world.fasi_version.id, None, None)
+def official_chosen(world):
+    """The official table version chosen for the main process."""
+    world.choose.execute(world.admin, world.process.id, world.official_version.id, None, None)
     return world
 
 

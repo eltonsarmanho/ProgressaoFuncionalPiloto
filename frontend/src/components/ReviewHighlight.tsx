@@ -20,13 +20,14 @@ export function ReviewHighlight({ groups }: { groups: ScoringGroup[] }) {
             <th>Descrição</th>
             <th>Modo</th>
             <th>Pontos</th>
+            <th>Carga mínima (h)</th>
             <th>Limite</th>
           </tr>
         </thead>
         <tbody>
           {groups.flatMap((group) => [
             <tr className="group-head" key={`g${group.number}`}>
-              <th colSpan={5}>
+              <th colSpan={6}>
                 Grupo {roman(group.number)} · {group.name}
                 {group.counts_in_total ? "" : " (não conta no total)"}
               </th>
@@ -46,6 +47,7 @@ export function ReviewHighlight({ groups }: { groups: ScoringGroup[] }) {
                 </td>
                 <td data-label="Modo">{c.mode}</td>
                 <td data-label="Pontos">{formatDecimal(c.unit_points)}</td>
+                <td data-label="Carga mínima (h)">{formatDecimal(c.min_hours)}</td>
                 <td data-label="Limite">{formatDecimal(c.max_points)}</td>
               </tr>
             )),

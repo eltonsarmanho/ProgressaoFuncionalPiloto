@@ -224,6 +224,7 @@ def make_activity(process, base, **kwargs) -> Activity:
         period_end=date(2023, 7, 31), period_precision=PeriodPrecision.MONTH,
         academic_period="2023.1", level=Level.GRADUACAO, quantity=D("2.5"), hours=D("68"),
         course_hours=D("60"), informed_points=D("24"), points_override=D("20"),
+        unit_points_override=D("2.5"),
         evidence_note="Declaração", source=ActivitySource.IMPORTADA,
         status=ActivityStatus.AGUARDANDO_REVISAO, distinct_justification="outra oferta",
         candidates=(Candidate(2, 3, "talvez"), Candidate(1, 2, "pós")),

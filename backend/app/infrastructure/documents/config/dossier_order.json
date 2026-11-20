@@ -1,0 +1,19 @@
+{
+  "items": [
+    {"order": 1, "title": "Requerimento à CPPD, conforme o modelo", "generated_by": null},
+    {"order": 2, "title": "Portaria da última progressão", "generated_by": null},
+    {
+      "order": 3,
+      "title": "Declaração de pagamento de exercícios anteriores, preenchida",
+      "generated_by": null
+    },
+    {"order": 4, "title": "Relatório de progressão funcional", "generated_by": "RELATORIO"},
+    {"order": 5, "title": "Tabela de Pontuação", "generated_by": "TABELA"},
+    {
+      "order": 6,
+      "title": "Documentação comprobatória, em ordem e numerada",
+      "generated_by": "COMPROVANTE"
+    },
+    {"order": 7, "title": "Currículo Lattes atualizado", "generated_by": null}
+  ]
+}

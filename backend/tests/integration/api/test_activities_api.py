@@ -6,6 +6,8 @@ import pytest
 
 from app.domain.entities.user import Role
 from tests.integration.api.factories import add_professor, process_payload
+from tests.support.legacy_duplicates import add_legacy_duplicate
+from tests.support.process_status import conclude_for_test
 
 
 @pytest.fixture
@@ -28,7 +30,18 @@ def process(client, admin, reference, uow_factory):
 
 @pytest.fixture
 def chosen(client, headers, process, scoring_tables):
-    body = {"version_id": str(scoring_tables["FASI"].id)}
+    body = {"version_id": str(scoring_tables["OFICIAL"].id)}
+    response = client.put(
+        f"/api/processes/{process['id']}/scoring/table", json=body, headers=headers
+    )
+    assert response.status_code == 200
+    return process
+
+
+@pytest.fixture
+def points_chosen(client, headers, process, points_table):
+    """A table whose group I counts in points (the official one refuses informed points there)."""
+    body = {"version_id": str(points_table.id), "justificativa": "Teste"}
     response = client.put(
         f"/api/processes/{process['id']}/scoring/table", json=body, headers=headers
     )
@@ -72,7 +85,15 @@ def test_create_returns_201_with_manual_validated_activity(client, headers, chos
     assert created["event_date"] == "2023-05-10"
     assert created["period_precision"] == "DAY"
     assert created["evidence_note"] == "Declaração"
-    assert client.get(f"/api/activities/{created['id']}").json() == created
+    read = client.get(f"/api/activities/{created['id']}").json()
+    # SEC-02: the read adds the validity, the merged ones and the points; the answer of the write
+    # leaves them empty
+    extra = ("validity", "merged", "predicted_points")
+    assert {k: v for k, v in read.items() if k not in extra} == {
+        k: v for k, v in created.items() if k not in extra
+    }
+    assert (created["validity"], created["merged"], created["predicted_points"]) == (None, [], None)
+    assert read["validity"]["state"] == "VALIDA"
 
 
 @pytest.mark.parametrize("extra", [{"source": "SUGERIDA_IA"}, {"source": "MANUAL"}])
@@ -133,16 +154,6 @@ def test_group_one_derives_item_from_level_and_requires_its_inputs(client, heade
         ({"title": "t" * 301}, "title"),
         ({"evidence_note": "n" * 501}, "evidence_note"),
         ({"points_override": 5, "group_number": 2, "item_number": 7}, "points_override"),
-        (
-            {
-                "points_override": 5,
-                "group_number": 1,
-                "academic_period": "2023.1",
-                "level": "GRADUACAO",
-                "horas": 68,
-            },
-            "justificativa",
-        ),
         ({"level": "OUTRO"}, "level"),
     ],
 )
@@ -150,9 +161,23 @@ def test_invalid_inputs_are_422_with_the_field_name(client, headers, chosen, cha
     field_error(client.post(activities_url(chosen), json=body(**changes), headers=headers), field)
 
 
-def test_points_override_with_justification_is_saved_for_weekly_load(client, headers, chosen):
+def test_points_override_without_justification_is_saved(client, headers, points_chosen):
+    """UIM-16: manual points need no justification."""
+    payload = body(
+        points_override=5, group_number=1, academic_period="2023.1", level="GRADUACAO", horas=68
+    )
+
+    response = client.post(activities_url(points_chosen), json=payload, headers=headers)
+
+    assert response.status_code == 201
+    assert response.json()["points_override"] == "5.00"
+
+
+def test_points_override_with_justification_is_saved_for_weekly_load(
+    client, headers, points_chosen
+):
     created = create(
-        client, headers, chosen, group_number=1, academic_period="2023.1", level="GRADUACAO",
+        client, headers, points_chosen, group_number=1, academic_period="2023.1", level="GRADUACAO",
         horas=68, points_override=24, justificativa="Declaração da unidade",
     )  # fmt: skip
 
@@ -213,13 +238,78 @@ def test_put_with_justification_updates_and_bumps_version(client, headers, chose
     assert (response.json()["quantidade"], response.json()["version"]) == ("5.00", 2)
 
 
-def test_put_changing_scoring_inputs_without_justification_is_422(client, headers, chosen):
+def test_unit_points_override_round_trips_scores_and_clears_through_the_api(
+    client, headers, chosen
+):
+    created = create(client, headers, chosen, group_number=2, item_number=7, quantidade=3)
+    url = f"/api/activities/{created['id']}"
+    scoring_url = f"/api/processes/{chosen['id']}/scoring"
+
+    typed = client.put(
+        url,
+        json=body(group_number=2, item_number=7, quantidade=3, unit_points_override=2.5,
+                  expected_version=1),
+        headers=headers,
+    )  # fmt: skip
+    row = client.get(scoring_url).json()["rows"][0]
+
+    assert typed.status_code == 200
+    assert typed.json()["unit_points_override"] == "2.50"
+    assert (row["points"], row["unit_points"]) == ("7.50", "2.50")
+    assert [a["code"] for a in row["alerts"]].count("VALOR_UNITARIO_MANUAL") == 1
+
+    again = client.put(
+        url,
+        json=body(group_number=2, item_number=7, quantidade=4, unit_points_override=2.5,
+                  expected_version=2),
+        headers=headers,
+    )  # fmt: skip
+    assert client.get(scoring_url).json()["rows"][0]["points"] == "10.00"
+
+    cleared = client.put(
+        url,
+        json=body(group_number=2, item_number=7, quantidade=4, unit_points_override=None,
+                  expected_version=3),
+        headers=headers,
+    )  # fmt: skip
+    assert again.status_code == 200 and cleared.status_code == 200
+    assert cleared.json()["unit_points_override"] is None
+    assert client.get(scoring_url).json()["rows"][0]["points"] == "20.00"
+
+
+@pytest.mark.parametrize("value", [-0.01, 10000.01])
+def test_unit_points_override_out_of_range_is_422_on_its_field(client, headers, chosen, value):
+    payload = body(group_number=2, item_number=7, quantidade=1, unit_points_override=value)
+
+    field_error(
+        client.post(activities_url(chosen), json=payload, headers=headers), "unit_points_override"
+    )
+
+
+def test_unit_points_override_on_a_weekly_load_item_is_422_on_its_field(
+    client, headers, points_chosen
+):
+    payload = body(
+        unit_points_override=2, group_number=1, academic_period="2023.1", level="GRADUACAO",
+        horas=68,
+    )  # fmt: skip
+
+    field_error(
+        client.post(activities_url(points_chosen), json=payload, headers=headers),
+        "unit_points_override",
+    )
+
+
+def test_put_changing_scoring_inputs_without_justification_is_saved(client, headers, chosen):
+    """UIM-16: changing the quantity needs no justification."""
     created = create(client, headers, chosen, group_number=2, item_number=7, quantidade=4)
     url = f"/api/activities/{created['id']}"
     payload = body(group_number=2, item_number=7, quantidade=5, expected_version=1)
 
-    field_error(client.put(url, json=payload, headers=headers), "justificativa")
-    assert client.get(url).json()["quantidade"] == "4.00"
+    response = client.put(url, json=payload, headers=headers)
+
+    assert response.status_code == 200
+    assert client.get(url).json()["quantidade"] == "5.00"
 
 
 def test_put_requires_expected_version_and_detects_stale_writes(client, headers, chosen):
@@ -236,67 +326,91 @@ def test_put_requires_expected_version_and_detects_stale_writes(client, headers,
     assert client.get(url).json()["title"] == "Novo título"
 
 
-def test_status_change_needs_justification_and_valid_status(client, headers, chosen):
+def test_status_change_needs_no_justification_but_a_valid_status(client, headers, chosen):
     created = create(client, headers, chosen)
     url = f"/api/activities/{created['id']}/status"
 
-    no_reason = client.post(
-        url, json={"status": "REJEITADA", "expected_version": 1}, headers=headers
-    )
     bad_value = client.post(
         url,
         json={"status": "PENDENTE", "expected_version": 1, "justificativa": "x"},
         headers=headers,
     )
-    ok = client.post(
-        url,
-        json={"status": "REJEITADA", "expected_version": 1, "justificativa": "Erro"},
-        headers=headers,
+    no_reason = client.post(
+        url, json={"status": "REJEITADA", "expected_version": 1}, headers=headers
     )
-
-    field_error(no_reason, "justificativa")
-    field_error(bad_value, "status")
-    assert ok.status_code == 200
-    assert (ok.json()["status"], ok.json()["version"]) == ("REJEITADA", 2)
     stale = client.post(
         url,
         json={"status": "VALIDADA", "expected_version": 1, "justificativa": "x"},
         headers=headers,
     )
+
+    field_error(bad_value, "status")
+    assert no_reason.status_code == 200  # UIM-14: no justification needed
+    assert (no_reason.json()["status"], no_reason.json()["version"]) == ("REJEITADA", 2)
     assert stale.status_code == 409
 
 
-def test_distinct_mark_releases_a_duplicate_in_the_result(client, headers, chosen):
-    create(client, headers, chosen, group_number=2, item_number=7, quantidade=1)
-    twin = create(
-        client,
-        headers,
-        chosen,
-        title=" ORIENTAÇÃO de tcc",
-        group_number=2,
-        item_number=7,
-        quantidade=1,
+def test_status_change_still_accepts_and_audits_a_justification(client, headers, chosen):
+    created = create(client, headers, chosen)
+
+    ok = client.post(
+        f"/api/activities/{created['id']}/status",
+        json={"status": "REJEITADA", "expected_version": 1, "justificativa": "Erro"},
+        headers=headers,
     )
+
+    assert ok.status_code == 200
+    assert ok.json()["status"] == "REJEITADA"
+
+
+def legacy_twin(client, original: dict, **changes) -> dict:
+    """DUP-04: a write merges duplicates now, so the twin is a row from before the merge."""
+    container = client.app.state.container
+    with container.uow_factory() as uow:
+        stored = uow.activities.get(uuid.UUID(original["id"]))
+    twin = add_legacy_duplicate(container.uow_factory, stored, **changes)
+    return {"id": str(twin.id)}
+
+
+def test_distinct_mark_releases_a_duplicate_in_the_result(client, headers, chosen):
+    first = create(client, headers, chosen, group_number=2, item_number=7, quantidade=1)
+    twin = legacy_twin(client, first, title=" ORIENTAÇÃO de tcc")
     scoring_url = f"/api/processes/{chosen['id']}/scoring"
-    assert [r["reasons"] for r in client.get(scoring_url).json()["rows"]] == [[], ["DUPLICIDADE"]]
+    # SEG-01: the duplicate is not valid; it has no row, so only the first one scores
+    before = client.get(scoring_url).json()
+    assert [r["reasons"] for r in before["rows"]] == [[]]
+    assert before["total"] == "5.00"
 
     url = f"/api/activities/{twin['id']}/distinct"
-    blank = client.post(url, json={"expected_version": 1, "justificativa": " "}, headers=headers)
     ok = client.post(
         url, json={"expected_version": 1, "justificativa": "Outro aluno"}, headers=headers
     )
 
-    field_error(blank, "justificativa")
     assert ok.status_code == 200
     assert ok.json()["distinct_justification"] == "Outro aluno"
-    assert client.get(scoring_url).json()["total"] == "20.00"
+    assert client.get(scoring_url).json()["total"] == "10.00"
+
+
+def test_distinct_mark_without_a_justification_also_releases_the_duplicate(
+    client, headers, chosen
+):
+    first = create(client, headers, chosen, group_number=2, item_number=7, quantidade=1)
+    twin = legacy_twin(client, first, title=" ORIENTAÇÃO de tcc")
+
+    ok = client.post(
+        f"/api/activities/{twin['id']}/distinct", json={"expected_version": 1}, headers=headers
+    )
+
+    assert ok.status_code == 200
+    assert ok.json()["distinct_justification"] == "Marcada como distinta pelo usuário"
+    assert client.get(f"/api/processes/{chosen['id']}/scoring").json()["total"] == "10.00"
 
 
 @pytest.mark.parametrize("final", ["CONCLUIDO", "ARQUIVADO"])
-def test_writes_on_a_closed_process_are_409(client, headers, chosen, final):
+def test_writes_on_a_closed_process_are_409(client, headers, chosen, uow_factory, final):
     created = create(client, headers, chosen)
     current = chosen
-    for status in ("EM_ANDAMENTO", "CONCLUIDO") if final == "CONCLUIDO" else ("ARQUIVADO",):
+    for status in ("EM_ANDAMENTO",) if final == "CONCLUIDO" else ("ARQUIVADO",):
         version = client.get(f"/api/processes/{current['id']}").json()["version"]
         response = client.post(
             f"/api/processes/{current['id']}/status",
@@ -304,6 +418,8 @@ def test_writes_on_a_closed_process_are_409(client, headers, chosen, final):
             headers=headers,
         )
         assert response.status_code == 200, response.text
+    if final == "CONCLUIDO":
+        conclude_for_test(uow_factory, current["id"])
     url = f"/api/activities/{created['id']}"
 
     assert client.post(activities_url(chosen), json=body(), headers=headers).status_code == 409

@@ -1,0 +1,483 @@
+import { Fragment, useRef, useState, type FormEvent } from "react";
+import { Link } from "react-router";
+import { ApiError, errorMessage, fieldErrors, request } from "../api/client";
+import type { DocumentSummary } from "../api/types";
+import {
+  ACTIVE_DOCUMENT_STATUSES,
+  DOCUMENT_CODE_LABELS,
+  DOCUMENT_STATUS_LABELS,
+  DOCUMENT_TYPE_LABELS,
+  LOW_CONFIDENCE,
+  NO_ITEM_CODE,
+  OUTSIDE_INTERSTICE_CODE,
+  TAXONOMY_LABELS,
+  formatDecimal,
+  formatSize,
+  outsideIntersticeWarning,
+} from "../labels";
+import { FieldError, errorProps } from "./FieldError";
+import { Modal } from "./Modal";
+
+type Panel = { kind: "delete" | "classify"; doc: DocumentSummary };
+
+/** UIM-02: the original file is fetched as a download, without leaving the page. */
+function download(doc: DocumentSummary) {
+  const link = document.createElement("a");
+  link.href = `/api/documents/${doc.id}/file?download=1`;
+  link.download = doc.original_name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+type Notice = { tone: "error" | "ok"; text: string; existingId?: string };
+
+const COLUMNS = ["Nome", "Tipo", "Tamanho", "Status", "Categoria sugerida", "Confiança", "Ações"] as const;
+
+function labelOf(table: Record<string, string>, code: string | null): string {
+  return code ? (table[code] ?? code) : "—";
+}
+
+/** The warning each document status carries; the AI-unavailable one points to manual entry (TELA-07). */
+function StatusNote({ doc }: { doc: DocumentSummary }) {
+  if (doc.status === "EXTRAIDO_SEM_IA") {
+    return (
+      <p className="doc-warning sev-ALERTA">
+        A IA ficou indisponível para este documento ({labelOf(DOCUMENT_CODE_LABELS, doc.status_code)}). O texto foi
+        extraído, mas nenhuma atividade foi sugerida: cadastre a atividade manualmente.
+      </p>
+    );
+  }
+  if (doc.suggested_category === NO_ITEM_CODE) {
+    return (
+      <p className="doc-warning sev-ALERTA">
+        {DOCUMENT_CODE_LABELS[NO_ITEM_CODE]}: nenhuma atividade foi criada a partir deste documento.
+      </p>
+    );
+  }
+  if ((doc.status === "FALHOU" || doc.status === "REQUER_REVISAO") && doc.status_code) {
+    return <p className="doc-warning sev-ALERTA">{labelOf(DOCUMENT_CODE_LABELS, doc.status_code)}</p>;
+  }
+  if (doc.status === "REQUER_REVISAO") {
+    return <p className="doc-warning sev-ALERTA">Requer revisão: abra o documento e confira os avisos.</p>;
+  }
+  return null;
+}
+
+/** UIM-07: the document produced no usable activity, so the user may create one from it. */
+function producedNoActivity(doc: DocumentSummary): boolean {
+  if (ACTIVE_DOCUMENT_STATUSES.includes(doc.status)) return false;
+  if (doc.status === "FALHOU" || doc.status === "REQUER_REVISAO" || doc.status === "EXTRAIDO_SEM_IA") return true;
+  if (doc.suggested_category === NO_ITEM_CODE) return true;
+  return doc.activity_count === 0;
+}
+
+/** FORA-02: the highlighted strip under the row of a document outside the interstice. */
+function OutsideBanner({ doc }: { doc: DocumentSummary }) {
+  return (
+    <tr className="doc-outside-banner">
+      <td colSpan={COLUMNS.length}>{outsideIntersticeWarning(doc) ?? DOCUMENT_CODE_LABELS[OUTSIDE_INTERSTICE_CODE]}</td>
+    </tr>
+  );
+}
+
+/** FORA-08 / FORA-09: the counts of the list; a document outside the interstice is never "pending review". */
+function Summary({ documents }: { documents: DocumentSummary[] }) {
+  const outside = documents.filter((d) => d.outside_interstice).length;
+  const pending = documents.filter((d) => d.status === "REQUER_REVISAO" && !d.outside_interstice).length;
+  const total = documents.length;
+  return (
+    <p className="muted doc-summary" data-testid="doc-summary">
+      {total} {total === 1 ? "documento" : "documentos"} · {pending}{" "}
+      {pending === 1 ? "pendente de revisão" : "pendentes de revisão"} · {outside} fora do interstício
+    </p>
+  );
+}
+
+function Confidence({ doc }: { doc: DocumentSummary }) {
+  if (doc.confidence == null) return <>—</>;
+  const low = Number(doc.confidence) < LOW_CONFIDENCE;
+  return (
+    <>
+      {formatDecimal(doc.confidence)}
+      {low && <span className="doc-warning sev-ALERTA"> Baixa confiança: confira os dados</span>}
+    </>
+  );
+}
+
+/** UIM-03: the only question before deleting; no justification. */
+function ConfirmDelete({ doc, onDone, onCancel }: { doc: DocumentSummary; onDone: () => void; onCancel: () => void }) {
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function confirm() {
+    setError(null);
+    setBusy(true);
+    try {
+      await request("DELETE", `/api/documents/${doc.id}`);
+      onDone();
+    } catch (err) {
+      setError(errorMessage(err));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal title="Excluir documento" onClose={onCancel}>
+      <p>
+        Excluir {doc.original_name}? Esta ação não pode ser desfeita.
+      </p>
+      <p className="muted">
+        O arquivo, o texto extraído e os vínculos são apagados. As atividades continuam, mas perdem este comprovante.
+      </p>
+      {error && (
+        <p role="alert" className="error">
+          {error}
+        </p>
+      )}
+      <div className="btn-row">
+        <button type="button" className="btn btn-danger" disabled={busy} onClick={() => void confirm()}>
+          Excluir
+        </button>
+        <button type="button" className="btn btn-secondary" onClick={onCancel}>
+          Cancelar
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function ClassifyForm({ doc, onDone, onCancel }: { doc: DocumentSummary; onDone: () => void; onCancel: () => void }) {
+  const [tipo, setTipo] = useState(doc.manual_type ?? doc.suggested_type ?? "");
+  const [categoria, setCategoria] = useState(
+    doc.manual_category ?? (doc.suggested_category && doc.suggested_category !== NO_ITEM_CODE ? doc.suggested_category : ""),
+  );
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setErrors({});
+    try {
+      await request("PUT", `/api/documents/${doc.id}/classification`, {
+        tipo,
+        categoria,
+        expected_version: doc.version,
+      });
+      onDone();
+    } catch (err) {
+      const byField = fieldErrors(err);
+      setErrors(byField);
+      if (Object.keys(byField).length === 0) setError(errorMessage(err));
+    }
+  }
+
+  return (
+    <Modal title="Classificar documento" onClose={onCancel}>
+      <p>{doc.original_name}</p>
+      <p className="muted">Sua classificação é guardada ao lado da sugestão da IA, que não é alterada.</p>
+      <form onSubmit={submit} noValidate>
+        <div className="field">
+          <label htmlFor="classify-tipo">Tipo do documento</label>
+          <select id="classify-tipo" value={tipo} onChange={(e) => setTipo(e.target.value)} {...errorProps("tipo", errors)}>
+            <option value="">Selecione…</option>
+            {Object.entries(DOCUMENT_TYPE_LABELS).map(([code, label]) => (
+              <option key={code} value={code}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <FieldError id="tipo-error" message={errors.tipo} />
+        </div>
+        <div className="field">
+          <label htmlFor="classify-categoria">Categoria da atividade</label>
+          <select
+            id="classify-categoria"
+            value={categoria}
+            onChange={(e) => setCategoria(e.target.value)}
+            {...errorProps("categoria", errors)}
+          >
+            <option value="">Selecione…</option>
+            {Object.entries(TAXONOMY_LABELS).map(([code, label]) => (
+              <option key={code} value={code}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <FieldError id="categoria-error" message={errors.categoria} />
+        </div>
+        {error && (
+          <p role="alert" className="error">
+            {error}
+          </p>
+        )}
+        <div className="btn-row">
+          <button type="submit" className="btn btn-primary">
+            Salvar classificação
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+/**
+ * TELA-02 / 04 / 07 / 09: one row per document (cards at 360 px), with every action of the step.
+ * `onChanged` reloads the list after replace, delete, reprocess and classify.
+ */
+export function DocumentList({
+  documents,
+  processId,
+  onView,
+  onCreateActivity,
+  onChanged,
+}: {
+  documents: DocumentSummary[];
+  processId: string;
+  onView: (doc: DocumentSummary) => void;
+  onCreateActivity: (doc: DocumentSummary) => void;
+  onChanged: () => void;
+}) {
+  const [panel, setPanel] = useState<Panel | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const replaceTarget = useRef<DocumentSummary | null>(null);
+  const replaceInput = useRef<HTMLInputElement>(null);
+
+  const done = () => {
+    setPanel(null);
+    setNotice(null);
+    onChanged();
+  };
+
+  async function reprocess(doc: DocumentSummary) {
+    setNotice(null);
+    try {
+      await request("POST", `/api/documents/${doc.id}/reprocess`);
+      setNotice({ tone: "ok", text: `${doc.original_name}: reprocessamento solicitado.` });
+      onChanged();
+    } catch (err) {
+      setNotice({ tone: "error", text: `${doc.original_name}: ${errorMessage(err)}` });
+    }
+  }
+
+  async function replace(file: File | undefined) {
+    const doc = replaceTarget.current;
+    if (replaceInput.current) replaceInput.current.value = "";
+    if (!doc || !file) return;
+    setNotice(null);
+    const form = new FormData();
+    form.append("file", file);
+    form.append("expected_version", String(doc.version));
+    try {
+      await request("PUT", `/api/documents/${doc.id}/file`, form);
+      setNotice({ tone: "ok", text: `${doc.original_name}: arquivo substituído; o documento será processado de novo.` });
+      onChanged();
+    } catch (err) {
+      const existing = err instanceof ApiError && err.status === 409 ? duplicateId(err) : undefined;
+      const issues = fieldErrors(err);
+      setNotice({
+        tone: "error",
+        text: `${doc.original_name}: ${issues.arquivo ?? errorMessage(err)}`,
+        existingId: existing,
+      });
+    }
+  }
+
+  return (
+    <section className="card" aria-labelledby="documents-title">
+      <h2 id="documents-title">Documentos enviados</h2>
+      <p className="muted">
+        As atividades sugeridas continuam sujeitas à sua validação na Etapa 3. Documentos com confiança abaixo de 70% ou
+        com aviso merecem uma conferência mais atenta. Reprocessar um documento descarta os rascunhos da leitura
+        anterior que você ainda não editou.
+      </p>
+      <input
+        ref={replaceInput}
+        type="file"
+        className="visually-hidden"
+        tabIndex={-1}
+        aria-label="Arquivo substituto"
+        accept=".pdf,.jpg,.jpeg,.png"
+        onChange={(e) => void replace(e.target.files?.[0])}
+      />
+      <div aria-live="polite">
+        {notice && (
+          <p role={notice.tone === "error" ? "alert" : "status"} className={notice.tone === "error" ? "error" : undefined}>
+            {notice.text}
+            {notice.existingId && (
+              <>
+                {" "}
+                <Link to={`/processos/${processId}/documentos?documento=${notice.existingId}`}>
+                  Ver o documento já enviado
+                </Link>
+              </>
+            )}
+          </p>
+        )}
+      </div>
+      {documents.length === 0 ? (
+        <p>Nenhum documento enviado neste processo.</p>
+      ) : (
+        <>
+          <Summary documents={documents} />
+          <table className="scoring-table wide-table doc-table">
+            <thead>
+              <tr>
+                {COLUMNS.map((c) => (
+                  <th key={c} scope="col">
+                    {c}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {documents.map((doc) => {
+                const type = doc.manual_type ?? doc.suggested_type;
+                const category = doc.manual_category ?? doc.suggested_category;
+                const busy = ACTIVE_DOCUMENT_STATUSES.includes(doc.status);
+                const outside = doc.outside_interstice === true;
+                const deleted = doc.arquivo_excluido === true; // DEL-12: the conclusion removed the file
+                return (
+                  <Fragment key={doc.id}>
+                    <tr className={outside ? "doc-outside" : undefined}>
+                      <td data-label="Nome" className="doc-name" title={doc.original_name}>
+                        {doc.original_name}
+                      </td>
+                      <td data-label="Tipo">
+                        {labelOf(DOCUMENT_TYPE_LABELS, type)}
+                        {doc.manual_type && <small className="muted"> (informado por você)</small>}
+                        {!doc.manual_type && doc.suggested_type && <small className="muted"> (sugerido pela IA)</small>}
+                      </td>
+                      <td data-label="Tamanho">
+                        {formatSize(doc.size_bytes)}
+                        {deleted && ` · ${doc.page_count} ${doc.page_count === 1 ? "página" : "páginas"}`}
+                      </td>
+                      <td data-label="Status">
+                        <span className={`status status-${doc.status}`}>{DOCUMENT_STATUS_LABELS[doc.status]}</span>
+                        {deleted && <span className="badge badge-pending">Arquivo excluído</span>}
+                        <StatusNote doc={doc} />
+                      </td>
+                      <td data-label="Categoria sugerida">
+                        {category === NO_ITEM_CODE ? "Sem item de pontuação" : labelOf(TAXONOMY_LABELS, category)}
+                        {doc.manual_category ? (
+                          <small className="muted"> (informada por você)</small>
+                        ) : (
+                          category &&
+                          category !== NO_ITEM_CODE && <small className="muted"> (sugerida pela IA)</small>
+                        )}
+                      </td>
+                      <td data-label="Confiança">
+                        <Confidence doc={doc} />
+                      </td>
+                      <td data-label="Ações">
+                        <div className="row-actions">
+                          {!deleted && (
+                            <>
+                              <button
+                                type="button"
+                                className="btn btn-primary"
+                                aria-label={`Visualizar ${doc.original_name}`}
+                                title={`Visualizar ${doc.original_name}`}
+                                onClick={() => onView(doc)}
+                              >
+                                Visualizar
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                aria-label={`Baixar ${doc.original_name}`}
+                                title={`Baixar ${doc.original_name}`}
+                                onClick={() => download(doc)}
+                              >
+                                Baixar
+                              </button>
+                            </>
+                          )}
+                          {!outside && !deleted && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              aria-label={`Substituir ${doc.original_name}`}
+                              title={`Substituir ${doc.original_name}`}
+                              onClick={() => {
+                                replaceTarget.current = doc;
+                                replaceInput.current?.click();
+                              }}
+                            >
+                              Substituir
+                            </button>
+                          )}
+                          {!deleted && (
+                            <button
+                              type="button"
+                              className="btn btn-danger"
+                              aria-label={`Excluir ${doc.original_name}`}
+                              title={`Excluir ${doc.original_name}`}
+                              onClick={() => setPanel({ kind: "delete", doc })}
+                            >
+                              Excluir
+                            </button>
+                          )}
+                          {!deleted && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              aria-label={`Reprocessar ${doc.original_name}`}
+                              title={`Reprocessar ${doc.original_name}`}
+                              disabled={busy}
+                              onClick={() => void reprocess(doc)}
+                            >
+                              Reprocessar
+                            </button>
+                          )}
+                          {!outside && !deleted && producedNoActivity(doc) && (
+                            <button
+                              type="button"
+                              className="btn btn-primary"
+                              aria-label={`Criar atividade de ${doc.original_name}`}
+                              title={`Criar atividade de ${doc.original_name}`}
+                              onClick={() => onCreateActivity(doc)}
+                            >
+                              Criar atividade
+                            </button>
+                          )}
+                          {!outside && !deleted && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              aria-label={`Classificar ${doc.original_name}`}
+                              title={`Classificar ${doc.original_name}`}
+                              onClick={() => setPanel({ kind: "classify", doc })}
+                            >
+                              Classificar
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                    {outside && <OutsideBanner doc={doc} />}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </>
+      )}
+      {panel?.kind === "delete" && (
+        <ConfirmDelete key={panel.doc.id} doc={panel.doc} onDone={done} onCancel={() => setPanel(null)} />
+      )}
+      {panel?.kind === "classify" && (
+        <ClassifyForm key={panel.doc.id} doc={panel.doc} onDone={done} onCancel={() => setPanel(null)} />
+      )}
+    </section>
+  );
+}
+
+/** The 409 of a replacement carries the id of the document that already has the file. */
+function duplicateId(error: ApiError): string | undefined {
+  const body = error.body as { existing_document_id?: unknown } | undefined;
+  return body?.existing_document_id ? String(body.existing_document_id) : undefined;
+}

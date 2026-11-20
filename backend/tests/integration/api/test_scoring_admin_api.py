@@ -8,7 +8,7 @@ from app.domain.entities.audit import AuditAction
 from app.domain.entities.user import Role
 from tests.integration.api.factories import add_professor, process_payload
 
-FASI_NAME = "Tabela de Pontuação da FASI"
+OFFICIAL_NAME = "Tabela de Pontuação da UFPA"
 REFERENCE = "Res. 7.000/2026"
 CSV_HEADER = "grupo,item,descricao,unidade,modo,pontos,horas_por_bloco,limite"
 CSV_VALID = f"{CSV_HEADER}\n2,7,Orientação nova,por aluno,POR_UNIDADE,12.5,,30\n"
@@ -19,8 +19,8 @@ def admin(act_as, scoring_tables):
     return act_as("admin@ufpa.br", Role.ADMIN)
 
 
-def fasi(client):
-    return next(t for t in client.get("/api/scoring-tables").json() if t["name"] == FASI_NAME)
+def official(client):
+    return next(t for t in client.get("/api/scoring-tables").json() if t["name"] == OFFICIAL_NAME)
 
 
 def post_version(client, headers, table, **kw):
@@ -114,7 +114,7 @@ def test_admin_creates_a_table_with_units_and_first_version(client, admin, refer
 
 def test_create_with_a_repeated_name_is_422_on_name(client, admin):
     _, headers = admin
-    body = {"name": FASI_NAME, "valid_from": "2026-01-01", "norm_reference": REFERENCE}
+    body = {"name": OFFICIAL_NAME, "valid_from": "2026-01-01", "norm_reference": REFERENCE}
 
     response = client.post("/api/scoring-tables", json=body, headers=headers)
 
@@ -139,13 +139,13 @@ def test_every_write_route_is_403_for_non_admin_and_changes_nothing(
     client, act_as, scoring_tables, reference, role
 ):
     _, headers = act_as("outro@ufpa.br", role)
-    table = fasi(client)
+    table = official(client)
 
     responses = write_requests(client, headers, table, reference)
 
     assert {name: r.status_code for name, r in responses.items()} == dict.fromkeys(responses, 403)
     assert len(client.get("/api/scoring-tables").json()) == 2
-    assert len(fasi(client)["versions"]) == 1
+    assert len(official(client)["versions"]) == 1
 
 
 def test_every_route_is_401_without_a_session(client, scoring_tables):
@@ -164,7 +164,7 @@ def test_every_route_is_401_without_a_session(client, scoring_tables):
 
 def test_duplicate_creates_an_independent_table_with_the_latest_version(client, admin):
     _, headers = admin
-    table = fasi(client)
+    table = official(client)
 
     response = client.post(
         f"/api/scoring-tables/{table['id']}/duplicate",
@@ -183,16 +183,16 @@ def test_duplicate_creates_an_independent_table_with_the_latest_version(client, 
     assert edited.status_code == 200
     original = client.get(f"/api/scoring-versions/{table['versions'][0]['id']}").json()
     original_item = original["groups"][1]["criteria"][6]
-    assert (original_item["item_number"], original_item["unit_points"]) == (7, "10.00")
+    assert (original_item["item_number"], original_item["unit_points"]) == (7, "5.00")
 
 
 def test_duplicate_name_clash_is_422_and_unknown_table_is_404(client, admin):
     _, headers = admin
-    table = fasi(client)
+    table = official(client)
 
     clash = client.post(
         f"/api/scoring-tables/{table['id']}/duplicate",
-        json={"new_name": FASI_NAME},
+        json={"new_name": OFFICIAL_NAME},
         headers=headers,
     )
     unknown = client.post(
@@ -205,7 +205,7 @@ def test_duplicate_name_clash_is_422_and_unknown_table_is_404(client, admin):
 
 def test_new_version_copies_criteria_and_closes_the_open_one(client, admin):
     _, headers = admin
-    table = fasi(client)
+    table = official(client)
 
     response = post_version(client, headers, table, version_name="2026")
 
@@ -216,8 +216,8 @@ def test_new_version_copies_criteria_and_closes_the_open_one(client, admin):
         None,
         "2026",
     )
-    assert [len(g["criteria"]) for g in created["groups"]] == [3, 16, 12, 7, 6, 14, 11, 66]
-    old, new = fasi(client)["versions"]
+    assert [len(g["criteria"]) for g in created["groups"]] == [2, 16, 9, 6, 5, 14, 11, 37]
+    old, new = official(client)["versions"]
     assert old["valid_to"] == "2026-02-28"
     assert new["id"] == created["id"]
 
@@ -230,34 +230,34 @@ def test_new_version_is_409_when_a_process_would_lose_its_chosen_version(
     process = client.post("/api/processes", json=process_payload(professor), headers=headers).json()
     chosen = client.put(
         f"/api/processes/{process['id']}/scoring/table",
-        json={"version_id": str(scoring_tables["FASI"].id)},
+        json={"version_id": str(scoring_tables["OFICIAL"].id)},
         headers=headers,
     )
     assert chosen.status_code == 200
 
-    response = post_version(client, headers, fasi(client), valid_from="2024-11-23")
+    response = post_version(client, headers, official(client), valid_from="2024-11-23")
 
     assert response.status_code == 409
-    [only] = fasi(client)["versions"]
+    [only] = official(client)["versions"]
     assert only["valid_to"] is None
 
 
 def test_overlapping_validity_is_409(client, admin):
     _, headers = admin
-    table = fasi(client)
+    table = official(client)
     assert post_version(client, headers, table).status_code == 201
 
     response = post_version(
-        client, headers, fasi(client), valid_from="2023-01-01", valid_to="2023-12-31"
+        client, headers, official(client), valid_from="2023-01-01", valid_to="2023-12-31"
     )
 
     assert response.status_code == 409
-    assert len(fasi(client)["versions"]) == 2
+    assert len(official(client)["versions"]) == 2
 
 
 def test_new_version_without_norm_reference_is_422(client, admin):
     _, headers = admin
-    table = fasi(client)
+    table = official(client)
     body = {"source_version_id": table["versions"][0]["id"], "valid_from": "2026-03-01"}
 
     response = client.post(
@@ -271,7 +271,7 @@ def test_new_version_without_norm_reference_is_422(client, admin):
 def test_criterion_change_is_audited_with_before_and_after(client, admin, uow_factory):
     actor, headers = admin
     table = client.post(
-        f"/api/scoring-tables/{fasi(client)['id']}/duplicate",
+        f"/api/scoring-tables/{official(client)['id']}/duplicate",
         json={"new_name": "Cópia"},
         headers=headers,
     ).json()
@@ -289,12 +289,12 @@ def test_criterion_change_is_audited_with_before_and_after(client, admin, uow_fa
         ]
     assert event.user_id == actor.id
     assert event.justification == REFERENCE
-    assert event.changes == {"criteria.2.7.unit_points": {"before": "10", "after": "12.5"}}
+    assert event.changes == {"criteria.2.7.unit_points": {"before": "5", "after": "12.5"}}
 
 
 def test_criterion_change_without_reference_is_422(client, admin):
     _, headers = admin
-    version_id = fasi(client)["versions"][0]["id"]
+    version_id = official(client)["versions"][0]["id"]
 
     response = put_criterion(client, headers, version_id, change_reference=" ")
 
@@ -310,11 +310,11 @@ def test_criterion_of_a_version_in_use_is_409_asking_for_a_new_version(
     process = client.post("/api/processes", json=process_payload(professor), headers=headers).json()
     client.put(
         f"/api/processes/{process['id']}/scoring/table",
-        json={"version_id": str(scoring_tables["FASI"].id)},
+        json={"version_id": str(scoring_tables["OFICIAL"].id)},
         headers=headers,
     )
 
-    response = put_criterion(client, headers, str(scoring_tables["FASI"].id))
+    response = put_criterion(client, headers, str(scoring_tables["OFICIAL"].id))
 
     assert response.status_code == 409
     assert "nova versão" in response.json()["detail"]
@@ -322,14 +322,14 @@ def test_criterion_of_a_version_in_use_is_409_asking_for_a_new_version(
 
 def test_unknown_criterion_is_404(client, admin):
     _, headers = admin
-    version_id = fasi(client)["versions"][0]["id"]
+    version_id = official(client)["versions"][0]["id"]
 
     assert put_criterion(client, headers, version_id, item=999).status_code == 404
 
 
 def test_csv_import_creates_the_new_version_with_every_row(client, admin):
     _, headers = admin
-    table = fasi(client)
+    table = official(client)
 
     response = upload(client, headers, table, valid_to="", status="OFICIAL")
 
@@ -348,13 +348,13 @@ def test_csv_import_creates_the_new_version_with_every_row(client, admin):
         "12.50",
         "30.00",
     )
-    assert fasi(client)["versions"][0]["valid_to"] == "2026-02-28"
+    assert official(client)["versions"][0]["valid_to"] == "2026-02-28"
 
 
 def test_csv_with_bom_is_accepted(client, admin):
     _, headers = admin
 
-    response = upload(client, headers, fasi(client), content=("﻿" + CSV_VALID).encode())
+    response = upload(client, headers, official(client), content=("﻿" + CSV_VALID).encode())
 
     assert response.status_code == 201
 
@@ -368,7 +368,7 @@ def test_csv_with_invalid_rows_is_422_listing_every_line_and_field_and_creates_n
         "2,8,Ok,x,INEXISTENTE,1,,\n2,9,Ok,x,POR_UNIDADE,a,,\n"
     )
 
-    response = upload(client, headers, fasi(client), content=bad)
+    response = upload(client, headers, official(client), content=bad)
 
     assert response.status_code == 422
     assert [(e["field"], e["message"].split(":")[0]) for e in response.json()["detail"]] == [
@@ -376,13 +376,13 @@ def test_csv_with_invalid_rows_is_422_listing_every_line_and_field_and_creates_n
         ("file", "linha 3, campo modo"),
         ("file", "linha 4, campo pontos"),
     ]
-    [only] = fasi(client)["versions"]
+    [only] = official(client)["versions"]
     assert only["valid_to"] is None
 
 
 def test_csv_that_is_not_utf8_or_missing_is_422_on_file(client, admin):
     _, headers = admin
-    table = fasi(client)
+    table = official(client)
 
     not_utf8 = upload(client, headers, table, content="descrição".encode("latin-1"))
     missing = client.post(
@@ -393,12 +393,12 @@ def test_csv_that_is_not_utf8_or_missing_is_422_on_file(client, admin):
 
     assert (not_utf8.status_code, not_utf8.json()["detail"][0]["field"]) == (422, "file")
     assert (missing.status_code, missing.json()["detail"][0]["field"]) == (422, "file")
-    assert len(fasi(client)["versions"]) == 1
+    assert len(official(client)["versions"]) == 1
 
 
 def test_csv_import_without_norm_reference_is_422_and_unknown_table_404(client, admin):
     _, headers = admin
-    table = fasi(client)
+    table = official(client)
 
     no_reference = upload(client, headers, table, norm_reference=" ")
     unknown = upload(client, headers, {"id": str(uuid.uuid4())})
@@ -412,29 +412,29 @@ def test_csv_import_without_norm_reference_is_422_and_unknown_table_404(client, 
 
 def test_units_are_replaced_and_audited(client, admin, reference, uow_factory):
     actor, headers = admin
-    table = fasi(client)
+    table = official(client)
 
     response = client.put(
         f"/api/scoring-tables/{table['id']}/units",
-        json={"unit_ids": [str(reference["FASI"].id), str(reference["IFCH"].id)]},
+        json={"unit_ids": [str(reference["FASI"].id)]},
         headers=headers,
     )
 
     assert response.status_code == 200
-    assert set(response.json()["unit_ids"]) == {
-        str(reference["FASI"].id),
-        str(reference["IFCH"].id),
-    }
-    assert set(fasi(client)["unit_ids"]) == set(response.json()["unit_ids"])
+    assert response.json()["unit_ids"] == [str(reference["FASI"].id)]
+    assert set(official(client)["unit_ids"]) == set(response.json()["unit_ids"])
     with uow_factory() as uow:
         [event] = uow.audit.list_for("scoring_table", table["id"])
     assert (event.action, event.user_id) == (AuditAction.UPDATE, actor.id)
-    assert event.changes["unit_ids"]["before"] == [str(reference["FASI"].id)]
+    assert set(event.changes["unit_ids"]["before"]) == {
+        str(reference["FASI"].id),
+        str(reference["IFCH"].id),
+    }
 
 
 def test_units_unknown_unit_is_422_and_unknown_table_404(client, admin):
     _, headers = admin
-    table = fasi(client)
+    table = official(client)
 
     bad_unit = client.put(
         f"/api/scoring-tables/{table['id']}/units",
@@ -453,7 +453,7 @@ def test_history_lists_versions_and_audit_events_chronologically_for_every_role(
     client, admin, act_as, clock
 ):
     _, headers = admin
-    table = fasi(client)
+    table = official(client)
     assert post_version(client, headers, table).status_code == 201
     assert put_criterion(client, headers, table["versions"][0]["id"]).status_code == 409
     docente_headers = act_as("docente@ufpa.br", Role.DOCENTE)[1]
@@ -464,7 +464,7 @@ def test_history_lists_versions_and_audit_events_chronologically_for_every_role(
     assert response.status_code == 200
     history = response.json()
     assert [(v["valid_from"], v["valid_to"], v["status"]) for v in history["versions"]] == [
-        ("2022-11-23", "2026-02-28", "PENDENTE_VALIDACAO"),
+        ("2015-03-24", "2026-02-28", "OFICIAL"),
         ("2026-03-01", None, "PENDENTE_VALIDACAO"),
     ]
     assert all(v["norm_reference"] for v in history["versions"])
@@ -497,7 +497,7 @@ def test_history_of_a_new_table_includes_the_table_creation_event(client, admin)
 
 def test_superseded_version_stays_read_only(client, admin):
     _, headers = admin
-    table = fasi(client)
+    table = official(client)
     assert post_version(client, headers, table).status_code == 201
 
     response = put_criterion(client, headers, table["versions"][0]["id"])

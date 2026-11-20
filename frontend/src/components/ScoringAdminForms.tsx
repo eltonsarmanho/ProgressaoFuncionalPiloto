@@ -147,20 +147,6 @@ function VersionForm({
   );
 }
 
-/** The shared `request` helper only sends JSON, so the multipart upload sends the CSRF token itself. */
-async function postCsv(path: string, form: FormData): Promise<void> {
-  const me = await request<{ csrf_token: string }>("GET", "/api/auth/me");
-  const response = await fetch(path, {
-    method: "POST",
-    headers: { "X-CSRF-Token": me.csrf_token },
-    credentials: "include",
-    body: form,
-  });
-  if (response.ok) return;
-  const text = await response.text();
-  throw new ApiError(response.status, text ? JSON.parse(text)?.detail : undefined);
-}
-
 function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [validFrom, setValidFrom] = useState("");
@@ -175,7 +161,7 @@ function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: () 
     form.set("norm_reference", reference.trim());
     form.set("status", status);
     if (validTo) form.set("valid_to", validTo);
-    await postCsv(`/api/scoring-tables/${table.id}/versions/import`, form);
+    await request("POST", `/api/scoring-tables/${table.id}/versions/import`, form);
     setFile(null);
   }, onChanged);
 
@@ -183,7 +169,8 @@ function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: () 
     <form className="card" onSubmit={submit} noValidate aria-label="Importar CSV">
       <h3>Importar CSV como nova versão</h3>
       <p className="muted">
-        Colunas: grupo, item, descricao, unidade, modo, pontos, horas_por_bloco, limite. UTF-8, separado por
+        Colunas: grupo, item, descricao, unidade, modo, pontos, horas_por_bloco, limite e min_hours (opcional,
+        carga horária mínima em horas; vazio ou ausente = sem mínimo). UTF-8, separado por
         vírgulas, ponto decimal. Tudo ou nada.
       </p>
       <Field id="csv-file" label="Arquivo CSV" error={errors.file}>

@@ -1,5 +1,6 @@
 """CALC-01, CALC-07..CALC-14 and VERIF-08: the deterministic scoring engine."""
 
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from itertools import count
@@ -13,6 +14,7 @@ from app.domain.entities.scoring import (
     ScoringTableVersion,
     TableStatus,
 )
+from app.domain.rules.activity_validity import InvalidReason
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.process_verification import Severity
 from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
@@ -72,6 +74,10 @@ def row_of(result, activity):
     return next(r for r in result.rows if r.activity_id == activity.id)
 
 
+def has_row(result, activity) -> bool:
+    return any(r.activity_id == activity.id for r in result.rows)
+
+
 # --- inclusion rules (CALC-08, CALC-10, VERIF-08) -------------------------------------------
 
 
@@ -98,13 +104,14 @@ def test_awaiting_review_becomes_potential_and_stays_out_of_the_total():
     assert result.group_subtotals[2] == D("0")
 
 
-def test_rejected_activity_is_not_scored_with_reason_rejeitada():
+def test_rejected_activity_is_not_valid_with_reason_rejeitada_and_has_no_row():
+    # SEG-01: a rejected activity is not valid, so it no longer shows as a "not scored" row.
     a = act(status=ActivityStatus.REJEITADA)
 
     result = calculate(BASIC, [a], INTERSTICE)
 
-    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
-    assert row_of(result, a).reasons == (NotScoredReason.REJEITADA,)
+    assert not has_row(result, a)
+    assert result.validity[a.id].reason is InvalidReason.REJEITADA
     assert result.total == D("0")
 
 
@@ -126,13 +133,14 @@ def test_activity_without_group_and_item_is_sem_enquadramento():
     assert row_of(result, a).reasons == (NotScoredReason.SEM_ENQUADRAMENTO,)
 
 
-def test_activity_outside_interstice_is_fora_do_interstício():
+def test_activity_outside_interstice_is_not_valid_fora_do_interstício_and_has_no_row():
+    # SEG-01: outside the interstice is a validity reason, not a "not scored" row.
     a = act(event_date=date(2022, 11, 22))
 
     result = calculate(BASIC, [a], INTERSTICE)
 
-    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
-    assert row_of(result, a).reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
+    assert not has_row(result, a)
+    assert result.validity[a.id].reason is InvalidReason.FORA_DO_INTERSTICIO
     assert result.total == D("0")
 
 
@@ -143,8 +151,9 @@ def test_group_that_does_not_count_gives_zero_subtotal_and_reason():
 
     result = calculate(version, [a, b], INTERSTICE)
 
-    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
-    assert row_of(result, a).reasons == (NotScoredReason.GRUPO_NAO_CONTA,)
+    # SEG-01: a group outside the total is a validity reason; the activity has no row
+    assert not has_row(result, a)
+    assert result.validity[a.id].reason is InvalidReason.GRUPO_NAO_CONTA
     assert result.group_subtotals[1] == D("0")
     assert result.total == D("10")
 
@@ -156,8 +165,9 @@ def test_newer_duplicate_is_excluded_and_older_counts():
     result = calculate(BASIC, [newer, older], INTERSTICE)
 
     assert row_of(result, older).status is RowStatus.PONTUADA
-    assert row_of(result, newer).status is RowStatus.NAO_PONTUADA
-    assert row_of(result, newer).reasons == (NotScoredReason.DUPLICIDADE,)
+    # SEG-01: the residual duplicate is not valid; it has no row
+    assert not has_row(result, newer)
+    assert result.validity[newer.id].reason is InvalidReason.DUPLICIDADE
     assert result.total == D("10")
 
 
@@ -174,14 +184,16 @@ def test_distinct_justification_makes_both_count():
     assert result.total == D("20")
 
 
-def test_precedence_missing_criterion_over_rejected_over_period():
+def test_precedence_rejected_over_missing_criterion_and_over_period():
+    # SEG-01: the rule changed; rejected now comes first, before the missing criterion
     rejected_missing = act(item=99, status=ActivityStatus.REJEITADA)
     rejected_outside = act(status=ActivityStatus.REJEITADA, event_date=date(2020, 1, 1))
 
     result = calculate(BASIC, [rejected_missing, rejected_outside], INTERSTICE)
 
-    assert row_of(result, rejected_missing).reasons == (NotScoredReason.SEM_ENQUADRAMENTO,)
-    assert row_of(result, rejected_outside).reasons == (NotScoredReason.REJEITADA,)
+    assert result.validity[rejected_missing.id].reason is InvalidReason.REJEITADA
+    assert result.validity[rejected_outside.id].reason is InvalidReason.REJEITADA
+    assert result.rows == ()
 
 
 def test_precedence_period_over_group_that_does_not_count():
@@ -190,7 +202,8 @@ def test_precedence_period_over_group_that_does_not_count():
 
     result = calculate(version, [a], INTERSTICE)
 
-    assert row_of(result, a).reasons == (NotScoredReason.FORA_DO_INTERSTICIO,)
+    assert result.validity[a.id].reason is InvalidReason.FORA_DO_INTERSTICIO
+    assert not has_row(result, a)
 
 
 def test_awaiting_review_outside_interstice_is_not_potential():
@@ -198,7 +211,7 @@ def test_awaiting_review_outside_interstice_is_not_potential():
 
     result = calculate(BASIC, [a], INTERSTICE)
 
-    assert row_of(result, a).status is RowStatus.NAO_PONTUADA
+    assert not has_row(result, a)  # SEG-01
     assert result.potential_total == D("0")
 
 
@@ -350,6 +363,80 @@ def test_manual_points_on_weekly_load_raise_pontos_ajustados_manualmente():
     assert ScoringAlertCode.PONTOS_AJUSTADOS_MANUALMENTE in codes(result, a)
 
 
+# --- unit value typed by hand (UIM-21) ----------------------------------------------------
+
+
+def test_unit_points_override_replaces_the_table_value_per_unit():
+    a = act(quantity="3", unit_points_override=D("2.5"))
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    row = row_of(result, a)
+    assert row.points == D("7.5")
+    assert row.unit_points == D("2.5")
+    assert row.effective_quantity == D("3")
+    assert ScoringAlertCode.VALOR_UNITARIO_MANUAL in codes(result, a)
+    assert result.total == D("7.5")
+
+
+def test_unit_points_override_survives_a_quantity_change():
+    three = act(quantity="3", unit_points_override=D("2.5"))
+    four = replace(three, quantity=D("4"))
+
+    assert row_of(calculate(BASIC, [four], INTERSTICE), four).points == D("10")
+
+
+def test_unit_points_override_still_meets_the_criterion_cap():
+    version = table(group(3, per_unit(3, 1, "6", max_points="10")))
+    a = act(g=3, item=1, unit_points_override=D("8"))
+    b = act(g=3, item=1, unit_points_override=D("8"))
+
+    result = calculate(version, [a, b], INTERSTICE)
+
+    assert result.group_subtotals[3] == D("10")
+    assert (result.limit_adjustments[0].before, result.limit_adjustments[0].after) == (
+        D("16"),
+        D("10"),
+    )
+
+
+def test_unit_points_override_per_block_multiplies_the_blocks():
+    version = _fasi_miniature()
+    a = act(g=4, item=4, hours=D("10"), unit_points_override=D("2"))
+
+    row = row_of(calculate(version, [a], INTERSTICE), a)
+
+    assert row.points == D("6")  # floor(10 / 3) = 3 blocks x 2
+    assert row.unit_points == D("2")
+
+
+def test_without_the_override_the_table_value_and_no_manual_alert():
+    a = act(quantity="3")
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert row_of(result, a).points == D("30")
+    assert row_of(result, a).unit_points == D("10")
+    assert ScoringAlertCode.VALOR_UNITARIO_MANUAL not in codes(result, a)
+
+
+def test_unit_points_override_is_ignored_where_there_is_no_unit_value():
+    weekly = ScoringCriterion(
+        1, 1, "Aulas", "h", ScoringMode.CARGA_SEMANAL, weeks_per_semester=17, prep_ratio=D("1")
+    )
+    informed = ScoringCriterion(1, 3, "Avaliação", "pt", ScoringMode.VALOR_INFORMADO)
+    version = table(group(1, weekly, informed))
+    a = act(g=1, item=1, hours=D("68"), level=Level.GRADUACAO, unit_points_override=D("99"))
+    b = act(g=1, item=3, informed_points=D("8"), unit_points_override=D("99"))
+
+    result = calculate(version, [a, b], INTERSTICE)
+
+    assert row_of(result, a).points == D("8")  # 68 x 2 / 17
+    assert row_of(result, b).points == D("8")
+    assert ScoringAlertCode.VALOR_UNITARIO_MANUAL not in codes(result, a)
+    assert ScoringAlertCode.VALOR_UNITARIO_MANUAL not in codes(result, b)
+
+
 def test_row_alerts_carry_severity_message_and_norm_reference():
     a = act(event_date=None, evidence_note=None)
 
@@ -369,12 +456,14 @@ def test_invalid_interstice_does_not_exclude_nor_alert_on_dates():
     result = calculate(BASIC, [a], bad)
 
     assert row_of(result, a).status is RowStatus.PONTUADA
-    assert NotScoredReason.FORA_DO_INTERSTICIO not in row_of(result, a).reasons
+    assert result.validity[a.id].is_valid
     assert ScoringAlertCode.INTERSTICIO_PARCIAL not in codes(result, a)
 
 
 def test_non_scored_row_has_no_alerts():
-    a = act(event_date=date(2020, 1, 1), evidence_note=None)
+    # SEG-01: the not scored row left is the one without category (outside the interstice has
+    # no row any more)
+    a = act(g=None, item=None, evidence_note=None)
 
     assert row_of(calculate(BASIC, [a], INTERSTICE), a).alerts == ()
 
@@ -416,10 +505,11 @@ def test_counters():
     everything = [ok, no_evidence, pending, rejected, outside]
     counters = calculate(version, everything, INTERSTICE).counters
 
-    assert counters.activities == 5
-    assert counters.with_evidence == 4  # all but no_evidence
+    # SEG-01: rejected and outside the interstice are not valid and are not counted
+    assert counters.activities == 3
+    assert counters.with_evidence == 2  # ok and pending, not no_evidence
     assert counters.pending == 1
-    assert counters.not_scored == 2  # rejected, outside
+    assert counters.not_scored == 0
     assert counters.with_alerts == 1  # no_evidence
 
 
@@ -482,3 +572,344 @@ def test_real_case_fasi_2022_2024_in_miniature():
     assert result.group1_percent == D("22.22")
     assert result.potential_total == D("0")
     assert result.counters.not_scored == 0
+
+
+# --- minimum course hours (OFI-06, OFI-07) ------------------------------------------------------
+
+
+def with_minimum(group_number=4, item=4, points="5", min_hours="20") -> ScoringCriterion:
+    return ScoringCriterion(
+        group_number, item, f"item {group_number}.{item}", "curso", ScoringMode.POR_UNIDADE,
+        unit_points=D(points), min_hours=None if min_hours is None else D(min_hours),
+    )  # fmt: skip
+
+
+COURSES = table(group(4, with_minimum(), with_minimum(item=1, min_hours=None)))
+
+
+def test_activity_with_19_99_hours_is_not_scored_for_insufficient_load():
+    a = act(g=4, item=4, hours=D("19.99"))
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    # SEG-01: insufficient load is a validity reason; the activity has no row
+    assert not has_row(result, a)
+    assert result.validity[a.id].reason is InvalidReason.CARGA_HORARIA_INSUFICIENTE
+    assert result.total == D("0")
+
+
+def test_activity_with_exactly_20_hours_is_scored():
+    a = act(g=4, item=4, hours=D("20"))
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.PONTUADA
+    assert row_of(result, a).points == D("5")
+    assert row_of(result, a).reasons == ()
+    assert result.total == D("5")
+
+
+def test_activity_above_the_minimum_is_scored_without_a_load_alert():
+    a = act(g=4, item=4, hours=D("21"))
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    assert row_of(result, a).points == D("5")
+    assert ScoringAlertCode.CARGA_HORARIA_NAO_INFORMADA not in codes(result, a)
+
+
+def test_activity_without_hours_is_scored_with_the_missing_hours_alert():
+    a = act(g=4, item=4, hours=None)
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    assert row_of(result, a).status is RowStatus.PONTUADA
+    assert row_of(result, a).points == D("5")
+    assert ScoringAlertCode.CARGA_HORARIA_NAO_INFORMADA in codes(result, a)
+    missing = ScoringAlertCode.CARGA_HORARIA_NAO_INFORMADA
+    alert = next(x for x in row_of(result, a).alerts if x.code is missing)
+    assert alert.severity is Severity.ALERTA
+    assert alert.norm_reference == "Res. 4.644/2015-CONSEPE, Anexo I"
+    assert result.total == D("5")
+
+
+def test_zero_hours_is_below_the_minimum_not_missing():
+    a = act(g=4, item=4, hours=D("0"))
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    # SEG-01
+    assert not has_row(result, a)
+    assert result.validity[a.id].reason is InvalidReason.CARGA_HORARIA_INSUFICIENTE
+
+
+def test_criterion_without_minimum_ignores_hours_and_never_alerts_on_them():
+    short = act(g=4, item=1, hours=D("1"))
+    none = act(g=4, item=1, hours=None)
+
+    result = calculate(COURSES, [short, none], INTERSTICE)
+
+    assert row_of(result, short).points == D("5")
+    assert row_of(result, none).points == D("5")
+    assert ScoringAlertCode.CARGA_HORARIA_NAO_INFORMADA not in codes(result, none)
+    assert result.total == D("10")
+
+
+def test_insufficient_activity_has_no_row_and_is_not_counted():
+    # SEG-01: it was a "not scored" row with no alerts; now it is not valid and not counted
+    low = act(g=4, item=4, hours=D("10"), evidence_note=None)
+    ok = act(g=4, item=4, hours=D("30"))
+
+    result = calculate(COURSES, [low, ok], INTERSTICE)
+
+    assert not has_row(result, low)
+    assert result.counters.not_scored == 0
+    assert result.counters.activities == 1
+    assert result.total == D("5")
+
+
+def test_awaiting_review_with_insufficient_hours_is_not_potential():
+    a = act(g=4, item=4, hours=D("10"), status=ActivityStatus.AGUARDANDO_REVISAO)
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    assert not has_row(result, a)  # SEG-01
+    assert result.potential_total == D("0")
+
+
+def test_outside_interstice_takes_precedence_over_insufficient_hours():
+    a = act(g=4, item=4, hours=D("10"), event_date=date(2020, 1, 1))
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    assert result.validity[a.id].reason is InvalidReason.FORA_DO_INTERSTICIO  # SEG-01
+
+
+def test_missing_hours_alert_is_added_to_the_other_row_alerts():
+    a = act(g=4, item=4, hours=None, evidence_note=None)
+
+    result = calculate(COURSES, [a], INTERSTICE)
+
+    assert {
+        ScoringAlertCode.CARGA_HORARIA_NAO_INFORMADA,
+        ScoringAlertCode.SEM_COMPROVANTE,
+    } == set(codes(result, a))
+
+
+# --- group I as PIT hours outside the total (PIT-01, PIT-02) --------------------------------------
+
+
+def pit_criterion(item, prep) -> ScoringCriterion:
+    return ScoringCriterion(
+        1, item, f"I.{item}", "horas (PIT)", ScoringMode.CARGA_SEMANAL,
+        weeks_per_semester=17, prep_ratio=D(prep),
+    )  # fmt: skip
+
+
+def pit_table() -> ScoringTableVersion:
+    return table(
+        group(1, pit_criterion(1, "1"), pit_criterion(2, "2"), counts=False),
+        group(2, per_unit(2, 7, "10")),
+    )
+
+
+def offer(hours, level=Level.GRADUACAO, period="2023.1", **kwargs):
+    item = 1 if level is Level.GRADUACAO else 2
+    return act(
+        g=1, item=item, hours=D(hours), level=level, academic_period=period, **kwargs
+    )
+
+
+def test_68_hours_in_graduation_give_8_pit_hours_and_no_points():
+    a = offer("68")
+
+    result = calculate(pit_table(), [a], INTERSTICE)
+
+    assert row_of(result, a).pit_hours == D("8.00")
+    assert row_of(result, a).points == D("0")
+    assert row_of(result, a).status is RowStatus.PONTUADA
+    assert row_of(result, a).reasons == ()
+
+
+def test_34_hours_in_graduation_give_4_pit_hours():
+    a = offer("34")
+
+    assert row_of(calculate(pit_table(), [a], INTERSTICE), a).pit_hours == D("4.00")
+
+
+def test_68_hours_in_postgraduation_give_12_pit_hours():
+    a = offer("68", level=Level.POS_GRADUACAO)
+
+    assert row_of(calculate(pit_table(), [a], INTERSTICE), a).pit_hours == D("12.00")
+
+
+def test_pit_hours_are_rounded_half_up_to_two_places():
+    a = offer("10")  # 10 / 17 * 2 = 1.1764... -> 1.18
+
+    assert row_of(calculate(pit_table(), [a], INTERSTICE), a).pit_hours == D("1.18")
+
+
+def test_pit_hours_are_summed_per_academic_period():
+    offers = [
+        offer("68", period="2023.1"),
+        offer("68", period="2023.1"),
+        offer("68", level=Level.POS_GRADUACAO, period="2023.1"),
+        offer("68", period="2023.2"),
+        offer("34", period="2023.2"),
+    ]
+
+    result = calculate(pit_table(), offers, INTERSTICE)
+
+    assert result.group1_hours_by_period == {"2023.1": D("28.00"), "2023.2": D("12.00")}
+    assert list(result.group1_hours_by_period) == ["2023.1", "2023.2"]
+
+
+def test_three_offers_of_68_hours_in_one_period_give_24_hours():
+    offers = [offer("68", period="2022.2") for _ in range(3)]
+
+    result = calculate(pit_table(), offers, INTERSTICE)
+
+    assert result.group1_hours_by_period == {"2022.2": D("24.00")}
+    assert result.group1_total_hours == D("24.00")
+
+
+def test_group1_total_hours_sums_all_periods():
+    offers = [
+        offer("68", period="2022.2"),
+        offer("68", period="2023.1"),
+        offer("34", period="2023.1"),
+    ]
+
+    assert calculate(pit_table(), offers, INTERSTICE).group1_total_hours == D("20.00")
+
+
+def test_group1_contributes_nothing_to_subtotal_total_or_potential():
+    scored = offer("68")
+    pending = offer("68", status=ActivityStatus.AGUARDANDO_REVISAO)
+    other = act(g=2, item=7, quantity="2")
+
+    result = calculate(pit_table(), [scored, pending, other], INTERSTICE)
+
+    assert result.group_subtotals[1] == D("0")
+    assert result.total == D("20")
+    assert result.potential_total == D("0")
+    assert result.group1_percent == D("0.00")
+
+
+def test_group1_only_process_has_zero_total_and_hours_reported():
+    result = calculate(pit_table(), [offer("68")], INTERSTICE)
+
+    assert result.total == D("0")
+    assert result.group1_total_hours == D("8.00")
+    assert result.group1_percent is None
+
+
+def test_informed_points_do_not_replace_the_pit_hours_calculation():
+    a = offer("68", points_override=D("99"))
+
+    row = row_of(calculate(pit_table(), [a], INTERSTICE), a)
+
+    assert row.pit_hours == D("8.00")
+    assert row.points == D("0")
+    assert ScoringAlertCode.PONTOS_AJUSTADOS_MANUALMENTE not in {x.code for x in row.alerts}
+
+
+def test_pit_row_reports_the_hours_formula():
+    a = offer("68")
+
+    row = row_of(calculate(pit_table(), [a], INTERSTICE), a)
+
+    assert row.formula_text == "68 h ÷ 17 semanas × (1 + 1) = 8.00"
+
+
+def test_pit_hours_of_awaiting_review_and_rejected_offers_stay_out_of_the_summary():
+    pending = offer("68", status=ActivityStatus.AGUARDANDO_REVISAO)
+    rejected = offer("68", status=ActivityStatus.REJEITADA)
+    valid = offer("34")
+
+    result = calculate(pit_table(), [pending, rejected, valid], INTERSTICE)
+
+    assert row_of(result, pending).pit_hours == D("8.00")
+    assert row_of(result, pending).status is RowStatus.POTENCIAL
+    assert not has_row(result, rejected)  # SEG-01: a rejected offer has no row
+    assert result.group1_total_hours == D("4.00")
+
+
+def test_offer_outside_the_interstice_has_no_pit_hours():
+    a = offer("68", event_date=date(2020, 1, 1))
+
+    result = calculate(pit_table(), [a], INTERSTICE)
+
+    assert not has_row(result, a)  # SEG-01
+    assert result.validity[a.id].reason is InvalidReason.FORA_DO_INTERSTICIO
+    assert result.group1_total_hours == D("0")
+
+
+def test_rows_of_other_groups_have_no_pit_hours_and_result_without_group1_is_empty():
+    a = act(g=2, item=7)
+
+    result = calculate(pit_table(), [a], INTERSTICE)
+
+    assert row_of(result, a).pit_hours is None
+    assert result.group1_hours_by_period == {}
+    assert result.group1_total_hours == D("0")
+
+
+def test_group1_that_counts_in_total_keeps_the_legacy_points_calculation():
+    legacy = table(group(1, pit_criterion(1, "1"), counts=True))
+    a = offer("68")
+
+    result = calculate(legacy, [a], INTERSTICE)
+
+    assert row_of(result, a).points == D("8.00")
+    assert row_of(result, a).pit_hours is None
+    assert result.group_subtotals[1] == D("8.00")
+    assert result.group1_total_hours == D("0")
+
+
+# --- potential split by date (REAL-08) ------------------------------------------------------
+
+
+def pending(**kwargs):
+    return act(status=ActivityStatus.AGUARDANDO_REVISAO, **kwargs)
+
+
+def test_potential_is_split_into_dated_and_undated_and_the_parts_sum_to_the_total():
+    dated = pending(quantity="3")
+    undated = pending(quantity="2", event_date=None)
+
+    result = calculate(BASIC, [dated, undated], INTERSTICE)
+
+    assert result.potential_total == D("50")
+    assert result.potential_dated == D("30")
+    assert result.potential_undated == D("20")
+    assert result.potential_dated + result.potential_undated == result.potential_total
+
+
+def test_undated_activity_keeps_the_rule_of_counting_with_the_missing_date_alert():
+    a = act(quantity="2", event_date=None)  # validated
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert result.total == D("20")
+    assert ScoringAlertCode.DATA_AUSENTE in [x.code for x in row_of(result, a).alerts]
+    assert (result.potential_dated, result.potential_undated) == (D("0"), D("0"))
+
+
+def test_partially_overlapping_period_counts_as_dated_potential():
+    a = pending(quantity="1", event_date=None,
+                period_start=date(2022, 1, 1), period_end=date(2023, 1, 1))  # fmt: skip
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert (result.potential_dated, result.potential_undated) == (D("10"), D("0"))
+
+
+def test_dated_outside_the_interstice_is_in_neither_part():
+    a = pending(quantity="1", event_date=date(2020, 1, 1))
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert (result.potential_total, result.potential_dated, result.potential_undated) == (
+        D("0"), D("0"), D("0"),
+    )  # fmt: skip

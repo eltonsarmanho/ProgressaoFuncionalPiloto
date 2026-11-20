@@ -19,7 +19,11 @@ const BASE: ScoringResult = {
   ],
   total: "414.00",
   potential_total: "450.50",
+  potential_dated: "300.50",
+  potential_undated: "150.00",
   group1_percent: "22.22",
+  group1_hours_by_period: {},
+  group1_total_hours: "0.00",
   counters: { activities: 20, with_evidence: 15, pending: 3, not_scored: 4, with_alerts: 6 },
   rows: [],
   limit_adjustments: [],
@@ -45,6 +49,13 @@ describe("ScoringSummary", () => {
     expect(def("Grupo VIII · Produção")).toHaveTextContent("56,00");
     expect(def("Total geral")).toHaveTextContent("414,00");
     expect(def("Pontuação potencial")).toHaveTextContent("450,50");
+  });
+
+  it("REAL-09: divide a pontuação potencial entre com data no interstício e sem data", () => {
+    render(<ScoringSummary result={BASE} />);
+    expect(def("Pontuação potencial")).toHaveTextContent("450,50");
+    expect(def("Potencial com data no interstício")).toHaveTextContent("300,50");
+    expect(def("Potencial sem data — aguardando revisão")).toHaveTextContent("150,00");
   });
 
   it("TELA-03: exibe o percentual do Grupo I com vírgula e '—' quando nulo", () => {
@@ -80,5 +91,76 @@ describe("ScoringSummary", () => {
       "Não pontuadas: 4",
       "Com divergências: 6",
     ]);
+  });
+
+  describe("TELA-02: Grupo I em horas de PIT", () => {
+    const OFFICIAL: ScoringResult = {
+      ...BASE,
+      subtotals: [
+        { group_number: 1, subtotal: "0.00" },
+        { group_number: 2, subtotal: "52.00" },
+        { group_number: 3, subtotal: "7.00" },
+        { group_number: 4, subtotal: "62.00" },
+        { group_number: 5, subtotal: "0.00" },
+        { group_number: 6, subtotal: "30.00" },
+        { group_number: 7, subtotal: "4.00" },
+        { group_number: 8, subtotal: "56.00" },
+      ],
+      total: "211.00",
+      potential_total: "211.00",
+      potential_dated: "211.00",
+      potential_undated: "0.00",
+      group1_percent: null,
+      group1_hours_by_period: { "2022.1": "24.00", "2022.2": "24.00", "2023.1": "24.00", "2023.2": "20.00" },
+      group1_total_hours: "92.00",
+      rows: [
+        {
+          activity_id: "g1", title: "Cálculo I", activity_status: "VALIDADA", evidence_note: null,
+          group_number: 1, item_number: 1, unit_points: null, effective_quantity: null, formula_text: null,
+          points: "0.00", pit_hours: "8.00", status: "PONTUADA", reasons: [], alerts: [],
+        },
+      ],
+    };
+
+    it("rotula o total como 'Total geral (Grupos II a VIII)' sem incluir o Grupo I", () => {
+      render(<ScoringSummary result={OFFICIAL} />);
+      expect(def("Total geral (Grupos II a VIII)")).toHaveTextContent("211,00");
+      expect(screen.queryByText("Total geral", { selector: "dt" })).not.toBeInTheDocument();
+      expect(screen.queryByText("Grupo I · Docência", { selector: "dt" })).not.toBeInTheDocument();
+      expect(def("Grupo II · Orientação")).toHaveTextContent("52,00");
+    });
+
+    it("mostra à parte as horas de PIT de cada período letivo, em ordem", () => {
+      render(<ScoringSummary result={OFFICIAL} />);
+      const hours = screen.getByRole("group", { name: "Horas de PIT do Grupo I" });
+      const entries = within(hours).getAllByText(/^PIT /, { selector: "dt" }).map((dt) => [dt.textContent, dt.nextElementSibling?.textContent]);
+      expect(entries).toEqual([
+        ["PIT 2022.1", "24,00 horas"],
+        ["PIT 2022.2", "24,00 horas"],
+        ["PIT 2023.1", "24,00 horas"],
+        ["PIT 2023.2", "20,00 horas"],
+      ]);
+    });
+
+    it("mostra o total de horas de PIT à parte do total geral", () => {
+      render(<ScoringSummary result={OFFICIAL} />);
+      const hours = screen.getByRole("group", { name: "Horas de PIT do Grupo I" });
+      expect(within(hours).getByText("Total de horas de PIT", { selector: "dt" }).nextElementSibling).toHaveTextContent("92,00 horas");
+      expect(def("Total geral (Grupos II a VIII)")).not.toHaveTextContent("92");
+    });
+
+    it("sem lançamentos no Grupo I mostra 0,00 hora quando a versão tira o Grupo I do total", () => {
+      render(<ScoringSummary result={{ ...OFFICIAL, rows: [], group1_hours_by_period: {}, group1_total_hours: "0.00" }} group1InHours />);
+      const hours = screen.getByRole("group", { name: "Horas de PIT do Grupo I" });
+      expect(within(hours).getByText("Total de horas de PIT", { selector: "dt" }).nextElementSibling).toHaveTextContent("0,00 horas");
+      expect(def("Total geral (Grupos II a VIII)")).toHaveTextContent("211,00");
+    });
+
+    it("em tabela antiga o Grupo I segue em pontos e o rótulo continua 'Total geral'", () => {
+      render(<ScoringSummary result={BASE} />);
+      expect(def("Total geral")).toHaveTextContent("414,00");
+      expect(def("Grupo I · Docência")).toHaveTextContent("92,00");
+      expect(screen.queryByRole("group", { name: "Horas de PIT do Grupo I" })).not.toBeInTheDocument();
+    });
   });
 });

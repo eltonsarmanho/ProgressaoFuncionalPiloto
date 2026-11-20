@@ -1,8 +1,8 @@
-/** Inline error rendered right after its input (UI-05). */
-export function FieldError({ id, message }: { id: string; message?: string }) {
+/** Inline error rendered right after its input (UI-05); `alert` makes a screen reader announce it when it appears. */
+export function FieldError({ id, message, alert = false }: { id: string; message?: string; alert?: boolean }) {
   if (!message) return null;
   return (
-    <p id={id} className="error field-error">
+    <p id={id} className="error field-error" role={alert ? "alert" : undefined}>
       {message}
     </p>
   );

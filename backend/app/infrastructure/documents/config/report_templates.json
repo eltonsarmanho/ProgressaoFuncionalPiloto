@@ -1,0 +1,172 @@
+{
+  "default": "ufpa-modelo-2",
+  "templates": {
+    "ufpa-modelo-2": {
+      "version": 1,
+      "entry_style": "campos",
+      "page": {
+        "size": "A4",
+        "margins_mm": {"left": 31.75, "right": 31.75, "top": 25.4, "bottom": 25.4},
+        "font": "Times New Roman",
+        "font_size": 9
+      },
+      "header_lines": [
+        "Serviço Público Federal",
+        "Universidade Federal do Pará",
+        "{unit_name}"
+      ],
+      "title": "RELATÓRIO DE ATIVIDADES",
+      "identification": [
+        "Nome: {professor_name}",
+        "Professor {current_class}, nível {current_level}",
+        "Unidade: {unit_name}",
+        "Período de interstício: {interstice}"
+      ],
+      "body_heading": "ATIVIDADES DESENVOLVIDAS",
+      "group_map": [
+        {"group": 1, "item": 1, "section": "1.1"},
+        {"group": 1, "item": 2, "section": "1.2"},
+        {"group": 2, "section": "1.3"},
+        {"group": 3, "section": "6", "subtitle": "Participação em bancas e comissões examinadoras"},
+        {"group": 4, "section": "3"},
+        {"group": 5, "section": "2"},
+        {"group": 6, "section": "4"},
+        {"group": 7, "section": "6", "subtitle": "Capacitação"},
+        {"group": 8, "section": "6"}
+      ],
+      "sections": [
+        {
+          "key": "1.1",
+          "title": "Atividades didáticas: graduação",
+          "group_by": "academic_period",
+          "entry": {
+            "fields": [
+              {"label": "Disciplina", "text": "{title}"},
+              {"label": "Curso", "text": "{course}"},
+              {"label": "Carga horária", "text": "{course_hours}"},
+              {"label": "Período", "text": "{period}"}
+            ]
+          }
+        },
+        {
+          "key": "1.2",
+          "title": "Atividades didáticas: pós-graduação",
+          "group_by": "academic_period",
+          "entry": {
+            "fields": [
+              {"label": "Disciplina", "text": "{title}"},
+              {"label": "Curso", "text": "{course}"},
+              {"label": "Carga horária", "text": "{course_hours}"},
+              {"label": "Período", "text": "{period}"}
+            ]
+          }
+        },
+        {
+          "key": "1.3",
+          "title": "Atividades didáticas: orientações",
+          "group_by": "item",
+          "order_items": true,
+          "entry": {
+            "fields": [
+              {"label": "Título", "text": "{title}"},
+              {"label": "Período", "text": "{dates}"},
+              {"label": "Descrição", "text": "{description}"}
+            ]
+          }
+        },
+        {
+          "key": "2",
+          "title": "Pesquisa",
+          "entry": {
+            "fields": [
+              {"label": "Título", "text": "{title}"},
+              {"label": "Período", "text": "{dates}"},
+              {"label": "Carga horária", "text": "{hours}"},
+              {"label": "Descrição", "text": "{description}"}
+            ]
+          }
+        },
+        {
+          "key": "3",
+          "title": "Extensão",
+          "entry": {
+            "fields": [
+              {"label": "Título", "text": "{title}"},
+              {"label": "Período", "text": "{dates}"},
+              {"label": "Carga horária", "text": "{hours}"},
+              {"label": "Descrição", "text": "{description}"}
+            ]
+          }
+        },
+        {
+          "key": "4",
+          "title": "Administração",
+          "entry": {
+            "fields": [
+              {"label": "Atividade", "text": "{title}"},
+              {"label": "Período", "text": "{dates}"},
+              {"label": "Descrição", "text": "{description}"}
+            ]
+          }
+        },
+        {
+          "key": "5",
+          "title": "Atividades culturais e/ou artísticas",
+          "entry": {
+            "fields": [
+              {"label": "Atividade", "text": "{title}"},
+              {"label": "Período", "text": "{dates}"},
+              {"label": "Descrição", "text": "{description}"}
+            ]
+          }
+        },
+        {
+          "key": "6",
+          "title": "Outras atividades",
+          "entry": {
+            "fields": [
+              {"label": "Atividade", "text": "{title}"},
+              {"label": "Período", "text": "{dates}"},
+              {"label": "Carga horária", "text": "{hours}"},
+              {"label": "Descrição", "text": "{description}"}
+            ]
+          }
+        }
+      ],
+      "allowed_terms": [
+        "UFPA",
+        "Universidade Federal do Pará"
+      ],
+      "formal_vocabulary": [
+        "realizou", "realizada", "realizado", "realizadas", "realizados", "realização",
+        "ministrou", "ministrada", "ministrado", "ministradas", "ministrados",
+        "participou", "participação", "participada", "participado",
+        "atuou", "atuação", "coordenou", "coordenação", "coordenada", "coordenado",
+        "orientou", "orientação", "orientações", "orientada", "orientado",
+        "concluiu", "concluída", "concluído", "concluídas", "concluídos", "conclusão",
+        "desenvolveu", "desenvolvida", "desenvolvido", "desenvolvidas", "desenvolvidos",
+        "integrou", "integrante", "membro", "presidiu", "composição", "compôs",
+        "elaborou", "elaboração", "elaborada", "elaborado", "apresentou", "apresentação",
+        "organizou", "organização", "organizada", "organizado", "exerceu", "exercício",
+        "cursou", "frequentou", "capacitação", "treinamento", "formação",
+        "docente", "professor", "professora", "estudante", "estudantes", "discente",
+        "atividade", "atividades", "projeto", "projetos", "curso", "cursos", "disciplina",
+        "disciplinas", "graduação", "pós-graduação", "evento", "comissão", "banca",
+        "bancas", "trabalho", "trabalhos", "unidade", "instituição",
+        "durante", "período", "periodo", "referente", "conforme", "mediante", "também",
+        "junto", "sobre", "entre", "desde", "tendo", "sendo", "ocorreu", "ocorrida",
+        "vinculada", "vinculado", "carga", "horária", "horário", "horas", "semestre",
+        "letivo", "andamento", "início", "término", "ainda", "cujo", "cuja"
+      ],
+      "forbidden_words": [
+        "objetivo", "objetivos", "resultado", "resultados", "metodologia", "metodologias",
+        "excelente", "relevante", "visando", "contribuindo", "contribuiu", "contribuição",
+        "importante", "fundamental", "essencial", "excepcional", "notável", "brilhante",
+        "inovador", "inovadora", "significativo", "significativa", "sucesso", "impacto",
+        "melhoria", "aprimorar", "benefício", "eficaz", "eficiente", "satisfatório",
+        "satisfatória", "destacou", "destaque", "proporcionou", "alcançou", "alcançados"
+      ],
+      "max_new_words": 3
+    }
+  }
+}

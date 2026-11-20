@@ -42,7 +42,7 @@ def test_downgrade_one_revision_and_upgrade_again(migrated_url):
     assert "scoring_table_version_id" in columns
     assert {"scoring_mode", "table_status", "activity_status"} <= enums
 
-    command.downgrade(cfg, "-1")
+    command.downgrade(cfg, "0001")
     tables, columns, enums = _names(migrated_url)
     assert not SCORING_TABLES & tables
     assert "scoring_table_version_id" not in columns

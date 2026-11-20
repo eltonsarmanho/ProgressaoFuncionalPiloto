@@ -1,0 +1,1954 @@
+# Revisão simplificada das atividades Tasks
+
+## Execution Protocol (MANDATORY -- do not skip)
+
+Implement these tasks with the `tlc-spec-driven` skill: **activate it by name and follow its Execute flow and Critical Rules.** Do not search for skill files by filesystem path. The skill is the source of truth for the full flow (per-task cycle, sub-agent delegation, adequacy review, Verifier, discrimination sensor).
+
+**If the skill cannot be activated, STOP and tell the user - do not proceed without it.**
+
+---
+
+**Design**: `.specs/features/revisao-simplificada/design.md`
+**Spec**: `.specs/features/revisao-simplificada/spec.md`
+**Status**: Verified (PASS, 2026-11-19)
+
+Regras de execução desta feature: cada tarefa escreve primeiro os testes que derivam dos critérios de aceitação da spec e só então o código (os itens `Done when` começam pelo teste); só dados sintéticos; `Documentos/` e `Modelos/` nunca são abertos; um commit por tarefa (Conventional Commits, com `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`), marcando a tarefa neste arquivo e a rastreabilidade da spec no mesmo commit; sem push, deploy nem acesso à VM sem autorização explícita (a migração `0008` vai à VM só no deploy autorizado). A fase 1 muda a regra do que entra nos documentos: as versões já geradas não mudam (AD-012).
+
+---
+
+## Test Coverage Matrix
+
+> Generated from project guidelines, spec and the existing suites. Guidelines found: `CLAUDE.md` (regras de negócio, gate), AD-001 (teste de arquitetura), AD-004 (integração em PostgreSQL real), AD-006, AD-012, AD-019. Existing tests sampled: `backend/tests/unit/{domain,application,infrastructure}`, `backend/tests/integration/{api,doc_usecases,scoring}`, `frontend/src/**/*.test.tsx`.
+
+| Code Layer | Required Test Type | Coverage Expectation | Location Pattern | Run Command |
+| --- | --- | --- | --- | --- |
+| Domain (entities, rules) | unit | All branches; 1:1 to spec ACs; every listed edge case and each boundary value (data no primeiro e no último dia do interstício, carga igual ao mínimo, cadeia de três duplicadas) | `backend/tests/unit/domain/test_*.py` | `cd backend && .venv/bin/pytest tests/unit tests/architecture -q` |
+| Use cases + services | integration | Happy + every listed edge case + error paths (422, 404, 409); atomicidade e idempotência da mesclagem | `backend/tests/integration/{doc_usecases,scoring,api}/test_*.py` | `cd backend && .venv/bin/pytest tests/integration -q` |
+| API routes and schemas | integration | All routes in scope: happy + edge + error paths (401/403/404/409/422); CSRF nas escritas | `backend/tests/integration/api/test_*.py` | `cd backend && .venv/bin/pytest tests/integration/api -q` |
+| Repositories / migrations | integration | Key query paths, número de consultas, FK que não trava o `DELETE` do processo, `upgrade` e `downgrade` | `backend/tests/integration/test_*.py` | `cd backend && .venv/bin/pytest tests/integration -q` |
+| Frontend components/pages | unit | Each SEC, DUP, EDT, QTD AC: render + interação + exibição de erro, com a API simulada; 120 atividades; 360 px sem rolagem horizontal; teclado | `frontend/src/**/*.test.tsx` | `cd frontend && npm test -- --run` |
+| Types / labels / docs | none | build gate only (labels têm teste de texto) | - | build gate only |
+
+## Gate Check Commands
+
+| Gate Level | When to Use | Command |
+| --- | --- | --- |
+| Quick | After tasks with unit tests only | `cd backend && .venv/bin/pytest tests/unit tests/architecture -q` (frontend: `cd frontend && npm test -- --run`) |
+| Full | After tasks with integration tests | `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` |
+| Build | After phase completion or config/type-only tasks | `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run` |
+
+---
+
+## Execution Plan
+
+Phases are ordered and run sequentially - each phase completes before the next begins, and tasks within a phase execute in order. A tarefa que depende de fase anterior lista a dependência em `Depends on`; o diagrama de cada fase mostra só as dependências da própria fase.
+
+### Phase 1: Validade no domínio e no motor
+
+```
+T1 → T2 → T4
+T3 → T4
+T2 → T5 → T6 → T8
+T7 → T8
+```
+
+### Phase 2: Mesclagem
+
+```
+T9 → T10 → T11 → T12
+T13 → T14 → T15 → T16
+T12 → T14
+```
+
+### Phase 3: Regras de escrita
+
+```
+T5 → T17 → T18 → T19 → T20 → T21 → T22
+T14 → T21
+```
+
+### Phase 4: API da lista
+
+```
+T12 → T23 → T24 → T25 → T26
+T22 → T25
+```
+
+### Phase 5: Frontend, peças da Etapa 3
+
+```
+T26 → T27 → T28 → T29 → T33
+T28 → T30 → T33
+T28 → T31
+T28 → T32 → T33
+```
+
+### Phase 6: Frontend, a Etapa 3 montada
+
+```
+T31 → T34 → T36
+T33 → T34
+T33 → T35 → T36
+T28 → T37 → T38
+T36 → T38 → T39
+```
+
+### Phase 7: Frontend, formulário e Etapa 4
+
+```
+T30 → T40 → T41
+T39 → T40
+T39 → T42
+```
+
+### Phase 7b: Frontend, correções da revisão do lote 5
+
+```
+T42 → T45 → T46 → T47 → T48 → T49 → T50 → T51 → T52 → T53 → T54 → T55
+```
+
+### Phase 7c: Correções da rodada 1 do Verifier
+
+```
+T55 → T56 → T57 → T58 → T59 → T60 → T61 → T62
+```
+
+### Phase 8: Documentação e verificação
+
+```
+T62 → T43 → T44
+```
+
+---
+
+## Task Breakdown
+
+### T1: `classify_activity` e `Validity` no domínio
+
+**Status**: Done
+
+**What**: Função pura que decide se a atividade é válida ou não válida, com o motivo, os parâmetros do motivo e se precisa de categoria.
+**Where**: `backend/app/domain/rules/activity_validity.py` (novo)
+**Depends on**: None
+**Reuses**: `evaluate_period` e `is_yearly_unit` (`scoring_periods.py`), `NotScoredReason` (`scoring_alerts.py`), `is_pit_criterion`
+**Requirement**: VAL-06, SEC-02, SEC-06, SEC-07, SEG-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes em `backend/tests/unit/domain/test_activity_validity.py`: rejeitada → `NAO_VALIDA/REJEITADA`; data um dia antes e um dia depois do interstício → `FORA_DO_INTERSTICIO` com `event_date` e `interstice_*` nos parâmetros, e o primeiro e o último dia são válidos; categoria por ano cujo período cruza o interstício → válida, e o que não o toca → fora; sem categoria → `VALIDA` com `needs_category`; grupo que não conta (sem ser PIT) → `GRUPO_NAO_CONTA`; duplicidade residual → `DUPLICIDADE`; carga igual ao mínimo → válida e abaixo → `CARGA_HORARIA_INSUFICIENTE` com `hours` e `min_hours`; sem carga informada → válida; sem tabela só avalia rejeitada, data como dia e categoria; a ordem dos motivos é a do motor
+- [x] `classify_activity` não importa FastAPI nem SQLAlchemy (teste de arquitetura passa)
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(domain): classify an activity as valid or not valid with the reason`
+
+---
+
+### T2: O motor avalia só as atividades válidas
+
+**Status**: Done
+
+**What**: `calculate` classifica cada atividade uma vez, avalia só as válidas, devolve o mapa `validity` no resultado e conta os contadores só sobre as válidas; `_evaluate` perde as saídas antecipadas que `classify_activity` cobre.
+**Where**: `backend/app/domain/rules/scoring_engine.py` (modify)
+**Depends on**: T1
+**Reuses**: `classify_activity` (T1), `find_duplicates`, os testes de caracterização de `test_scoring_characterization.py` e `test_scoring_golden.py`
+**Requirement**: VAL-01, SEG-01, SEG-03, SEG-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/unit/domain/test_scoring_engine_validity.py`: atividade fora do interstício, rejeitada, com carga insuficiente e duplicada não geram linha nem contam nos contadores `activities`, `not_scored` e `pending`; o total e os subtotais não mudam em relação à regra antiga para o mesmo conjunto de válidas; atividade sem categoria continua como linha `SEM_ENQUADRAMENTO`; atividade validada com categoria pontua com o valor unitário da tabela e a quantidade informada sem outra ação; `ScoringResult.validity` traz o estado de cada atividade
+- [x] Os testes de caracterização e os golden existentes passam sem alteração de valor esperado, exceto os que listavam `NAO_PONTUADA` por motivo agora tratado como não válida (cada exceção é anotada no corpo do teste com o requisito SEG-01)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: contagem antes e depois registrada; nenhum teste apagado sem substituto
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `feat(scoring): score only the valid activities`
+
+---
+
+### T3: Código de alerta `QUANTIDADE_ASSUMIDA`
+
+**Status**: Done
+
+**What**: Novo valor `QUANTIDADE_ASSUMIDA` em `ScoringAlertCode`.
+**Where**: `backend/app/domain/rules/scoring_alerts.py` (modify)
+**Depends on**: None
+**Reuses**: os demais códigos do mesmo enum
+**Requirement**: VAL-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Teste em `backend/tests/unit/domain/test_scoring_alerts.py`: o código existe com o texto `QUANTIDADE_ASSUMIDA` e o conjunto de códigos conhecidos do teste de contrato inclui o novo
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: o teste novo passa
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(scoring): add the assumed-quantity alert code`
+
+---
+
+### T4: O motor emite `QUANTIDADE_ASSUMIDA`
+
+**Status**: Done
+
+**What**: Quando o item é por unidade e a atividade não tem quantidade, a linha pontua com quantidade 1 e carrega o alerta `QUANTIDADE_ASSUMIDA`.
+**Where**: `backend/app/domain/rules/scoring_engine.py` (modify)
+**Depends on**: T2, T3
+**Reuses**: `_row_alert`, `scoring_points._per_unit`
+**Requirement**: VAL-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/unit/domain/test_scoring_engine_validity.py`: item por unidade sem quantidade → pontos de 1 unidade e o alerta; com quantidade informada → sem o alerta; item por bloco, por hora e por ano sem quantidade → sem o alerta (a regra é só do item por unidade)
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(scoring): warn when the quantity is assumed to be one`
+
+---
+
+### T5: A Etapa 4 usa a validade, com e sem tabela
+
+**Status**: Done
+
+**What**: `compute_process_score` e `_without_table` trazem só as atividades válidas nas linhas e nos contadores e repassam o mapa `validity` no resultado.
+**Where**: `backend/app/application/use_cases/scoring.py` (modify)
+**Depends on**: T2
+**Reuses**: `classify_activity` (T1), `calculate`, `ProcessScore`
+**Requirement**: SEG-01, SEG-04, VAL-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/api/test_scoring_validity_api.py`: uma co-orientação de mestrado com categoria II.5, validada, aparece na Etapa 4 com 8,00 pontos sem outra ação; uma atividade fora do interstício, uma rejeitada e uma com carga insuficiente não aparecem nas linhas nem nos contadores; sem tabela escolhida, só as válidas contam e as demais não entram; trocar a data de uma atividade fora para dentro a inclui no cálculo seguinte
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; os de `test_scoring_process_api.py` ajustados só nos casos de SEG-01 anotados
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(scoring): compute the process score over the valid activities`
+
+---
+
+### T6: `eligible_activities` recebe a validade
+
+**Status**: Done
+
+**What**: A seleção das atividades dos documentos passa a exigir validada, com grupo e item, e válida; assim Tabela, Relatório e Comprovante usam a mesma regra.
+**Where**: `backend/app/domain/rules/activity_order.py` (modify)
+**Depends on**: T5
+**Reuses**: `ScoringResult.validity` (T2)
+**Requirement**: SEG-01, SEG-02, SEG-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/unit/domain/test_activity_order.py`: validada e válida entra; validada e não válida (por exemplo, fora do interstício) não entra; aguardando revisão não entra; sem categoria não entra; a ordem de `table_order` não muda
+- [x] Todo chamador de `eligible_activities` passa a validade (o teste de arquitetura e o `ruff` pegam o que faltar)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `feat(documents): take only valid activities into the documents`
+
+---
+
+### T7: Código de recusa `ATIVIDADE_SEM_CATEGORIA`
+
+**Status**: Done
+
+**What**: Novo valor `ATIVIDADE_SEM_CATEGORIA` em `GenerationCode`.
+**Where**: `backend/app/domain/entities/generated.py` (modify)
+**Depends on**: None
+**Reuses**: `GenerationCode.ATIVIDADE_SEM_DESCRICAO` como modelo
+**Requirement**: SEG-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] O valor existe e o teste de contrato dos códigos (`test_generation_error_mapping.py`) inclui o novo com status 422
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: nenhum teste apagado
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `feat(documents): add the refusal code for activities without category`
+
+---
+
+### T8: A geração usa a validade e recusa atividade sem categoria
+
+**Status**: Done
+
+**What**: `load_generation_inputs` seleciona as atividades pela validade, `_excluded` conta só as válidas que ficam de fora (aguardando validação) e a geração é recusada com `ATIVIDADE_SEM_CATEGORIA` quando há atividade válida sem categoria.
+**Where**: `backend/app/application/services/generation_inputs.py` (modify)
+**Depends on**: T6, T7
+**Reuses**: `eligible_activities` (T6), `GenerationRefused`
+**Requirement**: SEG-01, SEG-02, SEG-03, SEG-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/api/test_generated_validity_acceptance.py`: com atividades fora do interstício, duplicadas, rejeitadas e com carga insuficiente, a Tabela, o Relatório e o Comprovante não trazem nenhuma delas, nem como "Não pontuada", e o Comprovante não inclui páginas cuja única atividade é não válida; corrigir a data de uma e gerar de novo a inclui; atividade válida sem categoria → 422 `ATIVIDADE_SEM_CATEGORIA` nos três documentos; as versões geradas antes continuam iguais (AD-012)
+- [x] O snapshot `excluded` não lista mais rejeitadas nem sem categoria como "ficaram de fora" (a regra nova as trata como não válidas ou recusa a geração); ajustes nos testes existentes anotados com SEG-01
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; nenhum teste apagado sem substituto
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(documents): generate only from valid activities and refuse uncategorized ones`
+
+---
+
+### T9: Migração `0008_activity_merge`
+
+**Status**: Done
+
+**What**: Colunas `activities.merged_into_id` e `activity_evidences.origin_activity_id` (FK `NO ACTION`), índice parcial e o espelho das colunas nos modelos SQLAlchemy (a mesma mudança de esquema).
+**Where**: `backend/alembic/versions/0008_activity_merge.py` (novo)
+**Depends on**: None
+**Reuses**: `0007_process_purge.py` como modelo; `test_migrations.py`
+**Requirement**: DUP-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/test_migration_activity_merge.py`: após o `upgrade`, as colunas e o índice existem e aceitam nulo; `downgrade` remove as duas colunas e o índice; a FK recusa um id inexistente; o `test_models_match_migrated_schema` passa
+- [x] Cabeça do alembic é `0008`; os dados existentes não mudam
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(db): add the merged-into and origin columns for activity merging`
+
+---
+
+### T10: Campo `merged_into_id` na entidade `Activity`
+
+**Status**: Done
+
+**What**: `Activity.merged_into_id` (nulo por padrão) e `Activity.is_merged`.
+**Where**: `backend/app/domain/entities/activity.py` (modify)
+**Depends on**: T9
+**Reuses**: os campos opcionais existentes da entidade
+**Requirement**: DUP-02, DUP-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Teste em `backend/tests/unit/domain/test_activity_entity.py`: padrão nulo; `is_merged` verdadeiro só com o campo preenchido; `dataclasses.replace` preserva o campo
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(domain): mark an activity as merged into another`
+
+---
+
+### T11: Porta do repositório para a mesclagem
+
+**Status**: Done
+
+**What**: Métodos da porta `ActivityRepository` para listar as mescladas numa atividade, gravar a mesclagem e mover provas, e `origin_activity_id` em `ActivityEvidence`.
+**Where**: `backend/app/domain/repositories/ports.py` (modify)
+**Depends on**: T10
+**Reuses**: `ActivityEvidence` e `EvidenceRepository` existentes
+**Requirement**: DUP-01, DUP-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Porta com `list_merged_into(activity_id)`, `set_merged_into(activity, target_id, expected_version)`, `list_for_process(..., include_merged=False)`, e `EvidenceRepository.move(evidence_ids, to_activity_id, origin_activity_id)` / `restore_from(origin_activity_id)`; `ActivityEvidence.origin_activity_id`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (o teste de arquitetura continua passando)
+- [x] Test count: nenhum teste apagado
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `feat(domain): extend the activity ports for merging`
+
+---
+
+### T12: Repositórios SQL da mesclagem
+
+**Status**: Done
+
+**What**: Implementação SQL das portas: a lista padrão deixa de trazer as mescladas, e as provas movem e voltam com a origem gravada.
+**Where**: `backend/app/infrastructure/database/repositories.py` (modify)
+**Depends on**: T11
+**Reuses**: `SqlActivityRepository`, `SqlEvidenceRepository`, `_ACTIVITY_FIELDS`
+**Requirement**: DUP-02, DUP-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/test_repositories_merge.py`: lista padrão sem mescladas e com `include_merged=True` com elas; `set_merged_into` respeita a versão esperada (409 se mudou); mover provas grava `origin_activity_id`, não repete o par documento e página que a mantida já tem, e `restore_from` devolve só as provas que vieram dela; excluir um processo com atividade mesclada pelo `DELETE` do caso de uso apaga tudo sem violar a FK
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(db): list, merge and restore activities and their evidences`
+
+---
+
+### T13: `duplicate_pairs` com cadeias
+
+**Status**: Done
+
+**What**: Função que devolve os pares (duplicada, original) pela mesma regra de `find_duplicates` e agrupa cadeias A, B, C num grupo só.
+**Where**: `backend/app/domain/rules/scoring_duplicates.py` (modify)
+**Depends on**: None
+**Reuses**: `similar_titles`, `find_duplicates`
+**Requirement**: DUP-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/unit/domain/test_scoring_duplicates.py`: o conjunto de duplicadas de `duplicate_pairs` é o mesmo de `find_duplicates` para as mesmas entradas; A~B e B~C formam um grupo de três; atividades `distinct_justification` não formam par; `duplicate_groups` devolve grupos ordenados por criação
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam; os existentes de `find_duplicates` seguem verdes
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(domain): group duplicate activities into chains`
+
+---
+
+### T14: `merge_process` (mesclagem do processo)
+
+**Status**: Done
+
+**What**: Mescla as duplicadas do processo: fica a validada mais antiga, ou a mais antiga se nenhuma ou todas estão validadas; as provas passam para a mantida; auditoria `MERGE`; idempotente e atômica.
+**Where**: `backend/app/application/services/activity_merge.py` (novo)
+**Depends on**: T12, T13
+**Reuses**: `duplicate_groups` (T13), `uow.activities`, `uow.evidences`, `AuditService`
+**Requirement**: DUP-01, DUP-02, DUP-03, DUP-05, DUP-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_activity_merge.py`: duas duplicadas viram uma com as provas das duas e sem par documento e página repetido; fica a validada mesmo se a outra é mais antiga; com as duas validadas ou nenhuma fica a mais antiga; cadeia de três vira uma; a mesclada permanece no banco com `merged_into_id` e um evento de auditoria com os dois ids; repetir não muda nada; uma falha no meio (repositório forçado a falhar) não deixa atividade nem prova alterada; processo somente leitura não é alterado
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(activities): merge duplicate activities of a process`
+
+---
+
+### T15: `separate` ("Não é duplicada")
+
+**Status**: Done
+
+**What**: Restaura a atividade mesclada, devolve as provas que vieram dela e marca as duas como distintas.
+**Where**: `backend/app/application/services/activity_merge.py` (modify)
+**Depends on**: T14
+**Reuses**: `MarkActivitiesDistinct`, `distinct_justification`
+**Requirement**: DUP-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_activity_separate.py`: depois de `separate` a atividade volta às listas, suas provas voltam, as duas ficam como distintas e `merge_process` não as mescla de novo; só uma atividade mesclada pode ser separada (outra → 422); auditoria do evento; versão desatualizada → 409
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(activities): separate a merged activity back into two`
+
+---
+
+### T16: Rotas de mesclagem e de separação
+
+**Status**: Done
+
+**What**: `POST /api/processes/{id}/activities/merge-duplicates` → `{merged: n}` e `POST /api/activities/{id}/separate` → a atividade; o modelo de resposta `MergeOut` fica no módulo de esquemas de atividade.
+**Where**: `backend/app/presentation/api/activities.py` (modify)
+**Depends on**: T15
+**Reuses**: `validate_batch` e `mark_distinct` como modelo de rota; `container.py`
+**Requirement**: DUP-04, DUP-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/api/test_activity_merge_api.py`: `merge-duplicates` devolve o número de mesclagens e uma segunda chamada devolve 0; processo somente leitura devolve 0 sem alterar; processo de outro usuário → 404; sem CSRF → 403; `separate` devolve a atividade restaurada, 422 numa atividade não mesclada, 404 fora do acesso
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(api): add the merge-duplicates and separate routes`
+
+---
+
+### T17: Validar exige categoria e atividade válida
+
+**Status**: Done
+
+**What**: `ChangeActivityStatus` recusa `VALIDADA` sem categoria (422 no campo `categoria`) e para atividade não válida (422 `ATIVIDADE_NAO_VALIDA` no campo `status`); rejeitar e reabrir seguem livres.
+**Where**: `backend/app/application/use_cases/scoring.py` (modify)
+**Depends on**: T5
+**Reuses**: `classify_activity` (T1), `ValidationFailed`
+**Requirement**: VAL-03, VAL-05, VAL-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/api/test_activity_validate_rules_api.py`: sem categoria → 422 com campo `categoria` e a mensagem "Escolha a categoria antes de validar" e a atividade intacta; atividade fora do interstício → 422 `ATIVIDADE_NAO_VALIDA`; atividade com categoria dentro do interstício → 200 e a auditoria do status gravada sem justificativa; rejeitar e reabrir uma atividade sem categoria funcionam
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; os de `test_activities_api.py` que validavam sem categoria ajustados com anotação VAL-03
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(activities): require a category and a valid activity to validate`
+
+---
+
+### T18: Validação em lote com `skipped`
+
+**Status**: Done
+
+**What**: `BulkValidateActivities` valida as que podem e devolve `skipped` com o motivo das que ficaram de fora; versão alterada (409) e atividade de outro processo (404) continuam derrubando tudo.
+**Where**: `backend/app/application/use_cases/scoring.py` (modify)
+**Depends on**: T17
+**Reuses**: `classify_activity`, a regra de T17
+**Requirement**: VAL-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/test_bulk_validate_skipped.py`: um lote com 3 atividades com categoria e 2 sem valida as 3 e devolve as 2 em `skipped` com o motivo `SEM_CATEGORIA`; uma não válida entra em `skipped` com o motivo da validade; um 409 de versão alterada não valida nenhuma; "Validar as confiáveis" (mesma rota) segue a regra
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(activities): validate in batch and list what was skipped`
+
+---
+
+### T19: Rota do lote devolve `{activities, skipped}`
+
+**Status**: Done
+
+**What**: A rota `POST /api/processes/{id}/activities/validate` passa a responder `{activities, skipped}`; o modelo de resposta acompanha, no módulo de esquemas de atividade.
+**Where**: `backend/app/presentation/api/activities.py` (modify)
+**Depends on**: T18
+**Reuses**: `validate_batch`, `ActivityOut`
+**Requirement**: VAL-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/api/test_bulk_validate_api.py` (ajustado): o corpo novo traz `activities` e `skipped: [{id, reason}]`; o código 409 e o 404 seguem; sem CSRF → 403
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes de `test_bulk_validate_api.py` ajustados mantêm a cobertura
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(api): return the skipped activities from the batch validation`
+
+---
+
+### T20: Data dentro do interstício e quantidade válida na edição
+
+**Status**: Done
+
+**What**: A criação manual e `UpdateActivity` recusam data fora do interstício (422 no campo da data, com a faixa na mensagem); nas categorias por ano o período só precisa tocar o interstício; a criação a partir de documento não passa por essa checagem.
+**Where**: `backend/app/application/use_cases/scoring.py` (modify)
+**Depends on**: T19
+**Reuses**: `evaluate_period`, `is_yearly_unit`, `ValidationFailed`, `_validate_basics`
+**Requirement**: EDT-02, EDT-03, EDT-06, QTD-02, QTD-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/api/test_activity_edit_rules_api.py`: data de 2023 num processo de 2024 a 2026 → 422 em `event_date` com "A data deve estar entre dd/mm/aaaa e dd/mm/aaaa" e a atividade intacta; o primeiro e o último dia passam; categoria por ano cujo período cruza o interstício passa e o que não o toca → 422 em `period_start`/`period_end`; criação manual fora → 422; a criação a partir de documento (`source` `SUGERIDA_IA`) fora do interstício é aceita (nasce e fica não válida); quantidade negativa ou não numérica → 422 em `quantidade`; mudar a quantidade recalcula a pontuação e grava a auditoria sem justificativa; editar sem alterar a data de uma atividade já fora do interstício é recusado só se o corpo trouxer essa data
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; os existentes que criavam atividades manuais com datas fora do interstício ajustados com anotação EDT-02
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(activities): require the activity date inside the interstice on manual edits`
+
+---
+
+### T21: Criar e editar atividade mesclam as duplicadas
+
+**Status**: Done
+
+**What**: `CreateActivity` e `UpdateActivity` chamam `merge_process` depois de gravar, na mesma unidade de trabalho.
+**Where**: `backend/app/application/use_cases/scoring.py` (modify)
+**Depends on**: T14, T20
+**Reuses**: `merge_process` (T14)
+**Requirement**: DUP-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/api/test_activity_merge_on_write_api.py`: criar uma atividade igual a outra mescla na hora e a lista mostra uma só com as duas provas; editar o título para igualar a outra mescla; editar até deixar de ser duplicada não desfaz a mesclagem; uma falha da mesclagem reverte também a criação
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(activities): merge duplicates when an activity is created or edited`
+
+---
+
+### T22: A leitura de documentos mescla as duplicadas
+
+**Status**: Done
+
+**What**: `ProcessDocument` chama `merge_process` ao fim da leitura e do reprocessamento; a atividade criada de documento fora do interstício nasce e aparece como não válida.
+**Where**: `backend/app/application/use_cases/document_processing.py` (modify)
+**Depends on**: T21
+**Reuses**: `merge_process` (T14), `ProcessDocument._store`
+**Requirement**: DUP-04, SEC-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_document_merge.py`: dois documentos que levam à mesma atividade resultam em uma só com as duas provas; reprocessar um documento que passa a duplicar mescla; uma atividade lida com data fora do interstício é criada (sem erro) e a validade a classifica como `FORA_DO_INTERSTICIO`; uma falha da mesclagem não perde a leitura do documento (o documento fica em erro tratável, sem atividade pela metade)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; os de `inteligencia-documental` seguem verdes
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(documents): merge duplicate activities after reading a document`
+
+---
+
+### T23: Candidatos carregados em lote
+
+**Status**: Done
+
+**What**: `list_for_process` carrega os candidatos de todas as atividades numa consulta só, em vez de uma por atividade.
+**Where**: `backend/app/infrastructure/database/repositories.py` (modify)
+**Depends on**: T12
+**Reuses**: `SqlActivityRepository._to_entity`
+**Requirement**: SEC-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Teste primeiro em `backend/tests/integration/test_repositories_activity_queries.py`: listar 300 atividades com candidatos executa um número de consultas que não cresce com o número de atividades (contado com o evento do SQLAlchemy); os candidatos continuam na mesma ordem
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `perf(db): load the candidates of the activities in one query`
+
+---
+
+### T24: Esquema `ActivityOut` com validade, mescladas e pontos previstos
+
+**Status**: Done
+
+**What**: `ActivityOut` ganha `validity`, `merged` (`[{id, title}]`) e `predicted_points`; `ValidityOut` espelha o domínio.
+**Where**: `backend/app/presentation/schemas/activities.py` (modify)
+**Depends on**: T23
+**Reuses**: `Validity` (T1), `Money`
+**Requirement**: SEC-01, SEC-07, DUP-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/unit/presentation/test_activity_schema.py`: a serialização traz `validity.state/reason/needs_category/params` com datas e horas em texto, `merged` e `predicted_points` (nulo quando não há previsão); campos extras seguem recusados; nenhum dado pessoal novo
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(api): add validity, merged activities and predicted points to the activity schema`
+
+---
+
+### T25: `ListActivities` devolve a validade
+
+**Status**: Done
+
+**What**: O caso de uso devolve cada atividade com a validade, as mescladas nela e os pontos previstos (da linha de cálculo, sem exigir validação); as mescladas não aparecem como linhas.
+**Where**: `backend/app/application/use_cases/scoring.py` (modify)
+**Depends on**: T24, T22
+**Reuses**: `compute_process_score`, `ScoringResult.validity`, `list_merged_into`
+**Requirement**: SEC-02, SEC-06, SEC-07, SEC-08, SEC-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/test_list_activities_validity.py`: cada motivo (rejeitada, fora do interstício, carga insuficiente) sai com `reason` e `params` corretos; sem categoria sai `VALIDA` com `needs_category`; `predicted_points` traz o valor previsto para atividade aguardando validação com categoria e nulo sem categoria; as mescladas ficam fora da lista e a mantida traz `merged`; ao corrigir uma atividade não válida, a listagem seguinte a traz como válida; reabrir uma rejeitada a devolve a `AGUARDANDO_REVISAO` e válida; sem tabela escolhida a validade sai sem carga horária e sem grupo
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(activities): list activities with their validity and predicted points`
+
+---
+
+### T26: Rota da lista com os campos novos
+
+**Status**: Done
+
+**What**: `GET /api/processes/{id}/activities` e `GET /api/activities/{id}` montam `ActivityOut` com a validade, as mescladas e os pontos previstos.
+**Where**: `backend/app/presentation/api/activities.py` (modify)
+**Depends on**: T25
+**Reuses**: `_present` e `ListActivities`
+**Requirement**: SEC-02, SEC-06, SEC-08, SEG-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `backend/tests/integration/api/test_activities_validity_api.py`: a lista de um processo com 120 atividades devolve todas, com a validade; uma mesclada não aparece e a mantida lista `merged`; `GET /api/activities/{id}` traz os mesmos campos; processo fora do acesso → 404; o fluxo da Etapa 4 (validar e pontuar) segue verde
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam; `test_activities_api.py` ajustado só onde o corpo ganhou campos
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(api): serve validity, merged and predicted points on the activity routes`
+
+---
+
+### T27: Tipos do frontend
+
+**Status**: Done
+
+**What**: `Validity`, `InvalidReason`, `MergedRef`, `BulkValidateResult` e os campos novos de `Activity` em `types.ts`.
+**Where**: `frontend/src/api/types.ts` (modify)
+**Depends on**: T26
+**Reuses**: os tipos de `Activity` e `ScoringAlert` existentes
+**Requirement**: SEC-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Tipos exportados conforme o Design (`state`, `reason`, `needs_category`, `params`), `GenerationCode` com `ATIVIDADE_SEM_CATEGORIA` e `ScoringAlertCode` com `QUANTIDADE_ASSUMIDA`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `feat(frontend): type the activity validity`
+
+---
+
+### T28: Rótulos dos motivos, selos e mensagens
+
+**Status**: Done
+
+**What**: Textos em `labels.ts`: motivos de não válida, selos "Precisa de categoria" e "Aguardando validação", mensagem do bloqueio, mensagem do alerta `QUANTIDADE_ASSUMIDA` e a recusa `ATIVIDADE_SEM_CATEGORIA`.
+**Where**: `frontend/src/labels.ts` (modify)
+**Depends on**: T27
+**Reuses**: `GENERATION_CODE_LABELS`, `SCORING_ALERT_LABELS`
+**Requirement**: SEC-07, VAL-02, SEG-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/labels.test.ts`: o texto de cada motivo bate com a spec ("Fora do interstício: data dd/mm/aaaa; interstício dd/mm/aaaa a dd/mm/aaaa", "Carga horária insuficiente: N h; o item exige M h", "Rejeitada por você"); cada código de `GenerationCode` e de `ScoringAlertCode` tem rótulo
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(frontend): add the labels of the validity reasons`
+
+---
+
+### T29: `ReasonText`
+
+**Status**: Done
+
+**What**: Componente que escreve o motivo de uma atividade não válida a partir de `validity.params`.
+**Where**: `frontend/src/components/ReasonText.tsx` (novo)
+**Depends on**: T28
+**Reuses**: `formatDate` e os rótulos de T28
+**Requirement**: SEC-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/components/ReasonText.test.tsx`: cada motivo gera o texto exato da spec com as datas e horas dos parâmetros; período por ano usa início e fim; o motivo não depende só de cor (o texto está presente)
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(frontend): show why an activity is not valid`
+
+---
+
+### T30: `CategoryPicker`
+
+**Status**: Done
+
+**What**: Seletor de categoria com grupos e itens, usado na linha e no formulário.
+**Where**: `frontend/src/components/CategoryPicker.tsx` (novo)
+**Depends on**: T28
+**Reuses**: a lista de critérios da tabela escolhida e o seletor de `ActivityReviewList`
+**Requirement**: SEC-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/components/CategoryPicker.test.tsx`: lista os itens por grupo; escolher chama `onChange` na hora, sem justificativa; rótulo acessível; operável por teclado; sem tabela escolhida mostra a mensagem de escolher a tabela
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(frontend): add the category picker`
+
+---
+
+### T31: `ActivityFilters`
+
+**Status**: Done
+
+**What**: Busca por título, chips de situação com contagem (todas, aguardando validação, validadas, precisa de categoria) e filtro por grupo.
+**Where**: `frontend/src/components/ActivityFilters.tsx` (novo)
+**Depends on**: T28
+**Reuses**: o padrão de chips de `DocumentList`
+**Requirement**: SEC-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/components/ActivityFilters.test.tsx`: cada chip mostra a contagem recebida; clicar marca `aria-pressed` e chama `onChange`; a busca chama `onChange` com o texto; o filtro por grupo lista só os grupos presentes; limpar volta ao padrão
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(frontend): add the activity filters`
+
+---
+
+### T32: `MergedNote`
+
+**Status**: Done
+
+**What**: Texto "N duplicadas mescladas" com o botão "Não é duplicada" por mesclada.
+**Where**: `frontend/src/components/MergedNote.tsx` (novo)
+**Depends on**: T28
+**Reuses**: `Modal` (confirmação não é necessária: age na hora)
+**Requirement**: DUP-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/components/MergedNote.test.tsx`: mostra "1 duplicada mesclada" e "2 duplicadas mescladas" com os títulos; "Não é duplicada" chama `POST /api/activities/{id}/separate` e avisa o pai; erro 409/422 mostra a mensagem; sem mescladas não renderiza nada
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(frontend): show the merged duplicates of an activity`
+
+---
+
+### T33: `ActivityRow`
+
+**Status**: Done
+
+**What**: Linha responsiva da atividade: título, data, categoria, pontos previstos, selos e ações (Validar só na válida; Editar; Rejeitar; Reabrir; Vincular).
+**Where**: `frontend/src/components/ActivityRow.tsx` (novo)
+**Depends on**: T29, T30, T32
+**Reuses**: `CategoryPicker`, `ReasonText`, `MergedNote`, as ações de `ActivityReviewList`
+**Requirement**: VAL-06, SEC-04, SEC-12
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/components/ActivityRow.test.tsx`: atividade válida com categoria mostra Validar; sem categoria mostra o selo "Precisa de categoria" com o seletor e sem Validar; não válida não mostra Validar e mostra o motivo; rejeitada mostra Reabrir; os pontos previstos aparecem; os selos têm texto; os botões têm nome acessível e a linha cabe em 360 px (classe responsiva sem largura fixa)
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(frontend): add the activity row with badges and actions`
+
+---
+
+### T34: Seção "Atividades válidas"
+
+**Status**: Done
+
+**What**: Seção com filtros, 25 por vez com "Mostrar mais", seleção, "Validar selecionadas", "Validar as confiáveis" (com a lista das puladas) e vínculo de documento.
+**Where**: `frontend/src/components/ValidActivitiesSection.tsx` (novo)
+**Depends on**: T31, T33
+**Reuses**: `ActivityRow`, `ActivityFilters`, o lote de `ActivityReviewList`
+**Requirement**: SEC-02, SEC-03, SEC-05, SEC-11, VAL-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/components/ValidActivitiesSection.test.tsx`: com 120 atividades mostra 25 e "Mostrar mais" mostra mais 25; os chips contam sobre a lista inteira; a busca e o filtro por grupo funcionam; o título traz o total; "Nenhuma atividade válida ainda" quando vazia; validar em lote chama a rota e mostra "12 validadas; 3 ficaram sem categoria" com a lista; "N atividades precisam de categoria" aparece quando há selo
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(frontend): add the valid activities section`
+
+---
+
+### T35: Seção "Atividades não válidas"
+
+**Status**: Done
+
+**What**: Seção fechada ao abrir, com `aria-expanded`, total e contagem por motivo no título; cada linha com o motivo e Editar (e Reabrir nas rejeitadas).
+**Where**: `frontend/src/components/InvalidActivitiesSection.tsx` (novo)
+**Depends on**: T33
+**Reuses**: `ActivityRow`, `ReasonText`
+**Requirement**: SEC-06, SEC-07, SEC-09, SEC-10, SEC-11, SEC-12
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/components/InvalidActivitiesSection.test.tsx`: abre fechada; o botão alterna `aria-expanded` e é focável por teclado; o título mostra o total e a contagem por motivo; as linhas mostram o motivo em texto; Editar e Reabrir chamam os callbacks; "Nenhuma atividade não válida" quando vazia; 25 por vez com "Mostrar mais"
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(frontend): add the not valid activities section`
+
+---
+
+### T36: `ActivityWorkspace`
+
+**Status**: Done
+
+**What**: Monta as duas seções, divide a lista pela validade e move a atividade de seção quando a edição ou a reabertura muda a validade, sem recarregar a página.
+**Where**: `frontend/src/components/ActivityWorkspace.tsx` (novo)
+**Depends on**: T34, T35
+**Reuses**: `ValidActivitiesSection`, `InvalidActivitiesSection`, `ActivityForm`, `activityBody`
+**Requirement**: SEC-01, SEC-08, SEC-09, SEC-12
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/components/ActivityWorkspace.test.tsx`: as duas seções com o total no título; editar a data de uma não válida para dentro do interstício a move para as válidas; reabrir uma rejeitada a move; uma mesclada não aparece; o layout não força rolagem horizontal em 360 px (sem largura mínima fixa); os títulos das seções são navegáveis por teclado
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(frontend): compose the two sections of the activity review`
+
+---
+
+### T37: `StepNav` com `blocked`
+
+**Status**: Done
+
+**What**: `StepNav` ganha `blocked` (passo e mensagem) e desabilita o avanço para a Etapa 4 e as seguintes enquanto bloqueado.
+**Where**: `frontend/src/components/StepNav.tsx` (modify)
+**Depends on**: T28
+**Reuses**: `enabled` e `current` existentes
+**Requirement**: SEC-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/components/StepNav.test.tsx`: com `blocked` as etapas 4 e seguintes ficam desabilitadas com `aria-disabled` e a mensagem "N atividades precisam de categoria"; sem `blocked` o comportamento atual não muda; as etapas anteriores seguem ativas
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam; os existentes seguem
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(frontend): block the next steps while activities lack a category`
+
+---
+
+### T38: A página da Etapa 3 usa a nova tela
+
+**Status**: Done
+
+**What**: `ProcessActivities` chama `merge-duplicates` uma vez ao abrir, carrega a lista e mostra o `ActivityWorkspace`; o avanço fica bloqueado com atividade válida sem categoria.
+**Where**: `frontend/src/pages/ProcessActivities.tsx` (modify)
+**Depends on**: T36, T37
+**Reuses**: `ActivityWorkspace`, `StepNav` com `blocked`, `usePolling`
+**Requirement**: SEC-01, SEC-05, DUP-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/pages/ProcessActivities.test.tsx`: abrir a página chama `merge-duplicates` uma vez (não em recarga por validar) e depois a lista; com 3 atividades sem categoria o avanço para a Etapa 4 fica bloqueado com "3 atividades precisam de categoria"; escolher a categoria na linha libera o avanço sem recarregar; processo somente leitura não chama a mesclagem; a falha da mesclagem não impede carregar a lista
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(frontend): open the activity review with merging and the category gate`
+
+---
+
+### T39: Remover `ActivityReviewList`
+
+**Status**: Done
+
+**What**: Remove o componente antigo e o teste dele depois de conferir que cada comportamento foi portado.
+**Where**: `frontend/src/components/ActivityReviewList.tsx` (remover)
+**Depends on**: T38
+**Reuses**: a lista dos 22 testes de `ActivityReviewList.test.tsx` como roteiro de cobertura
+**Requirement**: SEC-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Uma tabela no corpo do commit mapeia cada um dos 22 testes antigos ao teste novo que cobre o comportamento (seleção, validar em lote, validar as confiáveis, vincular documento, rejeitar, reabrir, selo de revisão, filtros), ou à decisão da spec que o aposentou
+- [x] `ActivityReviewList.tsx` e `.test.tsx` removidos; nenhum import restante
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: o total cai só pelos 22 testes mapeados
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `refactor(frontend): remove the single-table activity review list`
+
+---
+
+### T40: Formulário de edição enxuto
+
+**Status**: Done
+
+**What**: `ActivityForm` mostra Título, Data (ou Início e Fim nas categorias por ano), Categoria e Horas só quando a categoria tem carga mínima; nova atividade acrescenta Quantidade; oferta do Grupo I mostra só Título e Categoria; sem campo de comprovante.
+**Where**: `frontend/src/components/ActivityForm.tsx` (modify)
+**Depends on**: T30, T39
+**Reuses**: `CategoryPicker`, `activityBody` (continua mandando o corpo completo)
+**Requirement**: EDT-01, EDT-04, EDT-05, EDT-06, EDT-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/components/ActivityForm.test.tsx`: os campos exibidos para cada caso (categoria comum, por ano, com carga mínima, Grupo I, nova manual); salvar manda o corpo completo e mantém Quantidade, Horas, descrição e pontos que não foram editados; salvar aplica na hora, sem campo de justificativa; nenhum campo de texto de comprovante
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes antigos de campos removidos substituídos por testes dos campos novos, contagem registrada
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(frontend): simplify the activity edit form`
+
+---
+
+### T41: Erros de data no formulário
+
+**Status**: Done
+
+**What**: O erro 422 de data fora do interstício aparece no campo da data com a faixa, e o formulário mantém o que o usuário digitou.
+**Where**: `frontend/src/components/ActivityForm.tsx` (modify)
+**Depends on**: T40
+**Reuses**: `FieldError`, `ApiError.body`
+**Requirement**: EDT-02, EDT-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/components/ActivityForm.test.tsx`: 422 em `event_date` mostra "A data deve estar entre dd/mm/aaaa e dd/mm/aaaa" no campo; 422 em `period_start` ou `period_end` mostra no campo do período; o formulário não fecha e os valores seguem; 409 mostra a mensagem de versão alterada
+- [x] Gate check passes: `cd frontend && npm test -- --run`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(frontend): show the interstice date errors on the form`
+
+---
+
+### T42: Quantidade, horas e valor manual na Etapa 4
+
+**Status**: Done
+
+**What**: `ScoreEditor` oferece Quantidade (ou Horas nos itens medidos por horas) e o valor unitário manual, e mostra o erro 422 de `quantidade`.
+**Where**: `frontend/src/components/ScoreEditor.tsx` (modify)
+**Depends on**: T39
+**Reuses**: `FieldError`, a chamada de edição de `ProcessScoring`
+**Requirement**: QTD-01, QTD-02, QTD-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/components/ScoreEditor.test.tsx`: item por unidade mostra Quantidade; item por horas mostra Horas; o valor unitário manual segue; salvar manda o corpo completo e recarrega o total; quantidade negativa mostra o erro do campo vindo do 422; sem campo de justificativa
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `feat(frontend): edit quantity and hours in the score editor`
+
+---
+
+### T45: TF1, foco e anúncio depois de ações na linha
+
+**Status**: Done
+
+**What**: Depois de validar, rejeitar, reabrir, salvar a edição ou escolher a categoria na linha, o foco vai para um elemento estável e o resultado é anunciado numa região viva sempre montada; "Mostrar mais" leva o foco à primeira linha nova e o contador de linhas é região viva.
+**Where**: `frontend/src/components/ActivityWorkspace.tsx` (modify), com `ActivityRow.tsx`, `ValidActivitiesSection.tsx`, `InvalidActivitiesSection.tsx` e `CategoryPicker.tsx`
+**Depends on**: T42
+**Reuses**: `Modal` (devolve o foco ao abridor que ainda existe), `role="status"`
+**Requirement**: SEC-12, SEC-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro (que falham antes): depois de Validar, Rejeitar, Reabrir e de escolher a categoria na linha, `document.activeElement` é um elemento da página (o título da linha, com `tabIndex=-1`, ou o da linha seguinte quando ela some), nunca o `<body>`; uma região `role="status"` sempre montada no `ActivityWorkspace` diz "<título> validada", "rejeitada", "reaberta" e "categoria definida"; ao salvar a edição no modal o foco volta a um elemento estável da seção; "Mostrar mais" nas duas seções leva o foco à primeira linha nova e o texto "Mostrando N de M" tem `aria-live="polite"`
+- [x] A gravação da categoria continua imediata (regra 5 do projeto), sem botão de confirmar
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os 508 testes seguem e os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): keep the focus and announce the result after a row action`
+
+---
+
+### T46: TF2, o erro da linha sobrevive à recarga e não se duplica
+
+**Status**: Done
+
+**What**: O aviso de 409 ou 422 de uma escrita da linha sobe para o `ActivityWorkspace` e aparece numa região `role="alert"` que sobrevive à recarga em que a linha troca de seção; no 422 do campo `categoria` só o erro do seletor aparece.
+**Where**: `frontend/src/components/ActivityWorkspace.tsx` (modify), com `ActivityRow.tsx`
+**Depends on**: T45
+**Reuses**: a região viva da T45, `fieldErrors`, `errorMessage`
+**Requirement**: SEC-04, SEC-12
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro (que falham antes): um 409 ao validar mostra o aviso com o título da atividade e a recarga que tira a linha da seção não apaga o aviso; um 422 de `status` idem; um 422 de `categoria` mostra o texto uma só vez, no `FieldError` do seletor, sem outro `role="alert"` com a mesma mensagem
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): keep the row error visible when the row changes section`
+
+---
+
+### T47: TF3, a Etapa 3 sem tabela escolhida não fica sem saída
+
+**Status**: Done
+
+**What**: O bloqueio do avanço (SEC-05) só vale quando a Etapa 3 tem tabela (a lista de grupos não está vazia); sem tabela o avanço fica livre e a Etapa 3 mostra o aviso de que falta escolher a tabela, com o link para a Etapa 4.
+**Where**: `frontend/src/pages/ProcessActivities.tsx` (modify), com `CategoryPicker.tsx`
+**Depends on**: T46
+**Reuses**: `needsCategoryMessage`, `StepNav`
+**Requirement**: SEC-05, SEC-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/pages/ProcessActivities.test.tsx` (que falham antes): `GET /scoring/table` com `chosen` e `suggested` nulos e uma atividade sem categoria deixa "Ir para a Etapa 4" como link habilitado, o `StepNav` sem bloqueio e o aviso "Escolha a tabela de pontuação na Etapa 4..." com o link para a Etapa 4; com tabela, a mesma atividade bloqueia o avanço e mostra "1 atividade precisa de categoria"
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): do not block the next step when no table is chosen`
+
+---
+
+### T48: TF4, filtros e seleção coerentes
+
+**Status**: Done
+
+**What**: O filtro de grupo mostra a contagem de cada grupo; a seleção só conta e valida as atividades filtradas; a caixa de seleção some da linha que precisa de categoria e tem alvo de toque de 1,25 rem; "Selecionar todas" diz quantas estão além das mostradas.
+**Where**: `frontend/src/components/ValidActivitiesSection.tsx` (modify), com `ActivityFilters.tsx`, `ActivityRow.tsx`, `activityList.ts` e `styles.css`
+**Depends on**: T47
+**Reuses**: `filterActivities`, `groupsOf`
+**Requirement**: SEC-03, SEC-11
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro (que falham antes): as opções do filtro de grupo trazem a contagem ("II · Orientação (12)") calculada sobre as válidas; filtrar por grupo esconde da seleção, e do contador de "Validar as selecionadas (N)", as atividades que ficaram de fora; a linha que precisa de categoria não oferece a caixa de seleção; `styles.css` dá à caixa de seleção 1.25rem por 1.25rem; "Selecionar todas (N)" informa no texto quantas das N estão além das mostradas
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): count the groups and cross the selection with the filters`
+
+---
+
+### T49: TF5, acessibilidade dos formulários e da navegação
+
+**Status**: Done
+
+**What**: O foco do erro 422 do formulário da atividade acha o seletor de categoria; os formulários de vínculo e de pontuação focam o primeiro campo inválido e mostram o erro como alerta; um 422 de campo sem entrada vira alerta geral; o `StepNav` tem região viva sempre montada e os itens fechados apontam a mensagem; o critério dos 70% de "Validar as confiáveis" é texto visível.
+**Where**: `frontend/src/components/ActivityForm.tsx` (modify), com `CategoryPicker.tsx`, `ActivityLinkForm.tsx`, `ScoreEditor.tsx`, `StepNav.tsx`, `FieldError.tsx` e `ValidActivitiesSection.tsx`
+**Depends on**: T48
+**Reuses**: `fieldErrors`, `errorProps`, `FieldError`
+**Requirement**: SEC-05, SEC-12, EDT-02, QTD-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro (que falham antes): 422 em `categoria` no `ActivityForm` leva o foco ao seletor de categoria; 422 em `document_id` ou `page` no `ActivityLinkForm` e em `quantidade`, `horas` ou `unit_points_override` no `ScoreEditor` leva o foco ao primeiro campo inválido e o erro tem `role="alert"`; 422 de um campo sem input no `ScoreEditor` mostra o alerta geral; o `StepNav` tem sempre uma região `aria-live="polite"` (vazia sem bloqueio; sem `role="status"`, para não duplicar o `status` das páginas) e os itens fechados e "Ir para a Etapa 4" têm `aria-describedby` com o id da mensagem; o critério dos 70% é um texto visível ligado ao botão por `aria-describedby`, sem `title`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): focus and announce the form errors and the blocked steps`
+
+---
+
+### T50: TF6, notas do `ScoreEditor` e decisões registradas
+
+**Status**: Done
+
+**What**: As notas "para informar pontos use Editar" e "pontos informados na edição da atividade" do `ScoreEditor` apontam o caminho real; `design.md` registra as decisões do lote 5 (bloqueio a partir da Etapa 3, horas de PIT fora da linha, "Validar as confiáveis" sem motivo por linha).
+**Where**: `frontend/src/components/ScoreEditor.tsx` (modify), com `.specs/features/revisao-simplificada/design.md`
+**Depends on**: T49
+**Reuses**: EDT-01, QTD-01, regra 7 do `CLAUDE.md` (`unit_points_override`)
+**Requirement**: EDT-01, QTD-01, QTD-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/components/ScoreEditor.test.tsx` (que falham antes): a nota dos itens de carga semanal e a dos itens de valor informado não mandam mais "Editar" da Etapa 3 e dizem onde os pontos se informam; os testes que dependiam do texto antigo seguem com a mesma força
+- [x] Item `VALOR_INFORMADO` sem caminho de entrada de pontos não ganha solução nova: vira pergunta aberta no relatório
+- [x] `design.md` com a seção "Decisões do lote 5" (SEC-05 desde a Etapa 3 com recusa `ATIVIDADE_SEM_CATEGORIA` no servidor; horas de PIT só na Etapa 4; "Validar as confiáveis" explica só o critério)
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): point the score editor notes to the real path`
+
+---
+
+### T51: TF7, `hasTable` vem da tabela escolhida, não das categorias
+
+**Status**: Done
+
+**What**: `hasTable` da Etapa 3 deriva de `GET /scoring/table` (`chosen` ou `suggested` não nulos) e fica em `Loaded`; se a tabela existe mas a leitura das versões falha, o avanço continua bloqueado e a página mostra o erro de carga das categorias, sem o aviso falso de "nenhuma tabela".
+**Where**: `frontend/src/pages/ProcessActivities.tsx` (modify)
+**Depends on**: T50
+**Reuses**: `load`, `needsCategoryMessage`, `errorMessage`
+**Requirement**: SEC-05, SEC-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro em `frontend/src/pages/ProcessActivities.test.tsx` (que falham antes): com `GET /scoring/table` com tabela escolhida, `GET /scoring-versions/:id` falhando e uma atividade válida sem categoria, a página não mostra "Nenhuma tabela de pontuação foi escolhida", mostra o erro de carga das categorias e mantém o avanço bloqueado; sem tabela (`chosen` e `suggested` nulos) o comportamento da T47 segue igual
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): derive the table presence from the chosen table`
+
+---
+
+### T52: TF8, foco nos caminhos de falha da linha
+
+**Status**: Done
+
+**What**: O foco chega ao destino mesmo quando a ação falha: o seletor de categoria recebe o foco no 422 depois de sair do estado ocupado; Validar, Rejeitar e Reabrir que falham devolvem o foco ao botão acionado; o foco pendente de uma recarga que falha é descartado.
+**Where**: `frontend/src/components/ActivityRow.tsx` e `frontend/src/components/ActivityWorkspace.tsx` (modify)
+**Depends on**: T51
+**Reuses**: `pickerRef`, `pending`, `errorMessage`
+**Requirement**: SEC-12, SEC-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro (que falham antes), com `toHaveFocus`: um 422 de `categoria` deixa o foco no seletor de categoria (já habilitado); um 409 ou 5xx ao Validar, Rejeitar ou Reabrir deixa o foco no botão acionado, já habilitado; quando a recarga falha, o foco pendente é limpo e não se move depois
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): return the focus after a failed row action`
+
+---
+
+### T53: TF9, anúncios repetidos, erro da linha e filtros
+
+**Status**: Done
+
+**What**: Salvar a mesma atividade duas vezes anuncia as duas vezes; o erro da linha é limpo quando a lista recarrega com sucesso e ao iniciar outra ação, e o alerta é remontado a cada falha para reanunciar o mesmo texto; a mensagem de bloqueio da seção não duplica a região viva do `StepNav`; a mensagem "Nenhuma atividade encontrada com estes filtros." é anunciada.
+**Where**: `frontend/src/components/ActivityWorkspace.tsx` e `frontend/src/components/ValidActivitiesSection.tsx` (modify)
+**Depends on**: T52
+**Reuses**: a região viva da T45, `rowError` da T46
+**Requirement**: SEC-12, SEC-05, SEC-11
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro (que falham antes): salvar a mesma atividade duas vezes faz a região de status mudar de conteúdo nas duas (vazia entre elas ou com contador); o erro da linha some quando a lista recarrega com sucesso e quando outra ação começa; duas falhas iguais seguidas remontam o alerta (o elemento novo é outro nó); o `<p className="error">` da seção não tem `aria-live` e o texto segue visível; a mensagem "Nenhuma atividade encontrada com estes filtros." tem `role="status"`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): announce repeated saves, row errors and empty filters`
+
+---
+
+### T54: TF10, `StepNav` sem espaço extra
+
+**Status**: Done
+
+**What**: A região viva do `StepNav`, sempre montada e vazia sem bloqueio, não soma margem em nenhuma página: `.step-blocked:empty` zera a margem, sem `display: none`.
+**Where**: `frontend/src/styles.css` (modify), com `frontend/src/components/StepNav.tsx`
+**Depends on**: T53
+**Reuses**: os testes de CSS de `styles` que já checam regras de layout
+**Requirement**: SEC-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro (que falham antes), no mesmo estilo dos testes de CSS existentes: `styles.css` tem a regra `.step-blocked:empty` com `margin: 0` e não usa `display: none` nela; a região segue no DOM, vazia, sem bloqueio
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): drop the extra space of the empty step message`
+
+---
+
+### T55: TF11, o foco pendente de uma falha sem recarga é descartado
+
+**Status**: Done
+
+**What**: Dois pontos de baixa gravidade da segunda revisão. (1) `feedback.fail` de `ActivityWorkspace` só arma o foco pendente (`remember(id)`) quando a falha recarrega a lista; uma falha sem recarga (5xx) não deixa foco armado para uma recarga posterior de outra ação mover o foco ao título de uma linha que o usuário não tocou. (2) O teste do `StepNav` verifica no DOM que a mensagem de bloqueio, sem bloqueio, não tem nós de texto, e que com bloqueio mostra a mensagem.
+**Where**: `frontend/src/components/ActivityWorkspace.tsx` (modify), `frontend/src/components/ActivityWorkspace.test.tsx` e `frontend/src/components/StepNav.test.tsx` (modify)
+**Depends on**: T54
+**Reuses**: `pending`, `remember`, `reloads` de `feedback.fail`; os testes de foco da T52
+**Requirement**: SEC-12, SEC-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Teste primeiro (que falha antes): uma ação da linha A falha com 5xx sem recarregar; depois uma validação em lote de outras linhas recarrega a lista; o foco não vai ao título da linha A
+- [x] Teste em `StepNav.test.tsx`: sem bloqueio, `container.querySelector(".step-blocked:empty")` não é nulo (o `<p id="step-blocked-message">` não tem nós de texto); com bloqueio, o `<p>` mostra a mensagem
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): drop the stale pending focus after a failed row action`
+
+---
+
+### T56: FT1, `excluded` sem rastro das não válidas aguardando validação
+
+**Status**: Done
+
+**What**: O Verifier (validation.md, G1) viu que o mutante B27 (`_excluded` conta como "pendentes" a atividade não válida aguardando validação) sobrevive. Teste do caso: atividade fora do interstício e atividade com carga insuficiente em `AGUARDANDO_REVISAO` não geram `excluded` nem rastro no resumo da geração. Se o código estiver errado, corrige-o.
+**Where**: `backend/tests/integration/doc_usecases/test_generation_inputs.py` (modify) e `backend/tests/integration/api/test_generated_validity_acceptance.py` (modify)
+**Depends on**: T55
+**Reuses**: `add_activity` de `generation_support.py`; `insert` e `world` do teste de aceitação
+**Requirement**: SEG-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Teste primeiro: com as duas não válidas em `AGUARDANDO_REVISAO`, `inputs.excluded == {}` e `inputs.activities` vazio; no aceite, `summary["excluded"] == {}`, sem alerta `ATIVIDADES_FORA_DO_DOCUMENTO` e sem os títulos no documento
+- [x] O teste passa contra o código e falha contra o mutante B27 (`is_valid` removido de `_excluded`), provado em cópia
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest <arquivos tocados> -q` (o gate completo roda uma vez na T43)
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(generation): cover the not valid activities awaiting validation in excluded`
+
+---
+
+### T57: FT2, período aberto na categoria por ano da atividade manual
+
+**Status**: Done
+
+**What**: O Verifier (G2) viu que o mutante B43 (a checagem manual trata a categoria por ano como período fechado) sobrevive. Testes de API da criação e da edição manual de item por ano: `period_start` dentro ou antes do interstício e sem `period_end` é aceito; início depois do fim do interstício é 422. A spec registra o período aberto (SP3, SP5).
+**Where**: `backend/tests/integration/api/test_activity_edit_rules_api.py` (modify) e `.specs/features/revisao-simplificada/spec.md` (modify, junto com a T43 e a T62)
+**Depends on**: T56
+**Reuses**: os casos de EDT-03 do mesmo arquivo; `_check_inside_interstice` em `app/application/use_cases/scoring.py`
+**Requirement**: EDT-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Teste primeiro: criação e edição manual com `period_start` antes do início do interstício e dentro dele, sem `period_end`, respondem 2xx; com `period_start` depois do fim, 422 em `period_start`
+- [x] O teste passa contra o código e falha contra o mutante B43 (`yearly = False`), provado em cópia
+- [x] A spec descreve o período aberto como decisão do Verifier (texto no commit da T43, junto com a T62)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_activity_edit_rules_api.py -q`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(activities): cover the open period of a yearly category on manual writes`
+
+---
+
+### T58: FT3, teste do aviso de categoria com busca e filtro ativos
+
+**Status**: Done
+
+**What**: O Verifier (G3) viu que o mutante F3b sobrevive: o aviso "N atividades precisam de categoria" de `ValidActivitiesSection` usa a lista filtrada, e com busca ou filtro de grupo o número diverge do da navegação (`StepNav`). Confirmado na leitura do código: `ValidActivitiesSection.tsx:73` já conta sobre `activities` (a lista inteira), igual ao `StepNav`; o que faltava era o teste. A tarefa vira só de teste.
+**Where**: `frontend/src/components/ValidActivitiesSection.test.tsx` (modify)
+**Depends on**: T57
+**Reuses**: `needsCategory` e a contagem do chip "Precisa de categoria" de `activityList.ts`
+**Requirement**: SEC-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Teste primeiro: 5 atividades, 3 sem categoria; com a busca e com o filtro de grupo ativos, o aviso diz "3 atividades precisam de categoria"
+- [x] O teste passa contra o código e falha contra o mutante F3b (`filtered.filter` em vez de `activities.filter`), provado em cópia
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `test(frontend): cover the category warning with a search and a group filter on`
+
+---
+
+### T59: FT4, a atividade mesclada fora da Tabela, do Relatório e do Comprovante
+
+**Status**: Done
+
+**What**: O Verifier (G4) viu que nenhum teste gera os três documentos com uma atividade mesclada; a exclusão valia por herança da lista. Teste de aceitação com uma atividade mesclada na outra (com a evidência que ficou nela).
+**Where**: `backend/tests/integration/api/test_generated_validity_acceptance.py` (modify)
+**Depends on**: T58
+**Reuses**: `world`, `insert`, `link` e os leitores de documentos do teste de aceitação; `merge_process` do serviço de mesclagem
+**Requirement**: DUP-03, SEG-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Teste primeiro, mesclagem real: Tabela, Relatório e Comprovante não trazem o título da mesclada; a mantida aparece, uma vez na Tabela, e o Comprovante tem as duas páginas, a da mantida e a que veio da mesclada (provas somadas)
+- [x] Teste primeiro, página da mesclada: uma mesclada que ainda tem a própria página, sem ser duplicada pelo título, fica fora da Tabela, e o Comprovante só tem a página da mantida
+- [x] Os testes falham contra o mutante que lista as mescladas (`list_for_process` sem o filtro `merged_into_id`) e contra o que não move as provas, provados em cópia
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_generated_validity_acceptance.py -q`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(generation): cover the merged activity in the three generated documents`
+
+---
+
+### T60: FT5, a Etapa 3 a 360 px: verificação ou limitação registrada
+
+**Status**: Done
+
+**What**: O Verifier (G5) notou que "sem rolagem horizontal a 360 px" só tem prova estática do CSS (jsdom não calcula layout). Verifica-se se há navegador headless local sem baixar nada; se houver, mede-se a Etapa 3 a 360 px com 120 atividades sintéticas. O resultado, ou a limitação aceita com o passo a passo manual, vai em `design.md` ("Verificação a 360 px"). Nenhum teste muda.
+**Where**: `.specs/features/revisao-simplificada/design.md` (modify, junto com a T43)
+**Depends on**: T59
+**Reuses**: a regra de CSS de `ActivityWorkspace.test.tsx`
+**Requirement**: SEC-12
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Registrado se há navegador headless local utilizável (sem acesso à rede) e o que foi medido (`scrollWidth <= clientWidth`) ou, sem navegador, a limitação aceita com o passo a passo manual
+- [x] Nenhum teste alterado; nada baixado da rede
+- [x] Gate check passes: `git diff --stat` mostra só `design.md` (o gate completo roda uma vez na T43)
+- [x] Test count: inalterada
+
+**Resultado**: há navegador local (Google Chrome 146, `/usr/bin/google-chrome`, `--headless=new`), sem baixar nada. A Etapa 3 completa (app, `Layout`, `StepNav`) a 360 px com 120 atividades válidas, 12 sem categoria e 7 não válidas, tudo mostrado: `scrollWidth` 345 = `clientWidth` 345 (e 305 = 305 a 320 px), nenhum elemento além da borda; o controle a 200 px acusa rolagem (225 > 185). O texto completo, com o método e o passo a passo manual, está na seção "Verificação a 360 px" de `design.md`, que sobe no commit da T43 junto com os demais arquivos de documentação da árvore.
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `docs(specs): record the 360 px check of the activities step`
+
+---
+
+### T61: FT6, `ATIVIDADE_SEM_CATEGORIA` no worker de geração
+
+**Status**: Done
+
+**What**: O Verifier (G6) viu que, no worker de geração, `ATIVIDADE_SEM_CATEGORIA` cai em `ERRO_INTERNO` por faltar em `_FAILURE_MESSAGES`. Mapeia o código com mensagem em português e adiciona o rótulo equivalente no frontend se faltar (já existe em `labels.ts:320`, com teste em `labels.test.ts:157`: nada a mudar no frontend); AD-022 perde a pergunta aberta (2).
+**Where**: `backend/app/application/use_cases/generated_documents.py` (modify), `backend/tests/integration/doc_usecases/test_run_generation_table.py` (modify) e `.specs/STATE.md` (modify, junto com a T43)
+**Depends on**: T60
+**Reuses**: `_FAILURE_MESSAGES` e os testes de falha do worker; `GenerationRefused`
+**Requirement**: SEG-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Teste primeiro (que falha antes): uma atividade válida sem categoria que aparece depois do pedido faz o worker marcar a geração `FALHOU` com o código `ATIVIDADE_SEM_CATEGORIA` e a mensagem em português, não `ERRO_INTERNO`
+- [x] O rótulo do código existe no frontend (`labels.ts`), com teste se faltava
+- [x] A pergunta aberta (2) do AD-022 sai de `STATE.md`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest <arquivos tocados> -q`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(generation): fail the worker with the code of an activity without category`
+
+---
+
+### T62: FT7, testes de status final e decisões do Verifier na spec
+
+**Status**: Done
+
+**What**: Fecha G7 e SP1 a SP10 do Verifier. (a) Testes: trocar a categoria de atividade validada recalcula e mantém `VALIDADA`; carga horária corrigida devolve a atividade às válidas com o status que tinha. (b) `spec.md` registra, como "Decisões do Verifier", o comportamento já implementado (ordem dos motivos, `GRUPO_NAO_CONTA` e `DUPLICIDADE`, período por ano e precisão de mês, ordem das validações na rota de status, data inalterada, mais de duas validadas, Etapa 3 sem tabela, faixa da quantidade, vocabulário de `skipped`, cláusula da prévia da conclusão). Descreve o que existe; nenhum requisito novo, nenhum comportamento muda.
+**Where**: `backend/tests/integration/scoring/test_activity_update.py` (modify), `backend/tests/integration/scoring/test_list_activities_validity.py` (modify) e `.specs/features/revisao-simplificada/spec.md` (modify, junto com a T43)
+**Depends on**: T61
+**Reuses**: os testes de troca de item e de correção por data dos mesmos arquivos
+**Requirement**: VAL-01, SEC-08, EDT-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes primeiro: a troca de categoria de uma `VALIDADA` mantém `VALIDADA` e recalcula os pontos; a carga horária corrigida devolve a atividade às válidas com o status que tinha
+- [x] `spec.md` com a seção "Decisões do Verifier (rodada 1)" cobrindo SP1 a SP10 e o período aberto da T57, sem requisito novo (o arquivo sobe no commit da T43, junto com a `STATE.md`, o `CLAUDE.md` e o `design.md`)
+- [x] Os testes novos falham contra o mutante que muda o status na edição (`status=AGUARDANDO_REVISAO` em `UpdateActivity`), provado em cópia
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest <arquivos tocados> -q`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(activities): cover the final status after a category or hours correction`
+
+---
+
+### T43: Documentação da feature
+
+**Status**: Done
+
+**What**: (inclui as edições de `spec.md` e `design.md` das T57, T60 e T62, e a pergunta aberta da T61 em `STATE.md`) AD-022 em `STATE.md` (coluna `merged_into_id`, validade no servidor, mesclagem na escrita), regra 10 em `CLAUDE.md` e rastreabilidade da spec marcada como `Implemented`.
+**Where**: `.specs/STATE.md`, `CLAUDE.md`, `.specs/features/revisao-simplificada/spec.md` e `design.md` (modify)
+**Depends on**: T62
+**Reuses**: AD-018 como modelo; o texto do Design
+**Requirement**: DUP-02, SEG-01, VAL-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] AD-022 escrito em `STATE.md`; `CLAUDE.md` ganha a regra 10 (só as atividades válidas seguem; duplicadas mescladas; validar pontua); `spec.md` e `design.md` com o status atualizado; os 40 requisitos mapeados a tarefas
+- [x] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py revisao-simplificada` sem erro
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagem final registrada: backend 5281 passando (3 `deselected`), frontend 563 passando (41 arquivos)
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `docs(specs): record the simplified activity review decision`
+
+---
+
+### T44: Verificador independente
+
+**Status**: Done
+
+**What**: Agente diferente do autor confere os 40 requisitos com evidência (testes e leitura do código) e injeta mutantes (esquecer de excluir a não válida da Tabela, aceitar validar sem categoria, mesclar sem mover as provas, aplicar a checagem de data à leitura de documentos, não reverter a mesclagem que falha, paginar errado); escreve o relatório.
+**Where**: `.specs/features/revisao-simplificada/validation.md` (novo)
+**Depends on**: T43
+**Reuses**: `references/validate.md` e `sub-agents.md` do skill; `validate_state.py`
+**Requirement**: VAL-01, VAL-02, VAL-03, VAL-04, VAL-05, VAL-06, SEC-01, SEC-02, SEC-03, SEC-04, SEC-05, SEC-06, SEC-07, SEC-08, SEC-09, SEC-10, SEC-11, SEC-12, DUP-01, DUP-02, DUP-03, DUP-04, DUP-05, DUP-06, DUP-07, SEG-01, SEG-02, SEG-03, SEG-04, SEG-05, EDT-01, EDT-02, EDT-03, EDT-04, EDT-05, EDT-06, EDT-07, QTD-01, QTD-02, QTD-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`
+
+**Done when**:
+
+- [x] `validation.md` com o veredito PASS, a evidência `arquivo:linha` por requisito, o resultado do sensor de mutação e o intervalo de commits
+- [x] Mutantes sobreviventes e lacunas viram tarefas de correção; o ciclo corrigir e reverificar tem no máximo 3 voltas
+- [x] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_state.py revisao-simplificada` sem erro
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagem final registrada
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `docs(specs): verify the simplified activity review`
+
+---
+
+## Requirement coverage
+
+| Requisito | Tarefas | Requisito | Tarefas |
+| --- | --- | --- | --- |
+| VAL-01 | T2, T5, T62 | SEC-12 | T33, T35, T36, T45, T46, T49, T52, T53, T55, T60 |
+| VAL-02 | T3, T4, T28 | DUP-01 | T13, T14 |
+| VAL-03 | T17 | DUP-02 | T9, T10, T11, T12, T14 |
+| VAL-04 | T18, T19, T34 | DUP-03 | T10, T12, T14, T59 |
+| VAL-05 | T17 | DUP-04 | T16, T21, T22, T38 |
+| VAL-06 | T1, T17, T33, T34 | DUP-05 | T14 |
+| SEC-01 | T23, T24, T27, T36, T38, T39 | DUP-06 | T14 |
+| SEC-02 | T1, T25, T26, T34 | DUP-07 | T15, T16, T24, T32 |
+| SEC-03 | T31, T34, T48 | SEG-01 | T1, T2, T5, T6, T8, T56 |
+| SEC-04 | T30, T33, T45, T46, T47, T51, T52 | SEG-02 | T6, T8, T59 |
+| SEC-05 | T34, T37, T38, T47, T49, T51, T53, T54, T55, T58 | SEG-03 | T2, T6, T8, T26 |
+| SEC-06 | T1, T22, T25, T35 | SEG-04 | T2, T5 |
+| SEC-07 | T1, T24, T25, T28, T29, T35 | SEG-05 | T7, T8, T28, T61 |
+| SEC-08 | T25, T26, T36, T62 | EDT-01 | T40, T50 |
+| SEC-09 | T25, T35, T36 | EDT-02 | T20, T41, T49 |
+| SEC-10 | T35 | EDT-03 | T20, T41, T57, T62 |
+| SEC-11 | T34, T35, T48, T53 | EDT-04 | T40 |
+| QTD-01 | T42, T50 | EDT-05 | T40 |
+| QTD-02 | T20, T42, T50 | EDT-06 | T20, T40 |
+| QTD-03 | T20, T42, T49 | EDT-07 | T40 |
+
+---
+
+## Test Co-location Validation
+
+| Task | Code Layer Created/Modified | Matrix Requires | Task Says | Status |
+| ---- | --------------------------- | --------------- | --------- | ------ |
+| T1 | Domain rules | unit | unit | ✅ OK |
+| T2 | Domain rules | unit | unit | ✅ OK |
+| T3 | Domain rules | unit | unit | ✅ OK |
+| T4 | Domain rules | unit | unit | ✅ OK |
+| T5 | Use cases | integration | integration | ✅ OK |
+| T6 | Domain rules | unit | unit | ✅ OK |
+| T7 | Types | none | none | ✅ OK |
+| T8 | Services | integration | integration | ✅ OK |
+| T9 | Migration | integration | integration | ✅ OK |
+| T10 | Domain entity | unit | unit | ✅ OK |
+| T11 | Ports | none | none | ✅ OK |
+| T12 | Repositories | integration | integration | ✅ OK |
+| T13 | Domain rules | unit | unit | ✅ OK |
+| T14 | Services | integration | integration | ✅ OK |
+| T15 | Services | integration | integration | ✅ OK |
+| T16 | API routes and schemas | integration | integration | ✅ OK |
+| T17 | Use cases | integration | integration | ✅ OK |
+| T18 | Use cases | integration | integration | ✅ OK |
+| T19 | API routes and schemas | integration | integration | ✅ OK |
+| T20 | Use cases | integration | integration | ✅ OK |
+| T21 | Use cases | integration | integration | ✅ OK |
+| T22 | Use cases | integration | integration | ✅ OK |
+| T23 | Repositories | integration | integration | ✅ OK |
+| T24 | API schemas | unit | unit | ✅ OK |
+| T25 | Use cases | integration | integration | ✅ OK |
+| T26 | API routes | integration | integration | ✅ OK |
+| T27 | Types | none | none | ✅ OK |
+| T28 | Labels | unit | unit | ✅ OK |
+| T29-T38 | Frontend components/pages | unit | unit | ✅ OK |
+| T39 | Removal of a component | none (build gate) | none | ✅ OK |
+| T40-T42 | Frontend components | unit | unit | ✅ OK |
+| T45-T55 | Frontend components/pages | unit | unit | ✅ OK |
+| T56, T57, T59, T61, T62 | Use cases and API (tests only, T61 also a service) | integration | integration | ✅ OK |
+| T58 | Frontend component | unit | unit | ✅ OK |
+| T60 | Docs | none | none | ✅ OK |
+| T43, T44 | Docs | none | none | ✅ OK |
