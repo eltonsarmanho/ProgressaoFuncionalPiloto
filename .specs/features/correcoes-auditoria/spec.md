@@ -253,7 +253,7 @@ O docente não consegue concluir um processo real: nenhuma tela leva o processo 
 | CADOC-02 | P2: Documentação de estado | Tasks | Pending |
 | CADOC-03 | P2: Documentação de estado | Tasks | Pending |
 | CADOC-04 | P2: Documentação de estado | Execute | Implementing |
-| CADOC-05 | P2: Documentação de estado | Tasks | Pending |
+| CADOC-05 | P2: Documentação de estado | Execute | Implementing |
 | CADOC-06 | P2: Documentação de estado | Tasks | Pending |
 | CADOC-07 | P2: Documentação de estado | Tasks | Pending |
 | CADOC-08 | P2: Documentação de estado | Tasks | Pending |

@@ -1,8 +1,8 @@
 """TAB-01, TAB-04: the /scoring response of the 2022-2024 case, fixed before the extraction.
 
 Characterization of the screen response (AD-006: recomputed on demand) so that extracting
-compute_process_score cannot change what the screen shows. The scenario is the derived case of
-test_scoring_golden (total 211); no real data.
+compute_process_score cannot change what the screen shows. The scenario is the cenário derivado
+of test_scoring_golden (total 211); no real data.
 """
 
 from uuid import UUID
@@ -10,7 +10,7 @@ from uuid import UUID
 # The fixtures and the scenario builder come from the golden-case module.
 from tests.integration.api.test_scoring_golden import (  # noqa: F401, F811
     case,
-    real_case,
+    derived_case,
     score,
 )
 
@@ -26,11 +26,11 @@ ROW_KEYS = {
 }  # fmt: skip
 
 
-def test_the_scoring_response_of_the_2022_2024_case_is_fixed(real_case):  # noqa: F811
-    body = score(real_case)
+def test_the_scoring_response_of_the_2022_2024_case_is_fixed(derived_case):  # noqa: F811
+    body = score(derived_case)
 
     assert set(body) == TOP_LEVEL_KEYS
-    assert body["process_id"] == real_case["process"]["id"]
+    assert body["process_id"] == derived_case["process"]["id"]
     assert body["total"] == "211.00"
     assert [s["subtotal"] for s in body["subtotals"]] == [
         "0.00", "52.00", "7.00", "62.00", "0.00", "30.00", "4.00", "56.00",
@@ -46,8 +46,8 @@ def test_the_scoring_response_of_the_2022_2024_case_is_fixed(real_case):  # noqa
     assert body["chosen"] == body["suggested"]
 
 
-def test_every_row_keeps_its_shape_and_the_listing_order(real_case):  # noqa: F811
-    rows = score(real_case)["rows"]
+def test_every_row_keeps_its_shape_and_the_listing_order(derived_case):  # noqa: F811
+    rows = score(derived_case)["rows"]
 
     assert len(rows) == 38
     assert all(set(r) == ROW_KEYS for r in rows)

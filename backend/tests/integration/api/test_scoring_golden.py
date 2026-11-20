@@ -1,9 +1,10 @@
-"""ACE-01, PIT-01, PIT-02: derived case FASI 2022-2024 on the official table, through the API.
+"""ACE-01, PIT-01, PIT-02: cenário derivado de 2022-2024 on the official table, through the API.
 
-The quantities of the 2022-2024 case are entered on the official table (tabela-oficial spec,
-Acceptance story): subtotals II to VIII of 52, 7, 62, 0, 30, 4 and 56, total 211, and PIT hours
-per period of 24, 24, 24 and 20 (92 in total), group I outside the total. The total 414 came
-from the filled FASI table and no longer applies; this is not a result approved in a real process.
+The quantities of the cenário derivado (synthetic, 2022-2024) are entered on the official table
+(tabela-oficial spec, Acceptance story): in this cenário derivado the subtotals II to VIII are 52,
+7, 62, 0, 30, 4 and 56 and the total is 211, with PIT hours per period of 24, 24, 24 and 20 (92 in
+total), group I outside the total. The total 414 came from the filled FASI table and no longer
+applies; this is not a result approved in a real process.
 """
 
 from dataclasses import replace
@@ -65,8 +66,11 @@ def post(case, **body):
     return response.json()
 
 
-def add_real_case(case):
-    """The activities of the case, all dated inside 2022-11-23..2024-11-23."""
+def add_derived_case(case):
+    """The activities of the cenário derivado de 2022–2024 (sintético), 211 pontos.
+
+    All dated inside 2022-11-23..2024-11-23.
+    """
     semesters = [("2023.1", "2023-03-06"), ("2023.2", "2023-08-07"),
                  ("2023.3", "2023-12-04"), ("2023.4", "2024-03-04")]  # fmt: skip
     offers = [(68, 68, 68), (68, 68, 68), (68, 68, 68), (68, 68, 34)]  # teaching hours per offer
@@ -103,13 +107,13 @@ def score(case):
 
 
 @pytest.fixture
-def real_case(case):
-    add_real_case(case)
+def derived_case(case):
+    add_derived_case(case)
     return case
 
 
-def test_subtotals_and_total_match_the_official_table(real_case):
-    body = score(real_case)
+def test_subtotals_and_total_match_the_official_table(derived_case):
+    body = score(derived_case)
 
     assert [s["group_number"] for s in body["subtotals"]] == list(range(1, 9))
     assert [s["subtotal"] for s in body["subtotals"]] == EXPECTED_SUBTOTALS
@@ -120,8 +124,8 @@ def test_subtotals_and_total_match_the_official_table(real_case):
     }  # fmt: skip
 
 
-def test_pit_hours_per_period_and_in_total_stay_outside_the_total(real_case):
-    body = score(real_case)
+def test_pit_hours_per_period_and_in_total_stay_outside_the_total(derived_case):
+    body = score(derived_case)
 
     assert body["group1_hours_by_period"] == EXPECTED_HOURS_BY_PERIOD
     assert body["group1_total_hours"] == "92.00"
@@ -129,8 +133,8 @@ def test_pit_hours_per_period_and_in_total_stay_outside_the_total(real_case):
     assert body["group1_percent"] == "0.00"
 
 
-def test_minimum_and_table_alerts_for_the_official_table(real_case):
-    body = score(real_case)
+def test_minimum_and_table_alerts_for_the_official_table(derived_case):
+    body = score(derived_case)
 
     assert body["minimum"] == {"status": "ATINGE", "minimum": "100.00", "total": "211.00"}
     alerts = {a["code"]: a for a in body["alerts"]}
@@ -139,8 +143,8 @@ def test_minimum_and_table_alerts_for_the_official_table(real_case):
     assert "MINIMO_NAO_DEFINIDO" not in alerts
 
 
-def test_rows_carry_formula_points_and_pit_hours(real_case):
-    rows = score(real_case)["rows"]
+def test_rows_carry_formula_points_and_pit_hours(derived_case):
+    rows = score(derived_case)["rows"]
     group_one = [r for r in rows if r["group_number"] == 1]
     course_row = next(r for r in rows if (r["group_number"], r["item_number"]) == (4, 4))
 
@@ -154,8 +158,8 @@ def test_rows_carry_formula_points_and_pit_hours(real_case):
     assert {r["status"] for r in rows} == {"PONTUADA"}
 
 
-def test_extra_activities_stay_out_of_the_total(real_case):
-    case = real_case
+def test_extra_activities_stay_out_of_the_total(derived_case):
+    case = derived_case
     before = score(case)
     container = case["client"].app.state.container
     # EDT-02: a manual activity cannot be dated outside the interstice any more, so the one
@@ -214,5 +218,5 @@ def test_extra_activities_stay_out_of_the_total(real_case):
     assert month_activity["period_precision"] == "MONTH"
 
 
-def test_the_result_is_the_same_on_every_query(real_case):
-    assert score(real_case) == score(real_case)
+def test_the_result_is_the_same_on_every_query(derived_case):
+    assert score(derived_case) == score(derived_case)

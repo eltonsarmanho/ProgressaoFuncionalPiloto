@@ -149,7 +149,7 @@ def link_pages(world, activity, document, pages) -> None:
 
 
 def add_scenario_211(world) -> None:
-    """The activities of the acceptance scenario of the official table (tabela-oficial, ACE-01):
+    """The activities of the cenário derivado of the official table (tabela-oficial, ACE-01):
     subtotals II to VIII of 52, 7, 62, 0, 30, 4 and 56, total 211, PIT hours 24, 24, 24 and 20."""
     def create(**kwargs):
         world.create.execute(

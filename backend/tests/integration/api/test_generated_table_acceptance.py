@@ -1,8 +1,8 @@
-"""TAB-01, TAB-04, TAB-05, TAB-06, TAB-07, TAB-08 (T89): the scoring table of the 211 point case,
-asked through the API, downloaded as DOCX and PDF and read back.
+"""TAB-01, TAB-04, TAB-05, TAB-06, TAB-07, TAB-08 (T89): the scoring table of the cenário derivado
+(211 pontos), asked through the API, downloaded as DOCX and PDF and read back.
 
-The case is the one of `test_scoring_golden.py` (subtotals II to VIII of 52, 7, 62, 0, 30, 4 and
-56, total 211, PIT hours of 24, 24, 24 and 20, 92 in total), all synthetic.
+The cenário derivado is the one of `test_scoring_golden.py` (subtotals II to VIII of 52, 7, 62, 0,
+30, 4 and 56, total 211, PIT hours of 24, 24, 24 and 20, 92 in total), all synthetic.
 """
 
 import re
@@ -11,19 +11,19 @@ import pytest
 
 from tests.integration.api.generated_readers import docx_text, pdf_text, pt
 from tests.integration.api.generated_support import ask, file_url, generate
-from tests.integration.api.test_scoring_golden import add_real_case, score
+from tests.integration.api.test_scoring_golden import add_derived_case, score
 from tests.integration.api.test_scoring_golden import case as golden_case
 
 SUBTOTALS = {"II": "52,00", "III": "7,00", "IV": "62,00", "V": "0,00", "VI": "30,00",
              "VII": "4,00", "VIII": "56,00"}  # fmt: skip
 PIT_HOURS = ["24,00", "24,00", "24,00", "20,00"]
-case = golden_case  # the fixture of the 211 point case: a professor, a process, the official table
+case = golden_case  # fixture of the cenário derivado (211): professor, process, official table
 READERS = {"docx": docx_text, "pdf": pdf_text}
 
 
 @pytest.fixture
 def table_211(case):
-    add_real_case(case)
+    add_derived_case(case)
     row = generate(case["client"], case["headers"], case["process"], "TABELA")
     return case, row
 

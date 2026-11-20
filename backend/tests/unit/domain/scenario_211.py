@@ -1,4 +1,4 @@
-"""Synthetic acceptance scenario of the generated documents: 211 points and 92 PIT hours.
+"""Cenário derivado (synthetic) of the generated documents: 211 points and 92 PIT hours.
 
 Subtotals II to VIII of 52, 7, 62, 0, 30, 4 and 56, group I outside the total with PIT hours
 of 24, 24, 24 and 20 per academic period. Made-up names only.

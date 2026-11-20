@@ -451,7 +451,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T13: Fixtures `real_case` passam a `derived_case`
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `add_real_case` e a fixture `real_case` passam a `add_derived_case` e `derived_case`, com docstring "cenário derivado de 2022–2024 (sintético), 211 pontos"; os importadores mudam junto; `scenario_211.py` diz "cenário derivado" na docstring.
 **Where**: `backend/tests/integration/api/test_scoring_golden.py` (modify; os importadores mudam no mesmo commit: o teste de caracterização e o de aceitação da Tabela gerada, em `backend/tests/integration/api/`, e a docstring do cenário de 211 em `backend/tests/unit/domain/`)
@@ -466,10 +466,10 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] `grep -rniE "real[ _]case|caso real" backend/tests/integration/api/test_scoring_golden.py backend/tests/integration/api/test_scoring_characterization.py backend/tests/integration/api/test_generated_table_acceptance.py` sem saída
-- [ ] Toda docstring de teste que cita 211 ou 303 pontos diz "cenário derivado" na mesma frase (`grep -rnE "\b(211|303)\b" backend/tests`)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: igual ao anterior
+- [x] `grep -rniE "real[ _]case|caso real" backend/tests/integration/api/test_scoring_golden.py backend/tests/integration/api/test_scoring_characterization.py backend/tests/integration/api/test_generated_table_acceptance.py` sem saída
+- [x] Toda docstring de teste que cita 211 ou 303 pontos diz "cenário derivado" na mesma frase (`grep -rnE "\b(211|303)\b" backend/tests`)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: igual ao anterior
 
 **Tests**: integration
 **Gate**: full
