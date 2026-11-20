@@ -563,7 +563,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T17: Design de `grupo-i-no-total` sem a sigla
 
-**Status**: Pending
+**Status**: Done
 
 **What**: As linhas 74, 215, 228 e 307 de `grupo-i-no-total/design.md` dizem "a tabela oficial não tem item de valor informado" (ou "item de valor informado de tabelas antigas, inexistente na tabela oficial") no lugar da sigla; a linha 74 registra que, desde a `correcoes-auditoria`, o grupo 1 só aceita os itens de carga semanal (CAREF-01). Nenhuma decisão do design muda.
 **Where**: `.specs/features/grupo-i-no-total/design.md` (modify)
@@ -578,8 +578,8 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] `grep -nE "\bI\.3\b" .specs/features/grupo-i-no-total/design.md` sem saída
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] `grep -nE "\bI\.3\b" .specs/features/grupo-i-no-total/design.md` sem saída
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
 
 **Tests**: none
 **Gate**: quick

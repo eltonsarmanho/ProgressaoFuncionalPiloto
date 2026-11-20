@@ -71,7 +71,7 @@ Pontos de integração: `generated_documents.py` (`_table`, `_comprovante`, `_nu
 | Item | Versão antiga (grupo 1 fora do total) | Versão nova (grupo 1 no total) |
 | ---- | ------------------------------------- | ------------------------------- |
 | Validade da oferta (I.1, I.2) | válida (`is_pit_criterion`) | válida (grupo conta) |
-| Validade de critério do grupo 1 que não é carga semanal | `GRUPO_NAO_CONTA` | válida, pontua pelo seu modo (a tabela oficial não tem I.3) |
+| Validade de critério do grupo 1 que não é carga semanal | `GRUPO_NAO_CONTA` | válida, pontua pelo seu modo (a tabela oficial não tem item de valor informado; desde a `correcoes-auditoria` o grupo 1 só aceita os itens de carga semanal, CAREF-01) |
 | `row.points` | 0 | horas de PIT |
 | `row.pit_hours` | horas de PIT | horas de PIT |
 | `row.outside_total` (novo) | verdadeiro | falso |
@@ -212,7 +212,7 @@ Não mudam de conteúdo. Conferido no código: `report_templates.json` já tem a
 | Remover o plano da `_table` mexe em testes de instantâneo e de `NUMERACAO_DIVERGENTE` | `generated_documents.py:538,567` | Testes antigos quebram por motivo certo | Trocar esses testes junto com a mudança; as versões antigas guardadas com o alerta continuam legíveis (rótulo mantido) |
 | O PDF com 5 colunas muda as quebras de página e as larguras | `table_pdf.py:47`, `table_docx.py:41` | Título longo ou subtotal grande quebra a linha | Teste com título de 400 caracteres e subtotal de 7 dígitos nos dois formatos; conferência visual do PDF e do DOCX (LibreOffice) no verificador |
 | Teste que procura "Não pontuada" no documento inteiro | `table_text.py` (`counters_line`) | Falso negativo | O rodapé perde os contadores de status (D6); os testes da GTAB-04 e GTAB-08 olham células e rodapé |
-| Specs de `documentos-gerados` (TAB-03, TAB-05), `tabela-oficial` (PIT-01..03, TELA-01..02) e `pontuacao` (premissa do I.3, CALC-05/06) e o critério dos 211 pontos ficam contraditórios | `.specs/features/documentos-gerados/spec.md:93,95`, `tabela-oficial/spec.md`, `pontuacao/spec.md:48` | Rastreabilidade enganosa | A nota de substituição da spec já cita TAB-03, TAB-05 e os 211; a Tasks acrescenta a nota recíproca nas specs antigas |
+| Specs de `documentos-gerados` (TAB-03, TAB-05), `tabela-oficial` (PIT-01..03, TELA-01..02) e `pontuacao` (premissa do item de valor informado de tabelas antigas, inexistente na tabela oficial, CALC-05/06) e o critério dos 211 pontos ficam contraditórios | `.specs/features/documentos-gerados/spec.md:93,95`, `tabela-oficial/spec.md`, `pontuacao/spec.md:48` | Rastreabilidade enganosa | A nota de substituição da spec já cita TAB-03, TAB-05 e os 211; a Tasks acrescenta a nota recíproca nas specs antigas |
 | Processos em andamento no ar | VM | O processo real em rascunho muda de total no deploy | Dump antes do deploy, auditoria da troca, aviso na Etapa 5; deploy só com autorização |
 
 ---
@@ -225,7 +225,7 @@ Não mudam de conteúdo. Conferido no código: `report_templates.json` já tem a
 - **S4 (GI-03).** "Iguais aos pontos do Grupo I" só vale sem teto no grupo ou no critério. A tabela oficial não tem teto; o teste fixa isso e a regra fica dita.
 - **S5 (GI-04), resolvida por GI-09.** A oferta fora do interstício só deixa de pontuar quando tem data; a oferta que só tem período letivo não é conferida. Com o Grupo I no total isso passaria a mexer no total (resolvido por GI-09).
 - **S6 (NUMERACAO_DIVERGENTE).** A spec tira o número do Comprovante da Tabela e não diz o que fazer com o alerta que existe por causa dele (D6).
-- **S7 (premissa "o Grupo I da planilha não tem teto").** Confere: `ufpa.json` não tem `max_points` no grupo 1 nem em I.1 e I.2, e a tabela oficial não traz o I.3 (`VALOR_INFORMADO`, que só existia na FASI antiga). A pergunta aberta da AD-022 sobre onde digitar pontos de item `VALOR_INFORMADO` não é afetada por esta feature.
+- **S7 (premissa "o Grupo I da planilha não tem teto").** Confere: `ufpa.json` não tem `max_points` no grupo 1 nem em I.1 e I.2, e a tabela oficial não traz o item de valor informado de tabelas antigas, inexistente na tabela oficial (`VALOR_INFORMADO`, que só existia na FASI antiga). A pergunta aberta da AD-022 sobre onde digitar pontos de item `VALOR_INFORMADO` não é afetada por esta feature.
 - **S8 (GRES-04).** A spec não diz o que fazer com a oferta ainda não validada (hoje ela aparece na linha `POTENCIAL` e fica fora das horas do período). Resolvida: aparece com a etiqueta "Aguardando validação" e fora das horas (GRES-04).
 - **S9 (GI-07, "vigente"), aplicada na spec.** A GI-07 passou a dizer "única versão sugerida e escolhível" e a antiga fica substituída (D3).
 
@@ -304,6 +304,6 @@ Gate do backend: `cd backend && ruff check . && pytest -q`; do frontend: `npm te
 - Tirar a coluna de situação da tabela de atividades da Etapa 4.
 - Relatório de Atividades e Comprovante (nenhum conteúdo muda; só o alerta de numeração).
 - O texto do alerta de data das ofertas do Grupo I (corrigido em `0422ac3` antes desta feature).
-- Digitação de pontos de itens `VALOR_INFORMADO` (pergunta aberta da AD-022; não existe I.3 na tabela oficial).
+- Digitação de pontos de itens `VALOR_INFORMADO` (pergunta aberta da AD-022; a tabela oficial não tem item de valor informado).
 - Paginação do bloco Docência (esperam-se poucos períodos e ofertas).
 - Deploy e push: só com a autorização do usuário; a migração `0009` (só esquema) roda no `alembic upgrade head` e a versão nova entra pelo seed na mesma partida, seguida da troca automática (D3); dump do banco antes.
