@@ -200,7 +200,7 @@ graph LR
 
 #### T3: Oferta do Grupo I só com período letivo é julgada pelo ano inteiro
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Em `evaluate_period`, a atividade do grupo 1 sem data nem período de datas e com período letivo bem formado (`has_academic_period`) é `FORA` quando o ano inteiro do período (1/1 a 31/12 do AAAA) está fora do interstício; nos demais casos continua `SEM_DATA` (nunca `PARCIAL` nem `DENTRO`, para não criar o alerta `INTERSTICIO_PARCIAL` nem mudar o tratamento atual das ofertas, D10). Atividade com data continua julgada pela data.
 **Where**: `backend/app/domain/rules/scoring_periods.py` (modify)
@@ -215,9 +215,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_scoring_periods.py`: oferta 2019.1 sem data num interstício de 23/11/2022 a 23/11/2024 → `FORA`; 2022.1 com o mesmo interstício → `SEM_DATA` (o ano cruza o início; mata o mutante "qualquer parte do ano fora"); 2025.2 → `FORA`; 2024.2 → `SEM_DATA`; interstício que começa em 1/1 do ano seguinte ao período → `FORA` e que termina em 31/12 do ano do período → `SEM_DATA` (bordas); oferta com data fora e período letivo dentro → julgada pela data; atividade de outro grupo com período letivo e sem data → `SEM_DATA`; período letivo malformado → `SEM_DATA`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam; nenhum teste existente muda de valor esperado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_scoring_periods.py`: oferta 2019.1 sem data num interstício de 23/11/2022 a 23/11/2024 → `FORA`; 2022.1 com o mesmo interstício → `SEM_DATA` (o ano cruza o início; mata o mutante "qualquer parte do ano fora"); 2025.2 → `FORA`; 2024.2 → `SEM_DATA`; interstício que começa em 1/1 do ano seguinte ao período → `FORA` e que termina em 31/12 do ano do período → `SEM_DATA` (bordas); oferta com data fora e período letivo dentro → julgada pela data; atividade de outro grupo com período letivo e sem data → `SEM_DATA`; período letivo malformado → `SEM_DATA`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam; nenhum teste existente muda de valor esperado
 
 **Tests**: unit
 **Gate**: quick

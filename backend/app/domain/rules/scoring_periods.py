@@ -94,14 +94,33 @@ def activity_interval(activity: Activity, open_end: date | None = None) -> tuple
     return start, end
 
 
+def _term_year_is_outside(activity: Activity, interstice: Interstice) -> bool:
+    """Whether the whole year of the academic period (AAAA.N) lies outside the interstice.
+
+    Semester dates are not invented: only a year with no day inside the interstice is outside.
+    """
+    year = int(activity.academic_period[:4])
+    return date(year, 12, 31) < interstice.start or date(year, 1, 1) > interstice.end
+
+
 def evaluate_period(
     activity: Activity, interstice: Interstice, open_ended: bool = False
 ) -> PeriodState:
-    """`open_ended` reads a start-only period as running to the end of the interstice."""
+    """`open_ended` reads a start-only period as running to the end of the interstice.
+
+    A group I offer with no date and no period of dates is judged by the year of its academic
+    period: FORA when the whole year is outside the interstice, otherwise SEM_DATA (GI-09).
+    """
     if interstice.end <= interstice.start:
         return PeriodState.NAO_VERIFICAVEL
     interval = activity_interval(activity, interstice.end if open_ended else None)
     if interval is None:
+        if (
+            activity.group_number == 1
+            and has_academic_period(activity)
+            and _term_year_is_outside(activity, interstice)
+        ):
+            return PeriodState.FORA
         return PeriodState.SEM_DATA
     start, end = interval
     if end < interstice.start or start > interstice.end:
