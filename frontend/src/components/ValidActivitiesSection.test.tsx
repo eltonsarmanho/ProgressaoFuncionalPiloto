@@ -496,3 +496,25 @@ describe("SEC-12: vincular documento, erros de campo", () => {
     expect(await within(dialog).findByRole("alert")).toHaveTextContent("A atividade não aceita vínculos");
   });
 });
+
+describe("SEC-12: anúncios da seção", () => {
+  it("a mensagem de bloqueio da seção fica visível e não é região viva (o StepNav a anuncia)", () => {
+    setup(many(3, { needs: 3 }));
+    const message = screen.getByText("3 atividades precisam de categoria");
+    expect(message).toBeVisible();
+    expect(message).not.toHaveAttribute("aria-live");
+    expect(message.closest("[aria-live]")).toBeNull();
+  });
+
+  it("quando o filtro zera a lista a mensagem sai da mesma região viva do contador, que continua montada", async () => {
+    const { user } = setup([activity({ id: "a1", title: "Orientação de TCC" })]);
+    const counter = screen.getByText("Mostrando 1 de 1");
+    expect(counter).toHaveAttribute("aria-live", "polite");
+    await user.type(screen.getByLabelText("Buscar por título"), "zzz");
+    const message = screen.getByText("Nenhuma atividade encontrada com estes filtros.");
+    expect(message).toBe(counter);
+    expect(message).toHaveAttribute("aria-live", "polite");
+    await user.click(screen.getByRole("button", { name: "Limpar filtros" }));
+    expect(screen.getByText("Mostrando 1 de 1")).toBe(counter);
+  });
+});

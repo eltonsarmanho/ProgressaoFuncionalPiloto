@@ -413,3 +413,87 @@ describe("SEC-12: o foco nos caminhos de falha da linha", () => {
     expect(document.activeElement).toBe(document.body);
   });
 });
+
+describe("SEC-12: anúncios repetidos e erro da linha", () => {
+  const STALE = { detail: "A atividade foi alterada; recarregue" };
+  const copy = (c: Activity[]) => [...c];
+  const status = () => screen.getByRole("status");
+
+  it("salvar ou validar a mesma atividade duas vezes anuncia as duas: o texto igual entra de novo na região", async () => {
+    const { user } = setup([activity({ id: "v1", title: "Banca válida" })], copy, {
+      "POST /api/activities/v1/status": { status: 200, body: activity({ id: "v1", title: "Banca válida" }) },
+    });
+    await user.click(screen.getByRole("button", { name: "Validar Banca válida" }));
+    await waitFor(() => expect(status()).toHaveTextContent("Banca válida validada"));
+    const first = status().firstElementChild;
+    expect(first).not.toBeNull();
+    await user.click(screen.getByRole("button", { name: "Validar Banca válida" }));
+    await waitFor(() => expect(status().firstElementChild).not.toBe(first));
+    expect(status()).toHaveTextContent("Banca válida validada");
+    expect(first?.isConnected).toBe(false);
+  });
+
+  it("duas falhas iguais seguidas remontam o alerta, para o leitor de tela repetir o texto", async () => {
+    const { user } = setup([activity({ id: "v1", title: "Banca válida" })], copy, {
+      "POST /api/activities/v1/status": { status: 500, body: { detail: "Falha do servidor" } },
+    });
+    await user.click(screen.getByRole("button", { name: "Validar Banca válida" }));
+    const first = await screen.findByRole("alert");
+    expect(first).toHaveTextContent("Banca válida: Falha do servidor");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Validar Banca válida" })).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: "Validar Banca válida" }));
+    await waitFor(() => expect(first.isConnected).toBe(false));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Banca válida: Falha do servidor");
+  });
+
+  it("o erro da linha sobrevive à recarga da própria falha e some na recarga seguinte que dá certo", async () => {
+    setCsrfToken("tok");
+    mockFetch({ "POST /api/activities/v1/status": { status: 409, body: STALE } });
+    const list = () => [activity({ id: "v1", title: "Banca um" }), activity({ id: "v2", title: "Banca dois" })];
+    const onChanged = vi.fn();
+    const view = (activities: Activity[]) => (
+      <ActivityWorkspace processId="p1" activities={activities} rows={[]} groups={GROUPS} documents={[]} onChanged={onChanged} />
+    );
+    const user = userEvent.setup();
+    const { rerender } = render(view(list()));
+    await user.click(screen.getByRole("button", { name: "Validar Banca um" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Banca um: A atividade foi alterada; recarregue");
+    rerender(view(list()));
+    expect(screen.getByRole("alert")).toHaveTextContent("Banca um: A atividade foi alterada; recarregue");
+    rerender(view(list()));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("o erro da linha some quando outra ação começa, antes da resposta dela", async () => {
+    setCsrfToken("tok");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) =>
+        String(input).includes("/v1/") ? Promise.resolve(new Response(JSON.stringify({ detail: "Falha do servidor" }), { status: 500, headers: { "Content-Type": "application/json" } })) : new Promise<Response>(() => {}),
+      ),
+    );
+    const user = userEvent.setup();
+    render(<Harness initial={[activity({ id: "v1", title: "Banca um" }), activity({ id: "v2", title: "Banca dois" })]} reload={copy} />);
+    await user.click(screen.getByRole("button", { name: "Validar Banca um" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Banca um: Falha do servidor");
+    await user.click(screen.getByRole("button", { name: "Validar Banca dois" }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("a validação em lote também tira o erro da linha ao começar", async () => {
+    setCsrfToken("tok");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) =>
+        String(input).includes("/v1/") ? Promise.resolve(new Response(JSON.stringify({ detail: "Falha do servidor" }), { status: 500, headers: { "Content-Type": "application/json" } })) : new Promise<Response>(() => {}),
+      ),
+    );
+    const user = userEvent.setup();
+    render(<Harness initial={[activity({ id: "v1", title: "Banca um" }), activity({ id: "v2", title: "Banca dois" })]} reload={copy} />);
+    await user.click(screen.getByRole("button", { name: "Validar Banca um" }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: "Selecionar Banca dois" }));
+    await user.click(screen.getByRole("button", { name: /^Validar as selecionadas/ }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});

@@ -36,8 +36,11 @@ export function ActivityWorkspace({
   loadFailures?: number;
 }) {
   const [editing, setEditing] = useState<Activity | null>(null);
-  const [announcement, setAnnouncement] = useState("");
-  const [rowError, setRowError] = useState<{ title: string; message: string } | null>(null);
+  // `n` makes each announcement and each error a new node, so the same text is read again.
+  const [announcement, setAnnouncement] = useState({ message: "", n: 0 });
+  const [rowError, setRowError] = useState<{ title: string; message: string; n: number } | null>(null);
+  // The reload that a failed write asks for must not take its own error away.
+  const ownReload = useRef(false);
   const root = useRef<HTMLDivElement>(null);
   const pending = useRef<PendingFocus | null>(null);
 
@@ -56,21 +59,31 @@ export function ActivityWorkspace({
 
   /** Announces the result, or shows the error where a reload cannot remove it. */
   const feedback: RowFeedback = {
+    start: () => setRowError(null),
     done: (id, message) => {
-      setAnnouncement(message);
+      setAnnouncement((current) => ({ message, n: current.n + 1 }));
       setRowError(null);
       remember(id);
     },
-    fail: (id, title, message) => {
-      setRowError({ title, message });
+    fail: (id, title, message, reloads) => {
+      setRowError((current) => ({ title, message, n: (current?.n ?? 0) + 1 }));
+      ownReload.current = reloads;
       remember(id);
     },
   };
 
-  // A reload that failed leaves the list as it was: the focus it was to move must not move later.
+  // A reload that failed leaves the list as it was: the focus it was to move must not move later,
+  // and the error it was to outlive is still the newest word on the list.
   useEffect(() => {
     pending.current = null;
+    ownReload.current = false;
   }, [loadFailures]);
+
+  // The error of a row stays through the reload its own failure caused and goes with the next one.
+  useEffect(() => {
+    if (ownReload.current) ownReload.current = false;
+    else setRowError(null);
+  }, [activities]);
 
   // After a reload the row may be gone (it changed section): the focus goes to its new place, to the
   // neighbor it left or to the title of its section, and never stays on the <body>.
@@ -96,10 +109,10 @@ export function ActivityWorkspace({
   return (
     <div className="activity-workspace" ref={root}>
       <div role="status" className="visually-hidden">
-        {announcement}
+        {announcement.message && <span key={announcement.n}>{announcement.message}</span>}
       </div>
       {rowError && (
-        <p role="alert" className="error">
+        <p key={rowError.n} role="alert" className="error">
           {`${rowError.title}: ${rowError.message}`}
         </p>
       )}

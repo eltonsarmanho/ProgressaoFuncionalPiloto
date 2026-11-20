@@ -1528,7 +1528,7 @@ T54 → T43 → T44
 
 ### T53: TF9, anúncios repetidos, erro da linha e filtros
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Salvar a mesma atividade duas vezes anuncia as duas vezes; o erro da linha é limpo quando a lista recarrega com sucesso e ao iniciar outra ação, e o alerta é remontado a cada falha para reanunciar o mesmo texto; a mensagem de bloqueio da seção não duplica a região viva do `StepNav`; a mensagem "Nenhuma atividade encontrada com estes filtros." é anunciada.
 **Where**: `frontend/src/components/ActivityWorkspace.tsx` e `frontend/src/components/ValidActivitiesSection.tsx` (modify)
@@ -1543,9 +1543,9 @@ T54 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro (que falham antes): salvar a mesma atividade duas vezes faz a região de status mudar de conteúdo nas duas (vazia entre elas ou com contador); o erro da linha some quando a lista recarrega com sucesso e quando outra ação começa; duas falhas iguais seguidas remontam o alerta (o elemento novo é outro nó); o `<p className="error">` da seção não tem `aria-live` e o texto segue visível; a mensagem "Nenhuma atividade encontrada com estes filtros." tem `role="status"`
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+- [x] Testes primeiro (que falham antes): salvar a mesma atividade duas vezes faz a região de status mudar de conteúdo nas duas (vazia entre elas ou com contador); o erro da linha some quando a lista recarrega com sucesso e quando outra ação começa; duas falhas iguais seguidas remontam o alerta (o elemento novo é outro nó); o `<p className="error">` da seção não tem `aria-live` e o texto segue visível; a mensagem "Nenhuma atividade encontrada com estes filtros." tem `role="status"`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
 
 **Tests**: unit
 **Gate**: build

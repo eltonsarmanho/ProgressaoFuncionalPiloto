@@ -27,10 +27,12 @@ function whenText(a: Activity): string {
 
 /** What the workspace does with the result of a write of a row: announce it and keep the focus. */
 export type RowFeedback = {
+  /** Another action starts: the error of an earlier one is stale. */
+  start: () => void;
   /** The write succeeded; called before the list reloads, while the row is still on the page. */
   done: (activityId: string, message: string) => void;
   /** The write failed: the workspace shows the message, with the title, where a reload cannot remove it. */
-  fail: (activityId: string, title: string, message: string) => void;
+  fail: (activityId: string, title: string, message: string, reloads: boolean) => void;
 };
 
 /**
@@ -90,6 +92,7 @@ export function ActivityRow({
   async function write(action: () => Promise<unknown>, success: string, trigger: HTMLElement | null) {
     setNotice(null);
     setCategoryError(undefined);
+    feedback?.start();
     setBusy(true);
     try {
       await action();
@@ -100,19 +103,19 @@ export function ActivityRow({
     } catch (err) {
       const byField = fieldErrors(err);
       const message = Object.values(byField)[0] ?? errorMessage(err);
+      const stale = err instanceof ApiError && (err.status === 409 || "status" in byField || "categoria" in byField);
       const toPicker = Boolean(byField.categoria) && pickerShown;
       if (toPicker) {
         // The select of the row says it; a second message would only repeat it.
         setCategoryError(byField.categoria);
       } else if (feedback) {
-        feedback.fail(activity.id, activity.title, message);
+        feedback.fail(activity.id, activity.title, message, stale);
       } else {
         setNotice(message);
       }
       // The control that was used, or the title when the reload takes it away.
       const back = toPicker ? pickerRef.current : trigger;
       refocus.current = () => (back?.isConnected ? back : titleRef.current)?.focus();
-      const stale = err instanceof ApiError && (err.status === 409 || "status" in byField || "categoria" in byField);
       if (stale) onChanged();
     } finally {
       setBusy(false);

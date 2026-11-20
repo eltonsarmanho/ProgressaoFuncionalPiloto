@@ -99,6 +99,7 @@ export function ValidActivitiesSection({
   /** VAL-04: one request for all the ids; the server validates what it can and lists the rest. */
   async function validateBatch(ids: string[], rest = "") {
     setNotice(null);
+    feedback?.start();
     setBusy(true);
     try {
       const result = await request<BulkValidateResult>("POST", `/api/processes/${processId}/activities/validate-batch`, {
@@ -126,7 +127,7 @@ export function ValidActivitiesSection({
       </h2>
       <p className="review-note">Atividades sugeridas pela IA aguardam a sua revisão: nada é validado sem você.</p>
       {needsCategory > 0 && (
-        <p className="error" aria-live="polite">
+        <p className="error">
           {needsCategoryMessage(needsCategory)}
         </p>
       )}
@@ -195,36 +196,38 @@ export function ValidActivitiesSection({
             {beyondPicked > 0 ? ` (${beyondPicked} além das mostradas)` : ""}
           </p>
 
-          {filtered.length === 0 ? (
-            <p>Nenhuma atividade encontrada com estes filtros.</p>
-          ) : (
-            <>
-              <ul className="activity-list" ref={list}>
-                {visible.map((a) => (
-                  <ActivityRow
-                    key={a.id}
-                    activity={a}
-                    groups={groups}
-                    selected={picked.includes(a.id)}
-                    onToggleSelect={() => toggle(a.id)}
-                    onEdit={() => onEdit(a)}
-                    onLink={() => setLinking(a)}
-                    onChanged={onChanged}
-                    feedback={feedback}
-                  />
-                ))}
-              </ul>
-              <p className="muted" aria-live="polite">{`Mostrando ${visible.length} de ${filtered.length}`}</p>
-              {filtered.length > shown && (
-                <button type="button" className="btn btn-secondary" onClick={() => {
-                    focusFrom.current = shown;
-                    setShown((n) => n + PAGE_SIZE);
-                  }}
-                >
-                  Mostrar mais
-                </button>
-              )}
-            </>
+          {filtered.length > 0 && (
+            <ul className="activity-list" ref={list}>
+              {visible.map((a) => (
+                <ActivityRow
+                  key={a.id}
+                  activity={a}
+                  groups={groups}
+                  selected={picked.includes(a.id)}
+                  onToggleSelect={() => toggle(a.id)}
+                  onEdit={() => onEdit(a)}
+                  onLink={() => setLinking(a)}
+                  onChanged={onChanged}
+                  feedback={feedback}
+                />
+              ))}
+            </ul>
+          )}
+          {/* Mounted with the list or without it, so the empty result is announced too. */}
+          <p className="muted" aria-live="polite">
+            {filtered.length === 0 ? "Nenhuma atividade encontrada com estes filtros." : `Mostrando ${visible.length} de ${filtered.length}`}
+          </p>
+          {filtered.length > shown && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => {
+                focusFrom.current = shown;
+                setShown((n) => n + PAGE_SIZE);
+              }}
+            >
+              Mostrar mais
+            </button>
           )}
         </>
       )}
