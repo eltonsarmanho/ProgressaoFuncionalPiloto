@@ -181,6 +181,17 @@ h2 {
   font-size: 0.85rem;
 }
 
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.status-row .badge {
+  margin: 0;
+}
+
 .sev-ERRO {
   color: var(--erro);
 }

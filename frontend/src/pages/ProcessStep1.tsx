@@ -4,6 +4,7 @@ import { errorMessage, fieldErrors, request } from "../api/client";
 import type { Process, Professor, Unit } from "../api/types";
 import { AlertList } from "../components/AlertList";
 import { FieldError, errorProps } from "../components/FieldError";
+import { StartProcessDialog } from "../components/ProcessDialogs";
 import { StepNav } from "../components/StepNav";
 import { STATUS_LABELS } from "../labels";
 
@@ -62,6 +63,7 @@ export function ProcessStep1() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     const fail = (err: unknown) => setError(errorMessage(err));
@@ -82,6 +84,24 @@ export function ProcessStep1() {
     if (passed?.id === id) show(passed);
     else request<Process>("GET", `/api/processes/${id}`).then(show).catch((err) => setError(errorMessage(err)));
   }, [id, passed]);
+
+  /** CAINI-06: the process moved on (409): show the status the server has now. */
+  async function reload() {
+    if (!process) return;
+    try {
+      const current = await request<Process>("GET", `/api/processes/${process.id}`);
+      setProcess(current);
+      setForm(toForm(current));
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  }
+
+  /** CAINI-05: only the status and the version change; what was typed stays. */
+  function started(status: Process["status"], version: number) {
+    setProcess((p) => (p ? { ...p, status, version } : p));
+    setStarting(false);
+  }
 
   function set(field: Field, value: string) {
     setForm((f) => {
@@ -165,7 +185,16 @@ export function ProcessStep1() {
       <StepNav current={1} processId={process?.id} />
       <form className="card" onSubmit={onSubmit} noValidate>
         <h1>Etapa 1 · Processo e interstício</h1>
-        {process && <p className="badge">{STATUS_LABELS[process.status]}</p>}
+        {process && (
+          <div className="status-row">
+            <p className="badge">{STATUS_LABELS[process.status]}</p>
+            {process.status === "RASCUNHO" && (
+              <button type="button" className="btn btn-secondary" onClick={() => setStarting(true)}>
+                Iniciar processo
+              </button>
+            )}
+          </div>
+        )}
 
         <fieldset>
           <legend>Docente</legend>
@@ -246,6 +275,16 @@ export function ProcessStep1() {
           Salvar
         </button>
       </form>
+
+      {process && starting && (
+        <StartProcessDialog
+          processId={process.id}
+          version={process.version}
+          onStarted={started}
+          onStale={() => void reload()}
+          onClose={() => setStarting(false)}
+        />
+      )}
 
       {process && (
         <section className="card" aria-labelledby="result-title">

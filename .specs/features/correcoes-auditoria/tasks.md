@@ -161,7 +161,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T3: Botão "Iniciar processo" na Etapa 1
 
-**Status**: Pending
+**Status**: Done
 
 **What**: A Etapa 1 mostra "Iniciar processo" ao lado da etiqueta de status só com processo em `RASCUNHO`, abre o `StartProcessDialog`, com 200 troca a etiqueta para "Em andamento", esconde o botão e guarda a versão nova (o próximo "Salvar" a usa) sem tocar nos campos digitados; com 409 recarrega o processo pelo `GET`.
 **Where**: `frontend/src/pages/ProcessStep1.tsx` (modify; testes no arquivo de teste da página)
@@ -176,9 +176,9 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/pages/ProcessStep1.test.tsx`: com processo `RASCUNHO` o botão aparece; com `EM_ANDAMENTO`, `CONCLUIDO`, `ARQUIVADO` e na criação (sem `id`) não aparece; confirmar com 200 mostra "Em andamento", esconde o botão, e o `PUT` seguinte de "Salvar" leva `expected_version` igual à versão devolvida; um campo digitado antes de iniciar continua com o valor digitado; 409 dispara um novo `GET /api/processes/<id>` e a etiqueta mostra o status devolvido por ele
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: contagem antes e depois registrada; nenhum teste apagado
+- [x] Testes primeiro em `frontend/src/pages/ProcessStep1.test.tsx`: com processo `RASCUNHO` o botão aparece; com `EM_ANDAMENTO`, `CONCLUIDO`, `ARQUIVADO` e na criação (sem `id`) não aparece; confirmar com 200 mostra "Em andamento", esconde o botão, e o `PUT` seguinte de "Salvar" leva `expected_version` igual à versão devolvida; um campo digitado antes de iniciar continua com o valor digitado; 409 dispara um novo `GET /api/processes/<id>` e a etiqueta mostra o status devolvido por ele
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagem antes e depois registrada; nenhum teste apagado
 
 **Tests**: unit
 **Gate**: quick

@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { ProcessStep1 } from "./ProcessStep1";
 import { mockFetch } from "../test/fetchMock";
@@ -212,5 +212,82 @@ describe("ProcessStep1", () => {
       expected_version: 5,
       justificativa: null,
     });
+  });
+});
+
+describe("CAINI-01, CAINI-02, CAINI-05, CAINI-06: iniciar o processo na Etapa 1", () => {
+  const OPEN = { name: "Iniciar processo" } as const;
+  const base = {
+    "GET /api/units": { status: 200, body: UNITS },
+    "GET /api/professors": { status: 200, body: PROFESSORS },
+  };
+
+  it("CAINI-01: com processo em rascunho mostra o botão Iniciar processo", async () => {
+    mockFetch({ ...base, "GET /api/processes/proc-1": { status: 200, body: SAVED } });
+    renderAt("/processos/proc-1");
+    expect(await screen.findByRole("button", OPEN)).toBeInTheDocument();
+    expect(screen.getByText("Rascunho")).toBeInTheDocument();
+  });
+
+  it.each(["EM_ANDAMENTO", "CONCLUIDO", "ARQUIVADO"])("CAINI-02: com o processo %s não mostra o botão", async (status) => {
+    mockFetch({ ...base, "GET /api/processes/proc-1": { status: 200, body: { ...SAVED, status } } });
+    renderAt("/processos/proc-1");
+    await screen.findByText("Duração do interstício: 24 meses e 730 dias");
+    expect(screen.queryByRole("button", OPEN)).not.toBeInTheDocument();
+  });
+
+  it("CAINI-02: na criação de um processo novo não mostra o botão", async () => {
+    mockFetch(base);
+    renderAt("/processos/novo");
+    await screen.findByRole("option", { name: "Maria Souza (SIAPE 1234567)" });
+    expect(screen.queryByRole("button", OPEN)).not.toBeInTheDocument();
+  });
+
+  it("CAINI-05: confirmar com 200 mostra Em andamento, esconde o botão e o Salvar seguinte usa a versão devolvida, sem tocar nos campos digitados", async () => {
+    const { calls } = mockFetch({
+      ...base,
+      "GET /api/processes/proc-1": { status: 200, body: SAVED },
+      "POST /api/processes/proc-1/status": { status: 200, body: { ...SAVED, status: "EM_ANDAMENTO", version: 2 } },
+      "PUT /api/processes/proc-1": { status: 200, body: { ...SAVED, status: "EM_ANDAMENTO", version: 3, notes: "Anotação digitada" } },
+    });
+    renderAt("/processos/proc-1");
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", OPEN));
+    await user.type(screen.getByLabelText("Observações"), "Anotação digitada");
+    await user.click(within(screen.getByRole("dialog", OPEN)).getByRole("button", { name: "Iniciar" }));
+
+    expect(await screen.findByText("Em andamento")).toBeInTheDocument();
+    expect(screen.queryByText("Rascunho")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", OPEN)).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Observações")).toHaveValue("Anotação digitada");
+    const post = calls.find((c) => c.method === "POST")!;
+    expect(JSON.parse(post.init!.body as string)).toEqual({ status: "EM_ANDAMENTO", expected_version: 1 });
+
+    await user.type(screen.getByLabelText("Justificativa da alteração"), "Ajuste");
+    await user.click(screen.getByRole("button", { name: "Salvar" }));
+    await vi.waitFor(() => expect(calls.some((c) => c.method === "PUT")).toBe(true));
+    const put = calls.find((c) => c.method === "PUT")!;
+    expect(JSON.parse(put.init!.body as string)).toMatchObject({ expected_version: 2, notes: "Anotação digitada" });
+  });
+
+  it("CAINI-06: 409 mostra a mensagem no modal e recarrega o processo com GET, e a etiqueta mostra o status devolvido", async () => {
+    let reads = 0;
+    const { calls } = mockFetch({
+      ...base,
+      "GET /api/processes/proc-1": () => {
+        reads += 1;
+        return { status: 200, body: reads === 1 ? SAVED : { ...SAVED, status: "EM_ANDAMENTO", version: 3 } };
+      },
+      "POST /api/processes/proc-1/status": { status: 409, body: { detail: "Versão desatualizada do processo." } },
+    });
+    renderAt("/processos/proc-1");
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", OPEN));
+    await user.click(within(screen.getByRole("dialog", OPEN)).getByRole("button", { name: "Iniciar" }));
+
+    expect(await within(screen.getByRole("dialog", OPEN)).findByRole("alert")).toHaveTextContent("Versão desatualizada do processo.");
+    expect(await screen.findByText("Em andamento")).toBeInTheDocument();
+    expect(calls.filter((c) => c.method === "GET" && c.path === "/api/processes/proc-1")).toHaveLength(2);
   });
 });
