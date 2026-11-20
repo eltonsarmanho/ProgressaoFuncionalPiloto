@@ -39,6 +39,7 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | Ordem das titulações | `GRADUACAO` < `ESPECIALIZACAO` < `MESTRADO` < `DOUTORADO` | Ordem dos valores já cadastrados | y |
 | Quem vê as normas | Toda pessoa autenticada lê a lista e abre fonte e arquivo; só o ADMIN cadastra, edita, anexa e arquiva | As normas são públicas; a manutenção é administrativa | y |
 | Arquivo da norma | PDF de até 20 MB, guardado no volume do servidor; trocar o arquivo substitui o anterior, com auditoria | Mesmo limite por arquivo do envio de documentos | y |
+| Origem e destino do processo | O servidor informa a classe, a denominação e o nível atuais e pretendidos; o sistema não deduz a classe seguinte, a denominação nem o nível. O movimento fora da sequência usual (salto) recebe `MODALIDADE_INCOMPATIVEL` como `ALERTA`, não mais como `ERRO` | Decisão do usuário em 2026-11-20: as denominações mudam com o tempo e a carreira tem saltos (hoje A Assistente, B Adjunto, C Associado, D Titular) | y |
 
 **Open questions:** none - all resolved or logged above.
 
@@ -108,6 +109,24 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 8. WHEN a titulação do docente é corrigida no cadastro THEN the system SHALL recalcular a verificação do processo na próxima leitura e deixar de mostrar o alerta que não se aplica mais.  <!-- event-driven -->
 
 **Independent Test**: Docente sintético com mestrado, promoção da classe B para a C na estrutura nova: alerta `TITULACAO_INSUFICIENTE` com o Manual da PROGEP; trocar para doutorado: o alerta some; progressão de C1 para C2 com mestrado: nenhum alerta.
+
+---
+
+### P1: Origem e destino informados pelo servidor ⭐ MVP
+
+**User Story**: Como servidor, quero informar de onde e para onde vou (classe, denominação e nível), porque a carreira tem saltos e as denominações mudam com o tempo.
+
+**Why P1**: Hoje um salto legítimo aparece como `ERRO`, e a denominação só vale se coincidir com a estrutura cadastrada.
+
+**Acceptance Criteria**:
+
+1. The system SHALL usar a classe, a denominação e o nível atuais e pretendidos exatamente como o servidor os informou na Etapa 1, nas verificações, nas telas e nos documentos gerados, sem deduzir a classe seguinte, a denominação nem o nível.  <!-- ubiquitous -->
+2. WHEN a promoção informada não vai do último nível da classe atual ao primeiro nível da classe imediatamente seguinte THEN the system SHALL emitir `MODALIDADE_INCOMPATIVEL` com severidade `ALERTA` e o texto "A promoção informada não segue a sequência usual (último nível da classe atual para o primeiro nível da classe seguinte); confira a norma que fundamenta o salto.".  <!-- event-driven -->
+3. WHEN a progressão informada não fica na mesma classe avançando exatamente um nível THEN the system SHALL emitir `MODALIDADE_INCOMPATIVEL` com severidade `ALERTA` e o texto "A progressão informada não segue a sequência usual (um nível acima, na mesma classe); confira a norma que fundamenta o salto.".  <!-- event-driven -->
+4. The system SHALL nunca bloquear nem alterar o processo por `MODALIDADE_INCOMPATIVEL` ou `DENOMINACAO_DIVERGENTE`.  <!-- ubiquitous -->
+5. WHEN o ADMIN altera as denominações de uma estrutura de carreira THEN the system SHALL usar as novas denominações em `DENOMINACAO_DIVERGENTE` na verificação seguinte, sem mudar a denominação informada nos processos nem os documentos já gerados.  <!-- event-driven -->
+
+**Independent Test**: Promoção sintética de A1 para C1 na estrutura nova: `MODALIDADE_INCOMPATIVEL` como `ALERTA`, com o texto do salto, e o processo segue para as próximas etapas; promoção de B4 para C1: nenhum alerta de modalidade; o ADMIN troca "Associado" por outra denominação sintética na classe C e o processo que informou "Associado" passa a mostrar `DENOMINACAO_DIVERGENTE`.
 
 ---
 
@@ -197,6 +216,11 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NTIT-06 | P1: Titulação exigida | Design | Pending |
 | NTIT-07 | P1: Titulação exigida | Design | Pending |
 | NTIT-08 | P1: Titulação exigida | Design | Pending |
+| NMOV-01 | P1: Origem e destino informados | Design | Pending |
+| NMOV-02 | P1: Origem e destino informados | Design | Pending |
+| NMOV-03 | P1: Origem e destino informados | Design | Pending |
+| NMOV-04 | P1: Origem e destino informados | Design | Pending |
+| NMOV-05 | P1: Origem e destino informados | Design | Pending |
 | NLIST-01 | P2: Lista de normas | Design | Pending |
 | NLIST-02 | P2: Lista de normas | Design | Pending |
 | NLIST-03 | P2: Lista de normas | Design | Pending |
