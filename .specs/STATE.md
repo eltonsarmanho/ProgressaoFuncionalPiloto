@@ -181,6 +181,15 @@
 - **Date**: 2026-11-19
 - **Status**: active
 
+### AD-023
+- **Decision**: O Grupo I (docência, I.1 e I.2) entra no Total geral a 1 ponto por hora de PIT, pela versão nova da tabela oficial UFPA ("Tabela oficial de pontuação UFPA, Grupo I no total"), com o grupo 1 `counts_in_total` verdadeiro e o VI.14 a 3 pontos por ano, como diz o texto da planilha. A versão anterior fica marcada como substituída (`scoring_table_versions.superseded_by_id`, migração `0009`): não é sugerida nem escolhível. No deploy, todo processo em `RASCUNHO` ou `EM_ANDAMENTO` que a usa passa sozinho para a nova, com um evento de auditoria por processo; `CONCLUIDO`, `ARQUIVADO` e documentos já gerados não mudam (AD-012), e a Etapa 5 avisa quando a última Tabela foi gerada com outra versão. A oferta do Grupo I só com período letivo fica fora do interstício quando o ano inteiro está fora. A Tabela de Pontuação não traz nada de Comprovante nem de status. Pontos digitados no Grupo I são recusados em qualquer tabela: é exceção registrada à regra 7 do `CLAUDE.md` (as horas de PIT vêm só do cálculo).
+- **Reason**: Decisões do usuário em 2026-11-19 depois de gerar os documentos reais ("o Grupo deve estar dentro do Total, não deve ficar separado"; "VI.14 são 3 pontos"; "Comprovante e status, se houver"). Substitui a decisão de 2026-11-17, que não tinha AD: a planilha oficial como única fonte, com o Grupo I em horas fora do total e o VI.14 a 6 pontos (fórmula `C*6` da célula), registrada só em `docs/referencias/normas/FONTES.md` e no `notes` de `ufpa.json`.
+- **Trade-off**: A troca automática é a única mudança de processo feita sem pedido do usuário, por isso é auditada, restrita aos estados editáveis e idempotente. A versão nova entra pelo seed (sem copiar dados para o Alembic); a `0009` é só de esquema. Processos concluídos com a versão antiga seguem sem o Grupo I.
+- **Implementation**: feature `grupo-i-no-total` (spec e design aprovados em 2026-11-19; D1 a D12 em `design.md`). Até o deploy dela, o sistema no ar segue com o Grupo I fora do total e o VI.14 a 6.
+- **Scope**: `grupo-i-no-total`; substitui PIT-01..03 e TELA-01..02 de `tabela-oficial`, TAB-03 e TAB-05 de `documentos-gerados`
+- **Date**: 2026-11-19
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/inteligencia-documental` (Complex): **implementada**, Fases 1-17 (T1-T140) commitadas na branch `feat/inteligencia-documental` (empilhada sobre `feat/pontuacao` sobre `feat/fundacao`; main intocada). PRs abertos no GitHub: #1 `feat/fundacao`, #2 `feat/pontuacao`, #3 `feat/inteligencia-documental`. Depois: `documentos-gerados` (implementada e verificada, ver abaixo) → `banca-parecer` → `normativo` → `implantacao`

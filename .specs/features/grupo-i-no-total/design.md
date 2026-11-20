@@ -1,7 +1,7 @@
 # Grupo I no total, Tabela sem Status nem Comprovante e resumo da Etapa 4 Design
 
 **Spec**: `.specs/features/grupo-i-no-total/spec.md`
-**Status**: Draft revisado (respostas do usuário às 8 perguntas registradas em 2026-11-19; D2, D3 e D6 refeitas e D10 a D12 novas; aguarda a aprovação do usuário)
+**Status**: Approved (o usuário aprovou o desenho revisado em 2026-11-19; AD-023 registrada em `STATE.md`)
 
 Decisões do projeto que este desenho segue: AD-001 (a regra fica no `domain`, sem FastAPI nem SQLAlchemy), AD-002 (regra institucional é dado versionado, com referência normativa), AD-006 (o resultado é calculado na hora, nunca gravado), AD-007 (tabela de pontuação relacional), AD-011 (DOCX com python-docx, PDF com reportlab, mesmo conteúdo e mesma ordem) e AD-012 (versão gerada é imutável: só as gerações novas usam a regra nova). AD-022 segue valendo: `GRUPO_NAO_CONTA` e `classify_activity` não mudam. Este desenho pede uma AD nova, **AD-023** (ver D1 e D2), que substitui a decisão de 2026-11-17 do Grupo I em horas fora do total; ela só entra em `STATE.md` depois da aprovação.
 
@@ -174,7 +174,7 @@ Não mudam de conteúdo. Conferido no código: `report_templates.json` já tem a
 
 - **Esquema**: migração `0009_version_superseded`, só `ALTER TABLE scoring_table_versions ADD COLUMN superseded_by_id UUID NULL REFERENCES scoring_table_versions(id)`; `downgrade` é `DROP COLUMN`. Entidade `ScoringTableVersion.superseded_by_id` e propriedade `is_superseded`.
 - **Dados**: a versão nova (grupos e critérios) entra pelo seed na primeira partida depois do deploy; em seguida `AdoptSupersedingVersion` marca a antiga e troca os processos editáveis. Idempotente: na segunda partida não há processo a trocar e a marca já existe.
-- **`ufpa.json`**: `version_name` "Tabela oficial de pontuação UFPA, Grupo I no total", `valid_from` igual ao da antiga, `status` `OFICIAL`, grupo 1 com `counts_in_total: true`, `notes` e `norm_reference` com o texto aprovado (pergunta 8). `minimums` copiado. O seed passa a saber qual versão a nova substitui (campo `supersedes` no JSON, com o nome da antiga). Em instalação nova só a versão nova existe e não há o que substituir.
+- **`ufpa.json`**: `version_name` "Tabela oficial de pontuação UFPA, Grupo I no total", `valid_from` igual ao da antiga, `status` `OFICIAL`, grupo 1 com `counts_in_total: true`, VI.14 com `unit_points` 3 (GI-12, decisão do usuário em 2026-11-19; `review_note` reescrita), `notes` e `norm_reference` com o texto aprovado (pergunta 8). `minimums` copiado. O seed passa a saber qual versão a nova substitui (campo `supersedes` no JSON, com o nome da antiga). Em instalação nova só a versão nova existe e não há o que substituir.
 - **Quem muda**: processos `RASCUNHO` e `EM_ANDAMENTO` com a versão antiga (na VM, o processo real em rascunho). Cada troca gera um evento de auditoria. Processos `CONCLUIDO` e `ARQUIVADO` e todos os documentos já gerados ficam como estão; a Etapa 5 avisa que a Tabela foi gerada com outra versão (D12).
 - **Reversão**: o caminho seguro é o dump do banco feito no deploy (a troca dos processos é dado). Sem dump: `UPDATE` da versão escolhida de volta, usando os eventos de auditoria da troca, e `superseded_by_id` nulo.
 

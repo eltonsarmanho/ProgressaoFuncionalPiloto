@@ -41,6 +41,7 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 | Oferta do Grupo I só com período letivo, sem data | Fora do interstício quando o ano inteiro do período está fora dele; sem inventar datas de semestre | Resposta do usuário em 2026-11-19 (pergunta 4); evita que disciplina antiga some pontos sem aviso | y |
 | Disciplinas ainda não validadas no bloco Docência | Aparecem com a etiqueta "Aguardando validação" e ficam fora das horas | Resposta do usuário em 2026-11-19 (pergunta 6) | y |
 | Comprovante e status na Tabela | Nada de Comprovante nem de status em lugar nenhum da Tabela: sem colunas, sem o alerta de numeração do Comprovante, sem alertas "sem comprovante" e sem contadores de status ou de comprovante no rodapé; o motivo de uma linha não pontuar continua em Alertas | Resposta do usuário em 2026-11-19 (pergunta 7: "Comprovante e status, se houver") | y |
+| VI.14 na versão nova | 3 pontos por ano, como diz o texto da planilha (a versão anterior tinha 6, pela fórmula `C*6` da célula, decisão de 2026-11-17) | Decisão do usuário em 2026-11-19 ("VI.14 são 3 pontos") | y |
 | Nome e referência da versão nova | "Tabela oficial de pontuação UFPA, Grupo I no total"; referência: "Tabela oficial de pontuação para progressão docente da UFPA (planilha fornecida em 2026-11-17), com o Grupo I somado ao total a 1 ponto por hora de PIT por decisão do usuário em 2026-11-19" | Resposta do usuário em 2026-11-19 (pergunta 8) | y |
 
 **Open questions:** none - all resolved or logged above.
@@ -68,6 +69,7 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 9. IF uma oferta do Grupo I não tem data nem período de datas e o ano inteiro do seu período letivo (AAAA.N) está fora do interstício THEN the system SHALL tratá-la como fora do interstício (`FORA_DO_INTERSTICIO`), com 0 ponto e 0 hora  <!-- unwanted-behavior -->
 10. WHEN a versão nova entra no sistema THEN the system SHALL passar para ela todo processo em `RASCUNHO` ou `EM_ANDAMENTO` que usa a versão anterior, registrando a troca na auditoria, e SHALL deixar sem mudança os processos `CONCLUIDO` ou `ARQUIVADO` e os documentos já gerados  <!-- event-driven -->
 11. WHEN a última Tabela de Pontuação gerada de um processo usou uma versão da tabela diferente da escolhida hoje THEN the frontend SHALL mostrar na Etapa 5 o aviso "Gerada com outra versão da tabela de pontuação; gere de novo"  <!-- event-driven -->
+12. The system SHALL dar ao item VI.14 3 pontos por ano na versão nova da tabela  <!-- ubiquitous -->
 
 **Independent Test**: Lançar quatro períodos de disciplinas (três ofertas de 68 h em cada um dos três primeiros e duas de 68 h e uma de 34 h no quarto) e ver o subtotal do Grupo I e o total geral com os 92 pontos somados aos dos demais grupos.
 
@@ -128,40 +130,41 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| GI-01 | P1: Grupo I conta no total | Design | Pending |
-| GI-02 | P1: Grupo I conta no total | Design | Pending |
-| GI-03 | P1: Grupo I conta no total | Design | Pending |
-| GI-04 | P1: Grupo I conta no total | Design | Pending |
-| GI-05 | P1: Grupo I conta no total | Design | Pending |
-| GI-06 | P1: Grupo I conta no total | Design | Pending |
-| GI-07 | P1: Grupo I conta no total | Design | Pending |
-| GI-08 | P1: Grupo I conta no total | Design | Pending |
-| GI-09 | P1: Grupo I conta no total | Design | Pending |
-| GI-10 | P1: Grupo I conta no total | Design | Pending |
-| GI-11 | P1: Grupo I conta no total | Design | Pending |
-| GTAB-01 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
-| GTAB-02 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
-| GTAB-03 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
-| GTAB-04 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
-| GTAB-05 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
-| GTAB-06 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
-| GTAB-07 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
-| GTAB-08 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
-| GRES-01 | P1: Resumo da Etapa 4 em painel | Design | Pending |
-| GRES-02 | P1: Resumo da Etapa 4 em painel | Design | Pending |
-| GRES-03 | P1: Resumo da Etapa 4 em painel | Design | Pending |
-| GRES-04 | P1: Resumo da Etapa 4 em painel | Design | Pending |
-| GRES-05 | P1: Resumo da Etapa 4 em painel | Design | Pending |
-| GRES-06 | P1: Resumo da Etapa 4 em painel | Design | Pending |
-| GRES-07 | P1: Resumo da Etapa 4 em painel | Design | Pending |
-| GRES-08 | P1: Resumo da Etapa 4 em painel | Design | Pending |
-| GRES-09 | P1: Resumo da Etapa 4 em painel | Design | Pending |
+| GI-01 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-02 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-03 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-04 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-05 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-06 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-07 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-08 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-09 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-10 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-11 | P1: Grupo I conta no total | Tasks | Pending |
+| GI-12 | P1: Grupo I conta no total | Tasks | Pending |
+| GTAB-01 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
+| GTAB-02 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
+| GTAB-03 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
+| GTAB-04 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
+| GTAB-05 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
+| GTAB-06 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
+| GTAB-07 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
+| GTAB-08 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
+| GRES-01 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
+| GRES-02 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
+| GRES-03 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
+| GRES-04 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
+| GRES-05 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
+| GRES-06 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
+| GRES-07 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
+| GRES-08 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
+| GRES-09 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Implemented → Verified
 
-**Coverage:** 28 total, 0 mapped to tasks, 28 unmapped ⚠️ (as Tasks mapeiam)
+**Coverage:** 29 total, 0 mapped to tasks, 29 unmapped ⚠️ (as Tasks mapeiam)
 
 ---
 
