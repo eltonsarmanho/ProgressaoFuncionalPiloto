@@ -784,7 +784,7 @@ graph LR
 
 #### T23: `TeachingBlock` com a docência por período e disciplina
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Componente de leitura "Docência (PIT)": a partir das linhas com `pit_hours`, períodos letivos em ordem (cada um com `h4`, a lista de ofertas com disciplina, nível de `LEVEL_LABELS` e horas, e o total do período de `group1_hours_by_period`); oferta `POTENCIAL` com a etiqueta de texto "Aguardando validação" e fora do total do período (o total vem do motor); ofertas sem período em "Sem período letivo", sem total próprio; total geral de `group1_total_hours`, com "= pontos" na versão nova ("Total do Grupo I: 92,00 horas = 92,00 pontos") e "fora do total" na antiga; sem ofertas, "Nenhuma disciplina lançada no Grupo I". O componente não soma nada (D8).
 **Where**: `frontend/src/components/TeachingBlock.tsx` (novo)
@@ -799,9 +799,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/TeachingBlock.test.tsx`: dois períodos em ordem com disciplinas, nível e horas; total do período igual ao da API mesmo com uma oferta `POTENCIAL` na lista (com a etiqueta "Aguardando validação"; mata "POTENCIAL somada no total do período"); oferta sem período em "Sem período letivo"; total geral com "= pontos" na nova e "fora do total" na antiga; sem ofertas, a mensagem; semestre sem linha (só ofertas fora do interstício) não aparece
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/TeachingBlock.test.tsx`: dois períodos em ordem com disciplinas, nível e horas; total do período igual ao da API mesmo com uma oferta `POTENCIAL` na lista (com a etiqueta "Aguardando validação"; mata "POTENCIAL somada no total do período"); oferta sem período em "Sem período letivo"; total geral com "= pontos" na nova e "fora do total" na antiga; sem ofertas, a mensagem; semestre sem linha (só ofertas fora do interstício) não aparece
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: front
