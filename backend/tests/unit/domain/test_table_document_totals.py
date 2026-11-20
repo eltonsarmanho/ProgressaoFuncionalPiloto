@@ -4,7 +4,7 @@ from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 
-from app.domain.entities.activity import ActivityStatus
+from app.domain.entities.activity import ActivityStatus, Level
 from app.domain.entities.scoring import ScoringCriterion, ScoringMode
 from app.domain.rules.process_verification import Alert, Severity
 from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
@@ -202,6 +202,19 @@ def test_an_end_date_missing_appears_with_the_text_of_the_engine():
     shown = [x for x in document.alerts if x.code == "DATA_FIM_AUSENTE"]
     assert [x.message for x in shown] == [row.alerts[0].message]
     assert shown[0].subject == "Coordenação de curso"
+
+
+def test_a_group_one_offer_with_a_period_has_no_missing_date_alert_in_the_table():
+    offer_row = activity(
+        1, 1, hours=Decimal("68"), level=Level.GRADUACAO, academic_period="2023.1",
+        event_date=None, title="Cálculo I",
+    )  # fmt: skip
+    undated = activity(2, 7, title="Orientação sem data", event_date=None)
+
+    document, _ = build(activities=[offer_row, undated])
+
+    subjects = [x.subject for x in document.alerts if x.code == "DATA_AUSENTE"]
+    assert subjects == ["Orientação sem data"]
 
 
 def test_an_insufficient_course_load_appears_with_the_text_of_the_screen():

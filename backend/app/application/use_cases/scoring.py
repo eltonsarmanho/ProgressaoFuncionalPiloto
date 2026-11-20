@@ -3,7 +3,6 @@
 Access follows the process (AccessPolicy): anything outside it is NotFound, never Forbidden.
 """
 
-import re
 import uuid
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass, fields, replace
@@ -48,7 +47,12 @@ from app.domain.rules.scoring_engine import (
     has_evidence,
     is_pit_criterion,
 )
-from app.domain.rules.scoring_periods import PeriodState, evaluate_period, is_yearly_unit
+from app.domain.rules.scoring_periods import (
+    ACADEMIC_PERIOD,
+    PeriodState,
+    evaluate_period,
+    is_yearly_unit,
+)
 from app.domain.rules.scoring_table_choice import verify_table_choice
 from app.domain.rules.scoring_verification import (
     MinimumComparison,
@@ -194,7 +198,6 @@ class ChooseProcessTable(_ScoringUseCase):
 MAX_VALUE = Decimal(10000)
 MAX_TITLE = 300
 MAX_EVIDENCE_NOTE = 500
-ACADEMIC_PERIOD = re.compile(r"^\d{4}\.\d$")
 ACTIVITY_ENTITY = "activity"
 ACTIVITY_NOT_FOUND = "Atividade não encontrada"
 DISTINCT_DEFAULT_TEXT = "Marcada como distinta pelo usuário"
@@ -278,7 +281,7 @@ def _apply_group1(data: ActivityData, version: ScoringTableVersion | None) -> Ac
         criterion = version.get_criterion(1, data.item_number)
         if criterion is not None and criterion.mode is ScoringMode.VALOR_INFORMADO:
             return data
-    if data.academic_period is None or not ACADEMIC_PERIOD.match(data.academic_period):
+    if data.academic_period is None or not ACADEMIC_PERIOD.fullmatch(data.academic_period):
         raise ValidationFailed("academic_period", "Informe o período letivo no formato AAAA.N")
     if data.level is None:
         raise ValidationFailed("level", "Informe o nível (graduação ou pós-graduação)")

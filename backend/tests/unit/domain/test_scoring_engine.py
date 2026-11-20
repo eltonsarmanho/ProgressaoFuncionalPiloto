@@ -913,3 +913,67 @@ def test_dated_outside_the_interstice_is_in_neither_part():
     assert (result.potential_total, result.potential_dated, result.potential_undated) == (
         D("0"), D("0"), D("0"),
     )  # fmt: skip
+
+
+# --- the group I offer has a period, not a date: no missing date alert ----------------------------
+
+
+def undated_offer(period="2023.1", **kwargs):
+    return offer("68", period=period, event_date=None, **kwargs)
+
+
+def test_a_group_one_offer_with_an_academic_period_gets_no_missing_date_alert():
+    a = undated_offer()
+
+    result = calculate(pit_table(), [a], INTERSTICE)
+
+    assert ScoringAlertCode.DATA_AUSENTE not in codes(result, a)
+    assert row_of(result, a).pit_hours == D("8.00")
+
+
+def test_an_undated_offer_of_a_table_with_group_one_in_the_total_gets_no_alert_either():
+    weekly = ScoringCriterion(
+        1, 1, "Aulas", "h", ScoringMode.CARGA_SEMANAL, weeks_per_semester=17, prep_ratio=D("1")
+    )
+    version = table(group(1, weekly, counts=True))
+    a = act(g=1, item=1, hours=D("68"), level=Level.GRADUACAO, academic_period="2023.2",
+            event_date=None)  # fmt: skip
+
+    result = calculate(version, [a], INTERSTICE)
+
+    assert ScoringAlertCode.DATA_AUSENTE not in codes(result, a)
+
+
+def test_an_offer_without_an_academic_period_or_date_keeps_the_alert():
+    a = undated_offer(period=None)
+
+    result = calculate(pit_table(), [a], INTERSTICE)
+
+    assert ScoringAlertCode.DATA_AUSENTE in codes(result, a)
+
+
+def test_an_offer_with_a_malformed_academic_period_and_no_date_keeps_the_alert():
+    for period in ("2023", "2023/1", "23.1", "2023.12", " 2023.1"):
+        a = undated_offer(period=period)
+
+        result = calculate(pit_table(), [a], INTERSTICE)
+
+        assert ScoringAlertCode.DATA_AUSENTE in codes(result, a), period
+
+
+def test_a_group_one_informed_value_item_with_a_period_and_no_date_keeps_the_alert():
+    informed = ScoringCriterion(1, 3, "Avaliação", "unidade", ScoringMode.VALOR_INFORMADO)
+    version = table(group(1, pit_criterion(1, "1"), informed, counts=True))
+    a = act(g=1, item=3, informed_points=D("2"), academic_period="2023.1", event_date=None)
+
+    result = calculate(version, [a], INTERSTICE)
+
+    assert ScoringAlertCode.DATA_AUSENTE in codes(result, a)
+
+
+def test_an_academic_period_does_not_silence_the_alert_of_another_group():
+    a = act(event_date=None, academic_period="2023.1")
+
+    result = calculate(BASIC, [a], INTERSTICE)
+
+    assert ScoringAlertCode.DATA_AUSENTE in codes(result, a)

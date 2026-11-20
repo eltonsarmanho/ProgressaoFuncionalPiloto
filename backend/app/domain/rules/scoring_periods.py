@@ -9,6 +9,8 @@ from enum import StrEnum
 from app.domain.entities.activity import Activity, PeriodPrecision
 from app.domain.rules.interstice import Interstice
 
+ACADEMIC_PERIOD = re.compile(r"\d{4}\.\d")
+
 
 class PeriodState(StrEnum):
     DENTRO = "DENTRO"
@@ -16,6 +18,13 @@ class PeriodState(StrEnum):
     FORA = "FORA"
     SEM_DATA = "SEM_DATA"
     NAO_VERIFICAVEL = "NAO_VERIFICAVEL"
+
+
+def has_academic_period(activity: Activity) -> bool:
+    """Whether the activity carries a well-formed academic period (AAAA.N), as the offers of
+    group I do instead of a date."""
+    period = activity.academic_period
+    return period is not None and ACADEMIC_PERIOD.fullmatch(period) is not None
 
 
 def expand_month_dates(start: date, end: date) -> tuple[date, date]:

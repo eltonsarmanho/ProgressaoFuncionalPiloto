@@ -37,6 +37,7 @@ from app.domain.rules.scoring_duplicates import ContentKey, find_duplicates
 from app.domain.rules.scoring_periods import (
     PeriodState,
     evaluate_period,
+    has_academic_period,
     is_start_only,
     is_yearly_unit,
     open_period_years,
@@ -150,14 +151,26 @@ def _open_quantity(activity: Activity, interstice: Interstice) -> Decimal:
     return years if activity.quantity is None else min(activity.quantity, years)
 
 
-def _period_alerts(state: PeriodState, version: ScoringTableVersion) -> list[Alert]:
+def _is_group_one_offer(activity: Activity, criterion: ScoringCriterion) -> bool:
+    """A group I weekly-load offer with an academic period: its period is that of the term, so
+    having no date is not a gap."""
+    return (
+        criterion.group_number == 1
+        and criterion.mode is ScoringMode.CARGA_SEMANAL
+        and has_academic_period(activity)
+    )
+
+
+def _period_alerts(
+    state: PeriodState, version: ScoringTableVersion, offer_with_period: bool = False
+) -> list[Alert]:
     if state is PeriodState.PARCIAL:
         message = (
             "O período da atividade ultrapassa o interstício; pontuada com a quantidade "
             "informada, sem proporcionalizar."
         )
         return [_row_alert(ScoringAlertCode.INTERSTICIO_PARCIAL, message, version)]
-    if state is PeriodState.SEM_DATA:
+    if state is PeriodState.SEM_DATA and not offer_with_period:
         message = "A atividade não tem data nem período; pontuada sem verificação do interstício."
         return [_row_alert(ScoringAlertCode.DATA_AUSENTE, message, version)]
     return []
@@ -187,7 +200,7 @@ def _evaluate(
     if open_ended:
         scored_activity = replace(scored_activity, quantity=_open_quantity(activity, interstice))
     result = criterion_points(criterion, scored_activity)
-    alerts = _period_alerts(state, version)
+    alerts = _period_alerts(state, version, _is_group_one_offer(activity, criterion))
     if open_ended:
         message = (
             "A atividade não tem data final; pontuada com os anos completos do período até o "
