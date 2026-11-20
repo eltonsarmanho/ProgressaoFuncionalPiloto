@@ -4,6 +4,8 @@
 **Fontes:** `docs/referencias/normas/FONTES.md` (itens 8 e 9), tabela do IFCH, tabela preenchida da FASI 2022–2024, Res. 4.644/2015 e Res. 4.074/2010.
 
 > **Nota de substituição (2026-11-17):** a feature `tabela-oficial` (`.specs/features/tabela-oficial/spec.md`) substitui TAB-03, TAB-04, TAB-05, TAB-06, TAB-07 e CALC-14 deste documento. A planilha oficial da UFPA passa a ser a única fonte de pontuação; as tabelas do IFCH (PDF) e da FASI (tabela preenchida) deixam de valer, o Grupo I passa a horas de PIT fora do total e o caso real de 2022–2024 (total 414) é substituído pelo cenário derivado de 211 pontos. O texto abaixo permanece como registro do que foi construído e verificado até então.
+>
+> **Nota de substituição (2026-11-19):** a decisão de 2026-11-17 de manter o Grupo I em horas, fora do total, foi revertida pela feature `grupo-i-no-total` (`.specs/features/grupo-i-no-total/spec.md`, AD-023): o Grupo I conta no total a 1 ponto por hora de PIT e o cenário derivado de 2022–2024 passa a 303 pontos. O VI.14 passa a valer 3 pontos por ano, como diz o texto da planilha. As regras desta spec que tratam o Grupo I como fora do total valem só para a versão anterior da tabela, marcada como substituída.
 
 ## Problem Statement
 

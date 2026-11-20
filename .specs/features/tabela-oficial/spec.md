@@ -1,6 +1,6 @@
 # Tabela Oficial — Specification
 
-> **Nota de substituição:** PIT-01, PIT-02 e PIT-03 e TELA-01 e TELA-02 (Grupo I em horas, fora do total) são substituídos pela feature `grupo-i-no-total` (AD-023) quando ela for implementada; até lá valem como estão. A nota recíproca está em `grupo-i-no-total/spec.md`.
+> **Nota de substituição (2026-11-19):** PIT-01, PIT-02 e PIT-03 e TELA-01 e TELA-02 (Grupo I em horas, fora do total) e os critérios de 211 pontos do cenário derivado e de 92 horas fora do total são substituídos pela feature `grupo-i-no-total` (AD-023): o Grupo I conta no total a 1 ponto por hora de PIT (o cenário derivado passa a 303 pontos; as horas seguem 24, 24, 24 e 20) e o VI.14 vale 3 pontos por ano na versão nova da tabela. A versão anterior da tabela segue como foi construída e verificada, marcada como substituída. A nota recíproca está em `grupo-i-no-total/spec.md`.
 
 **Escopo:** Large (muda a fonte das pontuações, regras já verificadas e testes; sem domínio novo).
 **Substitui:** TAB-03, TAB-04, TAB-05, TAB-06, TAB-07 e CALC-14 da feature `pontuacao`, e as regras de sugestão (CLS-02) da `inteligencia-documental`.

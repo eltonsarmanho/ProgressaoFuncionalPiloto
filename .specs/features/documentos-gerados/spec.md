@@ -1,6 +1,6 @@
 # Documentos Gerados — Specification
 
-> **Nota de substituição:** TAB-03 e TAB-05 (sete colunas com status e comprovante; horas de PIT "sem somá-las aos pontos") são substituídos pela feature `grupo-i-no-total` (AD-023) quando ela for implementada; até lá valem como estão. A nota recíproca está em `grupo-i-no-total/spec.md`.
+> **Nota de substituição (2026-11-19):** TAB-03 e TAB-05 (sete colunas com status e comprovante; horas de PIT "sem somá-las aos pontos"), a premissa "Tabela de pontuação do Grupo I" e os critérios de 211 pontos do cenário derivado são substituídos pela feature `grupo-i-no-total` (AD-023): a Tabela de Pontuação tem cinco colunas, sem Status nem Comprovante, traz o Grupo I como seção I e soma o Grupo I no total (303 pontos no cenário derivado). A nota recíproca está em `grupo-i-no-total/spec.md`.
 
 **Escopo:** Complex (domínio novo: montagem de PDF a partir de originais, DOCX, redação por IA com revisão humana, histórico imutável de documentos).
 **Depende de:** `fundacao` (processo e a transição de status `ProcessStatus`, acesso, auditoria), `pontuacao` e `tabela-oficial` (resultado calculado, AD-006), `inteligencia-documental` (documentos, páginas, vínculos atividade-página, job em processo, AD-008, AD-009).

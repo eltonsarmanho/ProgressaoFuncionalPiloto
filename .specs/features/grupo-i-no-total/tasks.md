@@ -1013,7 +1013,7 @@ graph LR
 
 #### T31: Notas de substituição recíprocas nas specs antigas
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Conferir se a `correcoes-auditoria` já pôs as notas e completar só o que faltar: `tabela-oficial/spec.md` (PIT-01..03, TELA-01..02 e o critério de 211 pontos e 92 horas fora do total), `documentos-gerados/spec.md` (TAB-03, TAB-05, a premissa "Tabela de pontuação do Grupo I" e o critério de 211) e `pontuacao/spec.md` (nota de 2026-11-17 sobre o Grupo I fora do total) apontam para `grupo-i-no-total` e AD-023; `docs/referencias/normas/FONTES.md` registra o Grupo I no total e o VI.14 = 3 desde 2026-11-19, mantendo o histórico.
 **Where**: `.specs/features/tabela-oficial/spec.md` (modify)
@@ -1028,9 +1028,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Cada spec antiga citada tem uma nota que nomeia os requisitos substituídos, a feature e a data; nada além das notas muda nelas
-- [ ] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py tabela-oficial` e `documentos-gerados` sem erro novo
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Cada spec antiga citada tem uma nota que nomeia os requisitos substituídos, a feature e a data; nada além das notas muda nelas
+- [x] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py tabela-oficial` e `documentos-gerados` sem erro novo
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
 
 **Tests**: none
 **Gate**: build
