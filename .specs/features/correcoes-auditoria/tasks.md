@@ -245,7 +245,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T6: Tabelas sintéticas de teste com nome sintético e item de valor informado fora do Grupo I
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Em `scoring_variants.py`, `OTHER_TABLE` passa a "Tabela Sintética Alternativa de Teste" e `POINTS_TABLE` a "Tabela Sintética com Grupo I em Pontos"; o critério `VALOR_INFORMADO` deixa o grupo 1 e vai para o grupo 8, com o número seguinte ao último item do grupo 8 da oficial, descrição "Item de valor informado (sintético)" e limite de 10 pontos; o grupo 1 da tabela sintética fica só com os dois critérios de carga semanal. Os testes que usavam o item no grupo 1 passam a usar o item sintético do grupo 8 com a mesma asserção de valor.
 **Dependentes** (mudam no mesmo commit, senão o gate quebra): o dicionário `informed` de `:281-300` e o teste de `:325-330` de `backend/tests/integration/scoring/test_activity_create.py` (renomeado para `test_informed_value_item_keeps_informed_points`); `:201-212` de `backend/tests/integration/scoring/test_process_score.py` (o ajuste de limite passa a ser do grupo 8 e a asserção de subtotal vai para `group_subtotals[8]`); a docstring de `backend/tests/integration/api/conftest.py:147`; `OTHER_NAME` em `backend/tests/integration/api/test_scoring_tables_api.py:12`.
@@ -261,11 +261,11 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] Testes ajustados primeiro: o item sintético grava `informed_points == 8` (grupo 8); `unit_points_override` nele dá 422 em `unit_points_override`; 15 pontos informados viram o ajuste `("ATIVIDADE", 15, 10)` e `group_subtotals[8]` inclui 10; a troca de tabela continua mostrando o II.12 a 10 na tabela sintética alternativa
-- [ ] `grep -rnE "\bI\.3\b|student.?evaluation" backend/tests` e `grep -rniE "avalia[cç][aã]o (pelo corpo )?discente" backend/tests/support backend/tests/integration` sem saída
-- [ ] `grep -rn "Tabela Alternativa de Teste\|Tabela de Teste com Grupo I" backend/tests` sem saída
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: igual ao anterior (renomes e ajustes, nenhum teste apagado)
+- [x] Testes ajustados primeiro: o item sintético grava `informed_points == 8` (grupo 8); `unit_points_override` nele dá 422 em `unit_points_override`; 15 pontos informados viram o ajuste `("ATIVIDADE", 15, 10)` e `group_subtotals[8]` inclui 10; a troca de tabela continua mostrando o II.12 a 10 na tabela sintética alternativa
+- [x] `grep -rnE "\bI\.3\b|student.?evaluation" backend/tests` e `grep -rniE "avalia[cç][aã]o (pelo corpo )?discente" backend/tests/support backend/tests/integration` sem saída
+- [x] `grep -rn "Tabela Alternativa de Teste\|Tabela de Teste com Grupo I" backend/tests` sem saída
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: igual ao anterior (renomes e ajustes, nenhum teste apagado)
 
 **Tests**: integration
 **Gate**: full

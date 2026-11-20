@@ -144,7 +144,7 @@ def scoring_tables(uow_factory, reference):
 
 @pytest.fixture
 def points_table(uow_factory, scoring_tables):
-    """A copy of the official version whose group I counts in points (informed points, I.3)."""
+    """A copy of the official version whose group I counts in points (synthetic informed item)."""
     with uow_factory() as uow:
         version = add_points_table(uow, scoring_tables["OFICIAL"])
         uow.commit()

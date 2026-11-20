@@ -19,6 +19,7 @@ from app.domain.errors import Conflict, NotFound, ValidationFailed
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.scoring_alerts import NotScoredReason
 from app.domain.rules.scoring_engine import calculate
+from tests.support.scoring_variants import INFORMED_GROUP, INFORMED_ITEM
 
 D = Decimal
 INTERSTICE = Interstice(date(2022, 11, 23), date(2024, 11, 23))
@@ -288,8 +289,8 @@ def test_unit_points_override_is_refused_for_weekly_load_and_informed_value_item
         "unit_points_override": D("2"),
     }
     informed = {
-        "group_number": 1,
-        "item_number": 3,
+        "group_number": INFORMED_GROUP,
+        "item_number": INFORMED_ITEM,
         "informed_points": D("8"),
         "unit_points_override": D("2"),
     }
@@ -322,9 +323,12 @@ def test_candidate_items_are_saved_with_or_without_a_justification(official_chos
     assert activity.candidates == (candidate, bare)
 
 
-def test_group_one_student_evaluation_item_keeps_informed_points(points_chosen):
-    activity = create(points_chosen, group_number=1, item_number=3, informed_points=D("8"))
+def test_informed_value_item_keeps_informed_points(points_chosen):
+    activity = create(
+        points_chosen, group_number=INFORMED_GROUP, item_number=INFORMED_ITEM,
+        informed_points=D("8"),
+    )  # fmt: skip
 
-    assert (activity.group_number, activity.item_number) == (1, 3)
+    assert (activity.group_number, activity.item_number) == (8, INFORMED_ITEM)
     assert activity.informed_points == D("8")
     assert activity.academic_period is None

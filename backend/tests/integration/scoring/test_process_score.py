@@ -24,6 +24,7 @@ from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
 from app.domain.rules.scoring_engine import RowStatus
 from app.domain.rules.scoring_verification import MinimumStatus
 from tests.integration.scoring.conftest import make_official_pending
+from tests.support.scoring_variants import INFORMED_GROUP, INFORMED_ITEM
 
 D = Decimal
 INSIDE = date(2023, 5, 10)
@@ -200,7 +201,8 @@ def test_extension_points_remove_the_extension_or_research_alert(official_chosen
 
 def test_limit_adjustments_are_reported(points_chosen):
     world = points_chosen
-    add(world, "Avaliação discente", 1, 3, informed_points=D("15"))
+    add(world, "Item de valor informado (sintético)", INFORMED_GROUP, INFORMED_ITEM,
+        informed_points=D("15"))  # fmt: skip
 
     result = world.calc.execute(world.admin, world.process.id).result
 
@@ -210,7 +212,7 @@ def test_limit_adjustments_are_reported(points_chosen):
         D("15"),
         D("10"),
     )
-    assert result.group_subtotals[1] == D("10")
+    assert result.group_subtotals[8] == D("10")
 
 
 def test_switching_table_reevaluates_by_group_and_item(official_chosen):

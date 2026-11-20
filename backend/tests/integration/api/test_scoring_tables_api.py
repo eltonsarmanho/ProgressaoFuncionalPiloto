@@ -9,7 +9,7 @@ from tests.integration.api.factories import add_professor, process_payload
 
 GROUP_COUNTS = [2, 16, 9, 6, 5, 14, 11, 37]
 OFFICIAL_NAME = "Tabela de Pontuação da UFPA"
-OTHER_NAME = "Tabela Alternativa de Teste"
+OTHER_NAME = "Tabela Sintética Alternativa de Teste"
 
 
 @pytest.fixture

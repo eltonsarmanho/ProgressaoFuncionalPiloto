@@ -12,8 +12,10 @@ from decimal import Decimal
 from app.domain.entities.scoring import ScoringCriterion, ScoringMode, ScoringTableVersion
 from app.domain.repositories.ports import ScoringTableRecord
 
-OTHER_TABLE = "Tabela Alternativa de Teste"
-POINTS_TABLE = "Tabela de Teste com Grupo I em Pontos"
+OTHER_TABLE = "Tabela Sintética Alternativa de Teste"
+POINTS_TABLE = "Tabela Sintética com Grupo I em Pontos"
+INFORMED_GROUP = 8
+INFORMED_ITEM = 38  # the item after the last of group VIII of the official table (37)
 
 
 def _with_criteria(version: ScoringTableVersion, group_number, criteria, **group_changes):
@@ -48,21 +50,24 @@ def add_other_table(uow, official: ScoringTableVersion) -> ScoringTableVersion:
 def add_points_table(uow, official: ScoringTableVersion) -> ScoringTableVersion:
     """A copy of the official version whose group I counts in points, as the old FASI table.
 
-    Group I keeps the two weekly-load criteria and gets I.3, a VALOR_INFORMADO item limited to
-    10 points, so the tests of informed points and limits keep a table that accepts them.
+    Group I keeps the two weekly-load criteria. Group VIII gets a synthetic VALOR_INFORMADO item
+    limited to 10 points, so the tests of informed points and limits keep a table that accepts
+    them. The official table has no such item.
     """
     table = ScoringTableRecord(uuid.uuid4(), POINTS_TABLE, unit_ids=())
     uow.scoring_tables.add_table(table)
+    group8 = official.get_group(INFORMED_GROUP).criteria
+    assert INFORMED_ITEM == max(c.item_number for c in group8) + 1
     informed = ScoringCriterion(
-        1, 3, "Avaliação discente (item de teste)", "pontos", ScoringMode.VALOR_INFORMADO,
-        max_points=Decimal("10"),
+        INFORMED_GROUP, INFORMED_ITEM, "Item de valor informado (sintético)", "pontos",
+        ScoringMode.VALOR_INFORMADO, max_points=Decimal("10"),
     )  # fmt: skip
+    with_group1 = _with_criteria(official, 1, official.get_group(1).criteria, counts_in_total=True)
     copy = replace(
-        _with_criteria(official, 1, (*official.get_group(1).criteria, informed),
-                       counts_in_total=True),
+        _with_criteria(with_group1, INFORMED_GROUP, (*group8, informed)),
         id=uuid.uuid4(),
         table_id=table.id,
         norm_reference="Tabela de teste",
-    )  # fmt: skip
+    )
     uow.scoring_tables.add_version(copy)
     return copy
