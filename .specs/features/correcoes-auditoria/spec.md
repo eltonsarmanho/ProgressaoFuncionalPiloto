@@ -249,7 +249,7 @@ O docente não consegue concluir um processo real: nenhuma tela leva o processo 
 | CAEDI-02 | P1: Editar atividade com pontuação manual gravada | Execute | Implementing |
 | CAEDI-03 | P1: Editar atividade com pontuação manual gravada | Execute | Implementing |
 | CAEDI-04 | P1: Editar atividade com pontuação manual gravada | Execute | Implementing |
-| CADOC-01 | P2: Documentação de estado | Tasks | Pending |
+| CADOC-01 | P2: Documentação de estado | Execute | Implementing |
 | CADOC-02 | P2: Documentação de estado | Execute | Implementing |
 | CADOC-03 | P2: Documentação de estado | Execute | Implementing |
 | CADOC-04 | P2: Documentação de estado | Execute | Implementing |

@@ -815,7 +815,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T26: Handoff do `STATE.md`
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Reescreve a seção Handoff com o conteúdo de CADOC-01, medido no momento: `git rev-parse --short HEAD`, `git branch --show-current`, `git log --oneline origin/feat/inteligencia-documental..HEAD` (commits locais não enviados), VM em `a136faf` com a migração `0008` (registro do deploy em `920c658`), feature corrente `correcoes-auditoria` e a seguinte `grupo-i-no-total`, gate atual com as contagens do backend e do frontend, decisões pendentes ainda abertas (as de `inteligencia-documental` e as `n` desta spec); remove a lista de arquivos "uncommitted" e o deploy de `documentos-gerados` como pendente; mantém Deploy, MariTalk e Documentos reais atualizados.
 **Where**: `.specs/STATE.md` (modify, seção Handoff)
@@ -830,10 +830,10 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] O HEAD, a branch e a lista de commits locais do Handoff batem com os comandos rodados (citados na mensagem do commit)
-- [ ] `grep -n "Uncommitted files\|ainda não foi feito" .specs/STATE.md` sem saída
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: contagens do backend e do frontend registradas no Handoff
+- [x] O HEAD, a branch e a lista de commits locais do Handoff batem com os comandos rodados (citados na mensagem do commit)
+- [x] `grep -n "Uncommitted files\|ainda não foi feito" .specs/STATE.md` sem saída
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagens do backend e do frontend registradas no Handoff
 
 **Tests**: none
 **Gate**: build
