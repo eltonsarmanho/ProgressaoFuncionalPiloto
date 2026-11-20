@@ -262,7 +262,7 @@ def _validate_basics(data: ActivityData) -> None:
     _range("horas", "Horas", data.hours)
     _range("course_hours", "CH da disciplina", data.course_hours)
     _range("informed_points", "Pontos informados", data.informed_points)
-    _range("points_override", "Pontos informados", data.points_override)
+    _range("points_override", "Pontuação manual", data.points_override)
     _range("unit_points_override", "Valor unitário", data.unit_points_override)
     if data.period_start and data.period_end and data.period_end < data.period_start:
         raise ValidationFailed("period_end", "Fim do período anterior ao início")
@@ -316,7 +316,8 @@ def _check_criterion_inputs(data: ActivityData, version: ScoringTableVersion | N
     ):
         raise ValidationFailed(
             "points_override",
-            "Pontos informados só se aplicam a critérios de carga semanal da tabela escolhida",
+            "Esta tabela não aceita pontuação manual neste item; nos itens por unidade ou por "
+            "bloco de horas, informe o valor unitário",
         )
 
 

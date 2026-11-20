@@ -335,7 +335,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T9: Mensagens de pontuação manual
 
-**Status**: Pending
+**Status**: Done
 
 **What**: O rótulo de faixa de `points_override` passa a "Pontuação manual" (o de `informed_points` continua "Pontos informados"); a recusa de `points_override` fora de critério de carga semanal passa à mensagem de CATXT-02.
 **Where**: `backend/app/application/use_cases/scoring.py` (modify, `:264-265` e `:323-329`)
@@ -350,10 +350,10 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_activity_create.py`: `points_override` num item por unidade da oficial e numa atividade sem item → 422 em `points_override` com a mensagem exata de CATXT-02; `points_override = 10001` → mensagem "Pontuação manual deve estar entre 0 e 10000"; `informed_points = -1` → "Pontos informados deve estar entre 0 e 10000"; `points_override` em item PIT continua com a mensagem das horas de PIT
-- [ ] `grep -n "só se aplicam a critérios de carga semanal" backend/app` sem saída
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: contagem antes e depois registrada
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_activity_create.py`: `points_override` num item por unidade da oficial e numa atividade sem item → 422 em `points_override` com a mensagem exata de CATXT-02; `points_override = 10001` → mensagem "Pontuação manual deve estar entre 0 e 10000"; `informed_points = -1` → "Pontos informados deve estar entre 0 e 10000"; `points_override` em item PIT continua com a mensagem das horas de PIT
+- [x] `grep -n "só se aplicam a critérios de carga semanal" backend/app` sem saída
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: contagem antes e depois registrada
 
 **Tests**: integration
 **Gate**: full

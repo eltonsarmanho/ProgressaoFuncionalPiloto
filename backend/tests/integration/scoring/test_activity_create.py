@@ -410,3 +410,54 @@ def test_editing_a_group_one_activity_into_the_informed_value_item_needs_the_sam
         )  # fmt: skip
 
     assert error.value.field == field
+
+
+# --- CATXT-02..04: messages of the manual points fields ---------------------------------------
+
+
+def message_of_failure(world, **kw) -> str:
+    with pytest.raises(ValidationFailed) as error:
+        create(world, **kw)
+    assert error.value.field == next(iter(kw.keys() & {"points_override", "informed_points"}))
+    return error.value.message
+
+
+@pytest.mark.parametrize(
+    "target", [{"group_number": 2, "item_number": 7, "quantity": D("1")}, {"group_number": 2}]
+)
+def test_points_override_outside_weekly_load_says_to_inform_the_unit_value(
+    official_chosen, target
+):
+    message = message_of_failure(official_chosen, **target, points_override=D("5"))
+
+    assert message == (
+        "Esta tabela não aceita pontuação manual neste item; nos itens por unidade ou por "
+        "bloco de horas, informe o valor unitário"
+    )
+
+
+def test_points_override_above_the_range_is_called_manual_score(official_chosen):
+    message = message_of_failure(
+        official_chosen, group_number=2, item_number=7, points_override=D("10001")
+    )
+
+    assert message == "Pontuação manual deve estar entre 0 e 10000"
+
+
+def test_informed_points_below_the_range_keeps_its_label(official_chosen):
+    message = message_of_failure(
+        official_chosen, group_number=2, item_number=7, informed_points=D("-1")
+    )
+
+    assert message == "Pontos informados deve estar entre 0 e 10000"
+
+
+def test_points_override_on_a_pit_item_keeps_the_pit_hours_message(official_chosen):
+    message = message_of_failure(
+        official_chosen, group_number=1, academic_period="2023.1", level=Level.GRADUACAO,
+        hours=D("68"), points_override=D("24"),
+    )  # fmt: skip
+
+    assert message == (
+        "No Grupo I, as horas de PIT são calculadas da carga horária; não há pontos a informar"
+    )

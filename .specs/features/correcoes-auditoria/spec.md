@@ -242,9 +242,9 @@ O docente não consegue concluir um processo real: nenhuma tela leva o processo 
 | CAREF-05 | P1: O Grupo I tem só I.1 e I.2 | Execute | Implementing |
 | CAREF-06 | P1: O Grupo I tem só I.1 e I.2 | Tasks | Pending |
 | CATXT-01 | P1: Textos que dizem o que o sistema faz | Tasks | Pending |
-| CATXT-02 | P1: Textos que dizem o que o sistema faz | Tasks | Pending |
-| CATXT-03 | P1: Textos que dizem o que o sistema faz | Tasks | Pending |
-| CATXT-04 | P1: Textos que dizem o que o sistema faz | Tasks | Pending |
+| CATXT-02 | P1: Textos que dizem o que o sistema faz | Execute | Implementing |
+| CATXT-03 | P1: Textos que dizem o que o sistema faz | Execute | Implementing |
+| CATXT-04 | P1: Textos que dizem o que o sistema faz | Execute | Implementing |
 | CAEDI-01 | P1: Editar atividade com pontuação manual gravada | Tasks | Pending |
 | CAEDI-02 | P1: Editar atividade com pontuação manual gravada | Tasks | Pending |
 | CAEDI-03 | P1: Editar atividade com pontuação manual gravada | Tasks | Pending |
