@@ -983,7 +983,7 @@ graph LR
 
 #### T30: Aviso da Etapa 5 para a Tabela gerada com outra versão
 
-**Status**: Pending
+**Status**: Done
 
 **What**: A Etapa 5 lê a versão escolhida (`GET /api/processes/{id}/scoring/table`, já existente: `chosen.version.id`) e, quando a última Tabela `PRONTO` tem `table_version_id` diferente, mostra "Gerada com outra versão da tabela de pontuação; gere de novo" no bloco da Tabela; Relatório e Comprovante não mostram o aviso (D12).
 **Where**: `frontend/src/pages/ProcessGenerated.tsx` (modify)
@@ -998,9 +998,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/pages/ProcessGenerated.test.tsx`: última Tabela `PRONTO` com versão diferente da escolhida mostra o aviso; igual não mostra; uma Tabela mais nova em andamento ou falha não esconde nem cria o aviso (compara só a última `PRONTO`; mata "comparando com a versão errada"); Relatório e Comprovante com versão diferente não mostram aviso; sem tabela escolhida, sem aviso
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/pages/ProcessGenerated.test.tsx`: última Tabela `PRONTO` com versão diferente da escolhida mostra o aviso; igual não mostra; uma Tabela mais nova em andamento ou falha não esconde nem cria o aviso (compara só a última `PRONTO`; mata "comparando com a versão errada"); Relatório e Comprovante com versão diferente não mostram aviso; sem tabela escolhida, sem aviso
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: front

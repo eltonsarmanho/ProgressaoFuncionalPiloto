@@ -235,3 +235,83 @@ describe("CAINI-10, CAINI-11: a Etapa 5 explica a conclusão conforme o status",
     expect(screen.queryByRole("link", { name: "Ir para a Etapa 1" })).not.toBeInTheDocument();
   });
 });
+
+describe("GI-11: aviso da Tabela gerada com outra versão da tabela de pontuação", () => {
+  const WARNING = "Gerada com outra versão da tabela de pontuação; gere de novo";
+  const chosen = (versionId: string | null) => ({
+    "GET /api/processes/p1/scoring/table": {
+      status: 200,
+      body: {
+        chosen: versionId ? { table_name: "Tabela oficial", version: { id: versionId } } : null,
+        suggested: null,
+        alerts: [],
+      },
+    },
+  });
+
+  it("a última Tabela pronta com versão diferente da escolhida mostra o aviso no bloco da Tabela", async () => {
+    setup("EM_ANDAMENTO", { TABELA: [generated({ table_version_id: "v-old" })] }, chosen("v-new"));
+    const b = await block("Tabela de Pontuação");
+    expect(await within(b).findByText(WARNING)).toBeInTheDocument();
+  });
+
+  it("a versão igual à escolhida não mostra o aviso", async () => {
+    setup("EM_ANDAMENTO", { TABELA: [generated({ table_version_id: "v-new" })] }, chosen("v-new"));
+    const b = await block("Tabela de Pontuação");
+    await within(b).findByRole("link", { name: "Baixar Tabela de Pontuação versão 1 em PDF" });
+    expect(screen.queryByText(WARNING)).not.toBeInTheDocument();
+  });
+
+  it("uma Tabela mais nova que falhou não esconde o aviso da última pronta", async () => {
+    setup(
+      "EM_ANDAMENTO",
+      {
+        TABELA: [
+          generated({ id: "g2", state: "FALHOU", version_number: null, table_version_id: null, files: [], error_code: "ERRO_INTERNO" }),
+          generated({ id: "g1", table_version_id: "v-old" }),
+        ],
+      },
+      chosen("v-new"),
+    );
+    const b = await block("Tabela de Pontuação");
+    expect(await within(b).findByText(WARNING)).toBeInTheDocument();
+  });
+
+  it("uma Tabela mais nova em andamento com versão diferente não cria o aviso quando a última pronta é a escolhida", async () => {
+    setup(
+      "EM_ANDAMENTO",
+      {
+        TABELA: [
+          generated({ id: "g2", state: "GERANDO", version_number: null, table_version_id: "v-old", files: [] }),
+          generated({ id: "g1", table_version_id: "v-new" }),
+        ],
+      },
+      chosen("v-new"),
+    );
+    const b = await block("Tabela de Pontuação");
+    await within(b).findByRole("link", { name: "Baixar Tabela de Pontuação versão 1 em PDF" });
+    expect(screen.queryByText(WARNING)).not.toBeInTheDocument();
+  });
+
+  it("o Relatório e o Comprovante gerados com outra versão não mostram o aviso", async () => {
+    setup(
+      "EM_ANDAMENTO",
+      {
+        TABELA: [generated({ table_version_id: "v-new" })],
+        RELATORIO: [generated({ id: "g3", kind: "RELATORIO", table_version_id: "v-old" })],
+        COMPROVANTE: [generated({ id: "g4", kind: "COMPROVANTE", table_version_id: "v-old" })],
+      },
+      chosen("v-new"),
+    );
+    const report = await block("Relatório de Atividades");
+    await within(report).findByRole("link", { name: "Baixar Relatório de Atividades versão 1 em PDF" });
+    expect(screen.queryByText(WARNING)).not.toBeInTheDocument();
+  });
+
+  it("sem tabela escolhida não há aviso", async () => {
+    setup("EM_ANDAMENTO", { TABELA: [generated({ table_version_id: "v-old" })] }, chosen(null));
+    const b = await block("Tabela de Pontuação");
+    await within(b).findByRole("link", { name: "Baixar Tabela de Pontuação versão 1 em PDF" });
+    expect(screen.queryByText(WARNING)).not.toBeInTheDocument();
+  });
+});

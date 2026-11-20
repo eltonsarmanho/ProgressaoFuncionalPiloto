@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
 import { errorMessage, request } from "../api/client";
-import type { Activity, Process } from "../api/types";
+import type { Activity, Process, TableChoice } from "../api/types";
 import { ComprovanteLayoutEditor } from "../components/ComprovanteLayoutEditor";
 import { ConcludeDialog } from "../components/ConcludeDialog";
 import { DossierOrder } from "../components/DossierOrder";
@@ -47,6 +47,7 @@ export function ProcessGenerated() {
   const { id = "" } = useParams();
   const [process, setProcess] = useState<Process | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [chosenTableVersionId, setChosenTableVersionId] = useState<string | null>(null);
   const [concluding, setConcluding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloads, setReloads] = useState(0);
@@ -79,6 +80,20 @@ export function ProcessGenerated() {
     };
   }, [id]);
 
+  useEffect(() => {
+    let cancelled = false;
+    request<TableChoice>("GET", `/api/processes/${id}/scoring/table`)
+      .then((found) => {
+        if (!cancelled) setChosenTableVersionId(found.chosen?.version.id ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setChosenTableVersionId(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
   const readOnly = process !== null && (process.status === "CONCLUIDO" || process.status === "ARQUIVADO");
   const concluded = process?.status === "CONCLUIDO";
   const leftOut = leftOutCount(activities);
@@ -100,7 +115,7 @@ export function ProcessGenerated() {
       )}
       {process && (
         <>
-          <GeneratedBlock processId={id} kind="TABELA" leftOut={leftOut} />
+          <GeneratedBlock processId={id} kind="TABELA" leftOut={leftOut} chosenTableVersionId={chosenTableVersionId} />
           <GeneratedBlock processId={id} kind="RELATORIO" leftOut={leftOut}>
             <Disclosure label="Revisar rascunho do Relatório">
               <ReportDraftEditor processId={id} readOnly={readOnly} />

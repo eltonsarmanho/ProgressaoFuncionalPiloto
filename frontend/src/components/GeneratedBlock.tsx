@@ -5,6 +5,8 @@ import { generationErrorMessage, isConflict } from "../generationErrors";
 import { usePolling } from "../hooks/usePolling";
 import { DOCUMENT_KIND_LABELS, GENERATION_CODE_LABELS, GENERATION_STATE_LABELS, alertDetail, alertText, formatDay, formatSize } from "../labels";
 
+const OUTDATED_TABLE_NOTICE = "Gerada com outra versão da tabela de pontuação; gere de novo";
+
 /**
  * UIG-01, UIG-04, UIG-05, UIG-06, VER-09: the block of one generated document. The warning of the
  * activities that stay out comes before the button; while a generation runs the block asks the
@@ -14,18 +16,22 @@ import { DOCUMENT_KIND_LABELS, GENERATION_CODE_LABELS, GENERATION_STATE_LABELS, 
  * `leftOut` is the number of activities that will not enter the document; `disabledReason` turns the
  * button off with the reason shown (a concluded process cannot generate the Comprovante); `children`
  * is what goes at the end of the block (the draft of the report, the arrangement of the Comprovante).
+ * `chosenTableVersionId` is the scoring table version the process uses today: when the last ready
+ * Tabela was generated with another one, the block says so (GI-11); the other kinds never warn.
  */
 export function GeneratedBlock({
   processId,
   kind,
   leftOut = 0,
   disabledReason,
+  chosenTableVersionId,
   children,
 }: {
   processId: string;
   kind: DocumentKind;
   leftOut?: number;
   disabledReason?: string;
+  chosenTableVersionId?: string | null;
   children?: ReactNode;
 }) {
   const [rows, setRows] = useState<GeneratedDocument[] | null>(null);
@@ -65,6 +71,8 @@ export function GeneratedBlock({
   const latest = rows?.[0];
   const ready = (rows ?? []).filter((r) => r.state === "PRONTO");
   const headingId = `generated-${kind}`;
+  const lastTableVersion = ready[0]?.table_version_id;
+  const outdated = kind === "TABELA" && Boolean(chosenTableVersionId) && Boolean(lastTableVersion) && lastTableVersion !== chosenTableVersionId;
 
   return (
     <section className="card generated-block" aria-labelledby={headingId}>
@@ -108,6 +116,7 @@ export function GeneratedBlock({
           ))}
         </ul>
       )}
+      {outdated && <p className="doc-warning sev-ALERTA">{OUTDATED_TABLE_NOTICE}</p>}
       {rows !== null && ready.length === 0 && !running && <p className="muted">Nenhuma versão gerada ainda.</p>}
       {ready.length > 0 && (
         <ul aria-label="Versões geradas" className="generation-history">
