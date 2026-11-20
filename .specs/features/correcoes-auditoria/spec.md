@@ -232,9 +232,9 @@ O docente não consegue concluir um processo real: nenhuma tela leva o processo 
 | CAINI-09 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
 | CAINI-10 | P1: Etapa 5 explica a conclusão | Execute | Implementing |
 | CAINI-11 | P1: Etapa 5 explica a conclusão | Execute | Implementing |
-| CAINI-12 | P2: Iniciar pelo Painel | Tasks | Pending |
-| CAINI-13 | P2: Iniciar pelo Painel | Tasks | Pending |
-| CAINI-14 | P2: Iniciar pelo Painel | Tasks | Pending |
+| CAINI-12 | P2: Iniciar pelo Painel | Execute | Implementing |
+| CAINI-13 | P2: Iniciar pelo Painel | Execute | Implementing |
+| CAINI-14 | P2: Iniciar pelo Painel | Execute | Implementing |
 | CAREF-01 | P1: O Grupo I tem só I.1 e I.2 | Tasks | Pending |
 | CAREF-02 | P1: O Grupo I tem só I.1 e I.2 | Tasks | Pending |
 | CAREF-03 | P1: O Grupo I tem só I.1 e I.2 | Tasks | Pending |

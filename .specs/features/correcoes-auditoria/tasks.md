@@ -217,7 +217,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T5: Botão "Iniciar" no Painel
 
-**Status**: Pending
+**Status**: Done
 
 **What**: A linha do Painel com processo `RASCUNHO` ganha o botão "Iniciar" (`aria-label` e `title` "Iniciar processo de {nome}"), que abre o `StartProcessDialog`; com 200 a linha e a contagem por status mudam sem recarregar; com 409 a lista é recarregada.
 **Where**: `frontend/src/pages/Dashboard.tsx` (modify; testes no arquivo de teste da página)
@@ -232,9 +232,9 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/pages/Dashboard.test.tsx`: o botão aparece só nas linhas `RASCUNHO`, com o `aria-label` exato; confirmar com 200 mostra "Em andamento" na linha e a contagem de "Rascunho" cai 1 e a de "Em andamento" sobe 1 sem novo `GET /api/processes`; 409 mostra a mensagem no modal e faz um novo `GET /api/processes`
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: contagem antes e depois registrada; nenhum teste apagado
+- [x] Testes primeiro em `frontend/src/pages/Dashboard.test.tsx`: o botão aparece só nas linhas `RASCUNHO`, com o `aria-label` exato; confirmar com 200 mostra "Em andamento" na linha e a contagem de "Rascunho" cai 1 e a de "Em andamento" sobe 1 sem novo `GET /api/processes`; 409 mostra a mensagem no modal e faz um novo `GET /api/processes`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagem antes e depois registrada; nenhum teste apagado
 
 **Tests**: unit
 **Gate**: quick

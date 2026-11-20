@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { errorMessage, request } from "../api/client";
 import type { ProcessStatus, ProcessSummary } from "../api/types";
-import { ArchiveProcessDialog, DeleteProcessDialog } from "../components/ProcessDialogs";
+import { ArchiveProcessDialog, DeleteProcessDialog, StartProcessDialog } from "../components/ProcessDialogs";
 import { MODALITY_LABELS, SEVERITIES, SEVERITY_LABELS, STATUS_LABELS, formatDate } from "../labels";
 
 const STATUSES = Object.keys(STATUS_LABELS) as ProcessStatus[];
@@ -12,6 +12,7 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [archiving, setArchiving] = useState<ProcessSummary | null>(null);
   const [deleting, setDeleting] = useState<ProcessSummary | null>(null);
+  const [starting, setStarting] = useState<ProcessSummary | null>(null);
 
   function load() {
     return request<ProcessSummary[]>("GET", "/api/processes")
@@ -26,6 +27,11 @@ export function Dashboard() {
   function archived(id: string, status: ProcessStatus, version: number) {
     setProcesses((list) => list?.map((p) => (p.id === id ? { ...p, status, version } : p)) ?? null);
     setArchiving(null);
+  }
+
+  function started(id: string, status: ProcessStatus, version: number) {
+    setProcesses((list) => list?.map((p) => (p.id === id ? { ...p, status, version } : p)) ?? null);
+    setStarting(null);
   }
 
   function deleted(id: string, alreadyGone: boolean) {
@@ -83,6 +89,17 @@ export function Dashboard() {
                 ))}
               </ul>
               <div className="btn-row">
+                {p.status === "RASCUNHO" && (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    aria-label={`Iniciar processo de ${p.professor_name}`}
+                    title={`Iniciar processo de ${p.professor_name}`}
+                    onClick={() => setStarting(p)}
+                  >
+                    Iniciar
+                  </button>
+                )}
                 {p.status !== "ARQUIVADO" && (
                   <button
                     type="button"
@@ -109,6 +126,15 @@ export function Dashboard() {
         </ul>
       )}
 
+      {starting && (
+        <StartProcessDialog
+          processId={starting.id}
+          version={starting.version}
+          onStarted={(status, version) => started(starting.id, status, version)}
+          onStale={() => void load()}
+          onClose={() => setStarting(null)}
+        />
+      )}
       {archiving && (
         <ArchiveProcessDialog
           process={archiving}

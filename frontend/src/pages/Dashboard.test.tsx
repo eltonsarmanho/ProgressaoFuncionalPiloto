@@ -167,6 +167,80 @@ describe("GP-ARQ: arquivar processo no painel", () => {
   });
 });
 
+describe("CAINI-12..14: iniciar processo em rascunho pelo painel", () => {
+  const start = (name: string) => ({ name: `Iniciar processo de ${name}` });
+  const loadsOf = (calls: { method: string; path: string }[]) =>
+    calls.filter((c) => c.method === "GET" && c.path === "/api/processes");
+
+  it("CAINI-12: o botão Iniciar só aparece nas linhas em rascunho, com o aria-label exato", async () => {
+    setup([
+      summary("a", "Docente Alfa", "RASCUNHO", [0, 0, 0]),
+      summary("b", "Docente Beta", "EM_ANDAMENTO", [0, 0, 0]),
+      summary("c", "Docente Gama", "CONCLUIDO", [0, 0, 0]),
+      summary("d", "Docente Delta", "ARQUIVADO", [0, 0, 0]),
+    ]);
+
+    const alfa = await card("Docente Alfa");
+    const button = within(alfa).getByRole("button", start("Docente Alfa"));
+    expect(button).toHaveTextContent("Iniciar");
+    expect(button).toHaveAttribute("title", "Iniciar processo de Docente Alfa");
+    for (const name of ["Docente Beta", "Docente Gama", "Docente Delta"]) {
+      expect(within(await card(name)).queryByRole("button", { name: /Iniciar/ })).not.toBeInTheDocument();
+    }
+  });
+
+  it("CAINI-13: confirmar usa o mesmo modal e o mesmo pedido, e a linha e a contagem mudam sem recarregar a lista", async () => {
+    const { user, calls } = setup(
+      [summary("a", "Docente Alfa", "RASCUNHO", [0, 0, 0], 4), summary("b", "Docente Beta", "RASCUNHO", [0, 0, 0])],
+      { "POST /api/processes/a/status": { status: 200, body: { id: "a", status: "EM_ANDAMENTO", version: 5 } } },
+    );
+    const alfaBefore = await card("Docente Alfa");
+    expect(total("Rascunho")).toBe("2");
+    expect(total("Em andamento")).toBe("0");
+
+    await user.click(within(alfaBefore).getByRole("button", start("Docente Alfa")));
+    const dialog = screen.getByRole("dialog", { name: "Iniciar processo" });
+    expect(
+      within(dialog).getByText(
+        "Depois de iniciado, o processo não volta a rascunho e cada alteração na Etapa 1 passa a pedir justificativa.",
+      ),
+    ).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Iniciar" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    const post = calls.find((c) => c.method === "POST")!;
+    expect(JSON.parse(post.init!.body as string)).toEqual({ status: "EM_ANDAMENTO", expected_version: 4 });
+    const alfa = screen.getByRole("listitem", { name: "Docente Alfa" });
+    expect(within(alfa).getByText("Em andamento")).toBeInTheDocument();
+    expect(within(alfa).queryByRole("button", { name: /Iniciar/ })).not.toBeInTheDocument();
+    expect(total("Rascunho")).toBe("1");
+    expect(total("Em andamento")).toBe("1");
+    expect(loadsOf(calls)).toHaveLength(1);
+  });
+
+  it("CAINI-14: 409 mostra a mensagem no modal e recarrega a lista", async () => {
+    let loads = 0;
+    const { user, calls } = setup([], {
+      "GET /api/processes": () => {
+        loads += 1;
+        return { status: 200, body: [summary("a", "Docente Alfa", loads === 1 ? "RASCUNHO" : "EM_ANDAMENTO", [0, 0, 0], loads)] };
+      },
+      "POST /api/processes/a/status": { status: 409, body: { detail: "O processo foi alterado por outro usuário; recarregue" } },
+    });
+
+    await user.click(within(await card("Docente Alfa")).getByRole("button", start("Docente Alfa")));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Iniciar" }));
+
+    expect(await within(await screen.findByRole("dialog")).findByRole("alert")).toHaveTextContent(
+      "O processo foi alterado por outro usuário; recarregue",
+    );
+    await waitFor(() => expect(loadsOf(calls)).toHaveLength(2));
+    await waitFor(() =>
+      expect(within(screen.getByRole("listitem", { name: "Docente Alfa" })).getByText("Em andamento")).toBeInTheDocument(),
+    );
+  });
+});
+
 const PREVIEW = { documents: 12, activities: 30, generated_documents: 3 };
 
 describe("GP-DEL: excluir processo no painel", () => {
