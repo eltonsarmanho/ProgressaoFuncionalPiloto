@@ -174,3 +174,15 @@ describe("UIG-07: a Etapa 5 cabe em 360 px sem rolagem horizontal da página", (
     }
   });
 });
+
+describe("SEC-05: a região viva vazia do StepNav não ocupa espaço", () => {
+  it("`.step-blocked:empty` zera a margem e a região não é escondida (continua no DOM, lida pelo leitor de tela)", () => {
+    const empty = css.match(/\.step-blocked:empty\s*{([^}]*)}/);
+    expect(empty).not.toBeNull();
+    expect(empty![1]).toMatch(/margin:\s*0\s*;/);
+    expect(empty![1]).not.toMatch(/display\s*:\s*none/);
+    expect(empty![1]).not.toMatch(/visibility\s*:\s*hidden/);
+    // With a message, the block keeps its own margin.
+    expect(css).toMatch(/\.step-blocked\s*{[^}]*margin:\s*-0\.5rem 0 1rem/);
+  });
+});

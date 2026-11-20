@@ -1556,7 +1556,7 @@ T54 → T43 → T44
 
 ### T54: TF10, `StepNav` sem espaço extra
 
-**Status**: Pending
+**Status**: Done
 
 **What**: A região viva do `StepNav`, sempre montada e vazia sem bloqueio, não soma margem em nenhuma página: `.step-blocked:empty` zera a margem, sem `display: none`.
 **Where**: `frontend/src/styles.css` (modify), com `frontend/src/components/StepNav.tsx`
@@ -1571,9 +1571,9 @@ T54 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro (que falham antes), no mesmo estilo dos testes de CSS existentes: `styles.css` tem a regra `.step-blocked:empty` com `margin: 0` e não usa `display: none` nela; a região segue no DOM, vazia, sem bloqueio
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+- [x] Testes primeiro (que falham antes), no mesmo estilo dos testes de CSS existentes: `styles.css` tem a regra `.step-blocked:empty` com `margin: 0` e não usa `display: none` nela; a região segue no DOM, vazia, sem bloqueio
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
 
 **Tests**: unit
 **Gate**: build

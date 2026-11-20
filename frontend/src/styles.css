@@ -1065,3 +1065,8 @@ fieldset.grid legend {
   color: var(--erro);
   font-weight: 600;
 }
+
+/* The live region is always on the page: without a message it takes no room. */
+.step-blocked:empty {
+  margin: 0;
+}
