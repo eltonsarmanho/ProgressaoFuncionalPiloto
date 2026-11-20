@@ -400,3 +400,54 @@ describe("SEC-12: 'Mostrar mais' mantém o foco e o contador é anunciado", () =
     expect(document.activeElement).toBe(screen.getByText("Atividade 026"));
   });
 });
+
+describe("SEC-03: o filtro de grupo mostra a contagem de cada grupo", () => {
+  it("cada opção traz o número de atividades válidas do grupo", () => {
+    const list = [
+      activity({ id: "a1", title: "Banca A" }),
+      activity({ id: "a2", title: "Banca B" }),
+      activity({ id: "a3", title: "Orientação C", group_number: 2, item_number: 7 }),
+    ];
+    setup(list);
+    const options = within(screen.getByLabelText("Filtrar por grupo")).getAllByRole("option").map((o) => o.textContent);
+    expect(options).toEqual(["Todos os grupos", "II · Orientação (1)", "III · Bancas (2)"]);
+  });
+});
+
+describe("SEC-11: a seleção vale só para o que o filtro mostra", () => {
+  it("filtrar por grupo descarta da seleção as escondidas: o contador e o lote só levam as filtradas", async () => {
+    const { calls, user } = setup(many(4), { [BATCH]: { status: 200, body: { activities: [{}, {}], skipped: [] } } });
+    await user.click(screen.getByRole("button", { name: "Selecionar todas (4)" }));
+    expect(screen.getByRole("button", { name: "Validar as selecionadas (4)" })).toBeEnabled();
+    await user.selectOptions(screen.getByLabelText("Filtrar por grupo"), "3");
+    expect(screen.getByRole("button", { name: "Validar as selecionadas (2)" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Validar as selecionadas (2)" }));
+    await waitFor(() => expect(calls).toHaveLength(1));
+    expect(body(calls[0].init)).toEqual({ activity_ids: ["m1", "m3"] });
+  });
+
+  it("a seleção escondida pelo filtro não volta ao limpar o filtro", async () => {
+    const { user } = setup(many(4));
+    await user.click(screen.getByRole("button", { name: "Selecionar todas (4)" }));
+    await user.selectOptions(screen.getByLabelText("Filtrar por grupo"), "3");
+    await user.click(screen.getByRole("button", { name: "Limpar filtros" }));
+    expect(screen.getByRole("button", { name: "Validar as selecionadas (2)" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Selecionar Atividade 002")).not.toBeChecked();
+  });
+
+  it("'Selecionar todas' avisa quantas atividades estão além das mostradas, e o contador também", async () => {
+    const { user } = setup(many(60));
+    expect(screen.getByText("Selecionar todas inclui as 60 atividades dos filtros, 35 além das 25 mostradas.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Selecionar todas (60)" }));
+    expect(screen.getByText("60 atividades selecionadas (35 além das mostradas)")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Mostrar mais" }));
+    await user.click(screen.getByRole("button", { name: "Mostrar mais" }));
+    expect(screen.queryByText(/além das mostradas/)).not.toBeInTheDocument();
+    expect(screen.getByText("60 atividades selecionadas")).toBeInTheDocument();
+  });
+
+  it("sem atividades além das mostradas não há aviso", () => {
+    setup(many(5));
+    expect(screen.queryByText(/além das/)).not.toBeInTheDocument();
+  });
+});

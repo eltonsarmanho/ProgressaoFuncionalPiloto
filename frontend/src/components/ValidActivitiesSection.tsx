@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { PAGE_SIZE, countSituations, filterActivities, groupsOf, validityOf } from "../activityList";
+import { useEffect, useId, useRef, useState } from "react";
+import { PAGE_SIZE, countGroups, countSituations, filterActivities, groupsOf, validityOf } from "../activityList";
 import { errorMessage, request } from "../api/client";
 import type { Activity, BulkValidateResult, DocumentSummary, ScoringGroup, ScoringRow, SkippedActivity } from "../api/types";
 import { INVALID_REASON_LABELS, needsCategoryMessage } from "../labels";
@@ -55,6 +55,7 @@ export function ValidActivitiesSection({
   const [notice, setNotice] = useState<Notice | null>(null);
   const [busy, setBusy] = useState(false);
   const [linking, setLinking] = useState<Activity | null>(null);
+  const beyondId = useId();
   const list = useRef<HTMLUListElement>(null);
   const focusFrom = useRef<number | null>(null);
 
@@ -70,12 +71,16 @@ export function ValidActivitiesSection({
   const visible = filtered.slice(0, shown);
   const needsCategory = activities.filter((a) => validityOf(a).needs_category).length;
 
-  // The selection keeps only what still awaits validation (a reload may have validated some of it).
-  const awaiting = new Set(activities.filter((a) => a.status === "AGUARDANDO_REVISAO").map((a) => a.id));
-  const picked = selection.filter((id) => awaiting.has(id));
+  // SEC-11: the selection is what the filters show and what can be validated now (a reload may have
+  // validated some of it, and a filter hides the rest): the counter and the batch count only that.
   const validatable = filtered
     .filter((a) => a.status === "AGUARDANDO_REVISAO" && !validityOf(a).needs_category)
     .map((a) => a.id);
+  const validatableSet = new Set(validatable);
+  const picked = selection.filter((id) => validatableSet.has(id));
+  const shownIds = new Set(visible.map((a) => a.id));
+  const beyondAll = validatable.filter((id) => !shownIds.has(id)).length;
+  const beyondPicked = picked.filter((id) => !shownIds.has(id)).length;
   const confident = activities
     .filter((a) => !validityOf(a).needs_category && isConfidentSuggestion(a, rowOf.get(a.id), documents))
     .map((a) => a.id);
@@ -83,6 +88,9 @@ export function ValidActivitiesSection({
   const changeFilters = (next: ActivityFilterState) => {
     setFilters(next);
     setShown(PAGE_SIZE);
+    // What the new filters hide leaves the selection, and does not come back when they are cleared.
+    const kept = new Set(filterActivities(activities, next).map((a) => a.id));
+    setSelection((current) => current.filter((id) => kept.has(id)));
   };
   const toggle = (id: string) =>
     setSelection((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]));
@@ -140,12 +148,13 @@ export function ValidActivitiesSection({
         <p>Nenhuma atividade válida ainda</p>
       ) : (
         <>
-          <ActivityFilters filters={filters} counts={countSituations(activities)} groups={groupsOf(activities)} onChange={changeFilters} />
+          <ActivityFilters filters={filters} counts={countSituations(activities)} groups={groupsOf(activities)} groupCounts={countGroups(activities)} onChange={changeFilters} />
           <div className="btn-row activity-toolbar">
             <button
               type="button"
               className="btn btn-secondary"
               disabled={validatable.length === 0}
+              aria-describedby={beyondAll > 0 ? beyondId : undefined}
               onClick={() => setSelection(validatable)}
             >
               Selecionar todas ({validatable.length})
@@ -172,8 +181,14 @@ export function ValidActivitiesSection({
             </button>
           </div>
           <p className="muted">{plural(confident.length, "atividade elegível", "atividades elegíveis")} para a validação por confiança.</p>
+          {beyondAll > 0 && (
+            <p id={beyondId} className="muted">
+              {`Selecionar todas inclui as ${validatable.length} atividades dos filtros, ${beyondAll} além das ${visible.length} mostradas.`}
+            </p>
+          )}
           <p className="muted" aria-live="polite">
             {plural(picked.length, "atividade selecionada", "atividades selecionadas")}
+            {beyondPicked > 0 ? ` (${beyondPicked} além das mostradas)` : ""}
           </p>
 
           {filtered.length === 0 ? (

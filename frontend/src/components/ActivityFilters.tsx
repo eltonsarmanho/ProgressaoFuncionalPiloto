@@ -22,12 +22,15 @@ export function ActivityFilters({
   filters,
   counts,
   groups,
+  groupCounts,
   onChange,
 }: {
   filters: ActivityFilterState;
   counts: SituationCounts;
   /** The group numbers the list has, so the filter offers only those. */
   groups: number[];
+  /** How many activities each group has; shown beside the name of the group when given. */
+  groupCounts?: Record<number, number>;
   onChange: (filters: ActivityFilterState) => void;
 }) {
   const active = filters.query !== "" || filters.situation !== "TODAS" || filters.group !== null;
@@ -55,7 +58,7 @@ export function ActivityFilters({
               .sort((a, b) => a - b)
               .map((g) => (
                 <option key={g} value={g}>
-                  {`${roman(g)} · ${GROUP_NAMES[g] ?? `Grupo ${g}`}`}
+                  {`${roman(g)} · ${GROUP_NAMES[g] ?? `Grupo ${g}`}${groupCounts ? ` (${groupCounts[g] ?? 0})` : ""}`}
                 </option>
               ))}
           </select>

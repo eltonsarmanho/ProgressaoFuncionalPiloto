@@ -958,7 +958,9 @@ fieldset.grid legend {
 
 .activity-row-main > input[type="checkbox"] {
   flex: 0 0 auto;
-  width: auto;
+  /* Touch target (SEC-11): logical size, so the rule fixes no layout width of the row. */
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
   margin-top: 0.25rem;
 }
 

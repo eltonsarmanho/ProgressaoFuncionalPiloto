@@ -31,6 +31,15 @@ export function countSituations(activities: Activity[]): SituationCounts {
   return counts;
 }
 
+/** SEC-03: how many valid activities each group has, for the group filter. */
+export function countGroups(activities: Activity[]): Record<number, number> {
+  const counts: Record<number, number> = {};
+  for (const activity of activities) {
+    if (activity.group_number != null) counts[activity.group_number] = (counts[activity.group_number] ?? 0) + 1;
+  }
+  return counts;
+}
+
 /** Case and accent do not matter in the search ("orientacao" finds "Orientação"). */
 const fold = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 

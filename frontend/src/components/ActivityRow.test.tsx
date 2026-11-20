@@ -235,6 +235,17 @@ describe("VAL-06, SEC-04, SEC-12: ActivityRow", () => {
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   });
 
+  it("a atividade que precisa de categoria não oferece a caixa de seleção", () => {
+    setup(activity({ group_number: null, item_number: null, predicted_points: null, validity: { ...VALID, needs_category: true } }));
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+
+  it("a caixa de seleção tem alvo de toque de 1.25rem por 1.25rem", () => {
+    const rule = css.match(/\.activity-row-main\s*>\s*input\[type="checkbox"\]\s*{[^}]*}/)?.[0] ?? "";
+    expect(rule).toMatch(/inline-size:\s*1\.25rem/);
+    expect(rule).toMatch(/block-size:\s*1\.25rem/);
+  });
+
   it("mostra as duplicadas mescladas com 'Não é duplicada'", () => {
     setup(activity({ merged: [{ id: "m1", title: "Banca de mestrado de Maria (cópia)" }] }));
     expect(screen.getByText("1 duplicada mesclada")).toBeInTheDocument();

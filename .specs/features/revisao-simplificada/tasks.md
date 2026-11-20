@@ -1386,6 +1386,8 @@ T50 → T43 → T44
 
 ### T48: TF4, filtros e seleção coerentes
 
+**Status**: Done
+
 **What**: O filtro de grupo mostra a contagem de cada grupo; a seleção só conta e valida as atividades filtradas; a caixa de seleção some da linha que precisa de categoria e tem alvo de toque de 1,25 rem; "Selecionar todas" diz quantas estão além das mostradas.
 **Where**: `frontend/src/components/ValidActivitiesSection.tsx` (modify), com `ActivityFilters.tsx`, `ActivityRow.tsx`, `activityList.ts` e `styles.css`
 **Depends on**: T47
@@ -1399,9 +1401,9 @@ T50 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro (que falham antes): as opções do filtro de grupo trazem a contagem ("II · Orientação (12)") calculada sobre as válidas; filtrar por grupo esconde da seleção, e do contador de "Validar as selecionadas (N)", as atividades que ficaram de fora; a linha que precisa de categoria não oferece a caixa de seleção; `styles.css` dá à caixa de seleção 1.25rem por 1.25rem; "Selecionar todas (N)" informa no texto quantas das N estão além das mostradas
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado; os novos passam
+- [x] Testes primeiro (que falham antes): as opções do filtro de grupo trazem a contagem ("II · Orientação (12)") calculada sobre as válidas; filtrar por grupo esconde da seleção, e do contador de "Validar as selecionadas (N)", as atividades que ficaram de fora; a linha que precisa de categoria não oferece a caixa de seleção; `styles.css` dá à caixa de seleção 1.25rem por 1.25rem; "Selecionar todas (N)" informa no texto quantas das N estão além das mostradas
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado; os novos passam
 
 **Tests**: unit
 **Gate**: build

@@ -132,7 +132,7 @@ export function ActivityRow({
   return (
     <li className="activity-row">
       <div className="activity-row-main">
-        {onToggleSelect && isValid && awaiting && (
+        {onToggleSelect && isValid && awaiting && !validity.needs_category && (
           <input
             type="checkbox"
             aria-label={`Selecionar ${activity.title}`}
