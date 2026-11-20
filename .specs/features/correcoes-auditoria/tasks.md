@@ -102,7 +102,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T1: Caracterização da transição de rascunho para em andamento
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Testes de API que fixam o que o servidor já faz ao iniciar: DOCENTE vinculado e ADMIN iniciam sem justificativa (200, versão + 1, evento `STATUS` com justificativa vazia); SECRETARIA de outra unidade e DOCENTE de outro docente recebem 404 e o processo não muda. Sem mudança de código de produção (se algum teste falhar, PARE e registre: a spec assume que o backend já aceita).
 **Where**: `backend/tests/integration/api/test_process_updates_api.py` (modify)
@@ -117,12 +117,12 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] Teste: DOCENTE vinculado envia `{"status": "EM_ANDAMENTO", "expected_version": 1}` sem `justificativa` → 200, `status == "EM_ANDAMENTO"`, `version == 2`, e o último evento de auditoria do processo é `STATUS` com `{"status": {"before": "RASCUNHO", "after": "EM_ANDAMENTO"}}` e justificativa `None`
-- [ ] Teste: ADMIN faz o mesmo → 200 e `version == 2`
-- [ ] Teste: SECRETARIA de outra unidade e DOCENTE de outro docente → 404, e um `GET` do dono mostra `RASCUNHO` e `version == 1`
-- [ ] Nenhum arquivo de `backend/app/` muda
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: contagem antes e depois registrada; só testes novos
+- [x] Teste: DOCENTE vinculado envia `{"status": "EM_ANDAMENTO", "expected_version": 1}` sem `justificativa` → 200, `status == "EM_ANDAMENTO"`, `version == 2`, e o último evento de auditoria do processo é `STATUS` com `{"status": {"before": "RASCUNHO", "after": "EM_ANDAMENTO"}}` e justificativa `None`
+- [x] Teste: ADMIN faz o mesmo → 200 e `version == 2`
+- [x] Teste: SECRETARIA de outra unidade e DOCENTE de outro docente → 404, e um `GET` do dono mostra `RASCUNHO` e `version == 1`
+- [x] Nenhum arquivo de `backend/app/` muda
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: contagem antes e depois registrada; só testes novos
 
 **Tests**: integration
 **Gate**: full

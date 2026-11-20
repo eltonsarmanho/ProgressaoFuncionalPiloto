@@ -228,8 +228,8 @@ O docente não consegue concluir um processo real: nenhuma tela leva o processo 
 | CAINI-05 | P1: Iniciar o processo na Etapa 1 | Tasks | Pending |
 | CAINI-06 | P1: Iniciar o processo na Etapa 1 | Tasks | Pending |
 | CAINI-07 | P1: Iniciar o processo na Etapa 1 | Tasks | Pending |
-| CAINI-08 | P1: Iniciar o processo na Etapa 1 | Tasks | Pending |
-| CAINI-09 | P1: Iniciar o processo na Etapa 1 | Tasks | Pending |
+| CAINI-08 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
+| CAINI-09 | P1: Iniciar o processo na Etapa 1 | Execute | Implementing |
 | CAINI-10 | P1: Etapa 5 explica a conclusão | Tasks | Pending |
 | CAINI-11 | P1: Etapa 5 explica a conclusão | Tasks | Pending |
 | CAINI-12 | P2: Iniciar pelo Painel | Tasks | Pending |

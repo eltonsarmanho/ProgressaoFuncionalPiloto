@@ -145,6 +145,50 @@ def test_status_follows_rascunho_em_andamento_concluido(client, secretaria, proc
     assert all(e.user_id == actor.id for e in events)
 
 
+@pytest.mark.parametrize("who", ["docente", "admin"])
+def test_start_without_justification_by_linked_docente_or_admin_is_audited(  # CAINI-08
+    client, act_as, process, professor, uow_factory, who
+):
+    if who == "docente":
+        actor, headers = act_as("docente@ufpa.br", Role.DOCENTE, professor_id=professor.id)
+    else:
+        actor, headers = act_as("admin@ufpa.br", Role.ADMIN)
+
+    response = set_status(client, headers, process["id"], "EM_ANDAMENTO", 1)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert (body["status"], body["version"]) == ("EM_ANDAMENTO", 2)
+    with uow_factory() as uow:
+        last = uow.audit.list_for("process", process["id"])[-1]
+    assert last.action == AuditAction.STATUS
+    assert last.changes == {"status": {"before": "RASCUNHO", "after": "EM_ANDAMENTO"}}
+    assert last.justification is None
+    assert last.user_id == actor.id
+
+
+@pytest.mark.parametrize("who", ["other-unit-secretaria", "other-docente"])
+def test_start_by_a_user_who_cannot_read_the_process_is_404_and_changes_nothing(  # CAINI-09
+    client, act_as, reference, process, uow_factory, who
+):
+    if who == "other-unit-secretaria":
+        _, headers = act_as(
+            "sec.ifch@ufpa.br", Role.SECRETARIA, unit_ids=frozenset({reference["IFCH"].id})
+        )
+    else:
+        stranger = add_professor(
+            uow_factory, reference["FASI"], siape="7654321", name="Outro Docente"
+        )
+        _, headers = act_as("outro@ufpa.br", Role.DOCENTE, professor_id=stranger.id)
+
+    response = set_status(client, headers, process["id"], "EM_ANDAMENTO", 1)
+
+    assert response.status_code == 404
+    _, owner = act_as("admin@ufpa.br", Role.ADMIN)
+    unchanged = client.get(f"/api/processes/{process['id']}", headers=owner).json()
+    assert (unchanged["status"], unchanged["version"]) == ("RASCUNHO", 1)
+
+
 @pytest.mark.parametrize(
     ("path", "target"),
     [([], "CONCLUIDO"), (["EM_ANDAMENTO", "CONCLUIDO"], "EM_ANDAMENTO"), ([], "RASCUNHO")],
