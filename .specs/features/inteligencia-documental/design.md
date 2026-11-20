@@ -170,18 +170,18 @@ A tabela vira `suggestion_rules.py`. A numeração é a da tabela oficial de pon
 | `BANCA_QUALIFICACAO` | III.7 | — | 1 | Pós-graduação |
 | `BANCA_SELECAO_POS` / `BOLSAS` | III.8 / III.9 | — | 1 | Por banca |
 | `BANCA_PROCESSO_SELETIVO` | sem item | — | — | Antes III.11 (alt. III.12); não existe na tabela oficial; não cria atividade |
-| `EXTENSAO_PROJETO_COORDENACAO` / `PARTICIPACAO` | IV.1 / IV.2 | — | anos inteiros do período (`QUANTIDADE_ESTIMADA`) | Por ano |
+| `EXTENSAO_PROJETO_COORDENACAO` / `PARTICIPACAO` | IV.1 / IV.2 | — | 1 por ação | Por ação, qualquer duração |
 | `EXTENSAO_CURSO_COORDENACAO` | IV.3 | — | 1 por documento; horas guardadas | Carga mínima de 20 h verificada pelo motor |
 | `EXTENSAO_CURSO_MINISTRANTE` | IV.4 | IV.5 | 1 por documento; horas guardadas | Carga mínima de 20 h verificada pelo motor |
 | `EXTENSAO_EVENTO_COORDENACAO` | IV.6 | — | 1 por documento; horas guardadas | |
 | `EXTENSAO_EVENTO_MINISTRANTE` | sem item | — | — | Antes IV.7; não existe na tabela oficial; não cria atividade |
-| `PESQUISA_PROJETO_COORDENACAO` | V.1 | — | 1 | Por projeto, com relatório final |
+| `PESQUISA_PROJETO_COORDENACAO` | V.1 | — | anos completos do período no interstício (`QUANTIDADE_ESTIMADA`) | Por ano de exercício, com relatório final |
 | `PESQUISA_GRUPO_COORDENACAO` / `MEMBRO` | V.2 / V.3 | — | anos (`QUANTIDADE_ESTIMADA`) | |
 | `PESQUISA_BOLSA_PRODUTIVIDADE` | V.4 | — | anos | |
 | `FUNCAO_DIRETOR_FACULDADE` | VI.6 | VI.3 | anos (`QUANTIDADE_ESTIMADA`) | Por portaria de designação |
 | `FUNCAO_VICE_DIRETOR_FACULDADE` / `COORDENADOR_CURSO_GRADUACAO` | VI.7 | — | anos | |
-| `COMISSAO_ADMINISTRACAO_SUPERIOR` / `NDE_MEMBRO` | VI.10 | VI.14 | 1 por designação | |
-| `COMISSAO_UNIDADE` | VI.12 | VI.14 | 1 por designação | |
+| `COMISSAO_ADMINISTRACAO_SUPERIOR` / `NDE_MEMBRO` | VI.10 | VI.14 | anos completos do período no interstício (`QUANTIDADE_ESTIMADA`) | |
+| `COMISSAO_UNIDADE` | VI.12 | VI.14 | anos completos do período no interstício (`QUANTIDADE_ESTIMADA`) | |
 | `COLEGIADO_MEMBRO` | VI.13 | — | anos | |
 | `CURSO_ESPECIALIZACAO_CONCLUIDO` | VII.7 | — | 1 | 360 horas |
 | `CURSO_APERFEICOAMENTO_CONCLUIDO` | VII.8 | VII.9 | 1 | 180 horas |

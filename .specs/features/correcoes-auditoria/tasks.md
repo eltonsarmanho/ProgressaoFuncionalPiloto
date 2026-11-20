@@ -645,7 +645,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T20: Coluna Quantidade do design da inteligência documental
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Na tabela de taxonomias, IV.1 e IV.2 passam a "1 por ação" (observação "Por ação, qualquer duração"); V.1, VI.10 e VI.12 passam a "anos completos do período no interstício (`QUANTIDADE_ESTIMADA`)", conforme `_PER_YEAR` em `quantity_rules.py:26-41`.
 **Where**: `.specs/features/inteligencia-documental/design.md` (modify, linhas 173, 178, 183 e 184)
@@ -660,8 +660,8 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] As cinco linhas batem com `_PER_YEAR` e com o "por ação" do comentário de `quantity_rules.py:23-25` (conferência citada na mensagem do commit)
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] As cinco linhas batem com `_PER_YEAR` e com o "por ação" do comentário de `quantity_rules.py:23-25` (conferência citada na mensagem do commit)
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
 
 **Tests**: none
 **Gate**: quick
