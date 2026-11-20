@@ -218,6 +218,20 @@ describe("SEC-05: sem tabela escolhida o avanço não fica sem saída", () => {
   });
 });
 
+describe("SEC-05: a falha de ler as categorias de uma tabela escolhida", () => {
+  it("com tabela escolhida e as versões falhando, não diz que falta a tabela, mostra o erro e mantém o bloqueio", async () => {
+    renderPage({
+      "GET /api/scoring-versions/v1": { status: 500, body: { detail: "falha" } },
+      [LIST]: { status: 200, body: [noCategory("c1", "Uma")] },
+    });
+    await screen.findByText("Uma");
+    expect(screen.queryByText(/Nenhuma tabela de pontuação foi escolhida/)).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("Não foi possível carregar as categorias da tabela de pontuação.");
+    expect(within(nav()).getByText("1 atividade precisa de categoria")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Ir para a Etapa 4 · Pontuação" })).not.toBeInTheDocument();
+  });
+});
+
 describe("REV: rejeitar, editar e validar em lote recarregam a lista", () => {
   it("rejeitar recarrega a lista", async () => {
     const { calls, user } = renderPage({

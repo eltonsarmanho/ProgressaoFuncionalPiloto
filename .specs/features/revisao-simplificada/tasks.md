@@ -1472,7 +1472,7 @@ T54 → T43 → T44
 
 ### T51: TF7, `hasTable` vem da tabela escolhida, não das categorias
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `hasTable` da Etapa 3 deriva de `GET /scoring/table` (`chosen` ou `suggested` não nulos) e fica em `Loaded`; se a tabela existe mas a leitura das versões falha, o avanço continua bloqueado e a página mostra o erro de carga das categorias, sem o aviso falso de "nenhuma tabela".
 **Where**: `frontend/src/pages/ProcessActivities.tsx` (modify)
@@ -1487,9 +1487,9 @@ T54 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/pages/ProcessActivities.test.tsx` (que falham antes): com `GET /scoring/table` com tabela escolhida, `GET /scoring-versions/:id` falhando e uma atividade válida sem categoria, a página não mostra "Nenhuma tabela de pontuação foi escolhida", mostra o erro de carga das categorias e mantém o avanço bloqueado; sem tabela (`chosen` e `suggested` nulos) o comportamento da T47 segue igual
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+- [x] Testes primeiro em `frontend/src/pages/ProcessActivities.test.tsx` (que falham antes): com `GET /scoring/table` com tabela escolhida, `GET /scoring-versions/:id` falhando e uma atividade válida sem categoria, a página não mostra "Nenhuma tabela de pontuação foi escolhida", mostra o erro de carga das categorias e mantém o avanço bloqueado; sem tabela (`chosen` e `suggested` nulos) o comportamento da T47 segue igual
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
 
 **Tests**: unit
 **Gate**: build

@@ -12,6 +12,10 @@ type Loaded = {
   result: ScoringResult | null;
   documents: DocumentSummary[];
   groups: ScoringGroup[];
+  /** A table is chosen or suggested (from `GET /scoring/table`), whatever happens to reading its categories. */
+  hasTable: boolean;
+  /** The table exists but its categories could not be read. */
+  categoriesFailed: boolean;
 };
 
 type Preparation = { id: string; done: Promise<void> };
@@ -44,13 +48,20 @@ async function load(id: string): Promise<Loaded> {
   const version = versionId
     ? await request<ScoringVersion>("GET", `/api/scoring-versions/${versionId}`).catch(() => null)
     : null;
-  return { activities, result, documents, groups: version?.groups ?? [] };
+  return {
+    activities,
+    result,
+    documents,
+    groups: version?.groups ?? [],
+    hasTable: versionId != null,
+    categoriesFailed: versionId != null && version == null,
+  };
 }
 
 /**
  * Etapa 3: review of the activities in two sections (valid and not valid), with the batch
  * validation and the documents. The way to Etapa 4 stays closed while a valid activity lacks its
- * category (SEC-05), but only when there is a table to choose the category from: without one the
+ * category (SEC-05), but only when there is a table (chosen or suggested) to choose the category from: without one the
  * way stays open and the page tells the user to choose the table in Etapa 4, where it is chosen.
  */
 export function ProcessActivities() {
@@ -77,8 +88,8 @@ export function ProcessActivities() {
     };
   }, [id, reloads]);
 
-  const hasTable = data != null && data.groups.length > 0;
-  const missing = hasTable ? data.activities.filter((a) => isValid(a) && validityOf(a).needs_category).length : 0;
+  const hasTable = data?.hasTable ?? false;
+  const missing = data && hasTable ? data.activities.filter((a) => isValid(a) && validityOf(a).needs_category).length : 0;
 
   return (
     <>
@@ -91,6 +102,11 @@ export function ProcessActivities() {
       {error && (
         <p role="alert" className="error">
           {error}
+        </p>
+      )}
+      {data?.categoriesFailed && (
+        <p role="alert" className="error">
+          Não foi possível carregar as categorias da tabela de pontuação.
         </p>
       )}
       {data && !hasTable && (
