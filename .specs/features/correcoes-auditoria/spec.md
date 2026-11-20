@@ -235,7 +235,7 @@ O docente não consegue concluir um processo real: nenhuma tela leva o processo 
 | CAINI-12 | P2: Iniciar pelo Painel | Execute | Implementing |
 | CAINI-13 | P2: Iniciar pelo Painel | Execute | Implementing |
 | CAINI-14 | P2: Iniciar pelo Painel | Execute | Implementing |
-| CAREF-01 | P1: O Grupo I tem só I.1 e I.2 | Tasks | Pending |
+| CAREF-01 | P1: O Grupo I tem só I.1 e I.2 | Execute | Implementing |
 | CAREF-02 | P1: O Grupo I tem só I.1 e I.2 | Execute | Implementing |
 | CAREF-03 | P1: O Grupo I tem só I.1 e I.2 | Execute | Implementing |
 | CAREF-04 | P1: O Grupo I tem só I.1 e I.2 | Execute | Implementing |

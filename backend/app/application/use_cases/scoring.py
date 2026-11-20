@@ -268,19 +268,10 @@ def _validate_basics(data: ActivityData) -> None:
         raise ValidationFailed("period_end", "Fim do período anterior ao início")
 
 
-def _apply_group1(data: ActivityData, version: ScoringTableVersion | None) -> ActivityData:
-    """Group I needs academic period, level and hours; the item follows the level (ATV-02).
-
-    SPEC_PRECISION: ATV-02 says "the Group I activity" without excepting I.3 (student
-    evaluation, a VALOR_INFORMADO criterion that is not a course offering). A criterion of that
-    mode chosen explicitly keeps its informed points and skips the course-offering inputs.
-    """
+def _apply_group1(data: ActivityData) -> ActivityData:
+    """Group I needs academic period, level and hours; the item follows the level (ATV-02)."""
     if data.group_number != 1:
         return data
-    if version and data.item_number is not None:
-        criterion = version.get_criterion(1, data.item_number)
-        if criterion is not None and criterion.mode is ScoringMode.VALOR_INFORMADO:
-            return data
     if data.academic_period is None or not ACADEMIC_PERIOD.fullmatch(data.academic_period):
         raise ValidationFailed("academic_period", "Informe o período letivo no formato AAAA.N")
     if data.level is None:
@@ -331,7 +322,7 @@ def _check_criterion_inputs(data: ActivityData, version: ScoringTableVersion | N
 
 def normalize_activity(data: ActivityData, version: ScoringTableVersion | None) -> ActivityData:
     _validate_basics(data)
-    data = _apply_group1(replace(data, title=data.title.strip()), version)
+    data = _apply_group1(replace(data, title=data.title.strip()))
     _check_criterion_inputs(data, version)
     return data
 

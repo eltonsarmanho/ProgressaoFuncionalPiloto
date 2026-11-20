@@ -1,5 +1,7 @@
 """ATV-01..03, ATV-05..07, ATV-11, ATV-12: creating activities of a process."""
 
+import uuid
+from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 
@@ -15,7 +17,9 @@ from app.domain.entities.activity import (
 )
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.process import ProcessStatus
+from app.domain.entities.scoring import ScoringCriterion, ScoringMode
 from app.domain.errors import Conflict, NotFound, ValidationFailed
+from app.domain.repositories.ports import ScoringTableRecord
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.scoring_alerts import NotScoredReason
 from app.domain.rules.scoring_engine import calculate
@@ -332,3 +336,77 @@ def test_informed_value_item_keeps_informed_points(points_chosen):
     assert (activity.group_number, activity.item_number) == (8, INFORMED_ITEM)
     assert activity.informed_points == D("8")
     assert activity.academic_period is None
+
+
+# --- CAREF-01: group I always needs period, level and hours ------------------------------
+
+
+@pytest.fixture
+def group1_informed_chosen(official_chosen):
+    """A synthetic table whose group I has a VALOR_INFORMADO criterion at item 3, chosen."""
+    world = official_chosen
+    informed = ScoringCriterion(
+        1, 3, "Item de valor informado (sintético)", "pontos", ScoringMode.VALOR_INFORMADO,
+        max_points=D("10"),
+    )  # fmt: skip
+    groups = tuple(
+        replace(g, criteria=(*g.criteria, informed)) if g.number == 1 else g
+        for g in world.official_version.groups
+    )
+    with world.uow_factory() as uow:
+        table = ScoringTableRecord(
+            uuid.uuid4(), "Tabela Sintética com Item de Valor no Grupo I", unit_ids=()
+        )
+        uow.scoring_tables.add_table(table)
+        version = replace(
+            world.official_version, id=uuid.uuid4(), table_id=table.id, groups=groups,
+            norm_reference="Tabela de teste",
+        )  # fmt: skip
+        uow.scoring_tables.add_version(version)
+        uow.commit()
+    world.choose.execute(world.admin, world.process.id, version.id, None, "Teste")
+    return world
+
+
+GROUP1_INFORMED = {"group_number": 1, "item_number": 3, "informed_points": D("8")}
+GROUP1_MISSING_INPUT = [
+    ({}, "academic_period"),
+    ({"academic_period": "2023.1"}, "level"),
+    ({"academic_period": "2023.1", "level": Level.GRADUACAO}, "horas"),
+]
+
+
+@pytest.mark.parametrize(("inputs", "field"), GROUP1_MISSING_INPUT)
+def test_group_one_item_of_informed_value_still_needs_period_level_and_hours(
+    group1_informed_chosen, inputs, field
+):
+    assert field_of_failure(group1_informed_chosen, **GROUP1_INFORMED, **inputs) == field
+
+
+def test_group_one_item_of_informed_value_with_all_inputs_follows_the_level(
+    group1_informed_chosen,
+):
+    activity = create(
+        group1_informed_chosen, **GROUP1_INFORMED, academic_period="2023.1",
+        level=Level.GRADUACAO, hours=D("68"),
+    )  # fmt: skip
+
+    assert (activity.group_number, activity.item_number) == (1, 1)
+
+
+@pytest.mark.parametrize(("inputs", "field"), GROUP1_MISSING_INPUT)
+def test_editing_a_group_one_activity_into_the_informed_value_item_needs_the_same_inputs(
+    group1_informed_chosen, inputs, field
+):
+    world = group1_informed_chosen
+    offer = create(
+        world, group_number=1, academic_period="2023.1", level=Level.GRADUACAO, hours=D("68")
+    )
+
+    with pytest.raises(ValidationFailed) as error:
+        world.update.execute(
+            world.admin, offer.id, data(title=offer.title, **GROUP1_INFORMED, **inputs),
+            offer.version, None,
+        )  # fmt: skip
+
+    assert error.value.field == field

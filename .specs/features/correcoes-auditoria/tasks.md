@@ -305,7 +305,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T8: O Grupo I sempre exige período letivo, nível e horas
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `_apply_group1` perde o ramo que devolvia a atividade sem checagem quando o critério do grupo 1 era `VALOR_INFORMADO`, e a docstring perde o `SPEC_PRECISION` sobre esse item; o Grupo I sempre exige `AAAA.N`, nível e horas e o item segue o nível.
 **Where**: `backend/app/application/use_cases/scoring.py` (modify, `:271-290`)
@@ -320,11 +320,11 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_activity_create.py`: numa tabela sintética cujo grupo 1 tem um critério `VALOR_INFORMADO` no item 3, criar atividade `group_number=1, item_number=3, informed_points=8` sem período → 422 em `academic_period`; com período `2023.1` e sem nível → 422 em `level`; com nível e sem horas → 422 em `horas`; com os três (graduação) → `item_number == 1`; o mesmo vale na edição
-- [ ] O teste falha antes da mudança e passa depois
-- [ ] `grep -nE "VALOR_INFORMADO" backend/app/application/use_cases/scoring.py` não mostra mais a checagem dentro de `_apply_group1`; `grep -niE "student" backend/app/application/use_cases/scoring.py` sem saída
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: contagem antes e depois registrada
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_activity_create.py`: numa tabela sintética cujo grupo 1 tem um critério `VALOR_INFORMADO` no item 3, criar atividade `group_number=1, item_number=3, informed_points=8` sem período → 422 em `academic_period`; com período `2023.1` e sem nível → 422 em `level`; com nível e sem horas → 422 em `horas`; com os três (graduação) → `item_number == 1`; o mesmo vale na edição
+- [x] O teste falha antes da mudança e passa depois
+- [x] `grep -nE "VALOR_INFORMADO" backend/app/application/use_cases/scoring.py` não mostra mais a checagem dentro de `_apply_group1`; `grep -niE "student" backend/app/application/use_cases/scoring.py` sem saída
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: contagem antes e depois registrada
 
 **Tests**: integration
 **Gate**: full
