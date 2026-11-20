@@ -115,29 +115,33 @@ def codes(done):
     return [a.code for a in done.alerts]
 
 
-def test_table_and_comprovante_from_the_same_layout_share_the_hash_and_do_not_diverge(gen):
+def test_the_table_has_no_layout_and_no_plan_hash_while_the_comprovante_keeps_both(gen):
+    # GTAB-08: the table no longer cites the Comprovante, so it carries no arrangement
     three_activities(gen)
 
     table = generate(gen, DocumentKind.TABELA)
     comprovante = generate(gen, DocumentKind.COMPROVANTE)
 
-    assert table.plan_hash == comprovante.plan_hash
+    assert table.plan_hash is None
+    assert "layout" not in table.snapshot
+    assert comprovante.plan_hash == current_plan(gen.world)[1].plan_hash
+    assert comprovante.snapshot["layout"]["plan_hash"] == comprovante.plan_hash
     assert GenerationAlertCode.NUMERACAO_DIVERGENTE not in codes(comprovante)
     assert GenerationAlertCode.NUMERACAO_DIVERGENTE not in codes(table)
 
 
-def test_after_the_arrangement_changes_the_comprovante_warns_of_the_older_table(gen):
+def test_after_the_arrangement_changes_the_comprovante_does_not_warn_of_the_older_table(gen):
     three_activities(gen)
-    table = generate(gen, DocumentKind.TABELA)
+    generate(gen, DocumentKind.TABELA)
     save_layout_without_the_page_of(gen.world, "Atividade A")
 
     comprovante = generate(gen, DocumentKind.COMPROVANTE)
 
-    assert comprovante.plan_hash != table.plan_hash
-    assert GenerationAlertCode.NUMERACAO_DIVERGENTE in codes(comprovante)
+    assert GenerationAlertCode.NUMERACAO_DIVERGENTE not in codes(comprovante)
+    assert comprovante.plan_hash is not None
 
 
-def test_the_table_warns_when_the_latest_comprovante_was_numbered_differently(gen):
+def test_the_table_does_not_warn_when_the_latest_comprovante_was_numbered_differently(gen):
     three_activities(gen)
     comprovante = generate(gen, DocumentKind.COMPROVANTE)
     save_layout_without_the_page_of(gen.world, "Atividade A")
@@ -145,4 +149,4 @@ def test_the_table_warns_when_the_latest_comprovante_was_numbered_differently(ge
     table = generate(gen, DocumentKind.TABELA)
 
     assert table.plan_hash != comprovante.plan_hash
-    assert GenerationAlertCode.NUMERACAO_DIVERGENTE in codes(table)
+    assert GenerationAlertCode.NUMERACAO_DIVERGENTE not in codes(table)

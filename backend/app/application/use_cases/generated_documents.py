@@ -280,29 +280,6 @@ def _layout_snapshot(layout: ComprovanteLayout, plan: ComprovantePlan) -> dict[s
     return {"plan_hash": plan.plan_hash, "entries": entries}
 
 
-_OTHER_KIND = {
-    DocumentKind.TABELA: DocumentKind.COMPROVANTE,
-    DocumentKind.COMPROVANTE: DocumentKind.TABELA,
-}
-_NUMBERING_TEXT = {
-    DocumentKind.TABELA: "O Comprovante mais recente foi numerado de outro modo que esta Tabela.",
-    DocumentKind.COMPROVANTE: (
-        "A Tabela de Pontuação mais recente cita uma numeração diferente deste Comprovante."
-    ),
-}
-
-
-def _numbering_alert(
-    kind: DocumentKind, plan: ComprovantePlan, latest: Mapping[DocumentKind, GeneratedDocument]
-) -> list[GenerationAlert]:
-    """The Tabela cites page numbers of the Comprovante: when the latest version of the other
-    document was numbered from another plan, the two disagree (NUMERACAO_DIVERGENTE)."""
-    other = latest.get(_OTHER_KIND[kind])
-    if other is None or other.plan_hash == plan.plan_hash:
-        return []
-    return [GenerationAlert(GenerationAlertCode.NUMERACAO_DIVERGENTE, _NUMBERING_TEXT[kind])]
-
-
 _FAILURE_MESSAGES: Mapping[GenerationCode, str] = {
     GenerationCode.ORIGINAL_INDISPONIVEL: (
         "Um documento de origem não está mais disponível no armazenamento."
@@ -422,8 +399,7 @@ class RunGeneration:
             saved_draft = None
             if generation.kind is DocumentKind.RELATORIO:
                 saved_draft = uow.report_drafts.get(process.id)
-            latest = uow.generations.latest_ready_by_kind(process.id)
-        produced = self._produce(generation, inputs, saved_draft, latest, scratch)
+        produced = self._produce(generation, inputs, saved_draft, scratch)
         files = []
         for fmt, temp in produced.outputs:
             sha256, size = _digest(temp)
@@ -512,20 +488,18 @@ class RunGeneration:
         generation: GeneratedDocument,
         inputs: GenerationInputs,
         saved: ReportDraft | None,
-        latest: Mapping[DocumentKind, GeneratedDocument],
         scratch: _Scratch,
     ) -> _Produced:
         if generation.kind is DocumentKind.RELATORIO:
             return self._report(generation, inputs, saved, scratch)
         if generation.kind is DocumentKind.COMPROVANTE:
-            return self._comprovante(generation, inputs, latest, scratch)
-        return self._table(generation, inputs, latest, scratch)
+            return self._comprovante(generation, inputs, scratch)
+        return self._table(generation, inputs, scratch)
 
     def _table(
         self,
         generation: GeneratedDocument,
         inputs: GenerationInputs,
-        latest: Mapping[DocumentKind, GeneratedDocument],
         scratch: _Scratch,
     ) -> _Produced:
         version = inputs.version
@@ -534,7 +508,6 @@ class RunGeneration:
                 GenerationCode.TABELA_NAO_ESCOLHIDA,
                 "Escolha a tabela de pontuação do processo antes de gerar.",
             )
-        plan = plan_comprovante(inputs.layout, inputs.activities, self._toc_capacity)
         model = build_table_document(
             inputs.header,
             version,
@@ -555,10 +528,8 @@ class RunGeneration:
             inputs.activities,
             excluded=inputs.excluded,
             alerts=_unique([a.code for a in model.alerts]),
-            layout=_layout_snapshot(inputs.layout, plan),
         )
-        alerts = _left_out_alert(inputs) + _numbering_alert(generation.kind, plan, latest)
-        return _Produced(outputs, snapshot, alerts, plan.plan_hash)
+        return _Produced(outputs, snapshot, _left_out_alert(inputs))
 
     def _report(
         self,
@@ -633,7 +604,6 @@ class RunGeneration:
         self,
         generation: GeneratedDocument,
         inputs: GenerationInputs,
-        latest: Mapping[DocumentKind, GeneratedDocument],
         scratch: _Scratch,
     ) -> _Produced:
         """The PDF assembled from the plan, one original page at a time (CMP-01, CMP-11)."""
@@ -678,11 +648,7 @@ class RunGeneration:
             alerts=_unique([a.code for a in inputs.score.alerts]),
             layout=_layout_snapshot(inputs.layout, plan),
         )
-        alerts = (
-            list(result.alerts)
-            + _left_out_alert(inputs)
-            + _numbering_alert(generation.kind, plan, latest)
-        )
+        alerts = list(result.alerts) + _left_out_alert(inputs)
         return _Produced([(DocumentFormat.PDF, temp)], snapshot, alerts, plan.plan_hash)
 
 

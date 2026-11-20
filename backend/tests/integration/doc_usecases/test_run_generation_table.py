@@ -9,19 +9,15 @@ import pymupdf
 import pytest
 from docx import Document
 
-from app.application.services.generation_inputs import load_generation_inputs
 from app.domain.entities.activity import ActivityStatus
 from app.domain.entities.audit import AuditAction
-from app.domain.entities.comprovante import ComprovantePlan
 from app.domain.entities.generated import (
     DocumentFormat,
     DocumentKind,
     GenerationAlertCode,
     GenerationState,
 )
-from app.domain.rules.comprovante_plan import plan_comprovante
 from tests.integration.doc_usecases.generation_support import (
-    TOC_CAPACITY,
     add_activity,
     add_document,
     add_scenario_211,
@@ -146,8 +142,8 @@ def test_the_executor_takes_the_oldest_waiting_row_and_says_when_there_is_none(g
     assert gen.run().run_next() is False
 
 
-def test_the_table_quotes_no_comprovante_number_and_still_keeps_the_plan_hash(gen):
-    # GTAB-04, GTAB-08: the plan itself leaves the table in the next task (GTAB-08, D6)
+def test_the_table_quotes_no_comprovante_number_and_keeps_no_plan(gen):
+    # GTAB-04, GTAB-08: no number in the text, no arrangement in the snapshot, no plan hash
     world = gen.world
     with_page = add_activity(world, title="Com página", item_number=3)
     add_activity(world, title="Sem página", item_number=7)
@@ -156,13 +152,8 @@ def test_the_table_quotes_no_comprovante_number_and_still_keeps_the_plan_hash(ge
 
     done = generate(gen)
 
-    with world.uow_factory() as uow:
-        inputs = load_generation_inputs(uow, uow.processes.get(world.process.id))
-        plan: ComprovantePlan = plan_comprovante(inputs.layout, inputs.activities, TOC_CAPACITY)
-    assert done.plan_hash == plan.plan_hash == done.snapshot["layout"]["plan_hash"]
-    assert done.snapshot["layout"]["entries"][0]["pages"] == [
-        {"document_id": str(document.id), "page": 2}
-    ]
+    assert done.plan_hash is None
+    assert "layout" not in done.snapshot
     text = pdf_text(file_of(gen, done, DocumentFormat.PDF)[1])
     assert "sem comprovante" not in text
     assert "Comprovante" not in text
@@ -227,4 +218,7 @@ def test_a_document_outside_the_interstice_is_nowhere_in_the_generated_table(gen
     done = generate(gen)
 
     assert str(outside.id) not in json.dumps(done.snapshot)
-    assert str(inside.id) in json.dumps(done.snapshot)
+    # GTAB-08: the snapshot no longer carries the arrangement, so the linked document is not in it;
+    # the activity is
+    assert str(inside.id) not in json.dumps(done.snapshot)
+    assert str(activity.id) in json.dumps(done.snapshot)

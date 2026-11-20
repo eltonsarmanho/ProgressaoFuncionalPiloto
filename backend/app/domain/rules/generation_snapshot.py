@@ -15,7 +15,7 @@ from app.domain.rules.interstice import Interstice
 from app.domain.rules.scoring_engine import ScoringResult
 
 _CENTS = Decimal("0.01")
-_WITH_LAYOUT = (DocumentKind.TABELA, DocumentKind.COMPROVANTE)
+_WITH_LAYOUT = (DocumentKind.COMPROVANTE,)  # the Tabela cites no page of it (GTAB-08)
 
 
 def _money(value: Decimal) -> str:
@@ -38,7 +38,7 @@ def build_snapshot(
 ) -> dict[str, Any]:
     """`activities` are the ones in the document; `excluded` counts the rest by reason.
 
-    `layout` goes into the Tabela and the Comprovante snapshots, `report` and `template` into
+    `layout` goes into the Comprovante snapshot, `report` and `template` into
     the Relatório one; the others are ignored.
     """
     listed = {a.id for a in activities}

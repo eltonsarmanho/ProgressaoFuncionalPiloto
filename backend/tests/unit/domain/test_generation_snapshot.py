@@ -122,7 +122,8 @@ def test_the_excluded_counts_by_reason_and_the_alert_codes_are_kept():
 @pytest.mark.parametrize(
     ("kind", "present", "absent"),
     [
-        (DocumentKind.TABELA, "layout", "report"),
+        (DocumentKind.TABELA, "table_version", "layout"),
+        (DocumentKind.TABELA, "table_version", "report"),
         (DocumentKind.COMPROVANTE, "layout", "report"),
         (DocumentKind.RELATORIO, "report", "layout"),
     ],
@@ -135,10 +136,10 @@ def test_layout_and_report_only_appear_in_their_own_kinds(kind, present, absent)
 
 
 def test_the_layout_and_the_report_are_the_ones_given():
-    table, _, _, _ = snapshot(DocumentKind.TABELA)
+    comprovante, _, _, _ = snapshot(DocumentKind.COMPROVANTE)
     report, _, _, _ = snapshot(DocumentKind.RELATORIO)
 
-    assert table["layout"] == LAYOUT
+    assert comprovante["layout"] == LAYOUT
     assert report["report"] == REPORT
 
 

@@ -553,7 +553,7 @@ graph LR
 
 #### T15: Geração da Tabela sem plano do Comprovante nem `NUMERACAO_DIVERGENTE`
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `_table` deixa de chamar `plan_comprovante`, de montar números e de acrescentar `_numbering_alert`; o instantâneo da Tabela deixa de levar `layout`; `_Produced.plan_hash` da Tabela fica nulo. `_comprovante` deixa de acrescentar `_numbering_alert`. Saem `_OTHER_KIND`, `_NUMBERING_TEXT`, `_numbering_alert` e o parâmetro `latest` das duas funções (D6). O código `NUMERACAO_DIVERGENTE` continua no enum e em `labels.ts` para as versões antigas que o guardam.
 **Where**: `backend/app/application/use_cases/generated_documents.py` (modify)
@@ -568,10 +568,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_run_generation_table.py` e `test_run_generation_comprovante.py`: a Tabela gerada não tem `layout` no instantâneo e tem `plan_hash` nulo; mudar o arranjo do Comprovante depois de gerar a Tabela não cria `NUMERACAO_DIVERGENTE` em nenhum dos dois; o Comprovante continua com `layout` e `plan_hash`; versão antiga já gravada com o alerta continua legível pela API
-- [ ] Testes existentes que mudam: `test_run_generation_comprovante.py` (casos de `NUMERACAO_DIVERGENTE`), `test_run_generation_table.py` (plano e `plan_hash` da Tabela), `test_generation_snapshot.py` (`layout` na Tabela) e `test_generated_schemas.py` se exigir o alerta numa geração nova: GTAB-08 (D6)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: contagem antes e depois registrada; nenhum teste apagado sem substituto
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_run_generation_table.py` e `test_run_generation_comprovante.py`: a Tabela gerada não tem `layout` no instantâneo e tem `plan_hash` nulo; mudar o arranjo do Comprovante depois de gerar a Tabela não cria `NUMERACAO_DIVERGENTE` em nenhum dos dois; o Comprovante continua com `layout` e `plan_hash`; versão antiga já gravada com o alerta continua legível pela API
+- [x] Testes existentes que mudam: `test_run_generation_comprovante.py` (casos de `NUMERACAO_DIVERGENTE`), `test_run_generation_table.py` (plano e `plan_hash` da Tabela), `test_generation_snapshot.py` (`layout` na Tabela) e `test_generated_schemas.py` se exigir o alerta numa geração nova: GTAB-08 (D6)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: contagem antes e depois registrada; nenhum teste apagado sem substituto
 
 **Tests**: integration
 **Gate**: full
