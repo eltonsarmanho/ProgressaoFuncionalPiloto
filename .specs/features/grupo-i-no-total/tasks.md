@@ -756,7 +756,7 @@ graph LR
 
 #### T22: `GroupBars` com uma barra por grupo
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Componente de leitura: `ul` com uma linha por grupo (nome curto de `GROUP_NAMES` ou da versão, subtotal em texto e `div` decorativo `aria-hidden="true"` com largura `subtotal ÷ total` em %); total 0 dá barra vazia, sem divisão por zero; grupos com 0,00 com a classe `muted`; o grupo I não aparece quando `group1OutsideTotal`.
 **Where**: `frontend/src/components/GroupBars.tsx` (novo)
@@ -771,9 +771,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/GroupBars.test.tsx`: oito linhas na versão nova e sete na antiga (sem o I); cada valor em texto ao lado da barra; barra com `aria-hidden` e largura proporcional (92 de 303 ≈ 30,36%); grupo com 0,00 com `muted`; total 0 dá largura 0% e nenhum `NaN` ou `Infinity` (mata a divisão por zero)
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/GroupBars.test.tsx`: oito linhas na versão nova e sete na antiga (sem o I); cada valor em texto ao lado da barra; barra com `aria-hidden` e largura proporcional (92 de 303 ≈ 30,36%); grupo com 0,00 com `muted`; total 0 dá largura 0% e nenhum `NaN` ou `Infinity` (mata a divisão por zero)
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: front
