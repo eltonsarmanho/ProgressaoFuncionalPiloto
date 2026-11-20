@@ -8,7 +8,11 @@
 
 Corroborated across multiple features. Safe to apply as guidance.
 
-_none_
+### L-009 - For each date guard test the last allowed day as well as the first rejected day
+- signal: `surviving_mutant` · recurrence: 2 feature(s) · scope: `career-versions` · harmful: 0
+- features: fundacao, grupo-i-no-total
+- evidence: K3 backend/app/application/use_cases/career.py:125 (CARR-09/CARR-10) (career-versions) (+1 more)
+- last seen: 2026-11-20T08:03:57Z
 
 ## Candidates (under observation - do NOT load as guidance yet)
 
@@ -60,12 +64,6 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `career-versions` · harmful: 0
 - features: fundacao
 - evidence: K1/K2 backend/app/application/use_cases/career.py:77,80 (CARR-08 overlap) (career-versions)
-- last seen: 2026-11-17T02:32:56Z
-
-### L-009 - For each date guard test the last allowed day as well as the first rejected day
-- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `career-versions` · harmful: 0
-- features: fundacao
-- evidence: K3 backend/app/application/use_cases/career.py:125 (CARR-09/CARR-10) (career-versions)
 - last seen: 2026-11-17T02:32:56Z
 
 ### L-010 - When a derived flag requires two conditions together, assert a case where only one holds and the flag stays false

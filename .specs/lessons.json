@@ -156,17 +156,19 @@
       "text": "For each date guard test the last allowed day as well as the first rejected day",
       "signal": "surviving_mutant",
       "scope": "career-versions",
-      "status": "candidate",
+      "status": "confirmed",
       "features": [
-        "fundacao"
+        "fundacao",
+        "grupo-i-no-total"
       ],
-      "recurrence": 1,
+      "recurrence": 2,
       "harmful": 0,
       "evidence": [
-        "K3 backend/app/application/use_cases/career.py:125 (CARR-09/CARR-10) (career-versions)"
+        "K3 backend/app/application/use_cases/career.py:125 (CARR-09/CARR-10) (career-versions)",
+        "M03/M04 backend/app/domain/rules/scoring_periods.py:103 (GI-09) (domain-rules)"
       ],
       "created": "2026-11-17T02:32:56Z",
-      "last_seen": "2026-11-17T02:32:56Z"
+      "last_seen": "2026-11-20T08:03:57Z"
     },
     {
       "id": "L-010",
