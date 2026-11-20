@@ -44,7 +44,14 @@ export function TablePicker({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const options = tables.flatMap((t) => t.versions.map((v) => ({ id: v.id, text: `${t.name} · ${v.name}` })));
+  // GI-07: a superseded version is never offered. A process that still uses one is read-only (the
+  // editable ones were moved to the new version), so it shows the name and offers no switch.
+  const locked = chosen?.version.superseded_by_id != null;
+  const options = locked
+    ? []
+    : tables.flatMap((t) =>
+        t.versions.filter((v) => v.superseded_by_id == null).map((v) => ({ id: v.id, text: `${t.name} · ${v.name}` })),
+      );
   const differs = versionId !== "" && versionId !== chosen?.version.id;
 
   async function confirm() {
@@ -86,7 +93,7 @@ export function TablePicker({
           {error}
         </p>
       )}
-      {(!chosen || differs) && versionId !== "" && (
+      {!locked && (!chosen || differs) && versionId !== "" && (
         <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void confirm()}>
           {chosen ? "Trocar tabela e recalcular" : "Confirmar tabela e calcular"}
         </button>

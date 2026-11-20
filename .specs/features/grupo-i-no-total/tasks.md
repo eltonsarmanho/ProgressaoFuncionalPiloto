@@ -955,7 +955,7 @@ graph LR
 
 #### T29: `TablePicker` sem versões substituídas
 
-**Status**: Pending
+**Status**: Done
 
 **What**: A lista de escolha não oferece versão com `superseded_by_id`; processo `CONCLUIDO` ou `ARQUIVADO` que ainda usa a versão antiga mostra o nome dela no cartão "Tabela escolhida", sem botão de troca. Nenhum aviso nem botão de "versão mais nova" (D3).
 **Where**: `frontend/src/components/TablePicker.tsx` (modify)
@@ -970,9 +970,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/TablePicker.test.tsx`: com uma versão substituída e a nova, só a nova aparece na lista (mata "substituída de volta à lista"); processo somente leitura com a antiga escolhida mostra o nome dela e nenhum botão de troca; o erro 422 `VERSAO_SUBSTITUIDA` da API aparece em `role="alert"`
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `frontend/src/components/TablePicker.test.tsx`: com uma versão substituída e a nova, só a nova aparece na lista (mata "substituída de volta à lista"); processo somente leitura com a antiga escolhida mostra o nome dela e nenhum botão de troca; o erro 422 `VERSAO_SUBSTITUIDA` da API aparece em `role="alert"`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: front
