@@ -1737,7 +1737,7 @@ T62 → T43 → T44
 
 ### T60: FT5, a Etapa 3 a 360 px: verificação ou limitação registrada
 
-**Status**: Pending
+**Status**: Done
 
 **What**: O Verifier (G5) notou que "sem rolagem horizontal a 360 px" só tem prova estática do CSS (jsdom não calcula layout). Verifica-se se há navegador headless local sem baixar nada; se houver, mede-se a Etapa 3 a 360 px com 120 atividades sintéticas. O resultado, ou a limitação aceita com o passo a passo manual, vai em `design.md` ("Verificação a 360 px"). Nenhum teste muda.
 **Where**: `.specs/features/revisao-simplificada/design.md` (modify, junto com a T43)
@@ -1752,10 +1752,12 @@ T62 → T43 → T44
 
 **Done when**:
 
-- [ ] Registrado se há navegador headless local utilizável (sem acesso à rede) e o que foi medido (`scrollWidth <= clientWidth`) ou, sem navegador, a limitação aceita com o passo a passo manual
-- [ ] Nenhum teste alterado; nada baixado da rede
-- [ ] Gate check passes: `git diff --stat` mostra só `design.md` (o gate completo roda uma vez na T43)
-- [ ] Test count: inalterada
+- [x] Registrado se há navegador headless local utilizável (sem acesso à rede) e o que foi medido (`scrollWidth <= clientWidth`) ou, sem navegador, a limitação aceita com o passo a passo manual
+- [x] Nenhum teste alterado; nada baixado da rede
+- [x] Gate check passes: `git diff --stat` mostra só `design.md` (o gate completo roda uma vez na T43)
+- [x] Test count: inalterada
+
+**Resultado**: há navegador local (Google Chrome 146, `/usr/bin/google-chrome`, `--headless=new`), sem baixar nada. A Etapa 3 completa (app, `Layout`, `StepNav`) a 360 px com 120 atividades válidas, 12 sem categoria e 7 não válidas, tudo mostrado: `scrollWidth` 345 = `clientWidth` 345 (e 305 = 305 a 320 px), nenhum elemento além da borda; o controle a 200 px acusa rolagem (225 > 185). O texto completo, com o método e o passo a passo manual, está na seção "Verificação a 360 px" de `design.md`, que sobe no commit da T43 junto com os demais arquivos de documentação da árvore.
 
 **Tests**: none
 **Gate**: build
