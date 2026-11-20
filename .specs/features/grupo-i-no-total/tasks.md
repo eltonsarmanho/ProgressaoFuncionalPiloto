@@ -1070,7 +1070,7 @@ graph LR
 
 #### T33: Procedimento de deploy da `0009` e da troca automática
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Seção nova em `docs/deploy/vm.md` (só descreve; nada é executado): dump do banco antes (`progressao-pre-grupo-i-no-total-<data>.sql.gz`); o `alembic upgrade head` aplica a `0009` e o seed, na partida, insere a versão nova e roda `AdoptSupersedingVersion`; consultas de conferência depois da partida (versão antiga com `superseded_by_id`, processos editáveis na nova, um evento de auditoria por processo trocado, concluídos e arquivados intocados); retorno pelo dump (caminho seguro) ou, sem dump, `UPDATE` da versão escolhida de volta pelos eventos de auditoria da troca e `superseded_by_id` nulo; aviso de que o processo real em rascunho muda de total e de que a Tabela já gerada mostra o aviso da Etapa 5.
 **Where**: `docs/deploy/vm.md` (modify)
@@ -1085,8 +1085,8 @@ graph LR
 
 **Done when**:
 
-- [ ] Seção escrita com ordem, conferência e retorno; diz que deploy e push só com autorização do usuário
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Seção escrita com ordem, conferência e retorno; diz que deploy e push só com autorização do usuário
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
 
 **Tests**: none
 **Gate**: build

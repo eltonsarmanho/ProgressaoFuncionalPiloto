@@ -132,6 +132,43 @@ Usar só dados sintéticos (docente com SIAPE fictício, PDF sintético; nunca `
 - A conclusão não apaga o JSON estruturado das extrações nem os documentos gerados (AD-015).
 - Enquanto houver geração ou redação em andamento, a conclusão responde `OPERACAO_EM_ANDAMENTO`; um reinício do backend leva a geração que estava `GERANDO` a `FALHOU` com o código `INTERROMPIDA`, e o usuário pede de novo (AD-012); isso vale também para o `docker compose up -d` do próprio deploy.
 
+## Deploy do Grupo I no total (feature `grupo-i-no-total`)
+
+Esta seção só descreve o procedimento; nada dela foi executado. **Push e deploy só com a autorização explícita do usuário**, como nos outros deploys. A versão traz a migração `0009_version_superseded`, a versão nova da tabela oficial (o Grupo I conta no Total geral a 1 ponto por hora de PIT e o VI.14 vale 3 pontos por ano), a troca automática dos processos editáveis e a Tabela de Pontuação em cinco colunas, sem Comprovante nem status. Até o deploy, o sistema no ar segue com o Grupo I fora do total e o VI.14 a 6.
+
+### O que muda na VM
+
+| Ordem | O que | Como entra |
+| --- | --- | --- |
+| 1 | Migração `0009_version_superseded` (só esquema: `scoring_table_versions.superseded_by_id`, UUID nulo, chave estrangeira para a própria tabela) | `alembic upgrade head` do `docker-entrypoint.sh`; `alembic current` deve terminar em `0009 (head)` |
+| 2 | Versão nova "Tabela oficial de pontuação UFPA, Grupo I no total" (grupos e critérios de `ufpa.json`) | O seed roda em toda partida e insere a versão cujo nome ainda não existe; a migração não copia dados |
+| 3 | `AdoptSupersedingVersion`, chamado pelo seed na mesma partida, numa transação | Marca a versão antiga ("Tabela oficial de pontuação UFPA") com `superseded_by_id` = versão nova e passa para a nova todo processo `RASCUNHO` ou `EM_ANDAMENTO` que a usa, com um evento de auditoria `UPDATE` por processo (entidade `process`, justificativa "AD-023: Grupo I no total", sem usuário) |
+
+Processos `CONCLUIDO` e `ARQUIVADO` e todos os documentos já gerados não mudam (AD-012). O seed é idempotente: numa segunda partida não há processo a trocar e a marca já existe.
+
+### Antes do deploy
+
+1. Nada em processamento: nenhuma geração `GERANDO` e nenhum documento `PROCESSANDO`, pois reiniciar o backend interrompe o que estiver rodando.
+2. Ponto de retorno, como em "Atualizar para uma versão nova": etiquetar as imagens em uso (`progressao-funcional-backend:grupo-i-pre-<commit>` e o mesmo para o `frontend`), copiar `docker-compose.override.yml` e `.env` para `backups/` e **fazer o dump do banco antes de subir a imagem nova**: `docker exec dashboard_db pg_dump -U <superusuario> -d progressao | gzip > backups/progressao-pre-grupo-i-no-total-<data>.sql.gz`, conferindo `gzip -t` e `ls -l`.
+3. Construir as imagens do commit aprovado fora da VM, conferir o pacote do frontend com `scripts/check_bundle_no_secrets.sh` e conferir na imagem que `0009_version_superseded.py` está em `alembic/versions`.
+4. Avisar o usuário: o processo real em rascunho muda de total no deploy (o Grupo I passa a somar e o VI.14 vale 3) e a Tabela de Pontuação que ele já gerou continua como foi gerada; a Etapa 5 passa a mostrar "Gerada com outra versão da tabela de pontuação; gere de novo" até ele gerar de novo.
+
+### Depois da partida: conferência
+
+Com `docker exec -it dashboard_db psql -U <superusuario> -d progressao`:
+
+1. `alembic current` no backend termina em `0009 (head)` e `docker logs progressao-funcional-backend-1` não mostra erro de migração nem de seed.
+2. Versão antiga marcada: `SELECT v.name, v.superseded_by_id IS NOT NULL AS substituida FROM scoring_table_versions v ORDER BY v.created_at;` mostra a antiga com `substituida` verdadeiro e a nova com falso.
+3. Processos editáveis na nova: `SELECT p.status, v.name, count(*) FROM processes p JOIN scoring_table_versions v ON v.id = p.scoring_table_version_id GROUP BY 1, 2;` não pode mostrar `RASCUNHO` nem `EM_ANDAMENTO` com a versão antiga.
+4. Um evento de auditoria por processo trocado: `SELECT entity_id, changes, justification FROM audit_logs WHERE entity = 'process' AND justification = 'AD-023: Grupo I no total';` traz uma linha por processo trocado, com `changes->'scoring_table_version_id'` (`before` e `after`).
+5. Concluídos e arquivados intocados: o resultado do item 3 ainda mostra os `CONCLUIDO` e `ARQUIVADO` com a versão antiga, e nenhum deles aparece na consulta do item 4.
+6. `GET /api/health` 200 depois de `docker compose up -d --no-build` e `docker compose restart nginx`; na Etapa 4 do processo em rascunho o painel diz "Grupos I a VIII" e a lista de tabelas só oferece a versão nova. Fumaça só com dados sintéticos (nunca `Documentos/` nem `Modelos/`): gerar a Tabela e conferir a seção I, as cinco colunas e o Total geral com o Grupo I, no DOCX e no PDF.
+
+### Voltar à versão anterior
+
+- **Caminho seguro: restaurar o dump** `progressao-pre-grupo-i-no-total-<data>.sql.gz` e trocar as etiquetas das imagens para as do ponto de retorno. A troca dos processos é dado, então o dump a desfaz; o `downgrade` da `0009` (`DROP COLUMN superseded_by_id`) sozinho não devolve os processos.
+- **Sem dump** (só se o dump não existir): desfazer pelos eventos de auditoria da troca. Para cada evento de `audit_logs` com `justification = 'AD-023: Grupo I no total'`, `UPDATE processes SET scoring_table_version_id = (changes->'scoring_table_version_id'->>'before')::uuid WHERE id = entity_id::uuid;` e depois `UPDATE scoring_table_versions SET superseded_by_id = NULL WHERE superseded_by_id IS NOT NULL;`. Isso volta o estado de dados, mas a partida seguinte do backend com a imagem nova repete a troca (o seed é idempotente), então a imagem anterior tem de estar no ar antes. Processos alterados depois do deploy continuam na versão em que foram editados.
+
 ## Memória do OCR (limite de 384 MB do `backend`)
 
 Medida em 2026-11-17 dentro de `docker run -m 384m --memory-swap 384m`, com a imagem do backend (Tesseract `por`) e PDFs sintéticos só de imagem (cada página é um PNG A4 a 300 dpi). O pico é o `memory.peak` do cgroup do contêiner, que inclui a geração do PDF de teste.
