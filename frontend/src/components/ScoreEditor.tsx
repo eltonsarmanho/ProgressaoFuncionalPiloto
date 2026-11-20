@@ -10,10 +10,10 @@ function noteFor(criterion: Criterion | undefined, pit: boolean): string | null 
   if (!criterion) return "A atividade ainda não tem item de pontuação: escolha o item em Editar.";
   if (pit) return "As horas de PIT do Grupo I são calculadas da carga horária e não aceitam valor manual.";
   if (criterion.mode === "CARGA_SEMANAL") {
-    return "A pontuação deste item segue a carga semanal da tabela; para informar pontos use Editar.";
+    return "A pontuação deste item segue a carga semanal da tabela: é calculada pelas horas da atividade e não tem valor a digitar nesta tela.";
   }
   if (criterion.mode === "VALOR_INFORMADO") {
-    return "Neste item os pontos são os pontos informados na edição da atividade (Editar).";
+    return "Neste item os pontos são os pontos informados da atividade, lidos do documento: esta tela não os altera.";
   }
   return null;
 }

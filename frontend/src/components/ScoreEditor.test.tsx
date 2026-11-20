@@ -131,13 +131,22 @@ describe("UIM-22: editor do valor unitário", () => {
   it.each([
     ["CARGA_SEMANAL", false, /carga semanal da tabela/],
     ["CARGA_SEMANAL", true, /horas de PIT/],
-    ["VALOR_INFORMADO", false, /pontos informados na edição da atividade/],
+    ["VALOR_INFORMADO", false, /pontos informados da atividade, lidos do documento/],
   ] as const)("em %s (PIT: %s) não oferece o campo e explica numa nota curta", (mode, pit, note) => {
     setup({ mode, pit });
     expect(screen.queryByLabelText("Valor unitário")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Salvar pontuação" })).not.toBeInTheDocument();
     expect(screen.getByText(note)).toBeInTheDocument();
   });
+
+  it.each([["CARGA_SEMANAL"], ["VALOR_INFORMADO"]] as const)(
+    "em %s a nota não manda mais para o Editar da Etapa 3, que não tem campo de pontos (EDT-01)",
+    (mode) => {
+      setup({ mode });
+      const note = document.querySelector("p.muted") as HTMLElement;
+      expect(note.textContent).not.toMatch(/Editar|edição da atividade/);
+    },
+  );
 
   it("Cancelar chama onCancel sem chamar a API", async () => {
     const { calls, onCancel, user } = setup();

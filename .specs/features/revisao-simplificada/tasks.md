@@ -1442,6 +1442,8 @@ T50 → T43 → T44
 
 ### T50: TF6, notas do `ScoreEditor` e decisões registradas
 
+**Status**: Done
+
 **What**: As notas "para informar pontos use Editar" e "pontos informados na edição da atividade" do `ScoreEditor` apontam o caminho real; `design.md` registra as decisões do lote 5 (bloqueio a partir da Etapa 3, horas de PIT fora da linha, "Validar as confiáveis" sem motivo por linha).
 **Where**: `frontend/src/components/ScoreEditor.tsx` (modify), com `.specs/features/revisao-simplificada/design.md`
 **Depends on**: T49
@@ -1455,11 +1457,11 @@ T50 → T43 → T44
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ScoreEditor.test.tsx` (que falham antes): a nota dos itens de carga semanal e a dos itens de valor informado não mandam mais "Editar" da Etapa 3 e dizem onde os pontos se informam; os testes que dependiam do texto antigo seguem com a mesma força
-- [ ] Item `VALOR_INFORMADO` sem caminho de entrada de pontos não ganha solução nova: vira pergunta aberta no relatório
-- [ ] `design.md` com a seção "Decisões do lote 5" (SEC-05 desde a Etapa 3 com recusa `ATIVIDADE_SEM_CATEGORIA` no servidor; horas de PIT só na Etapa 4; "Validar as confiáveis" explica só o critério)
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado; os novos passam
+- [x] Testes primeiro em `frontend/src/components/ScoreEditor.test.tsx` (que falham antes): a nota dos itens de carga semanal e a dos itens de valor informado não mandam mais "Editar" da Etapa 3 e dizem onde os pontos se informam; os testes que dependiam do texto antigo seguem com a mesma força
+- [x] Item `VALOR_INFORMADO` sem caminho de entrada de pontos não ganha solução nova: vira pergunta aberta no relatório
+- [x] `design.md` com a seção "Decisões do lote 5" (SEC-05 desde a Etapa 3 com recusa `ATIVIDADE_SEM_CATEGORIA` no servidor; horas de PIT só na Etapa 4; "Validar as confiáveis" explica só o critério)
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado; os novos passam
 
 **Tests**: unit
 **Gate**: build

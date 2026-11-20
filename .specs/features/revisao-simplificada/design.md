@@ -166,3 +166,15 @@ type Validity = {
 5. **Frontend, Etapa 3**: `ActivityWorkspace` e componentes, seções, filtros, selo, bloqueio do avanço, `StepNav`.
 6. **Frontend, formulário e Etapa 4**: `ActivityForm` enxuto, `CategoryPicker`, `ScoreEditor` com Quantidade e Horas.
 7. **Verificador independente**, correções e documentação (AD-022, `CLAUDE.md`, rastreabilidade).
+
+---
+
+## Decisões do lote 5 (correções da revisão da Etapa 3)
+
+- **Bloqueio do avanço (SEC-05) desde a Etapa 3.** O frontend fecha a Etapa 4 e a seguinte enquanto há atividade válida sem categoria, mas só quando a tabela de pontuação existe (a lista de grupos não está vazia). Sem tabela escolhida nem sugerida (`GET /scoring/table` com `chosen` e `suggested` nulos) o avanço fica livre e a Etapa 3 avisa que falta escolher a tabela, com o link para a Etapa 4. A garantia final é do servidor: a geração dos documentos é recusada com `ATIVIDADE_SEM_CATEGORIA` (SEG-05).
+- **Horas de PIT fora da linha da Etapa 3.** A linha da atividade não mostra as horas de PIT do Grupo I; elas continuam na Etapa 4.
+- **"Validar as confiáveis" não explica por linha.** O botão mostra o critério em texto visível (sugestão da IA, sem candidatos, sem aviso, documento com confiança a partir de 70%) e a contagem de elegíveis; a linha que ficou de fora não diz por que não é elegível.
+- **"Selecionar todas" segue o filtro, não a página.** Seleciona todas as atividades do filtro que aguardam validação e têm categoria, mesmo as além das 25 mostradas; o texto diz quantas estão além das mostradas, para o docente saber o que será validado. A seleção só vale para o que o filtro mostra e perde o que ele esconde.
+- **Erro de escrita da linha.** O aviso de 409 ou 422 sobe para o `ActivityWorkspace` e fica numa região `role="alert"` que sobrevive à recarga em que a linha troca de seção; o 422 da categoria aparece só no seletor da linha.
+- **Texto do `ScoreEditor`.** Depois da EDT-01 nenhuma tela da Etapa 3 digita pontos informados (`informed_points`) nem pontos manuais de carga semanal (`points_override`); as notas desses itens não apontam mais para "Editar".
+- **Pergunta aberta.** Itens `VALOR_INFORMADO` (por exemplo o I.3) e itens de carga semanal que precisem de pontos digitados não têm hoje caminho de entrada na interface: o servidor aceita `informed_points` e `points_override`, mas nenhum formulário os mostra, e `unit_points_override` é recusado nesses modos. A decisão de onde digitá-los é do usuário.
