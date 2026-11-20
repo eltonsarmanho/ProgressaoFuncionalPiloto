@@ -21,7 +21,6 @@ from app.infrastructure.documents.table_text import (
     ALERTS_HEADING,
     COLUMNS,
     PIT_COLUMNS,
-    PIT_HEADING,
     PIT_TOTAL_LABEL,
     TITLE,
     alert_line,
@@ -29,6 +28,7 @@ from app.infrastructure.documents.table_text import (
     band_title,
     counters_line,
     identification_lines,
+    pit_heading,
     total_line,
 )
 from app.infrastructure.documents.text_safety import xml_safe
@@ -110,7 +110,7 @@ def _main_table(document, model: TableDocument) -> None:
 
 def _pit_table(document, model: TableDocument) -> None:
     pit = model.pit_hours
-    document.add_paragraph().add_run(PIT_HEADING).bold = True
+    document.add_paragraph().add_run(pit_heading(pit)).bold = True
     table = document.add_table(rows=1, cols=2)
     table.style = "Table Grid"
     for cell, name in zip(table.rows[0].cells, PIT_COLUMNS, strict=True):

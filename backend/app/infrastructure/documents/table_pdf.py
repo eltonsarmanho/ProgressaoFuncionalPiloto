@@ -31,7 +31,6 @@ from app.infrastructure.documents.table_text import (
     ALERTS_HEADING,
     COLUMNS,
     PIT_COLUMNS,
-    PIT_HEADING,
     PIT_TOTAL_LABEL,
     TITLE,
     alert_line,
@@ -39,6 +38,7 @@ from app.infrastructure.documents.table_text import (
     band_title,
     counters_line,
     identification_lines,
+    pit_heading,
     total_line,
 )
 
@@ -132,7 +132,7 @@ def _pit_section(pit: PitHours, styles: PdfStyles) -> list:
         Spacer(1, 10),
         KeepTogether(
             [
-                _p(PIT_HEADING, styles.heading),
+                _p(pit_heading(pit), styles.heading),
                 table,
             ]
         ),

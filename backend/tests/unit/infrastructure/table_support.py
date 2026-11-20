@@ -5,7 +5,13 @@ from uuid import uuid4
 
 from app.domain.rules.scoring_engine import Counters
 from app.domain.rules.table_document import TableDocument, TableRow, build_table_document
-from tests.unit.domain.scenario_211 import INTERSTICE, activity, item_capped_table, scenario_result
+from tests.unit.domain.scenario_211 import (
+    INTERSTICE,
+    activity,
+    item_capped_table,
+    scenario_303_result,
+    scenario_result,
+)
 from tests.unit.domain.test_table_document_totals import HEADER
 
 SUBTOTALS = {"II": "52,00", "III": "7,00", "IV": "62,00", "V": "0,00", "VI": "30,00",
@@ -18,6 +24,12 @@ assert INTERSTICE.start.year == 2022
 def scenario_table(header=HEADER) -> TableDocument:
     version, activities, result = scenario_result()
     return build_table_document(header, version, result, activities)
+
+
+def scenario_303_table() -> TableDocument:
+    """The scenario with group I inside the total: section I, 303 points, hours in the total."""
+    version, activities, result = scenario_303_result()
+    return build_table_document(HEADER, version, result, activities)
 
 
 def long_table(rows: int = 1000, title: str = "Atividade sintética") -> TableDocument:
@@ -60,3 +72,7 @@ def wide_band_table() -> TableDocument:
     document = table_with_title(title)
     band = replace(document.bands[0], subtotal=BIG_SUBTOTAL)
     return replace(document, bands=(band, *document.bands[1:]), total=BIG_SUBTOTAL)
+
+
+NEW_PIT_HEADING = "Horas de PIT por semestre (Grupo I)"
+OLD_PIT_HEADING = "Horas de PIT por semestre (Grupo I, fora do total de pontos)"

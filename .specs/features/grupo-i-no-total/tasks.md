@@ -525,7 +525,7 @@ graph LR
 
 #### T14: Título da seção de horas por versão
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `table_text.py` passa a ter dois títulos: versão em que o Grupo I conta, "Horas de PIT por semestre (Grupo I)"; versão antiga, o atual "Horas de PIT por semestre (Grupo I, fora do total de pontos)" (S3); a função `pit_heading(pit)` escolhe pelo `PitHours.outside_total` e os dois escritores (`table_docx.py`, `table_pdf.py`) a usam. `PIT_COLUMNS` e `PIT_TOTAL_LABEL` não mudam.
 **Where**: `backend/app/infrastructure/documents/table_text.py` (modify)
@@ -540,9 +540,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `test_table_docx.py` e `test_table_pdf.py`: versão nova com o título "Horas de PIT por semestre (Grupo I)", as horas de cada período e "Total em horas"; versão antiga com o título "fora do total de pontos" (mata "título igual nas duas versões"); tabela sem carga semanal no grupo 1 não tem a seção
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam
+- [x] Testes primeiro em `test_table_docx.py` e `test_table_pdf.py`: versão nova com o título "Horas de PIT por semestre (Grupo I)", as horas de cada período e "Total em horas"; versão antiga com o título "fora do total de pontos" (mata "título igual nas duas versões"); tabela sem carga semanal no grupo 1 não tem a seção
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam
 
 **Tests**: unit
 **Gate**: quick

@@ -147,8 +147,8 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 | GTAB-03 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Implementing |
 | GTAB-04 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Implementing |
 | GTAB-05 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Implementing |
-| GTAB-06 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
-| GTAB-07 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Implementing |
+| GTAB-06 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Implementing |
+| GTAB-07 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implementing | Implementing |
 | GTAB-08 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Implementing | Implementing |
 | GRES-01 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
 | GRES-02 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |

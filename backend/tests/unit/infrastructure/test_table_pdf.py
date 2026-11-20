@@ -11,11 +11,14 @@ from tests.unit.domain.test_table_document_totals import HEADER
 from tests.unit.infrastructure.table_support import (
     BIG_SUBTOTAL,
     INTERSTICE_TEXT,
+    NEW_PIT_HEADING,
+    OLD_PIT_HEADING,
     PIT_HOURS,
     SUBTOTALS,
     capped_table,
     distinct_counters_table,
     long_table,
+    scenario_303_table,
     scenario_table,
     table_with_title,
     wide_band_table,
@@ -224,3 +227,22 @@ def test_a_title_of_eight_thousand_characters_does_not_break_the_pdf(tmp_path):
     assert "palavra999" not in text
     assert "…" in text
     assert "Pontuação geral:" in text
+
+
+def test_the_new_version_titles_the_hours_section_without_saying_outside_the_total(tmp_path):
+    # GTAB-06: the hours of each term and the total in hours, under the new title
+    text = text_of(render(tmp_path, scenario_303_table()))
+
+    assert NEW_PIT_HEADING in text
+    assert OLD_PIT_HEADING not in text
+    assert "fora do total" not in text
+    pit = text[text.index(NEW_PIT_HEADING) :]
+    assert "Total em horas" in pit
+    assert re.findall(r"\b\d\d,00\b", pit.split("Alertas")[0]) == [*PIT_HOURS, "92,00"]
+
+
+def test_the_old_version_keeps_the_title_that_says_outside_the_total_of_points(tmp_path):
+    # GTAB-07
+    text = text_of(render(tmp_path, scenario_table()))
+
+    assert OLD_PIT_HEADING in text

@@ -1,11 +1,12 @@
 """The words of the Tabela de Pontuação, shared by the PDF and the DOCX so both say the same."""
 
 from app.domain.rules.pt_format import format_interstice
-from app.domain.rules.table_document import GroupBand, TableAlert, TableDocument
+from app.domain.rules.table_document import GroupBand, PitHours, TableAlert, TableDocument
 
 TITLE = "TABELA DE PONTUAÇÃO"
 COLUMNS = ("Item", "Atividade", "Quantidade", "Pontuação unitária", "Total")
-PIT_HEADING = "Horas de PIT por semestre (Grupo I, fora do total de pontos)"
+PIT_HEADING = "Horas de PIT por semestre (Grupo I)"
+PIT_HEADING_OUTSIDE_TOTAL = "Horas de PIT por semestre (Grupo I, fora do total de pontos)"
 PIT_COLUMNS = ("Período letivo", "Horas de PIT")
 PIT_TOTAL_LABEL = "Total em horas"
 ALERTS_HEADING = "Alertas"
@@ -22,6 +23,11 @@ def identification_lines(document: TableDocument) -> tuple[str, ...]:
         f"Tabela de pontuação: {document.table_name}",
         f"Referência normativa: {document.norm_reference}",
     )
+
+
+def pit_heading(pit: PitHours) -> str:
+    """The new version counts the hours as points (GTAB-06); the old one only shows them."""
+    return PIT_HEADING_OUTSIDE_TOTAL if pit.outside_total else PIT_HEADING
 
 
 def band_title(band: GroupBand) -> str:
