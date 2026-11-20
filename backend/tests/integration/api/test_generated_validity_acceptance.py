@@ -123,6 +123,29 @@ def test_the_summary_counts_only_the_valid_activity(client, world):
     assert row["summary"]["excluded"] == {}
 
 
+def test_not_valid_activities_awaiting_validation_leave_no_trace_in_the_summary(
+    client, world, uow_factory
+):
+    # SEG-01: not valid ones that are still awaiting validation are not "pendentes" either
+    insert(
+        uow_factory, world, title="Fora do prazo aguardando", group_number=2, item_number=7,
+        event_date=date(2020, 1, 1), status=ActivityStatus.AGUARDANDO_REVISAO,
+    )  # fmt: skip
+    insert(
+        uow_factory, world, title="Curta aguardando", group_number=4, item_number=3,
+        hours=Decimal(10), status=ActivityStatus.AGUARDANDO_REVISAO,
+    )  # fmt: skip
+
+    row = generate(client, world.headers, world.process, "TABELA")
+
+    assert row["summary"]["excluded"] == {}
+    assert row["summary"]["activity_count"] == 1
+    text = docx_text(client.get(file_url(row, "docx")).content)
+    assert "Fora do prazo aguardando" not in text
+    assert "Curta aguardando" not in text
+    assert "ATIVIDADES_FORA_DO_DOCUMENTO" not in [a["code"] for a in row["alerts"]]
+
+
 # --- Relatório -----------------------------------------------------------------------------
 
 

@@ -1,5 +1,8 @@
 """TAB-01, TAB-02, UIG-06: what the generation reads from the process, in one read."""
 
+from datetime import date
+from decimal import Decimal
+
 import pytest
 from sqlalchemy import text
 
@@ -46,6 +49,21 @@ def test_only_validated_valid_activities_go_in_and_the_valid_left_out_are_counte
 
     assert [a.id for a in inputs.activities] == [kept.id]
     assert inputs.excluded == {"pendentes": 2}
+
+
+def test_not_valid_activities_awaiting_validation_leave_no_trace_in_excluded(official_chosen):
+    # SEG-01: outside the interstice and below the minimum hours are not valid, so awaiting
+    # validation does not make them "pendentes"; nothing of them is left out or counted
+    world = official_chosen
+    add_activity(world, title="Fora do prazo", event_date=date(2020, 1, 1),
+                 status=ActivityStatus.AGUARDANDO_REVISAO)  # fmt: skip
+    add_activity(world, title="Carga insuficiente", group_number=4, item_number=3,
+                 hours=Decimal(10), status=ActivityStatus.AGUARDANDO_REVISAO)  # fmt: skip
+
+    inputs = load(world)
+
+    assert [a.id for a in inputs.activities] == []
+    assert inputs.excluded == {}
 
 
 def test_a_valid_activity_without_category_refuses_with_its_code(official_chosen):

@@ -1619,7 +1619,7 @@ T62 → T43 → T44
 
 ### T56: FT1, `excluded` sem rastro das não válidas aguardando validação
 
-**Status**: Pending
+**Status**: Done
 
 **What**: O Verifier (validation.md, G1) viu que o mutante B27 (`_excluded` conta como "pendentes" a atividade não válida aguardando validação) sobrevive. Teste do caso: atividade fora do interstício e atividade com carga insuficiente em `AGUARDANDO_REVISAO` não geram `excluded` nem rastro no resumo da geração. Se o código estiver errado, corrige-o.
 **Where**: `backend/tests/integration/doc_usecases/test_generation_inputs.py` (modify) e `backend/tests/integration/api/test_generated_validity_acceptance.py` (modify)
@@ -1634,10 +1634,10 @@ T62 → T43 → T44
 
 **Done when**:
 
-- [ ] Teste primeiro: com as duas não válidas em `AGUARDANDO_REVISAO`, `inputs.excluded == {}` e `inputs.activities` vazio; no aceite, `summary["excluded"] == {}`, sem alerta `ATIVIDADES_FORA_DO_DOCUMENTO` e sem os títulos no documento
-- [ ] O teste passa contra o código e falha contra o mutante B27 (`is_valid` removido de `_excluded`), provado em cópia
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest <arquivos tocados> -q` (o gate completo roda uma vez na T43)
-- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+- [x] Teste primeiro: com as duas não válidas em `AGUARDANDO_REVISAO`, `inputs.excluded == {}` e `inputs.activities` vazio; no aceite, `summary["excluded"] == {}`, sem alerta `ATIVIDADES_FORA_DO_DOCUMENTO` e sem os títulos no documento
+- [x] O teste passa contra o código e falha contra o mutante B27 (`is_valid` removido de `_excluded`), provado em cópia
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest <arquivos tocados> -q` (o gate completo roda uma vez na T43)
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
 
 **Tests**: integration
 **Gate**: full
