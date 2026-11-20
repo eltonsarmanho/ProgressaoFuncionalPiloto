@@ -250,16 +250,16 @@ O docente não consegue concluir um processo real: nenhuma tela leva o processo 
 | CAEDI-03 | P1: Editar atividade com pontuação manual gravada | Execute | Implementing |
 | CAEDI-04 | P1: Editar atividade com pontuação manual gravada | Execute | Implementing |
 | CADOC-01 | P2: Documentação de estado | Tasks | Pending |
-| CADOC-02 | P2: Documentação de estado | Tasks | Pending |
+| CADOC-02 | P2: Documentação de estado | Execute | Implementing |
 | CADOC-03 | P2: Documentação de estado | Tasks | Pending |
 | CADOC-04 | P2: Documentação de estado | Execute | Implementing |
 | CADOC-05 | P2: Documentação de estado | Execute | Implementing |
-| CADOC-06 | P2: Documentação de estado | Tasks | Pending |
+| CADOC-06 | P2: Documentação de estado | Execute | Implementing |
 | CADOC-07 | P2: Documentação de estado | Tasks | Pending |
 | CADOC-08 | P2: Documentação de estado | Tasks | Pending |
 | CADOC-09 | P2: Documentação de estado | Tasks | Pending |
 | CADOC-10 | P2: Documentação de estado | Tasks | Pending |
-| CADOC-11 | P2: Documentação de estado | Tasks | Pending |
+| CADOC-11 | P2: Documentação de estado | Execute | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`, com a categoria prefixada por `CA` (esta feature).
 

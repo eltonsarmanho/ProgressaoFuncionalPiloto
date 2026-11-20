@@ -617,7 +617,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T19: Decisões e dívidas do `STATE.md`
 
-**Status**: Pending
+**Status**: Done
 
 **What**: AD-017 e AD-019 ganham a nota de CADOC-02 (a "linha de 0 ponto" foi substituída pela AD-022: rejeitada e fora do interstício vão para as não válidas e não chegam à Etapa 4); a pergunta aberta (1) da AD-022 é reescrita como pede CADOC-11; a dívida "Grupo I do caso real com 16 pontos sem explicação" vira o texto de CADOC-06. O Handoff fica para a T26.
 **Where**: `.specs/STATE.md` (modify, seção Decisions e a linha "Dívidas")
@@ -632,9 +632,9 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] AD-017 e AD-019 citam a AD-022 na nota; a dívida tem o texto exato de CADOC-06
-- [ ] `grep -nE "\bI\.3\b" .specs/STATE.md`, `grep -niE "avalia[cç][aã]o (pelo corpo )?discente" .specs/STATE.md` e `grep -n "16 pontos" .specs/STATE.md` sem saída
-- [ ] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] AD-017 e AD-019 citam a AD-022 na nota; a dívida tem o texto exato de CADOC-06
+- [x] `grep -nE "\bI\.3\b" .specs/STATE.md`, `grep -niE "avalia[cç][aã]o (pelo corpo )?discente" .specs/STATE.md` e `grep -n "16 pontos" .specs/STATE.md` sem saída
+- [x] Gate check passes: `cd backend && .venv/bin/pytest tests/unit tests/architecture -q`
 
 **Tests**: none
 **Gate**: quick
