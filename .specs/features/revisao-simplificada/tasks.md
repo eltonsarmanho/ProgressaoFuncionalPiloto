@@ -1707,7 +1707,7 @@ T62 → T43 → T44
 
 ### T59: FT4, a atividade mesclada fora da Tabela, do Relatório e do Comprovante
 
-**Status**: Pending
+**Status**: Done
 
 **What**: O Verifier (G4) viu que nenhum teste gera os três documentos com uma atividade mesclada; a exclusão valia por herança da lista. Teste de aceitação com uma atividade mesclada na outra (com a evidência que ficou nela).
 **Where**: `backend/tests/integration/api/test_generated_validity_acceptance.py` (modify)
@@ -1722,10 +1722,11 @@ T62 → T43 → T44
 
 **Done when**:
 
-- [ ] Teste primeiro: duas atividades iguais, a mesclada com uma página exclusiva; Tabela, Relatório e Comprovante não trazem o título nem a página exclusiva da mesclada; a mantida aparece, uma vez, com as provas somadas
-- [ ] O teste falha se a mesclada entrar nos documentos (mutante em cópia: `eligible_activities` sem o filtro de mescladas)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_generated_validity_acceptance.py -q`
-- [ ] Test count: nenhum teste apagado ou enfraquecido; os novos passam
+- [x] Teste primeiro, mesclagem real: Tabela, Relatório e Comprovante não trazem o título da mesclada; a mantida aparece, uma vez na Tabela, e o Comprovante tem as duas páginas, a da mantida e a que veio da mesclada (provas somadas)
+- [x] Teste primeiro, página da mesclada: uma mesclada que ainda tem a própria página, sem ser duplicada pelo título, fica fora da Tabela, e o Comprovante só tem a página da mantida
+- [x] Os testes falham contra o mutante que lista as mescladas (`list_for_process` sem o filtro `merged_into_id`) e contra o que não move as provas, provados em cópia
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_generated_validity_acceptance.py -q`
+- [x] Test count: nenhum teste apagado ou enfraquecido; os novos passam
 
 **Tests**: integration
 **Gate**: full

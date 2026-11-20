@@ -8,7 +8,7 @@ inserted straight: outside the interstice, rejected, below the minimum hours and
 
 import re
 import uuid
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pymupdf
@@ -174,6 +174,92 @@ def test_the_comprovante_has_no_page_whose_only_activity_is_not_valid(client, wo
     text = " ".join(pages)
     for title in (OUTSIDE, REJECTED, SHORT):
         assert title not in text, title
+
+
+# --- the merged activity (DUP-03, SEG-02) -------------------------------------------------------
+
+MERGED_SUFFIX = " complementar"
+LATER = datetime(2100, 1, 1, tzinfo=UTC)
+
+
+@pytest.fixture
+def merge_world(client, scenario, uow_factory):
+    """The valid activity (page 1 of Alfa) and a later one with the same item and a title that
+    only adds a word (page 4 of Alfa), still apart."""
+    headers, process = scenario.headers, scenario.process
+    later = insert(
+        uow_factory, scenario, title=scenario.activity["title"] + MERGED_SUFFIX,
+        group_number=2, item_number=7, status=ActivityStatus.VALIDADA, created_at=LATER,
+    )  # fmt: skip
+    content = source_pdf(5, label="Alfa ").tobytes()
+    response = client.post(
+        process_url(process, "documents"),
+        files=[("file", ("alfa.pdf", content, "application/pdf"))],
+        headers=headers,
+    )
+    assert response.status_code == 201, response.text
+    [uploaded] = response.json()
+    alfa = uploaded["document"]
+    link(client, headers, scenario.activity["id"], alfa, 1)
+    link(client, headers, str(later.id), alfa, 4)
+    scenario.merged_title = later.title
+    scenario.later = later
+    scenario.alfa = alfa
+    return scenario
+
+
+def comprovante_originals(client, world) -> list[str]:
+    row = generate(client, world.headers, world.process, "COMPROVANTE")
+    with pymupdf.open("pdf", client.get(file_url(row, "pdf")).content) as pdf:
+        pages = [" ".join(page.get_text().split()) for page in pdf]
+    assert world.merged_title not in " ".join(pages)
+    return [p for p in pages if "Origem Alfa pagina" in p]
+
+
+def test_a_merged_activity_is_in_none_of_the_three_documents_and_the_kept_one_has_both_proofs(
+    client, merge_world
+):
+    world = merge_world
+    merged = client.post(
+        f"/api/processes/{world.process['id']}/activities/merge-duplicates", headers=world.headers
+    )
+    assert merged.json() == {"merged": 1}, merged.text
+
+    for kind in ("TABELA", "RELATORIO"):
+        row = generate(client, world.headers, world.process, kind)
+        text = docx_text(client.get(file_url(row, "docx")).content)
+        assert world.merged_title not in text, kind
+        assert world.activity["title"] in text, kind
+        assert row["summary"]["activity_count"] == 1, kind
+        if kind == "TABELA":
+            assert text.count(world.activity["title"]) == 1
+    originals = comprovante_originals(client, world)
+    assert len(originals) == 2  # the proof of the merged one went to the kept one (DUP-01)
+    assert "Origem Alfa pagina 1" in originals[0]
+    assert "Origem Alfa pagina 4" in originals[1]
+
+
+def test_a_page_whose_only_activity_is_merged_is_not_in_the_comprovante(
+    client, merge_world, uow_factory
+):
+    # the merged activity keeps its page here (it was not moved) and is no duplicate by title,
+    # so only the mark "merged" keeps it out
+    world = merge_world
+    world.merged_title = "Coordenação de projeto de extensão"
+    with uow_factory() as uow:
+        stored = uow.activities.get(world.later.id)
+        stored.title = world.merged_title
+        uow.activities.update(stored, stored.version)
+        uow.activities.set_merged_into(stored, uuid.UUID(world.activity["id"]), stored.version)
+        uow.commit()
+
+    row = generate(client, world.headers, world.process, "TABELA")
+    originals = comprovante_originals(client, world)
+
+    assert world.merged_title not in docx_text(client.get(file_url(row, "docx")).content)
+    assert row["summary"]["activity_count"] == 1
+    assert len(originals) == 1
+    assert "Origem Alfa pagina 1" in originals[0]
 
 
 # --- correcting an activity brings it in on the next generation (SEG-01) ---------------------
