@@ -466,7 +466,7 @@ graph LR
 
 #### T12: Seção I, ordem das ofertas e horas no documento da Tabela
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Em `build_table_document`: a faixa do grupo 1 nasce na versão em que ele conta (já existe para todo grupo com `counts_in_total`); `_is_pit` passa a testar `row.outside_total`; a linha de oferta do Grupo I tem Atividade = título cortado a 400 caracteres + ` (1º Período de 2023)` por `format_period`, Quantidade = `pit_hours`, Pontuação unitária = `1,00`, Total = `points` (D7); ordem das linhas do grupo 1 por período letivo (sem período por último) e depois título sem diferenciar maiúscula, os demais grupos como hoje; `PitHours` ganha `outside_total` e `_pit_hours` existe sempre que a versão tem critério de carga semanal no grupo 1 (`is_group1_load_criterion`); `_alerts` deixa de listar os alertas `SEM_COMPROVANTE` (GTAB-08) e mantém os motivos. Os campos `comprovante` e `status` de `TableRow` ainda ficam (saem na T13).
 **Where**: `backend/app/domain/rules/table_document.py` (modify)
@@ -481,11 +481,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_table_document_rows.py` e `test_table_document_totals.py`: (GTAB-01) versão nova abre com a faixa "I", o nome do grupo e o subtotal "92,00"; (GTAB-02) uma linha por oferta com `I.1`/`I.2`, título e período, horas, "1,00" e total; ordem 2022.2 antes de 2023.1 e, no mesmo período, "álgebra" antes de "Banco" (mata "título antes do período"); oferta sem período por último; título de 401 caracteres cortado em 400 com "…" e o período depois; (GTAB-03) total "303,00" no cenário derivado; (GTAB-05) linha sem pontos com "0,00" e o motivo em Alertas; (GTAB-07) versão antiga sem faixa I, com a seção de horas e `outside_total` verdadeiro; (GTAB-08) nenhum alerta `SEM_COMPROVANTE` na lista, mesmo com atividade sem documento; (edge) semestre só com ofertas fora do interstício não gera linha
-- [ ] Teste de domínio: em toda linha do grupo 1 da versão nova `points == pit_hours`, para a constante "1,00" não mentir (D7)
-- [ ] Testes existentes que mudam: os que esperavam o alerta `SEM_COMPROVANTE` na Tabela (`test_table_document_rows.py`, `table_support.py`): GTAB-08
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: contagem antes e depois registrada
+- [x] Testes primeiro em `backend/tests/unit/domain/test_table_document_rows.py` e `test_table_document_totals.py`: (GTAB-01) versão nova abre com a faixa "I", o nome do grupo e o subtotal "92,00"; (GTAB-02) uma linha por oferta com `I.1`/`I.2`, título e período, horas, "1,00" e total; ordem 2022.2 antes de 2023.1 e, no mesmo período, "álgebra" antes de "Banco" (mata "título antes do período"); oferta sem período por último; título de 401 caracteres cortado em 400 com "…" e o período depois; (GTAB-03) total "303,00" no cenário derivado; (GTAB-05) linha sem pontos com "0,00" e o motivo em Alertas; (GTAB-07) versão antiga sem faixa I, com a seção de horas e `outside_total` verdadeiro; (GTAB-08) nenhum alerta `SEM_COMPROVANTE` na lista, mesmo com atividade sem documento; (edge) semestre só com ofertas fora do interstício não gera linha
+- [x] Teste de domínio: em toda linha do grupo 1 da versão nova `points == pit_hours`, para a constante "1,00" não mentir (D7)
+- [x] Testes existentes que mudam: os que esperavam o alerta `SEM_COMPROVANTE` na Tabela (`test_table_document_rows.py`, `table_support.py`): GTAB-08
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: contagem antes e depois registrada
 
 **Tests**: unit
 **Gate**: quick

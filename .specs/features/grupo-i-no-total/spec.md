@@ -142,14 +142,14 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 | GI-10 | P1: Grupo I conta no total | Tasks | Implementing |
 | GI-11 | P1: Grupo I conta no total | Tasks | Pending |
 | GI-12 | P1: Grupo I conta no total | Tasks | Implementing |
-| GTAB-01 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
-| GTAB-02 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
-| GTAB-03 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
+| GTAB-01 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Implementing |
+| GTAB-02 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Implementing |
+| GTAB-03 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Implementing |
 | GTAB-04 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
-| GTAB-05 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
+| GTAB-05 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Implementing |
 | GTAB-06 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
-| GTAB-07 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
-| GTAB-08 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Pending |
+| GTAB-07 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Implementing |
+| GTAB-08 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Tasks | Implementing |
 | GRES-01 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
 | GRES-02 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |
 | GRES-03 | P1: Resumo da Etapa 4 em painel | Tasks | Pending |

@@ -16,6 +16,7 @@ from tests.unit.domain.scenario_211 import (
     item_capped_table,
     official_like_table,
     per_unit,
+    scenario_303_result,
     scenario_result,
 )
 
@@ -181,6 +182,46 @@ def test_a_group_limit_appears_with_the_text_of_the_engine():
         "Limite aplicado em grupo 3: 7 pontos reduzidos para 5."
     ]
     assert result.limit_adjustments[0].scope == "GRUPO"
+
+
+def test_no_alert_says_that_an_activity_has_no_voucher():
+    # GTAB-08: the row alert exists in the engine, but the table never mentions the voucher
+    bare = activity(3, 2, title="Sem prova", evidence_note=None)
+    version, activities, result = scenario_result([bare])
+
+    document = build_table_document(HEADER, version, result, activities, {})
+
+    assert [a.code for a in result.rows[0].alerts] == [ScoringAlertCode.SEM_COMPROVANTE]
+    assert document.alerts == ()
+
+
+def test_the_other_alerts_of_a_row_without_voucher_stay_in_the_table():
+    # GTAB-08: only the voucher alert leaves; the reasons and the other alerts stay
+    open_ended = activity(
+        6, 6, "5", title="Coordenação", evidence_note=None, event_date=None,
+        period_start=date(2022, 12, 1),
+    )  # fmt: skip
+    yearly = ScoringCriterion(
+        6, 6, "Coordenação", "por ano de exercício", ScoringMode.POR_UNIDADE,
+        unit_points=Decimal("10"),
+    )  # fmt: skip
+    version = official_like_table()
+    group_six = replace(version.groups[5], criteria=(yearly,))
+    table = replace(version, groups=(*version.groups[:5], group_six, *version.groups[6:]))
+
+    document, _ = build(activities=[open_ended], version=table)
+
+    assert [a.code for a in document.alerts] == ["DATA_FIM_AUSENTE"]
+
+
+def test_the_total_of_the_scenario_with_group_one_inside_is_303():
+    # GTAB-03
+    version, activities, result = scenario_303_result()
+
+    document = build_table_document(HEADER, version, result, activities, {})
+
+    assert document.total == "303,00"
+    assert [h.hours for h in document.pit_hours.periods] == ["24,00", "24,00", "24,00", "20,00"]
 
 
 def test_an_end_date_missing_appears_with_the_text_of_the_engine():

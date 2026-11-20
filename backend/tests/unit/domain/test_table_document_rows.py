@@ -4,11 +4,13 @@ from dataclasses import replace
 from datetime import UTC, datetime
 from decimal import Decimal
 
+from app.domain.entities.activity import Level
 from app.domain.rules.table_document import MAX_TITLE_CHARS, TableHeader, build_table_document
 from tests.unit.domain.scenario_211 import (
     INTERSTICE,
     activity,
     official_like_table,
+    scenario_303_result,
     scenario_result,
 )
 
@@ -218,3 +220,149 @@ def test_a_cut_title_is_the_same_every_time_and_as_long_as_the_cap():
 
     assert shown_title(long_title) == shown_title(long_title)
     assert len(shown_title(long_title)) == MAX_TITLE_CHARS
+
+
+# --- group I as section I of the table (GTAB-01, GTAB-02, GTAB-03, GTAB-05, GTAB-07) ------------
+
+
+def offer(title, period, hours="68", level=Level.GRADUACAO, item=1, **kwargs):
+    return activity(
+        1, item, hours=Decimal(hours), level=level, academic_period=period, title=title, **kwargs
+    )
+
+
+def build_inside(activities=None):
+    version, activities, result = scenario_303_result(activities)
+    return build_table_document(HEADER, version, result, activities, NO_NUMBERS)
+
+
+def section_one(activities=None):
+    return build_inside(activities).bands[0]
+
+
+def test_the_new_version_opens_with_the_band_of_group_one_and_its_subtotal():
+    # GTAB-01
+    document = build_inside()
+
+    band = document.bands[0]
+    assert (band.group_number, band.numeral, band.name, band.subtotal) == (
+        1, "I", "Docência", "92,00",
+    )  # fmt: skip
+    assert [b.group_number for b in document.bands] == [1, 2, 3, 4, 5, 6, 7, 8]
+
+
+def test_the_scenario_303_total_is_the_sum_of_groups_i_to_viii():
+    # GTAB-03
+    document = build_inside()
+
+    assert document.total == "303,00"
+
+
+def test_each_group_one_offer_is_a_row_with_item_title_period_hours_unit_and_total():
+    # GTAB-02
+    cálculo = offer("Cálculo I", "2023.1")
+    pos = offer("Métodos", "2023.2", hours="68", level=Level.POS_GRADUACAO, item=2)
+
+    band = section_one([cálculo, pos])
+
+    assert [
+        (r.item, r.title, r.quantity, r.unit_points, r.points) for r in band.rows
+    ] == [
+        ("I.1", "Cálculo I (1º Período de 2023)", "8,00", "1,00", "8,00"),
+        ("I.2", "Métodos (2º Período de 2023)", "12,00", "1,00", "12,00"),
+    ]
+    assert band.subtotal == "20,00"
+
+
+def test_the_offers_are_ordered_by_term_and_then_by_title_ignoring_case():
+    # GTAB-02: 2022.2 before 2023.1 whatever the title; "álgebra" before "Banco" in one term
+    late = offer("Aaa disciplina", "2023.1")
+    banco = offer("Banco de dados", "2023.1")
+    algebra = offer("álgebra linear", "2023.1")
+    early = offer("Zzz disciplina", "2022.2")
+
+    band = section_one([late, banco, algebra, early])
+
+    assert [r.title for r in band.rows] == [
+        "Zzz disciplina (2º Período de 2022)",
+        "Aaa disciplina (1º Período de 2023)",
+        "álgebra linear (1º Período de 2023)",
+        "Banco de dados (1º Período de 2023)",
+    ]
+
+
+def test_an_offer_without_a_term_comes_last_and_has_only_its_title():
+    # GTAB-02
+    no_term = offer("Aaa sem período", None)
+    termed = offer("Zzz com período", "2023.2")
+
+    band = section_one([no_term, termed])
+
+    assert [r.title for r in band.rows] == [
+        "Zzz com período (2º Período de 2023)",
+        "Aaa sem período",
+    ]
+
+
+def test_a_title_of_401_characters_is_cut_at_400_with_an_ellipsis_and_the_term_comes_after():
+    # edge case: the same cut as the other rows
+    long = offer("b" * (MAX_TITLE_CHARS + 1), "2023.1")
+
+    band = section_one([long])
+
+    assert band.rows[0].title == "b" * (MAX_TITLE_CHARS - 1) + "…" + " (1º Período de 2023)"
+
+
+def test_every_group_one_row_scores_its_hours_so_the_constant_unit_of_one_cannot_lie():
+    # D7: points == hours, unit 1,00
+    band = section_one()
+
+    assert len(band.rows) == 12
+    assert {r.unit_points for r in band.rows} == {"1,00"}
+    assert all(r.points == r.quantity for r in band.rows)
+
+
+def test_a_group_one_row_that_scores_nothing_keeps_zero_points_and_its_reason_in_the_alerts():
+    # GTAB-05
+    unlisted = offer("Disciplina sem item", "2023.1", item=99)
+    version, activities, result = scenario_303_result([unlisted])
+
+    document = build_table_document(HEADER, version, result, activities, NO_NUMBERS)
+    row = document.bands[0].rows[0]
+
+    assert (row.item, row.points) == ("I.99", "0,00")
+    assert [(a.code, a.subject) for a in document.alerts] == [
+        ("SEM_ENQUADRAMENTO", "Disciplina sem item")
+    ]
+
+
+def test_a_term_with_only_offers_outside_the_interstice_has_no_row():
+    # edge case: GI-04 and GI-09, the whole year of 2019 is outside
+    old = [
+        offer("Disciplina antiga", "2019.1", event_date=None),
+        offer("Outra antiga", "2019.1", event_date=None),
+    ]
+    inside = offer("Disciplina atual", "2023.1", event_date=None)
+
+    band = section_one([*old, inside])
+
+    assert [r.title for r in band.rows] == ["Disciplina atual (1º Período de 2023)"]
+    assert band.subtotal == "8,00"
+
+
+def test_the_old_version_has_no_section_i_and_marks_the_hours_as_outside_the_total():
+    # GTAB-07
+    document = build()
+
+    assert 1 not in [b.group_number for b in document.bands]
+    assert document.pit_hours.outside_total is True
+    assert document.total == "211,00"
+
+
+def test_the_new_version_hours_section_is_not_marked_as_outside_the_total():
+    # GTAB-06, GTAB-07
+    document = build_inside()
+
+    assert document.pit_hours.outside_total is False
+    assert document.pit_hours.total == "92,00"
+

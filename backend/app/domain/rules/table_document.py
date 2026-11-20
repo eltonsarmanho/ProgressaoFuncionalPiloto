@@ -6,23 +6,23 @@ subtotals and the total are the engine's, never summed again here. The writers (
 draw this model.
 """
 
+import unicodedata
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 from uuid import UUID
 
 from app.domain.entities.activity import Activity
-from app.domain.entities.scoring import ScoringTableVersion
+from app.domain.entities.scoring import ScoringTableVersion, is_group1_load_criterion
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.process_verification import Alert
 from app.domain.rules.pt_format import format_decimal, format_period
-from app.domain.rules.scoring_alerts import NotScoredReason
+from app.domain.rules.scoring_alerts import NotScoredReason, ScoringAlertCode
 from app.domain.rules.scoring_engine import (
     Counters,
     RowStatus,
     ScoringResult,
     ScoringRow,
-    is_pit_criterion,
 )
 
 NO_VOUCHER = "sem comprovante"
@@ -45,6 +45,8 @@ _REASON_TEXT = {
     NotScoredReason.CARGA_HORARIA_INSUFICIENTE: "Carga horária abaixo do mínimo do item",
 }
 _CENTS = Decimal("0.01")
+GROUP_ONE = 1
+GROUP_ONE_UNIT_POINTS = Decimal("1")  # one point per PIT hour (D7): `points == pit_hours`
 
 
 @dataclass(frozen=True)
@@ -93,10 +95,12 @@ class PitPeriodHours:
 
 @dataclass(frozen=True)
 class PitHours:
-    """Group I offers measured in hours: a section apart, never added to the points (TAB-05)."""
+    """Group I offers summed in hours per term. `outside_total` is true when the table version
+    keeps the group out of the total, so the hours are not points (TAB-05, GTAB-06, GTAB-07)."""
 
     periods: tuple[PitPeriodHours, ...]
     total: str
+    outside_total: bool = False
 
 
 @dataclass(frozen=True)
@@ -144,52 +148,84 @@ def _shown_title(title: str) -> str:
     return title[: MAX_TITLE_CHARS - 1] + "…"
 
 
-def _table_row(row: ScoringRow, title: str, comprovante_numbers: Mapping[UUID, int]) -> TableRow:
+def _table_row(
+    row: ScoringRow, title: str, comprovante_numbers: Mapping[UUID, int], offer: bool = False
+) -> TableRow:
+    """A group I offer row shows the PIT hours as quantity and one point per hour (D7)."""
     number = comprovante_numbers.get(row.activity_id)
+    hours = row.pit_hours
     return TableRow(
         activity_id=row.activity_id,
         item=f"{roman(row.group_number)}.{row.item_number}",
         title=title,
-        quantity=_cell(row.effective_quantity),
-        unit_points=_cell(row.unit_points),
+        quantity=_cell(hours if offer else row.effective_quantity),
+        unit_points=two_places(GROUP_ONE_UNIT_POINTS) if offer else _cell(row.unit_points),
         points=two_places(row.points),
         comprovante=NO_VOUCHER if number is None else str(number),
         status=_STATUS_TEXT[row.status],
     )
 
 
-def _band_rows(
-    group_number: int,
-    version: ScoringTableVersion,
-    result: ScoringResult,
+def _term_key(period: str | None, title: str) -> tuple[bool, str, str]:
+    """Group I order: by academic term (an offer without one last), then by title ignoring case
+    and accents."""
+    plain = unicodedata.normalize("NFKD", title.casefold())
+    letters = "".join(c for c in plain if not unicodedata.combining(c))
+    return (period is None, period or "", letters)
+
+
+def _group_one_rows(
+    found: list[ScoringRow],
     titles: Mapping[UUID, str],
+    terms: Mapping[UUID, str | None],
     comprovante_numbers: Mapping[UUID, int],
 ) -> tuple[TableRow, ...]:
-    """Rows of the listed activities in the group, by item and then in the given order."""
+    """One row per offer: the title cut as the others, then the term in words (GTAB-02)."""
+    found.sort(key=lambda r: _term_key(terms[r.activity_id], titles[r.activity_id]))
+    rows = []
+    for row in found:
+        term = terms[row.activity_id]
+        title = titles[row.activity_id]
+        shown = title if term is None else f"{title} ({format_period(term)})"
+        rows.append(_table_row(row, shown, comprovante_numbers, offer=row.pit_hours is not None))
+    return tuple(rows)
+
+
+def _band_rows(
+    group_number: int,
+    result: ScoringResult,
+    titles: Mapping[UUID, str],
+    terms: Mapping[UUID, str | None],
+    comprovante_numbers: Mapping[UUID, int],
+) -> tuple[TableRow, ...]:
+    """Rows of the listed activities in the group, by item and then in the given order; the
+    group I offers by term and title instead."""
     found = [
-        row for row in result.rows if row.activity_id in titles and row.group_number == group_number
+        row
+        for row in result.rows
+        if row.activity_id in titles and row.group_number == group_number and not row.outside_total
     ]
-    found = [row for row in found if not _is_pit(version, row)]
+    if group_number == GROUP_ONE:
+        return _group_one_rows(found, titles, terms, comprovante_numbers)
     found.sort(key=lambda row: row.item_number or 0)
     return tuple(_table_row(r, titles[r.activity_id], comprovante_numbers) for r in found)
 
 
-def _is_pit(version: ScoringTableVersion, row: ScoringRow) -> bool:
-    """Group I weekly-load offers: their hours go to the separate PIT section, not to a band."""
-    criterion = version.get_criterion(row.group_number, row.item_number)
-    return criterion is not None and is_pit_criterion(version, criterion)
-
-
 def _pit_hours(version: ScoringTableVersion, result: ScoringResult) -> PitHours | None:
-    """The section exists only when the version measures group I in PIT hours."""
-    has_pit = any(is_pit_criterion(version, c) for g in version.groups for c in g.criteria)
-    if not has_pit:
+    """The section exists whenever the version measures group I by weekly load (PIT hours)."""
+    load = [c for g in version.groups for c in g.criteria if is_group1_load_criterion(c)]
+    if not load:
         return None
+    group = version.get_group(GROUP_ONE)
     periods = tuple(
         PitPeriodHours(format_period(period), two_places(hours))
         for period, hours in result.group1_hours_by_period.items()
     )
-    return PitHours(periods, two_places(result.group1_total_hours))
+    return PitHours(
+        periods,
+        two_places(result.group1_total_hours),
+        outside_total=group is not None and not group.counts_in_total,
+    )
 
 
 def _alerts(
@@ -204,7 +240,11 @@ def _alerts(
         if row.activity_id not in titles:
             continue
         subject = titles[row.activity_id]
-        found += [TableAlert(a.code.value, a.message, subject) for a in row.alerts]
+        found += [
+            TableAlert(a.code.value, a.message, subject)
+            for a in row.alerts
+            if a.code is not ScoringAlertCode.SEM_COMPROVANTE  # GTAB-08: no voucher in the table
+        ]
         found += [TableAlert(r.value, _REASON_TEXT[r], subject) for r in row.reasons]
     for adjustment in result.limit_adjustments:
         if adjustment.scope != "ATIVIDADE":
@@ -223,18 +263,20 @@ def build_table_document(
 ) -> TableDocument:
     """`activities` are the ones that go in the document; `comprovante_numbers` come from the plan.
 
-    A group that counts in the total is a band, empty ones included. A group outside the total
-    (group I in hours) has no band; its hours are the `pit_hours` section. `process_alerts` are
+    A group that counts in the total is a band, empty ones included, group I among them when the
+    version counts it (one row per offer). A group outside the total (group I of the old version)
+    has no band; its hours are the `pit_hours` section. `process_alerts` are
     the alerts of the process the screen shows beside the result.
     """
     titles = {a.id: _shown_title(a.title) for a in activities}
+    terms = {a.id: a.academic_period for a in activities}
     bands = tuple(
         GroupBand(
             group_number=group.number,
             numeral=roman(group.number),
             name=group.name,
             subtotal=two_places(result.group_subtotals[group.number]),
-            rows=_band_rows(group.number, version, result, titles, comprovante_numbers),
+            rows=_band_rows(group.number, result, titles, terms, comprovante_numbers),
         )
         for group in sorted(version.groups, key=lambda g: g.number)
         if group.counts_in_total
