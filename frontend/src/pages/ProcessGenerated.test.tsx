@@ -204,3 +204,34 @@ describe("DEL-13: processo CONCLUIDO", () => {
     expect(within(comprovante).queryByRole("button", { name: /Salvar arranjo|Subir|Descer|Remover|Acrescentar/ })).not.toBeInTheDocument();
   });
 });
+
+describe("CAINI-10, CAINI-11: a Etapa 5 explica a conclusão conforme o status", () => {
+  const CONCLUDE = "Concluir e excluir documentos de entrada";
+  const DRAFT_TEXT = "Inicie o processo na Etapa 1 para poder concluir.";
+
+  it("CAINI-10: em rascunho mostra o título, o texto, o link para a Etapa 1 e nenhum botão de concluir", async () => {
+    setup("RASCUNHO");
+    await block("Tabela de Pontuação");
+    expect(await screen.findByRole("heading", { name: "Concluir o processo" })).toBeInTheDocument();
+    expect(screen.getByText(DRAFT_TEXT)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ir para a Etapa 1" })).toHaveAttribute("href", "/processos/p1");
+    expect(screen.queryByRole("button", { name: CONCLUDE })).not.toBeInTheDocument();
+  });
+
+  it("CAINI-11: em andamento mostra o botão de concluir e não o texto de rascunho", async () => {
+    setup("EM_ANDAMENTO");
+    await block("Tabela de Pontuação");
+    expect(await screen.findByRole("heading", { name: "Concluir o processo" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: CONCLUDE })).toBeInTheDocument();
+    expect(screen.queryByText(DRAFT_TEXT)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Ir para a Etapa 1" })).not.toBeInTheDocument();
+  });
+
+  it.each(["CONCLUIDO", "ARQUIVADO"] as const)("CAINI-10, CAINI-11: com o processo %s não mostra o botão nem o texto de rascunho", async (status) => {
+    setup(status);
+    await block("Tabela de Pontuação");
+    expect(screen.queryByRole("button", { name: CONCLUDE })).not.toBeInTheDocument();
+    expect(screen.queryByText(DRAFT_TEXT)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Ir para a Etapa 1" })).not.toBeInTheDocument();
+  });
+});

@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { errorMessage, request } from "../api/client";
 import type { Activity, Process } from "../api/types";
 import { ComprovanteLayoutEditor } from "../components/ComprovanteLayoutEditor";
@@ -128,6 +128,17 @@ export function ProcessGenerated() {
                 <button type="button" className="btn btn-danger" onClick={() => setConcluding(true)}>
                   Concluir e excluir documentos de entrada
                 </button>
+              </div>
+            </section>
+          )}
+          {process.status === "RASCUNHO" && (
+            <section className="card" aria-labelledby="conclude-title">
+              <h2 id="conclude-title">Concluir o processo</h2>
+              <p className="muted">Inicie o processo na Etapa 1 para poder concluir.</p>
+              <div className="btn-row">
+                <Link className="btn btn-secondary" to={`/processos/${id}`}>
+                  Ir para a Etapa 1
+                </Link>
               </div>
             </section>
           )}

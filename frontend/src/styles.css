@@ -533,6 +533,11 @@ fieldset.grid legend {
   border-radius: 4px;
 }
 
+a.btn {
+  display: inline-block;
+  text-decoration: none;
+}
+
 .btn-primary {
   color: #fff;
   background: var(--primary);

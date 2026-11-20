@@ -189,7 +189,7 @@ T26 → T27       (origem na Fase 5)
 
 ### T4: Etapa 5 explica a conclusão de processo em rascunho
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Com processo `RASCUNHO`, a Etapa 5 mostra a seção "Concluir o processo" com o texto "Inicie o processo na Etapa 1 para poder concluir." e o link "Ir para a Etapa 1" para `/processos/{id}`, sem o botão de concluir; `EM_ANDAMENTO` segue como hoje.
 **Where**: `frontend/src/pages/ProcessGenerated.tsx` (modify; testes no arquivo de teste da página)
@@ -204,9 +204,9 @@ T26 → T27       (origem na Fase 5)
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/pages/ProcessGenerated.test.tsx`: `RASCUNHO` mostra o título "Concluir o processo", o texto exato, o link com `href` `/processos/<id>` e nenhum botão "Concluir e excluir documentos de entrada"; `EM_ANDAMENTO` mostra o botão e não o texto de rascunho; `CONCLUIDO` e `ARQUIVADO` não mostram nenhum dos dois
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: contagem antes e depois registrada; nenhum teste apagado
+- [x] Testes primeiro em `frontend/src/pages/ProcessGenerated.test.tsx`: `RASCUNHO` mostra o título "Concluir o processo", o texto exato, o link com `href` `/processos/<id>` e nenhum botão "Concluir e excluir documentos de entrada"; `EM_ANDAMENTO` mostra o botão e não o texto de rascunho; `CONCLUIDO` e `ARQUIVADO` não mostram nenhum dos dois
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagem antes e depois registrada; nenhum teste apagado
 
 **Tests**: unit
 **Gate**: quick
