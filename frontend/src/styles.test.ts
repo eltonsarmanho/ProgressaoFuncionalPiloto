@@ -267,6 +267,12 @@ describe("GRES-08: o painel da Etapa 4 cabe em 360 px sem rolagem horizontal da 
     expect(rule(".teaching-offers li")).toMatch(/flex-wrap\s*:\s*wrap/);
   });
 
+  it("GRES-02: o valor do mínimo herda o tamanho e o peso do texto comum; só o total e o mínimo definido os mudam", () => {
+    expect(rule(".panel-headline dd")).not.toMatch(/font-size|font-weight/);
+    expect(rule(".panel-value")).toMatch(/font-size\s*:/);
+    expect(rule(".panel-minimum")).toMatch(/font-weight\s*:\s*(700|bold)/);
+  });
+
   it("o nome do grupo e a disciplina têm min-width: 0 e overflow-wrap: anywhere", () => {
     for (const selector of [".group-bar-name", ".teaching-title"]) {
       expect(rule(selector), selector).toMatch(/min-width\s*:\s*0/);

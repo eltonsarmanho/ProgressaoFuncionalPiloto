@@ -1199,7 +1199,7 @@ graph LR
 
 #### T37: FT3, o mínimo não definido herda o tamanho do texto comum no CSS
 
-**Status**: Pending
+**Status**: Done
 
 **What**: O Verifier (validation.md, G4) viu que o tamanho de texto comum de GRES-02 só é fixado pela ausência de classe no componente; o tamanho real é do CSS. Teste estático em `styles.test.ts`: a regra `.panel-headline dd` não declara `font-size` nem `font-weight`, e só `.panel-value` (o total) e `.panel-minimum` (mínimo definido) as declaram.
 **Where**: `frontend/src/styles.test.ts` (modify)
@@ -1214,9 +1214,9 @@ graph LR
 
 **Done when**:
 
-- [ ] O teste novo passa contra o CSS e falha quando `.panel-headline dd` ganha `font-size` ou `font-weight`, provado em cópia isolada
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: nenhum teste apagado ou enfraquecido; o novo passa
+- [x] O teste novo passa contra o CSS e falha quando `.panel-headline dd` ganha `font-size` ou `font-weight`, provado em cópia isolada
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: nenhum teste apagado ou enfraquecido; o novo passa
 
 **Tests**: unit
 **Gate**: front
