@@ -899,7 +899,7 @@ graph LR
 
 #### T27: Tabela de atividades da Etapa 4 com a linha do Grupo I em pontos
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `inHours` deixa de ser `pit_hours != null` e passa a ser `outside_total`; na versão nova, a linha de carga semanal do Grupo I mostra Quantidade = horas de PIT, unidade "1,00" e Total = pontos (igual à Tabela, D7), e a faixa do grupo mostra "Subtotal" em vez de "Total de horas (PIT)".
 **Where**: `frontend/src/components/ScoringTable.tsx` (modify)
@@ -914,9 +914,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ScoringTable.test.tsx`: versão nova, linha do Grupo I com "8,00" em Quantidade, "1,00" e "8,00" em Total, faixa com "Subtotal"; versão antiga, linha em horas e "Total de horas (PIT)" como hoje (mata `outside_total` sempre falso ou sempre verdadeiro)
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam; os existentes ajustados só nas fixtures (campo novo)
+- [x] Testes primeiro em `frontend/src/components/ScoringTable.test.tsx`: versão nova, linha do Grupo I com "8,00" em Quantidade, "1,00" e "8,00" em Total, faixa com "Subtotal"; versão antiga, linha em horas e "Total de horas (PIT)" como hoje (mata `outside_total` sempre falso ou sempre verdadeiro)
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam; os existentes ajustados só nas fixtures (campo novo)
 
 **Tests**: unit
 **Gate**: front

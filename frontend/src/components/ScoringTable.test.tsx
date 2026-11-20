@@ -134,6 +134,7 @@ describe("ScoringTable", () => {
         effective_quantity: null,
         points: "0.00",
         pit_hours: "8.00",
+        outside_total: true,
         ...over,
       });
     const G1_SUBTOTALS = [{ group_number: 1, subtotal: "0.00" }, ...SUBTOTALS.slice(1)];
@@ -173,11 +174,42 @@ describe("ScoringTable", () => {
     });
 
     it("em tabela antiga (sem pit_hours) o Grupo I continua em pontos", () => {
-      const old = pit({ pit_hours: null, unit_points: "10.00", effective_quantity: "9.20", points: "92.00" });
+      const old = pit({ pit_hours: null, outside_total: false, unit_points: "10.00", effective_quantity: "9.20", points: "92.00" });
       render(<ScoringTable rows={[old]} subtotals={[{ group_number: 1, subtotal: "92.00" }]} />);
       const r = screen.getByText("Cálculo I").closest("tr")!;
       expect(within(r).getAllByRole("cell")[5]).toHaveTextContent("92,00");
       expect(screen.getAllByRole("rowgroup")[1]).toHaveTextContent("Subtotal: 92,00");
+    });
+
+    describe("GI-01, GRES-09: Grupo I que conta no total mostra as ofertas em pontos", () => {
+      const counted = (over: Partial<ScoringRow> = {}) =>
+        pit({ outside_total: false, points: "8.00", ...over });
+      const NEW_SUBTOTALS = [{ group_number: 1, subtotal: "8.00" }, ...SUBTOTALS.slice(1)];
+
+      it("a linha mostra as horas em Quantidade, 1,00 na unitária e os pontos em Total", () => {
+        render(<ScoringTable rows={[counted()]} subtotals={NEW_SUBTOTALS} group1TotalHours="8.00" />);
+        const r = screen.getByText("Cálculo I").closest("tr")!;
+        const cells = within(r).getAllByRole("cell").map((c) => c.textContent);
+        expect(cells).toEqual(["I", "1", "Cálculo I", "8,00", "1,00", "8,00", "Sem comprovante", "Pontuada"]);
+        expect(cells[5]).not.toContain("horas");
+        expect(within(r).getAllByRole("cell")[5]).toHaveAttribute("data-label", "Total");
+      });
+
+      it("a faixa do grupo mostra Subtotal, não 'Total de horas (PIT)'", () => {
+        render(<ScoringTable rows={[counted()]} subtotals={NEW_SUBTOTALS} group1TotalHours="8.00" />);
+        const head = screen.getAllByRole("rowgroup").filter((g) => g.tagName === "TBODY")[0];
+        const text = within(head).getAllByRole("row")[0].textContent;
+        expect(text).toContain("Subtotal: 8,00");
+        expect(text).not.toContain("Total de horas (PIT)");
+      });
+
+      it("na versão antiga a linha continua em horas e a faixa em 'Total de horas (PIT)'", () => {
+        render(<ScoringTable rows={[pit()]} subtotals={G1_SUBTOTALS} group1TotalHours="8.00" />);
+        const r = screen.getByText("Cálculo I").closest("tr")!;
+        expect(within(r).getAllByRole("cell")[5]).toHaveTextContent("8,00 horas (PIT)");
+        const head = screen.getAllByRole("rowgroup").filter((g) => g.tagName === "TBODY")[0];
+        expect(within(head).getAllByRole("row")[0].textContent).toContain("Total de horas (PIT): 8,00");
+      });
     });
 
     it("explica em português a razão CARGA_HORARIA_INSUFICIENTE", () => {

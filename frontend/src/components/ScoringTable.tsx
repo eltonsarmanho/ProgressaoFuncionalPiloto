@@ -14,6 +14,7 @@ const COLUMNS = [
 ] as const;
 
 const PIT_LABEL = "horas (PIT)";
+const POINT_PER_PIT_HOUR = "1.00";
 const VALUE_COLUMN = 5;
 const TITLE_COLUMN = 2;
 
@@ -28,7 +29,8 @@ type Props = {
 
 /**
  * TELA-02 / TELA-08: rows grouped I..VIII; stacked cards on narrow screens (CSS).
- * TELA-01: a row carrying `pit_hours` (group I of the official table) shows hours, never points.
+ * A group I row of a version that keeps the group outside the total (`outside_total`) shows hours, never points.
+ * GI-01: with the group counted in the total, the row shows the PIT hours as the quantity, 1,00 per hour and the points.
  */
 export function ScoringTable({ rows, subtotals, groupNames = GROUP_NAMES, group1TotalHours, actions }: Props) {
   const numbers = [...new Set([...subtotals.map((s) => s.group_number), ...rows.flatMap((r) => (r.group_number ? [r.group_number] : []))])].sort(
@@ -37,13 +39,14 @@ export function ScoringTable({ rows, subtotals, groupNames = GROUP_NAMES, group1
   const unassigned = rows.filter((r) => r.group_number == null);
 
   const renderRow = (r: ScoringRow) => {
-    const inHours = r.pit_hours != null;
+    const inHours = r.outside_total;
+    const countedPit = !inHours && r.pit_hours != null;
     const cells = [
       r.group_number ? roman(r.group_number) : "—",
       r.item_number ?? "—",
       r.title,
-      formatDecimal(r.effective_quantity),
-      inHours ? "—" : formatDecimal(r.unit_points),
+      formatDecimal(countedPit ? r.pit_hours : r.effective_quantity),
+      inHours ? "—" : formatDecimal(countedPit ? POINT_PER_PIT_HOUR : r.unit_points),
       inHours ? `${formatDecimal(r.pit_hours)} ${PIT_LABEL}` : formatDecimal(r.points),
       r.evidence_note || "Sem comprovante",
     ];
@@ -101,7 +104,7 @@ export function ScoringTable({ rows, subtotals, groupNames = GROUP_NAMES, group1
         const groupRows = rows.filter((r) => r.group_number === n);
         const subtotal = subtotals.find((s) => s.group_number === n)?.subtotal;
         const name = groupNames[n] ?? GROUP_NAMES[n];
-        const inHours = groupRows.some((r) => r.pit_hours != null);
+        const inHours = groupRows.some((r) => r.outside_total);
         return (
           <tbody key={n}>
             {head(
