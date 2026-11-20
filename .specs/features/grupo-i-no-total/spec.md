@@ -1,6 +1,6 @@
 # Grupo I no total, Tabela sem Status nem Comprovante e resumo da Etapa 4 Specification
 
-> **Nota de substituição:** esta feature substitui PIT-01, PIT-02 e PIT-03 e TELA-01 e TELA-02 da feature `tabela-oficial` (Grupo I em horas, fora do total) e a decisão de 2026-11-17 que a sustentava. O usuário reverteu a decisão em 2026-11-19, depois de gerar os documentos reais: o Grupo I entra no total, a 1 ponto por hora de PIT.
+> **Nota de substituição:** esta feature substitui PIT-01, PIT-02 e PIT-03 e TELA-01 e TELA-02 da feature `tabela-oficial` (Grupo I em horas, fora do total), TAB-03 e TAB-05 da feature `documentos-gerados` (sete colunas com status e comprovante; horas "sem somá-las aos pontos"), os critérios de 211 pontos de `tabela-oficial` e `documentos-gerados` (passam a 303 com o Grupo I) e a decisão de 2026-11-17 que a sustentava. O usuário reverteu a decisão em 2026-11-19, depois de gerar os documentos reais: o Grupo I entra no total, a 1 ponto por hora de PIT.
 
 ## Problem Statement
 
@@ -20,7 +20,7 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 | Mínimo de carga horária de ensino por regime (Res. 4.644, art. 13, I) e a regra dos 30% do Grupo I | Seguem como evolução; o percentual continua apenas exibido |
 | Relatório de Atividades e Comprovante | Não foram pedidos; ver a premissa abaixo |
 | Tirar a coluna de situação da tabela de atividades da Etapa 4 | O pedido é só para a Tabela de Pontuação |
-| Corrigir o texto "não tem data nem período" que aparece nos alertas das ofertas do Grupo I | Defeito à parte, tratado em outra tarefa depois da confirmação do usuário |
+| Corrigir o texto "não tem data nem período" que aparece nos alertas das ofertas do Grupo I | Defeito à parte, já corrigido no commit `0422ac3` |
 
 ---
 
@@ -30,13 +30,18 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 | --------------------- | -------------- | --------- | ---------- |
 | O Grupo I entra no total | Soma no Total geral, a 1 ponto por hora de PIT, sem limite de pontos (o Grupo I da planilha não tem teto) | Decisão do usuário em 2026-11-19; reverte a de 2026-11-17 e a fórmula do TOTAL da planilha oficial, que não soma o Grupo I | y |
 | Linha do Grupo I na Tabela | Item `I.1` (graduação) ou `I.2` (pós-graduação); Atividade = disciplina e período; Quantidade = horas de PIT; Pontuação unitária = 1,00; Total = horas | Pedido do usuário: "1 unidade do PIT são 1 hora/aula" | y |
-| Colunas Status e Comprovante | Saem da Tabela de Pontuação (DOCX e PDF); as colunas que ficam são Item, Atividade, Quantidade, Pontuação unitária e Total; a linha sem pontos aparece com Total 0,00 e o motivo continua na seção Alertas; o contador "Não pontuadas" do rodapé fica; a tabela deixa de apontar o número do Comprovante, que continua no Comprovante e no Relatório | Pedidos do usuário em 2026-11-19 | y |
+| Colunas Status e Comprovante | Saem da Tabela de Pontuação (DOCX e PDF); as colunas que ficam são Item, Atividade, Quantidade, Pontuação unitária e Total; a linha sem pontos aparece com Total 0,00 e o motivo continua na seção Alertas; o rodapé deixa de ter contadores de status e de comprovante (pergunta 7, ver abaixo); a tabela deixa de apontar o número do Comprovante, que continua no Comprovante e no Relatório | Pedidos do usuário em 2026-11-19 | y |
 | Desenho do resumo da Etapa 4 | Painel em blocos: faixa com Total geral e situação do mínimo; barras de pontos por grupo; bloco Docência (PIT) por semestre e disciplina; potencial e contadores em cartões pequenos | Escolha do usuário em 2026-11-19 | y |
-| Como a mudança chega à tabela oficial | Nova versão `OFICIAL` da tabela, com o Grupo I contando no total; a versão anterior fica como está. Um processo muda de versão pela escolha de tabela existente; o processo da VM está em rascunho | O `counts_in_total` é dado da versão e processo que já escolheu uma versão não pode ser reescrito; o desenho exato fica para a fase Design | n |
-| Tabela de horas por semestre na Tabela de Pontuação | Continua como resumo, com o título "Horas de PIT por semestre (Grupo I)" e o total em horas | Os totais por semestre continuam úteis ao docente; só deixa de dizer "fora do total de pontos" | n |
+| Como a mudança chega à tabela oficial | Nova versão `OFICIAL` da tabela, com o Grupo I contando no total, oferecida para qualquer interstício. A versão anterior fica marcada como substituída: não é mais sugerida nem escolhível. Todo processo em `RASCUNHO` ou `EM_ANDAMENTO` que a usa passa sozinho para a versão nova, com registro na auditoria; processo `CONCLUIDO` ou `ARQUIVADO` e documentos já gerados não mudam (AD-012) | Respostas do usuário em 2026-11-19 (perguntas 1 e 3 do Design): "o Grupo deve estar dentro do Total, não deve ficar separado" | y |
+| Tabela de horas por semestre na Tabela de Pontuação | Continua como resumo, com o título "Horas de PIT por semestre (Grupo I)" e o total em horas | Os totais por semestre continuam úteis ao docente; só deixa de dizer "fora do total de pontos" | y |
 | Ofertas do Grupo I fora do interstício | Seguem sem pontuar (`FORA_DO_INTERSTICIO`) e não entram nas horas nem no total | Regra existente do Grupo I, decisão de 2026-11-17 | y |
-| Pontos informados à mão no Grupo I | Recusados (422 em `points_override`), como hoje nas versões em horas de PIT; o valor vem do cálculo | A regra 7 do projeto vale para o que não vem do cálculo automático; o PIT vem do cálculo | n |
-| Relatório de Atividades e Comprovante | Ficam como estão; a Design confere se já tratam o Grupo I e, se tratarem, só acompanham o novo total | Não foram pedidos | n |
+| Pontos informados à mão no Grupo I | Recusados (422 em `points_override`) em qualquer critério de carga semanal do Grupo I, em qualquer versão de tabela; o valor vem do cálculo | A regra 7 do projeto vale para o que não vem do cálculo automático; o PIT vem do cálculo. Resposta do usuário em 2026-11-19 (pergunta 5) | y |
+| Relatório de Atividades e Comprovante | Ficam como estão: a Design conferiu que já tratam o Grupo I (seções 1.1 e 1.2) e não leem `counts_in_total` | Não foram pedidos | y |
+| Mínimo de referência da classe | Comparado com o total geral, que inclui o Grupo I | Resposta do usuário em 2026-11-19 (pergunta 2) | y |
+| Oferta do Grupo I só com período letivo, sem data | Fora do interstício quando o ano inteiro do período está fora dele; sem inventar datas de semestre | Resposta do usuário em 2026-11-19 (pergunta 4); evita que disciplina antiga some pontos sem aviso | y |
+| Disciplinas ainda não validadas no bloco Docência | Aparecem com a etiqueta "Aguardando validação" e ficam fora das horas | Resposta do usuário em 2026-11-19 (pergunta 6) | y |
+| Comprovante e status na Tabela | Nada de Comprovante nem de status em lugar nenhum da Tabela: sem colunas, sem o alerta de numeração do Comprovante, sem alertas "sem comprovante" e sem contadores de status ou de comprovante no rodapé; o motivo de uma linha não pontuar continua em Alertas | Resposta do usuário em 2026-11-19 (pergunta 7: "Comprovante e status, se houver") | y |
+| Nome e referência da versão nova | "Tabela oficial de pontuação UFPA, Grupo I no total"; referência: "Tabela oficial de pontuação para progressão docente da UFPA (planilha fornecida em 2026-11-17), com o Grupo I somado ao total a 1 ponto por hora de PIT por decisão do usuário em 2026-11-19" | Resposta do usuário em 2026-11-19 (pergunta 8) | y |
 
 **Open questions:** none - all resolved or logged above.
 
@@ -56,10 +61,13 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 2. WHEN o resultado é calculado com essa versão THEN the system SHALL devolver o subtotal do Grupo I como a soma dos pontos das ofertas dentro do interstício e o total geral como a soma dos subtotais dos Grupos I a VIII  <!-- event-driven -->
 3. WHEN o resultado é calculado com essa versão THEN the system SHALL continuar devolvendo as horas de PIT de cada oferta, somadas por período letivo e no total, iguais aos pontos do Grupo I  <!-- event-driven -->
 4. IF uma oferta do Grupo I está fora do interstício THEN the system SHALL dar a ela 0 ponto e 0 hora, com a razão `FORA_DO_INTERSTICIO`, e SHALL deixá-la fora do subtotal e do total  <!-- unwanted-behavior -->
-5. IF uma atividade do Grupo I informa pontos que substituem o cálculo (`points_override`) numa versão em que o Grupo I é medido em horas de PIT THEN the system SHALL responder 422 no campo `points_override`  <!-- unwanted-behavior -->
+5. IF uma atividade de critério de carga semanal do Grupo I informa pontos que substituem o cálculo (`points_override`), em qualquer versão da tabela, com o Grupo I dentro ou fora do total THEN the system SHALL responder 422 no campo `points_override`  <!-- unwanted-behavior -->
 6. WHERE o processo usa uma versão anterior da tabela, o sistema SHALL calcular com as regras dessa versão, sem alterar resultados já calculados  <!-- optional-feature -->
-7. The system SHALL oferecer a versão em que o Grupo I conta no total como a versão `OFICIAL` vigente da tabela oficial da UFPA  <!-- ubiquitous -->
+7. The system SHALL oferecer a versão em que o Grupo I conta no total como a única versão sugerida e escolhível da tabela oficial da UFPA, para qualquer interstício, e SHALL marcar a versão anterior como substituída  <!-- ubiquitous -->
 8. The system SHALL continuar exibindo o percentual do Grupo I sobre o total geral, sem emitir alerta por ele  <!-- ubiquitous -->
+9. IF uma oferta do Grupo I não tem data nem período de datas e o ano inteiro do seu período letivo (AAAA.N) está fora do interstício THEN the system SHALL tratá-la como fora do interstício (`FORA_DO_INTERSTICIO`), com 0 ponto e 0 hora  <!-- unwanted-behavior -->
+10. WHEN a versão nova entra no sistema THEN the system SHALL passar para ela todo processo em `RASCUNHO` ou `EM_ANDAMENTO` que usa a versão anterior, registrando a troca na auditoria, e SHALL deixar sem mudança os processos `CONCLUIDO` ou `ARQUIVADO` e os documentos já gerados  <!-- event-driven -->
+11. WHEN a última Tabela de Pontuação gerada de um processo usou uma versão da tabela diferente da escolhida hoje THEN the frontend SHALL mostrar na Etapa 5 o aviso "Gerada com outra versão da tabela de pontuação; gere de novo"  <!-- event-driven -->
 
 **Independent Test**: Lançar quatro períodos de disciplinas (três ofertas de 68 h em cada um dos três primeiros e duas de 68 h e uma de 34 h no quarto) e ver o subtotal do Grupo I e o total geral com os 92 pontos somados aos dos demais grupos.
 
@@ -77,9 +85,10 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 2. WHEN a tabela lista as ofertas do Grupo I THEN the system SHALL escrever uma linha por oferta, ordenada por período letivo e depois por título, com o item `I.1` ou `I.2`, a disciplina e o período na coluna Atividade, as horas de PIT em Quantidade, 1,00 em Pontuação unitária, e as horas em Total  <!-- event-driven -->
 3. WHEN a tabela é gerada THEN the system SHALL calcular a "Pontuação geral" somando os Grupos I a VIII  <!-- event-driven -->
 4. The system SHALL gerar a Tabela de Pontuação em DOCX e em PDF só com as colunas Item, Atividade, Quantidade, Pontuação unitária e Total, sem as colunas Status e Comprovante, sem o valor "Pontuada", "Potencial" ou "Não pontuada" e sem "sem comprovante" em qualquer linha  <!-- ubiquitous -->
-5. WHEN uma linha não pontua THEN the system SHALL mostrá-la com Total 0,00 e SHALL manter o motivo na seção Alertas  <!-- event-driven -->
+5. WHEN uma linha não pontua THEN the system SHALL mostrá-la com Total 0,00 e SHALL manter o motivo (por exemplo, fora do interstício) na seção Alertas  <!-- event-driven -->
 6. WHEN a tabela traz a seção de horas por semestre THEN the system SHALL intitulá-la "Horas de PIT por semestre (Grupo I)" e listar as horas de cada período e o total em horas  <!-- event-driven -->
 7. WHERE a tabela usada tem o Grupo I fora do total (versão anterior) the system SHALL gerar o documento como antes, sem a seção I, mas sem as colunas Status e Comprovante  <!-- optional-feature -->
+8. The system SHALL gerar a Tabela de Pontuação sem nenhuma referência a Comprovante ou a status: sem o alerta de numeração do Comprovante, sem alertas "sem comprovante" e sem contadores de status ou de comprovante no rodapé  <!-- ubiquitous -->
 
 **Independent Test**: Gerar a Tabela de um processo com ofertas do Grupo I e ver a seção I com as disciplinas, o total com o Grupo I somado e nenhuma coluna Status, no DOCX e no PDF.
 
@@ -96,7 +105,7 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 1. WHEN a Etapa 4 mostra o resumo THEN the frontend SHALL exibir, no topo, o Total geral em pontos com o rótulo "Grupos I a VIII" e, ao lado, a situação do mínimo de referência em texto curto  <!-- event-driven -->
 2. WHEN o mínimo de referência não está definido THEN the frontend SHALL exibir "Mínimo não definido" em tamanho de texto comum, sem destaque de valor  <!-- event-driven -->
 3. WHEN a Etapa 4 mostra os grupos THEN the frontend SHALL exibir uma linha por grupo com o nome, o subtotal e uma barra proporcional ao total geral, e SHALL exibir os grupos com 0,00 em tom discreto  <!-- event-driven -->
-4. WHEN a Etapa 4 mostra a docência THEN the frontend SHALL exibir um bloco "Docência (PIT)" com as ofertas agrupadas por período letivo, cada oferta com a disciplina, o nível e as horas, o total de horas de cada período e o total geral de horas  <!-- event-driven -->
+4. WHEN a Etapa 4 mostra a docência THEN the frontend SHALL exibir um bloco "Docência (PIT)" com as ofertas agrupadas por período letivo, cada oferta com a disciplina, o nível e as horas, o total de horas de cada período e o total geral de horas; a oferta ainda não validada aparece com a etiqueta "Aguardando validação" e fica fora das horas  <!-- event-driven -->
 5. IF o processo não tem ofertas do Grupo I THEN the frontend SHALL exibir no bloco Docência a mensagem "Nenhuma disciplina lançada no Grupo I"  <!-- unwanted-behavior -->
 6. WHEN o potencial (total, com data no interstício e sem data) é maior que 0 THEN the frontend SHALL exibir os valores em cartões pequenos, e SHALL ocultá-los quando todos forem 0  <!-- event-driven -->
 7. WHEN a Etapa 4 mostra os contadores THEN the frontend SHALL exibir atividades, com comprovante, pendentes, não pontuadas e com divergências em uma faixa única  <!-- event-driven -->
@@ -127,6 +136,9 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 | GI-06 | P1: Grupo I conta no total | Design | Pending |
 | GI-07 | P1: Grupo I conta no total | Design | Pending |
 | GI-08 | P1: Grupo I conta no total | Design | Pending |
+| GI-09 | P1: Grupo I conta no total | Design | Pending |
+| GI-10 | P1: Grupo I conta no total | Design | Pending |
+| GI-11 | P1: Grupo I conta no total | Design | Pending |
 | GTAB-01 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
 | GTAB-02 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
 | GTAB-03 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
@@ -134,6 +146,7 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 | GTAB-05 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
 | GTAB-06 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
 | GTAB-07 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
+| GTAB-08 | P1: Tabela com o Grupo I e sem Status nem Comprovante | Design | Pending |
 | GRES-01 | P1: Resumo da Etapa 4 em painel | Design | Pending |
 | GRES-02 | P1: Resumo da Etapa 4 em painel | Design | Pending |
 | GRES-03 | P1: Resumo da Etapa 4 em painel | Design | Pending |
@@ -148,7 +161,7 @@ A Tabela de Pontuação gerada não lista o Grupo I (docência, medida em PIT): 
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Implemented → Verified
 
-**Coverage:** 24 total, 0 mapped to tasks, 24 unmapped ⚠️ (a Design e as Tasks mapeiam)
+**Coverage:** 28 total, 0 mapped to tasks, 28 unmapped ⚠️ (as Tasks mapeiam)
 
 ---
 
