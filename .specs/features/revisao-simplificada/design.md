@@ -177,7 +177,7 @@ type Validity = {
 - **"Selecionar todas" segue o filtro, não a página.** Seleciona todas as atividades do filtro que aguardam validação e têm categoria, mesmo as além das 25 mostradas; o texto diz quantas estão além das mostradas, para o docente saber o que será validado. A seleção só vale para o que o filtro mostra e perde o que ele esconde.
 - **Erro de escrita da linha.** O aviso de 409 ou 422 sobe para o `ActivityWorkspace` e fica numa região `role="alert"` que sobrevive à recarga em que a linha troca de seção; o 422 da categoria aparece só no seletor da linha.
 - **Texto do `ScoreEditor`.** Depois da EDT-01 nenhuma tela da Etapa 3 digita pontos informados (`informed_points`) nem pontos manuais de carga semanal (`points_override`); as notas desses itens não apontam mais para "Editar".
-- **Pergunta aberta.** Itens `VALOR_INFORMADO` (por exemplo o I.3) e itens de carga semanal que precisem de pontos digitados não têm hoje caminho de entrada na interface: o servidor aceita `informed_points` e `points_override`, mas nenhum formulário os mostra, e `unit_points_override` é recusado nesses modos. A decisão de onde digitá-los é do usuário.
+- **Itens de valor informado (resolvida em 2026-11-19).** Itens `VALOR_INFORMADO` não têm campo de pontos na interface: o servidor aceita `informed_points` e `points_override`, mas nenhum formulário os mostra. A tabela oficial UFPA, a única ligada às unidades, não tem nenhum item desse tipo (o Grupo I dela tem só os itens 1 e 2, em horas); o I.3 de avaliação discente só existe na tabela antiga do IFCH (Res. 4.644/2015) e no rascunho da FASI. Nada é construído agora; se uma tabela com esse tipo de item voltar a ser usada, o campo entra no editor da Etapa 4 (opção A, escolhida pelo usuário).
 
 ---
 
