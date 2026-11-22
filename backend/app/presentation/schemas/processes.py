@@ -87,8 +87,8 @@ class AlertOut(BaseModel):
     norm_archived: bool = False
 
     @classmethod
-    def of(cls, alert: Alert, norms: Mapping[str, NormCitation] | None = None) -> "AlertOut":
-        cited = (norms or {}).get(alert.norm_code) if alert.norm_code else None
+    def of(cls, alert: Alert, norms: Mapping[str, NormCitation]) -> "AlertOut":
+        cited = norms.get(alert.norm_code) if alert.norm_code else None
         return cls(
             code=alert.code,
             severity=alert.severity,

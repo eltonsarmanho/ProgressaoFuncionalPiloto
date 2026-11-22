@@ -6,11 +6,33 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from app.application.use_cases.norms import LinkedRule, NormFields, NormWithLinks
-from app.domain.entities.norm import NormKind
+from app.domain.entities.norm import NormCitation, NormKind
 
 
 def file_url(norm_id: UUID) -> str:
     return f"/api/norms/{norm_id}/file"
+
+
+class NormRefOut(BaseModel):
+    """A norm cited by a rule: where to read it (NLINK-04)."""
+
+    code: str
+    title: str
+    source_url: str | None
+    file_url: str | None
+    archived: bool
+
+    @classmethod
+    def of(cls, citation: NormCitation | None) -> "NormRefOut | None":
+        if citation is None:
+            return None
+        return cls(
+            code=citation.code,
+            title=citation.title,
+            source_url=citation.source_url,
+            file_url=file_url(citation.id) if citation.has_file else None,
+            archived=citation.archived,
+        )
 
 
 class NormIn(BaseModel):

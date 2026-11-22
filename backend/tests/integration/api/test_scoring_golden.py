@@ -152,7 +152,12 @@ def test_pit_hours_per_period_and_in_total_stay_outside_the_total(derived_case):
 def test_minimum_and_table_alerts_for_the_official_table(derived_case):
     body = score(derived_case)
 
-    assert body["minimum"] == {"status": "ATINGE", "minimum": "100.00", "total": "211.00"}
+    assert body["minimum"] == {
+        "status": "ATINGE",
+        "minimum": "100.00",
+        "total": "211.00",
+        "norm": None,
+    }
     alerts = {a["code"]: a for a in body["alerts"]}
     assert "TABELA_PENDENTE_VALIDACAO" not in alerts
     assert "SEM_EXTENSAO_OU_PESQUISA" not in alerts
@@ -264,7 +269,12 @@ def test_303_group_i_scores_its_pit_hours_and_the_total_is_211_plus_92(derived_c
 def test_303_the_minimum_is_compared_with_the_total_that_includes_group_i(derived_case_303):
     body = score(derived_case_303)
 
-    assert body["minimum"] == {"status": "ATINGE", "minimum": "100.00", "total": "303.00"}
+    assert body["minimum"] == {
+        "status": "ATINGE",
+        "minimum": "100.00",
+        "total": "303.00",
+        "norm": None,
+    }
     assert body["alerts"] == []  # GI-08: no alert for the share of group I
 
 

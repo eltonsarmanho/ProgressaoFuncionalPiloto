@@ -43,7 +43,13 @@ def test_the_scoring_response_of_the_2022_2024_case_is_fixed(derived_case):  # n
     assert body["group1_total_hours"] == "92.00"
     assert body["limit_adjustments"] == []
     assert body["alerts"] == []
-    assert body["minimum"] == {"status": "ATINGE", "minimum": "100.00", "total": "211.00"}
+    # NMIN-02: the new `norm` is empty for a numeric minimum; the values are as before
+    assert body["minimum"] == {
+        "status": "ATINGE",
+        "minimum": "100.00",
+        "total": "211.00",
+        "norm": None,
+    }
     assert body["chosen"]["table_name"] == "Tabela de Pontuação da UFPA"
     assert body["chosen"] == body["suggested"]
 

@@ -706,7 +706,7 @@ graph LR
 
 #### T21: Alertas da pontuação e mínimo com a norma
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Os casos de uso de pontuação (`scoring.py:144,148,880`) resolvem as citações e os schemas passam `norms` a `AlertOut.of`; `MinimumOut.norm: NormRefOut | None` (NMIN-02); `VersionRefOut.norm_code`.
 **Where**: `backend/app/presentation/schemas/scoring.py` (modify; os casos de uso em `application/use_cases/scoring.py`)
@@ -721,9 +721,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_scoring_alert_norms.py` (novo): alerta de linha da pontuação traz `TABELA-OFICIAL-UFPA`; na estrutura da Lei 15.141 o mínimo vem `NAO_DEFINIDO` com `norm` da `RES-4644-2015-CONSEPE` (NMIN-01, 02); na estrutura antiga o mínimo numérico vem como hoje; a versão da tabela traz `norm_code`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/api/test_scoring_alert_norms.py` (novo): alerta de linha da pontuação traz `TABELA-OFICIAL-UFPA`; na estrutura da Lei 15.141 o mínimo vem `NAO_DEFINIDO` com `norm` da `RES-4644-2015-CONSEPE` (NMIN-01, 02); na estrutura antiga o mínimo numérico vem como hoje; a versão da tabela traz `norm_code`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full

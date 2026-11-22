@@ -265,7 +265,12 @@ def test_scoring_result_has_rows_reasons_alerts_and_decimal_text(
     assert body["alerts"] and alert_map(body)["TABELA_PENDENTE_VALIDACAO"] == (
         "REQUER_ANALISE_NORMATIVA"
     )
-    assert body["minimum"] == {"status": "NAO_ATINGE", "minimum": "100.00", "total": "20.00"}
+    assert body["minimum"] == {
+        "status": "NAO_ATINGE",
+        "minimum": "100.00",
+        "total": "20.00",
+        "norm": None,
+    }
 
 
 @pytest.mark.parametrize("path", ["scoring", "scoring/table"])

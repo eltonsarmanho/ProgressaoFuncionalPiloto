@@ -20,7 +20,8 @@ from app.domain.entities.scoring import (
 )
 from app.domain.rules.scoring_alerts import NotScoredReason
 from app.domain.rules.scoring_engine import RowStatus
-from app.domain.rules.scoring_verification import MinimumStatus
+from app.domain.rules.scoring_verification import NORM_RES_4644, MinimumStatus
+from app.presentation.schemas.norms import NormRefOut
 from app.presentation.schemas.processes import AlertOut
 
 Money = Annotated[Decimal, PlainSerializer(lambda v: f"{v:.2f}", return_type=str)]
@@ -72,6 +73,7 @@ class VersionRefOut(BaseModel):
     valid_from: date
     valid_to: date | None
     norm_reference: str
+    norm_code: str | None
     status: TableStatus
     superseded_by_id: UUID | None
 
@@ -146,7 +148,7 @@ class TableStateOut(BaseModel):
         return cls(
             chosen=TableRefOut.of(state.chosen),
             suggested=TableRefOut.of(state.suggested),
-            alerts=[AlertOut.of(a) for a in state.alerts],
+            alerts=[AlertOut.of(a, state.norms) for a in state.alerts],
         )
 
 
@@ -204,6 +206,7 @@ class MinimumOut(BaseModel):
     status: MinimumStatus
     minimum: Money | None
     total: Money
+    norm: NormRefOut | None  # only when the minimum is not defined: the resolution (NMIN-02)
 
 
 class ProcessScoreOut(BaseModel):
@@ -262,7 +265,7 @@ class ProcessScoreOut(BaseModel):
                     level=activities[r.activity_id].level,
                     status=r.status,
                     reasons=list(r.reasons),
-                    alerts=[AlertOut.of(a) for a in r.alerts],
+                    alerts=[AlertOut.of(a, score.norms) for a in r.alerts],
                     evidence_count=r.evidence_count,
                 )
                 for r in result.rows
@@ -275,14 +278,17 @@ class ProcessScoreOut(BaseModel):
                     before=a.before,
                     after=a.after,
                     activity_id=a.activity_id,
-                    alert=AlertOut.of(a.alert),
+                    alert=AlertOut.of(a.alert, score.norms),
                 )
                 for a in result.limit_adjustments
             ],
-            alerts=[AlertOut.of(a) for a in score.alerts],
+            alerts=[AlertOut.of(a, score.norms) for a in score.alerts],
             minimum=MinimumOut(
                 status=score.minimum.status,
                 minimum=score.minimum.minimum,
                 total=score.minimum.total,
+                norm=NormRefOut.of(score.norms.get(NORM_RES_4644))
+                if score.minimum.status is MinimumStatus.NAO_DEFINIDO
+                else None,
             ),
         )

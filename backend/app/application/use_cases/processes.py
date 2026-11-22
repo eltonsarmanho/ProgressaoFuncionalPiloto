@@ -64,7 +64,7 @@ class ProcessResult:
     interstice_days: int
     alerts: list[Alert]
     professor_name: str
-    norms: Mapping[str, NormCitation] = field(default_factory=dict)  # by norm code (NLINK-03)
+    norms: Mapping[str, NormCitation] = field(default_factory=dict, compare=False)  # NLINK-03
 
 
 def audit_view(process: FunctionalProcess) -> dict:

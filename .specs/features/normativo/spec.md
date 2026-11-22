@@ -224,8 +224,8 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NLIST-01 | P2: Lista de normas | Implementing | Implementing |
 | NLIST-02 | P2: Lista de normas | Implementing | Implementing |
 | NLIST-03 | P2: Lista de normas | Design | Pending |
-| NMIN-01 | P2: Mínimo não definido | Implementing | Implementing |
-| NMIN-02 | P2: Mínimo não definido | Design | Pending |
+| NMIN-01 | P2: Mínimo não definido | Implemented | Implemented |
+| NMIN-02 | P2: Mínimo não definido | Implementing | Implementing |
 
 **Coverage:** 31 total, 0 mapped to tasks, 31 unmapped (Design pendente)
 

@@ -4,8 +4,8 @@ Access follows the process (AccessPolicy): anything outside it is NotFound, neve
 """
 
 import uuid
-from collections.abc import Callable, Sequence
-from dataclasses import asdict, dataclass, fields, replace
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from dataclasses import asdict, dataclass, field, fields, replace
 from datetime import date
 from decimal import Decimal
 from uuid import UUID
@@ -13,6 +13,7 @@ from uuid import UUID
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.activity_merge import MergeDuplicateActivities
 from app.application.services.audit_service import AuditService
+from app.application.services.norm_citations import cite_norms
 from app.domain.entities.activity import (
     Activity,
     ActivitySource,
@@ -25,6 +26,7 @@ from app.domain.entities.activity import (
 )
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.career import select_version
+from app.domain.entities.norm import NormCitation
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor
 from app.domain.entities.scoring import (
@@ -58,6 +60,7 @@ from app.domain.rules.scoring_periods import (
 )
 from app.domain.rules.scoring_table_choice import verify_table_choice
 from app.domain.rules.scoring_verification import (
+    NORM_RES_4644,
     MinimumComparison,
     MinimumStatus,
     ScoringContext,
@@ -82,6 +85,11 @@ class TableSuggestion:
     chosen: TableRef | None
     suggested: TableRef | None
     alerts: list[Alert]
+    norms: Mapping[str, NormCitation] = field(default_factory=dict, compare=False)  # NLINK-03
+
+
+def _with_table_norms(uow: UnitOfWork, state: TableSuggestion) -> TableSuggestion:
+    return replace(state, norms=cite_norms(uow, [a.norm_code for a in state.alerts]))
 
 
 class _ScoringUseCase:
@@ -165,7 +173,7 @@ class SuggestScoringTable(_ScoringUseCase):
     def execute(self, actor: User, process_id: UUID) -> TableSuggestion:
         """Never writes: the suggestion applies only after the user confirms it (SEL-02)."""
         with self._uow_factory() as uow:
-            return table_state(uow, self._readable(uow, actor, process_id))
+            return _with_table_norms(uow, table_state(uow, self._readable(uow, actor, process_id)))
 
 
 class ChooseProcessTable(_ScoringUseCase):
@@ -204,7 +212,7 @@ class ChooseProcessTable(_ScoringUseCase):
                 justification,
             )
             uow.commit()
-            return table_state(uow, uow.processes.get(process.id))
+            return _with_table_norms(uow, table_state(uow, uow.processes.get(process.id)))
 
 
 MAX_VALUE = Decimal(10000)
@@ -799,6 +807,21 @@ class ProcessScore:
     activities: tuple[Activity, ...]
     alerts: list[Alert]
     minimum: MinimumComparison
+    norms: Mapping[str, NormCitation] = field(default_factory=dict, compare=False)  # NLINK-03
+
+
+def _score_alerts(score: ProcessScore) -> Iterable[Alert]:
+    yield from score.alerts
+    for row in score.result.rows:
+        yield from row.alerts
+    for adjustment in score.result.limit_adjustments:
+        yield adjustment.alert
+
+
+def _with_score_norms(uow: UnitOfWork, score: ProcessScore) -> ProcessScore:
+    """The norms behind every alert of the result and behind the reference minimum (NMIN-02)."""
+    codes = [a.norm_code for a in _score_alerts(score)] + [NORM_RES_4644]
+    return replace(score, norms=cite_norms(uow, codes))
 
 
 def _without_table(
@@ -886,7 +909,7 @@ class CalculateProcessScore(_ScoringUseCase):
     def execute(self, actor: User, process_id: UUID) -> ProcessScore:
         with self._uow_factory() as uow:
             process = self._readable(uow, actor, process_id)
-            return compute_process_score(uow, process)
+            return _with_score_norms(uow, compute_process_score(uow, process))
 
 
 class GetActivity(_ScoringUseCase):
