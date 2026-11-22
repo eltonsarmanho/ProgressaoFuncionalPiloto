@@ -38,7 +38,7 @@ from app.domain.entities.generated import (
 )
 from app.domain.entities.norm import Norm
 from app.domain.entities.process import FunctionalProcess, ProcessStatus
-from app.domain.entities.professor import Professor
+from app.domain.entities.professor import Professor, Titration
 from app.domain.entities.report import DraftEntry, DraftSection, ReportDocument, ReportDraft
 from app.domain.entities.scoring import ScoringCriterion, ScoringTableVersion
 from app.domain.entities.user import Session, User
@@ -150,6 +150,17 @@ class CareerVersionRepository(Protocol):
     def add(self, structure_code: str, version: CareerVersion) -> None: ...
 
     def update(self, version: CareerVersion) -> None: ...
+
+    def set_links(
+        self,
+        version_id: UUID,
+        norm_code: str | None,
+        titrations: Mapping[str, Titration],
+        titration_norm_code: str | None,
+    ) -> None:
+        """Writes the norm code, the required titration of the listed classes and the norm code
+        of the titration rules, without the in-use lock of the edit through the API."""
+        ...
 
 
 @dataclass

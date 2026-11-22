@@ -449,7 +449,7 @@ graph LR
 
 #### T12: Mapeamento de norma e titulação na versão de carreira
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `SqlCareerVersionRepository` lê e grava `norm_code` (coluna) e `required_titration` por classe e `required_titration_norm_code` (JSONB, lidos com `.get`); método `set_links(version_id, norm_code, titrations, titration_norm_code)` que grava sem a trava de versão em uso.
 **Where**: `backend/app/infrastructure/database/repositories.py` (modify)
@@ -464,9 +464,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_career_repository_norms.py` (novo): linha antiga sem as chaves novas lê `None`; ida e volta com os três campos; `set_links` numa versão usada por processo grava os campos e não muda classes, níveis nem denominações
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/test_career_repository_norms.py` (novo): linha antiga sem as chaves novas lê `None`; ida e volta com os três campos; `set_links` numa versão usada por processo grava os campos e não muda classes, níveis nem denominações
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full

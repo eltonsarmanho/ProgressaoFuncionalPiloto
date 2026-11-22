@@ -1,5 +1,6 @@
 """SQLAlchemy implementations of the domain ports (AD-001)."""
 
+import copy
 import uuid
 from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import asdict, replace
@@ -41,7 +42,7 @@ from app.domain.entities.generated import (
 )
 from app.domain.entities.norm import Norm, NormFile
 from app.domain.entities.process import FunctionalProcess, ProcessStatus
-from app.domain.entities.professor import Professor
+from app.domain.entities.professor import Professor, Titration
 from app.domain.entities.report import DraftEntry, DraftSection, EntrySource, ReportDraft
 from app.domain.entities.scoring import (
     ScoringCriterion,
@@ -501,18 +502,28 @@ class SqlNormRepository:
 
 def career_definition(version: CareerVersion) -> dict[str, Any]:
     """JSONB `definition` of a career version (design.md, Data Models)."""
-    return {
+    classes = []
+    for c in version.classes:
+        entry: dict[str, Any] = {
+            "code": c.code,
+            "denominations": list(c.denominations),
+            "levels": list(c.levels),
+            "promotion_min_months": c.promotion_min_months,
+        }
+        if c.required_titration is not None:  # NTIT-05: absent key, no titration rule
+            entry["required_titration"] = c.required_titration.value
+        classes.append(entry)
+    definition: dict[str, Any] = {
         "progression_min_months": version.progression_min_months,
-        "classes": [
-            {
-                "code": c.code,
-                "denominations": list(c.denominations),
-                "levels": list(c.levels),
-                "promotion_min_months": c.promotion_min_months,
-            }
-            for c in version.classes
-        ],
+        "classes": classes,
     }
+    if version.required_titration_norm_code is not None:
+        definition["required_titration_norm_code"] = version.required_titration_norm_code
+    return definition
+
+
+def _titration(value: str | None) -> Titration | None:
+    return Titration(value) if value is not None else None
 
 
 def _career_version(m: CareerVersionModel) -> CareerVersion:
@@ -530,9 +541,12 @@ def _career_version(m: CareerVersionModel) -> CareerVersion:
                 denominations=tuple(c["denominations"]),
                 levels=tuple(c["levels"]),
                 promotion_min_months=c["promotion_min_months"],
+                required_titration=_titration(c.get("required_titration")),
             )
             for c in definition["classes"]
         ),
+        norm_code=m.norm_code,
+        required_titration_norm_code=definition.get("required_titration_norm_code"),
     )
 
 
@@ -590,6 +604,7 @@ class SqlCareerVersionRepository:
                 valid_to=version.valid_to,
                 norm_reference=version.norm_reference,
                 definition=career_definition(version),
+                norm_code=version.norm_code,
             )
         )
 
@@ -603,10 +618,38 @@ class SqlCareerVersionRepository:
                 valid_to=version.valid_to,
                 norm_reference=version.norm_reference,
                 definition=career_definition(version),
+                norm_code=version.norm_code,
             )
         ).rowcount
         if rowcount == 0:
             raise NotFound("Versão de carreira não encontrada")
+
+    def set_links(
+        self,
+        version_id: UUID,
+        norm_code: str | None,
+        titrations: Mapping[str, Titration],
+        titration_norm_code: str | None,
+    ) -> None:
+        """Writes the norm links of the version and nothing else, even when a process uses it.
+
+        `titrations` maps a class code to its required titration; classes not listed keep what
+        they have. The in-use lock belongs to the edit through the API, not to the seed.
+        """
+        m = self._s.get(CareerVersionModel, version_id, populate_existing=True)
+        if m is None:
+            raise NotFound("Versão de carreira não encontrada")
+        definition = copy.deepcopy(m.definition)
+        for entry in definition["classes"]:
+            if entry["code"] in titrations:
+                entry["required_titration"] = titrations[entry["code"]].value
+        if titration_norm_code is not None:
+            definition["required_titration_norm_code"] = titration_norm_code
+        else:
+            definition.pop("required_titration_norm_code", None)
+        m.norm_code = norm_code
+        m.definition = definition
+        self._s.flush()
 
 
 _CRITERION_FIELDS = (
