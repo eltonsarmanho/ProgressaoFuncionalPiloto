@@ -791,7 +791,7 @@ graph LR
 
 #### T24: Componente `NormLink`
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `NormLink({title, url, fileUrl, archived})`: "Ver norma" aponta para o arquivo, senão para a URL, senão mostra só o título; acrescenta "(arquivada)"; link externo com `rel="noopener noreferrer"`.
 **Where**: `frontend/src/components/NormLink.tsx` (new)
@@ -806,9 +806,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/NormLink.test.tsx` (novo): com arquivo e URL o link vai ao arquivo; só URL vai à URL; nenhum dos dois mostra só o título, sem link; arquivada mostra "(arquivada)"
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `frontend/src/components/NormLink.test.tsx` (novo): com arquivo e URL o link vai ao arquivo; só URL vai à URL; nenhum dos dois mostra só o título, sem link; arquivada mostra "(arquivada)"
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: build
