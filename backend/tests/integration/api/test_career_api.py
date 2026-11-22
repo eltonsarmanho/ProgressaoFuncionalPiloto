@@ -405,6 +405,32 @@ def test_put_with_an_old_body_keeps_the_stored_norm_code_and_titration(client, a
     assert class_by_code(after)["C"]["required_titration"] == "DOUTORADO"
 
 
+def test_put_without_required_titration_in_any_class_keeps_the_stored_rules(client, admin):
+    _, headers = admin
+    before = versions_by_name(client)[LEI]
+    old_classes = [
+        {k: v for k, v in c.items() if k != "required_titration"} for c in before["classes"]
+    ]
+    body = {k: before[k] for k in NEW_VERSION} | {"classes": old_classes, "valid_to": "2030-12-31"}
+    assert all("required_titration" not in c for c in body["classes"])
+    assert "norm_code" not in body and "required_titration_norm_code" not in body
+
+    response = client.put(f"{URL}/{before['id']}", json=body, headers=headers)
+
+    assert response.status_code == 200, response.text
+    for stored in (response.json(), versions_by_name(client)[LEI]):
+        assert {c: v["required_titration"] for c, v in class_by_code(stored).items()} == {
+            "A": None,
+            "B": None,
+            "C": "DOUTORADO",
+            "D": "DOUTORADO",
+        }
+        assert (stored["norm_code"], stored["required_titration_norm_code"]) == (
+            "LEI-12772-2012",
+            MANUAL,
+        )
+
+
 def test_an_invalid_titration_is_422_on_the_field(client, admin):
     _, headers = admin
     lei = versions_by_name(client)[LEI]
