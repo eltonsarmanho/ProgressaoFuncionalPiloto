@@ -49,9 +49,11 @@ from app.domain.entities.professor import Professor, Titration
 from app.domain.entities.report import DraftEntry, DraftSection, ReportDocument, ReportDraft
 from app.domain.entities.scoring import ScoringCriterion, ScoringTableVersion
 from app.domain.entities.user import Session, User
+from app.domain.rules.opinion_document import OpinionDocument
 from app.domain.rules.ordinance_grounding import OrdinanceAi
 from app.domain.rules.report_draft import ReportConfig
 from app.domain.rules.report_wording import WordingItem
+from app.domain.rules.request_document import RequestDocument
 from app.domain.rules.table_document import TableDocument, TableHeader
 from app.domain.rules.upload_validation import FileFacts, FileKind
 
@@ -854,13 +856,22 @@ class AiWritingError(Exception):
 
 
 class DocumentWriter(Protocol):
-    """Writes the Tabela and the Relatório from their models, to a path (never a stream)."""
+    """Writes the Tabela, the Relatório, the Parecer and the Requerimento from their models, to a
+    path (never a stream)."""
 
     def write_table(self, model: TableDocument, fmt: DocumentFormat, target: Path) -> None: ...
 
     def write_report(self, model: ReportDocument, fmt: DocumentFormat, target: Path) -> None:
         """`model` is built by `build_report_document`: the header, the identification and the
         sections of the draft that go in the document."""
+        ...
+
+    def write_opinion(self, model: OpinionDocument, fmt: DocumentFormat, target: Path) -> None:
+        """`model` is built by `build_opinion` (PAR-03)."""
+        ...
+
+    def write_request(self, model: RequestDocument, fmt: DocumentFormat, target: Path) -> None:
+        """`model` is built by `build_request` (REQ-02)."""
         ...
 
 

@@ -962,7 +962,7 @@ graph LR
 
 #### T28: Escritor de documentos com os dois tipos novos
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `DocumentWriter` (porta) ganha `write_opinion(model, fmt, target)` e `write_request(model, fmt, target)`; `FileDocumentWriter` os despacha para os escritores de DOCX e PDF.
 **Where**: `backend/app/infrastructure/documents/document_writer.py` (modify; a porta em `backend/app/domain/repositories/ports.py:710`)
@@ -977,9 +977,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_document_writer.py`: o Parecer em PDF é um PDF com "PARECER" e o Total geral; em DOCX é um DOCX com o parágrafo "PARECER"; o Requerimento em PDF e em DOCX traz "Prezado Sr. Presidente da CPPD,"; os testes existentes da Tabela e do Relatório seguem passando
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_document_writer.py`: o Parecer em PDF é um PDF com "PARECER" e o Total geral; em DOCX é um DOCX com o parágrafo "PARECER"; o Requerimento em PDF e em DOCX traz "Prezado Sr. Presidente da CPPD,"; os testes existentes da Tabela e do Relatório seguem passando
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

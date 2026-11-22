@@ -8,6 +8,7 @@ from docx import Document
 
 from app.domain.entities.generated import DocumentFormat
 from app.infrastructure.documents.document_writer import FileDocumentWriter
+from tests.unit.infrastructure.board_writer_support import opinion_model, request_model
 from tests.unit.infrastructure.report_model_support import report_document
 from tests.unit.infrastructure.table_support import scenario_table
 
@@ -45,3 +46,34 @@ def test_the_report_in_docx_is_a_docx_with_the_title(target):
     FileDocumentWriter().write_report(report_document(), DocumentFormat.DOCX, target)
 
     assert "RELATÓRIO DE ATIVIDADES" in [p.text for p in Document(str(target)).paragraphs]
+
+
+def test_the_opinion_in_pdf_is_a_pdf_with_the_title_and_the_total_geral(target):
+    FileDocumentWriter().write_opinion(opinion_model(), DocumentFormat.PDF, target)
+
+    assert target.read_bytes().startswith(b"%PDF")
+    text = " ".join(page.get_text() for page in pymupdf.open(target, filetype="pdf"))
+    assert "PARECER" in text
+    assert "211,00" in text
+
+
+def test_the_opinion_in_docx_is_a_docx_with_the_title_paragraph(target):
+    FileDocumentWriter().write_opinion(opinion_model(), DocumentFormat.DOCX, target)
+
+    assert zipfile.is_zipfile(target)
+    assert "PARECER" in [p.text for p in Document(str(target)).paragraphs]
+
+
+def test_the_request_in_pdf_is_a_pdf_with_the_greeting(target):
+    FileDocumentWriter().write_request(request_model(), DocumentFormat.PDF, target)
+
+    assert target.read_bytes().startswith(b"%PDF")
+    text = " ".join(page.get_text() for page in pymupdf.open(target, filetype="pdf"))
+    assert "Prezado Sr. Presidente da CPPD," in text
+
+
+def test_the_request_in_docx_is_a_docx_with_the_greeting(target):
+    FileDocumentWriter().write_request(request_model(), DocumentFormat.DOCX, target)
+
+    assert zipfile.is_zipfile(target)
+    assert "Prezado Sr. Presidente da CPPD," in [p.text for p in Document(str(target)).paragraphs]
