@@ -1164,7 +1164,7 @@ graph LR
 
 #### T35: Rotas da banca, do Parecer e da cidade
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `GET /api/processes/{id}/board`, `PUT /api/processes/{id}/board/ordinance` (número, data, membros, `expected_version`), `PUT /api/processes/{id}/board/opinion` (conclusão, data, local, observações, `expected_version`) e `PUT /api/processes/{id}/request-settings` (cidade, `expected_version`), todas com 404 fora do acesso, 409 `PROCESSO_SOMENTE_LEITURA` e 409 `VERSAO_DESATUALIZADA`, e os schemas de entrada e saída; registro em `main.py`.
 **Where**: `backend/app/presentation/api/board.py` (new; schemas em `backend/app/presentation/schemas/board.py`, registro em `backend/app/main.py`)
@@ -1179,9 +1179,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_board_api.py` (novo): `GET /board` num processo novo devolve portaria `SEM_ARQUIVO` versão 0, Parecer com `conclusion` nula e cidade vazia; o `PUT` da portaria grava número, data e membros e devolve a versão nova com `source` `INFORMADO`; 16 membros, nome vazio, número com 51 caracteres e `MEMBRO_REPETIDO` dão 422 com o campo (e o código no repetido); duas gravações da mesma versão: 200 e 409 `VERSAO_DESATUALIZADA`; o `PUT` do Parecer grava sem conclusão e com `FAVORAVEL`, e observações com 5 001 dão 422 em `notes`; o `PUT` da cidade grava até 100 e recusa 101; corpo com campo desconhecido dá 422; sem sessão 401; processo concluído e arquivado dão 409 `PROCESSO_SOMENTE_LEITURA` nas três gravações e o `GET` segue 200; docente de outro processo e secretaria de outra unidade recebem 404 nas quatro rotas; ADMIN e dono acessam
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_board_api.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/api/test_board_api.py` (novo): `GET /board` num processo novo devolve portaria `SEM_ARQUIVO` versão 0, Parecer com `conclusion` nula e cidade vazia; o `PUT` da portaria grava número, data e membros e devolve a versão nova com `source` `INFORMADO`; 16 membros, nome vazio, número com 51 caracteres e `MEMBRO_REPETIDO` dão 422 com o campo (e o código no repetido); duas gravações da mesma versão: 200 e 409 `VERSAO_DESATUALIZADA`; o `PUT` do Parecer grava sem conclusão e com `FAVORAVEL`, e observações com 5 001 dão 422 em `notes`; o `PUT` da cidade grava até 100 e recusa 101; corpo com campo desconhecido dá 422; sem sessão 401; processo concluído e arquivado dão 409 `PROCESSO_SOMENTE_LEITURA` nas três gravações e o `GET` segue 200; docente de outro processo e secretaria de outra unidade recebem 404 nas quatro rotas; ADMIN e dono acessam
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_board_api.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted

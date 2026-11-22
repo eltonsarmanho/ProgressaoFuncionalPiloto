@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import UTC, datetime
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -197,3 +198,20 @@ def process(client, admin, professor):
     response = client.post("/api/processes", json=process_payload(professor), headers=admin[1])
     assert response.status_code == 201, response.text
     return response.json()
+
+
+@pytest.fixture
+def actors(make_user, uow_factory, reference, professor, process):
+    """The users around `process` (a FASI process of `professor`): the owner, a docente of another
+    unit and the secretaries of the unit and of another unit. Each has `.email`."""
+    other = add_professor(uow_factory, reference["IFCH"], siape="7654321", name="Outra Docente")
+    return SimpleNamespace(
+        owner=make_user("dono@ufpa.br", Role.DOCENTE, professor_id=professor.id),
+        other_docente=make_user("outra@ufpa.br", Role.DOCENTE, professor_id=other.id),
+        secretaria=make_user(
+            "sec@ufpa.br", Role.SECRETARIA, unit_ids=frozenset({reference["FASI"].id})
+        ),
+        other_secretaria=make_user(
+            "sec2@ufpa.br", Role.SECRETARIA, unit_ids=frozenset({reference["IFCH"].id})
+        ),
+    )
