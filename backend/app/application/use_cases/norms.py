@@ -327,4 +327,7 @@ class DownloadNormFile:
             norm = _existing(uow, norm_id)
         if norm.file is None:
             raise NotFound("A norma não tem arquivo")
-        return self._storage.open(norm.file.internal_name), norm.file.original_name
+        path = self._storage.open(norm.file.internal_name)
+        if not path.is_file():
+            raise NotFound("O arquivo da norma não está no servidor")
+        return path, norm.file.original_name

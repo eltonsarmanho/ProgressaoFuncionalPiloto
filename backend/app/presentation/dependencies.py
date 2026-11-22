@@ -45,6 +45,15 @@ from app.application.use_cases.generated_documents import (
     RequestGeneration,
     RunGeneration,
 )
+from app.application.use_cases.norms import (
+    ArchiveNorm,
+    AttachNormFile,
+    CreateNorm,
+    DownloadNormFile,
+    GetNorm,
+    ListNorms,
+    UpdateNorm,
+)
 from app.application.use_cases.processes import (
     ChangeProcessStatus,
     CreateProcess,
@@ -111,6 +120,7 @@ from app.domain.repositories.ports import (
 from app.infrastructure.ai.maritalk import MariTalkExtractor
 from app.infrastructure.ai.report_writer import MariTalkReportWriter
 from app.infrastructure.database.repositories import SqlUnitOfWork
+from app.infrastructure.database.seed import STRUCTURE_CODE
 from app.infrastructure.database.session import make_session_factory
 from app.infrastructure.documents.comprovante_assembler import PdfComprovanteAssembler
 from app.infrastructure.documents.config_loader import ReportConfigLoader, load_dossier_order
@@ -122,6 +132,7 @@ from app.infrastructure.security import tokens
 from app.infrastructure.security.argon2_hasher import Argon2PasswordHasher
 from app.infrastructure.storage.generated_storage import LocalGeneratedStorage
 from app.infrastructure.storage.local_storage import LocalFileStorage
+from app.infrastructure.storage.norm_storage import LocalNormStorage
 
 MB = 1024 * 1024
 
@@ -141,6 +152,13 @@ class Container:
     create_unit: CreateUnit
     update_unit: UpdateUnit
     archive_unit: ArchiveUnit
+    list_norms: ListNorms
+    get_norm: GetNorm
+    create_norm: CreateNorm
+    update_norm: UpdateNorm
+    archive_norm: ArchiveNorm
+    attach_norm_file: AttachNormFile
+    download_norm_file: DownloadNormFile
     create_professor: CreateProfessor
     update_professor: UpdateProfessor
     archive_professor: ArchiveProfessor
@@ -238,6 +256,7 @@ def build_container(
     create_activity = CreateActivity(uow_factory, audit, policy, merger)
     change_status = ChangeActivityStatus(uow_factory, audit, policy)
     storage = LocalFileStorage(settings.storage_dir)
+    norm_storage = LocalNormStorage(settings.storage_dir)
     generated_storage = LocalGeneratedStorage(settings.storage_dir)
     inspector = PillowFileInspector(settings.max_megapixels, settings.max_pages)
     limits = DocumentLimits(
@@ -272,6 +291,13 @@ def build_container(
         create_unit=CreateUnit(uow_factory, audit),
         update_unit=UpdateUnit(uow_factory, audit),
         archive_unit=ArchiveUnit(uow_factory, audit),
+        list_norms=ListNorms(uow_factory, (STRUCTURE_CODE,)),
+        get_norm=GetNorm(uow_factory, (STRUCTURE_CODE,)),
+        create_norm=CreateNorm(uow_factory, audit),
+        update_norm=UpdateNorm(uow_factory, audit),
+        archive_norm=ArchiveNorm(uow_factory, audit),
+        attach_norm_file=AttachNormFile(uow_factory, audit, norm_storage, inspector),
+        download_norm_file=DownloadNormFile(uow_factory, norm_storage),
         create_professor=CreateProfessor(uow_factory, audit, policy),
         update_professor=UpdateProfessor(uow_factory, audit, policy),
         archive_professor=ArchiveProfessor(uow_factory, audit, policy),

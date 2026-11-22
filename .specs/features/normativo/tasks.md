@@ -650,7 +650,7 @@ graph LR
 
 #### T19: Rotas `/api/norms`
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `GET /api/norms?include_archived`, `GET /api/norms/{id}`, `POST`, `PUT /{id}`, `POST /{id}/archive`, `PUT /{id}/file` (multipart) e `GET /{id}/file` (PDF com `nosniff` e `CSP sandbox`), schemas `NormIn`/`NormOut` e registro em `main.py`.
 **Where**: `backend/app/presentation/api/norms.py` (new; schemas em `presentation/schemas/norms.py`, registro em `main.py`)
@@ -665,9 +665,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_norms_api.py` (novo): cada rota no caminho feliz; 403 para DOCENTE nas escritas; 401 sem sessão; 409 em versão velha; 422 com `field`; 404 para norma inexistente e para arquivo ausente; download com `Content-Type: application/pdf`, `X-Content-Type-Options: nosniff` e `Content-Security-Policy` com `sandbox`; DOCENTE lê lista e arquivo
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/api/test_norms_api.py` (novo): cada rota no caminho feliz; 403 para DOCENTE nas escritas; 401 sem sessão; 409 em versão velha; 422 com `field`; 404 para norma inexistente e para arquivo ausente; download com `Content-Type: application/pdf`, `X-Content-Type-Options: nosniff` e `Content-Security-Policy` com `sandbox`; DOCENTE lê lista e arquivo
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full

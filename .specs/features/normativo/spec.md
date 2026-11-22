@@ -198,7 +198,7 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NBASE-06 | P1: Base de normas | Implementing | Implementing |
 | NBASE-07 | P1: Base de normas | Implementing | Implementing |
 | NBASE-08 | P1: Base de normas | Implementing | Implementing |
-| NBASE-09 | P1: Base de normas | Implementing | Implementing |
+| NBASE-09 | P1: Base de normas | Implemented | Implemented |
 | NBASE-10 | P1: Base de normas | Implementing | Implementing |
 | NBASE-11 | P1: Base de normas | Implemented | Implemented |
 | NBASE-12 | P1: Base de normas | Implemented | Implemented |
