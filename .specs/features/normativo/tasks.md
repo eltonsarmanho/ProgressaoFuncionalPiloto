@@ -903,7 +903,7 @@ graph LR
 
 #### T28: Página "Normas"
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Página na rota `/normas`, com item de menu para todos: tabela com título, tipo, órgão, publicação, vigência, `NormLink` e regras ligadas; filtro "Mostrar arquivadas"; botões Cadastrar, Editar, Anexar PDF e Arquivar só para ADMIN.
 **Where**: `frontend/src/pages/Norms.tsx` (new; rota em `App.tsx`, menu em `components/Layout.tsx`)
@@ -918,9 +918,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/pages/Norms.test.tsx` (novo): DOCENTE vê as normas e nenhum botão de edição; ADMIN vê os botões; o filtro pede `include_archived=true` e mostra "(arquivada)"; arquivar pede confirmação e atualiza a linha; o menu "Normas" aparece para DOCENTE e ADMIN
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `frontend/src/pages/Norms.test.tsx` (novo): DOCENTE vê as normas e nenhum botão de edição; ADMIN vê os botões; o filtro pede `include_archived=true` e mostra "(arquivada)"; arquivar pede confirmação e atualiza a linha; o menu "Normas" aparece para DOCENTE e ADMIN
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: build

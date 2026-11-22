@@ -197,7 +197,7 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NBASE-05 | P1: Base de normas | Implemented | Implemented |
 | NBASE-06 | P1: Base de normas | Implemented | Implemented |
 | NBASE-07 | P1: Base de normas | Implemented | Implemented |
-| NBASE-08 | P1: Base de normas | Implementing | Implementing |
+| NBASE-08 | P1: Base de normas | Implemented | Implemented |
 | NBASE-09 | P1: Base de normas | Implemented | Implemented |
 | NBASE-10 | P1: Base de normas | Implemented | Implemented |
 | NBASE-11 | P1: Base de normas | Implemented | Implemented |
@@ -221,9 +221,9 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NMOV-03 | P1: Origem e destino informados | Implemented | Implemented |
 | NMOV-04 | P1: Origem e destino informados | Implemented | Implemented |
 | NMOV-05 | P1: Origem e destino informados | Implemented | Implemented |
-| NLIST-01 | P2: Lista de normas | Implementing | Implementing |
-| NLIST-02 | P2: Lista de normas | Implementing | Implementing |
-| NLIST-03 | P2: Lista de normas | Design | Pending |
+| NLIST-01 | P2: Lista de normas | Implemented | Implemented |
+| NLIST-02 | P2: Lista de normas | Implemented | Implemented |
+| NLIST-03 | P2: Lista de normas | Implemented | Implemented |
 | NMIN-01 | P2: Mínimo não definido | Implemented | Implemented |
 | NMIN-02 | P2: Mínimo não definido | Implemented | Implemented |
 

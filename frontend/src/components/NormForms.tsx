@@ -98,7 +98,6 @@ export function NormForm({ norm, onSaved, onCancel }: Props) {
 
   return (
     <form className="card" onSubmit={submit} noValidate aria-label={norm ? "Editar norma" : "Cadastrar norma"}>
-      <h3>{norm ? "Editar norma" : "Cadastrar norma"}</h3>
       <Field name="code" label="Código" errors={errors}>
         {(p) => <input {...p} value={code} readOnly={Boolean(norm)} onChange={(e) => setCode(e.target.value)} />}
       </Field>
@@ -136,14 +135,16 @@ export function NormForm({ norm, onSaved, onCancel }: Props) {
         {(p) => <textarea {...p} value={notes} onChange={(e) => setNotes(e.target.value)} />}
       </Field>
       <Alert message={error} />
-      <button type="submit" disabled={busy}>
-        {norm ? "Salvar norma" : "Cadastrar norma"}
-      </button>
-      {onCancel && (
-        <button type="button" className="link" onClick={onCancel}>
-          Cancelar
+      <div className="btn-row">
+        <button type="submit" className="btn btn-primary" disabled={busy}>
+          {norm ? "Salvar norma" : "Cadastrar norma"}
         </button>
-      )}
+        {onCancel && (
+          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            Cancelar
+          </button>
+        )}
+      </div>
     </form>
   );
 }
@@ -161,7 +162,6 @@ export function NormFileForm({ norm, onSaved, onCancel }: Props & { norm: Norm }
 
   return (
     <form className="card" onSubmit={submit} noValidate aria-label="Anexar PDF">
-      <h3>Anexar PDF</h3>
       <p className="muted">{NORM_FILE_HINT}</p>
       <Field name={FILE_FIELD} label="Arquivo PDF" errors={errors}>
         {(p) => (
@@ -174,14 +174,16 @@ export function NormFileForm({ norm, onSaved, onCancel }: Props & { norm: Norm }
         )}
       </Field>
       <Alert message={error} />
-      <button type="submit" disabled={busy}>
-        Anexar PDF
-      </button>
-      {onCancel && (
-        <button type="button" className="link" onClick={onCancel}>
-          Cancelar
+      <div className="btn-row">
+        <button type="submit" className="btn btn-primary" disabled={busy}>
+          Anexar PDF
         </button>
-      )}
+        {onCancel && (
+          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            Cancelar
+          </button>
+        )}
+      </div>
     </form>
   );
 }

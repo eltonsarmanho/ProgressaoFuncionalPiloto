@@ -5,6 +5,7 @@ import { RequireAuth } from "./auth/RequireAuth";
 import { Layout } from "./components/Layout";
 import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
+import { Norms } from "./pages/Norms";
 import { ProcessActivities } from "./pages/ProcessActivities";
 import { ProcessDocuments } from "./pages/ProcessDocuments";
 import { ProcessGenerated } from "./pages/ProcessGenerated";
@@ -39,6 +40,7 @@ export function AppRoutes() {
         <Route path="processos/:id/atividades" element={<ProcessActivities />} />
         <Route path="processos/:id/pontuacao" element={<ProcessScoring />} />
         <Route path="processos/:id/gerados" element={<ProcessGenerated />} />
+        <Route path="normas" element={<Norms />} />
         <Route
           path="administracao/tabelas"
           element={

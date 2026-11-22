@@ -133,6 +133,13 @@ export const MINIMUM_LABELS: Record<string, string> = {
   NAO_DEFINIDO: "Mínimo não definido",
 };
 
+/** NLIST-01: the kinds of rule that cite a norm. */
+export const LINKED_RULE_LABELS: Record<string, string> = {
+  CARREIRA: "Estrutura de carreira",
+  TABELA: "Tabela de pontuação",
+  TITULACAO: "Titulação",
+};
+
 /** NMIN-02: why the minimum of the new career structure is not defined. */
 export const MINIMUM_UNDEFINED_REASON =
   "Mínimo não definido: a Res. 4.644/2015, art. 12, fixa mínimos só para as classes da estrutura antiga";
