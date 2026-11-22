@@ -7,7 +7,7 @@ import pytest
 from PIL import Image
 
 from app.application.use_cases.generated_documents import GenerationLimits
-from app.domain.entities.generated import DocumentKind, GenerationCode
+from app.domain.entities.generated import ARTIFACT_KINDS, DocumentKind, GenerationCode
 from app.domain.errors import GenerationRefused
 from app.domain.rules.comprovante_plan import ComprovanteRefused
 from tests.integration.doc_usecases.generation_support import (
@@ -175,7 +175,7 @@ def test_less_than_the_minimum_free_space_refuses_every_kind(gen):
     add_activity(gen.world)
     limits = GenerationLimits(min_free_bytes=200 * MB)
 
-    for kind in DocumentKind:
+    for kind in ARTIFACT_KINDS:
         error = refused(gen, kind, storage=FreeSpace(200 * MB - 1), limits=limits)
         assert error.code == GenerationCode.ESPACO_INSUFICIENTE
 

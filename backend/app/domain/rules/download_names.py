@@ -11,6 +11,8 @@ _STEMS = {
     DocumentKind.TABELA: "Tabela_de_Pontuacao",
     DocumentKind.RELATORIO: "Relatorio_de_Atividades",
     DocumentKind.COMPROVANTE: "Comprovante_de_Documentos",
+    DocumentKind.REQUERIMENTO: "Requerimento",
+    DocumentKind.PARECER: "Parecer",
 }
 _EXTENSIONS = {DocumentFormat.DOCX: "docx", DocumentFormat.PDF: "pdf"}
 

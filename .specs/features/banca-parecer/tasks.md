@@ -295,7 +295,7 @@ graph LR
 
 #### T5: Tipos de documento gerado e códigos novos
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `DocumentKind` ganha `REQUERIMENTO` e `PARECER`; `GenerationCode` ganha `CONCLUSAO_AUSENTE`, `BANCA_SEM_MEMBROS`, `TABELA_AUSENTE`, `TABELA_DESATUALIZADA` e `PORTARIA_EXISTENTE`; `ARTIFACT_KINDS = (TABELA, RELATORIO, COMPROVANTE)` é a lista que a conclusão exige; `_STEMS` de `download_names` ganha "Requerimento" e "Parecer".
 **Where**: `backend/app/domain/entities/generated.py` (modify; os dois nomes novos em `backend/app/domain/rules/download_names.py`)
@@ -310,10 +310,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro: `backend/tests/unit/domain/test_generated_entities.py:54` passa a esperar os cinco valores de `DocumentKind` na ordem `TABELA`, `RELATORIO`, `COMPROVANTE`, `REQUERIMENTO`, `PARECER` e os cinco códigos novos em `GenerationCode`; `backend/tests/unit/domain/test_download_names.py` ganha os quatro nomes novos (`Requerimento_2020-2024_v2.pdf`, `.docx`, `Parecer_2020-2024_v2.pdf`, `.docx`) e a parametrização sobre `list(DocumentKind)` cobre os cinco tipos; `ARTIFACT_KINDS` tem só os três tipos exigidos, nessa ordem
-- [ ] Testes existentes que enumeram `DocumentKind` e passam a usar `ARTIFACT_KINDS` (PAR-02, REQ-01: com o tipo novo, pedir "todos os tipos" geraria Parecer e Requerimento sem os pré-requisitos): `backend/tests/integration/doc_usecases/test_request_generation.py:30,79`, `test_request_refusals.py:178`, `conclusion_support.py:87` (`add_all_ready`), `backend/tests/integration/api/generated_support.py:114` (`add_all_ready`) e `test_conclusion_acceptance.py:80`; `test_generation_snapshot.py:156` segue passando sobre os cinco tipos
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit/domain/test_generated_entities.py tests/unit/domain/test_download_names.py tests/unit/domain/test_generation_snapshot.py tests/integration/doc_usecases/test_request_generation.py tests/integration/doc_usecases/test_request_refusals.py tests/integration/api/test_conclusion_acceptance.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro: `backend/tests/unit/domain/test_generated_entities.py:54` passa a esperar os cinco valores de `DocumentKind` na ordem `TABELA`, `RELATORIO`, `COMPROVANTE`, `REQUERIMENTO`, `PARECER` e os cinco códigos novos em `GenerationCode`; `backend/tests/unit/domain/test_download_names.py` ganha os quatro nomes novos (`Requerimento_2020-2024_v2.pdf`, `.docx`, `Parecer_2020-2024_v2.pdf`, `.docx`) e a parametrização sobre `list(DocumentKind)` cobre os cinco tipos; `ARTIFACT_KINDS` tem só os três tipos exigidos, nessa ordem
+- [x] Testes existentes que enumeram `DocumentKind` e passam a usar `ARTIFACT_KINDS` (PAR-02, REQ-01: com o tipo novo, pedir "todos os tipos" geraria Parecer e Requerimento sem os pré-requisitos): `backend/tests/integration/doc_usecases/test_request_generation.py:30,79`, `test_request_refusals.py:178`, `conclusion_support.py:87` (`add_all_ready`), `backend/tests/integration/api/generated_support.py:114` (`add_all_ready`) e `test_conclusion_acceptance.py:80`; `test_generation_snapshot.py:156` segue passando sobre os cinco tipos
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit/domain/test_generated_entities.py tests/unit/domain/test_download_names.py tests/unit/domain/test_generation_snapshot.py tests/integration/doc_usecases/test_request_generation.py tests/integration/doc_usecases/test_request_refusals.py tests/integration/api/test_conclusion_acceptance.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: targeted

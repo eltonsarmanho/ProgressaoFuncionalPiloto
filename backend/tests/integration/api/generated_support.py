@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.domain.entities.generated import DocumentKind
+from app.domain.entities.generated import ARTIFACT_KINDS
 from app.domain.repositories.ports import ActivityEvidence
 from tests.integration.documents.factories import make_document
 from tests.integration.documents.generated_support import T0, make_file, make_generation
@@ -111,7 +111,7 @@ def add_ready(uow_factory, process, user, kind) -> None:
 
 
 def add_all_ready(uow_factory, process, user) -> None:
-    for kind in DocumentKind:
+    for kind in ARTIFACT_KINDS:
         add_ready(uow_factory, process, user, kind)
 
 

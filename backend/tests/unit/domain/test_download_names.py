@@ -29,9 +29,13 @@ INTERSTICE = Interstice(date(2020, 1, 1), date(2024, 12, 31))
             DocumentFormat.DOCX,
             "Comprovante_de_Documentos_2020-2024_v2.docx",
         ),
+        (DocumentKind.REQUERIMENTO, DocumentFormat.PDF, "Requerimento_2020-2024_v2.pdf"),
+        (DocumentKind.REQUERIMENTO, DocumentFormat.DOCX, "Requerimento_2020-2024_v2.docx"),
+        (DocumentKind.PARECER, DocumentFormat.PDF, "Parecer_2020-2024_v2.pdf"),
+        (DocumentKind.PARECER, DocumentFormat.DOCX, "Parecer_2020-2024_v2.docx"),
     ],
 )
-def test_the_six_names_follow_kind_interstice_and_version(kind, fmt, expected):
+def test_the_ten_names_follow_kind_interstice_and_version(kind, fmt, expected):
     assert download_name(kind, fmt, INTERSTICE, 2) == expected
 
 

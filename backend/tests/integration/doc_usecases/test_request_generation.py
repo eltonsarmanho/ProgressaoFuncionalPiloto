@@ -6,6 +6,7 @@ import pytest
 
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.generated import (
+    ARTIFACT_KINDS,
     DocumentKind,
     GeneratedDocument,
     GenerationCode,
@@ -27,7 +28,7 @@ def refusal(request, world, kind=DocumentKind.TABELA) -> GenerationRefused:
     return error.value
 
 
-@pytest.mark.parametrize("kind", list(DocumentKind))
+@pytest.mark.parametrize("kind", list(ARTIFACT_KINDS))
 def test_a_request_stores_a_generating_row_of_the_kind_for_the_actor(gen, kind):
     world = gen.world
     add_activity(world)
@@ -76,10 +77,10 @@ def test_requests_of_different_kinds_coexist(gen):
     world = gen.world
     add_activity(world)
 
-    for kind in DocumentKind:
+    for kind in ARTIFACT_KINDS:
         gen.request().execute(world.admin, world.process.id, kind)
 
-    assert sorted(r.kind for r in rows(world)) == sorted(DocumentKind)
+    assert sorted(r.kind for r in rows(world)) == sorted(ARTIFACT_KINDS)
 
 
 def test_a_new_request_is_accepted_after_the_previous_one_failed(gen):

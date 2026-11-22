@@ -159,9 +159,11 @@ def test_a_body_is_accepted_as_documented_and_refuses_a_field_it_does_not_know(s
     assert refused.value.errors()[0]["type"] == "extra_forbidden"
 
 
-def test_the_kind_of_a_request_must_be_one_of_the_three_documents():
+def test_the_kind_of_a_request_must_be_one_of_the_five_documents():
     with pytest.raises(ValidationError):
-        GenerationRequest(kind="PARECER")
+        GenerationRequest(kind="PORTARIA")
+    assert GenerationRequest(kind="PARECER").kind is DocumentKind.PARECER
+    assert GenerationRequest(kind="REQUERIMENTO").kind is DocumentKind.REQUERIMENTO
 
 
 def test_a_layout_body_becomes_the_domain_arrangement_and_refuses_page_zero():

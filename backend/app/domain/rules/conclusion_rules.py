@@ -8,6 +8,7 @@ from typing import Protocol
 
 from app.domain.entities.conclusion import ConclusionCheck, ConclusionPreview, ConclusionResult
 from app.domain.entities.generated import (
+    ARTIFACT_KINDS,
     DocumentKind,
     GenerationAlert,
     GenerationAlertCode,
@@ -53,7 +54,7 @@ def summarize_purge(
     return ConclusionPreview(
         files=len(remaining),
         bytes=sum(doc.size_bytes for doc in remaining),
-        artifacts={kind: kind in ready for kind in DocumentKind},
+        artifacts={kind: kind in ready for kind in ARTIFACT_KINDS},
     )
 
 

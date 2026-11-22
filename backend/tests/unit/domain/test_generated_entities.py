@@ -8,6 +8,7 @@ from uuid import uuid4
 import pytest
 
 from app.domain.entities.generated import (
+    ARTIFACT_KINDS,
     DocumentFormat,
     DocumentKind,
     GeneratedDocument,
@@ -31,6 +32,8 @@ REFUSAL_CODES = {
     "CONFIRMACAO_OBRIGATORIA", "OPERACAO_EM_ANDAMENTO", "CONCLUSAO_EXIGE_EXCLUSAO",
     "ARQUIVO_EXCLUIDO", "PAGINA_FORA_DO_DOCUMENTO", "VERSAO_DESATUALIZADA",
     "PROCESSO_SOMENTE_LEITURA",
+    "CONCLUSAO_AUSENTE", "BANCA_SEM_MEMBROS", "TABELA_AUSENTE", "TABELA_DESATUALIZADA",
+    "PORTARIA_EXISTENTE",
 }  # fmt: skip
 ALERT_CODES = {
     "ATIVIDADE_SEM_COMPROVANTE", "REDACAO_REJEITADA", "REDACAO_INDISPONIVEL",
@@ -50,8 +53,14 @@ def test_only_gerando_to_pronto_or_falhou_is_a_valid_transition(current, target)
     assert can_transition(current, target) is ((current, target) in ALLOWED)
 
 
-def test_the_three_kinds_the_two_formats_and_the_three_states_exist():
-    assert [k.value for k in DocumentKind] == ["TABELA", "RELATORIO", "COMPROVANTE"]
+def test_the_five_kinds_the_two_formats_and_the_three_states_exist():
+    assert [k.value for k in DocumentKind] == [
+        "TABELA",
+        "RELATORIO",
+        "COMPROVANTE",
+        "REQUERIMENTO",
+        "PARECER",
+    ]
     assert [f.value for f in DocumentFormat] == ["DOCX", "PDF"]
     assert [s.value for s in GenerationState] == ["GERANDO", "PRONTO", "FALHOU"]
 
@@ -59,6 +68,24 @@ def test_the_three_kinds_the_two_formats_and_the_three_states_exist():
 def test_the_refusal_codes_have_the_exact_names_of_the_design():
     assert {c.value for c in GenerationCode} == REFUSAL_CODES
     assert all(c.name == c.value for c in GenerationCode)
+
+
+def test_the_new_refusal_codes_of_the_board_documents_exist():
+    assert {
+        "CONCLUSAO_AUSENTE",
+        "BANCA_SEM_MEMBROS",
+        "TABELA_AUSENTE",
+        "TABELA_DESATUALIZADA",
+        "PORTARIA_EXISTENTE",
+    } <= {c.value for c in GenerationCode}
+
+
+def test_the_artifacts_the_conclusion_requires_are_the_three_original_kinds_in_order():
+    assert ARTIFACT_KINDS == (
+        DocumentKind.TABELA,
+        DocumentKind.RELATORIO,
+        DocumentKind.COMPROVANTE,
+    )
 
 
 def test_the_alert_codes_have_the_exact_names_of_the_design():

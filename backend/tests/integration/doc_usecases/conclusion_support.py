@@ -7,8 +7,8 @@ from types import SimpleNamespace
 
 from app.domain.entities.document import PageText, TextMethod
 from app.domain.entities.generated import (
+    ARTIFACT_KINDS,
     DocumentFormat,
-    DocumentKind,
     GeneratedFile,
     GenerationCode,
     GenerationState,
@@ -84,7 +84,7 @@ def add_generation(world, kind, state=GenerationState.PRONTO, process=None):
 
 
 def add_all_ready(world, process=None) -> None:
-    for kind in DocumentKind:
+    for kind in ARTIFACT_KINDS:
         add_generation(world, kind, process=process)
 
 

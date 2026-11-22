@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from app.domain.entities.conclusion import ConclusionPreview
-from app.domain.entities.generated import DocumentKind, GenerationAlertCode
+from app.domain.entities.generated import ARTIFACT_KINDS, DocumentKind, GenerationAlertCode
 from app.domain.entities.process import ProcessStatus
 from app.domain.rules.conclusion_rules import purge_outcome, summarize_purge
 
@@ -54,7 +54,7 @@ def test_the_preview_says_which_kinds_have_a_ready_version():
 def test_without_ready_kinds_every_kind_is_marked_missing():
     preview = summarize_purge([FakeDocument(5)])
 
-    assert preview.artifacts == dict.fromkeys(DocumentKind, False)
+    assert preview.artifacts == dict.fromkeys(ARTIFACT_KINDS, False)
     assert isinstance(preview, ConclusionPreview)
 
 

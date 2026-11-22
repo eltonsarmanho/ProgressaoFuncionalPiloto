@@ -15,6 +15,12 @@ class DocumentKind(StrEnum):
     TABELA = "TABELA"
     RELATORIO = "RELATORIO"
     COMPROVANTE = "COMPROVANTE"
+    REQUERIMENTO = "REQUERIMENTO"
+    PARECER = "PARECER"
+
+
+# The kinds a process needs ready to be concluded; the Requerimento and the Parecer do not count.
+ARTIFACT_KINDS = (DocumentKind.TABELA, DocumentKind.RELATORIO, DocumentKind.COMPROVANTE)
 
 
 class DocumentFormat(StrEnum):
@@ -63,6 +69,11 @@ class GenerationCode(StrEnum):
     PAGINA_FORA_DO_DOCUMENTO = "PAGINA_FORA_DO_DOCUMENTO"
     VERSAO_DESATUALIZADA = "VERSAO_DESATUALIZADA"
     PROCESSO_SOMENTE_LEITURA = "PROCESSO_SOMENTE_LEITURA"
+    CONCLUSAO_AUSENTE = "CONCLUSAO_AUSENTE"
+    BANCA_SEM_MEMBROS = "BANCA_SEM_MEMBROS"
+    TABELA_AUSENTE = "TABELA_AUSENTE"
+    TABELA_DESATUALIZADA = "TABELA_DESATUALIZADA"
+    PORTARIA_EXISTENTE = "PORTARIA_EXISTENTE"
 
 
 class GenerationAlertCode(StrEnum):

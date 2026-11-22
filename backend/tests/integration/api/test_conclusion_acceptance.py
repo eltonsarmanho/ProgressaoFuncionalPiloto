@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 from app.domain.entities.document import DocumentStatus
-from app.domain.entities.generated import DocumentKind
+from app.domain.entities.generated import ARTIFACT_KINDS
 from app.domain.repositories.ports import JobStatus
 from tests.integration.api.documents_support import seed_run, upload
 from tests.integration.api.generated_support import ask, file_url, generate
@@ -77,7 +77,7 @@ def done(client, scenario, uow_factory, tmp_path):
         assert link.status_code == 201, link.text
     scenario.documents = [first, second, third]
     scenario.versions = [
-        generate(client, scenario.headers, scenario.process, kind.value) for kind in DocumentKind
+        generate(client, scenario.headers, scenario.process, kind.value) for kind in ARTIFACT_KINDS
     ]
     storage = tmp_path / "storage"
     scenario.uploads = storage / "uploads" / scenario.process["id"]
