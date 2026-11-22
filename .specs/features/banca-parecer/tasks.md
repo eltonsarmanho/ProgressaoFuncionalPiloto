@@ -1451,7 +1451,7 @@ graph LR
 
 #### T45: Página da Etapa 6, Banca e Parecer
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ProcessBoard` na rota `/processos/:id/banca`: `StepNav` na Etapa 6, o bloco da portaria (`OrdinanceForm`, com `usePolling` enquanto a leitura está `PENDENTE` ou `LENDO`), o bloco do Parecer (`OpinionForm` e o `GeneratedBlock` do `PARECER`), e o estado somente leitura em processo `ARQUIVADO` ou `CONCLUIDO`.
 **Where**: `frontend/src/pages/ProcessBoard.tsx` (new; a rota em `frontend/src/App.tsx`)
@@ -1466,9 +1466,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/pages/ProcessBoard.test.tsx` (novo): a rota mostra a navegação com a Etapa 6 atual, o bloco da portaria e o bloco do Parecer com o botão "Gerar Parecer"; com a leitura `PENDENTE` a página consulta de novo a cada 3 s (relógio falso) até `LIDA` e para; "Gerar Parecer" com a conclusão ausente mostra a mensagem de `CONCLUSAO_AUSENTE`, e com a pontuação mudada a de `TABELA_DESATUALIZADA`; a lista de versões do Parecer traz os links de DOCX e PDF; processo `ARQUIVADO` e `CONCLUIDO` mostram o aviso de somente leitura, desabilitam envio, gravação e geração com o motivo e mantêm o download das versões já geradas; a rota `/processos/p1/banca` existe em `App.tsx`
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `frontend/src/pages/ProcessBoard.test.tsx` (novo): a rota mostra a navegação com a Etapa 6 atual, o bloco da portaria e o bloco do Parecer com o botão "Gerar Parecer"; com a leitura `PENDENTE` a página consulta de novo a cada 3 s (relógio falso) até `LIDA` e para; "Gerar Parecer" com a conclusão ausente mostra a mensagem de `CONCLUSAO_AUSENTE`, e com a pontuação mudada a de `TABELA_DESATUALIZADA`; a lista de versões do Parecer traz os links de DOCX e PDF; processo `ARQUIVADO` e `CONCLUIDO` mostram o aviso de somente leitura, desabilitam envio, gravação e geração com o motivo e mantêm o download das versões já geradas; a rota `/processos/p1/banca` existe em `App.tsx`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: front
