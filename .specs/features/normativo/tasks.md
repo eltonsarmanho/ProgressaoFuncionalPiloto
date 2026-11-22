@@ -392,7 +392,7 @@ graph LR
 
 #### T10: Migração `0010_norms` e modelos
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Migração só de esquema: enum `norm_kind`, tabela `norms` (campos e `CHECK valid_to >= valid_from` do design, `code` único), colunas `career_versions.norm_code` e `scoring_table_versions.norm_code` (`VARCHAR(50) NULL`, sem chave estrangeira); `downgrade` remove tudo; `NormModel` e as duas colunas em `models.py`.
 **Where**: `backend/alembic/versions/0010_norms.py` (new; o modelo correspondente em `backend/app/infrastructure/database/models.py`)
@@ -407,10 +407,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_migration_norms.py` (novo): `upgrade` cria a tabela, o enum, o índice único de `code` e as duas colunas nulas; inserir dois códigos iguais falha; `valid_to < valid_from` falha; `downgrade` remove tudo e volta a `0009`; linhas existentes de `career_versions` e `scoring_table_versions` ficam com `norm_code` nulo
-- [ ] `test_migrations.py` passa (cabeça `0010`)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/test_migration_norms.py` (novo): `upgrade` cria a tabela, o enum, o índice único de `code` e as duas colunas nulas; inserir dois códigos iguais falha; `valid_to < valid_from` falha; `downgrade` remove tudo e volta a `0009`; linhas existentes de `career_versions` e `scoring_table_versions` ficam com `norm_code` nulo
+- [x] `test_migrations.py` passa (cabeça `0010`)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full

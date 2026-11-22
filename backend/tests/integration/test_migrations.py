@@ -41,6 +41,7 @@ TABLES = {
     "report_wording_jobs",
     "report_drafts",
     "comprovante_layouts",
+    "norms",
 }
 
 

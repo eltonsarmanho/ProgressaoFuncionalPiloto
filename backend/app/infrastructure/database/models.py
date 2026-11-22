@@ -33,6 +33,7 @@ from app.domain.entities.audit import AuditAction
 from app.domain.entities.career import Modality
 from app.domain.entities.document import DocumentStatus, RunStatus, TextMethod
 from app.domain.entities.generated import DocumentFormat, DocumentKind, GenerationState
+from app.domain.entities.norm import NormKind
 from app.domain.entities.process import ProcessStatus
 from app.domain.entities.professor import Titration, WorkRegime
 from app.domain.entities.scoring import ScoringMode, TableStatus
@@ -59,6 +60,34 @@ class AcademicUnitModel(Base):
         UUID(as_uuid=True), ForeignKey("academic_units.id")
     )
     archived: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class NormModel(Base):
+    __tablename__ = "norms"
+    __table_args__ = (
+        CheckConstraint(
+            "valid_from IS NULL OR valid_to IS NULL OR valid_to >= valid_from",
+            name="ck_norms_validity",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    code: Mapped[str] = mapped_column(String(50), unique=True)
+    title: Mapped[str] = mapped_column(String(500))
+    kind: Mapped[NormKind] = mapped_column(_enum(NormKind, "norm_kind"))
+    issuer: Mapped[str] = mapped_column(String(255))
+    published_on: Mapped[date] = mapped_column(Date)
+    valid_from: Mapped[date | None] = mapped_column(Date)
+    valid_to: Mapped[date | None] = mapped_column(Date)
+    source_url: Mapped[str | None] = mapped_column(Text)
+    file_internal_name: Mapped[str | None] = mapped_column(String(64))
+    file_original_name: Mapped[str | None] = mapped_column(String(255))
+    file_size_bytes: Mapped[int | None] = mapped_column(Integer)
+    file_sha256: Mapped[str | None] = mapped_column(CHAR(64))
+    notes: Mapped[str | None] = mapped_column(Text)
+    archived: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class UserModel(Base):
@@ -131,6 +160,7 @@ class CareerVersionModel(Base):
     norm_reference: Mapped[str] = mapped_column(Text)
     definition: Mapped[dict[str, Any]] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    norm_code: Mapped[str | None] = mapped_column(String(50))
 
 
 class ProfessorModel(Base):
@@ -234,6 +264,7 @@ class ScoringTableVersionModel(Base):
     superseded_by_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("scoring_table_versions.id")
     )
+    norm_code: Mapped[str | None] = mapped_column(String(50))
 
 
 class ScoringGroupModel(Base):
