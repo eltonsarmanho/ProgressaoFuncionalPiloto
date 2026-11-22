@@ -14,9 +14,11 @@ from app.domain.entities.academic_unit import AcademicUnit
 from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.entities.audit import AuditEvent
 from app.domain.entities.board import (
+    BoardOpinion,
     BoardOrdinance,
     OrdinanceFile,
     OrdinanceReadingCode,
+    RequestSettings,
 )
 from app.domain.entities.career import CareerVersion
 from app.domain.entities.comprovante import ComprovanteLayout, ComprovantePlan
@@ -583,6 +585,40 @@ class BoardRepository(Protocol):
         ...
 
 
+class OpinionRepository(Protocol):
+    """The fields of the Parecer, one row per process (PAR-01)."""
+
+    def get(self, process_id: UUID) -> BoardOpinion | None: ...
+
+    def create(self, opinion: BoardOpinion, user_id: UUID, expected_version: int) -> BoardOpinion:
+        """The first save: `expected_version` must be 0 (`StaleVersion` otherwise) and the stored
+        opinion gets version 1; the conclusion stays empty when nobody chose it (PAR-12). A
+        second one for the process raises `Conflict`."""
+        ...
+
+    def update(self, opinion: BoardOpinion, user_id: UUID, expected_version: int) -> BoardOpinion:
+        """Replaces the conclusion, the date, the place and the notes when the stored version is
+        `expected_version`; the version goes up by one. `StaleVersion` changes nothing and
+        `NotFound` means there is none to update."""
+        ...
+
+
+class RequestSettingsRepository(Protocol):
+    """The city of the Requerimento, one row per process (REQ-05)."""
+
+    def get(self, process_id: UUID) -> RequestSettings | None: ...
+
+    def create(self, settings: RequestSettings, expected_version: int) -> RequestSettings:
+        """The first save: `expected_version` must be 0 (`StaleVersion` otherwise); version 1. A
+        second one for the process raises `Conflict`."""
+        ...
+
+    def update(self, settings: RequestSettings, expected_version: int) -> RequestSettings:
+        """Replaces the city when the stored version is `expected_version`; the version goes up
+        by one. `StaleVersion` changes nothing."""
+        ...
+
+
 class GenerationRepository(Protocol):
     """Generated documents: one row per request, one numbered version per PRONTO (VER-01)."""
 
@@ -930,6 +966,8 @@ class UnitOfWork(Protocol):
     report_drafts: ReportDraftRepository
     comprovante_layouts: LayoutRepository
     board: BoardRepository
+    opinions: OpinionRepository
+    request_settings: RequestSettingsRepository
     process_purge: ProcessPurgeRepository
 
     def __enter__(self) -> Self: ...

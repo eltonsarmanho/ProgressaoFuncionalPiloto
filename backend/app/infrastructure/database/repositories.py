@@ -18,6 +18,7 @@ from app.domain.entities.activity import Activity, ActivityStatus, Candidate
 from app.domain.entities.audit import AuditEvent
 from app.domain.entities.board import (
     BoardMember,
+    BoardOpinion,
     BoardOrdinance,
     BoardRole,
     OrdinanceFile,
@@ -25,6 +26,7 @@ from app.domain.entities.board import (
     OrdinanceWarning,
     OrdinanceWarningCode,
     ReadingState,
+    RequestSettings,
     ValueSource,
     can_read_transition,
 )
@@ -83,6 +85,7 @@ from app.infrastructure.database.models import (
     ActivityEvidenceModel,
     ActivityModel,
     AuditLogModel,
+    BoardOpinionModel,
     BoardOrdinanceModel,
     CareerStructureModel,
     CareerVersionModel,
@@ -99,6 +102,7 @@ from app.infrastructure.database.models import (
     ProfessorModel,
     ReportDraftModel,
     ReportWordingJobModel,
+    RequestSettingsModel,
     ScoringCriterionModel,
     ScoringGroupModel,
     ScoringTableModel,
@@ -2517,6 +2521,130 @@ class SqlBoardRepository:
         )
 
 
+class SqlOpinionRepository:
+    """The fields of the Parecer: one row per process."""
+
+    def __init__(self, session: Session):
+        self._s = session
+
+    @staticmethod
+    def _to_entity(m: BoardOpinionModel) -> BoardOpinion:
+        return BoardOpinion(
+            process_id=m.process_id,
+            conclusion=m.conclusion,
+            opinion_date=m.opinion_date,
+            place=m.place,
+            notes=m.notes,
+            version=m.version,
+        )
+
+    def get(self, process_id: UUID) -> BoardOpinion | None:
+        m = self._s.scalars(
+            select(BoardOpinionModel)
+            .where(BoardOpinionModel.process_id == process_id)
+            .execution_options(populate_existing=True)
+        ).first()
+        return self._to_entity(m) if m else None
+
+    def create(self, opinion: BoardOpinion, user_id: UUID, expected_version: int) -> BoardOpinion:
+        if expected_version != 0:
+            raise StaleVersion("O Parecer ainda não foi salvo; recarregue")
+        try:
+            with self._s.begin_nested():
+                self._s.execute(
+                    insert(BoardOpinionModel).values(
+                        id=uuid.uuid4(),
+                        process_id=opinion.process_id,
+                        conclusion=opinion.conclusion,
+                        opinion_date=opinion.opinion_date,
+                        place=opinion.place,
+                        notes=opinion.notes,
+                        version=1,
+                        updated_by=user_id,
+                    )
+                )
+        except IntegrityError as exc:
+            if _is_unique_violation(exc):
+                raise Conflict("O processo já tem os dados do Parecer salvos") from None
+            raise
+        return replace(opinion, version=1)
+
+    def update(self, opinion: BoardOpinion, user_id: UUID, expected_version: int) -> BoardOpinion:
+        m = self._s.scalars(
+            select(BoardOpinionModel)
+            .where(BoardOpinionModel.process_id == opinion.process_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        ).first()
+        if m is None:
+            raise NotFound("Dados do Parecer não encontrados")
+        if m.version != expected_version:
+            raise StaleVersion("Os dados do Parecer foram alterados por outro usuário; recarregue")
+        m.conclusion = opinion.conclusion
+        m.opinion_date = opinion.opinion_date
+        m.place = opinion.place
+        m.notes = opinion.notes
+        m.version += 1
+        m.updated_by = user_id
+        m.updated_at = func.now()
+        self._s.flush()
+        return self._to_entity(m)
+
+
+class SqlRequestSettingsRepository:
+    """The city of the Requerimento: one row per process."""
+
+    def __init__(self, session: Session):
+        self._s = session
+
+    @staticmethod
+    def _to_entity(m: RequestSettingsModel) -> RequestSettings:
+        return RequestSettings(process_id=m.process_id, city=m.city, version=m.version)
+
+    def get(self, process_id: UUID) -> RequestSettings | None:
+        m = self._s.scalars(
+            select(RequestSettingsModel)
+            .where(RequestSettingsModel.process_id == process_id)
+            .execution_options(populate_existing=True)
+        ).first()
+        return self._to_entity(m) if m else None
+
+    def create(self, settings: RequestSettings, expected_version: int) -> RequestSettings:
+        if expected_version != 0:
+            raise StaleVersion("A cidade ainda não foi salva; recarregue")
+        try:
+            with self._s.begin_nested():
+                self._s.execute(
+                    insert(RequestSettingsModel).values(
+                        id=uuid.uuid4(),
+                        process_id=settings.process_id,
+                        city=settings.city,
+                        version=1,
+                    )
+                )
+        except IntegrityError as exc:
+            if _is_unique_violation(exc):
+                raise Conflict("O processo já tem a cidade do Requerimento salva") from None
+            raise
+        return replace(settings, version=1)
+
+    def update(self, settings: RequestSettings, expected_version: int) -> RequestSettings:
+        m = self._s.scalars(
+            select(RequestSettingsModel)
+            .where(RequestSettingsModel.process_id == settings.process_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        ).first()
+        if m is None:
+            raise NotFound("Cidade não encontrada")
+        if m.version != expected_version:
+            raise StaleVersion("A cidade foi alterada por outro usuário; recarregue")
+        m.city = settings.city
+        m.version += 1
+        self._s.flush()
+        return self._to_entity(m)
+
+
 class SqlProcessPurgeRepository:
     """Deletes a process and everything below it in one transaction (GP-D2, GP-D3).
 
@@ -2653,6 +2781,8 @@ class SqlUnitOfWork:
         self.report_drafts = SqlReportDraftRepository(self._session)
         self.comprovante_layouts = SqlLayoutRepository(self._session)
         self.board = SqlBoardRepository(self._session)
+        self.opinions = SqlOpinionRepository(self._session)
+        self.request_settings = SqlRequestSettingsRepository(self._session)
         self.process_purge = SqlProcessPurgeRepository(self._session)
         return self
 

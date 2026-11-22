@@ -563,7 +563,7 @@ graph LR
 
 #### T14: Repositórios do Parecer e da cidade
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Portas `OpinionRepository` e `RequestSettingsRepository` (`get`, `create` com `expected_version=0`, `update` com versão otimista), `SqlOpinionRepository`, `SqlRequestSettingsRepository`, `uow.opinions` e `uow.request_settings`.
 **Where**: `backend/app/infrastructure/database/repositories.py` (modify; as portas e os atributos do `UnitOfWork` em `backend/app/domain/repositories/ports.py`)
@@ -578,9 +578,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/documents/test_board_opinion_repository.py` (novo): `get` sem linha devolve `None`; `create` com versão 0 grava com `conclusion` nula quando ninguém a escolheu (PAR-12); `create` com versão diferente de 0 levanta `StaleVersion`; segundo `create` levanta `Conflict`; `update` com versão velha levanta `StaleVersion` e com a certa sobe a versão; as observações de 5 000 caracteres voltam inteiras; a conclusão volta ao valor gravado e pode voltar a `None`; o mesmo para a cidade (`request_settings`), até 100 caracteres
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/documents/test_board_opinion_repository.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/documents/test_board_opinion_repository.py` (novo): `get` sem linha devolve `None`; `create` com versão 0 grava com `conclusion` nula quando ninguém a escolheu (PAR-12); `create` com versão diferente de 0 levanta `StaleVersion`; segundo `create` levanta `Conflict`; `update` com versão velha levanta `StaleVersion` e com a certa sobe a versão; as observações de 5 000 caracteres voltam inteiras; a conclusão volta ao valor gravado e pode voltar a `None`; o mesmo para a cidade (`request_settings`), até 100 caracteres
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/documents/test_board_opinion_repository.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted
