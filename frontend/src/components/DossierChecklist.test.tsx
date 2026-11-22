@@ -1,42 +1,15 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import type { ChecklistItem, ChecklistState } from "../api/board";
+import type { ChecklistItem } from "../api/board";
 import { setCsrfToken } from "../api/client";
+import { checklist } from "../test/boardFixtures";
 import { mockFetch } from "../test/fetchMock";
 import { DossierChecklist } from "./DossierChecklist";
 
 const GET = "GET /api/processes/p1/dossier";
 const LATTES = "PUT /api/processes/p1/dossier/items/CURRICULO_LATTES";
 const READ_ONLY_REASON = "O processo está concluído ou arquivado e não aceita alterações.";
-
-type Row = [key: string, title: string, source: ChecklistItem["source"]];
-const ROWS: Row[] = [
-  ["REQUERIMENTO", "Requerimento", "GERADO"],
-  ["PORTARIA_ULTIMA_PROGRESSAO", "Portaria da última progressão", "MANUAL"],
-  ["DECLARACAO_PAGAMENTO", "Declaração de pagamento de exercícios anteriores", "MANUAL"],
-  ["RELATORIO", "Relatório de Atividades", "GERADO"],
-  ["TABELA", "Tabela de Pontuação", "GERADO"],
-  ["COMPROVANTE", "Comprovante de Documentos", "GERADO"],
-  ["CURRICULO_LATTES", "Currículo Lattes", "MANUAL"],
-  ["PORTARIA_BANCA", "Portaria da banca", "PORTARIA_BANCA"],
-  ["PARECER", "Parecer da banca", "GERADO"],
-];
-
-/** The nine items of the dossier; `over` changes one item by key. */
-function checklist(over: Record<string, Partial<ChecklistItem>> = {}): ChecklistItem[] {
-  return ROWS.map(([key, title, source], i) => ({
-    key,
-    order: i + 1,
-    title,
-    source,
-    state: "PENDENTE" as ChecklistState,
-    version_number: null,
-    generation_id: null,
-    outdated_table: false,
-    ...over[key],
-  }));
-}
 
 /** The spec's independent test: only Tabela, Relatório and Comprovante generated. */
 const THREE_GENERATED = {

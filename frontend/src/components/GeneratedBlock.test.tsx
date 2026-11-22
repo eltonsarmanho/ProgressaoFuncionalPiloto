@@ -193,3 +193,39 @@ describe("DEL-11: geração que o processo não aceita", () => {
     expect(screen.getByText(/Os documentos de entrada foram excluídos/)).toBeInTheDocument();
   });
 });
+
+describe("DOS-02: onReady avisa a página quando uma versão chega a PRONTO", () => {
+  it("é chamado uma vez quando a versão em geração fica PRONTO, e não antes", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const onReady = vi.fn();
+    const { state } = setup([generated({ state: "GERANDO", version_number: null, files: [], finished_at: null })], {}, { onReady });
+    expect(await screen.findByText("Gerando…")).toBeInTheDocument();
+    expect(onReady).not.toHaveBeenCalled();
+
+    state.rows = [generated()];
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    await screen.findByRole("link", { name: "Baixar Tabela de Pontuação versão 1 em DOCX" });
+    expect(onReady).toHaveBeenCalledTimes(1);
+
+    await act(() => vi.advanceTimersByTimeAsync(9000));
+    expect(onReady).toHaveBeenCalledTimes(1);
+  });
+
+  it("uma versão que já estava PRONTO ao abrir o bloco não chama onReady", async () => {
+    const onReady = vi.fn();
+    setup([generated()], {}, { onReady });
+    await screen.findByRole("link", { name: "Baixar Tabela de Pontuação versão 1 em DOCX" });
+    expect(onReady).not.toHaveBeenCalled();
+  });
+
+  it("uma geração que falha não chama onReady", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const onReady = vi.fn();
+    const { state } = setup([generated({ state: "GERANDO", version_number: null, files: [], finished_at: null })], {}, { onReady });
+    await screen.findByText("Gerando…");
+    state.rows = [generated({ state: "FALHOU", version_number: null, files: [], error_code: "ERRO_INTERNO" })];
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    await screen.findByRole("alert");
+    expect(onReady).not.toHaveBeenCalled();
+  });
+});

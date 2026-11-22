@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from "react";
 import { request } from "../api/client";
 import type { DocumentKind, GeneratedDocument } from "../api/generated";
 import { generationErrorMessage, isConflict } from "../generationErrors";
@@ -18,6 +18,8 @@ export const OUTDATED_TABLE_NOTICE = "Gerada com outra versão da tabela de pont
  * is what goes at the end of the block (the draft of the report, the arrangement of the Comprovante).
  * `chosenTableVersionId` is the scoring table version the process uses today: when the last ready
  * Tabela was generated with another one, the block says so (GI-11); the other kinds never warn.
+ * `onReady` is called when a version that was not ready becomes PRONTO while the block is open (the page
+ * can then read the checklist of the dossier again); versions already ready when the block opens do not call it.
  */
 export function GeneratedBlock({
   processId,
@@ -25,6 +27,7 @@ export function GeneratedBlock({
   leftOut = 0,
   disabledReason,
   chosenTableVersionId,
+  onReady,
   children,
 }: {
   processId: string;
@@ -32,6 +35,7 @@ export function GeneratedBlock({
   leftOut?: number;
   disabledReason?: string;
   chosenTableVersionId?: string | null;
+  onReady?: () => void;
   children?: ReactNode;
 }) {
   const [rows, setRows] = useState<GeneratedDocument[] | null>(null);
@@ -55,6 +59,16 @@ export function GeneratedBlock({
 
   const running = rows?.some((r) => r.state === "GERANDO") ?? false;
   usePolling(reload, running);
+
+  const readyIds = useRef<Set<string> | null>(null);
+  const notifyReady = useEffectEvent(() => onReady?.());
+  useEffect(() => {
+    if (rows === null) return;
+    const now = new Set(rows.filter((r) => r.state === "PRONTO").map((r) => r.id));
+    const before = readyIds.current;
+    readyIds.current = now;
+    if (before !== null && [...now].some((id) => !before.has(id))) notifyReady();
+  }, [rows]);
 
   async function generate() {
     setError(null);

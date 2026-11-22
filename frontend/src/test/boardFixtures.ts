@@ -1,4 +1,4 @@
-import type { BoardView, Opinion, Ordinance, RequestSettings } from "../api/board";
+import type { BoardView, ChecklistItem, ChecklistState, Opinion, Ordinance, RequestSettings } from "../api/board";
 
 /** Synthetic data of the Etapa 6 screens: no name here belongs to a real person. */
 export function ordinance(over: Partial<Ordinance> = {}): Ordinance {
@@ -53,4 +53,32 @@ export function requestSettings(over: Partial<RequestSettings> = {}): RequestSet
 
 export function board(over: Partial<BoardView> = {}): BoardView {
   return { ordinance: ordinance(), opinion: opinion(), request_settings: requestSettings(), ...over };
+}
+
+type Row = [key: string, title: string, source: ChecklistItem["source"]];
+const DOSSIER_ROWS: Row[] = [
+  ["REQUERIMENTO", "Requerimento", "GERADO"],
+  ["PORTARIA_ULTIMA_PROGRESSAO", "Portaria da última progressão", "MANUAL"],
+  ["DECLARACAO_PAGAMENTO", "Declaração de pagamento de exercícios anteriores", "MANUAL"],
+  ["RELATORIO", "Relatório de Atividades", "GERADO"],
+  ["TABELA", "Tabela de Pontuação", "GERADO"],
+  ["COMPROVANTE", "Comprovante de Documentos", "GERADO"],
+  ["CURRICULO_LATTES", "Currículo Lattes", "MANUAL"],
+  ["PORTARIA_BANCA", "Portaria da banca", "PORTARIA_BANCA"],
+  ["PARECER", "Parecer da banca", "GERADO"],
+];
+
+/** The nine items of the dossier, all pending; `over` changes one item by key. */
+export function checklist(over: Record<string, Partial<ChecklistItem>> = {}): ChecklistItem[] {
+  return DOSSIER_ROWS.map(([key, title, source], i) => ({
+    key,
+    order: i + 1,
+    title,
+    source,
+    state: "PENDENTE" as ChecklistState,
+    version_number: null,
+    generation_id: null,
+    outdated_table: false,
+    ...over[key],
+  }));
 }

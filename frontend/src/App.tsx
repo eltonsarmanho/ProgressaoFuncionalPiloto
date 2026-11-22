@@ -9,6 +9,7 @@ import { Norms } from "./pages/Norms";
 import { ProcessActivities } from "./pages/ProcessActivities";
 import { ProcessBoard } from "./pages/ProcessBoard";
 import { ProcessDocuments } from "./pages/ProcessDocuments";
+import { ProcessDossier } from "./pages/ProcessDossier";
 import { ProcessGenerated } from "./pages/ProcessGenerated";
 import { ProcessScoring } from "./pages/ProcessScoring";
 import { ProcessStep1 } from "./pages/ProcessStep1";
@@ -42,6 +43,7 @@ export function AppRoutes() {
         <Route path="processos/:id/pontuacao" element={<ProcessScoring />} />
         <Route path="processos/:id/gerados" element={<ProcessGenerated />} />
         <Route path="processos/:id/banca" element={<ProcessBoard />} />
+        <Route path="processos/:id/dossie" element={<ProcessDossier />} />
         <Route path="normas" element={<Norms />} />
         <Route
           path="administracao/tabelas"

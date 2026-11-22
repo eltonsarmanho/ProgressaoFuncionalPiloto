@@ -1538,7 +1538,7 @@ graph LR
 
 #### T48: Página da Etapa 7, Requerimento e dossiê
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ProcessDossier` na rota `/processos/:id/dossie`: `StepNav` na Etapa 7, o campo Cidade (grava por `PUT /request-settings` com a versão), o `GeneratedBlock` do `REQUERIMENTO` (que ganha `onReady`, chamado quando uma versão chega a `PRONTO`, para o checklist se atualizar), o `DossierChecklist` e a seção **Concluir o processo** com o `ConcludeDialog` (movida da Etapa 5), com os mesmos textos e estados de hoje (`EM_ANDAMENTO` mostra o botão; `RASCUNHO` o link para a Etapa 1).
 **Where**: `frontend/src/pages/ProcessDossier.tsx` (new; `onReady` em `frontend/src/components/GeneratedBlock.tsx` e a rota em `frontend/src/App.tsx`)
@@ -1553,10 +1553,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/pages/ProcessDossier.test.tsx` (novo), incluindo os testes que saem de `ProcessGenerated.test.tsx` (UIG-09, CAINI-10 e CAINI-11): a página mostra a Etapa 7 atual, o campo Cidade, o bloco do Requerimento e o checklist; digitar a cidade e salvar envia `PUT /request-settings` com `expected_version`; "Gerar Requerimento" gera, a versão aparece e o checklist passa o item a `GERADO` sem recarregar a página; só o processo `EM_ANDAMENTO` oferece o botão que abre a confirmação (UIG-09), e ao concluir a página recarrega o processo; `RASCUNHO` mostra o texto, o link para a Etapa 1 e nenhum botão de concluir (CAINI-10); `EM_ANDAMENTO` mostra o botão e não o texto de rascunho (CAINI-11); a confirmação lista como aviso os pendentes da banca sem bloquear (DOS-07); processo `ARQUIVADO` e `CONCLUIDO` mostram o aviso de somente leitura, desabilitam cidade, geração e marcas com o motivo e mantêm o download; a rota `/processos/p1/dossie` existe em `App.tsx`
-- [ ] Teste existente: `GeneratedBlock.test.tsx` segue passando com o `onReady` opcional (sem a propriedade nada muda) e ganha um teste da chamada quando a versão fica `PRONTO`
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `frontend/src/pages/ProcessDossier.test.tsx` (novo), incluindo os testes que saem de `ProcessGenerated.test.tsx` (UIG-09, CAINI-10 e CAINI-11): a página mostra a Etapa 7 atual, o campo Cidade, o bloco do Requerimento e o checklist; digitar a cidade e salvar envia `PUT /request-settings` com `expected_version`; "Gerar Requerimento" gera, a versão aparece e o checklist passa o item a `GERADO` sem recarregar a página; só o processo `EM_ANDAMENTO` oferece o botão que abre a confirmação (UIG-09), e ao concluir a página recarrega o processo; `RASCUNHO` mostra o texto, o link para a Etapa 1 e nenhum botão de concluir (CAINI-10); `EM_ANDAMENTO` mostra o botão e não o texto de rascunho (CAINI-11); a confirmação lista como aviso os pendentes da banca sem bloquear (DOS-07); processo `ARQUIVADO` e `CONCLUIDO` mostram o aviso de somente leitura, desabilitam cidade, geração e marcas com o motivo e mantêm o download; a rota `/processos/p1/dossie` existe em `App.tsx`
+- [x] Teste existente: `GeneratedBlock.test.tsx` segue passando com o `onReady` opcional (sem a propriedade nada muda) e ganha um teste da chamada quando a versão fica `PRONTO`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: front
