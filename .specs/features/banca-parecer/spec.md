@@ -196,18 +196,18 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | PORT-01 | P1: Portaria da banca | Design | Pending |
-| PORT-02 | P1: Portaria da banca | Design | Pending |
+| PORT-02 | P1: Portaria da banca | Implementing | Implementing |
 | PORT-03 | P1: Portaria da banca | Design | Pending |
 | PORT-04 | P1: Portaria da banca | Design | Pending |
-| PORT-05 | P1: Portaria da banca | Design | Pending |
+| PORT-05 | P1: Portaria da banca | Implementing | Implementing |
 | PORT-06 | P1: Portaria da banca | Design | Pending |
-| PORT-07 | P1: Portaria da banca | Design | Pending |
+| PORT-07 | P1: Portaria da banca | Implementing | Implementing |
 | PORT-08 | P1: Portaria da banca | Design | Pending |
 | PORT-09 | P1: Portaria da banca | Design | Pending |
 | PORT-10 | P1: Portaria da banca | Design | Pending |
 | PORT-11 | P1: Portaria da banca | Design | Pending |
 | PORT-12 | P1: Portaria da banca | Design | Pending |
-| PAR-01 | P1: Minuta do Parecer | Design | Pending |
+| PAR-01 | P1: Minuta do Parecer | Implementing | Implementing |
 | PAR-02 | P1: Minuta do Parecer | Design | Pending |
 | PAR-03 | P1: Minuta do Parecer | Implementing | Implementing |
 | PAR-04 | P1: Minuta do Parecer | Design | Pending |
@@ -218,7 +218,7 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 | PAR-09 | P1: Minuta do Parecer | Design | Pending |
 | PAR-10 | P1: Minuta do Parecer | Design | Pending |
 | PAR-11 | P1: Minuta do Parecer | Design | Pending |
-| PAR-12 | P1: Minuta do Parecer | Design | Pending |
+| PAR-12 | P1: Minuta do Parecer | Implementing | Implementing |
 | PAR-13 | P1: Minuta do Parecer | Design | Pending |
 | PAR-14 | P1: Minuta do Parecer | Design | Pending |
 | REQ-01 | P1: Requerimento | Design | Pending |

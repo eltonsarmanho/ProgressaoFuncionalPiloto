@@ -208,7 +208,7 @@ graph LR
 
 #### T2: Entidades da banca
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `BoardRole` (`PRESIDENTE`, `MEMBRO`, `SUPLENTE`), `ValueSource` (`EXTRAIDO`, `INFORMADO`), `ReadingState` (`SEM_ARQUIVO`, `PENDENTE`, `LENDO`, `LIDA`, `FALHOU`), `OpinionConclusion` (`FAVORAVEL`, `DESFAVORAVEL`), `OrdinanceReadingCode` (`IA_INDISPONIVEL`, `IA_CREDENCIAL_RECUSADA`, `RESPOSTA_INVALIDA`, `TEXTO_ILEGIVEL`, `INTERROMPIDA`, `ERRO_INTERNO`), `OrdinanceWarningCode` (`VALOR_SEM_ORIGEM`, `MEMBROS_NAO_ENCONTRADOS`), `BoardMember(name, role, page, source)`, `OrdinanceFile(internal_name, original_name, mime, size_bytes, sha256, page_count, deleted_at)`, `BoardOrdinance`, `BoardOpinion` e `RequestSettings` com `version`, e `can_read_transition(current, target)`. `BoardOrdinance.is_registered` é verdadeiro com ao menos um membro (DOS-03) e `BoardOpinion.conclusion` não tem valor padrão.
 **Where**: `backend/app/domain/entities/board.py` (new)
@@ -223,10 +223,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_board.py` (novo): os valores literais de cada enum; `BoardOpinion` novo tem `conclusion is None`, data, local e observações vazios (PAR-12: nenhum valor inicial); `BoardOrdinance` novo está em `SEM_ARQUIVO`, sem membros, `is_registered` falso, e com um membro passa a verdadeiro; `can_read_transition` aceita `SEM_ARQUIVO` a `PENDENTE`, `PENDENTE` a `LENDO`, `LENDO` a `LIDA` ou `FALHOU`, `LIDA` ou `FALHOU` a `PENDENTE` e recusa qualquer outra
-- [ ] Teste de arquitetura passa (o domínio não importa FastAPI nem SQLAlchemy)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_board.py` (novo): os valores literais de cada enum; `BoardOpinion` novo tem `conclusion is None`, data, local e observações vazios (PAR-12: nenhum valor inicial); `BoardOrdinance` novo está em `SEM_ARQUIVO`, sem membros, `is_registered` falso, e com um membro passa a verdadeiro; `can_read_transition` aceita `SEM_ARQUIVO` a `PENDENTE`, `PENDENTE` a `LENDO`, `LENDO` a `LIDA` ou `FALHOU`, `LIDA` ou `FALHOU` a `PENDENTE` e recusa qualquer outra
+- [x] Teste de arquitetura passa (o domínio não importa FastAPI nem SQLAlchemy)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
