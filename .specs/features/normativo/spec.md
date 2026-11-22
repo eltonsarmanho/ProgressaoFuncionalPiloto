@@ -126,7 +126,7 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 4. The system SHALL nunca bloquear nem alterar o processo por `MODALIDADE_INCOMPATIVEL` ou `DENOMINACAO_DIVERGENTE`.  <!-- ubiquitous -->
 5. WHEN o ADMIN altera as denominações de uma estrutura de carreira (numa versão que nenhum processo usa, por CARR-08, ou numa versão nova) THEN the system SHALL usar as novas denominações em `DENOMINACAO_DIVERGENTE` na verificação seguinte, que lê as denominações da versão como estão gravadas quando roda, sem mudar a denominação informada nos processos nem os documentos já gerados.  <!-- event-driven -->
 
-**Independent Test**: Promoção sintética de A1 para C1 na estrutura nova: `MODALIDADE_INCOMPATIVEL` como `ALERTA`, com o texto do salto, e o processo segue para as próximas etapas; promoção de B4 para C1: nenhum alerta de modalidade; o ADMIN troca "Associado" por outra denominação sintética na classe C e o processo que informou "Associado" passa a mostrar `DENOMINACAO_DIVERGENTE`.
+**Independent Test**: Promoção sintética de A1 para C1 na estrutura nova: `MODALIDADE_INCOMPATIVEL` como `ALERTA`, com o texto do salto, e o processo segue para as próximas etapas; promoção de B4 para C1: nenhum alerta de modalidade; o ADMIN troca "Associado" por outra denominação sintética na classe C de uma versão que nenhum processo usa (CARR-08) e a verificação de um processo sintético que informou "Associado" nessa versão passa a mostrar `DENOMINACAO_DIVERGENTE`, com a denominação informada intacta.
 
 ---
 
