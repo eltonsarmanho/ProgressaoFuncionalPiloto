@@ -875,7 +875,7 @@ graph LR
 
 #### T27: Formulários de norma
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `NormForm` (cadastrar e editar, com erro por campo de 422 e mensagem de 409) e `NormFileForm` (anexar PDF por `FormData`, com a mensagem do limite).
 **Where**: `frontend/src/components/NormForms.tsx` (new)
@@ -890,9 +890,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/NormForms.test.tsx` (novo): envia os campos; mostra o erro de 422 no campo; mostra a mensagem de 409; o código fica só leitura na edição; anexo envia `FormData` com o arquivo e `expected_version`
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `frontend/src/components/NormForms.test.tsx` (novo): envia os campos; mostra o erro de 422 no campo; mostra a mensagem de 409; o código fica só leitura na edição; anexo envia `FormData` com o arquivo e `expected_version`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: build

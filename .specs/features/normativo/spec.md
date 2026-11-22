@@ -190,16 +190,16 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| NBASE-01 | P1: Base de normas | Implementing | Implementing |
-| NBASE-02 | P1: Base de normas | Implementing | Implementing |
-| NBASE-03 | P1: Base de normas | Implementing | Implementing |
-| NBASE-04 | P1: Base de normas | Implementing | Implementing |
-| NBASE-05 | P1: Base de normas | Implementing | Implementing |
-| NBASE-06 | P1: Base de normas | Implementing | Implementing |
-| NBASE-07 | P1: Base de normas | Implementing | Implementing |
+| NBASE-01 | P1: Base de normas | Implemented | Implemented |
+| NBASE-02 | P1: Base de normas | Implemented | Implemented |
+| NBASE-03 | P1: Base de normas | Implemented | Implemented |
+| NBASE-04 | P1: Base de normas | Implemented | Implemented |
+| NBASE-05 | P1: Base de normas | Implemented | Implemented |
+| NBASE-06 | P1: Base de normas | Implemented | Implemented |
+| NBASE-07 | P1: Base de normas | Implemented | Implemented |
 | NBASE-08 | P1: Base de normas | Implementing | Implementing |
 | NBASE-09 | P1: Base de normas | Implemented | Implemented |
-| NBASE-10 | P1: Base de normas | Implementing | Implementing |
+| NBASE-10 | P1: Base de normas | Implemented | Implemented |
 | NBASE-11 | P1: Base de normas | Implemented | Implemented |
 | NBASE-12 | P1: Base de normas | Implemented | Implemented |
 | NLINK-01 | P1: Regras e alertas ligados à norma | Implementing | Implementing |
