@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 
-const TOTAL_STEPS = 9;
+const TOTAL_STEPS = 7;
 
 /** The id of the message of the block: the closed steps and the closed "go to the next step" point to it. */
 export const STEP_BLOCKED_ID = "step-blocked-message";
@@ -11,6 +11,8 @@ const STEP_TITLES: Record<number, string> = {
   3: "Atividades",
   4: "Pontuação",
   5: "Documentos gerados",
+  6: "Banca e Parecer",
+  7: "Requerimento e dossiê",
 };
 
 function stepPath(step: number, processId?: string): string | null {
@@ -20,12 +22,14 @@ function stepPath(step: number, processId?: string): string | null {
   if (step === 3) return `/processos/${processId}/atividades`;
   if (step === 4) return `/processos/${processId}/pontuacao`;
   if (step === 5) return `/processos/${processId}/gerados`;
+  if (step === 6) return `/processos/${processId}/banca`;
+  if (step === 7) return `/processos/${processId}/dossie`;
   return null;
 }
 
-/** UI-04 / TELA-01: nine steps; only the enabled ones (default: step 1) are available. */
+/** UI-04 / TELA-01 / BNAV-01: seven steps; only the enabled ones (default: step 1) are available. */
 export function StepNav({
-  enabled = [1, 2, 3, 4, 5],
+  enabled = [1, 2, 3, 4, 5, 6, 7],
   current = 1,
   processId,
   blocked,

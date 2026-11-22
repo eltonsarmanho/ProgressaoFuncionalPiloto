@@ -1337,7 +1337,7 @@ graph LR
 
 #### T41: Navegação com sete etapas
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `StepNav` com `TOTAL_STEPS = 7`, `6: "Banca e Parecer"` (`/processos/:id/banca`), `7: "Requerimento e dossiê"` (`/processos/:id/dossie`), `enabled` padrão de 1 a 7 e nenhuma etapa "em breve".
 **Where**: `frontend/src/components/StepNav.tsx` (modify)
@@ -1352,10 +1352,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/StepNav.test.tsx`: a navegação mostra sete itens com as Etapas 6 "Banca e Parecer" e 7 "Requerimento e dossiê" habilitadas, nenhuma com "em breve"; as hrefs são `/processos/p1`, `/documentos`, `/atividades`, `/pontuacao`, `/gerados`, `/banca` e `/dossie`; a etapa atual leva `aria-current`; sem processo salvo as etapas aparecem sem link; o bloqueio de avanço (SEC-05) continua fechando as etapas depois da bloqueada, a 6 e a 7 inclusive
-- [ ] Testes existentes que mudam por BNAV-01: `StepNav.test.tsx:16-30` ("habilita as Etapas 1 a 5 e mantém as 6 a 9 com 'em breve'"), `:99-101` ("as etapas 6 a 9 seguem 'em breve'") e `frontend/src/pages/ProcessStep1.test.tsx:131-165` (exibe as 9 etapas com 6 a 9 "em breve" passa a esperar 7 etapas habilitadas)
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `frontend/src/components/StepNav.test.tsx`: a navegação mostra sete itens com as Etapas 6 "Banca e Parecer" e 7 "Requerimento e dossiê" habilitadas, nenhuma com "em breve"; as hrefs são `/processos/p1`, `/documentos`, `/atividades`, `/pontuacao`, `/gerados`, `/banca` e `/dossie`; a etapa atual leva `aria-current`; sem processo salvo as etapas aparecem sem link; o bloqueio de avanço (SEC-05) continua fechando as etapas depois da bloqueada, a 6 e a 7 inclusive
+- [x] Testes existentes que mudam por BNAV-01: `StepNav.test.tsx:16-30` ("habilita as Etapas 1 a 5 e mantém as 6 a 9 com 'em breve'"), `:99-101` ("as etapas 6 a 9 seguem 'em breve'") e `frontend/src/pages/ProcessStep1.test.tsx:131-165` (exibe as 9 etapas com 6 a 9 "em breve" passa a esperar 7 etapas habilitadas)
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: front

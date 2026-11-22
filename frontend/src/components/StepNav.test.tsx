@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { StepNav } from "./StepNav";
@@ -13,33 +13,38 @@ function steps(props: Parameters<typeof StepNav>[0]) {
 }
 
 describe("TELA-01, UIG-01: navegação das etapas", () => {
-  it("habilita as Etapas 1 a 5 e mantém as 6 a 9 desabilitadas com 'em breve'", () => {
+  it("BNAV-01: mostra sete etapas habilitadas, com a Etapa 6 Banca e Parecer e a Etapa 7 Requerimento e dossiê, e nenhuma 'em breve'", () => {
     const items = steps({ processId: "p1" });
-    expect(items).toHaveLength(9);
-    items.slice(0, 5).forEach((item) => {
+    expect(items).toHaveLength(7);
+    items.forEach((item) => {
       expect(item).not.toHaveTextContent("em breve");
       expect(item).not.toHaveAttribute("aria-disabled");
       expect(within(item).getByRole("link")).toBeInTheDocument();
     });
-    items.slice(5).forEach((item, i) => {
-      expect(item).toHaveTextContent(`Etapa ${i + 6}`);
-      expect(item).toHaveTextContent("em breve");
-      expect(item).toHaveAttribute("aria-disabled", "true");
-      expect(within(item).queryByRole("link")).not.toBeInTheDocument();
-    });
+    expect(items[5]).toHaveTextContent("Etapa 6 · Banca e Parecer");
+    expect(items[6]).toHaveTextContent("Etapa 7 · Requerimento e dossiê");
   });
 
-  it("liga cada etapa habilitada à sua rota, a Etapa 5 em /gerados", () => {
-    const hrefs = steps({ processId: "p1" })
-      .slice(0, 5)
-      .map((item) => within(item).getByRole("link").getAttribute("href"));
+  it("BNAV-01: liga cada etapa à sua rota, a Etapa 6 em /banca e a Etapa 7 em /dossie", () => {
+    const hrefs = steps({ processId: "p1" }).map((item) => within(item).getByRole("link").getAttribute("href"));
     expect(hrefs).toEqual([
       "/processos/p1",
       "/processos/p1/documentos",
       "/processos/p1/atividades",
       "/processos/p1/pontuacao",
       "/processos/p1/gerados",
+      "/processos/p1/banca",
+      "/processos/p1/dossie",
     ]);
+  });
+
+  it("BNAV-01: a etapa atual leva aria-current, a 6 e a 7 inclusive", () => {
+    [6, 7].forEach((current) => {
+      const items = steps({ processId: "p1", current });
+      expect(items[current - 1]).toHaveAttribute("aria-current", "step");
+      items.filter((_, i) => i !== current - 1).forEach((item) => expect(item).not.toHaveAttribute("aria-current"));
+      cleanup();
+    });
   });
 
   it("mostra a Etapa 5 como Documentos gerados e a Etapa 4 segue como Pontuação", () => {
@@ -58,12 +63,12 @@ describe("TELA-01, UIG-01: navegação das etapas", () => {
     expect(items[1]).not.toHaveAttribute("aria-current");
   });
 
-  it("sem processo salvo as etapas habilitadas aparecem sem link, a 5 inclusive", () => {
+  it("sem processo salvo as etapas habilitadas aparecem sem link, da 2 à 7", () => {
     const items = steps({});
-    expect(within(items[1]).queryByRole("link")).not.toBeInTheDocument();
-    expect(items[1]).not.toHaveTextContent("em breve");
-    expect(within(items[4]).queryByRole("link")).not.toBeInTheDocument();
-    expect(items[4]).not.toHaveTextContent("em breve");
+    [1, 2, 3, 4, 5, 6].forEach((i) => {
+      expect(within(items[i]).queryByRole("link")).not.toBeInTheDocument();
+      expect(items[i]).not.toHaveTextContent("em breve");
+    });
   });
 });
 
@@ -96,9 +101,16 @@ describe("SEC-05: avanço bloqueado", () => {
     expect(items[2]).not.toHaveAttribute("aria-disabled");
   });
 
-  it("as etapas 6 a 9 seguem 'em breve'", () => {
+  it("BNAV-01: o bloqueio fecha também as Etapas 6 e 7, sem link e sem 'em breve'", () => {
     const items = steps({ processId: "p1", current: 3, blocked });
-    items.slice(5).forEach((item) => expect(item).toHaveTextContent("em breve"));
+    expect(items).toHaveLength(7);
+    [5, 6].forEach((i) => {
+      expect(items[i]).toHaveAttribute("aria-disabled", "true");
+      expect(items[i]).not.toHaveTextContent("em breve");
+      expect(within(items[i]).queryByRole("link")).not.toBeInTheDocument();
+    });
+    expect(items[5]).toHaveTextContent("Etapa 6 · Banca e Parecer");
+    expect(items[6]).toHaveTextContent("Etapa 7 · Requerimento e dossiê");
   });
 
   it("sem 'blocked' o comportamento não muda e nenhuma mensagem aparece", () => {
@@ -147,11 +159,11 @@ describe("SEC-05, SEC-12: a região viva e os itens fechados", () => {
     expect(withBlock.querySelector("p#step-blocked-message")).toHaveTextContent("3 atividades precisam de categoria");
   });
 
-  it("as etapas fechadas apontam a mensagem por aria-describedby; as abertas e as 'em breve' não", () => {
+  it("as etapas fechadas, a 6 e a 7 inclusive, apontam a mensagem por aria-describedby; as abertas não", () => {
     const items = steps({ processId: "p1", current: 3, blocked });
     const id = live().id;
     expect(id).not.toBe("");
-    [3, 4].forEach((i) => expect(items[i]).toHaveAttribute("aria-describedby", id));
-    [0, 1, 2, 5, 8].forEach((i) => expect(items[i]).not.toHaveAttribute("aria-describedby"));
+    [3, 4, 5, 6].forEach((i) => expect(items[i]).toHaveAttribute("aria-describedby", id));
+    [0, 1, 2].forEach((i) => expect(items[i]).not.toHaveAttribute("aria-describedby"));
   });
 });

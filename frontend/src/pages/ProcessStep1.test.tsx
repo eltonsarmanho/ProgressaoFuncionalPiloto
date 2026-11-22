@@ -128,7 +128,7 @@ describe("ProcessStep1", () => {
     });
   });
 
-  it("UI-04 / TELA-01: exibe as 9 etapas com a Etapa 1 ativa, as etapas 2 a 5 habilitadas e as etapas 6–9 desabilitadas e rotuladas 'em breve'", async () => {
+  it("UI-04 / TELA-01 / BNAV-01: exibe as 7 etapas com a Etapa 1 ativa e todas habilitadas, nenhuma 'em breve'", async () => {
     mockFetch({
       "GET /api/units": { status: 200, body: UNITS },
       "GET /api/professors": { status: 200, body: PROFESSORS },
@@ -136,36 +136,25 @@ describe("ProcessStep1", () => {
     renderAt("/processos/novo");
     const nav = await screen.findByRole("navigation", { name: "Etapas do processo" });
     const steps = within(nav).getAllByRole("listitem");
-    expect(steps).toHaveLength(9);
+    expect(steps).toHaveLength(7);
     expect(steps[0]).toHaveAttribute("aria-current", "step");
-    expect(steps[0]).not.toHaveTextContent("em breve");
-    expect(steps[0]).not.toHaveAttribute("aria-disabled");
+    steps.forEach((step, i) => {
+      expect(step).not.toHaveTextContent("em breve");
+      expect(step).not.toHaveAttribute("aria-disabled");
+      if (i > 0) expect(step).not.toHaveAttribute("aria-current");
+    });
     expect(steps[1]).toHaveTextContent("Etapa 2");
     expect(steps[1]).toHaveTextContent("Documentos");
     expect(steps[2]).toHaveTextContent("Etapa 3");
     expect(steps[2]).toHaveTextContent("Atividades");
-    [1, 2].forEach((i) => {
-      expect(steps[i]).not.toHaveTextContent("em breve");
-      expect(steps[i]).not.toHaveAttribute("aria-disabled");
-      expect(steps[i]).not.toHaveAttribute("aria-current");
-    });
     expect(steps[3]).toHaveTextContent("Etapa 4");
     expect(steps[3]).toHaveTextContent("Pontuação");
-    expect(steps[3]).not.toHaveTextContent("em breve");
-    expect(steps[3]).not.toHaveAttribute("aria-disabled");
-    expect(steps[3]).not.toHaveAttribute("aria-current");
     expect(steps[4]).toHaveTextContent("Etapa 5");
     expect(steps[4]).toHaveTextContent("Documentos gerados");
-    expect(steps[4]).not.toHaveTextContent("em breve");
-    expect(steps[4]).not.toHaveAttribute("aria-disabled");
-    steps.forEach((step, i) => {
-      if (i < 5) return;
-      expect(step).toHaveTextContent(`Etapa ${i + 1}`);
-      expect(step).toHaveTextContent("em breve");
-      expect(step).toHaveAttribute("aria-disabled", "true");
-      expect(step).not.toHaveAttribute("aria-current");
-      expect(within(step).queryByRole("link")).not.toBeInTheDocument();
-    });
+    expect(steps[5]).toHaveTextContent("Etapa 6");
+    expect(steps[5]).toHaveTextContent("Banca e Parecer");
+    expect(steps[6]).toHaveTextContent("Etapa 7");
+    expect(steps[6]).toHaveTextContent("Requerimento e dossiê");
   });
 
   it("TELA-01: com um processo aberto, Etapa 1 e Etapa 4 são links para o processo e para a pontuação", async () => {
