@@ -97,6 +97,20 @@ def test_downgrade_to_0005_removes_the_tables_and_keeps_the_earlier_schema(migra
     assert GENERATED_FUNCTIONS <= functions
 
 
+def test_the_kind_enum_has_the_five_kinds_in_order_after_the_upgrade(engine):
+    with engine.connect() as conn:
+        values = list(
+            conn.execute(
+                text(
+                    "SELECT enumlabel FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid "
+                    "WHERE t.typname = 'generated_kind' ORDER BY e.enumsortorder"
+                )
+            ).scalars()
+        )
+
+    assert values == ["TABELA", "RELATORIO", "COMPROVANTE", "REQUERIMENTO", "PARECER"]
+
+
 def test_two_generating_rows_of_the_same_process_and_kind_are_refused(engine, process, base):
     user_id = base["admin"].id
     with pytest.raises(IntegrityError, match="uq_generated_documents_generating"):

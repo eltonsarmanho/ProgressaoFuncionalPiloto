@@ -57,6 +57,10 @@ HANDLED_DIRECT = {
     "report_wording_jobs",
     "report_drafts",
     "comprovante_layouts",
+    "board_ordinances",
+    "board_opinions",
+    "request_settings",
+    "dossier_deliveries",
 }
 
 

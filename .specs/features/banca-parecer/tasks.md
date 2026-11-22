@@ -505,7 +505,7 @@ graph LR
 
 #### T12: Migração `0011_board_opinion` e modelos
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Migração `0011` (depois da `0010_norms`): `ALTER TYPE generated_kind ADD VALUE IF NOT EXISTS 'REQUERIMENTO'` e `'PARECER'` (sem usá-los na própria migração), enums `board_role`, `value_source`, `ordinance_reading_state` e `opinion_conclusion`, tabelas `board_ordinances`, `board_opinions`, `request_settings` e `dossier_deliveries` como no design (único por processo, `CHECK char_length(notes) <= 5000`, índice parcial `ix_board_ordinances_pending`), `downgrade` que remove tabelas e enums e mantém os valores de `generated_kind`; os quatro modelos em `models.py`.
 **Where**: `backend/alembic/versions/0011_board_opinion.py` (new; os modelos `BoardOrdinanceModel`, `BoardOpinionModel`, `RequestSettingsModel` e `DossierDeliveryModel` em `backend/app/infrastructure/database/models.py`)
@@ -520,11 +520,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_migration_board.py` (novo): `upgrade` cria as quatro tabelas, os quatro enums e o índice parcial; duas portarias do mesmo processo falham; `members` nasce `[]`, `reading_state` nasce `SEM_ARQUIVO` e `conclusion` nasce nulo; observações com 5 001 caracteres falham pelo `CHECK`; chave primária composta de `dossier_deliveries` recusa a marca repetida; depois do `upgrade` é possível inserir `generated_documents` de tipo `PARECER` e `REQUERIMENTO` e continua valendo uma só linha `GERANDO` por processo e tipo; `downgrade` a `0010` remove as tabelas e os quatro enums e **mantém** os valores `PARECER` e `REQUERIMENTO` em `generated_kind`; `upgrade` de novo volta ao estado anterior
-- [ ] Testes existentes que mudam por causa das tabelas e dos valores novos: `backend/tests/integration/test_migrations.py` (`TABLES` ganha as quatro tabelas), `backend/tests/integration/documents/test_generated_schema.py` (confere os cinco valores de `generated_kind` depois do `upgrade` e que o `downgrade` até a `0005` e a volta ao `head` seguem passando) e `backend/tests/integration/documents/test_process_purge_repository.py::test_every_foreign_key_to_the_process_is_handled` (`HANDLED_DIRECT` ganha as quatro tabelas; a exclusão em si vem na T16)
-- [ ] `test_models_match_migrated_schema` passa (modelos e migração iguais)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/test_migration_board.py tests/integration/test_migrations.py tests/integration/test_migration_norms.py tests/integration/documents/test_generated_schema.py tests/integration/documents/test_process_purge_repository.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/test_migration_board.py` (novo): `upgrade` cria as quatro tabelas, os quatro enums e o índice parcial; duas portarias do mesmo processo falham; `members` nasce `[]`, `reading_state` nasce `SEM_ARQUIVO` e `conclusion` nasce nulo; observações com 5 001 caracteres falham pelo `CHECK`; chave primária composta de `dossier_deliveries` recusa a marca repetida; depois do `upgrade` é possível inserir `generated_documents` de tipo `PARECER` e `REQUERIMENTO` e continua valendo uma só linha `GERANDO` por processo e tipo; `downgrade` a `0010` remove as tabelas e os quatro enums e **mantém** os valores `PARECER` e `REQUERIMENTO` em `generated_kind`; `upgrade` de novo volta ao estado anterior
+- [x] Testes existentes que mudam por causa das tabelas e dos valores novos: `backend/tests/integration/test_migrations.py` (`TABLES` ganha as quatro tabelas), `backend/tests/integration/documents/test_generated_schema.py` (confere os cinco valores de `generated_kind` depois do `upgrade` e que o `downgrade` até a `0005` e a volta ao `head` seguem passando) e `backend/tests/integration/documents/test_process_purge_repository.py::test_every_foreign_key_to_the_process_is_handled` (`HANDLED_DIRECT` ganha as quatro tabelas; a exclusão em si vem na T16)
+- [x] `test_models_match_migrated_schema` passa (modelos e migração iguais)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/test_migration_board.py tests/integration/test_migrations.py tests/integration/test_migration_norms.py tests/integration/documents/test_generated_schema.py tests/integration/documents/test_process_purge_repository.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted

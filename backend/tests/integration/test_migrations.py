@@ -42,6 +42,10 @@ TABLES = {
     "report_drafts",
     "comprovante_layouts",
     "norms",
+    "board_ordinances",
+    "board_opinions",
+    "request_settings",
+    "dossier_deliveries",
 }
 
 

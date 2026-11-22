@@ -30,6 +30,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from app.domain.entities.academic_unit import UnitKind
 from app.domain.entities.activity import ActivitySource, ActivityStatus, Level, PeriodPrecision
 from app.domain.entities.audit import AuditAction
+from app.domain.entities.board import OpinionConclusion, ReadingState, ValueSource
 from app.domain.entities.career import Modality
 from app.domain.entities.document import DocumentStatus, RunStatus, TextMethod
 from app.domain.entities.generated import DocumentFormat, DocumentKind, GenerationState
@@ -608,3 +609,108 @@ class ComprovanteLayoutModel(Base):
     version: Mapped[int] = mapped_column(Integer)
     updated_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class BoardOrdinanceModel(Base):
+    """The board ordinance of a process: its file, the values read or typed and the reading state.
+
+    Not a `documents` row (PORT-09). `members` is the list `[{name, role, page, source}]`.
+    """
+
+    __tablename__ = "board_ordinances"
+    __table_args__ = (
+        UniqueConstraint("process_id", name="uq_board_ordinances_process"),
+        UniqueConstraint("internal_name", name="uq_board_ordinances_internal_name"),
+        Index(
+            "ix_board_ordinances_pending",
+            "reading_requested_at",
+            postgresql_where=text("reading_state = 'PENDENTE'"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    process_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_processes.id")
+    )
+    number: Mapped[str | None] = mapped_column(String(50))
+    number_page: Mapped[int | None] = mapped_column(Integer)
+    number_source: Mapped[ValueSource | None] = mapped_column(_enum(ValueSource, "value_source"))
+    ordinance_date: Mapped[date | None] = mapped_column(Date)
+    date_page: Mapped[int | None] = mapped_column(Integer)
+    date_source: Mapped[ValueSource | None] = mapped_column(_enum(ValueSource, "value_source"))
+    members: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, server_default=text("'[]'::jsonb"))
+    original_name: Mapped[str | None] = mapped_column(String(255))
+    internal_name: Mapped[str | None] = mapped_column(String(64))
+    mime: Mapped[str | None] = mapped_column(String(50))
+    size_bytes: Mapped[int | None] = mapped_column(Integer)
+    sha256: Mapped[str | None] = mapped_column(CHAR(64))
+    page_count: Mapped[int | None] = mapped_column(Integer)
+    file_deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reading_state: Mapped[ReadingState] = mapped_column(
+        _enum(ReadingState, "ordinance_reading_state"), server_default="SEM_ARQUIVO"
+    )
+    reading_code: Mapped[str | None] = mapped_column(String(40))
+    reading_attempts: Mapped[int] = mapped_column(Integer, server_default="0")
+    reading_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reading_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reading_finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    raw_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    warnings: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONB, server_default=text("'[]'::jsonb")
+    )
+    version: Mapped[int] = mapped_column(Integer, server_default="1")
+    created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class BoardOpinionModel(Base):
+    """The fields of the Parecer; `conclusion` has no default (PAR-12)."""
+
+    __tablename__ = "board_opinions"
+    __table_args__ = (
+        UniqueConstraint("process_id", name="uq_board_opinions_process"),
+        CheckConstraint("char_length(notes) <= 5000", name="ck_board_opinions_notes"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    process_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_processes.id")
+    )
+    conclusion: Mapped[OpinionConclusion | None] = mapped_column(
+        _enum(OpinionConclusion, "opinion_conclusion")
+    )
+    opinion_date: Mapped[date | None] = mapped_column(Date)
+    place: Mapped[str | None] = mapped_column(String(100))
+    notes: Mapped[str | None] = mapped_column(Text)
+    version: Mapped[int] = mapped_column(Integer, server_default="1")
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class RequestSettingsModel(Base):
+    """The city of the Requerimento, apart from the process (REQ-05)."""
+
+    __tablename__ = "request_settings"
+    __table_args__ = (UniqueConstraint("process_id", name="uq_request_settings_process"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    process_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_processes.id")
+    )
+    city: Mapped[str | None] = mapped_column(String(100))
+    version: Mapped[int] = mapped_column(Integer, server_default="1")
+
+
+class DossierDeliveryModel(Base):
+    """The mark "Entregue" of an item of the dossier that the system does not produce (DOS-04)."""
+
+    __tablename__ = "dossier_deliveries"
+
+    process_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_processes.id"), primary_key=True
+    )
+    item_key: Mapped[str] = mapped_column(String(40), primary_key=True)
+    marked_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    marked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

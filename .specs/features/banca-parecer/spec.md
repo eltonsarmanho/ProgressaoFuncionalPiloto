@@ -195,7 +195,7 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| PORT-01 | P1: Portaria da banca | Design | Pending |
+| PORT-01 | P1: Portaria da banca | Implementing | Implementing |
 | PORT-02 | P1: Portaria da banca | Implementing | Implementing |
 | PORT-03 | P1: Portaria da banca | Implementing | Implementing |
 | PORT-04 | P1: Portaria da banca | Design | Pending |
@@ -206,7 +206,7 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 | PORT-09 | P1: Portaria da banca | Design | Pending |
 | PORT-10 | P1: Portaria da banca | Design | Pending |
 | PORT-11 | P1: Portaria da banca | Implementing | Implementing |
-| PORT-12 | P1: Portaria da banca | Design | Pending |
+| PORT-12 | P1: Portaria da banca | Implementing | Implementing |
 | PAR-01 | P1: Minuta do Parecer | Implementing | Implementing |
 | PAR-02 | P1: Minuta do Parecer | Implementing | Implementing |
 | PAR-03 | P1: Minuta do Parecer | Implementing | Implementing |
@@ -232,7 +232,7 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 | DOS-01 | P2: Checklist do dossiê | Implementing | Implementing |
 | DOS-02 | P2: Checklist do dossiê | Implementing | Implementing |
 | DOS-03 | P2: Checklist do dossiê | Implementing | Implementing |
-| DOS-04 | P2: Checklist do dossiê | Design | Pending |
+| DOS-04 | P2: Checklist do dossiê | Implementing | Implementing |
 | DOS-05 | P2: Checklist do dossiê | Implementing | Implementing |
 | DOS-06 | P2: Checklist do dossiê | Implementing | Implementing |
 | DOS-07 | P2: Checklist do dossiê | Implementing | Implementing |
