@@ -1,5 +1,6 @@
 """VER-05, CMP-09, CMP-10, VER-07: a generation that fails leaves no file and a closed row."""
 
+import dataclasses
 import json
 import logging
 
@@ -153,3 +154,60 @@ def test_the_log_of_a_failed_generation_has_no_text_of_the_documents(gen, caplog
 
     assert "ERRO_INTERNO" in caplog.text
     assert PERSON not in caplog.text and SECRET not in caplog.text
+
+
+class Invented:
+    """A kind of document that no code knows."""
+
+    value = "INVENTADO"
+
+
+class _InventedKindGenerations:
+    """The generation repository, but every row it reads says the invented kind."""
+
+    def __init__(self, real) -> None:
+        self._real = real
+
+    def get(self, generation_id):
+        row = self._real.get(generation_id)
+        return None if row is None else dataclasses.replace(row, kind=Invented())
+
+    def __getattr__(self, name):
+        return getattr(self._real, name)
+
+
+class _InventedKindUow:
+    def __init__(self, real) -> None:
+        self._real = real
+
+    def __enter__(self):
+        self._real.__enter__()
+        return self
+
+    def __exit__(self, *exc):
+        return self._real.__exit__(*exc)
+
+    @property
+    def generations(self):
+        return _InventedKindGenerations(self._real.generations)
+
+    def __getattr__(self, name):
+        return getattr(self._real, name)
+
+
+def test_a_kind_no_code_knows_fails_with_an_internal_error_and_never_becomes_a_tabela(gen, caplog):
+    add_activity(gen.world)
+    requested = gen.request().execute(gen.world.admin, gen.world.process.id, DocumentKind.TABELA)
+    factory = gen.world.uow_factory
+
+    with caplog.at_level(logging.DEBUG):
+        assert gen.run(uow_factory=lambda: _InventedKindUow(factory())).run_next() is True
+
+    with factory() as uow:
+        failed = uow.generations.get(requested.id)
+    assert failed.state is GenerationState.FALHOU
+    assert failed.error_code is GenerationCode.ERRO_INTERNO
+    assert failed.version_number is None and failed.files == ()
+    assert stored_files(gen) == []
+    assert "error_type=ValueError" in caplog.text
+    assert "unknown kind" not in caplog.text  # the log carries the type of the error, not its text

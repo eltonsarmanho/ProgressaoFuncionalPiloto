@@ -1,5 +1,6 @@
 """TAB-01, VER-01, VER-02, VER-07: running the generation of the scoring table."""
 
+import dataclasses
 import hashlib
 import json
 import re
@@ -222,3 +223,48 @@ def test_a_document_outside_the_interstice_is_nowhere_in_the_generated_table(gen
     # the activity is
     assert str(inside.id) not in json.dumps(done.snapshot)
     assert str(activity.id) in json.dumps(done.snapshot)
+
+
+# --- the reference minimum goes in the snapshot (PAR-04, PAR-06) ------------------------------
+
+
+def set_current_class(world, current_class):
+    with world.uow_factory() as uow:
+        current = uow.processes.get(world.process.id)
+        uow.processes.update(
+            dataclasses.replace(current, current_class=current_class), current.version
+        )
+        uow.commit()
+
+
+def test_the_snapshot_keeps_the_minimum_of_the_class_and_that_the_total_does_not_reach_it(gen):
+    add_activity(gen.world)  # class C: the minimum of the table is 100 and one activity is 5
+
+    generation = generate(gen)
+
+    assert generation.snapshot["total"] == "5.00"
+    assert generation.snapshot["minimum"] == {"status": "NAO_ATINGE", "value": "100.00"}
+
+
+def test_the_snapshot_keeps_that_the_total_reaches_the_minimum(gen):
+    add_scenario_211(gen.world)  # well above the 100 points of class C
+
+    generation = generate(gen)
+
+    assert generation.snapshot["minimum"] == {"status": "ATINGE", "value": "100.00"}
+
+
+def test_a_class_with_no_minimum_in_the_table_is_saved_as_not_defined_with_no_value(gen):
+    add_activity(gen.world)
+    set_current_class(gen.world, "Z")  # no minimum for it in the table of points
+
+    generation = generate(gen)
+
+    assert generation.snapshot["minimum"] == {"status": "NAO_DEFINIDO", "value": None}
+
+
+def test_the_minimum_is_kept_only_in_the_tabela_snapshot(gen):
+    add_activity(gen.world)
+
+    assert "minimum" in generate(gen, DocumentKind.TABELA).snapshot
+    assert "minimum" not in generate(gen, DocumentKind.RELATORIO).snapshot

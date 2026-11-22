@@ -1019,7 +1019,7 @@ graph LR
 
 #### T30: Despacho explícito por tipo e mínimo na Tabela
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `RunGeneration._build_and_close` e `_produce` passam a despachar por tipo com ramos explícitos para Tabela, Relatório e Comprovante (que continuam carregando as entradas de geração) e `ValueError` para qualquer outro tipo, sem cair em `_table`; `_table` passa o `minimum` ao instantâneo (`inputs.score.minimum`) e `_FAILURE_MESSAGES` ganha a mensagem de `TABELA_DESATUALIZADA`.
 **Where**: `backend/app/application/use_cases/generated_documents.py` (modify)
@@ -1034,10 +1034,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_run_generation_table.py` e `test_run_generation_failure.py`: o instantâneo da Tabela gerada traz `minimum` com `status` e `value` do cálculo de agora; na estrutura sem mínimo definido traz `NAO_DEFINIDO` com `value` nulo; um tipo que não é nenhum dos cinco (objeto de teste com `kind` inventado) levanta `ValueError` em `_produce` e a linha termina `FALHOU` com `ERRO_INTERNO`, com o log só com o tipo da exceção (risco do design: o tipo desconhecido não vira Tabela em silêncio); Relatório e Comprovante seguem gerando como antes
-- [ ] Testes existentes: `test_run_generation_table.py`, `test_run_generation_report.py` e `test_run_generation_comprovante.py` seguem passando sem enfraquecer
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_run_generation_table.py tests/integration/doc_usecases/test_run_generation_report.py tests/integration/doc_usecases/test_run_generation_comprovante.py tests/integration/doc_usecases/test_run_generation_failure.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_run_generation_table.py` e `test_run_generation_failure.py`: o instantâneo da Tabela gerada traz `minimum` com `status` e `value` do cálculo de agora; na estrutura sem mínimo definido traz `NAO_DEFINIDO` com `value` nulo; um tipo que não é nenhum dos cinco (objeto de teste com `kind` inventado) levanta `ValueError` em `_produce` e a linha termina `FALHOU` com `ERRO_INTERNO`, com o log só com o tipo da exceção (risco do design: o tipo desconhecido não vira Tabela em silêncio); Relatório e Comprovante seguem gerando como antes
+- [x] Testes existentes: `test_run_generation_table.py`, `test_run_generation_report.py` e `test_run_generation_comprovante.py` seguem passando sem enfraquecer
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_run_generation_table.py tests/integration/doc_usecases/test_run_generation_report.py tests/integration/doc_usecases/test_run_generation_comprovante.py tests/integration/doc_usecases/test_run_generation_failure.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted

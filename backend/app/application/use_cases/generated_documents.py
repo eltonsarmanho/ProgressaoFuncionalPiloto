@@ -79,6 +79,8 @@ GENERATED_ENTITY = "generated_document"
 MB = 1024 * 1024
 _PIXELS_PER_MEGAPIXEL = 1_000_000
 _BOARD_KINDS = (DocumentKind.PARECER, DocumentKind.REQUERIMENTO)
+# the kinds that read the activities, the score and the table of the process to be built
+_INPUT_KINDS = (DocumentKind.TABELA, DocumentKind.RELATORIO, DocumentKind.COMPROVANTE)
 
 
 @dataclass(frozen=True)
@@ -384,6 +386,7 @@ _FAILURE_MESSAGES: Mapping[GenerationCode, str] = {
     GenerationCode.ATIVIDADE_SEM_CATEGORIA: (
         "Há atividades sem categoria na Etapa 3. Escolha a categoria de cada uma."
     ),
+    GenerationCode.TABELA_DESATUALIZADA: TABLE_OUTDATED_MESSAGE,
     GenerationCode.ERRO_INTERNO: "Erro interno ao gerar o documento. Tente gerar de novo.",
 }
 
@@ -484,12 +487,14 @@ class RunGeneration:
     def _build_and_close(
         self, generation: GeneratedDocument, scratch: _Scratch
     ) -> tuple[list[GeneratedFile], GeneratedDocument]:
-        with self._uow_factory() as uow:
-            process = uow.processes.get(generation.process_id)
-            inputs = load_generation_inputs(uow, process)
-            saved_draft = None
-            if generation.kind is DocumentKind.RELATORIO:
-                saved_draft = uow.report_drafts.get(process.id)
+        inputs = None
+        saved_draft = None
+        if generation.kind in _INPUT_KINDS:
+            with self._uow_factory() as uow:
+                process = uow.processes.get(generation.process_id)
+                inputs = load_generation_inputs(uow, process)
+                if generation.kind is DocumentKind.RELATORIO:
+                    saved_draft = uow.report_drafts.get(process.id)
         produced = self._produce(generation, inputs, saved_draft, scratch)
         files = []
         for fmt, temp in produced.outputs:
@@ -577,15 +582,21 @@ class RunGeneration:
     def _produce(
         self,
         generation: GeneratedDocument,
-        inputs: GenerationInputs,
+        inputs: GenerationInputs | None,
         saved: ReportDraft | None,
         scratch: _Scratch,
     ) -> _Produced:
-        if generation.kind is DocumentKind.RELATORIO:
-            return self._report(generation, inputs, saved, scratch)
-        if generation.kind is DocumentKind.COMPROVANTE:
+        """One explicit branch per kind; a kind nobody handles is an error, never a Tabela."""
+        kind = generation.kind
+        if kind in _INPUT_KINDS:
+            if inputs is None:
+                raise ValueError("the generation inputs were not loaded")
+            if kind is DocumentKind.TABELA:
+                return self._table(generation, inputs, scratch)
+            if kind is DocumentKind.RELATORIO:
+                return self._report(generation, inputs, saved, scratch)
             return self._comprovante(generation, inputs, scratch)
-        return self._table(generation, inputs, scratch)
+        raise ValueError(f"unknown kind of generated document: {kind}")
 
     def _table(
         self,
@@ -619,6 +630,7 @@ class RunGeneration:
             inputs.activities,
             excluded=inputs.excluded,
             alerts=_unique([a.code for a in model.alerts]),
+            minimum=inputs.score.minimum,
         )
         return _Produced(outputs, snapshot, _left_out_alert(inputs))
 
