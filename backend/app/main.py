@@ -6,7 +6,7 @@ from fastapi import FastAPI
 
 from app.core.config import Settings, load_settings
 from app.core.logging import configure_logging, install_access_log
-from app.domain.repositories.ports import AiExtractor, Clock, TextExtractor
+from app.domain.repositories.ports import AiExtractor, Clock, OrdinanceExtractor, TextExtractor
 from app.infrastructure.clock import SystemClock
 from app.infrastructure.database.session import make_engine
 from app.infrastructure.jobs.worker import DocumentWorker
@@ -41,12 +41,13 @@ def create_app(
     clock: Clock | None = None,
     ai_extractor: AiExtractor | None = None,
     text_extractor: TextExtractor | None = None,
+    ordinance_extractor: OrdinanceExtractor | None = None,
 ) -> FastAPI:
     settings = settings or load_settings()
     configure_logging()
     engine = make_engine(settings.database_url)
     container = build_container(
-        settings, engine, clock or SystemClock(), ai_extractor, text_extractor
+        settings, engine, clock or SystemClock(), ai_extractor, text_extractor, ordinance_extractor
     )
 
     @asynccontextmanager
@@ -58,8 +59,8 @@ def create_app(
                 container.process_document,
                 container.recover_stuck_jobs,
                 container.clock,
-                runners=[container.run_generation.run_next, container.run_wording.run_next],
-                recoverers=[container.recover_generations.execute],
+                runners=container.worker_runners(),
+                recoverers=container.worker_recoverers(),
             )
             worker.start()
         yield

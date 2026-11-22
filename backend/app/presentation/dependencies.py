@@ -13,6 +13,15 @@ from app.application.services.document_analyzer import DocumentAnalyzer
 from app.application.services.purge_inputs import PurgeInputDocuments
 from app.application.use_cases.activity_merging import MergeProcessDuplicates, SeparateActivity
 from app.application.use_cases.auth import GetCurrentSession, Login, Logout
+from app.application.use_cases.board import (
+    DownloadOrdinanceFile,
+    GetBoard,
+    RereadOrdinance,
+    SaveOpinion,
+    SaveOrdinanceData,
+    SaveRequestSettings,
+    UploadOrdinance,
+)
 from app.application.use_cases.career import (
     CreateCareerVersion,
     ListCareerVersions,
@@ -35,6 +44,7 @@ from app.application.use_cases.documents import (
     ReprocessDocument,
     UploadDocuments,
 )
+from app.application.use_cases.dossier import GetDossier, SetDossierDelivery
 from app.application.use_cases.evidences import LinkEvidence, ListEvidences, UnlinkEvidence
 from app.application.use_cases.generated_documents import (
     DownloadGeneratedFile,
@@ -54,6 +64,7 @@ from app.application.use_cases.norms import (
     ListNorms,
     UpdateNorm,
 )
+from app.application.use_cases.ordinance_reading import RunOrdinanceReading
 from app.application.use_cases.processes import (
     ChangeProcessStatus,
     CreateProcess,
@@ -114,10 +125,12 @@ from app.domain.repositories.ports import (
     Clock,
     FileInspector,
     FileStorage,
+    OrdinanceExtractor,
     TextExtractor,
     UnitOfWork,
 )
 from app.infrastructure.ai.maritalk import MariTalkExtractor
+from app.infrastructure.ai.ordinance_extractor import MariTalkOrdinanceExtractor
 from app.infrastructure.ai.report_writer import MariTalkReportWriter
 from app.infrastructure.database.repositories import SqlUnitOfWork
 from app.infrastructure.database.seed import STRUCTURE_CODE
@@ -230,6 +243,30 @@ class Container:
     conclusion_preview: GetConclusionPreview
     conclude_process: ConcludeProcess
     dossier_order: Callable[[], tuple[DossierItem, ...]]
+    get_board: GetBoard
+    upload_ordinance: UploadOrdinance
+    reread_ordinance: RereadOrdinance
+    save_ordinance_data: SaveOrdinanceData
+    download_ordinance_file: DownloadOrdinanceFile
+    save_opinion: SaveOpinion
+    save_request_settings: SaveRequestSettings
+    run_ordinance_reading: RunOrdinanceReading
+    get_dossier: GetDossier
+    set_dossier_delivery: SetDossierDelivery
+
+    def worker_runners(self) -> list[Callable[[], bool]]:
+        """What the executor runs before the OCR, in the order the user waits for them: the
+        generation, the wording of a section, then the reading of the board ordinance (AD-008)."""
+        return [
+            self.run_generation.run_next,
+            self.run_wording.run_next,
+            self.run_ordinance_reading.run_next,
+        ]
+
+    def worker_recoverers(self) -> list[Callable[[], object]]:
+        """Run at the start, before the executor: the generations and the ordinance readings a
+        restart left running (VER-08, PORT-07)."""
+        return [self.recover_generations.execute, self.run_ordinance_reading.recover_interrupted]
 
 
 def build_container(
@@ -238,11 +275,12 @@ def build_container(
     clock: Clock,
     ai_extractor: AiExtractor | None = None,
     text_extractor: TextExtractor | None = None,
+    ordinance_extractor: OrdinanceExtractor | None = None,
 ) -> Container:
     """Wires every service; the document services are shared by the routes and the worker.
 
-    Tests pass a fake `ai_extractor` or `text_extractor`; production builds the MariTalk
-    adapter and the PyMuPDF plus Tesseract reader (AD-005, AD-009).
+    Tests pass a fake `ai_extractor`, `text_extractor` or `ordinance_extractor`; production builds
+    the MariTalk adapters and the PyMuPDF plus Tesseract reader (AD-005, AD-009).
     """
     session_factory = make_session_factory(engine)
 
@@ -266,8 +304,9 @@ def build_container(
         max_documents_per_process=settings.max_documents_per_process,
         max_uploads_per_minute=settings.max_uploads_per_minute,
     )
+    text_extractor = text_extractor or DocumentTextExtractor(clock)
     analyzer = DocumentAnalyzer(
-        text_extractor or DocumentTextExtractor(clock),
+        text_extractor,
         ai_extractor or MariTalkExtractor(settings),
         clock,
     )
@@ -405,6 +444,27 @@ def build_container(
             uow_factory, audit, policy, PurgeInputDocuments(uow_factory, storage, clock)
         ),
         dossier_order=load_dossier_order,
+        get_board=GetBoard(uow_factory, audit, policy),
+        upload_ordinance=UploadOrdinance(
+            uow_factory, audit, policy, storage, inspector, clock, limits
+        ),
+        reread_ordinance=RereadOrdinance(uow_factory, audit, policy, clock),
+        save_ordinance_data=SaveOrdinanceData(uow_factory, audit, policy),
+        download_ordinance_file=DownloadOrdinanceFile(uow_factory, audit, policy, storage),
+        save_opinion=SaveOpinion(uow_factory, audit, policy),
+        save_request_settings=SaveRequestSettings(uow_factory, audit, policy),
+        run_ordinance_reading=RunOrdinanceReading(
+            uow_factory,
+            audit,
+            clock,
+            storage,
+            text_extractor,
+            ordinance_extractor or MariTalkOrdinanceExtractor(settings),
+        ),
+        get_dossier=GetDossier(uow_factory, audit, policy, load_dossier_order),
+        set_dossier_delivery=SetDossierDelivery(
+            uow_factory, audit, policy, load_dossier_order, clock
+        ),
     )
 
 

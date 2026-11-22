@@ -39,12 +39,17 @@ def make_client(migrated_url, engine, clock, tmp_path):
     """Factory for TestClients; https base URL so Secure cookies are sent back.
 
     The background worker is off and the storage is a temporary directory unless a test says
-    otherwise through `settings`; `ai_extractor` and `text_extractor` replace the real adapters.
+    otherwise through `settings`; `ai_extractor`, `text_extractor` and `ordinance_extractor`
+    replace the real adapters.
     """
     clients = []
 
     def make(
-        cookie_secure: bool = True, ai_extractor=None, text_extractor=None, **settings
+        cookie_secure: bool = True,
+        ai_extractor=None,
+        text_extractor=None,
+        ordinance_extractor=None,
+        **settings,
     ) -> TestClient:
         options = {
             "worker_enabled": False,
@@ -59,7 +64,7 @@ def make_client(migrated_url, engine, clock, tmp_path):
             **options,
         )
         scheme = "https" if cookie_secure else "http"
-        app = create_app(app_settings, clock, ai_extractor, text_extractor)
+        app = create_app(app_settings, clock, ai_extractor, text_extractor, ordinance_extractor)
         client = TestClient(app, base_url=f"{scheme}://testserver")
         client.__enter__()
         clients.append(client)

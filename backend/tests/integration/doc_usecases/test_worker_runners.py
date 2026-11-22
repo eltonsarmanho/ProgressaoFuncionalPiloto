@@ -1,5 +1,6 @@
-"""VER-04, VER-08, REL-14: the executor runs several kinds of jobs (generation, wording, OCR) in
-one thread, in that order, and a runner that fails never takes the thread down."""
+"""VER-04, VER-08, REL-14, PORT-07: the executor runs several kinds of jobs (generation, wording,
+ordinance reading, OCR) in one thread, in that order, and a runner that fails never takes the
+thread down."""
 
 import logging
 import time
@@ -121,3 +122,57 @@ def test_start_calls_every_recoverer_and_a_failing_one_does_not_stop_the_rest(do
 
     assert called == ["quebrado", "ok"]  # once each, in order
     assert "segredo" not in " ".join(r.getMessage() for r in caplog.records)
+
+
+def test_the_order_is_generation_wording_ordinance_and_only_then_the_ocr_job(docs):
+    document = submit(docs, "ocr")
+    log = []
+    worker = worker_with(
+        docs,
+        [FakeRunner("geracao", log), FakeRunner("redacao", log), FakeRunner("portaria", log)],
+    )
+
+    assert [worker.run_once() for _ in range(4)] == [True, True, True, True]
+    assert log == ["geracao", "redacao", "portaria"]
+    assert document_status(docs, document) is DocumentStatus.PROCESSADO
+
+
+def test_a_generation_waiting_is_taken_before_the_ordinance_and_the_ordinance_before_a_document(
+    docs,
+):
+    document = submit(docs, "espera")
+    log = []
+    worker = worker_with(
+        docs, [FakeRunner("geracao", log, jobs=1), FakeRunner("portaria", log, jobs=1)]
+    )
+
+    assert worker.run_once() is True
+    assert log == ["geracao"]
+    assert worker.run_once() is True
+    assert log == ["geracao", "portaria"]
+    assert document_status(docs, document) is DocumentStatus.PENDENTE  # the OCR still waits
+
+    assert worker.run_once() is True
+    assert document_status(docs, document) is DocumentStatus.PROCESSADO
+
+
+def test_an_ordinance_runner_that_raises_keeps_the_thread_alive_and_the_log_has_only_the_type(
+    docs, caplog
+):
+    document = submit(docs, "segue")
+    log = []
+    broken = FakeRunner("portaria", log, error=RuntimeError("texto sigiloso da portaria"))
+    worker = worker_with(docs, [FakeRunner("geracao", log, jobs=0), broken])
+
+    with caplog.at_level(logging.ERROR, logger="app.documents.worker"):
+        worker.start()
+        try:
+            assert wait_until(lambda: document_status(docs, document) is DocumentStatus.PROCESSADO)
+        finally:
+            worker.stop()
+
+    assert log == ["portaria"]
+    messages = " ".join(r.getMessage() for r in caplog.records)
+    assert "RuntimeError" in messages
+    assert "sigiloso" not in messages
+    assert all(r.exc_info is None for r in caplog.records)

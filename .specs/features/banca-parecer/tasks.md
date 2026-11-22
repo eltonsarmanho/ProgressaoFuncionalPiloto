@@ -1135,7 +1135,7 @@ graph LR
 
 #### T34: Ligação dos casos de uso, do executor e do extrator falso
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `Container` e `build_container` ganham `get_board`, `upload_ordinance`, `reread_ordinance`, `save_ordinance_data`, `download_ordinance_file`, `save_opinion`, `save_request_settings`, `run_ordinance_reading`, `get_dossier` e `set_dossier_delivery`; `build_container` e `create_app` aceitam `ordinance_extractor` (o falso dos testes; produção usa o `MariTalkOrdinanceExtractor`); o worker recebe os executores na ordem **geração, redação, portaria, OCR** e o recuperador da portaria; a fixture `make_client` aceita `ordinance_extractor`.
 **Where**: `backend/app/presentation/dependencies.py` (modify; `backend/app/main.py` e a fixture `make_client` em `backend/tests/integration/api/conftest.py`)
@@ -1150,10 +1150,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro: `backend/tests/integration/api/test_generation_wiring.py` (o container expõe os casos de uso novos; a aplicação sobe com o executor ligado e desligado; a partida chama o recuperador da portaria e fecha como `INTERROMPIDA` a leitura que ficou `LENDO`); `backend/tests/integration/doc_usecases/test_worker_runners.py` (a ordem é geração, redação, portaria e só então o OCR; uma geração esperando é pega antes da portaria e a portaria antes de um documento esperando; um executor da portaria que levanta não derruba a thread e o log só tem o tipo); `test_worker_lifespan.py` segue passando
-- [ ] `create_app(..., ordinance_extractor=fake)` troca o extrator; sem ele a aplicação usa o `MariTalkOrdinanceExtractor` e a chave só entra pelas configurações do backend
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_generation_wiring.py tests/integration/doc_usecases/test_worker_runners.py tests/integration/doc_usecases/test_worker_lifespan.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro: `backend/tests/integration/api/test_generation_wiring.py` (o container expõe os casos de uso novos; a aplicação sobe com o executor ligado e desligado; a partida chama o recuperador da portaria e fecha como `INTERROMPIDA` a leitura que ficou `LENDO`); `backend/tests/integration/doc_usecases/test_worker_runners.py` (a ordem é geração, redação, portaria e só então o OCR; uma geração esperando é pega antes da portaria e a portaria antes de um documento esperando; um executor da portaria que levanta não derruba a thread e o log só tem o tipo); `test_worker_lifespan.py` segue passando
+- [x] `create_app(..., ordinance_extractor=fake)` troca o extrator; sem ele a aplicação usa o `MariTalkOrdinanceExtractor` e a chave só entra pelas configurações do backend
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_generation_wiring.py tests/integration/doc_usecases/test_worker_runners.py tests/integration/doc_usecases/test_worker_lifespan.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted
