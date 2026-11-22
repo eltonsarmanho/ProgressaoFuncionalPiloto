@@ -847,7 +847,7 @@ graph LR
 
 #### T26: Mínimo não definido com a norma
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Com o mínimo `NAO_DEFINIDO`, o `PanelHeadline` mostra "Mínimo não definido: a Res. 4.644/2015, art. 12, fixa mínimos só para as classes da estrutura antiga" e o `NormLink` de `minimum.norm`.
 **Where**: `frontend/src/components/PanelHeadline.tsx` (modify)
@@ -862,9 +862,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/PanelHeadline.test.tsx`: o texto exato e "Ver norma" com o mínimo não definido; o mínimo numérico como hoje na estrutura antiga
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `frontend/src/components/PanelHeadline.test.tsx`: o texto exato e "Ver norma" com o mínimo não definido; o mínimo numérico como hoje na estrutura antiga
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: build

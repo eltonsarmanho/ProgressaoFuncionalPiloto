@@ -1,5 +1,6 @@
 import type { ScoringResult } from "../api/types";
-import { PANEL_LABELS, MINIMUM_LABELS, formatDecimal } from "../labels";
+import { PANEL_LABELS, MINIMUM_LABELS, MINIMUM_UNDEFINED_REASON, formatDecimal } from "../labels";
+import { NormLink } from "./NormLink";
 
 type Props = {
   result: Pick<ScoringResult, "total" | "minimum" | "group1_percent">;
@@ -9,14 +10,14 @@ type Props = {
 
 /**
  * GRES-01, GRES-02: the grand total with the groups it sums, the minimum in short text and the
- * Group I share (GI-08). A read-only block: the values come from the API as they are.
+ * Group I share (GI-08); an undefined minimum says why and links its norm (NMIN-02). A read-only block: the values come from the API as they are.
  */
 export function PanelHeadline({ result, group1OutsideTotal }: Props) {
   const { minimum } = result;
   const defined = minimum.status !== "NAO_DEFINIDO";
   const minimumText = defined
     ? `${MINIMUM_LABELS[minimum.status]}${minimum.minimum != null ? ` (${formatDecimal(minimum.minimum)})` : ""}`
-    : PANEL_LABELS.minimumUndefined;
+    : MINIMUM_UNDEFINED_REASON;
   return (
     <dl className="panel-headline">
       <div>
@@ -30,7 +31,20 @@ export function PanelHeadline({ result, group1OutsideTotal }: Props) {
       </div>
       <div>
         <dt>Mínimo de referência</dt>
-        <dd className={defined ? "panel-minimum" : undefined}>{minimumText}</dd>
+        <dd className={defined ? "panel-minimum" : undefined}>
+          {minimumText}
+          {minimum.norm && (
+            <>
+              {" "}
+              <NormLink
+                title={minimum.norm.title}
+                url={minimum.norm.source_url}
+                fileUrl={minimum.norm.file_url}
+                archived={minimum.norm.archived}
+              />
+            </>
+          )}
+        </dd>
       </div>
       <div>
         <dt>Percentual do Grupo I</dt>

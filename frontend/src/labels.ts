@@ -133,6 +133,10 @@ export const MINIMUM_LABELS: Record<string, string> = {
   NAO_DEFINIDO: "Mínimo não definido",
 };
 
+/** NMIN-02: why the minimum of the new career structure is not defined. */
+export const MINIMUM_UNDEFINED_REASON =
+  "Mínimo não definido: a Res. 4.644/2015, art. 12, fixa mínimos só para as classes da estrutura antiga";
+
 /** GRES-04: the level of a group I offer. */
 export const LEVEL_LABELS: Record<Level, string> = {
   GRADUACAO: "Graduação",

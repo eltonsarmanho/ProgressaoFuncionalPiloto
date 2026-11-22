@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { ScoringResult } from "../api/types";
 import { PanelHeadline } from "./PanelHeadline";
@@ -57,5 +57,61 @@ describe("PanelHeadline", () => {
     rerender(<PanelHeadline result={{ ...NEW, group1_percent: null }} group1OutsideTotal={false} />);
     expect(def("Percentual do Grupo I")).toHaveTextContent("—");
     expect(def("Percentual do Grupo I")).not.toHaveTextContent("%");
+  });
+
+  it("NMIN-02: mínimo não definido mostra a explicação da Res. 4.644/2015 e o 'Ver norma' da resolução", () => {
+    const withNorm = {
+      ...NEW,
+      minimum: {
+        status: "NAO_DEFINIDO" as const,
+        minimum: null,
+        total: "303.00",
+        norm: {
+          code: "RES-4644-2015-CONSEPE",
+          title: "Resolução nº 4.644/2015-CONSEPE",
+          source_url: "https://sege.exemplo.test/res-4644",
+          file_url: null,
+          archived: false,
+        },
+      },
+    };
+    render(<PanelHeadline result={withNorm} group1OutsideTotal={false} />);
+    const value = def("Mínimo de referência");
+    expect(value).toHaveTextContent(
+      "Mínimo não definido: a Res. 4.644/2015, art. 12, fixa mínimos só para as classes da estrutura antiga",
+    );
+    expect(value).toHaveTextContent("Resolução nº 4.644/2015-CONSEPE");
+    expect(within(value).getByRole("link", { name: "Ver norma" })).toHaveAttribute(
+      "href",
+      "https://sege.exemplo.test/res-4644",
+    );
+  });
+
+  it("NMIN-02: com o arquivo da resolução anexado o 'Ver norma' vai ao arquivo", () => {
+    const withFile = {
+      ...NEW,
+      minimum: {
+        status: "NAO_DEFINIDO" as const,
+        minimum: null,
+        total: "303.00",
+        norm: {
+          code: "RES-4644-2015-CONSEPE",
+          title: "Resolução nº 4.644/2015-CONSEPE",
+          source_url: "https://sege.exemplo.test/res-4644",
+          file_url: "/api/norms/n1/file",
+          archived: false,
+        },
+      },
+    };
+    render(<PanelHeadline result={withFile} group1OutsideTotal={false} />);
+    expect(screen.getByRole("link", { name: "Ver norma" })).toHaveAttribute("href", "/api/norms/n1/file");
+  });
+
+  it("NMIN-01/02: o mínimo numérico da estrutura antiga sai como hoje, sem a explicação nem o link", () => {
+    render(<PanelHeadline result={NEW} group1OutsideTotal={false} />);
+    const value = def("Mínimo de referência");
+    expect(value).toHaveTextContent("Atinge o mínimo (100,00)");
+    expect(value).not.toHaveTextContent("Res. 4.644/2015");
+    expect(screen.queryByRole("link", { name: "Ver norma" })).toBeNull();
   });
 });
