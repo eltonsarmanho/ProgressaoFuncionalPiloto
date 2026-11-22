@@ -3,7 +3,13 @@
 
 from datetime import UTC, date, datetime
 
-from app.application.use_cases.board import RereadOrdinance, SaveOrdinanceData, UploadOrdinance
+from app.application.use_cases.board import (
+    DownloadOrdinanceFile,
+    GetBoard,
+    RereadOrdinance,
+    SaveOrdinanceData,
+    UploadOrdinance,
+)
 from app.domain.entities.board import (
     BoardMember,
     BoardOrdinance,
@@ -32,6 +38,14 @@ def reread_uc(world, docs) -> RereadOrdinance:
 
 def save_data_uc(world) -> SaveOrdinanceData:
     return SaveOrdinanceData(world.uow_factory, world.audit, world.policy)
+
+
+def get_board_uc(world) -> GetBoard:
+    return GetBoard(world.uow_factory, world.audit, world.policy)
+
+
+def download_uc(world, docs) -> DownloadOrdinanceFile:
+    return DownloadOrdinanceFile(world.uow_factory, world.audit, world.policy, docs.storage)
 
 
 def stored_board(world, process=None) -> BoardOrdinance | None:

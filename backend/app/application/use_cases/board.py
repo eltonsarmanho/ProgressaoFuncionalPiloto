@@ -11,6 +11,7 @@ never the name of a board member (third party) and never a justification (regra 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from datetime import date
+from pathlib import Path
 from uuid import UUID
 
 from app.application.services.access_policy import AccessPolicy
@@ -23,18 +24,21 @@ from app.application.use_cases.documents import (
     UploadRejected,
 )
 from app.application.use_cases.generated_documents import _EditUseCase
+from app.application.use_cases.scoring import _ScoringUseCase
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.board import (
     BoardMember,
+    BoardOpinion,
     BoardOrdinance,
     BoardRole,
     OrdinanceFile,
     ReadingState,
+    RequestSettings,
     ValueSource,
 )
 from app.domain.entities.generated import GenerationCode
 from app.domain.entities.user import User
-from app.domain.errors import Conflict, StaleVersion, ValidationFailed
+from app.domain.errors import Conflict, Gone, NotFound, StaleVersion, ValidationFailed
 from app.domain.repositories.ports import Clock, FileInspector, FileStorage, UnitOfWork
 from app.domain.rules.board_rules import validate_board_data
 from app.domain.rules.ordinance_grounding import DATE, MEMBERS, NUMBER
@@ -378,3 +382,64 @@ def _edited(
         edited.ordinance_date, edited.date_page = ordinance_date, None
         edited.date_source = ValueSource.INFORMADO
     return edited
+
+
+FILE_DELETED_MESSAGE = "O arquivo da portaria foi excluído na conclusão do processo"
+
+
+@dataclass(frozen=True)
+class BoardView:
+    """The three things of the board, each with its own version; one that was never saved comes
+    back empty with version 0, which is the `expected_version` of its first save. Nothing is
+    filled in from the score: the conclusion stays empty until a person chooses it (PAR-12)."""
+
+    ordinance: BoardOrdinance
+    opinion: BoardOpinion
+    request_settings: RequestSettings
+
+
+class GetBoard(_ScoringUseCase):
+    def execute(self, actor: User, process_id: UUID) -> BoardView:
+        """A read never writes."""
+        with self._uow_factory() as uow:
+            self._readable(uow, actor, process_id)
+            return BoardView(
+                ordinance=uow.board.get(process_id) or BoardOrdinance(process_id, version=0),
+                opinion=uow.opinions.get(process_id) or BoardOpinion(process_id, version=0),
+                request_settings=uow.request_settings.get(process_id)
+                or RequestSettings(process_id, version=0),
+            )
+
+
+@dataclass(frozen=True)
+class OrdinanceDownload:
+    path: Path
+    name: str  # original name, display text only
+    mime: str
+
+
+class DownloadOrdinanceFile(_ScoringUseCase):
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        policy: AccessPolicy,
+        storage: FileStorage,
+    ) -> None:
+        super().__init__(uow_factory, audit, policy)
+        self._storage = storage
+
+    def execute(self, actor: User, process_id: UUID) -> OrdinanceDownload:
+        """The stored file; `NotFound` without one, `Gone` once the conclusion removed it."""
+        with self._uow_factory() as uow:
+            self._readable(uow, actor, process_id)
+            ordinance = uow.board.get(process_id)
+        file = ordinance.file if ordinance else None
+        if file is None:
+            raise NotFound("A portaria não tem arquivo")
+        if file.deleted_at is not None:
+            raise Gone(GenerationCode.ARQUIVO_EXCLUIDO.value, FILE_DELETED_MESSAGE)
+        path = self._storage.path(process_id, file.internal_name)
+        if not path.is_file():
+            raise NotFound("Arquivo não encontrado")
+        return OrdinanceDownload(path, file.original_name, file.mime)

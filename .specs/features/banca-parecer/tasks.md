@@ -735,7 +735,7 @@ graph LR
 
 #### T20: Leitura da banca e download do arquivo da portaria
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `GetBoard.execute(actor, process_id) -> BoardView` (portaria, Parecer e cidade, cada um com a própria versão; linha ausente volta como entidade vazia de versão 0) e `DownloadOrdinanceFile.execute(actor, process_id)` com o caminho, o nome de exibição e o tipo do arquivo; arquivo ausente é `NotFound` e arquivo apagado pela conclusão é `Gone` (`ARQUIVO_EXCLUIDO`).
 **Where**: `backend/app/application/use_cases/board.py` (modify)
@@ -750,9 +750,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_board_read.py` (novo): processo sem nada devolve portaria `SEM_ARQUIVO` de versão 0, Parecer com conclusão `None` e versão 0 e cidade vazia (PAR-12: a leitura nunca preenche a conclusão, nem com a Tabela pronta e o total acima do mínimo); depois de gravar os três, a leitura devolve cada um com a sua versão; o arquivo baixa com o tipo e o nome de exibição; sem arquivo `NotFound`; arquivo apagado pela conclusão levanta `Gone` com `ARQUIVO_EXCLUIDO` e os dados da portaria seguem na leitura; quem não acessa o processo recebe `NotFound` em ambos
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_board_read.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_board_read.py` (novo): processo sem nada devolve portaria `SEM_ARQUIVO` de versão 0, Parecer com conclusão `None` e versão 0 e cidade vazia (PAR-12: a leitura nunca preenche a conclusão, nem com a Tabela pronta e o total acima do mínimo); depois de gravar os três, a leitura devolve cada um com a sua versão; o arquivo baixa com o tipo e o nome de exibição; sem arquivo `NotFound`; arquivo apagado pela conclusão levanta `Gone` com `ARQUIVO_EXCLUIDO` e os dados da portaria seguem na leitura; quem não acessa o processo recebe `NotFound` em ambos
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_board_read.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted
