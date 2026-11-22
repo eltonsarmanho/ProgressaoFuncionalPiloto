@@ -1220,7 +1220,7 @@ graph LR
 
 #### T37: Rotas do checklist do dossiê
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `GET /api/processes/{id}/dossier` (lista de `ChecklistItemOut` com `key`, `order`, `title`, `source`, `state`, `version_number`, `generation_id`, `outdated_table`) e `PUT /api/processes/{id}/dossier/items/{key}` com `{"entregue": bool}` (devolve a lista nova); `GET /api/dossier-order` fica, lendo o mesmo arquivo e com o mesmo formato de antes.
 **Where**: `backend/app/presentation/api/dossier.py` (modify; os schemas em `backend/app/presentation/schemas/generated.py`)
@@ -1235,9 +1235,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_dossier_api.py` (novo): `GET /dossier` num processo só com Tabela, Relatório e Comprovante prontos devolve nove itens na ordem do arquivo, três `GERADO` e seis `PENDENTE`; marcar "CURRICULO_LATTES" com `{"entregue": true}` e recarregar mostra `ENTREGUE`; desmarcar volta a `PENDENTE`; marcar `TABELA`, `PORTARIA_BANCA` ou chave inexistente dá 422; corpo sem `entregue` dá 422; a portaria com um membro mostra `REGISTRADA`; a Tabela gerada com outra versão da tabela traz `outdated_table`; processo concluído e arquivado dão 409 `PROCESSO_SOMENTE_LEITURA` na marca; fora do acesso 404; sem sessão 401; `GET /api/dossier-order` segue respondendo `order`, `title` e `generated_by` (compatibilidade)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_dossier_api.py tests/integration/api/test_dossier_order_api.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/api/test_dossier_api.py` (novo): `GET /dossier` num processo só com Tabela, Relatório e Comprovante prontos devolve nove itens na ordem do arquivo, três `GERADO` e seis `PENDENTE`; marcar "CURRICULO_LATTES" com `{"entregue": true}` e recarregar mostra `ENTREGUE`; desmarcar volta a `PENDENTE`; marcar `TABELA`, `PORTARIA_BANCA` ou chave inexistente dá 422; corpo sem `entregue` dá 422; a portaria com um membro mostra `REGISTRADA`; a Tabela gerada com outra versão da tabela traz `outdated_table`; processo concluído e arquivado dão 409 `PROCESSO_SOMENTE_LEITURA` na marca; fora do acesso 404; sem sessão 401; `GET /api/dossier-order` segue respondendo `order`, `title` e `generated_by` (compatibilidade)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_dossier_api.py tests/integration/api/test_dossier_order_api.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted

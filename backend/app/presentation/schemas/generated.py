@@ -41,7 +41,14 @@ from app.domain.entities.generated import (
     WordingJob,
 )
 from app.domain.entities.process import ProcessStatus
-from app.domain.entities.report import DossierItem, DraftEntry, DraftSection, ReportDraft
+from app.domain.entities.report import (
+    DossierItem,
+    DossierSource,
+    DraftEntry,
+    DraftSection,
+    ReportDraft,
+)
+from app.domain.rules.dossier_checklist import ChecklistItem, ChecklistState
 
 
 class _Body(BaseModel):
@@ -528,6 +535,36 @@ class DossierItemOut(BaseModel):
     @classmethod
     def of(cls, item: DossierItem) -> "DossierItemOut":
         return cls(order=item.order, title=item.title, generated_by=item.generated_by)
+
+
+class ChecklistItemOut(BaseModel):
+    """One document of the dossier of a process and where it stands (DOS-01 to DOS-06)."""
+
+    key: str
+    order: int
+    title: str
+    source: DossierSource
+    state: ChecklistState
+    version_number: int | None
+    generation_id: UUID | None
+    outdated_table: bool
+
+    @classmethod
+    def of(cls, item: ChecklistItem) -> "ChecklistItemOut":
+        return cls(
+            key=item.key,
+            order=item.order,
+            title=item.title,
+            source=item.source,
+            state=item.state,
+            version_number=item.version_number,
+            generation_id=item.generation_id,
+            outdated_table=item.outdated_table,
+        )
+
+
+class DeliveryIn(_Body):
+    entregue: bool
 
 
 class ConclusionPreviewOut(BaseModel):
