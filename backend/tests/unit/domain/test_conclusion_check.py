@@ -73,3 +73,18 @@ def test_a_repeated_kind_in_the_ready_set_changes_nothing():
     check = check_conclusion([*ALL_KINDS, DocumentKind.TABELA], 0)
 
     assert check.allowed is True
+
+
+def test_the_board_documents_pending_do_not_block_the_conclusion():
+    check = check_conclusion(ALL_KINDS, 0)
+
+    assert check.allowed is True
+    assert check.missing_kinds == ()
+
+
+def test_the_board_documents_ready_do_not_hide_a_missing_required_kind():
+    ready = {DocumentKind.REQUERIMENTO, DocumentKind.PARECER, DocumentKind.TABELA}
+
+    check = check_conclusion(ready, 0)
+
+    assert check.missing_kinds == (DocumentKind.RELATORIO, DocumentKind.COMPROVANTE)

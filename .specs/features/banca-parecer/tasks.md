@@ -324,7 +324,7 @@ graph LR
 
 #### T6: Conclusão com os tipos novos e aviso dos pendentes
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `summarize_purge` monta `artifacts` só com `ARTIFACT_KINDS`, soma o arquivo da portaria (quando ainda existe) a `files` e `bytes`, e devolve `pending_board`; `pending_board_items(ready_kinds, ordinance_registered)` lista, nesta ordem, `REQUERIMENTO`, `PORTARIA_BANCA` e `PARECER` que ainda não existem; `ConclusionPreview.pending_board: tuple[str, ...] = ()`; `check_conclusion` segue exigindo só os três tipos.
 **Where**: `backend/app/domain/rules/conclusion_rules.py` (modify; o campo novo em `backend/app/domain/entities/conclusion.py`)
@@ -339,11 +339,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_conclusion_purge.py` e `test_conclusion_check.py`: `artifacts` tem exatamente as chaves `TABELA`, `RELATORIO` e `COMPROVANTE` mesmo com `REQUERIMENTO` e `PARECER` prontos; `pending_board` com nada pronto e portaria sem membro é `("REQUERIMENTO", "PORTARIA_BANCA", "PARECER")`; com Parecer pronto sai `PARECER`; com portaria registrada (ao menos um membro) sai `PORTARIA_BANCA`; com tudo pronto é vazio; `check_conclusion` com os três tipos prontos e Parecer e Requerimento pendentes continua permitido (o aviso não bloqueia); a portaria com arquivo soma 1 arquivo e os bytes, e com `file_deleted_at` preenchido não soma
-- [ ] Testes existentes que mudam por DOS-07: `test_conclusion_purge.py:45-57` (`dict.fromkeys(DocumentKind, False)` passa a `ARTIFACT_KINDS`) e `test_conclusion_entities.py` (o campo novo tem padrão vazio, então a construção atual segue valendo)
-- [ ] Teste de arquitetura passa
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_conclusion_purge.py` e `test_conclusion_check.py`: `artifacts` tem exatamente as chaves `TABELA`, `RELATORIO` e `COMPROVANTE` mesmo com `REQUERIMENTO` e `PARECER` prontos; `pending_board` com nada pronto e portaria sem membro é `("REQUERIMENTO", "PORTARIA_BANCA", "PARECER")`; com Parecer pronto sai `PARECER`; com portaria registrada (ao menos um membro) sai `PORTARIA_BANCA`; com tudo pronto é vazio; `check_conclusion` com os três tipos prontos e Parecer e Requerimento pendentes continua permitido (o aviso não bloqueia); a portaria com arquivo soma 1 arquivo e os bytes, e com `file_deleted_at` preenchido não soma
+- [x] Testes existentes que mudam por DOS-07: `test_conclusion_purge.py:45-57` (`dict.fromkeys(DocumentKind, False)` passa a `ARTIFACT_KINDS`) e `test_conclusion_entities.py` (o campo novo tem padrão vazio, então a construção atual segue valendo)
+- [x] Teste de arquitetura passa
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

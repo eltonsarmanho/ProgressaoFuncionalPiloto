@@ -72,7 +72,7 @@ def test_a_second_request_of_a_kind_while_one_runs_is_409_and_another_kind_is_no
 
 
 def test_an_unknown_kind_or_field_in_the_request_is_422(client, scenario):
-    wrong_kind = ask(client, scenario.headers, scenario.process, "PARECER")
+    wrong_kind = ask(client, scenario.headers, scenario.process, "PORTARIA")
     extra = client.post(
         generations_url(scenario.process),
         json={"kind": "TABELA", "justificativa": "x"},

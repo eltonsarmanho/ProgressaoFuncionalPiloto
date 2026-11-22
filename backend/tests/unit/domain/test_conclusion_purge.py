@@ -1,4 +1,4 @@
-"""DEL-03, DEL-08, DEL-09, DEL-13: preview and result of removing the input documents."""
+"""DEL-03, DEL-08, DEL-09, DEL-13, DOS-07: preview and result of removing the input documents."""
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from app.domain.entities.conclusion import ConclusionPreview
 from app.domain.entities.generated import ARTIFACT_KINDS, DocumentKind, GenerationAlertCode
 from app.domain.entities.process import ProcessStatus
-from app.domain.rules.conclusion_rules import purge_outcome, summarize_purge
+from app.domain.rules.conclusion_rules import pending_board_items, purge_outcome, summarize_purge
 
 DELETED_AT = datetime(2026, 11, 18, 12, 0, tzinfo=UTC)
 
@@ -56,6 +56,81 @@ def test_without_ready_kinds_every_kind_is_marked_missing():
 
     assert preview.artifacts == dict.fromkeys(ARTIFACT_KINDS, False)
     assert isinstance(preview, ConclusionPreview)
+
+
+def test_the_artifacts_have_only_the_three_required_kinds_even_with_the_board_documents_ready():
+    ready = set(DocumentKind)
+
+    preview = summarize_purge([], ready_kinds=ready)
+
+    assert list(preview.artifacts) == [
+        DocumentKind.TABELA,
+        DocumentKind.RELATORIO,
+        DocumentKind.COMPROVANTE,
+    ]
+    assert all(preview.artifacts.values())
+
+
+def test_the_ordinance_file_that_still_exists_adds_one_file_and_its_bytes():
+    preview = summarize_purge([FakeDocument(1_000)], ordinance_file=FakeDocument(500))
+
+    assert (preview.files, preview.bytes) == (2, 1_500)
+
+
+def test_the_ordinance_file_already_deleted_adds_nothing():
+    preview = summarize_purge(
+        [FakeDocument(1_000)], ordinance_file=FakeDocument(500, file_deleted_at=DELETED_AT)
+    )
+
+    assert (preview.files, preview.bytes) == (1, 1_000)
+
+
+def test_a_process_without_an_ordinance_file_counts_only_its_documents():
+    preview = summarize_purge([FakeDocument(1_000)], ordinance_file=None)
+
+    assert (preview.files, preview.bytes) == (1, 1_000)
+
+
+def test_with_nothing_ready_and_no_registered_ordinance_the_three_board_items_are_pending():
+    assert pending_board_items((), ordinance_registered=False) == (
+        "REQUERIMENTO",
+        "PORTARIA_BANCA",
+        "PARECER",
+    )
+    assert summarize_purge([]).pending_board == ("REQUERIMENTO", "PORTARIA_BANCA", "PARECER")
+
+
+def test_a_ready_parecer_leaves_the_parecer_out_of_the_pending_items():
+    assert pending_board_items({DocumentKind.PARECER}, ordinance_registered=False) == (
+        "REQUERIMENTO",
+        "PORTARIA_BANCA",
+    )
+
+
+def test_a_ready_requerimento_leaves_the_requerimento_out_of_the_pending_items():
+    assert pending_board_items({DocumentKind.REQUERIMENTO}, ordinance_registered=False) == (
+        "PORTARIA_BANCA",
+        "PARECER",
+    )
+
+
+def test_a_registered_ordinance_leaves_the_ordinance_out_of_the_pending_items():
+    assert pending_board_items((), ordinance_registered=True) == ("REQUERIMENTO", "PARECER")
+
+
+def test_with_everything_ready_and_registered_nothing_is_pending():
+    ready = {DocumentKind.REQUERIMENTO, DocumentKind.PARECER}
+
+    assert pending_board_items(ready, ordinance_registered=True) == ()
+    assert summarize_purge([], ready_kinds=ready, ordinance_registered=True).pending_board == ()
+
+
+def test_the_three_original_kinds_alone_do_not_clear_the_board_items():
+    assert pending_board_items(ARTIFACT_KINDS, ordinance_registered=False) == (
+        "REQUERIMENTO",
+        "PORTARIA_BANCA",
+        "PARECER",
+    )
 
 
 def test_an_outcome_without_pending_files_concludes_the_process():

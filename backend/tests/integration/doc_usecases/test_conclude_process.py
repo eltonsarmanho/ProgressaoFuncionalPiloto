@@ -11,6 +11,7 @@ from app.application.use_cases.conclusion import ConcludeProcess
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.conclusion import ConclusionResult
 from app.domain.entities.generated import (
+    ARTIFACT_KINDS,
     DocumentKind,
     GenerationAlertCode,
     GenerationState,
@@ -194,7 +195,7 @@ def test_a_process_that_is_not_em_andamento_is_409_and_nothing_is_removed(gen, s
 
 
 def test_with_everything_ready_the_files_go_and_the_generated_ones_stay(gen, ready):
-    kept = {kind: add_stored_generation(gen, kind) for kind in K}
+    kept = {kind: add_stored_generation(gen, kind) for kind in ARTIFACT_KINDS}
 
     result = conclude(gen)
 

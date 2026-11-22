@@ -29,6 +29,12 @@ def test_the_preview_keeps_files_bytes_and_a_flag_per_kind_of_artifact():
     assert preview.artifacts[DocumentKind.COMPROVANTE] is True
 
 
+def test_the_preview_has_no_pending_board_items_unless_given():
+    preview = ConclusionPreview(files=0, bytes=0, artifacts={})
+
+    assert preview.pending_board == ()
+
+
 def test_the_result_keeps_status_counts_bytes_and_alerts():
     alert = GenerationAlert(GenerationAlertCode.EXCLUSAO_PARCIAL, "1 arquivo pendente")
 

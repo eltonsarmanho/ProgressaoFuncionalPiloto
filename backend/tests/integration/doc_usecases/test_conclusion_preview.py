@@ -8,7 +8,7 @@ import pytest
 from app.application.services.purge_inputs import PurgeInputDocuments
 from app.application.use_cases.conclusion import GetConclusionPreview
 from app.domain.entities.conclusion import ConclusionPreview
-from app.domain.entities.generated import DocumentKind, GenerationState
+from app.domain.entities.generated import ARTIFACT_KINDS, DocumentKind, GenerationState
 from app.domain.errors import NotFound
 from tests.integration.doc_usecases.conclusion_support import (
     add_all_ready,
@@ -19,6 +19,7 @@ from tests.integration.doc_usecases.generation_support import add_document
 from tests.integration.doc_usecases.test_purge_inputs import FixedClock
 
 K = DocumentKind
+NO_BOARD_DOCUMENT = ("REQUERIMENTO", "PORTARIA_BANCA", "PARECER")
 
 
 def preview_uc(world) -> GetConclusionPreview:
@@ -26,7 +27,7 @@ def preview_uc(world) -> GetConclusionPreview:
 
 
 def all_kinds(value: bool) -> dict:
-    return {kind: value for kind in K}
+    return {kind: value for kind in ARTIFACT_KINDS}
 
 
 def test_three_documents_give_three_files_the_sum_of_the_sizes_and_each_kind_marked(gen):
@@ -37,7 +38,9 @@ def test_three_documents_give_three_files_the_sum_of_the_sizes_and_each_kind_mar
 
     result = preview_uc(world).execute(world.admin, world.process.id)
 
-    assert result == ConclusionPreview(files=3, bytes=600, artifacts=all_kinds(True))
+    assert result == ConclusionPreview(
+        files=3, bytes=600, artifacts=all_kinds(True), pending_board=NO_BOARD_DOCUMENT
+    )
 
 
 def test_only_a_ready_version_marks_its_kind(gen):
@@ -70,7 +73,9 @@ def test_after_the_conclusion_it_is_zero_files_and_zero_bytes(gen):
 
     result = preview_uc(world).execute(world.admin, world.process.id)
 
-    assert result == ConclusionPreview(files=0, bytes=0, artifacts=all_kinds(True))
+    assert result == ConclusionPreview(
+        files=0, bytes=0, artifacts=all_kinds(True), pending_board=NO_BOARD_DOCUMENT
+    )
 
 
 def test_a_process_without_documents_gives_zeros(gen):

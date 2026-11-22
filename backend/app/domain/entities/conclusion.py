@@ -8,11 +8,13 @@ from app.domain.entities.process import ProcessStatus
 
 @dataclass(frozen=True)
 class ConclusionPreview:
-    """What concluding would remove, and which generated documents already have a PRONTO."""
+    """What concluding would remove, which required documents already have a PRONTO and which
+    board documents are still missing (a warning that never blocks, DOS-07)."""
 
     files: int
     bytes: int
     artifacts: dict[DocumentKind, bool]
+    pending_board: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

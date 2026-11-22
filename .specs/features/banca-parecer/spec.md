@@ -235,7 +235,7 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 | DOS-04 | P2: Checklist do dossiê | Design | Pending |
 | DOS-05 | P2: Checklist do dossiê | Design | Pending |
 | DOS-06 | P2: Checklist do dossiê | Design | Pending |
-| DOS-07 | P2: Checklist do dossiê | Design | Pending |
+| DOS-07 | P2: Checklist do dossiê | Implementing | Implementing |
 | BNAV-01 | P1: Etapas 6 e 7 | Design | Pending |
 | BNAV-02 | P1: Etapas 6 e 7 | Design | Pending |
 | BNAV-03 | P1: Etapas 6 e 7 | Design | Pending |
