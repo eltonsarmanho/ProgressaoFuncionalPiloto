@@ -222,13 +222,13 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 | PAR-13 | P1: Minuta do Parecer | Implementing | Implementing |
 | PAR-14 | P1: Minuta do Parecer | Design | Pending |
 | REQ-01 | P1: Requerimento | Implementing | Implementing |
-| REQ-02 | P1: Requerimento | Design | Pending |
-| REQ-03 | P1: Requerimento | Design | Pending |
-| REQ-04 | P1: Requerimento | Design | Pending |
+| REQ-02 | P1: Requerimento | Implementing | Implementing |
+| REQ-03 | P1: Requerimento | Implementing | Implementing |
+| REQ-04 | P1: Requerimento | Implementing | Implementing |
 | REQ-05 | P1: Requerimento | Implementing | Implementing |
-| REQ-06 | P1: Requerimento | Design | Pending |
-| REQ-07 | P1: Requerimento | Design | Pending |
-| REQ-08 | P1: Requerimento | Design | Pending |
+| REQ-06 | P1: Requerimento | Implementing | Implementing |
+| REQ-07 | P1: Requerimento | Implementing | Implementing |
+| REQ-08 | P1: Requerimento | Implementing | Implementing |
 | DOS-01 | P2: Checklist do dossiê | Design | Pending |
 | DOS-02 | P2: Checklist do dossiê | Design | Pending |
 | DOS-03 | P2: Checklist do dossiê | Design | Pending |

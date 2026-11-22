@@ -414,7 +414,7 @@ graph LR
 
 #### T9: Texto do Requerimento
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `RequestDocument` e `build_request(process, professor, unit, career_code, city, last_opinion_date, page) -> RequestDocument` com os textos literais do modelo da PROGEP: cabeçalho MEC, UFPA e PROGEP, título, "Prezado Sr. Presidente da CPPD,", a opção "(X) PROGRESSÃO FUNCIONAL POR DESEMPENHO ACADÊMICA/PROMOÇÃO", o parágrafo do pedido, a linha da avaliação de desempenho, "<cidade>, <data de abertura por extenso>.", "Nestes termos, pede deferimento.", assinatura, "Assinatura do (a) requerente", "Matrícula SIAPE: <siape>" e a observação da LGPD. Cidade vazia dá "__________"; sem Parecer a data da avaliação é "___/___/___"; a parte "REVISÃO" não entra.
 **Where**: `backend/app/domain/rules/request_document.py` (new)
@@ -429,11 +429,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Texto literal de cada frase fixa conferido contra o modelo público da PROGEP (leitura do `.docx` público; o teste não abre o arquivo, usa os textos copiados)
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_request_document.py` (novo): o cabeçalho, o título "REQUERIMENTO DE PROGRESSÃO/PROMOÇÃO/REVISÃO - DOCENTES (MAGISTÉRIO SUPERIOR E EBTT)" e a opção "(X) PROGRESSÃO FUNCIONAL POR DESEMPENHO ACADÊMICA/PROMOÇÃO" saem como no modelo (REQ-02); um processo sintético de promoção do nível 4 da classe B para o nível 1 da classe C traz nome, SIAPE, "(X) Magistério Superior" (código `MAGISTERIO_SUPERIOR`), unidade, "promoção", nível, classe e denominação como informados e o interstício em dd/mm/aaaa a dd/mm/aaaa (REQ-03); código de carreira desconhecido deixa as duas opções sem marca; a linha da avaliação traz a data do último Parecer em dd/mm/aaaa e, sem Parecer, "___/___/___" (REQ-04); a linha final é "Belém, 10 de março de 2025." para cidade "Belém" e data de abertura 10/03/2025, e "__________, 10 de março de 2025." sem cidade (REQ-05, REQ-06); "Matrícula SIAPE: <siape>" e a observação da LGPD no fim; nenhuma seção de revisão (a palavra REVISÃO só aparece no título, REQ-07); a função não chama IA nem lê relógio (REQ-08)
-- [ ] Teste de arquitetura passa
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Texto literal de cada frase fixa conferido contra o modelo público da PROGEP (leitura do `.docx` público; o teste não abre o arquivo, usa os textos copiados)
+- [x] Testes primeiro em `backend/tests/unit/domain/test_request_document.py` (novo): o cabeçalho, o título "REQUERIMENTO DE PROGRESSÃO/PROMOÇÃO/REVISÃO - DOCENTES (MAGISTÉRIO SUPERIOR E EBTT)" e a opção "(X) PROGRESSÃO FUNCIONAL POR DESEMPENHO ACADÊMICA/PROMOÇÃO" saem como no modelo (REQ-02); um processo sintético de promoção do nível 4 da classe B para o nível 1 da classe C traz nome, SIAPE, "(X) Magistério Superior" (código `MAGISTERIO_SUPERIOR`), unidade, "promoção", nível, classe e denominação como informados e o interstício em dd/mm/aaaa a dd/mm/aaaa (REQ-03); código de carreira desconhecido deixa as duas opções sem marca; a linha da avaliação traz a data do último Parecer em dd/mm/aaaa e, sem Parecer, "___/___/___" (REQ-04); a linha final é "Belém, 10 de março de 2025." para cidade "Belém" e data de abertura 10/03/2025, e "__________, 10 de março de 2025." sem cidade (REQ-05, REQ-06); "Matrícula SIAPE: <siape>" e a observação da LGPD no fim; nenhuma seção de revisão (a palavra REVISÃO só aparece no título, REQ-07); a função não chama IA nem lê relógio (REQ-08)
+- [x] Teste de arquitetura passa
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
