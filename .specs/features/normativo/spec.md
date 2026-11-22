@@ -216,10 +216,10 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NTIT-06 | P1: Titulação exigida | Design | Pending |
 | NTIT-07 | P1: Titulação exigida | Design | Pending |
 | NTIT-08 | P1: Titulação exigida | Design | Pending |
-| NMOV-01 | P1: Origem e destino informados | Design | Pending |
-| NMOV-02 | P1: Origem e destino informados | Design | Pending |
-| NMOV-03 | P1: Origem e destino informados | Design | Pending |
-| NMOV-04 | P1: Origem e destino informados | Design | Pending |
+| NMOV-01 | P1: Origem e destino informados | Implementing | Implementing |
+| NMOV-02 | P1: Origem e destino informados | Implemented | Implemented |
+| NMOV-03 | P1: Origem e destino informados | Implemented | Implemented |
+| NMOV-04 | P1: Origem e destino informados | Implemented | Implemented |
 | NMOV-05 | P1: Origem e destino informados | Design | Pending |
 | NLIST-01 | P2: Lista de normas | Design | Pending |
 | NLIST-02 | P2: Lista de normas | Design | Pending |

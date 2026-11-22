@@ -138,9 +138,10 @@ def _structure_alerts(p: ProcessSnapshot, version: CareerVersion, dates_ok: bool
             alerts.append(
                 Alert(
                     AlertCode.MODALIDADE_INCOMPATIVEL,
-                    Severity.ERRO,
-                    "Promoção exige passar do último nível da classe atual para o primeiro "
-                    "nível da classe imediatamente seguinte.",
+                    Severity.ALERTA,
+                    "A promoção informada não segue a sequência usual (último nível da classe "
+                    "atual para o primeiro nível da classe seguinte); confira a norma que "
+                    "fundamenta o salto.",
                     REF_MODALITY,
                 )
             )
@@ -213,8 +214,9 @@ def verify_process(p: ProcessSnapshot, versions: Sequence[CareerVersion]) -> lis
         alerts.append(
             Alert(
                 AlertCode.MODALIDADE_INCOMPATIVEL,
-                Severity.ERRO,
-                "Progressão exige permanecer na mesma classe e avançar exatamente um nível.",
+                Severity.ALERTA,
+                "A progressão informada não segue a sequência usual (um nível acima, na mesma "
+                "classe); confira a norma que fundamenta o salto.",
                 REF_MODALITY,
             )
         )

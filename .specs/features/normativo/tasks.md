@@ -130,7 +130,7 @@ graph LR
 
 #### T1: Salto na carreira vira `ALERTA` com o texto da sequência usual
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Os dois `MODALIDADE_INCOMPATIVEL` (promoção em `_structure_alerts`, progressão em `verify_process`) passam de `Severity.ERRO` para `Severity.ALERTA`, com os textos exatos de NMOV-02 e NMOV-03; a condição não muda e nada deduz classe, denominação ou nível.
 **Where**: `backend/app/domain/rules/process_verification.py` (modify)
@@ -145,11 +145,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_process_verification.py`: promoção sintética A1→C1 na estrutura da Lei 15.141 dá `MODALIDADE_INCOMPATIVEL` `ALERTA` com o texto exato de NMOV-02; progressão C1→C3 e progressão B4→C1 dão `ALERTA` com o texto exato de NMOV-03; promoção B4→C1 e progressão C1→C2 não dão alerta de modalidade; nenhum alerta do processo com salto tem severidade `ERRO` por modalidade (NMOV-04)
-- [ ] Os testes existentes que esperam `ERRO` em `MODALIDADE_INCOMPATIVEL` (`test_process_verification.py`, `tests/integration/api/test_processes_api.py`, `test_process_updates_api.py`) passam a esperar `ALERTA` e o texto novo, citando NMOV-02/03 no commit
-- [ ] Teste de integração: processo com salto é criado, editado e iniciado (`EM_ANDAMENTO`) sem recusa (NMOV-04)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: contagem antes e depois registrada; nenhum teste apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_process_verification.py`: promoção sintética A1→C1 na estrutura da Lei 15.141 dá `MODALIDADE_INCOMPATIVEL` `ALERTA` com o texto exato de NMOV-02; progressão C1→C3 e progressão B4→C1 dão `ALERTA` com o texto exato de NMOV-03; promoção B4→C1 e progressão C1→C2 não dão alerta de modalidade; nenhum alerta do processo com salto tem severidade `ERRO` por modalidade (NMOV-04)
+- [x] Os testes existentes que esperam `ERRO` em `MODALIDADE_INCOMPATIVEL` (`test_process_verification.py`, `tests/integration/api/test_processes_api.py`, `test_process_updates_api.py`) passam a esperar `ALERTA` e o texto novo, citando NMOV-02/03 no commit
+- [x] Teste de integração: processo com salto é criado, editado e iniciado (`EM_ANDAMENTO`) sem recusa (NMOV-04)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: contagem antes e depois registrada; nenhum teste apagado
 
 **Tests**: unit
 **Gate**: full

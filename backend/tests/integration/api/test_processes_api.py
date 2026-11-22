@@ -93,13 +93,18 @@ def test_proc11_requerimento_case_returns_exact_codes_and_keeps_values(
     assert body["interstice"] == {"months": 24, "days": 730}
     severities = {a["code"]: a["severity"] for a in body["alerts"]}
     assert severities == {
-        "MODALIDADE_INCOMPATIVEL": "ERRO",
+        "MODALIDADE_INCOMPATIVEL": "ALERTA",  # NMOV-02: a jump is an alert
         "CLASSE_INEXISTENTE_NA_ESTRUTURA": "ERRO",
         "DENOMINACAO_DIVERGENTE": "ALERTA",
         "INTERSTICIO_NAO_CONCLUIDO": "ALERTA",
         "INTERSTICIO_CRUZA_REESTRUTURACAO": "REQUER_ANALISE_NORMATIVA",
     }
     assert all(a["message"] and a["norm_reference"] for a in body["alerts"])
+    modality = next(a for a in body["alerts"] if a["code"] == "MODALIDADE_INCOMPATIVEL")
+    assert modality["message"] == (
+        "A promoção informada não segue a sequência usual (último nível da classe atual "
+        "para o primeiro nível da classe seguinte); confira a norma que fundamenta o salto."
+    )
     cross = next(a for a in body["alerts"] if a["code"] == "INTERSTICIO_CRUZA_REESTRUTURACAO")
     assert "Lei 15.141/2025" in cross["norm_reference"]
     # PROC-03: values saved exactly as informed, despite the alerts
@@ -162,7 +167,8 @@ def test_admin_lists_all_processes_with_alert_counts(client, two_processes):
     by_id = {item["id"]: item for item in response.json()}
     assert set(by_id) == {two_processes["fasi"]["id"], two_processes["ifch"]["id"]}
     fasi = by_id[two_processes["fasi"]["id"]]
-    assert fasi["alert_counts"] == {"ERRO": 2, "ALERTA": 2, "REQUER_ANALISE_NORMATIVA": 1}
+    # NMOV-02: the promotion jump (MODALIDADE_INCOMPATIVEL) counts as ALERTA, not ERRO
+    assert fasi["alert_counts"] == {"ERRO": 1, "ALERTA": 3, "REQUER_ANALISE_NORMATIVA": 1}
     assert fasi["status"] == "RASCUNHO"
     assert fasi["professor_id"] == str(two_processes["fasi_prof"].id)
     assert fasi["professor_name"] == "Maria Docente da Silva"

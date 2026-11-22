@@ -57,6 +57,14 @@ def test_rascunho_update_without_justification_is_saved_and_audited(
     assert (body["target_level"], body["version"]) == (2, 2)
     # Promotion to D2 (not the first level of D): alerts are recomputed on save
     assert {a["code"] for a in body["alerts"]} == {"MODALIDADE_INCOMPATIVEL"}
+    # NMOV-02: the promotion out of the usual sequence is an alert with the jump text
+    assert [(a["severity"], a["message"]) for a in body["alerts"]] == [
+        (
+            "ALERTA",
+            "A promoção informada não segue a sequência usual (último nível da classe atual "
+            "para o primeiro nível da classe seguinte); confira a norma que fundamenta o salto.",
+        )
+    ]
     with uow_factory() as uow:
         event = uow.audit.list_for("process", process["id"])[-1]
     assert event.action is AuditAction.UPDATE
@@ -126,6 +134,43 @@ def test_second_save_with_stale_version_returns_409(client, secretaria, process)
     assert first.status_code == 200
     assert second.status_code == 409
     assert client.get(f"/api/processes/{process['id']}").json()["notes"] == "Primeira gravação"
+
+
+# NMOV-04: a career jump never refuses creation, edition nor the start of the process
+def test_process_with_career_jump_is_created_edited_and_started(client, secretaria, professor):
+    _, headers = secretaria
+    jump = {
+        **EDITABLE,
+        "current_class": "A",
+        "current_denomination": "Assistente",
+        "current_level": 1,
+        "target_class": "C",
+        "target_denomination": "Associado",
+        "target_level": 1,
+        "start_date": "2025-02-01",
+        "end_date": "2027-02-01",
+        "opening_date": "2027-03-01",
+    }
+
+    created = client.post("/api/processes", json=process_payload(professor, jump), headers=headers)
+    assert created.status_code == 201
+    process_id = created.json()["id"]
+    modality = [a for a in created.json()["alerts"] if a["code"] == "MODALIDADE_INCOMPATIVEL"]
+    assert [a["severity"] for a in modality] == ["ALERTA"]
+
+    edited = client.put(
+        f"/api/processes/{process_id}",
+        json={**jump, "notes": "Salto informado", "expected_version": 1},
+        headers=headers,
+    )
+    assert edited.status_code == 200
+    assert (edited.json()["current_class"], edited.json()["target_class"]) == ("A", "C")
+
+    started = set_status(client, headers, process_id, "EM_ANDAMENTO", 2)
+    assert (started.status_code, started.json()["status"]) == (200, "EM_ANDAMENTO")
+    stored = client.get(f"/api/processes/{process_id}").json()
+    assert (stored["current_class"], stored["current_level"]) == ("A", 1)
+    assert (stored["target_class"], stored["target_level"]) == ("C", 1)
 
 
 def test_status_follows_rascunho_em_andamento_concluido(client, secretaria, process, uow_factory):
