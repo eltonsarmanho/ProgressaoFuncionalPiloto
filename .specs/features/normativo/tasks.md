@@ -622,7 +622,7 @@ graph LR
 
 #### T18: Casos de uso de normas
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ListNorms` (com as regras ligadas: estruturas de carreira, versões de tabela, regras de titulação), `GetNorm`, `CreateNorm`, `UpdateNorm` (código imutável, auditoria com valores anteriores), `ArchiveNorm`, `AttachNormFile` (PDF até 20 MB, grava o novo, confirma, apaga o anterior) e `DownloadNormFile`; escrita só ADMIN.
 **Where**: `backend/app/application/use_cases/norms.py` (new)
@@ -637,9 +637,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_norm_usecases.py` (novo): criar grava ativa e audita (NBASE-01); código repetido e cada campo ausente dão 422 com o campo (NBASE-02); vigência e URL inválidas (NBASE-03, 04); anexar PDF sintético grava e audita, anexar de novo apaga o anterior do disco (NBASE-05); não PDF e 20 MB + 1 byte dão 422 (NBASE-06); editar não muda o código e a auditoria guarda os valores anteriores (NBASE-07); arquivar mantém as ligações (NBASE-08); DOCENTE e SECRETARIA recebem `Forbidden` em toda escrita (NBASE-09); versão velha dá `StaleVersion` (NBASE-10); listar esconde arquivadas sem o filtro e traz as regras ligadas (NLIST-01, 02); falha ao gravar o arquivo deixa o registro e o arquivo anterior intactos
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/test_norm_usecases.py` (novo): criar grava ativa e audita (NBASE-01); código repetido e cada campo ausente dão 422 com o campo (NBASE-02); vigência e URL inválidas (NBASE-03, 04); anexar PDF sintético grava e audita, anexar de novo apaga o anterior do disco (NBASE-05); não PDF e 20 MB + 1 byte dão 422 (NBASE-06); editar não muda o código e a auditoria guarda os valores anteriores (NBASE-07); arquivar mantém as ligações (NBASE-08); DOCENTE e SECRETARIA recebem `Forbidden` em toda escrita (NBASE-09); versão velha dá `StaleVersion` (NBASE-10); listar esconde arquivadas sem o filtro e traz as regras ligadas (NLIST-01, 02); falha ao gravar o arquivo deixa o registro e o arquivo anterior intactos
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full

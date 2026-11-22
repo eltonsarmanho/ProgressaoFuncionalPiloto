@@ -194,12 +194,12 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NBASE-02 | P1: Base de normas | Implementing | Implementing |
 | NBASE-03 | P1: Base de normas | Implementing | Implementing |
 | NBASE-04 | P1: Base de normas | Implementing | Implementing |
-| NBASE-05 | P1: Base de normas | Design | Pending |
-| NBASE-06 | P1: Base de normas | Design | Pending |
-| NBASE-07 | P1: Base de normas | Design | Pending |
+| NBASE-05 | P1: Base de normas | Implementing | Implementing |
+| NBASE-06 | P1: Base de normas | Implementing | Implementing |
+| NBASE-07 | P1: Base de normas | Implementing | Implementing |
 | NBASE-08 | P1: Base de normas | Implementing | Implementing |
-| NBASE-09 | P1: Base de normas | Design | Pending |
-| NBASE-10 | P1: Base de normas | Design | Pending |
+| NBASE-09 | P1: Base de normas | Implementing | Implementing |
+| NBASE-10 | P1: Base de normas | Implementing | Implementing |
 | NBASE-11 | P1: Base de normas | Implemented | Implemented |
 | NBASE-12 | P1: Base de normas | Implemented | Implemented |
 | NLINK-01 | P1: Regras e alertas ligados à norma | Implemented | Implemented |
@@ -221,8 +221,8 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NMOV-03 | P1: Origem e destino informados | Implemented | Implemented |
 | NMOV-04 | P1: Origem e destino informados | Implemented | Implemented |
 | NMOV-05 | P1: Origem e destino informados | Implementing | Implementing |
-| NLIST-01 | P2: Lista de normas | Design | Pending |
-| NLIST-02 | P2: Lista de normas | Design | Pending |
+| NLIST-01 | P2: Lista de normas | Implementing | Implementing |
+| NLIST-02 | P2: Lista de normas | Implementing | Implementing |
 | NLIST-03 | P2: Lista de normas | Design | Pending |
 | NMIN-01 | P2: Mínimo não definido | Implementing | Implementing |
 | NMIN-02 | P2: Mínimo não definido | Design | Pending |
