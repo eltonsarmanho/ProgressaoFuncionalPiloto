@@ -1307,7 +1307,7 @@ graph LR
 
 #### T40: Tipos e rótulos dos documentos gerados
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `DocumentKind` ganha `REQUERIMENTO` e `PARECER`; `DOCUMENT_KINDS` lista os cinco e `ARTIFACT_KINDS` os três da conclusão; `ConclusionPreview` passa a ter `artifacts: Record<ArtifactKind, boolean>` e `pending_board: string[]`; `GENERATION_CODES` ganha os cinco códigos novos; rótulos em português dos tipos, dos códigos e dos itens pendentes.
 **Where**: `frontend/src/api/generated.ts` (modify; os rótulos em `frontend/src/labels.ts`)
@@ -1322,11 +1322,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/labels.test.ts`: todo código de `GENERATION_CODES` tem rótulo em português e só eles (os cinco novos incluídos, `TABELA_DESATUALIZADA` com "A pontuação mudou depois da última Tabela; gere a Tabela de novo"); `DOCUMENT_KIND_LABELS` tem os cinco tipos ("Requerimento" e "Parecer" os novos); há rótulo para cada item de `pending_board` (`REQUERIMENTO`, `PORTARIA_BANCA`, `PARECER`)
-- [ ] Teste existente: `frontend/src/test/generatedFixtures.ts` (`preview()` ganha `pending_board: []`) e `GeneratedBlock.test.tsx` seguem passando com os tipos novos
-- [ ] `npm run build` sem erro de tipo (os `Record` tipados acusam o que faltar)
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `frontend/src/labels.test.ts`: todo código de `GENERATION_CODES` tem rótulo em português e só eles (os cinco novos incluídos, `TABELA_DESATUALIZADA` com "A pontuação mudou depois da última Tabela; gere a Tabela de novo"); `DOCUMENT_KIND_LABELS` tem os cinco tipos ("Requerimento" e "Parecer" os novos); há rótulo para cada item de `pending_board` (`REQUERIMENTO`, `PORTARIA_BANCA`, `PARECER`)
+- [x] Teste existente: `frontend/src/test/generatedFixtures.ts` (`preview()` ganha `pending_board: []`) e `GeneratedBlock.test.tsx` seguem passando com os tipos novos
+- [x] `npm run build` sem erro de tipo (os `Record` tipados acusam o que faltar)
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: front

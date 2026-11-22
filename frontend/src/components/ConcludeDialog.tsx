@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { request } from "../api/client";
 import type { ConclusionPreview, ConclusionResult } from "../api/generated";
-import { DOCUMENT_KINDS } from "../api/generated";
+import { ARTIFACT_KINDS } from "../api/generated";
 import { errorCode, generationErrorMessage } from "../generationErrors";
 import { DOCUMENT_KIND_LABELS, GENERATION_ALERT_LABELS, formatSize } from "../labels";
 import { Modal } from "./Modal";
@@ -50,7 +50,7 @@ export function ConcludeDialog({
     };
   }, [processId, reloads]);
 
-  const missing = preview ? DOCUMENT_KINDS.filter((kind) => !preview.artifacts[kind]) : [];
+  const missing = preview ? ARTIFACT_KINDS.filter((kind) => !preview.artifacts[kind]) : [];
   const concluded = result?.status === "CONCLUIDO";
   const partial = result !== null && !concluded;
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GENERATION_ALERT_CODES, GENERATION_CODES } from "./api/generated";
+import { ARTIFACT_KINDS, DOCUMENT_KINDS, GENERATION_ALERT_CODES, GENERATION_CODES, PENDING_BOARD_ITEMS } from "./api/generated";
 import { SCORING_ALERT_CODES, type InvalidReason, type Validity } from "./api/types";
 import {
   ALERT_CODE_LABELS,
@@ -13,6 +13,8 @@ import {
   invalidReasonText,
   needsCategoryMessage,
   DOCUMENT_CODE_LABELS,
+  DOCUMENT_KIND_LABELS,
+  PENDING_BOARD_LABELS,
   GENERATION_ALERT_LABELS,
   GENERATION_CODE_LABELS,
   GENERATION_STATE_LABELS,
@@ -210,5 +212,40 @@ describe("GRES-01, 02, 04, 05, 09: rótulos do painel da Etapa 4", () => {
   it("as barras usam nomes curtos de grupo, um por grupo de I a VIII", () => {
     expect(Object.keys(GROUP_NAMES)).toEqual(["1", "2", "3", "4", "5", "6", "7", "8"]);
     expect(GROUP_NAMES[1]).toBe("Docência");
+  });
+});
+
+describe("PAR-07..10, DOS-07: tipos, códigos e pendentes da banca", () => {
+  it("os cinco códigos novos de recusa existem e têm texto em português", () => {
+    for (const code of ["CONCLUSAO_AUSENTE", "BANCA_SEM_MEMBROS", "TABELA_AUSENTE", "TABELA_DESATUALIZADA", "PORTARIA_EXISTENTE"] as const) {
+      expect(GENERATION_CODES).toContain(code);
+      expect(GENERATION_CODE_LABELS[code], code).toBeTruthy();
+    }
+  });
+
+  it("PAR-10: TABELA_DESATUALIZADA diz que a pontuação mudou e manda gerar a Tabela de novo", () => {
+    expect(GENERATION_CODE_LABELS.TABELA_DESATUALIZADA).toBe(
+      "A pontuação mudou depois da última Tabela; gere a Tabela de novo",
+    );
+  });
+
+  it("os cinco tipos de documento têm nome, e só eles", () => {
+    expect([...DOCUMENT_KINDS]).toEqual(["TABELA", "RELATORIO", "COMPROVANTE", "REQUERIMENTO", "PARECER"]);
+    expect(Object.keys(DOCUMENT_KIND_LABELS).sort()).toEqual([...DOCUMENT_KINDS].sort());
+    expect(DOCUMENT_KIND_LABELS.REQUERIMENTO).toBe("Requerimento");
+    expect(DOCUMENT_KIND_LABELS.PARECER).toBe("Parecer");
+  });
+
+  it("DOS-07: a conclusão exige só a Tabela, o Relatório e o Comprovante", () => {
+    expect([...ARTIFACT_KINDS]).toEqual(["TABELA", "RELATORIO", "COMPROVANTE"]);
+  });
+
+  it("DOS-07: cada item pendente da banca tem rótulo, e só eles", () => {
+    expect([...PENDING_BOARD_ITEMS]).toEqual(["REQUERIMENTO", "PORTARIA_BANCA", "PARECER"]);
+    expect(PENDING_BOARD_LABELS).toEqual({
+      REQUERIMENTO: "Requerimento",
+      PORTARIA_BANCA: "Portaria da banca",
+      PARECER: "Parecer",
+    });
   });
 });

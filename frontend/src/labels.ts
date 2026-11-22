@@ -1,4 +1,12 @@
-import type { DocumentKind, EntrySource, GenerationAlert, GenerationAlertCode, GenerationCode, GenerationState } from "./api/generated";
+import type {
+  DocumentKind,
+  EntrySource,
+  GenerationAlert,
+  GenerationAlertCode,
+  GenerationCode,
+  GenerationState,
+  PendingBoardItem,
+} from "./api/generated";
 import type { DocumentStatus, InvalidReason, Level, Modality, NormKind, ProcessStatus, Severity, Validity } from "./api/types";
 
 export const STATUS_LABELS: Record<ProcessStatus, string> = {
@@ -380,6 +388,11 @@ export const GENERATION_CODE_LABELS: Record<GenerationCode, string> = {
   PAGINA_FORA_DO_DOCUMENTO: "A página indicada não existe no documento.",
   VERSAO_DESATUALIZADA: "Os dados mudaram desde que você abriu a tela. A versão atual foi recarregada.",
   PROCESSO_SOMENTE_LEITURA: "O processo está concluído ou arquivado e não aceita alterações.",
+  CONCLUSAO_AUSENTE: "Escolha a conclusão do Parecer, Favorável ou Desfavorável, e salve antes de gerar.",
+  BANCA_SEM_MEMBROS: "Registre ao menos um membro da banca antes de gerar o Parecer.",
+  TABELA_AUSENTE: "Gere a Tabela de Pontuação na Etapa 5 antes de gerar o Parecer.",
+  TABELA_DESATUALIZADA: "A pontuação mudou depois da última Tabela; gere a Tabela de novo",
+  PORTARIA_EXISTENTE: "Já há uma portaria da banca neste processo. Confirme a substituição para enviar outra.",
 };
 
 /** Alerts that travel with a result: the text the block of a document lists. */
@@ -437,11 +450,20 @@ export function formatCount(n: number): string {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
-/** The three documents the system generates (Etapa 5). */
+/** The documents the system generates: three in the Etapa 5, the Parecer in the Etapa 6 and the Requerimento in the Etapa 7. */
 export const DOCUMENT_KIND_LABELS: Record<DocumentKind, string> = {
   TABELA: "Tabela de Pontuação",
   RELATORIO: "Relatório de Atividades",
   COMPROVANTE: "Comprovante de Documentos",
+  REQUERIMENTO: "Requerimento",
+  PARECER: "Parecer",
+};
+
+/** DOS-07: the board documents the conclusion warns are still missing. */
+export const PENDING_BOARD_LABELS: Record<PendingBoardItem, string> = {
+  REQUERIMENTO: "Requerimento",
+  PORTARIA_BANCA: "Portaria da banca",
+  PARECER: "Parecer",
 };
 
 /** An instant of the server (ISO, UTC) as the day it was in the browser's time zone: "18/11/2026". */

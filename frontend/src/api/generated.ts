@@ -9,7 +9,9 @@
  */
 import type { ProcessStatus } from "./types";
 
-export type DocumentKind = "TABELA" | "RELATORIO" | "COMPROVANTE";
+export type DocumentKind = "TABELA" | "RELATORIO" | "COMPROVANTE" | "REQUERIMENTO" | "PARECER";
+/** The three kinds the conclusion of a process requires ready; the Requerimento and the Parecer do not count. */
+export type ArtifactKind = "TABELA" | "RELATORIO" | "COMPROVANTE";
 export type GenerationState = "GERANDO" | "PRONTO" | "FALHOU";
 /** The format of a file; in a download URL the extension is lowercase (`/files/pdf`). */
 export type DocumentFormat = "DOCX" | "PDF";
@@ -17,7 +19,11 @@ export type EntrySource = "MODELO" | "IA" | "USUARIO";
 export type PageKind = "CAPA" | "SUMARIO" | "SEPARADOR" | "ORIGINAL";
 export type TocLevel = "GRUPO" | "ITEM" | "ATIVIDADE";
 
-export const DOCUMENT_KINDS: DocumentKind[] = ["TABELA", "RELATORIO", "COMPROVANTE"];
+export const DOCUMENT_KINDS: DocumentKind[] = ["TABELA", "RELATORIO", "COMPROVANTE", "REQUERIMENTO", "PARECER"];
+export const ARTIFACT_KINDS: ArtifactKind[] = ["TABELA", "RELATORIO", "COMPROVANTE"];
+/** DOS-07: the board documents `ConclusionPreview.pending_board` names, in the order of the dossier. */
+export const PENDING_BOARD_ITEMS = ["REQUERIMENTO", "PORTARIA_BANCA", "PARECER"] as const;
+export type PendingBoardItem = (typeof PENDING_BOARD_ITEMS)[number];
 export const DOCUMENT_FORMATS: DocumentFormat[] = ["DOCX", "PDF"];
 
 /** Refusals and failures: a 422 or 409 `code`, or the `error_code` of a row or a job. */
@@ -43,6 +49,11 @@ export const GENERATION_CODES = [
   "PAGINA_FORA_DO_DOCUMENTO",
   "VERSAO_DESATUALIZADA",
   "PROCESSO_SOMENTE_LEITURA",
+  "CONCLUSAO_AUSENTE",
+  "BANCA_SEM_MEMBROS",
+  "TABELA_AUSENTE",
+  "TABELA_DESATUALIZADA",
+  "PORTARIA_EXISTENTE",
 ] as const;
 export type GenerationCode = (typeof GENERATION_CODES)[number];
 
@@ -256,8 +267,16 @@ export type LayoutSaveBody = {
 
 export type DossierItem = { order: number; title: string; generated_by: DocumentKind | null };
 
-/** `GET /processes/{id}/conclusion`: what concluding frees and which kinds have a ready version. */
-export type ConclusionPreview = { files: number; bytes: number; artifacts: Record<DocumentKind, boolean> };
+/**
+ * `GET /processes/{id}/conclusion`: what concluding frees, which required kinds have a ready version
+ * and which board documents are still missing (a warning that never blocks: DOS-07).
+ */
+export type ConclusionPreview = {
+  files: number;
+  bytes: number;
+  artifacts: Record<ArtifactKind, boolean>;
+  pending_board: string[];
+};
 
 export type ConclusionBody = { expected_version: number; confirmar: boolean; justificativa?: string | null };
 

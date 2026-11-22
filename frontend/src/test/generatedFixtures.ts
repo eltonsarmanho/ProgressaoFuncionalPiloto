@@ -147,7 +147,7 @@ export function generated(over: Partial<GeneratedDocument> = {}): GeneratedDocum
 }
 
 export function preview(over: Partial<ConclusionPreview> = {}): ConclusionPreview {
-  return { files: 3, bytes: 5_242_880, artifacts: { TABELA: true, RELATORIO: true, COMPROVANTE: true }, ...over };
+  return { files: 3, bytes: 5_242_880, artifacts: { TABELA: true, RELATORIO: true, COMPROVANTE: true }, pending_board: [], ...over };
 }
 
 /** A document of the process as the list of the Etapa 2 sends it (only what the Etapa 5 screens read). */
