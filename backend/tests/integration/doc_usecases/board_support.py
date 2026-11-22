@@ -101,3 +101,22 @@ def set_reading_state(world, state, process=None, code=None) -> None:
             else:
                 uow.board.finish_failed(process.id, code, now)
         uow.commit()
+
+
+class FakeOrdinanceExtractor:
+    """The AI of the tests: answers with `answer` (or raises `error`), records every text it
+    received and runs `during` while the call is in flight."""
+
+    def __init__(self, answer=None, error=None, during=None):
+        self.answer = answer
+        self.error = error
+        self.during = during
+        self.received: list[str] = []
+
+    def extract(self, text):
+        self.received.append(text)
+        if self.during is not None:
+            self.during()
+        if self.error is not None:
+            raise self.error
+        return self.answer

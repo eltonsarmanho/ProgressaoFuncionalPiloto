@@ -791,7 +791,7 @@ graph LR
 
 #### T22: Executor da leitura da portaria
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `RunOrdinanceReading` com `run_next()` (pega a `PENDENTE` mais antiga com `SKIP LOCKED`, extrai o texto por página, **mascara** com `mask_identifiers`, monta o texto com as marcas `[PÁGINA n]`, chama o `OrdinanceExtractor`, confere com `ground_ordinance` no texto original e grava `LIDA` com `merge_reading` sob o bloqueio da linha, sem sobrescrever campo `INFORMADO`), `recover_interrupted()` (`LENDO` na partida vira `FALHOU` com `INTERROMPIDA`, auditado) e a falha de qualquer etapa como `FALHOU` com o código.
 **Where**: `backend/app/application/use_cases/ordinance_reading.py` (new)
@@ -806,9 +806,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_ordinance_reading.py` (novo), com `FakeTextExtractor` e um `OrdinanceExtractor` falso que grava o texto que recebeu: portaria sintética de três membros vira `LIDA` com número, data e membros com a página de origem (PORT-02); o texto que o extrator recebeu traz `[CPF]`, `[EMAIL]` e `[TELEFONE]` no lugar dos dados sintéticos da página e **mantém os nomes**, e o extrator só recebe `str` (PORT-04); a conferência usa o texto original da página citada: valor que só está em outra página fica vazio com `VALOR_SEM_ORIGEM` (PORT-03); portaria sem membro termina `LIDA` com `MEMBROS_NAO_ENCONTRADOS`; ler de novo não sobrescreve o campo `INFORMADO` nem a lista de membros que a pessoa salvou, e a pessoa gravar enquanto a leitura roda (versão sobe) não faz a leitura perder a gravação nem falhar; erro do extrator vira `FALHOU` com o código e os campos seguem editáveis (PORT-07); texto vazio ou ilegível vira `FALHOU` com `TEXTO_ILEGIVEL` sem chamar a IA; exceção inesperada vira `FALHOU` com `ERRO_INTERNO` e o log só tem o tipo; `run_next` devolve `False` sem portaria `PENDENTE` e leva a mais antiga primeiro; `recover_interrupted` passa `LENDO` a `FALHOU` com `INTERROMPIDA`, audita sem usuário e deixa `PENDENTE` na fila; repetir a recuperação não muda nada
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_ordinance_reading.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_ordinance_reading.py` (novo), com `FakeTextExtractor` e um `OrdinanceExtractor` falso que grava o texto que recebeu: portaria sintética de três membros vira `LIDA` com número, data e membros com a página de origem (PORT-02); o texto que o extrator recebeu traz `[CPF]`, `[EMAIL]` e `[TELEFONE]` no lugar dos dados sintéticos da página e **mantém os nomes**, e o extrator só recebe `str` (PORT-04); a conferência usa o texto original da página citada: valor que só está em outra página fica vazio com `VALOR_SEM_ORIGEM` (PORT-03); portaria sem membro termina `LIDA` com `MEMBROS_NAO_ENCONTRADOS`; ler de novo não sobrescreve o campo `INFORMADO` nem a lista de membros que a pessoa salvou, e a pessoa gravar enquanto a leitura roda (versão sobe) não faz a leitura perder a gravação nem falhar; erro do extrator vira `FALHOU` com o código e os campos seguem editáveis (PORT-07); texto vazio ou ilegível vira `FALHOU` com `TEXTO_ILEGIVEL` sem chamar a IA; exceção inesperada vira `FALHOU` com `ERRO_INTERNO` e o log só tem o tipo; `run_next` devolve `False` sem portaria `PENDENTE` e leva a mais antiga primeiro; `recover_interrupted` passa `LENDO` a `FALHOU` com `INTERROMPIDA`, audita sem usuário e deixa `PENDENTE` na fila; repetir a recuperação não muda nada
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_ordinance_reading.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted
