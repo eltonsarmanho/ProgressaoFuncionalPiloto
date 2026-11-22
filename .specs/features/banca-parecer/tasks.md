@@ -619,7 +619,7 @@ graph LR
 
 #### T16: Exclusão do processo com a portaria e a banca
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `BusyReason.LEITURA_PORTARIA` e, em `busy_reasons`, a portaria `PENDENTE` ou `LENDO` deixa o processo ocupado; `delete_all` apaga as quatro tabelas novas antes do processo e devolve, como `StoredFile` da área `INPUT`, o arquivo da portaria quando ele ainda existe.
 **Where**: `backend/app/infrastructure/database/repositories.py` (modify; `BusyReason` em `backend/app/domain/repositories/ports.py`)
@@ -634,10 +634,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/documents/test_process_purge_repository.py`: `PROCESS_TABLES`, `rows()` e `populate()` passam a incluir `board_ordinances`, `board_opinions`, `request_settings` e `dossier_deliveries` (preenchidos pelos repositórios novos) e `delete_all` deixa zero linhas em todas; o arquivo da portaria volta em `delete_all` como arquivo de entrada e uma portaria cujo arquivo a conclusão já apagou não devolve arquivo; a exclusão de um processo não toca na portaria de outro; `busy_reasons` traz `LEITURA_PORTARIA` com a portaria `PENDENTE` ou `LENDO` e não traz com `LIDA`, `FALHOU` ou `SEM_ARQUIVO`; os Pareceres e Requerimentos gerados saem com os demais documentos gerados
-- [ ] Testes em `backend/tests/integration/doc_usecases/test_delete_process.py`: o arquivo da portaria sai do disco depois do commit; leitura da portaria em andamento recusa a exclusão com 409 `OPERACAO_EM_ANDAMENTO`; o diretório do processo some quando fica vazio
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (última tarefa de backend da fase: gate completo)
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/documents/test_process_purge_repository.py`: `PROCESS_TABLES`, `rows()` e `populate()` passam a incluir `board_ordinances`, `board_opinions`, `request_settings` e `dossier_deliveries` (preenchidos pelos repositórios novos) e `delete_all` deixa zero linhas em todas; o arquivo da portaria volta em `delete_all` como arquivo de entrada e uma portaria cujo arquivo a conclusão já apagou não devolve arquivo; a exclusão de um processo não toca na portaria de outro; `busy_reasons` traz `LEITURA_PORTARIA` com a portaria `PENDENTE` ou `LENDO` e não traz com `LIDA`, `FALHOU` ou `SEM_ARQUIVO`; os Pareceres e Requerimentos gerados saem com os demais documentos gerados
+- [x] Testes em `backend/tests/integration/doc_usecases/test_delete_process.py`: o arquivo da portaria sai do disco depois do commit; leitura da portaria em andamento recusa a exclusão com 409 `OPERACAO_EM_ANDAMENTO`; o diretório do processo some quando fica vazio
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (última tarefa de backend da fase: gate completo)
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full

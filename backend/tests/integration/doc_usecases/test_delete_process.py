@@ -17,6 +17,7 @@ from app.application.use_cases.processes import (
     GetProcessDeletePreview,
 )
 from app.domain.entities.audit import AuditAction
+from app.domain.entities.board import BoardOrdinance, OrdinanceFile, ReadingState
 from app.domain.entities.generated import DocumentFormat, DocumentKind, GeneratedFile
 from app.domain.entities.process import ProcessStatus
 from app.domain.errors import Conflict, Forbidden, NotFound
@@ -308,6 +309,64 @@ def expect_busy(case):
     assert count(world, "generated_files") == 2
     assert len(disk_files(case)) == 4
     assert count(world, "audit_logs") == audit_rows
+
+
+def add_ordinance(case, state=ReadingState.LIDA, stored=True):
+    """The board ordinance of the main process; with `stored` its file is really on the disk."""
+    world = case.world
+    file = None
+    if stored:
+        content = pdf("portaria")
+        name = case.gen.originals.save(world.process.id, "pdf", content)
+        file = OrdinanceFile(name, "portaria.pdf", "application/pdf", len(content), "f" * 64, 1)
+    with world.uow_factory() as uow:
+        uow.board.create(
+            BoardOrdinance(world.process.id, number="9/2025", file=file, reading_state=state),
+            world.admin.id,
+            0,
+        )
+        uow.commit()
+    return file
+
+
+def test_the_ordinance_file_leaves_the_disk_after_the_commit_and_its_rows_go(case):
+    world = case.world
+    add_ordinance(case)
+    assert len(disk_files(case)) == 5
+
+    delete(case).execute(world.admin, world.process.id)
+
+    assert disk_files(case) == []
+    assert count(world, "board_ordinances") == 0
+
+
+def test_the_directory_of_the_process_goes_when_the_ordinance_file_was_the_last(case):
+    world = case.world
+    add_ordinance(case)
+
+    delete(case).execute(world.admin, world.process.id)
+
+    assert not any(d.exists() for d in process_dirs(case, world.process.id))
+
+
+def test_an_ordinance_being_read_keeps_its_file_on_the_disk_when_the_deletion_is_refused(case):
+    world = case.world
+    add_ordinance(case, ReadingState.LENDO)
+
+    with pytest.raises(Conflict) as raised:
+        delete(case).execute(world.admin, world.process.id)
+
+    assert raised.value.code == "OPERACAO_EM_ANDAMENTO"
+    assert process_exists(world, world.process.id)
+    assert count(world, "board_ordinances") == 1
+    assert len(disk_files(case)) == 5
+
+
+@pytest.mark.parametrize("state", [ReadingState.PENDENTE, ReadingState.LENDO])
+def test_an_ordinance_being_read_blocks_the_deletion(case, state):
+    add_ordinance(case, state, stored=False)
+
+    expect_busy(case)
 
 
 @pytest.mark.parametrize("status", [JobStatus.PENDENTE, JobStatus.PROCESSANDO])

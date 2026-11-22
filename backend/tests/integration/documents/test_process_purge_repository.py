@@ -2,10 +2,21 @@
 PostgreSQL."""
 
 import uuid
+from datetime import date
 
 import pytest
 from sqlalchemy import event, text
 
+from app.domain.entities.board import (
+    BoardMember,
+    BoardOpinion,
+    BoardOrdinance,
+    BoardRole,
+    OpinionConclusion,
+    ReadingState,
+    RequestSettings,
+    ValueSource,
+)
 from app.domain.entities.document import PageText, TextMethod
 from app.domain.entities.generated import DocumentFormat, DocumentKind, GenerationState
 from app.domain.errors import NotFound
@@ -17,10 +28,14 @@ from app.domain.repositories.ports import (
     StoredFileArea,
 )
 from app.infrastructure.database.repositories import (
+    SqlBoardRepository,
+    SqlDossierDeliveryRepository,
     SqlGenerationRepository,
     SqlLayoutRepository,
+    SqlOpinionRepository,
     SqlProcessPurgeRepository,
     SqlReportDraftRepository,
+    SqlRequestSettingsRepository,
     SqlWordingJobRepository,
 )
 from tests.integration.documents.factories import make_document, make_run
@@ -32,6 +47,7 @@ from tests.integration.documents.generated_support import (
     make_layout,
     make_wording_job,
 )
+from tests.integration.documents.test_board_repository import make_file as make_ordinance_file
 from tests.integration.documents.test_repositories import add_documents, make_evidence, make_job
 from tests.integration.test_scoring_repositories import make_activity
 
@@ -49,6 +65,10 @@ PROCESS_TABLES = (
     "report_wording_jobs",
     "report_drafts",
     "comprovante_layouts",
+    "board_ordinances",
+    "board_opinions",
+    "request_settings",
+    "dossier_deliveries",
 )
 HANDLED_DIRECT = {
     "activities",
@@ -106,8 +126,41 @@ def populate(uow_factory, process, base, session_factory, finished_job=True):
         wording.finish(finished.id, T0, GenerationState.PRONTO)
         SqlReportDraftRepository(session).create(make_draft(process), user_id, 0)
         SqlLayoutRepository(session).create(make_layout(process), user_id, 0)
+        ordinance_file = add_board(session, process, user_id)
         session.commit()
-    return {"input": [doc_a, doc_b], "generated_names": {f.internal_name for f in files}}
+    return {
+        "input": [doc_a, doc_b],
+        "generated_names": {f.internal_name for f in files},
+        "ordinance_file": ordinance_file,
+    }
+
+
+MEMBER = BoardMember("Ana Presidente Souza", BoardRole.PRESIDENTE, 1, ValueSource.EXTRAIDO)
+
+
+def add_board(session, process, user_id, state=ReadingState.LIDA, file=True):
+    """The four tables of the banca, filled by their repositories; returns the ordinance file."""
+    ordinance_file = make_ordinance_file() if file else None
+    SqlBoardRepository(session).create(
+        BoardOrdinance(
+            process_id=process.id,
+            number="123/2025",
+            ordinance_date=date(2025, 3, 10),
+            members=(MEMBER,),
+            file=ordinance_file,
+            reading_state=state,
+        ),
+        user_id,
+        0,
+    )
+    SqlOpinionRepository(session).create(
+        BoardOpinion(process.id, OpinionConclusion.FAVORAVEL, date(2025, 4, 2), "Belém", "nota"),
+        user_id,
+        0,
+    )
+    SqlRequestSettingsRepository(session).create(RequestSettings(process.id, "Belém"), 0)
+    SqlDossierDeliveryRepository(session).mark(process.id, "CURRICULO_LATTES", user_id, T0)
+    return ordinance_file
 
 
 def rows(engine, process_id=None):
@@ -119,6 +172,10 @@ def rows(engine, process_id=None):
         "report_wording_jobs": "process_id = :p",
         "report_drafts": "process_id = :p",
         "comprovante_layouts": "process_id = :p",
+        "board_ordinances": "process_id = :p",
+        "board_opinions": "process_id = :p",
+        "request_settings": "process_id = :p",
+        "dossier_deliveries": "process_id = :p",
         "activity_candidates": "activity_id IN (SELECT id FROM activities WHERE process_id = :p)",
         "activity_evidences": "activity_id IN (SELECT id FROM activities WHERE process_id = :p)",
         "extraction_runs": "document_id IN (SELECT id FROM documents WHERE process_id = :p)",
@@ -212,7 +269,9 @@ def test_delete_all_returns_the_files_of_inputs_and_generated_documents(
 
     inputs = {f.internal_name for f in stored if f.area is StoredFileArea.INPUT}
     outputs = {f.internal_name for f in stored if f.area is StoredFileArea.GENERATED}
-    assert inputs == {d.internal_name for d in world["input"]}
+    assert inputs == {d.internal_name for d in world["input"]} | {
+        world["ordinance_file"].internal_name
+    }
     assert outputs == generated
     assert len(stored) == len(inputs) + len(outputs)
     assert {f.process_id for f in stored} == {process.id}
@@ -233,6 +292,63 @@ def test_a_document_whose_file_the_conclusion_removed_returns_no_file(
     stored = purge(session_factory, process.id)
 
     assert [f.internal_name for f in stored] == [kept.internal_name]
+
+
+def test_the_ordinance_file_comes_back_as_an_input_file_of_the_process(
+    uow_factory, session_factory, process, base
+):
+    with session_factory() as session:
+        file = add_board(session, process, base["admin"].id)
+        session.commit()
+
+    stored = purge(session_factory, process.id)
+
+    assert [(f.area, f.process_id, f.internal_name) for f in stored] == [
+        (StoredFileArea.INPUT, process.id, file.internal_name)
+    ]
+
+
+def test_an_ordinance_whose_file_the_conclusion_removed_returns_no_file(
+    session_factory, process, base
+):
+    with session_factory() as session:
+        add_board(session, process, base["admin"].id)
+        SqlBoardRepository(session).mark_file_deleted(process.id, T0)
+        session.commit()
+
+    assert purge(session_factory, process.id) == []
+
+
+def test_an_ordinance_only_typed_has_no_file_to_return_and_is_deleted(
+    engine, session_factory, process, base
+):
+    with session_factory() as session:
+        add_board(session, process, base["admin"].id, file=False)
+        session.commit()
+
+    assert purge(session_factory, process.id) == []
+    assert rows(engine)["board_ordinances"] == 0
+
+
+def test_the_opinions_and_requests_generated_leave_with_the_other_generated_documents(
+    engine, session_factory, process, base
+):
+    user_id = base["admin"].id
+    files = {kind: make_file() for kind in (DocumentKind.PARECER, DocumentKind.REQUERIMENTO)}
+    with session_factory() as session:
+        generations = SqlGenerationRepository(session)
+        for kind, file in files.items():
+            generation = make_generation(process, user_id, kind)
+            generations.add(generation)
+            generations.finish_ready(generation.id, T0, [file], {"total": "1"}, (), None)
+        session.commit()
+
+    stored = purge(session_factory, process.id)
+
+    assert {f.internal_name for f in stored} == {f.internal_name for f in files.values()}
+    assert {f.area for f in stored} == {StoredFileArea.GENERATED}
+    assert rows(engine)["generated_documents"] == 0
+    assert rows(engine)["generated_files"] == 0
 
 
 def test_a_process_without_any_dependent_is_deleted_and_returns_no_file(
@@ -371,6 +487,34 @@ def test_a_wording_in_progress_makes_the_process_busy(session_factory, process, 
     assert reasons == [BusyReason.REDACAO_EM_ANDAMENTO]
 
 
+@pytest.mark.parametrize("state", [ReadingState.PENDENTE, ReadingState.LENDO])
+def test_an_ordinance_queued_or_being_read_makes_the_process_busy(
+    session_factory, process, base, state
+):
+    with session_factory() as session:
+        add_board(session, process, base["admin"].id, state)
+        session.commit()
+
+    with session_factory() as session:
+        reasons = SqlProcessPurgeRepository(session).busy_reasons(process.id)
+
+    assert reasons == [BusyReason.LEITURA_PORTARIA]
+
+
+@pytest.mark.parametrize(
+    "state", [ReadingState.LIDA, ReadingState.FALHOU, ReadingState.SEM_ARQUIVO]
+)
+def test_an_ordinance_not_queued_or_being_read_does_not_make_the_process_busy(
+    session_factory, process, base, state
+):
+    with session_factory() as session:
+        add_board(session, process, base["admin"].id, state)
+        session.commit()
+
+    with session_factory() as session:
+        assert SqlProcessPurgeRepository(session).busy_reasons(process.id) == []
+
+
 def test_the_work_of_another_process_does_not_make_this_one_busy(
     uow_factory, session_factory, process, other_process, base
 ):
@@ -396,6 +540,7 @@ def test_every_busy_reason_is_reported_together(uow_factory, session_factory, pr
     with session_factory() as session:
         SqlGenerationRepository(session).add(make_generation(process, base["admin"].id))
         SqlWordingJobRepository(session).add(make_wording_job(process, base["admin"].id))
+        add_board(session, process, base["admin"].id, ReadingState.LENDO)
         session.commit()
 
     with session_factory() as session:

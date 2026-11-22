@@ -2731,6 +2731,17 @@ class SqlProcessPurgeRepository:
             )
         ):
             reasons.append(BusyReason.REDACAO_EM_ANDAMENTO)
+        if self._s.scalar(
+            select(
+                exists().where(
+                    BoardOrdinanceModel.process_id == process_id,
+                    BoardOrdinanceModel.reading_state.in_(
+                        (ReadingState.PENDENTE, ReadingState.LENDO)
+                    ),
+                )
+            )
+        ):
+            reasons.append(BusyReason.LEITURA_PORTARIA)
         return reasons
 
     def _count(self, model: Any, process_id: UUID) -> int:
@@ -2764,6 +2775,17 @@ class SqlProcessPurgeRepository:
                 )
             )
         ]
+        # The ordinance file is an input file (AD-015); the conclusion may have removed it already.
+        stored += [
+            StoredFile(StoredFileArea.INPUT, process_id, name, ordinance_id)
+            for ordinance_id, name in self._s.execute(
+                select(BoardOrdinanceModel.id, BoardOrdinanceModel.internal_name).where(
+                    BoardOrdinanceModel.process_id == process_id,
+                    BoardOrdinanceModel.internal_name.is_not(None),
+                    BoardOrdinanceModel.file_deleted_at.is_(None),
+                )
+            )
+        ]
         generated = self._ids(GeneratedDocumentModel, process_id)
         stored += [
             StoredFile(StoredFileArea.GENERATED, process_id, name, generation_id)
@@ -2774,6 +2796,10 @@ class SqlProcessPurgeRepository:
         ]
         self._s.execute(select(func.set_config("app.process_purge", "on", True)))
         for statement in (
+            delete(DossierDeliveryModel).where(DossierDeliveryModel.process_id == process_id),
+            delete(RequestSettingsModel).where(RequestSettingsModel.process_id == process_id),
+            delete(BoardOpinionModel).where(BoardOpinionModel.process_id == process_id),
+            delete(BoardOrdinanceModel).where(BoardOrdinanceModel.process_id == process_id),
             delete(ReportWordingJobModel).where(ReportWordingJobModel.process_id == process_id),
             delete(ComprovanteLayoutModel).where(ComprovanteLayoutModel.process_id == process_id),
             delete(ReportDraftModel).where(ReportDraftModel.process_id == process_id),

@@ -934,6 +934,7 @@ class BusyReason(StrEnum):
     DOCUMENTO_PROCESSANDO = "DOCUMENTO_PROCESSANDO"
     GERACAO_EM_ANDAMENTO = "GERACAO_EM_ANDAMENTO"
     REDACAO_EM_ANDAMENTO = "REDACAO_EM_ANDAMENTO"
+    LEITURA_PORTARIA = "LEITURA_PORTARIA"
 
 
 @dataclass(frozen=True)
@@ -949,8 +950,8 @@ class ProcessPurgeRepository(Protocol):
     """Deletion of a whole process with everything that depends on it (GP-D2)."""
 
     def busy_reasons(self, process_id: UUID) -> Sequence[BusyReason]:
-        """Work in progress for the process: a queued or running extraction, a generation or a
-        wording. Empty when nothing runs."""
+        """Work in progress for the process: a queued or running extraction, a generation, a
+        wording or a reading of the board ordinance. Empty when nothing runs."""
         ...
 
     def counts(self, process_id: UUID) -> ProcessDeletionCounts: ...
