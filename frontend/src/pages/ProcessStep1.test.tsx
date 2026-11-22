@@ -13,7 +13,7 @@ const PROFESSORS = [
 ];
 
 const ALERTS = [
-  { code: "MODALIDADE_INCOMPATIVEL", severity: "ERRO", message: "Modalidade incompatível com as classes informadas", norm_reference: "Res. 4.644/2015-CONSEPE, art. 1º, parágrafo único; Lei 12.772/2012, art. 12" },
+  { code: "INTERSTICIO_INSUFICIENTE", severity: "ERRO", message: "Interstício de 14 meses; o mínimo exigido é de 24 meses.", norm_reference: "Res. 4.644/2015-CONSEPE, arts. 2º, 4º e 5º" },
   { code: "INTERSTICIO_NAO_CONCLUIDO", severity: "ALERTA", message: "A data final é posterior à data de abertura", norm_reference: "Res. 4.644/2015-CONSEPE, art. 29" },
   { code: "CLASSE_INEXISTENTE_NA_ESTRUTURA", severity: "ERRO", message: "Nível 4 não existe na Classe D", norm_reference: "Lei 12.772/2012, Anexo I" },
   { code: "INTERSTICIO_CRUZA_REESTRUTURACAO", severity: "REQUER_ANALISE_NORMATIVA", message: "O interstício cruza 01/01/2025", norm_reference: "Lei 15.141/2025 (Lei 12.772/2012, art. 12, §7º, e Anexo II)" },
@@ -86,10 +86,10 @@ describe("ProcessStep1", () => {
     const erro = within(result).getByRole("region", { name: "Erro (2)" });
     const erroItems = within(erro).getAllByRole("listitem");
     expect(erroItems).toHaveLength(2);
-    expect(erroItems[0]).toHaveTextContent("MODALIDADE_INCOMPATIVEL");
-    expect(erroItems[0]).toHaveTextContent("Modalidade incompatível com as classes informadas");
+    expect(erroItems[0]).toHaveTextContent("INTERSTICIO_INSUFICIENTE");
+    expect(erroItems[0]).toHaveTextContent("Interstício de 14 meses; o mínimo exigido é de 24 meses.");
     expect(erroItems[0]).toHaveTextContent(
-      "Referência normativa: Res. 4.644/2015-CONSEPE, art. 1º, parágrafo único; Lei 12.772/2012, art. 12",
+      "Referência normativa: Res. 4.644/2015-CONSEPE, arts. 2º, 4º e 5º",
     );
     expect(erroItems[1]).toHaveTextContent("CLASSE_INEXISTENTE_NA_ESTRUTURA");
     expect(erroItems[1]).toHaveTextContent("Referência normativa: Lei 12.772/2012, Anexo I");
