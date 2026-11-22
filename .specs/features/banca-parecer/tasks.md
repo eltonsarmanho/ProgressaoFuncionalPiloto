@@ -354,7 +354,7 @@ graph LR
 
 #### T7: Mínimo de referência no instantâneo da Tabela
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `build_snapshot` ganha `minimum: MinimumComparison | None = None` e grava `snapshot["minimum"] = {"status": "ATINGE" | "NAO_ATINGE" | "NAO_DEFINIDO", "value": "100.00" | None}` quando recebe o valor; sem o argumento a chave não aparece (Tabela antiga).
 **Where**: `backend/app/domain/rules/generation_snapshot.py` (modify)
@@ -369,10 +369,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_generation_snapshot.py`: com `MinimumComparison(ATINGE, Decimal("100"), Decimal("211"))` o instantâneo traz `{"status": "ATINGE", "value": "100.00"}`; `NAO_ATINGE` idem com o valor; `NAO_DEFINIDO` traz `value` nulo; sem o argumento a chave `minimum` não existe; o instantâneo continua sobrevivendo a ida e volta por JSON e continua igual para a mesma entrada
-- [ ] Teste existente: `test_the_snapshot_survives_a_json_round_trip_unchanged` (parametrizado nos cinco tipos) passa sem mudança
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (última tarefa de backend da fase: gate completo)
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_generation_snapshot.py`: com `MinimumComparison(ATINGE, Decimal("100"), Decimal("211"))` o instantâneo traz `{"status": "ATINGE", "value": "100.00"}`; `NAO_ATINGE` idem com o valor; `NAO_DEFINIDO` traz `value` nulo; sem o argumento a chave `minimum` não existe; o instantâneo continua sobrevivendo a ida e volta por JSON e continua igual para a mesma entrada
+- [x] Teste existente: `test_the_snapshot_survives_a_json_round_trip_unchanged` (parametrizado nos cinco tipos) passa sem mudança
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (última tarefa de backend da fase: gate completo)
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: full

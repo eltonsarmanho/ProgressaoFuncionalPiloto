@@ -13,6 +13,7 @@ from app.domain.entities.generated import DocumentKind
 from app.domain.entities.scoring import ScoringTableVersion
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.scoring_engine import ScoringResult
+from app.domain.rules.scoring_verification import MinimumComparison
 
 _CENTS = Decimal("0.01")
 _WITH_LAYOUT = (DocumentKind.COMPROVANTE,)  # the Tabela cites no page of it (GTAB-08)
@@ -35,11 +36,13 @@ def build_snapshot(
     template: Mapping[str, Any] | None = None,
     layout: Mapping[str, Any] | None = None,
     report: Mapping[str, Any] | None = None,
+    minimum: MinimumComparison | None = None,
 ) -> dict[str, Any]:
     """`activities` are the ones in the document; `excluded` counts the rest by reason.
 
     `layout` goes into the Comprovante snapshot, `report` and `template` into
-    the Relatório one; the others are ignored.
+    the Relatório one; the others are ignored. `minimum` is the reference minimum compared with
+    the total (PAR-04, PAR-06); without it the key is absent, as in a Tabela of before.
     """
     listed = {a.id for a in activities}
     snapshot: dict[str, Any] = {
@@ -70,6 +73,11 @@ def build_snapshot(
         "excluded": dict(sorted(excluded.items())),
         "alerts": list(alerts),
     }
+    if minimum is not None:
+        snapshot["minimum"] = {
+            "status": minimum.status.value,
+            "value": None if minimum.minimum is None else _money(minimum.minimum),
+        }
     if kind in _WITH_LAYOUT and layout is not None:
         snapshot["layout"] = dict(layout)
     if kind is DocumentKind.RELATORIO:

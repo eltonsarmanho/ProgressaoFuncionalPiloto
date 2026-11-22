@@ -210,9 +210,9 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 | PAR-01 | P1: Minuta do Parecer | Implementing | Implementing |
 | PAR-02 | P1: Minuta do Parecer | Implementing | Implementing |
 | PAR-03 | P1: Minuta do Parecer | Implementing | Implementing |
-| PAR-04 | P1: Minuta do Parecer | Design | Pending |
+| PAR-04 | P1: Minuta do Parecer | Implementing | Implementing |
 | PAR-05 | P1: Minuta do Parecer | Design | Pending |
-| PAR-06 | P1: Minuta do Parecer | Design | Pending |
+| PAR-06 | P1: Minuta do Parecer | Implementing | Implementing |
 | PAR-07 | P1: Minuta do Parecer | Implementing | Implementing |
 | PAR-08 | P1: Minuta do Parecer | Implementing | Implementing |
 | PAR-09 | P1: Minuta do Parecer | Implementing | Implementing |

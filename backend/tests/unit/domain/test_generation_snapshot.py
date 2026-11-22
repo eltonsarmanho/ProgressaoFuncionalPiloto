@@ -1,4 +1,4 @@
-"""VER-02: the snapshot saved with each generated version."""
+"""VER-02, PAR-04, PAR-06: the snapshot saved with each generated version."""
 
 import json
 from dataclasses import replace
@@ -9,6 +9,7 @@ import pytest
 
 from app.domain.entities.generated import DocumentKind
 from app.domain.rules.generation_snapshot import build_snapshot
+from app.domain.rules.scoring_verification import MinimumComparison, MinimumStatus
 from tests.unit.domain.scenario_211 import (
     INTERSTICE,
     activity,
@@ -191,3 +192,38 @@ def test_a_total_with_decimals_keeps_two_places():
     data, _, _, _ = snapshot(activities=[activity(3, 2, "1")], version=version)
 
     assert data["total"] == "7.50"
+
+
+@pytest.mark.parametrize(
+    ("status", "minimum", "expected"),
+    [
+        (MinimumStatus.ATINGE, Decimal("100"), {"status": "ATINGE", "value": "100.00"}),
+        (MinimumStatus.NAO_ATINGE, Decimal("250"), {"status": "NAO_ATINGE", "value": "250.00"}),
+        (MinimumStatus.NAO_DEFINIDO, None, {"status": "NAO_DEFINIDO", "value": None}),
+    ],
+)
+def test_the_snapshot_keeps_the_status_and_the_value_of_the_reference_minimum(
+    status, minimum, expected
+):
+    comparison = MinimumComparison(status, minimum, Decimal("211"))
+
+    data, _, _, _ = snapshot(minimum=comparison)
+
+    assert data["minimum"] == expected
+
+
+def test_without_the_minimum_the_snapshot_has_no_minimum_key():
+    data, _, _, _ = snapshot()
+
+    assert "minimum" not in data
+
+
+def test_a_snapshot_with_the_minimum_survives_a_json_round_trip_and_is_repeatable():
+    comparison = MinimumComparison(MinimumStatus.ATINGE, Decimal("100"), Decimal("211"))
+
+    first, _, _, _ = snapshot(minimum=comparison)
+    second, _, _, _ = snapshot(minimum=comparison)
+
+    assert json.loads(json.dumps(first)) == first
+    assert first["total"] == "211.00"
+    assert first["minimum"] == second["minimum"]
