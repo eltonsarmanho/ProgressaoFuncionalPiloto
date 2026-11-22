@@ -123,6 +123,7 @@ def _scoring_version(data: dict[str, Any], table_id: uuid.UUID) -> ScoringTableV
         groups=tuple(groups),
         minimums=data["minimums"],
         notes=data["notes"],
+        norm_code=data.get("norm_code"),
     )
 
 

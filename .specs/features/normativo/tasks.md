@@ -477,7 +477,7 @@ graph LR
 
 #### T13: Mapeamento de `norm_code` na versão de tabela
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Os mapeamentos de versão de tabela (`repositories.py:629,674,711`) leem e gravam `norm_code`; `seed_data/ufpa.json` ganha `"norm_code": "TABELA-OFICIAL-UFPA"` nas versões, e a leitura do JSON o repassa.
 **Where**: `backend/app/infrastructure/database/repositories.py` (modify; uma chave em `seed_data/ufpa.json`)
@@ -492,10 +492,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_scoring_version_norm_code.py` (novo): ida e volta de `norm_code`; versão sem código lê `None`; a versão semeada numa base vazia vem com `TABELA-OFICIAL-UFPA`
-- [ ] `test_seed_scoring.py` passa
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/test_scoring_version_norm_code.py` (novo): ida e volta de `norm_code`; versão sem código lê `None`; a versão semeada numa base vazia vem com `TABELA-OFICIAL-UFPA`
+- [x] `test_seed_scoring.py` passa
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full

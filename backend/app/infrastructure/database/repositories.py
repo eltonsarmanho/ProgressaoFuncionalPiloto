@@ -762,6 +762,7 @@ class SqlScoringTableRepository:
                     notes=m.notes,
                     groups=tuple(entities),
                     superseded_by_id=m.superseded_by_id,
+                    norm_code=m.norm_code,
                 )
             )
         return result
@@ -805,6 +806,7 @@ class SqlScoringTableRepository:
                 status=version.status,
                 minimums=version.minimums,
                 notes=version.notes,
+                norm_code=version.norm_code,
             )
         )
         for group in version.groups:
@@ -842,6 +844,7 @@ class SqlScoringTableRepository:
                 status=version.status,
                 minimums=version.minimums,
                 notes=version.notes,
+                norm_code=version.norm_code,
             )
         ).rowcount
         if rowcount == 0:

@@ -2,6 +2,7 @@
   "table_name": "Tabela de Pontuação da UFPA",
   "version_name": "Tabela oficial de pontuação UFPA, Grupo I no total",
   "supersedes": "Tabela oficial de pontuação UFPA",
+  "norm_code": "TABELA-OFICIAL-UFPA",
   "valid_from": "2015-03-24",
   "valid_to": null,
   "norm_reference": "Tabela oficial de pontuação para progressão docente da UFPA (planilha fornecida em 2026-11-17), com o Grupo I somado ao total a 1 ponto por hora de PIT por decisão do usuário em 2026-11-19",
