@@ -4,12 +4,16 @@ straight in the database, a Tabela made ready by the run or crafted by hand. Syn
 import uuid
 from datetime import date
 
+import httpx
+import pytest
+
 from app.domain.entities.board import BoardOpinion, OpinionConclusion, RequestSettings
 from app.domain.entities.generated import (
     DocumentKind,
     GeneratedDocument,
     GenerationState,
 )
+from app.infrastructure.ai.maritalk import MariTalkClient
 from tests.integration.doc_usecases.generation_support import add_activity
 
 
@@ -78,3 +82,22 @@ def craft_ready_table(world, clock, snapshot) -> GeneratedDocument:
         uow.commit()
     assert done.state is GenerationState.PRONTO
     return done
+
+
+@pytest.fixture
+def no_ai(monkeypatch):
+    """Breaks every way out to the AI during a test and records the attempts: the MariTalk client
+    and the HTTP client under it. The Parecer and the Requerimento must leave `calls` empty."""
+    calls: list[str] = []
+
+    def refuse(name):
+        def guard(*args, **kwargs):
+            calls.append(name)
+            raise AssertionError(f"the AI was called: {name}")
+
+        return guard
+
+    monkeypatch.setattr(MariTalkClient, "chat", refuse("MariTalkClient.chat"))
+    monkeypatch.setattr(httpx.Client, "send", refuse("httpx.Client.send"))
+    monkeypatch.setattr(httpx.AsyncClient, "send", refuse("httpx.AsyncClient.send"))
+    return calls

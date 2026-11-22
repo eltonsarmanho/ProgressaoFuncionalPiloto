@@ -23,6 +23,7 @@ from app.application.services.audit_service import AuditService
 from app.application.services.generation_inputs import GenerationInputs, load_generation_inputs
 from app.application.use_cases.scoring import ProcessScore, _ScoringUseCase, compute_process_score
 from app.domain.entities.audit import AuditAction
+from app.domain.entities.board import BoardOpinion, BoardOrdinance
 from app.domain.entities.comprovante import (
     ComprovanteLayout,
     ComprovantePlan,
@@ -63,6 +64,7 @@ from app.domain.rules.comprovante_plan import (
 from app.domain.rules.download_names import download_name
 from app.domain.rules.generation_snapshot import build_snapshot
 from app.domain.rules.interstice import Interstice
+from app.domain.rules.opinion_document import build_opinion
 from app.domain.rules.report_document import build_report_document
 from app.domain.rules.report_draft import (
     STALE,
@@ -71,6 +73,7 @@ from app.domain.rules.report_draft import (
     propose_draft,
     reconcile_draft,
 )
+from app.domain.rules.scoring_verification import MinimumComparison, MinimumStatus
 from app.domain.rules.table_document import build_table_document
 
 logger = logging.getLogger("app.documents.generation")
@@ -174,6 +177,9 @@ class _EditUseCase(_ScoringUseCase):
 
 
 TABLE_OUTDATED_MESSAGE = "A pontuação mudou depois da última Tabela; gere a Tabela de novo"
+CONCLUSION_MISSING_MESSAGE = "Escolha a conclusão do Parecer antes de gerar."
+NO_MEMBERS_MESSAGE = "Registre ao menos um membro da banca antes de gerar o Parecer."
+NO_TABLE_MESSAGE = "Gere a Tabela de Pontuação antes de gerar o Parecer."
 _CENTS = Decimal("0.01")
 
 
@@ -195,10 +201,7 @@ def check_opinion_table(uow: UnitOfWork, process: FunctionalProcess) -> OpinionT
     """
     table = uow.generations.latest_ready_by_kind(process.id).get(DocumentKind.TABELA)
     if table is None or table.snapshot is None:
-        raise GenerationRefused(
-            GenerationCode.TABELA_AUSENTE,
-            "Gere a Tabela de Pontuação antes de gerar o Parecer.",
-        )
+        raise GenerationRefused(GenerationCode.TABELA_AUSENTE, NO_TABLE_MESSAGE)
     score = compute_process_score(uow, process)
     chosen = None if score.chosen is None else str(score.chosen.version.id)
     same_total = Decimal(table.snapshot["total"]) == score.result.total.quantize(_CENTS)
@@ -206,6 +209,27 @@ def check_opinion_table(uow: UnitOfWork, process: FunctionalProcess) -> OpinionT
     if not (same_total and same_version):
         raise GenerationRefused(GenerationCode.TABELA_DESATUALIZADA, TABLE_OUTDATED_MESSAGE)
     return OpinionTable(table, score)
+
+
+@dataclass(frozen=True)
+class OpinionInputs:
+    """What the Parecer is made of, all checked: the fields, the board and the Tabela."""
+
+    opinion: BoardOpinion
+    ordinance: BoardOrdinance
+    table: OpinionTable
+
+
+def check_opinion_inputs(uow: UnitOfWork, process: FunctionalProcess) -> OpinionInputs:
+    """The refusals of the Parecer in the order of the spec (PAR-07 to PAR-10); used by the
+    request and again by the run, because the person can change any of them in between."""
+    opinion = uow.opinions.get(process.id)
+    if opinion is None or opinion.conclusion is None:
+        raise GenerationRefused(GenerationCode.CONCLUSAO_AUSENTE, CONCLUSION_MISSING_MESSAGE)
+    ordinance = uow.board.get(process.id)
+    if ordinance is None or not ordinance.members:
+        raise GenerationRefused(GenerationCode.BANCA_SEM_MEMBROS, NO_MEMBERS_MESSAGE)
+    return OpinionInputs(opinion, ordinance, check_opinion_table(uow, process))
 
 
 class RequestGeneration(_EditUseCase):
@@ -303,20 +327,7 @@ class RequestGeneration(_EditUseCase):
 
     @staticmethod
     def _check_opinion(uow: UnitOfWork, process: FunctionalProcess) -> None:
-        """The refusals of the Parecer, in the order of the spec (PAR-07 to PAR-10)."""
-        opinion = uow.opinions.get(process.id)
-        if opinion is None or opinion.conclusion is None:
-            raise GenerationRefused(
-                GenerationCode.CONCLUSAO_AUSENTE,
-                "Escolha a conclusão do Parecer antes de gerar.",
-            )
-        ordinance = uow.board.get(process.id)
-        if ordinance is None or not ordinance.members:
-            raise GenerationRefused(
-                GenerationCode.BANCA_SEM_MEMBROS,
-                "Registre ao menos um membro da banca antes de gerar o Parecer.",
-            )
-        check_opinion_table(uow, process)
+        check_opinion_inputs(uow, process)
 
 
 _LEFT_OUT_LABELS = {
@@ -386,9 +397,31 @@ _FAILURE_MESSAGES: Mapping[GenerationCode, str] = {
     GenerationCode.ATIVIDADE_SEM_CATEGORIA: (
         "Há atividades sem categoria na Etapa 3. Escolha a categoria de cada uma."
     ),
+    GenerationCode.CONCLUSAO_AUSENTE: CONCLUSION_MISSING_MESSAGE,
+    GenerationCode.BANCA_SEM_MEMBROS: NO_MEMBERS_MESSAGE,
+    GenerationCode.TABELA_AUSENTE: NO_TABLE_MESSAGE,
     GenerationCode.TABELA_DESATUALIZADA: TABLE_OUTDATED_MESSAGE,
     GenerationCode.ERRO_INTERNO: "Erro interno ao gerar o documento. Tente gerar de novo.",
 }
+
+
+def _minimum_snapshot(minimum: MinimumComparison) -> dict[str, Any]:
+    value = None if minimum.minimum is None else f"{minimum.minimum.quantize(_CENTS):.2f}"
+    return {"status": minimum.status.value, "value": value}
+
+
+def _opinion_minimum(table_snapshot: Mapping[str, Any], score: ProcessScore) -> MinimumComparison:
+    """The minimum the Tabela was made with; a Tabela of before the field has the one of now (the
+    total was found equal, so the comparison is the same)."""
+    saved = table_snapshot.get("minimum")
+    if saved is None:
+        return score.minimum
+    value = saved["value"]
+    return MinimumComparison(
+        MinimumStatus(saved["status"]),
+        None if value is None else Decimal(value),
+        Decimal(table_snapshot["total"]),
+    )
 
 
 class _Scratch:
@@ -596,6 +629,8 @@ class RunGeneration:
             if kind is DocumentKind.RELATORIO:
                 return self._report(generation, inputs, saved, scratch)
             return self._comprovante(generation, inputs, scratch)
+        if kind is DocumentKind.PARECER:
+            return self._opinion(generation, scratch)
         raise ValueError(f"unknown kind of generated document: {kind}")
 
     def _table(
@@ -702,6 +737,65 @@ class RunGeneration:
         if any(w.code is STALE for section in draft.sections for w in section.warnings):
             alerts.append(GenerationAlert(STALE, STALE_MESSAGE))
         return _Produced(outputs, snapshot, alerts)
+
+    def _opinion(self, generation: GeneratedDocument, scratch: _Scratch) -> _Produced:
+        """The Parecer from the snapshot of the last Tabela, the ordinance and the conclusion the
+        person chose; the text is built by rules, never by the AI (PAR-02 to PAR-04, PAR-11)."""
+        config = self._report_config.load()
+        with self._uow_factory() as uow:
+            process = uow.processes.get(generation.process_id)
+            professor = uow.professors.get(process.professor_id)
+            unit = uow.units.get(process.unit_id)
+            if professor is None or unit is None:
+                raise NotFound("Docente ou unidade do processo não encontrado")
+            checked = check_opinion_inputs(uow, process)
+            ready = uow.generations.latest_ready_by_kind(process.id)
+        table = checked.table
+        snapshot_in = table.table.snapshot
+        versions = {
+            kind: ready[kind].version_number if kind in ready else None
+            for kind in (DocumentKind.TABELA, DocumentKind.RELATORIO, DocumentKind.COMPROVANTE)
+        }
+        minimum = _opinion_minimum(snapshot_in, table.score)
+        chosen = table.score.chosen
+        model = build_opinion(
+            process,
+            professor,
+            unit,
+            checked.ordinance,
+            checked.opinion,
+            snapshot_in,
+            versions,
+            minimum,
+            {} if chosen is None else {g.number: g.name for g in chosen.version.groups},
+            config.layout.page,
+        )
+        outputs = []
+        for fmt in _FORMATS:
+            temp = scratch.new_temp()
+            outputs.append((fmt, temp))
+            self._writer.write_opinion(model, fmt, temp)
+        ordinance, opinion = checked.ordinance, checked.opinion
+        snapshot = {
+            "table_generation_id": str(table.table.id),
+            "table_version": snapshot_in["table_version"],
+            "interstice": snapshot_in["interstice"],
+            "total": snapshot_in["total"],
+            "subtotals": snapshot_in["subtotals"],
+            "minimum": _minimum_snapshot(minimum),
+            "versions_used": {kind.value: number for kind, number in versions.items()},
+            "conclusion": opinion.conclusion.value,
+            "opinion_date": (
+                None if opinion.opinion_date is None else opinion.opinion_date.isoformat()
+            ),
+            "place": opinion.place,
+            "ordinance_number": ordinance.number,
+            "ordinance_date": (
+                None if ordinance.ordinance_date is None else ordinance.ordinance_date.isoformat()
+            ),
+            "members": [{"name": m.name, "role": m.role.value} for m in ordinance.members],
+        }
+        return _Produced(outputs, snapshot, [])
 
     def _comprovante(
         self,

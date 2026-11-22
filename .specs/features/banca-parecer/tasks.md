@@ -1048,7 +1048,7 @@ graph LR
 
 #### T31: Geração do Parecer
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `RunGeneration` produz o `PARECER`: lê num só `uow` o processo, o docente, a unidade, a portaria, a minuta, a última Tabela `PRONTO` e as últimas versões de Relatório e Comprovante, **repete** `check_opinion_table` (a pontuação pode mudar entre o pedido e a execução: a linha termina `FALHOU` com `TABELA_DESATUALIZADA`), monta o `OpinionDocument` com `build_opinion`, escreve DOCX e PDF e grava o instantâneo (`table_generation_id`, `table_version`, `interstice`, `total`, `subtotals`, `minimum` da Tabela ou, em Tabela antiga sem o campo, o cálculo de agora, versões usadas, conclusão, data, local, número e data da portaria e os membros). Não chama a IA.
 **Where**: `backend/app/application/use_cases/generated_documents.py` (modify)
@@ -1063,10 +1063,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_run_generation_opinion.py` (novo), num processo sintético com Tabela `PRONTO`, portaria de três membros e conclusão `FAVORAVEL`: a execução grava a versão 1 `PRONTO` com DOCX e PDF, e o Total geral do instantâneo e dos dois arquivos é o da Tabela (zero divergência); a frase da conclusão e as três linhas de assinatura estão nos dois arquivos; o instantâneo guarda o número da Tabela e as versões de Relatório e Comprovante usadas (ausentes ficam `None`); Tabela antiga sem `minimum` no instantâneo usa o mínimo calculado agora; mudar uma atividade validada entre o pedido e a execução faz a linha terminar `FALHOU` com `TABELA_DESATUALIZADA`, sem arquivo e sem consumir número; pedir de novo gera a versão 2 e as duas ficam no histórico e no disco (PAR-14); um provedor de IA que falha se chamado não é chamado nunca (PAR-11); uma linha `GERANDO` iniciada antes de um reinício vira `FALHOU` com `INTERROMPIDA` (`RecoverInterruptedGenerations`, para o tipo novo)
-- [ ] Testes existentes: `test_recover_generations.py` e `test_generated_versions.py` seguem passando
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_run_generation_opinion.py tests/integration/doc_usecases/test_recover_generations.py tests/integration/doc_usecases/test_generated_versions.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_run_generation_opinion.py` (novo), num processo sintético com Tabela `PRONTO`, portaria de três membros e conclusão `FAVORAVEL`: a execução grava a versão 1 `PRONTO` com DOCX e PDF, e o Total geral do instantâneo e dos dois arquivos é o da Tabela (zero divergência); a frase da conclusão e as três linhas de assinatura estão nos dois arquivos; o instantâneo guarda o número da Tabela e as versões de Relatório e Comprovante usadas (ausentes ficam `None`); Tabela antiga sem `minimum` no instantâneo usa o mínimo calculado agora; mudar uma atividade validada entre o pedido e a execução faz a linha terminar `FALHOU` com `TABELA_DESATUALIZADA`, sem arquivo e sem consumir número; pedir de novo gera a versão 2 e as duas ficam no histórico e no disco (PAR-14); um provedor de IA que falha se chamado não é chamado nunca (PAR-11); uma linha `GERANDO` iniciada antes de um reinício vira `FALHOU` com `INTERROMPIDA` (`RecoverInterruptedGenerations`, para o tipo novo)
+- [x] Testes existentes: `test_recover_generations.py` e `test_generated_versions.py` seguem passando
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_run_generation_opinion.py tests/integration/doc_usecases/test_recover_generations.py tests/integration/doc_usecases/test_generated_versions.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted

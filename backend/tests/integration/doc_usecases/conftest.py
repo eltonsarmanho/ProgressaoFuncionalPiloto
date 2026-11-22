@@ -15,6 +15,7 @@ from app.application.use_cases import document_processing, documents
 from app.infrastructure.files.inspector import PillowFileInspector
 from app.infrastructure.storage.local_storage import LocalFileStorage
 from tests.integration.doc_usecases.generation_support import gen  # noqa: F401  (fixture)
+from tests.integration.doc_usecases.opinion_support import no_ai  # noqa: F401  (fixture)
 from tests.integration.documents.factories import make_document
 from tests.integration.scoring.conftest import (  # noqa: F401  (fixtures)
     add_process,
