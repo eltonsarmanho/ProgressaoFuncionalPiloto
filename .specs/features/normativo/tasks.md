@@ -160,7 +160,7 @@ graph LR
 
 #### T2: Entidade `Norm`
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `NormKind` (`LEI`, `RESOLUCAO`, `INSTRUCAO_NORMATIVA`, `MANUAL`, `TABELA`, `OUTRO`), `NormFile(internal_name, original_name, size_bytes, sha256)`, `Norm(id, code, title, kind, issuer, published_on, valid_from, valid_to, source_url, file, notes, archived, version)` e `NormCitation(id, code, title, source_url, has_file, archived)` com o método `Norm.citation()`.
 **Where**: `backend/app/domain/entities/norm.py` (new)
@@ -175,10 +175,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_norm.py`: `citation()` copia código, título, URL e `archived`, e `has_file` é verdadeiro só com `file`; os seis valores de `NormKind`
-- [ ] Teste de arquitetura passa
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_norm.py`: `citation()` copia código, título, URL e `archived`, e `has_file` é verdadeiro só com `file`; os seis valores de `NormKind`
+- [x] Teste de arquitetura passa
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
