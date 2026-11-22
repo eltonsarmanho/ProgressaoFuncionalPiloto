@@ -6,6 +6,8 @@ from datetime import date
 from enum import StrEnum
 from uuid import UUID
 
+from app.domain.entities.professor import Titration
+
 
 class Modality(StrEnum):
     PROGRESSAO = "PROGRESSAO"
@@ -18,6 +20,7 @@ class CareerClass:
     denominations: tuple[str, ...]
     levels: tuple[int, ...]
     promotion_min_months: int | None  # None: entry class, not reachable by promotion
+    required_titration: Titration | None = None  # NTIT-05: None, no titration rule
 
 
 @dataclass(frozen=True)
@@ -28,6 +31,8 @@ class CareerVersion:
     norm_reference: str
     classes: tuple[CareerClass, ...]
     progression_min_months: int = 24
+    norm_code: str | None = None  # NLINK-01: the norm behind the structure
+    required_titration_norm_code: str | None = None  # the norm behind the titration rules
     id: UUID | None = field(default=None, compare=False)  # persistence identity only
 
     def covers(self, moment: date) -> bool:

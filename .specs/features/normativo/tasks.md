@@ -247,7 +247,7 @@ graph LR
 
 #### T5: Campos de norma e titulação na estrutura de carreira
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `CareerClass.required_titration: Titration | None = None`, `CareerVersion.norm_code: str | None = None` e `CareerVersion.required_titration_norm_code: str | None = None`, todos com padrão, para as construções atuais continuarem válidas.
 **Where**: `backend/app/domain/entities/career.py` (modify)
@@ -262,10 +262,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_career.py`: versão e classe sem os campos novos têm `None`; com eles, os valores ficam guardados; `get_class` e `next_class` não mudam
-- [ ] `test_career_catalog.py` passa sem mudança
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_career.py`: versão e classe sem os campos novos têm `None`; com eles, os valores ficam guardados; `get_class` e `next_class` não mudam
+- [x] `test_career_catalog.py` passa sem mudança
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
