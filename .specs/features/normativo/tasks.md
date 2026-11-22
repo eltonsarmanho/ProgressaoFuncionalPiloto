@@ -933,7 +933,7 @@ graph LR
 
 #### T29: Decisão AD-024, dívida e passos de deploy
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `STATE.md` ganha a AD-024 (regras citam a norma por `norm_code` resolvido em `norms`; norma nunca é excluída; salto na carreira é `ALERTA` e origem e destino são do servidor) e a dívida do prefixo de nome em `reference_minimum`; `docs/deploy/vm.md` ganha a seção do deploy do `normativo` (migração `0010`, ligações auditadas na partida, dump antes, conferência pós-deploy), sem executar nada.
 **Where**: `.specs/STATE.md` (modify; seção em `docs/deploy/vm.md`)
@@ -948,8 +948,8 @@ graph LR
 
 **Done when**:
 
-- [ ] AD-024 e a dívida registradas; seção de deploy com os comandos de conferência (cabeça `0010`, sete normas, auditorias das ligações)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] AD-024 e a dívida registradas; seção de deploy com os comandos de conferência (cabeça `0010`, sete normas, auditorias das ligações)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run` (o lote não alterou arquivo de backend; o autor rodou `ruff`, o `lint`, o `build` e os testes do frontend e deixou o `pytest` completo para o gate da T30)
 
 **Tests**: none
 **Gate**: build

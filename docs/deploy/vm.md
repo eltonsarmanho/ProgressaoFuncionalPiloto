@@ -177,6 +177,46 @@ Com `docker exec -it dashboard_db psql -U <superusuario> -d progressao`:
 - **Caminho seguro: restaurar o dump** `progressao-pre-grupo-i-no-total-<data>.sql.gz` e trocar as etiquetas das imagens para as do ponto de retorno. A troca dos processos é dado, então o dump a desfaz; o `downgrade` da `0009` (`DROP COLUMN superseded_by_id`) sozinho não devolve os processos.
 - **Sem dump** (só se o dump não existir): desfazer pelos eventos de auditoria da troca. Para cada evento de `audit_logs` com `justification = 'AD-023: Grupo I no total'`, `UPDATE processes SET scoring_table_version_id = (changes->'scoring_table_version_id'->>'before')::uuid WHERE id = entity_id::uuid;` e depois `UPDATE scoring_table_versions SET superseded_by_id = NULL WHERE superseded_by_id IS NOT NULL;`. Isso volta o estado de dados, mas a partida seguinte do backend com a imagem nova repete a troca (o seed é idempotente), então a imagem anterior tem de estar no ar antes. Processos alterados depois do deploy continuam na versão em que foram editados.
 
+## Deploy das normas (feature `normativo`)
+
+Esta seção descreve o procedimento; **nada foi executado**. **Push e deploy só com a autorização explícita do usuário**, como nos outros deploys. A versão traz a migração `0010_norms`, as sete normas semeadas, a ligação das estruturas de carreira e da tabela oficial às normas, a titulação das classes C e D da estrutura da Lei 15.141/2025, os alertas com a norma e a página "Normas". Ver a AD-024 em `.specs/STATE.md`.
+
+### O que muda na VM
+
+| Ordem | O que | Como entra |
+| --- | --- | --- |
+| 1 | Migração `0010_norms` (só esquema: enum `norm_kind`, tabela `norms`, colunas `career_versions.norm_code` e `scoring_table_versions.norm_code`, nulas e sem chave estrangeira) | `alembic upgrade head` do `docker-entrypoint.sh`; `alembic current` deve terminar em `0010 (head)` |
+| 2 | `seed_norms`: as sete normas de `seed_data/norms.json`, sem arquivo anexado | O seed roda em toda partida e insere só o código que ainda não existe, com um evento de auditoria `CREATE` por norma (entidade `norm`, sem usuário); norma existente nunca é alterada |
+| 3 | `link_career_norms`: `norm_code` das duas estruturas de carreira e, na da Lei 15.141/2025, `required_titration` das classes C e D (doutorado) e `required_titration_norm_code` | Preenche só o que está nulo, com um evento `UPDATE` por versão (entidade `career_version`, justificativa "Ligação às normas (NLINK-01, NLINK-02, NTIT-06)", sem usuário); não muda classes, níveis nem denominações |
+| 4 | `link_table_norms`: `norm_code` `TABELA-OFICIAL-UFPA` nas versões da tabela oficial | Só onde está nulo, com um evento `UPDATE` por versão (entidade `scoring_version`, mesma justificativa); antes da `AdoptSupersedingVersion` |
+
+Processos, atividades e documentos gerados não mudam (AD-012). O seed é idempotente: numa segunda partida nada é inserido nem auditado. A página Normas já mostra as sete normas sem arquivo; o ADMIN anexa depois os PDFs públicos (a URL semeada da Res. 4.644/2015 é uma pasta, não o PDF).
+
+### Antes do deploy
+
+1. Nada em processamento: nenhuma geração `GERANDO` e nenhum documento `PROCESSANDO`, pois reiniciar o backend interrompe o que estiver rodando.
+2. Ponto de retorno, como em "Atualizar para uma versão nova": etiquetar as imagens em uso (`progressao-funcional-backend:normativo-pre-<commit>` e o mesmo para o `frontend`), copiar `docker-compose.override.yml` e `.env` para `backups/` e **fazer o dump do banco antes de subir a imagem nova**: `docker exec dashboard_db pg_dump -U <superusuario> -d progressao | gzip > backups/progressao-pre-normativo-<data>.sql.gz`, conferindo `gzip -t` e `ls -l`.
+3. Construir as imagens do commit aprovado fora da VM, conferir o pacote do frontend com `scripts/check_bundle_no_secrets.sh` e conferir na imagem que `0010_norms.py` está em `alembic/versions` e que `seed_data/norms.json` está no pacote.
+4. O volume `storage/` precisa aceitar o diretório novo `storage/norms/` (criado pelo backend com modo 0700 no primeiro anexo); nenhuma mudança de `docker-compose.yml` é esperada.
+5. Avisar o usuário: um salto na carreira deixa de ser `ERRO` e passa a `ALERTA` (`MODALIDADE_INCOMPATIVEL`); o alerta `TITULACAO_INSUFICIENTE` pode aparecer em processos de promoção para as classes C ou D de docente sem doutorado; a Tabela, o Relatório e o Comprovante já gerados não mudam.
+
+### Depois da partida: conferência
+
+Com `docker exec -it dashboard_db psql -U <superusuario> -d progressao`:
+
+1. `alembic current` no backend termina em `0010 (head)` e `docker logs progressao-funcional-backend-1` não mostra erro de migração nem de seed.
+2. Sete normas: `SELECT code, kind, archived, file_internal_name IS NOT NULL AS com_arquivo FROM norms ORDER BY code;` traz `CORRELACAO-PROGEP-2025`, `IN-01-2026-IFCH`, `LEI-12772-2012`, `MANUAL-PROGEP-PROGRESSAO`, `RES-4074-2010-CONSEPE`, `RES-4644-2015-CONSEPE` e `TABELA-OFICIAL-UFPA`, todas sem arquivo e não arquivadas.
+3. Ligações das estruturas: `SELECT name, norm_code, definition->'required_titration_norm_code' AS norma_titulacao FROM career_versions ORDER BY name;` mostra `RES-4644-2015-CONSEPE` na estrutura antiga e `LEI-12772-2012` na da Lei 15.141/2025, esta com `MANUAL-PROGEP-PROGRESSAO` como norma da titulação; as classes C e D dela têm `"required_titration": "DOUTORADO"` na definição.
+4. Ligação da tabela: `SELECT name, norm_code, superseded_by_id IS NOT NULL AS substituida FROM scoring_table_versions ORDER BY created_at;` mostra `TABELA-OFICIAL-UFPA` nas versões da tabela oficial e nulo nas tabelas legadas arquivadas.
+5. Auditorias das ligações, uma por registro: `SELECT entity, count(*) FROM audit_logs WHERE user_id IS NULL AND entity IN ('norm', 'career_version', 'scoring_version') AND occurred_at > '<data-do-deploy>' GROUP BY entity;` dá 7 em `norm`, uma por versão de carreira ligada em `career_version` e uma por versão de tabela ligada em `scoring_version`.
+6. Idempotência: reiniciar o backend (`docker compose restart backend`) e repetir o item 5: as contagens não mudam.
+7. `GET /api/health` 200 depois de `docker compose up -d --no-build` e `docker compose restart nginx`; `GET /api/norms` autenticado devolve as sete normas; a página "Normas" aparece no menu para DOCENTE e ADMIN. Fumaça só com dados sintéticos (nunca `Documentos/` nem `Modelos/`): um processo sintético de promoção B para C com docente de mestrado mostra `TITULACAO_INSUFICIENTE` com o Manual da PROGEP; com doutorado o alerta some; um salto A1 para C1 mostra `MODALIDADE_INCOMPATIVEL` como `ALERTA` e o processo inicia; na Etapa 4 da estrutura nova o mínimo aparece "não definido" com o "Ver norma" da Res. 4.644/2015.
+
+### Voltar à versão anterior
+
+- **Caminho seguro: restaurar o dump** `progressao-pre-normativo-<data>.sql.gz` e trocar as etiquetas das imagens para as do ponto de retorno.
+- O `downgrade` da `0010` remove a tabela `norms`, o enum `norm_kind` e as duas colunas `norm_code`; a imagem anterior ignora as chaves novas da definição JSONB (`required_titration`, `required_titration_norm_code`), então nada mais precisa ser desfeito. Os PDFs em `storage/norms/` ficam órfãos (inofensivos; remover à mão depois). Se as normas já foram editadas ou receberam arquivo, voltar pelo `downgrade` perde esse cadastro: o dump anterior ao deploy não o tem, então copiar antes o que importar (`SELECT * FROM norms`).
+
 ## Memória do OCR (limite de 384 MB do `backend`)
 
 Medida em 2026-11-17 dentro de `docker run -m 384m --memory-swap 384m`, com a imagem do backend (Tesseract `por`) e PDFs sintéticos só de imagem (cada página é um PNG A4 a 300 dpi). O pico é o `memory.peak` do cgroup do contêiner, que inclui a geração do PDF de teste.
