@@ -1277,7 +1277,7 @@ graph LR
 
 #### T39: Aceitação ponta a ponta da banca, do Parecer e do Requerimento
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Teste de aceitação pela API, com o extrator falso, que percorre a portaria, o Parecer, o Requerimento, o checklist e a conclusão num processo sintético, e confere os critérios de sucesso da spec.
 **Where**: `backend/tests/integration/api/test_banca_parecer_acceptance.py` (new)
@@ -1292,9 +1292,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Teste de aceitação em `backend/tests/integration/api/test_banca_parecer_acceptance.py` (novo): portaria sintética de três membros enviada com o extrator falso, lida, com um nome corrigido pela pessoa; Tabela gerada; conclusão `FAVORAVEL` escolhida; Parecer gerado com o mesmo Total geral da Tabela, a frase da conclusão e três linhas de assinatura (lidos no DOCX e no PDF); mudar uma atividade validada dá `TABELA_DESATUALIZADA` e gerar a Tabela de novo libera; Requerimento gerado com a data do Parecer; checklist com Requerimento, Relatório, Tabela, Comprovante, Portaria da banca e Parecer prontos, e Currículo Lattes marcado "Entregue"; a portaria não aparece em `GET /documents`, não cria atividade e não muda `GET /scoring` (PORT-09); em nenhum momento a conclusão veio preenchida sem ação da pessoa e o extrator falso não foi chamado na geração dos dois documentos (PAR-11, PAR-12); a conclusão do processo apaga o arquivo da portaria e mantém os dados, e arquivar bloqueia tudo com 409
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (última tarefa de backend da fase: gate completo)
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Teste de aceitação em `backend/tests/integration/api/test_banca_parecer_acceptance.py` (novo): portaria sintética de três membros enviada com o extrator falso, lida, com um nome corrigido pela pessoa; Tabela gerada; conclusão `FAVORAVEL` escolhida; Parecer gerado com o mesmo Total geral da Tabela, a frase da conclusão e três linhas de assinatura (lidos no DOCX e no PDF); mudar uma atividade validada dá `TABELA_DESATUALIZADA` e gerar a Tabela de novo libera; Requerimento gerado com a data do Parecer; checklist com Requerimento, Relatório, Tabela, Comprovante, Portaria da banca e Parecer prontos, e Currículo Lattes marcado "Entregue"; a portaria não aparece em `GET /documents`, não cria atividade e não muda `GET /scoring` (PORT-09); em nenhum momento a conclusão veio preenchida sem ação da pessoa e o extrator falso não foi chamado na geração dos dois documentos (PAR-11, PAR-12); a conclusão do processo apaga o arquivo da portaria e mantém os dados, e arquivar bloqueia tudo com 409
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (última tarefa de backend da fase: gate completo)
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full
