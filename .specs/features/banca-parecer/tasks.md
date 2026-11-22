@@ -385,7 +385,7 @@ graph LR
 
 #### T8: Texto do Parecer
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `OpinionDocument` e `build_opinion(process, professor, unit, ordinance, opinion, table_snapshot, versions_used, minimum, group_names, page) -> OpinionDocument`, com as seções na ordem de PAR-03: cabeçalho (UFPA e unidade), título "PARECER", identificação, portaria (número e data), interstício, documentos analisados (versão usada de Tabela, Relatório e Comprovante), pontos por grupo I a VIII e Total geral, mínimo de referência, conclusão, observações, local e data e uma linha de assinatura por membro. Sem conclusão, `ValueError`.
 **Where**: `backend/app/domain/rules/opinion_document.py` (new)
@@ -400,10 +400,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_opinion_document.py` (novo): as seções saem na ordem de PAR-03; os pontos por grupo e o Total geral são os do instantâneo, formatados "211,00", sem recalcular (um instantâneo com subtotais que não somam o total é copiado como veio: o Parecer nunca soma de novo); a identificação traz classe, denominação e nível atuais e pretendidos exatamente como informados, com um processo sintético de salto (nível 4 da classe B "Adjunto" para o nível 1 da classe C "Associado") e com denominações fora do padrão, nada deduzido; a frase da conclusão é "A banca manifesta-se FAVORÁVEL à progressão de <docente>, do nível 4 da classe B (Adjunto) para o nível 1 da classe C (Associado), referente ao interstício de 23/11/2022 a 23/11/2024." com "promoção" na modalidade de promoção e "DESFAVORÁVEL" na outra conclusão (PAR-05); mínimo `NAO_DEFINIDO` escreve "Mínimo de referência: não definido pela norma aplicável" sem número (PAR-06) e mínimo numérico escreve o valor; uma linha de assinatura por membro, com nome e função, na ordem da portaria; observações vazias não criam seção; local vazio escreve "__________" e data vazia "___/___/___"; sem conclusão levanta `ValueError` (PAR-12: o domínio nunca escreve um Parecer sem a escolha da pessoa); a função não lê relógio nem chama IA (PAR-11)
-- [ ] Teste de arquitetura passa
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_opinion_document.py` (novo): as seções saem na ordem de PAR-03; os pontos por grupo e o Total geral são os do instantâneo, formatados "211,00", sem recalcular (um instantâneo com subtotais que não somam o total é copiado como veio: o Parecer nunca soma de novo); a identificação traz classe, denominação e nível atuais e pretendidos exatamente como informados, com um processo sintético de salto (nível 4 da classe B "Adjunto" para o nível 1 da classe C "Associado") e com denominações fora do padrão, nada deduzido; a frase da conclusão é "A banca manifesta-se FAVORÁVEL à progressão de <docente>, do nível 4 da classe B (Adjunto) para o nível 1 da classe C (Associado), referente ao interstício de 23/11/2022 a 23/11/2024." com "promoção" na modalidade de promoção e "DESFAVORÁVEL" na outra conclusão (PAR-05); mínimo `NAO_DEFINIDO` escreve "Mínimo de referência: não definido pela norma aplicável" sem número (PAR-06) e mínimo numérico escreve o valor; uma linha de assinatura por membro, com nome e função, na ordem da portaria; observações vazias não criam seção; local vazio escreve "__________" e data vazia "___/___/___"; sem conclusão levanta `ValueError` (PAR-12: o domínio nunca escreve um Parecer sem a escolha da pessoa); a função não lê relógio nem chama IA (PAR-11)
+- [x] Teste de arquitetura passa
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
