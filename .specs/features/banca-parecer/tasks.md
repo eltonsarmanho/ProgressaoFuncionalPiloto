@@ -878,7 +878,7 @@ graph LR
 
 #### T25: Parecer em PDF
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `write_opinion_pdf(model, target)` desenha o mesmo `OpinionDocument` com reportlab e a Liberation Serif versionada, na mesma ordem do DOCX, com `Página N de M` no rodapé.
 **Where**: `backend/app/infrastructure/documents/opinion_pdf.py` (new)
@@ -893,9 +893,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_opinion_pdf.py` (novo): o PDF começa com `%PDF`, é A4 e o texto, lido com `pymupdf`, traz as seções na mesma ordem do DOCX (as posições dos títulos crescem) e o Total geral igual ao do modelo; três membros dão três linhas de assinatura; caractere de controle não aparece como caixa vazia; só a fonte Liberation Serif é listada; a primeira linha do texto do DOCX e a do PDF coincidem (mesmo conteúdo e mesma ordem, AD-011)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_opinion_pdf.py` (novo): o PDF começa com `%PDF`, é A4 e o texto, lido com `pymupdf`, traz as seções na mesma ordem do DOCX (as posições dos títulos crescem) e o Total geral igual ao do modelo; três membros dão três linhas de assinatura; caractere de controle não aparece como caixa vazia; só a fonte Liberation Serif é listada; a primeira linha do texto do DOCX e a do PDF coincidem (mesmo conteúdo e mesma ordem, AD-011)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
