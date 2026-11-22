@@ -535,7 +535,7 @@ graph LR
 
 #### T13: Repositório da portaria da banca
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Porta `BoardRepository` (`get`, `create` com `expected_version=0`, `save_data` com versão otimista, `set_file`, `request_reading`, `lock`, `claim_next_pending` com `FOR UPDATE SKIP LOCKED`, `finish_read`, `finish_failed`, `recover_interrupted`, `mark_file_deleted`), `SqlBoardRepository` e `uow.board`.
 **Where**: `backend/app/infrastructure/database/repositories.py` (modify; a porta e o atributo do `UnitOfWork` em `backend/app/domain/repositories/ports.py`)
@@ -550,9 +550,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/documents/test_board_repository.py` (novo): grava e lê uma portaria sem arquivo e com arquivo, com os membros (página nula, `EXTRAIDO` e `INFORMADO`) idênticos na volta pelo JSONB; `create` com versão diferente de 0 levanta `StaleVersion` e um segundo `create` levanta `Conflict`; `save_data` com versão velha levanta `StaleVersion` e com a versão certa sobe a versão (PORT-12); `set_file` devolve o arquivo anterior para o chamador apagar; `claim_next_pending` pega a `PENDENTE` mais antiga, passa a `LENDO` e soma uma tentativa, e duas sessões não pegam a mesma (`SKIP LOCKED`); `finish_read` grava `LIDA` com os campos, os avisos e o JSON bruto; `finish_failed` grava `FALHOU` com o código; `recover_interrupted` passa `LENDO` a `FALHOU` com `INTERROMPIDA` e deixa `PENDENTE` onde está; `mark_file_deleted` preenche `file_deleted_at` e não toca em número, data nem membros; portaria é uma por processo e não aparece em `uow.documents` (PORT-09)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/documents/test_board_repository.py tests/integration/test_migrations.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/documents/test_board_repository.py` (novo): grava e lê uma portaria sem arquivo e com arquivo, com os membros (página nula, `EXTRAIDO` e `INFORMADO`) idênticos na volta pelo JSONB; `create` com versão diferente de 0 levanta `StaleVersion` e um segundo `create` levanta `Conflict`; `save_data` com versão velha levanta `StaleVersion` e com a versão certa sobe a versão (PORT-12); `set_file` devolve o arquivo anterior para o chamador apagar; `claim_next_pending` pega a `PENDENTE` mais antiga, passa a `LENDO` e soma uma tentativa, e duas sessões não pegam a mesma (`SKIP LOCKED`); `finish_read` grava `LIDA` com os campos, os avisos e o JSON bruto; `finish_failed` grava `FALHOU` com o código; `recover_interrupted` passa `LENDO` a `FALHOU` com `INTERROMPIDA` e deixa `PENDENTE` onde está; `mark_file_deleted` preenche `file_deleted_at` e não toca em número, data nem membros; portaria é uma por processo e não aparece em `uow.documents` (PORT-09)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/documents/test_board_repository.py tests/integration/test_migrations.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted

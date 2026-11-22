@@ -16,6 +16,18 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.domain.entities.academic_unit import AcademicUnit
 from app.domain.entities.activity import Activity, ActivityStatus, Candidate
 from app.domain.entities.audit import AuditEvent
+from app.domain.entities.board import (
+    BoardMember,
+    BoardOrdinance,
+    BoardRole,
+    OrdinanceFile,
+    OrdinanceReadingCode,
+    OrdinanceWarning,
+    OrdinanceWarningCode,
+    ReadingState,
+    ValueSource,
+    can_read_transition,
+)
 from app.domain.entities.career import CareerClass, CareerVersion
 from app.domain.entities.comprovante import (
     ComprovanteLayout,
@@ -71,6 +83,7 @@ from app.infrastructure.database.models import (
     ActivityEvidenceModel,
     ActivityModel,
     AuditLogModel,
+    BoardOrdinanceModel,
     CareerStructureModel,
     CareerVersionModel,
     ComprovanteLayoutModel,
@@ -2249,6 +2262,261 @@ class SqlLayoutRepository:
         return replace(layout, version=m.version)
 
 
+def _members_to_json(members: Sequence[BoardMember]) -> list[dict[str, Any]]:
+    return [
+        {"name": m.name, "role": m.role.value, "page": m.page, "source": m.source.value}
+        for m in members
+    ]
+
+
+def _members_from_json(rows: Sequence[dict[str, Any]]) -> tuple[BoardMember, ...]:
+    return tuple(
+        BoardMember(r["name"], BoardRole(r["role"]), r["page"], ValueSource(r["source"]))
+        for r in rows
+    )
+
+
+def _ordinance_warnings_to_json(warnings: Sequence[OrdinanceWarning]) -> list[dict[str, str]]:
+    return [{"code": w.code.value, "field": w.field} for w in warnings]
+
+
+def _ordinance_warnings_from_json(rows: Sequence[dict[str, str]]) -> tuple[OrdinanceWarning, ...]:
+    return tuple(OrdinanceWarning(OrdinanceWarningCode(r["code"]), r["field"]) for r in rows)
+
+
+def _ordinance_data_values(ordinance: BoardOrdinance) -> dict[str, Any]:
+    """The columns the person edits and the reading fills: number, date, members, warnings."""
+    return dict(
+        number=ordinance.number,
+        number_page=ordinance.number_page,
+        number_source=ordinance.number_source,
+        ordinance_date=ordinance.ordinance_date,
+        date_page=ordinance.date_page,
+        date_source=ordinance.date_source,
+        members=_members_to_json(ordinance.members),
+        warnings=_ordinance_warnings_to_json(ordinance.warnings),
+    )
+
+
+def _ordinance_file_values(file: OrdinanceFile | None) -> dict[str, Any]:
+    return dict(
+        original_name=file.original_name if file else None,
+        internal_name=file.internal_name if file else None,
+        mime=file.mime if file else None,
+        size_bytes=file.size_bytes if file else None,
+        sha256=file.sha256 if file else None,
+        page_count=file.page_count if file else None,
+        file_deleted_at=file.deleted_at if file else None,
+    )
+
+
+class SqlBoardRepository:
+    """The board ordinance of a process: one row, the members in a JSONB column."""
+
+    def __init__(self, session: Session):
+        self._s = session
+
+    @staticmethod
+    def _to_entity(m: BoardOrdinanceModel) -> BoardOrdinance:
+        file = None
+        if m.internal_name is not None:
+            file = OrdinanceFile(
+                internal_name=m.internal_name,
+                original_name=m.original_name,
+                mime=m.mime,
+                size_bytes=m.size_bytes,
+                sha256=m.sha256,
+                page_count=m.page_count,
+                deleted_at=m.file_deleted_at,
+            )
+        return BoardOrdinance(
+            process_id=m.process_id,
+            number=m.number,
+            number_page=m.number_page,
+            number_source=m.number_source,
+            ordinance_date=m.ordinance_date,
+            date_page=m.date_page,
+            date_source=m.date_source,
+            members=_members_from_json(m.members),
+            file=file,
+            reading_state=m.reading_state,
+            reading_code=OrdinanceReadingCode(m.reading_code) if m.reading_code else None,
+            warnings=_ordinance_warnings_from_json(m.warnings),
+            version=m.version,
+        )
+
+    def get(self, process_id: UUID) -> BoardOrdinance | None:
+        m = self._s.scalars(
+            select(BoardOrdinanceModel)
+            .where(BoardOrdinanceModel.process_id == process_id)
+            .execution_options(populate_existing=True)
+        ).first()
+        return self._to_entity(m) if m else None
+
+    def _locked(self, process_id: UUID) -> BoardOrdinanceModel:
+        m = self._s.scalars(
+            select(BoardOrdinanceModel)
+            .where(BoardOrdinanceModel.process_id == process_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        ).first()
+        if m is None:
+            raise NotFound("Portaria não encontrada")
+        return m
+
+    def _locked_at(self, process_id: UUID, expected_version: int) -> BoardOrdinanceModel:
+        m = self._locked(process_id)
+        if m.version != expected_version:
+            raise StaleVersion("A portaria foi alterada por outro usuário; recarregue")
+        return m
+
+    def lock(self, process_id: UUID) -> BoardOrdinance:
+        return self._to_entity(self._locked(process_id))
+
+    def create(
+        self, ordinance: BoardOrdinance, user_id: UUID, expected_version: int
+    ) -> BoardOrdinance:
+        if expected_version != 0:
+            raise StaleVersion("A portaria ainda não foi salva; recarregue")
+        try:
+            with self._s.begin_nested():
+                self._s.execute(
+                    insert(BoardOrdinanceModel).values(
+                        id=uuid.uuid4(),
+                        process_id=ordinance.process_id,
+                        **_ordinance_data_values(ordinance),
+                        **_ordinance_file_values(ordinance.file),
+                        reading_state=ordinance.reading_state,
+                        reading_code=ordinance.reading_code.value
+                        if ordinance.reading_code
+                        else None,
+                        version=1,
+                        created_by=user_id,
+                        updated_by=user_id,
+                    )
+                )
+        except IntegrityError as exc:
+            if _is_unique_violation(exc):
+                raise Conflict("O processo já tem uma portaria da banca") from None
+            raise
+        return replace(ordinance, version=1)
+
+    def save_data(
+        self, ordinance: BoardOrdinance, user_id: UUID | None, expected_version: int
+    ) -> BoardOrdinance:
+        m = self._locked_at(ordinance.process_id, expected_version)
+        for name, value in _ordinance_data_values(ordinance).items():
+            setattr(m, name, value)
+        m.version += 1
+        m.updated_by = user_id
+        m.updated_at = func.now()
+        self._s.flush()
+        return self._to_entity(m)
+
+    def set_file(
+        self,
+        process_id: UUID,
+        file: OrdinanceFile,
+        user_id: UUID | None,
+        expected_version: int,
+        now: datetime,
+    ) -> OrdinanceFile | None:
+        m = self._locked_at(process_id, expected_version)
+        previous = self._to_entity(m).file
+        for name, value in _ordinance_file_values(file).items():
+            setattr(m, name, value)
+        m.reading_state = ReadingState.PENDENTE
+        m.reading_code = None
+        m.reading_attempts = 0
+        m.reading_requested_at = now
+        m.reading_started_at = None
+        m.reading_finished_at = None
+        m.version += 1
+        m.updated_by = user_id
+        m.updated_at = func.now()
+        self._s.flush()
+        return previous if previous is not None and previous.deleted_at is None else None
+
+    def request_reading(self, process_id: UUID, expected_version: int, now: datetime) -> None:
+        m = self._locked_at(process_id, expected_version)
+        if m.internal_name is None or m.file_deleted_at is not None:
+            raise Conflict("A portaria não tem arquivo para ler")
+        if not can_read_transition(m.reading_state, ReadingState.PENDENTE):
+            raise Conflict("A leitura da portaria já está em andamento")
+        m.reading_state = ReadingState.PENDENTE
+        m.reading_code = None
+        m.reading_requested_at = now
+        self._s.flush()
+
+    def claim_next_pending(self, now: datetime) -> BoardOrdinance | None:
+        m = self._s.scalars(
+            select(BoardOrdinanceModel)
+            .where(BoardOrdinanceModel.reading_state == ReadingState.PENDENTE)
+            .order_by(BoardOrdinanceModel.reading_requested_at, BoardOrdinanceModel.id)
+            .limit(1)
+            .with_for_update(skip_locked=True)
+        ).first()
+        if m is None:
+            return None
+        m.reading_state = ReadingState.LENDO
+        m.reading_started_at = now
+        m.reading_attempts += 1
+        self._s.flush()
+        return self._to_entity(m)
+
+    def _reading(self, process_id: UUID) -> BoardOrdinanceModel:
+        m = self._locked(process_id)
+        if m.reading_state is not ReadingState.LENDO:
+            raise Conflict("A portaria não está sendo lida")
+        return m
+
+    def finish_read(
+        self, ordinance: BoardOrdinance, raw_json: dict[str, Any], now: datetime
+    ) -> BoardOrdinance:
+        m = self._reading(ordinance.process_id)
+        for name, value in _ordinance_data_values(ordinance).items():
+            setattr(m, name, value)
+        m.reading_state = ReadingState.LIDA
+        m.reading_code = None
+        m.reading_finished_at = now
+        m.raw_json = raw_json
+        m.version += 1
+        m.updated_at = func.now()
+        self._s.flush()
+        return self._to_entity(m)
+
+    def finish_failed(self, process_id: UUID, code: OrdinanceReadingCode, now: datetime) -> None:
+        m = self._reading(process_id)
+        m.reading_state = ReadingState.FALHOU
+        m.reading_code = code.value
+        m.reading_finished_at = now
+        self._s.flush()
+
+    def recover_interrupted(self, now: datetime) -> Sequence[UUID]:
+        return list(
+            self._s.scalars(
+                update(BoardOrdinanceModel)
+                .where(BoardOrdinanceModel.reading_state == ReadingState.LENDO)
+                .values(
+                    reading_state=ReadingState.FALHOU,
+                    reading_code=OrdinanceReadingCode.INTERROMPIDA.value,
+                    reading_finished_at=now,
+                )
+                .returning(BoardOrdinanceModel.process_id)
+            )
+        )
+
+    def mark_file_deleted(self, process_id: UUID, now: datetime) -> None:
+        self._s.execute(
+            update(BoardOrdinanceModel)
+            .where(
+                BoardOrdinanceModel.process_id == process_id,
+                BoardOrdinanceModel.file_deleted_at.is_(None),
+            )
+            .values(file_deleted_at=now)
+        )
+
+
 class SqlProcessPurgeRepository:
     """Deletes a process and everything below it in one transaction (GP-D2, GP-D3).
 
@@ -2384,6 +2652,7 @@ class SqlUnitOfWork:
         self.wording_jobs = SqlWordingJobRepository(self._session)
         self.report_drafts = SqlReportDraftRepository(self._session)
         self.comprovante_layouts = SqlLayoutRepository(self._session)
+        self.board = SqlBoardRepository(self._session)
         self.process_purge = SqlProcessPurgeRepository(self._session)
         return self
 

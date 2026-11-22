@@ -13,6 +13,11 @@ from uuid import UUID
 from app.domain.entities.academic_unit import AcademicUnit
 from app.domain.entities.activity import Activity, ActivityStatus
 from app.domain.entities.audit import AuditEvent
+from app.domain.entities.board import (
+    BoardOrdinance,
+    OrdinanceFile,
+    OrdinanceReadingCode,
+)
 from app.domain.entities.career import CareerVersion
 from app.domain.entities.comprovante import ComprovanteLayout, ComprovantePlan
 from app.domain.entities.document import (
@@ -508,6 +513,76 @@ class AiExtractor(Protocol):
         ...
 
 
+class BoardRepository(Protocol):
+    """The board ordinance, one per process, outside `documents` (PORT-09). Every write that
+    changes what the person sees (`create`, `save_data`, `set_file`, `finish_read`) takes the
+    `expected_version` they saw, raises `StaleVersion` when the stored one moved on, and goes up
+    by one (PORT-12); the queue operations do not move the version."""
+
+    def get(self, process_id: UUID) -> BoardOrdinance | None: ...
+
+    def lock(self, process_id: UUID) -> BoardOrdinance:
+        """The row locked until the end of the transaction, with fresh values; `NotFound` when
+        the process has no ordinance. A reading merges into what is stored at this moment."""
+        ...
+
+    def create(
+        self, ordinance: BoardOrdinance, user_id: UUID, expected_version: int
+    ) -> BoardOrdinance:
+        """The first save: `expected_version` must be 0 (`StaleVersion` otherwise) and the stored
+        ordinance gets version 1. A second one for the process raises `Conflict`."""
+        ...
+
+    def save_data(
+        self, ordinance: BoardOrdinance, user_id: UUID | None, expected_version: int
+    ) -> BoardOrdinance:
+        """Replaces the number, the date, the members (each with page and source) and the
+        warnings; the file and the reading state stay. `NotFound` without a stored one."""
+        ...
+
+    def set_file(
+        self,
+        process_id: UUID,
+        file: OrdinanceFile,
+        user_id: UUID | None,
+        expected_version: int,
+        now: datetime,
+    ) -> OrdinanceFile | None:
+        """Stores the file, queues the reading (`PENDENTE`, no code, zero attempts) and returns
+        the previous file that is still on disk, for the caller to delete after the commit."""
+        ...
+
+    def request_reading(self, process_id: UUID, expected_version: int, now: datetime) -> None:
+        """Queues the reading again ("Ler de novo"): `LIDA` or `FALHOU` to `PENDENTE`. `Conflict`
+        when it is already queued or running, or when there is no file on disk."""
+        ...
+
+    def claim_next_pending(self, now: datetime) -> BoardOrdinance | None:
+        """The oldest `PENDENTE` ordinance, marked `LENDO` with one more attempt; two
+        concurrent claims never share one (`FOR UPDATE SKIP LOCKED`)."""
+        ...
+
+    def finish_read(
+        self, ordinance: BoardOrdinance, raw_json: dict[str, Any], now: datetime
+    ) -> BoardOrdinance:
+        """`LENDO` to `LIDA`, storing the values and the warnings of `ordinance` and the raw
+        answer of the AI. `Conflict` when it is not being read."""
+        ...
+
+    def finish_failed(self, process_id: UUID, code: OrdinanceReadingCode, now: datetime) -> None:
+        """`LENDO` to `FALHOU` with the code; the typed data stay. `Conflict` otherwise."""
+        ...
+
+    def recover_interrupted(self, now: datetime) -> Sequence[UUID]:
+        """`LENDO` to `FALHOU` with `INTERROMPIDA`; returns the processes. A `PENDENTE` one stays
+        in the queue."""
+        ...
+
+    def mark_file_deleted(self, process_id: UUID, now: datetime) -> None:
+        """Sets `file_deleted_at` once (the first mark stays); the data are untouched."""
+        ...
+
+
 class GenerationRepository(Protocol):
     """Generated documents: one row per request, one numbered version per PRONTO (VER-01)."""
 
@@ -854,6 +929,7 @@ class UnitOfWork(Protocol):
     wording_jobs: WordingJobRepository
     report_drafts: ReportDraftRepository
     comprovante_layouts: LayoutRepository
+    board: BoardRepository
     process_purge: ProcessPurgeRepository
 
     def __enter__(self) -> Self: ...

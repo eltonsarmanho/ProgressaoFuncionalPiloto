@@ -203,7 +203,7 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 | PORT-06 | P1: Portaria da banca | Design | Pending |
 | PORT-07 | P1: Portaria da banca | Implementing | Implementing |
 | PORT-08 | P1: Portaria da banca | Implementing | Implementing |
-| PORT-09 | P1: Portaria da banca | Design | Pending |
+| PORT-09 | P1: Portaria da banca | Implementing | Implementing |
 | PORT-10 | P1: Portaria da banca | Design | Pending |
 | PORT-11 | P1: Portaria da banca | Implementing | Implementing |
 | PORT-12 | P1: Portaria da banca | Implementing | Implementing |
