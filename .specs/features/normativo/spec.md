@@ -100,7 +100,7 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 **Acceptance Criteria**:
 
 1. WHEN a verificação do processo roda e a classe pretendida difere da atual, a estrutura de carreira aplicável tem regra de titulação para a classe pretendida e a titulação do docente é menor que a exigida THEN the system SHALL emitir o alerta `TITULACAO_INSUFICIENTE` com severidade `ALERTA`.  <!-- event-driven -->
-2. The system SHALL escrever no alerta "A classe <classe pretendida> exige <titulação exigida>; a titulação cadastrada do docente é <titulação>.", com a norma da regra.  <!-- ubiquitous -->
+2. The system SHALL escrever no alerta "A classe <classe pretendida> (<denominação pretendida>) exige <titulação exigida>; a titulação cadastrada do docente é <titulação>.", com a norma da regra.  <!-- ubiquitous -->
 3. WHEN a titulação do docente é igual ou maior que a exigida THEN the system SHALL não emitir `TITULACAO_INSUFICIENTE`.  <!-- event-driven -->
 4. WHEN a classe pretendida é igual à atual (progressão dentro da classe) THEN the system SHALL não conferir a titulação.  <!-- event-driven -->
 5. WHERE a estrutura de carreira aplicável não tem regra de titulação para a classe pretendida the system SHALL não emitir `TITULACAO_INSUFICIENTE`.  <!-- optional-feature -->
@@ -124,7 +124,7 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 2. WHEN a promoção informada não vai do último nível da classe atual ao primeiro nível da classe imediatamente seguinte THEN the system SHALL emitir `MODALIDADE_INCOMPATIVEL` com severidade `ALERTA` e o texto "A promoção informada não segue a sequência usual (último nível da classe atual para o primeiro nível da classe seguinte); confira a norma que fundamenta o salto.".  <!-- event-driven -->
 3. WHEN a progressão informada não fica na mesma classe avançando exatamente um nível THEN the system SHALL emitir `MODALIDADE_INCOMPATIVEL` com severidade `ALERTA` e o texto "A progressão informada não segue a sequência usual (um nível acima, na mesma classe); confira a norma que fundamenta o salto.".  <!-- event-driven -->
 4. The system SHALL nunca bloquear nem alterar o processo por `MODALIDADE_INCOMPATIVEL` ou `DENOMINACAO_DIVERGENTE`.  <!-- ubiquitous -->
-5. WHEN o ADMIN altera as denominações de uma estrutura de carreira THEN the system SHALL usar as novas denominações em `DENOMINACAO_DIVERGENTE` na verificação seguinte, sem mudar a denominação informada nos processos nem os documentos já gerados.  <!-- event-driven -->
+5. WHEN o ADMIN altera as denominações de uma estrutura de carreira (numa versão que nenhum processo usa, por CARR-08, ou numa versão nova) THEN the system SHALL usar as novas denominações em `DENOMINACAO_DIVERGENTE` na verificação seguinte, que lê as denominações da versão como estão gravadas quando roda, sem mudar a denominação informada nos processos nem os documentos já gerados.  <!-- event-driven -->
 
 **Independent Test**: Promoção sintética de A1 para C1 na estrutura nova: `MODALIDADE_INCOMPATIVEL` como `ALERTA`, com o texto do salto, e o processo segue para as próximas etapas; promoção de B4 para C1: nenhum alerta de modalidade; o ADMIN troca "Associado" por outra denominação sintética na classe C e o processo que informou "Associado" passa a mostrar `DENOMINACAO_DIVERGENTE`.
 
@@ -208,7 +208,7 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NLINK-04 | P1: Regras e alertas ligados à norma | Implemented | Implemented |
 | NLINK-05 | P1: Regras e alertas ligados à norma | Implemented | Implemented |
 | NLINK-06 | P1: Regras e alertas ligados à norma | Implemented | Implemented |
-| NTIT-01 | P1: Titulação exigida | Implementing | Implementing |
+| NTIT-01 | P1: Titulação exigida | Implemented | Implemented |
 | NTIT-02 | P1: Titulação exigida | Implemented | Implemented |
 | NTIT-03 | P1: Titulação exigida | Implemented | Implemented |
 | NTIT-04 | P1: Titulação exigida | Implemented | Implemented |
@@ -227,7 +227,7 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NMIN-01 | P2: Mínimo não definido | Implemented | Implemented |
 | NMIN-02 | P2: Mínimo não definido | Implemented | Implemented |
 
-**Coverage:** 31 total, 0 mapped to tasks, 31 unmapped (Design pendente)
+**Coverage:** 36 total, 36 mapped to tasks, 0 unmapped
 
 ---
 
