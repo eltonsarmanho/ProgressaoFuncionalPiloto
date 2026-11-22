@@ -1077,7 +1077,7 @@ graph LR
 
 #### T32: Geração do Requerimento
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `RunGeneration` produz o `REQUERIMENTO` sem carregar as entradas de geração (nem atividades nem tabela): lê o processo, o docente, a unidade, a cidade, a estrutura de carreira do docente (`career_versions.structure_code`) e a data do Parecer da última versão `PRONTO`, monta com `build_request`, escreve DOCX e PDF e grava o instantâneo (campos preenchidos, cidade, data de abertura, data do Parecer usada e a versão desse Parecer).
 **Where**: `backend/app/application/use_cases/generated_documents.py` (modify)
@@ -1092,9 +1092,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_run_generation_request.py` (novo): num processo sintético de promoção do nível 4 da classe B para o nível 1 da classe C, sem atividade, sem Tabela e sem Parecer, a execução grava a versão 1 com DOCX e PDF, a linha "Belém, <data de abertura por extenso>." (com a cidade gravada), a linha da avaliação "___/___/___" e "(X) Magistério Superior" nos dois arquivos; sem cidade a linha traz "__________"; depois de gerar um Parecer `PRONTO` com data 05/12/2024, o Requerimento novo traz "05/12/2024" na linha da avaliação (o teste independente da spec); Parecer sem data deixa a linha em branco; o instantâneo guarda a cidade e a data usada; nenhuma chamada à IA (REQ-08); pedir de novo gera a versão 2 e a 1 continua (os documentos já gerados não mudam, AD-012)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (última tarefa de backend da fase: gate completo)
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_run_generation_request.py` (novo): num processo sintético de promoção do nível 4 da classe B para o nível 1 da classe C, sem atividade, sem Tabela e sem Parecer, a execução grava a versão 1 com DOCX e PDF, a linha "Belém, <data de abertura por extenso>." (com a cidade gravada), a linha da avaliação "___/___/___" e "(X) Magistério Superior" nos dois arquivos; sem cidade a linha traz "__________"; depois de gerar um Parecer `PRONTO` com data 05/12/2024, o Requerimento novo traz "05/12/2024" na linha da avaliação (o teste independente da spec); Parecer sem data deixa a linha em branco; o instantâneo guarda a cidade e a data usada; nenhuma chamada à IA (REQ-08); pedir de novo gera a versão 2 e a 1 continua (os documentos já gerados não mudam, AD-012)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (última tarefa de backend da fase: gate completo)
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full

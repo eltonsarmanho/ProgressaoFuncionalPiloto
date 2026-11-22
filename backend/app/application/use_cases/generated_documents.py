@@ -13,6 +13,7 @@ import uuid
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -73,6 +74,7 @@ from app.domain.rules.report_draft import (
     propose_draft,
     reconcile_draft,
 )
+from app.domain.rules.request_document import build_request
 from app.domain.rules.scoring_verification import MinimumComparison, MinimumStatus
 from app.domain.rules.table_document import build_table_document
 
@@ -424,6 +426,15 @@ def _opinion_minimum(table_snapshot: Mapping[str, Any], score: ProcessScore) -> 
     )
 
 
+def _opinion_date(opinion: GeneratedDocument | None) -> date | None:
+    """The date the last Parecer `PRONTO` was made with; none without a Parecer or without a
+    date in it (REQ-04)."""
+    if opinion is None or opinion.snapshot is None:
+        return None
+    saved = opinion.snapshot.get("opinion_date")
+    return None if saved is None else date.fromisoformat(saved)
+
+
 class _Scratch:
     """The files a run has written so far, to remove them when the run fails (VER-05)."""
 
@@ -631,6 +642,8 @@ class RunGeneration:
             return self._comprovante(generation, inputs, scratch)
         if kind is DocumentKind.PARECER:
             return self._opinion(generation, scratch)
+        if kind is DocumentKind.REQUERIMENTO:
+            return self._request(generation, scratch)
         raise ValueError(f"unknown kind of generated document: {kind}")
 
     def _table(
@@ -794,6 +807,55 @@ class RunGeneration:
                 None if ordinance.ordinance_date is None else ordinance.ordinance_date.isoformat()
             ),
             "members": [{"name": m.name, "role": m.role.value} for m in ordinance.members],
+        }
+        return _Produced(outputs, snapshot, [])
+
+    def _request(self, generation: GeneratedDocument, scratch: _Scratch) -> _Produced:
+        """The Requerimento from the data of Stage 1, the city and the date of the last Parecer
+        `PRONTO`; it needs no activity and no Tabela and never calls the AI (REQ-01, REQ-08)."""
+        config = self._report_config.load()
+        with self._uow_factory() as uow:
+            process = uow.processes.get(generation.process_id)
+            professor = uow.professors.get(process.professor_id)
+            unit = uow.units.get(process.unit_id)
+            if professor is None or unit is None:
+                raise NotFound("Docente ou unidade do processo não encontrado")
+            settings = uow.request_settings.get(process.id)
+            career = uow.career_versions.structure_code(professor.career_structure_id) or ""
+            last_opinion = uow.generations.latest_ready_by_kind(process.id).get(
+                DocumentKind.PARECER
+            )
+        city = None if settings is None else settings.city
+        opinion_date = _opinion_date(last_opinion)
+        model = build_request(
+            process, professor, unit, career, city, opinion_date, config.layout.page
+        )
+        outputs = []
+        for fmt in _FORMATS:
+            temp = scratch.new_temp()
+            outputs.append((fmt, temp))
+            self._writer.write_request(model, fmt, temp)
+        snapshot = {
+            "career": career,
+            "modality": process.modality.value,
+            "interstice": {
+                "start": process.start_date.isoformat(),
+                "end": process.end_date.isoformat(),
+            },
+            "current": {
+                "class": process.current_class,
+                "level": process.current_level,
+                "denomination": process.current_denomination,
+            },
+            "target": {
+                "class": process.target_class,
+                "level": process.target_level,
+                "denomination": process.target_denomination,
+            },
+            "city": city,
+            "opening_date": process.opening_date.isoformat(),
+            "opinion_date": None if opinion_date is None else opinion_date.isoformat(),
+            "opinion_version": None if last_opinion is None else last_opinion.version_number,
         }
         return _Produced(outputs, snapshot, [])
 
