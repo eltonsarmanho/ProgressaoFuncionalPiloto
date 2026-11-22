@@ -17,7 +17,11 @@ from app.domain.rules.process_verification import AlertCode, ProcessSnapshot, ve
 SYNTHETIC_CODE = "NORMA-SINTETICA-ESTRUTURA"
 SYNTHETIC_NEW = replace(LEI_15141_2025, norm_code=SYNTHETIC_CODE)
 SYNTHETIC_VERSIONS = (replace(RES_4644_2015, norm_code="NORMA-SINTETICA-ANTIGA"), SYNTHETIC_NEW)
-UNLINKED_VERSIONS = (RES_4644_2015, LEI_15141_2025)
+# The catalogue structures are linked to their norms (NLINK-02); a structure with no code is built.
+UNLINKED_VERSIONS = (
+    replace(RES_4644_2015, norm_code=None),
+    replace(LEI_15141_2025, norm_code=None),
+)
 
 CLEAN = ProcessSnapshot(
     modality=Modality.PROGRESSAO,

@@ -202,8 +202,8 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NBASE-10 | P1: Base de normas | Design | Pending |
 | NBASE-11 | P1: Base de normas | Implemented | Implemented |
 | NBASE-12 | P1: Base de normas | Implemented | Implemented |
-| NLINK-01 | P1: Regras e alertas ligados à norma | Implementing | Implementing |
-| NLINK-02 | P1: Regras e alertas ligados à norma | Design | Pending |
+| NLINK-01 | P1: Regras e alertas ligados à norma | Implemented | Implemented |
+| NLINK-02 | P1: Regras e alertas ligados à norma | Implemented | Implemented |
 | NLINK-03 | P1: Regras e alertas ligados à norma | Implementing | Implementing |
 | NLINK-04 | P1: Regras e alertas ligados à norma | Design | Pending |
 | NLINK-05 | P1: Regras e alertas ligados à norma | Design | Pending |
@@ -213,7 +213,7 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NTIT-03 | P1: Titulação exigida | Implemented | Implemented |
 | NTIT-04 | P1: Titulação exigida | Implemented | Implemented |
 | NTIT-05 | P1: Titulação exigida | Implemented | Implemented |
-| NTIT-06 | P1: Titulação exigida | Design | Pending |
+| NTIT-06 | P1: Titulação exigida | Implemented | Implemented |
 | NTIT-07 | P1: Titulação exigida | Implemented | Implemented |
 | NTIT-08 | P1: Titulação exigida | Design | Pending |
 | NMOV-01 | P1: Origem e destino informados | Implementing | Implementing |

@@ -5,6 +5,7 @@ Run with: python -m app.infrastructure.database.seed
 
 import json
 import uuid
+from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -39,6 +40,9 @@ SEED_DATA = Path(__file__).parent / "seed_data"
 OFFICIAL_TABLE_SEED = "ufpa.json"
 NORMS_SEED = "norms.json"
 NORM_ENTITY = "norm"
+CAREER_VERSION_ENTITY = "career_version"
+SCORING_VERSION_ENTITY = "scoring_version"
+LINK_JUSTIFICATION = "Ligação às normas (NLINK-01, NLINK-02, NTIT-06)"
 NORM_SEED_JUSTIFICATION = "Semente das normas (NBASE-11)"
 OFFICIAL_TABLE_UNITS = ("FASI", "IFCH")
 # Tables replaced by the official UFPA table (OFI-08, OFI-09): archived, never deleted.
@@ -97,6 +101,53 @@ def seed_norms(uow: SqlUnitOfWork) -> None:
         )
 
 
+def link_career_norms(uow: SqlUnitOfWork) -> None:
+    """Link the stored career versions to their norms, filling only what is still null.
+
+    Matches each stored version by name with the catalog. A norm code or a required titration
+    already set (by the ADMIN, for instance) is never overwritten. Works inside the caller's
+    transaction, never commits, and audits each changed version as a system change.
+    """
+    audit = AuditService(SystemClock())
+    catalog = {v.name: v for v in MAGISTERIO_SUPERIOR_VERSIONS}
+    for stored in uow.career_versions.list_versions(STRUCTURE_CODE):
+        wanted = catalog.get(stored.name)
+        if wanted is None or stored.id is None:
+            continue
+        norm_code = stored.norm_code or wanted.norm_code
+        titration_norm_code = (
+            stored.required_titration_norm_code or wanted.required_titration_norm_code
+        )
+        titrations = {
+            c.code: c.required_titration
+            for c in wanted.classes
+            if c.required_titration is not None
+            and (current := stored.get_class(c.code)) is not None
+            and current.required_titration is None
+        }
+        if (
+            norm_code == stored.norm_code
+            and titration_norm_code == stored.required_titration_norm_code
+            and not titrations
+        ):
+            continue
+        uow.career_versions.set_links(stored.id, norm_code, titrations, titration_norm_code)
+        audit.record(
+            uow,
+            None,
+            CAREER_VERSION_ENTITY,
+            stored.id,
+            AuditAction.UPDATE,
+            {
+                "norm_code": stored.norm_code,
+                "required_titration_norm_code": stored.required_titration_norm_code,
+            },
+            {"norm_code": norm_code, "required_titration_norm_code": titration_norm_code}
+            | ({"required_titration": titrations} if titrations else {}),
+            LINK_JUSTIFICATION,
+        )
+
+
 def seed_reference_data(
     uow: SqlUnitOfWork, admin_email: str, admin_password: str, hasher: PasswordHasher
 ) -> None:
@@ -112,6 +163,7 @@ def seed_reference_data(
         _ensure_unit(uow, FASI, parent_id=campus.id)
         _ensure_unit(uow, IFCH)
         seed_norms(uow)
+        link_career_norms(uow)
 
         if uow.users.get_by_email(admin_email) is None:
             uow.users.add(
@@ -175,6 +227,39 @@ def _scoring_version(data: dict[str, Any], table_id: uuid.UUID) -> ScoringTableV
     )
 
 
+def _official_table_data() -> dict[str, Any]:
+    return json.loads((SEED_DATA / OFFICIAL_TABLE_SEED).read_text(encoding="utf-8"))
+
+
+def link_table_norms(uow: SqlUnitOfWork) -> None:
+    """Give the versions of the official table the norm code of `ufpa.json`, only where null.
+
+    The archived IFCH and FASI tables are other tables and stay without a code. Works inside the
+    caller's transaction, never commits, and audits each changed version as a system change.
+    """
+    data = _official_table_data()
+    norm_code = data.get("norm_code")
+    tables = uow.scoring_tables.list_tables()
+    table = next((t for t in tables if t.name == data["table_name"]), None)
+    if norm_code is None or table is None:
+        return
+    audit = AuditService(SystemClock())
+    for version in uow.scoring_tables.list_versions(table.id):
+        if version.norm_code is not None:
+            continue
+        uow.scoring_tables.update_version(replace(version, norm_code=norm_code))
+        audit.record(
+            uow,
+            None,
+            SCORING_VERSION_ENTITY,
+            version.id,
+            AuditAction.UPDATE,
+            {"norm_code": None},
+            {"norm_code": norm_code},
+            LINK_JUSTIFICATION,
+        )
+
+
 def _archive_legacy_tables(uow: SqlUnitOfWork) -> None:
     """Archive the IFCH and FASI tables and detach their units (OFI-09).
 
@@ -208,7 +293,7 @@ def seed_scoring_tables(uow: SqlUnitOfWork) -> None:
         missing = [a for a in OFFICIAL_TABLE_UNITS if a not in units]
         if missing:
             raise LookupError(f"Unidade {missing[0]} não cadastrada; rode a semente de unidades")
-        data = json.loads((SEED_DATA / OFFICIAL_TABLE_SEED).read_text(encoding="utf-8"))
+        data = _official_table_data()
         table = next(
             (t for t in uow.scoring_tables.list_tables() if t.name == data["table_name"]), None
         )
@@ -222,6 +307,7 @@ def seed_scoring_tables(uow: SqlUnitOfWork) -> None:
         existing = {v.name for v in uow.scoring_tables.list_versions(table.id)}
         if data["version_name"] not in existing:
             uow.scoring_tables.add_version(_scoring_version(data, table.id))
+        link_table_norms(uow)
         AdoptSupersedingVersion(AuditService(SystemClock())).execute(
             uow, table.id, data.get("supersedes"), data["version_name"]
         )

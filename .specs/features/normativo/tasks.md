@@ -562,7 +562,7 @@ graph LR
 
 #### T16: Ligação das estruturas e das tabelas às normas
 
-**Status**: Pending
+**Status**: Done
 
 **What**: O catálogo (`career_catalog.py`) ganha `norm_code` nas duas estruturas e, na da Lei 15.141, `required_titration=DOUTORADO` nas classes C e D com `required_titration_norm_code="MANUAL-PROGEP-PROGRESSAO"`; `link_career_norms(uow)` e `link_table_norms(uow)` preenchem só os campos nulos (por `set_links` e pelo repositório de versões de tabela), com auditoria `UPDATE` e `actor=None`, na ordem do design (antes de `AdoptSupersedingVersion`).
 **Where**: `backend/app/infrastructure/database/seed.py` (modify; dados em `backend/app/domain/rules/career_catalog.py`)
@@ -577,10 +577,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_seed_links.py` (novo): numa base com as versões de carreira e de tabela gravadas antes (sem os campos) e um processo usando cada uma, a partida liga `RES-4644-2015-CONSEPE`, `LEI-12772-2012`, `TABELA-OFICIAL-UFPA` e a titulação de C e D, com uma auditoria por versão; rodar de novo não grava nada; um `norm_code` já preenchido pelo ADMIN não é sobrescrito; tabelas legadas arquivadas ficam sem código
-- [ ] `test_seed.py` atualizado para os campos novos do catálogo (risco do design), sem perder as comparações atuais
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/test_seed_links.py` (novo): numa base com as versões de carreira e de tabela gravadas antes (sem os campos) e um processo usando cada uma, a partida liga `RES-4644-2015-CONSEPE`, `LEI-12772-2012`, `TABELA-OFICIAL-UFPA` e a titulação de C e D, com uma auditoria por versão; rodar de novo não grava nada; um `norm_code` já preenchido pelo ADMIN não é sobrescrito; tabelas legadas arquivadas ficam sem código
+- [x] `test_seed.py` atualizado para os campos novos do catálogo (risco do design), sem perder as comparações atuais
+- [x] Testes existentes ajustados por causa de NLINK-02 e NTIT-06, sem enfraquecer: `test_career_catalog.py` (classes C e D da Lei 15.141 passam a esperar `DOUTORADO`; testes novos dos códigos e da titulação do catálogo) e `test_process_verification_citations.py` (a estrutura sem código passa a ser montada com `norm_code=None`, porque o catálogo agora tem código)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full
