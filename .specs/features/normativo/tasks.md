@@ -334,7 +334,7 @@ graph LR
 
 #### T8: Citação nos alertas de mínimo e de extensão e pesquisa
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Os alertas de `scoring_verification.py` (`MINIMO_NAO_DEFINIDO`, comparação com o mínimo, extensão e pesquisa) recebem `norm_code="RES-4644-2015-CONSEPE"`.
 **Where**: `backend/app/domain/rules/scoring_verification.py` (modify)
@@ -349,9 +349,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_scoring_verification.py`: cada um dos três alertas traz `RES-4644-2015-CONSEPE` e o mesmo `norm_reference` de hoje; na estrutura da Lei 15.141 o mínimo continua `NAO_DEFINIDO`, sem número (NMIN-01)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_scoring_verification.py`: cada um dos três alertas traz `RES-4644-2015-CONSEPE` e o mesmo `norm_reference` de hoje; na estrutura da Lei 15.141 o mínimo continua `NAO_DEFINIDO`, sem número (NMIN-01)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

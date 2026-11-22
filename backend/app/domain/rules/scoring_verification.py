@@ -18,6 +18,7 @@ from app.domain.rules.scoring_engine import ScoringResult
 REF_EXTENSION_RESEARCH = "Res. 4.644/2015-CONSEPE, art. 13, II"
 REF_MINIMUM = "Res. 4.644/2015-CONSEPE, art. 12"
 RES_4644_PREFIX = "Res. 4.644"
+NORM_RES_4644 = "RES-4644-2015-CONSEPE"
 
 
 class MinimumStatus(StrEnum):
@@ -70,6 +71,7 @@ def verify_scoring(ctx: ScoringContext, result: ScoringResult) -> list[Alert]:
                     "Docente em regime DE ou 40 h sem pontos nos Grupos IV (extensão) e V "
                     "(pesquisa); a norma exige atividade de extensão ou pesquisa.",
                     REF_EXTENSION_RESEARCH,
+                    NORM_RES_4644,
                 )
             )
     comparison = reference_minimum(
@@ -83,6 +85,7 @@ def verify_scoring(ctx: ScoringContext, result: ScoringResult) -> list[Alert]:
                 "O mínimo de pontos de referência não está definido para a estrutura de "
                 "carreira deste processo; a comparação exige análise normativa.",
                 REF_MINIMUM,
+                NORM_RES_4644,
             )
         )
     return alerts
