@@ -31,6 +31,7 @@ from app.domain.entities.board import (
     BoardOpinion,
     BoardOrdinance,
     BoardRole,
+    OpinionConclusion,
     OrdinanceFile,
     ReadingState,
     RequestSettings,
@@ -40,7 +41,7 @@ from app.domain.entities.generated import GenerationCode
 from app.domain.entities.user import User
 from app.domain.errors import Conflict, Gone, NotFound, StaleVersion, ValidationFailed
 from app.domain.repositories.ports import Clock, FileInspector, FileStorage, UnitOfWork
-from app.domain.rules.board_rules import validate_board_data
+from app.domain.rules.board_rules import validate_board_data, validate_city, validate_opinion_fields
 from app.domain.rules.ordinance_grounding import DATE, MEMBERS, NUMBER
 from app.domain.rules.upload_validation import extension_of, safe_display_name, validate_upload
 
@@ -443,3 +444,94 @@ class DownloadOrdinanceFile(_ScoringUseCase):
         if not path.is_file():
             raise NotFound("Arquivo não encontrado")
         return OrdinanceDownload(path, file.original_name, file.mime)
+
+
+OPINION_ENTITY = "board_opinion"
+SETTINGS_ENTITY = "request_settings"
+
+
+def _length(text: str | None) -> int:
+    return len(text) if text else 0
+
+
+class SaveOpinion(_BoardUseCase):
+    def execute(
+        self,
+        actor: User,
+        process_id: UUID,
+        conclusion: OpinionConclusion | None,
+        opinion_date: date | None,
+        place: str | None,
+        notes: str | None,
+        expected_version: int,
+    ) -> BoardOpinion:
+        """Saves the fields the person fills for the Parecer (PAR-01). The conclusion is exactly
+        what was sent, `None` included: the system never chooses or suggests one (PAR-12). The
+        first save needs `expected_version` 0; the limits are a 422 on the field (PAR-13)."""
+        place = (place or "").strip() or None
+        notes = (notes or "").strip() or None
+        with self._uow_factory() as uow:
+            self._editable(uow, actor, process_id)
+            if errors := validate_opinion_fields(place, notes):
+                raise ValidationFailed(errors[0].field, errors[0].message)
+            current = uow.opinions.get(process_id)
+            draft = BoardOpinion(process_id, conclusion, opinion_date, place, notes)
+            with self._versioned():
+                if current is None:
+                    result = uow.opinions.create(draft, actor.id, expected_version)
+                else:
+                    result = uow.opinions.update(draft, actor.id, expected_version)
+            self._audit.record(
+                uow,
+                actor.id,
+                OPINION_ENTITY,
+                process_id,
+                AuditAction.UPDATE if current else AuditAction.CREATE,
+                self._view(current),
+                self._view(result),
+            )
+            uow.commit()
+        return result
+
+    @staticmethod
+    def _view(opinion: BoardOpinion | None) -> dict:
+        """The code and the date of the choice and the sizes of the texts, never the texts."""
+        if opinion is None:
+            return {}
+        return {
+            "conclusion": opinion.conclusion,
+            "opinion_date": opinion.opinion_date,
+            "place_length": _length(opinion.place),
+            "notes_length": _length(opinion.notes),
+        }
+
+
+class SaveRequestSettings(_BoardUseCase):
+    def execute(
+        self, actor: User, process_id: UUID, city: str | None, expected_version: int
+    ) -> RequestSettings:
+        """Saves the city of the Requerimento (REQ-05). It lives in `request_settings`, not in the
+        process, so it never asks for the justification of the Etapa 1."""
+        city = (city or "").strip() or None
+        with self._uow_factory() as uow:
+            self._editable(uow, actor, process_id)
+            if errors := validate_city(city):
+                raise ValidationFailed(errors[0].field, errors[0].message)
+            current = uow.request_settings.get(process_id)
+            draft = RequestSettings(process_id, city)
+            with self._versioned():
+                if current is None:
+                    result = uow.request_settings.create(draft, expected_version)
+                else:
+                    result = uow.request_settings.update(draft, expected_version)
+            self._audit.record(
+                uow,
+                actor.id,
+                SETTINGS_ENTITY,
+                process_id,
+                AuditAction.UPDATE if current else AuditAction.CREATE,
+                {"city_length": _length(current.city)} if current else {},
+                {"city_length": _length(result.city)},
+            )
+            uow.commit()
+        return result

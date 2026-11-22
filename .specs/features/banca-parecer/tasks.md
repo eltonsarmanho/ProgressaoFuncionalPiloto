@@ -763,7 +763,7 @@ graph LR
 
 #### T21: Gravação da minuta do Parecer e da cidade
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `SaveOpinion.execute(actor, process_id, conclusion | None, date, place, notes, expected_version)` e `SaveRequestSettings.execute(actor, process_id, city, expected_version)`: validam com `validate_opinion_fields` e `validate_city`, criam com `expected_version=0`, auditam sem justificativa e nunca preenchem a conclusão; a cidade fica em `request_settings`, fora de `functional_processes`.
 **Where**: `backend/app/application/use_cases/board.py` (modify)
@@ -778,9 +778,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_opinion_save.py` (novo): gravar data, local e observações sem escolher conclusão mantém `conclusion` nula (PAR-12); escolher `FAVORAVEL` e `DESFAVORAVEL` grava e audita sem justificativa; limpar a conclusão volta a `None`; observações com 5 000 caracteres passam e com 5 001 dão 422 em `notes`; local com 101 dá 422 em `place` (PAR-13); a cidade com 100 passa e com 101 dá 422 em `city`; gravar a cidade não muda `functional_processes.version` nem exige justificativa da Etapa 1; versão velha dá 409 `VERSAO_DESATUALIZADA`; processo concluído ou arquivado dá 409 `PROCESSO_SOMENTE_LEITURA`; fora do acesso `NotFound`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_opinion_save.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_opinion_save.py` (novo): gravar data, local e observações sem escolher conclusão mantém `conclusion` nula (PAR-12); escolher `FAVORAVEL` e `DESFAVORAVEL` grava e audita sem justificativa; limpar a conclusão volta a `None`; observações com 5 000 caracteres passam e com 5 001 dão 422 em `notes`; local com 101 dá 422 em `place` (PAR-13); a cidade com 100 passa e com 101 dá 422 em `city`; gravar a cidade não muda `functional_processes.version` nem exige justificativa da Etapa 1; versão velha dá 409 `VERSAO_DESATUALIZADA`; processo concluído ou arquivado dá 409 `PROCESSO_SOMENTE_LEITURA`; fora do acesso `NotFound`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_opinion_save.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted

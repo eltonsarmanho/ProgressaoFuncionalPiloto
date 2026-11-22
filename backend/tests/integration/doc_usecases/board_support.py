@@ -7,7 +7,9 @@ from app.application.use_cases.board import (
     DownloadOrdinanceFile,
     GetBoard,
     RereadOrdinance,
+    SaveOpinion,
     SaveOrdinanceData,
+    SaveRequestSettings,
     UploadOrdinance,
 )
 from app.domain.entities.board import (
@@ -46,6 +48,14 @@ def get_board_uc(world) -> GetBoard:
 
 def download_uc(world, docs) -> DownloadOrdinanceFile:
     return DownloadOrdinanceFile(world.uow_factory, world.audit, world.policy, docs.storage)
+
+
+def save_opinion_uc(world) -> SaveOpinion:
+    return SaveOpinion(world.uow_factory, world.audit, world.policy)
+
+
+def save_settings_uc(world) -> SaveRequestSettings:
+    return SaveRequestSettings(world.uow_factory, world.audit, world.policy)
 
 
 def stored_board(world, process=None) -> BoardOrdinance | None:
