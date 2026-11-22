@@ -707,7 +707,7 @@ graph LR
 
 #### T19: Gravação dos dados da portaria
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `SaveOrdinanceData.execute(actor, process_id, number, date, members, expected_version)` valida com `validate_board_data` (422 por campo, `MEMBRO_REPETIDO` com o código), marca como `INFORMADO` só o que mudou (o que a pessoa não tocou mantém a origem e a página), aceita a portaria digitada sem arquivo (`expected_version=0` cria) e audita número, data, contagens e campos alterados, sem nome de membro e sem justificativa.
 **Where**: `backend/app/application/use_cases/board.py` (modify)
@@ -722,9 +722,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_ordinance_save.py` (novo): corrigir um nome grava e marca só esse membro como `INFORMADO` (os outros mantêm `EXTRAIDO` e a página); editar o número marca só o número; limpar a data a deixa vazia e `INFORMADO` (uma nova leitura não a ressuscita); gravar sem arquivo cria a linha em `SEM_ARQUIVO` com origem `INFORMADO` em tudo (PORT-06); o evento de auditoria sai sem justificativa e sem nome de membro (PORT-05); 16 membros, nome vazio, nome com 201 caracteres e número com 51 dão 422 no campo certo (PORT-11); `MEMBRO_REPETIDO` dá 422 com o código; duas gravações a partir da mesma versão: a primeira vale e a segunda dá 409 `VERSAO_DESATUALIZADA` (PORT-12); processo arquivado ou concluído dá 409 `PROCESSO_SOMENTE_LEITURA`; fora do acesso dá `NotFound`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_ordinance_save.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_ordinance_save.py` (novo): corrigir um nome grava e marca só esse membro como `INFORMADO` (os outros mantêm `EXTRAIDO` e a página); editar o número marca só o número; limpar a data a deixa vazia e `INFORMADO` (uma nova leitura não a ressuscita); gravar sem arquivo cria a linha em `SEM_ARQUIVO` com origem `INFORMADO` em tudo (PORT-06); o evento de auditoria sai sem justificativa e sem nome de membro (PORT-05); 16 membros, nome vazio, nome com 201 caracteres e número com 51 dão 422 no campo certo (PORT-11); `MEMBRO_REPETIDO` dá 422 com o código; duas gravações a partir da mesma versão: a primeira vale e a segunda dá 409 `VERSAO_DESATUALIZADA` (PORT-12); processo arquivado ou concluído dá 409 `PROCESSO_SOMENTE_LEITURA`; fora do acesso dá `NotFound`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_ordinance_save.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted

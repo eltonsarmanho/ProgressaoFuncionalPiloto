@@ -8,7 +8,9 @@ the score or the Comprovante (PORT-09). Audit events carry identifiers, states, 
 never the name of a board member (third party) and never a justification (regra 5).
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass, replace
+from datetime import date
 from uuid import UUID
 
 from app.application.services.access_policy import AccessPolicy
@@ -22,11 +24,20 @@ from app.application.use_cases.documents import (
 )
 from app.application.use_cases.generated_documents import _EditUseCase
 from app.domain.entities.audit import AuditAction
-from app.domain.entities.board import BoardOrdinance, OrdinanceFile, ReadingState
+from app.domain.entities.board import (
+    BoardMember,
+    BoardOrdinance,
+    BoardRole,
+    OrdinanceFile,
+    ReadingState,
+    ValueSource,
+)
 from app.domain.entities.generated import GenerationCode
 from app.domain.entities.user import User
 from app.domain.errors import Conflict, StaleVersion, ValidationFailed
 from app.domain.repositories.ports import Clock, FileInspector, FileStorage, UnitOfWork
+from app.domain.rules.board_rules import validate_board_data
+from app.domain.rules.ordinance_grounding import DATE, MEMBERS, NUMBER
 from app.domain.rules.upload_validation import extension_of, safe_display_name, validate_upload
 
 BOARD_ENTITY = "board_ordinance"
@@ -62,16 +73,6 @@ def _state_view(ordinance: BoardOrdinance | None) -> dict:
 
 
 class _BoardUseCase(_EditUseCase):
-    def __init__(
-        self,
-        uow_factory: Callable[[], UnitOfWork],
-        audit: AuditService,
-        policy: AccessPolicy,
-        clock: Clock,
-    ) -> None:
-        super().__init__(uow_factory, audit, policy)
-        self._clock = clock
-
     def _record(
         self,
         uow: UnitOfWork,
@@ -104,7 +105,8 @@ class UploadOrdinance(_BoardUseCase):
         clock: Clock,
         limits: DocumentLimits | None = None,
     ) -> None:
-        super().__init__(uow_factory, audit, policy, clock)
+        super().__init__(uow_factory, audit, policy)
+        self._clock = clock
         self._storage = storage
         self._inspector = inspector
         self._limits = limits or DocumentLimits()
@@ -184,8 +186,18 @@ class UploadOrdinance(_BoardUseCase):
 
 
 class RereadOrdinance(_BoardUseCase):
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        policy: AccessPolicy,
+        clock: Clock,
+    ) -> None:
+        super().__init__(uow_factory, audit, policy)
+        self._clock = clock
+
     def execute(self, actor: User, process_id: UUID, expected_version: int) -> BoardOrdinance:
-        """"Ler de novo": a finished reading goes back to the queue (PORT-07). Without a file it
+        """Ler de novo: a finished reading goes back to the queue (PORT-07). Without a file it
         is a 422 on `arquivo`; while the reading is queued or running it is a 409
         `OPERACAO_EM_ANDAMENTO`."""
         with self._uow_factory() as uow:
@@ -220,3 +232,149 @@ class RereadOrdinance(_BoardUseCase):
             )
             uow.commit()
         return result
+
+
+@dataclass(frozen=True)
+class MemberInput:
+    """A member as the person typed it: page and origin are decided here, not by the caller."""
+
+    name: str
+    role: BoardRole
+
+
+def _typed_members(
+    current: Sequence[BoardMember], typed: Sequence[MemberInput]
+) -> tuple[BoardMember, ...]:
+    """A member the person did not touch (same name and function) keeps its page and origin; any
+    other is `INFORMADO` with no page."""
+    known = {(m.name, m.role): m for m in current}
+    return tuple(
+        known.get((name, member.role))
+        or BoardMember(name, member.role, None, ValueSource.INFORMADO)
+        for member in typed
+        for name in (member.name.strip(),)
+    )
+
+
+def _audit_view(ordinance: BoardOrdinance | None) -> dict:
+    """Number, date and the count of members: never a name (third party)."""
+    if ordinance is None:
+        return {}
+    return {
+        "number": ordinance.number,
+        "ordinance_date": ordinance.ordinance_date,
+        "member_count": len(ordinance.members),
+    }
+
+
+class SaveOrdinanceData(_BoardUseCase):
+    def execute(
+        self,
+        actor: User,
+        process_id: UUID,
+        number: str | None,
+        ordinance_date: date | None,
+        members: Sequence[MemberInput],
+        expected_version: int,
+    ) -> BoardOrdinance:
+        """Saves what the person typed; only the fields that changed become `INFORMADO` (PORT-05).
+
+        Without an ordinance the save creates one with no file, everything typed that has a value
+        (PORT-06), and needs `expected_version` 0. Limits are a 422 on the field (PORT-11), a
+        version that is not the stored one is a 409 `VERSAO_DESATUALIZADA` (PORT-12).
+        """
+        number = (number or "").strip() or None
+        with self._uow_factory() as uow:
+            self._editable(uow, actor, process_id)
+            current = uow.board.get(process_id)
+            new_members = _typed_members(current.members if current else (), members)
+            if errors := validate_board_data(number, new_members):
+                first = errors[0]
+                raise ValidationFailed(first.field, first.message, first.code)
+            changed = _changed_fields(current, number, ordinance_date, new_members)
+            with self._versioned():
+                if current is None:
+                    result = uow.board.create(
+                        _created(process_id, number, ordinance_date, new_members),
+                        actor.id,
+                        expected_version,
+                    )
+                else:
+                    result = uow.board.save_data(
+                        _edited(current, number, ordinance_date, new_members, changed),
+                        actor.id,
+                        expected_version,
+                    )
+            self._record(
+                uow,
+                actor,
+                process_id,
+                AuditAction.UPDATE if current else AuditAction.CREATE,
+                "SAVE",
+                _audit_view(current),
+                {**_audit_view(result), "fields_changed": changed},
+            )
+            uow.commit()
+        return result
+
+
+def _changed_fields(
+    current: BoardOrdinance | None,
+    number: str | None,
+    ordinance_date: date | None,
+    members: tuple[BoardMember, ...],
+) -> list[str]:
+    if current is None:
+        return [
+            name
+            for name, value in ((NUMBER, number), (DATE, ordinance_date), (MEMBERS, members))
+            if value
+        ]
+    return [
+        name
+        for name, now, before in (
+            (NUMBER, number, current.number),
+            (DATE, ordinance_date, current.ordinance_date),
+            (MEMBERS, members, current.members),
+        )
+        if now != before
+    ]
+
+
+def _created(
+    process_id: UUID,
+    number: str | None,
+    ordinance_date: date | None,
+    members: tuple[BoardMember, ...],
+) -> BoardOrdinance:
+    typed = ValueSource.INFORMADO
+    return BoardOrdinance(
+        process_id,
+        number=number,
+        number_source=typed if number is not None else None,
+        ordinance_date=ordinance_date,
+        date_source=typed if ordinance_date is not None else None,
+        members=members,
+    )
+
+
+def _edited(
+    current: BoardOrdinance,
+    number: str | None,
+    ordinance_date: date | None,
+    members: tuple[BoardMember, ...],
+    changed: Sequence[str],
+) -> BoardOrdinance:
+    """The warning of a field the person changed describes a value that is gone: it is dropped."""
+    edited = replace(
+        current,
+        members=members,
+        warnings=tuple(w for w in current.warnings if w.field not in changed),
+    )
+    if NUMBER in changed:
+        edited.number, edited.number_page = number, None
+        edited.number_source = ValueSource.INFORMADO
+    if DATE in changed:
+        edited.ordinance_date, edited.date_page = ordinance_date, None
+        edited.date_source = ValueSource.INFORMADO
+    return edited
