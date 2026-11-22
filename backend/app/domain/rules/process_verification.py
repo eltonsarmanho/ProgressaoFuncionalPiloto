@@ -21,6 +21,10 @@ REF_RESTRUCTURING = "Lei 15.141/2025 (Lei 12.772/2012, art. 12, §7º, e Anexo I
 REF_NO_STRUCTURE = "Res. 4.644/2015-CONSEPE, art. 29; Lei 12.772/2012, art. 12"
 REF_INCOMPLETE = "Res. 4.644/2015-CONSEPE"
 
+# NLINK-03: norm codes of the rules that do not come from a career structure
+NORM_RES_4644 = "RES-4644-2015-CONSEPE"
+NORM_LEI_12772 = "LEI-12772-2012"
+
 
 class Severity(StrEnum):
     ERRO = "ERRO"
@@ -46,6 +50,7 @@ class Alert:
     severity: Severity
     message: str
     norm_reference: str
+    norm_code: str | None = None  # NLINK-03: the registered norm behind the rule
 
 
 @dataclass(frozen=True)
@@ -100,6 +105,7 @@ def _structure_alerts(p: ProcessSnapshot, version: CareerVersion, dates_ok: bool
                 Severity.ERRO,
                 f"Não existe na estrutura {version.name}: {'; '.join(missing)}.",
                 version.norm_reference,
+                version.norm_code,
             )
         )
 
@@ -119,6 +125,7 @@ def _structure_alerts(p: ProcessSnapshot, version: CareerVersion, dates_ok: bool
                 Severity.ALERTA,
                 f"Denominação divergente na estrutura {version.name}: {'; '.join(divergent)}.",
                 version.norm_reference,
+                version.norm_code,
             )
         )
 
@@ -143,6 +150,7 @@ def _structure_alerts(p: ProcessSnapshot, version: CareerVersion, dates_ok: bool
                     "atual para o primeiro nível da classe seguinte); confira a norma que "
                     "fundamenta o salto.",
                     REF_MODALITY,
+                    NORM_LEI_12772,
                 )
             )
 
@@ -156,6 +164,7 @@ def _structure_alerts(p: ProcessSnapshot, version: CareerVersion, dates_ok: bool
                     Severity.ERRO,
                     f"Interstício de {months} meses; o mínimo exigido é de {minimum} meses.",
                     version.norm_reference,
+                    version.norm_code,
                 )
             )
     return alerts
@@ -173,6 +182,7 @@ def verify_process(p: ProcessSnapshot, versions: Sequence[CareerVersion]) -> lis
                 Severity.ERRO,
                 "A data final do interstício deve ser posterior à data inicial.",
                 REF_INTERSTICE,
+                NORM_RES_4644,
             )
         )
     if p.end_date > p.opening_date:
@@ -182,6 +192,7 @@ def verify_process(p: ProcessSnapshot, versions: Sequence[CareerVersion]) -> lis
                 Severity.ALERTA,
                 "A data final do interstício é posterior à data de abertura do processo.",
                 REF_COMPLETION,
+                NORM_RES_4644,
             )
         )
     if interstice.crosses(RESTRUCTURING_DATE):
@@ -192,6 +203,7 @@ def verify_process(p: ProcessSnapshot, versions: Sequence[CareerVersion]) -> lis
                 "O interstício começa antes de 01/01/2025 e termina depois da reestruturação "
                 "da carreira pela Lei 15.141/2025; o enquadramento exige análise normativa.",
                 REF_RESTRUCTURING,
+                NORM_LEI_12772,
             )
         )
 
@@ -203,6 +215,7 @@ def verify_process(p: ProcessSnapshot, versions: Sequence[CareerVersion]) -> lis
                 Severity.REQUER_ANALISE_NORMATIVA,
                 "Não há estrutura de carreira cadastrada vigente na data final do interstício.",
                 REF_NO_STRUCTURE,
+                NORM_RES_4644,
             )
         )
     else:
@@ -218,6 +231,7 @@ def verify_process(p: ProcessSnapshot, versions: Sequence[CareerVersion]) -> lis
                 "A progressão informada não segue a sequência usual (um nível acima, na mesma "
                 "classe); confira a norma que fundamenta o salto.",
                 REF_MODALITY,
+                NORM_LEI_12772,
             )
         )
 
@@ -229,6 +243,7 @@ def verify_process(p: ProcessSnapshot, versions: Sequence[CareerVersion]) -> lis
                 Severity.ALERTA,
                 f"Campos não preenchidos: {', '.join(empty)}.",
                 REF_INCOMPLETE,
+                NORM_RES_4644,
             )
         )
     return alerts

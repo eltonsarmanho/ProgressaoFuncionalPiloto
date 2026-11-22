@@ -276,7 +276,7 @@ graph LR
 
 #### T6: `Alert.norm_code` e citação dos alertas da verificação do processo
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `Alert` ganha `norm_code: str | None = None`; cada alerta de `process_verification.py` recebe o código da tabela de citação do design: os que vêm da estrutura usam `version.norm_code`; conclusão do interstício, dados incompletos e sem estrutura usam `RES-4644-2015-CONSEPE`; reestruturação e modalidade usam `LEI-12772-2012`. O texto de `norm_reference` não muda.
 **Where**: `backend/app/domain/rules/process_verification.py` (modify)
@@ -291,10 +291,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_process_verification_citations.py` (novo): um cenário sintético por alerta (`CLASSE_INEXISTENTE_NA_ESTRUTURA`, `DENOMINACAO_DIVERGENTE`, `INTERSTICIO_INSUFICIENTE` com a estrutura ligada a um código sintético; `INTERSTICIO_NAO_CONCLUIDO`, `DADOS_INCOMPLETOS`, `ESTRUTURA_NAO_CADASTRADA` com `RES-4644-2015-CONSEPE`; `INTERSTICIO_CRUZA_REESTRUTURACAO` e os dois `MODALIDADE_INCOMPATIVEL` com `LEI-12772-2012`); estrutura sem `norm_code` dá alerta com `norm_code` nulo e o mesmo `norm_reference` de hoje
-- [ ] Teste de NMOV-05: a mesma verificação com a classe C da versão trocando "Associado" por uma denominação sintética passa a dar `DENOMINACAO_DIVERGENTE` para o processo que informou "Associado", sem alterar o processo
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_process_verification_citations.py` (novo): um cenário sintético por alerta (`CLASSE_INEXISTENTE_NA_ESTRUTURA`, `DENOMINACAO_DIVERGENTE`, `INTERSTICIO_INSUFICIENTE` com a estrutura ligada a um código sintético; `INTERSTICIO_NAO_CONCLUIDO`, `DADOS_INCOMPLETOS`, `ESTRUTURA_NAO_CADASTRADA` com `RES-4644-2015-CONSEPE`; `INTERSTICIO_CRUZA_REESTRUTURACAO` e os dois `MODALIDADE_INCOMPATIVEL` com `LEI-12772-2012`); estrutura sem `norm_code` dá alerta com `norm_code` nulo e o mesmo `norm_reference` de hoje
+- [x] Teste de NMOV-05: a mesma verificação com a classe C da versão trocando "Associado" por uma denominação sintética passa a dar `DENOMINACAO_DIVERGENTE` para o processo que informou "Associado", sem alterar o processo
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
