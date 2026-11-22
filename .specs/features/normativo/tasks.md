@@ -819,7 +819,7 @@ graph LR
 
 #### T25: `AlertList` com a norma
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Cada alerta mostra o título da norma, o `norm_reference` e o `NormLink`; sem norma, só o texto, como hoje.
 **Where**: `frontend/src/components/AlertList.tsx` (modify)
@@ -834,9 +834,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/AlertList.test.tsx` (novo, risco do design): alerta com norma mostra título, referência e "Ver norma"; sem norma mostra só a referência; `TITULACAO_INSUFICIENTE` mostra o rótulo e a mensagem; alerta `ALERTA` de modalidade não usa o estilo de erro
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `frontend/src/components/AlertList.test.tsx` (novo, risco do design): alerta com norma mostra título, referência e "Ver norma"; sem norma mostra só a referência; `TITULACAO_INSUFICIENTE` mostra o rótulo e a mensagem; alerta `ALERTA` de modalidade não usa o estilo de erro
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: build
