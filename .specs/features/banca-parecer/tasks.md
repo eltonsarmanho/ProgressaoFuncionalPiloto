@@ -1395,7 +1395,7 @@ graph LR
 
 #### T43: Formulário da portaria
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `OrdinanceForm` com envio do PDF ou imagem (com a confirmação da substituição quando já há arquivo), número, data e lista de membros editáveis (nome e função), a página de origem ou "informado pela pessoa" em cada valor, o aviso `VALOR_SEM_ORIGEM` no campo, `MEMBROS_NAO_ENCONTRADOS`, o motivo e "Ler de novo" quando a leitura `FALHOU`, e o registro sem arquivo; erro por campo do 422 e mensagem do 409.
 **Where**: `frontend/src/components/OrdinanceForm.tsx` (new)
@@ -1410,9 +1410,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/OrdinanceForm.test.tsx` (novo): sem portaria mostra o envio e os campos vazios; escolher um PDF envia `FormData` com `expected_version` 0; com a leitura `LIDA` os três membros aparecem com "página 2" e o número com a sua página; valor sem origem mostra o aviso no campo e o campo vazio; corrigir um nome e salvar envia a lista e mostra "informado pela pessoa" nesse membro; adicionar e remover membro; salvar os dados sem arquivo mostra todos como "informado pela pessoa"; leitura `FALHOU` mostra o motivo em português, mantém os campos editáveis e o botão "Ler de novo" chama a rota de nova leitura; `MEMBROS_NAO_ENCONTRADOS` mostra o aviso; enviar outro arquivo com portaria existente abre a confirmação da substituição e só envia `replace: true` depois de confirmar; 422 no `members[1].name` mostra o erro junto do nome e 422 de arquivo mostra a mensagem do limite; 409 `VERSAO_DESATUALIZADA` mostra o texto de recarregar; somente leitura desabilita o envio, os campos, "Ler de novo" e o salvar, com o motivo (BNAV-02)
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `frontend/src/components/OrdinanceForm.test.tsx` (novo): sem portaria mostra o envio e os campos vazios; escolher um PDF envia `FormData` com `expected_version` 0; com a leitura `LIDA` os três membros aparecem com "página 2" e o número com a sua página; valor sem origem mostra o aviso no campo e o campo vazio; corrigir um nome e salvar envia a lista e mostra "informado pela pessoa" nesse membro; adicionar e remover membro; salvar os dados sem arquivo mostra todos como "informado pela pessoa"; leitura `FALHOU` mostra o motivo em português, mantém os campos editáveis e o botão "Ler de novo" chama a rota de nova leitura; `MEMBROS_NAO_ENCONTRADOS` mostra o aviso; enviar outro arquivo com portaria existente abre a confirmação da substituição e só envia `replace: true` depois de confirmar; 422 no `members[1].name` mostra o erro junto do nome e 422 de arquivo mostra a mensagem do limite; 409 `VERSAO_DESATUALIZADA` mostra o texto de recarregar; somente leitura desabilita o envio, os campos, "Ler de novo" e o salvar, com o motivo (BNAV-02)
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: front
