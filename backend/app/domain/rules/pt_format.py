@@ -10,6 +10,20 @@ from decimal import Decimal
 from app.domain.rules.interstice import Interstice
 
 _ACADEMIC_PERIOD = re.compile(r"^(\d{4})\.(\d)$")
+_MONTH_NAMES = (
+    "janeiro",
+    "fevereiro",
+    "março",
+    "abril",
+    "maio",
+    "junho",
+    "julho",
+    "agosto",
+    "setembro",
+    "outubro",
+    "novembro",
+    "dezembro",
+)
 
 
 def format_decimal(value: Decimal | int) -> str:
@@ -20,6 +34,11 @@ def format_decimal(value: Decimal | int) -> str:
 def format_date(value: date) -> str:
     """`date(2024, 11, 23)` -> `23/11/2024`."""
     return value.strftime("%d/%m/%Y")
+
+
+def format_long_date(value: date) -> str:
+    """`date(2025, 3, 10)` -> `10 de março de 2025`; no zero, no ordinal, no system locale."""
+    return f"{value.day} de {_MONTH_NAMES[value.month - 1]} de {value.year}"
 
 
 def format_period(period: str) -> str:

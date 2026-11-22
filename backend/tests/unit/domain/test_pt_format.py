@@ -11,6 +11,7 @@ from app.domain.rules.pt_format import (
     format_decimal,
     format_hours,
     format_interstice,
+    format_long_date,
     format_period,
 )
 
@@ -77,3 +78,51 @@ def test_an_interstice_is_written_as_its_two_dates():
     interstice = Interstice(date(2022, 11, 23), date(2024, 11, 23))
 
     assert format_interstice(interstice) == "23/11/2022 a 23/11/2024"
+
+
+def test_a_long_date_is_written_in_full_in_portuguese():
+    assert format_long_date(date(2025, 3, 10)) == "10 de março de 2025"
+
+
+@pytest.mark.parametrize(
+    ("month", "name"),
+    [
+        (1, "janeiro"),
+        (2, "fevereiro"),
+        (3, "março"),
+        (4, "abril"),
+        (5, "maio"),
+        (6, "junho"),
+        (7, "julho"),
+        (8, "agosto"),
+        (9, "setembro"),
+        (10, "outubro"),
+        (11, "novembro"),
+        (12, "dezembro"),
+    ],
+)
+def test_each_month_of_a_long_date_has_its_portuguese_name(month, name):
+    assert format_long_date(date(2026, month, 15)) == f"15 de {name} de 2026"
+
+
+def test_the_first_day_of_a_long_date_has_no_zero_and_no_ordinal():
+    assert format_long_date(date(2026, 1, 1)) == "1 de janeiro de 2026"
+
+
+def test_a_leap_day_is_written_as_a_long_date():
+    assert format_long_date(date(2024, 2, 29)) == "29 de fevereiro de 2024"
+
+
+def test_a_long_date_does_not_depend_on_the_system_locale():
+    import locale
+
+    previous = locale.setlocale(locale.LC_TIME)
+    try:
+        for name in ("en_US.UTF-8", "fr_FR.UTF-8", "C"):
+            try:
+                locale.setlocale(locale.LC_TIME, name)
+            except locale.Error:
+                continue
+            assert format_long_date(date(2025, 3, 10)) == "10 de março de 2025"
+    finally:
+        locale.setlocale(locale.LC_TIME, previous)

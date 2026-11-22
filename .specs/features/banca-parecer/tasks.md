@@ -180,7 +180,7 @@ graph LR
 
 #### T1: Data por extenso
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `format_long_date(d: date) -> str` escreve a data como "10 de março de 2025": dia sem zero à esquerda e sem ordinal, mês em português com acento, ano com quatro dígitos, sem depender do idioma do sistema.
 **Where**: `backend/app/domain/rules/pt_format.py` (modify)
@@ -195,9 +195,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_pt_format.py`: `date(2025, 3, 10)` dá "10 de março de 2025" (o exemplo da spec); os doze meses com a grafia certa, incluindo "março"; dia 1 dá "1 de janeiro de 2026" (sem zero e sem "1º"); 29 de fevereiro de 2024; o resultado não muda com `LC_TIME` diferente (nada de `strftime("%B")`)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_pt_format.py`: `date(2025, 3, 10)` dá "10 de março de 2025" (o exemplo da spec); os doze meses com a grafia certa, incluindo "março"; dia 1 dá "1 de janeiro de 2026" (sem zero e sem "1º"); 29 de fevereiro de 2024; o resultado não muda com `LC_TIME` diferente (nada de `strftime("%B")`)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
