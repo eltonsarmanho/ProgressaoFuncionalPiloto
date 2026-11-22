@@ -906,7 +906,7 @@ graph LR
 
 #### T26: Requerimento em DOCX
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `write_request_docx(model, target)` escreve o `RequestDocument` em A4: cabeçalho centralizado, título, saudação, a opção marcada, o parágrafo do pedido justificado, a linha da avaliação de desempenho, a linha de local e data, "Nestes termos, pede deferimento.", a linha de assinatura, "Assinatura do (a) requerente", a matrícula e a observação da LGPD.
 **Where**: `backend/app/infrastructure/documents/request_docx.py` (new)
@@ -921,9 +921,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_request_docx.py` (novo): o DOCX abre e os parágrafos saem na ordem do modelo (cabeçalho, título, "Prezado Sr. Presidente da CPPD,", opção, pedido, avaliação, local e data, "Nestes termos, pede deferimento.", assinatura, "Assinatura do (a) requerente", "Matrícula SIAPE", LGPD); o parágrafo do pedido traz nome, SIAPE e interstício do modelo; a linha em branco "___/___/___" e "__________" saem como estão; caractere de controle no nome não quebra o arquivo; não há parágrafo de revisão
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_request_docx.py` (novo): o DOCX abre e os parágrafos saem na ordem do modelo (cabeçalho, título, "Prezado Sr. Presidente da CPPD,", opção, pedido, avaliação, local e data, "Nestes termos, pede deferimento.", assinatura, "Assinatura do (a) requerente", "Matrícula SIAPE", LGPD); o parágrafo do pedido traz nome, SIAPE e interstício do modelo; a linha em branco "___/___/___" e "__________" saem como estão; caractere de controle no nome não quebra o arquivo; não há parágrafo de revisão
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
