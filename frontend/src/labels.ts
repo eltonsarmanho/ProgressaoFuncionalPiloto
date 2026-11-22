@@ -1,4 +1,4 @@
-import type { BoardRole, ChecklistState, OrdinanceWarningCode, ReadingCode, ReadingState, ValueSource } from "./api/board";
+import type { BoardRole, ChecklistState, OpinionConclusion, OrdinanceWarningCode, ReadingCode, ReadingState, ValueSource } from "./api/board";
 import type {
   DocumentKind,
   EntrySource,
@@ -518,4 +518,10 @@ export const CHECKLIST_STATE_LABELS: Record<ChecklistState, string> = {
   REGISTRADA: "Registrada",
   ENTREGUE: "Entregue",
   PENDENTE: "Pendente",
+};
+
+/** PAR-01: the two conclusions the person chooses between; the system never suggests one (PAR-12). */
+export const OPINION_CONCLUSION_LABELS: Record<OpinionConclusion, string> = {
+  FAVORAVEL: "Favorável",
+  DESFAVORAVEL: "Desfavorável",
 };

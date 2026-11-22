@@ -1423,7 +1423,7 @@ graph LR
 
 #### T44: Formulário da minuta do Parecer
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `OpinionForm` com a conclusão em botões de rádio **sem seleção inicial** (Favorável e Desfavorável), a data, o local e as observações com contador de 5 000 caracteres, salvar com a versão e erro por campo; nenhuma conclusão é marcada nem sugerida pela tela.
 **Where**: `frontend/src/components/OpinionForm.tsx` (new)
@@ -1438,9 +1438,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/OpinionForm.test.tsx` (novo): com a minuta vazia nenhum rádio está marcado; com o total acima do mínimo e a Tabela pronta, ainda nenhum está marcado (PAR-12); escolher "Favorável" e salvar envia `conclusion: "FAVORAVEL"` com `expected_version`; o contador mostra "4 998 / 5 000" com 2 caracteres a menos e bloqueia o salvar acima de 5 000; 422 de `place` e de `notes` aparecem junto do campo; 409 mostra o texto de recarregar; somente leitura desabilita tudo com o motivo
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `frontend/src/components/OpinionForm.test.tsx` (novo): com a minuta vazia nenhum rádio está marcado; com o total acima do mínimo e a Tabela pronta, ainda nenhum está marcado (PAR-12); escolher "Favorável" e salvar envia `conclusion: "FAVORAVEL"` com `expected_version`; o contador mostra "4 998 / 5 000" com 2 caracteres a menos e bloqueia o salvar acima de 5 000; 422 de `place` e de `notes` aparecem junto do campo; 409 mostra o texto de recarregar; somente leitura desabilita tudo com o motivo
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: front
