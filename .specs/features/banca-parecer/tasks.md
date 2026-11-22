@@ -1599,7 +1599,7 @@ graph LR
 
 #### T50: Decisão AD-025 e passos de deploy
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `STATE.md` ganha a AD-025 (portaria da banca é entidade própria, fora de `documents`; Parecer e Requerimento são tipos de documento gerado sem IA; conclusão escolhida pela pessoa) e o que ficou de limite conhecido; `docs/deploy/vm.md` ganha a seção do deploy da banca e do Parecer (migração `0011` depois da `0010`, valores de enum que não se desfazem, dump antes, conferência pós-deploy, fumaça sintética), sem executar nada.
 **Where**: `.specs/STATE.md` (modify; seção em `docs/deploy/vm.md`)
@@ -1614,9 +1614,9 @@ graph LR
 
 **Done when**:
 
-- [ ] AD-025 registrada com decisão, motivo, custo (arquivo da portaria no mesmo armazenamento do processo; thread única ocupada pela leitura, AD-008; `ADD VALUE` irreversível), escopo e data
-- [ ] Seção de deploy com: o que muda na VM (migração `0011`, nenhuma semeadura, nenhuma mudança de `docker-compose.yml`), antes do deploy (nada em processamento, ponto de retorno e **dump antes**, `0010` já aplicada), a conferência (`alembic current` em `0011 (head)`, `SELECT unnest(enum_range(NULL::generated_kind))` com os cinco valores, as quatro tabelas, o log do backend sem erro de migração e a ordem do executor), a fumaça só com dados sintéticos (portaria sintética lida pela IA falsa ou digitada, Parecer, Requerimento e checklist) e o retorno (restaurar o dump e as imagens; o `downgrade` remove as tabelas e os enums mas mantém `REQUERIMENTO` e `PARECER`)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] AD-025 registrada com decisão, motivo, custo (arquivo da portaria no mesmo armazenamento do processo; thread única ocupada pela leitura, AD-008; `ADD VALUE` irreversível), escopo e data
+- [x] Seção de deploy com: o que muda na VM (migração `0011`, nenhuma semeadura, nenhuma mudança de `docker-compose.yml`), antes do deploy (nada em processamento, ponto de retorno e **dump antes**, `0010` já aplicada), a conferência (`alembic current` em `0011 (head)`, `SELECT unnest(enum_range(NULL::generated_kind))` com os cinco valores, as quatro tabelas, o log do backend sem erro de migração e a ordem do executor), a fumaça só com dados sintéticos (portaria sintética lida pela IA falsa ou digitada, Parecer, Requerimento e checklist) e o retorno (restaurar o dump e as imagens; o `downgrade` remove as tabelas e os enums mas mantém `REQUERIMENTO` e `PARECER`)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
 
 **Tests**: none
 **Gate**: build

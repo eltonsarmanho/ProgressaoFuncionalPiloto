@@ -217,6 +217,47 @@ Com `docker exec -it dashboard_db psql -U <superusuario> -d progressao`:
 - **Caminho seguro: restaurar o dump** `progressao-pre-normativo-<data>.sql.gz` e trocar as etiquetas das imagens para as do ponto de retorno.
 - O `downgrade` da `0010` remove a tabela `norms`, o enum `norm_kind` e as duas colunas `norm_code`; a imagem anterior ignora as chaves novas da definição JSONB (`required_titration`, `required_titration_norm_code`), então nada mais precisa ser desfeito. Os PDFs em `storage/norms/` ficam órfãos (inofensivos; remover à mão depois). Se as normas já foram editadas ou receberam arquivo, voltar pelo `downgrade` perde esse cadastro: o dump anterior ao deploy não o tem, então copiar antes o que importar (`SELECT * FROM norms`).
 
+## Deploy da banca e do Parecer (feature `banca-parecer`)
+
+Esta seção descreve o procedimento; **nada foi executado**. **Push e deploy só com a autorização explícita do usuário**, como nos outros deploys. A versão traz a migração `0011_board_opinion`, a portaria da banca lida pela IA, o Parecer e o Requerimento como documentos gerados, o checklist do dossiê e as Etapas 6 e 7 (o botão Concluir passa da Etapa 5 para a Etapa 7). Ver a AD-025 em `.specs/STATE.md`.
+
+### O que muda na VM
+
+| Ordem | O que | Como entra |
+| --- | --- | --- |
+| 1 | Migração `0011_board_opinion` (`down_revision = "0010"`): `ALTER TYPE generated_kind ADD VALUE` para `REQUERIMENTO` e `PARECER`; enums `board_role`, `value_source`, `ordinance_reading_state` e `opinion_conclusion`; tabelas `board_ordinances`, `board_opinions`, `request_settings` e `dossier_deliveries` | `alembic upgrade head` do `docker-entrypoint.sh`; `alembic current` deve terminar em `0011 (head)`. **Depois da `0010` do `normativo`**: se a `0010` ainda não está na VM, o `upgrade head` aplica as duas, na ordem |
+| 2 | Semeadura | Nenhuma: não há dado novo no seed |
+| 3 | `docker-compose.yml`, nginx, `Dockerfile`, `requirements.txt` | Nenhuma mudança. O arquivo da portaria fica em `storage/uploads/<processo>`, como os documentos de entrada |
+
+Processos, atividades e documentos já gerados não mudam (AD-012). A migração só cria objetos; os valores novos de `generated_kind` não são usados dentro dela.
+
+**Os valores de enum não se desfazem.** O `ALTER TYPE ... ADD VALUE` fica no banco mesmo com o `downgrade`, como na `0007`. O `downgrade` da `0011` remove as quatro tabelas e os quatro enums novos, mas `REQUERIMENTO` e `PARECER` continuam em `generated_kind` (inofensivos para a imagem anterior). Por isso o dump antes do deploy é o caminho seguro de volta.
+
+### Antes do deploy
+
+1. Nada em processamento: nenhuma geração `GERANDO`, nenhum documento `PROCESSANDO`, pois reiniciar o backend interrompe o que estiver rodando.
+2. Ponto de retorno, como em "Atualizar para uma versão nova": etiquetar as imagens em uso (`progressao-funcional-backend:banca-pre-<commit>` e o mesmo para o `frontend`), copiar `docker-compose.override.yml` e `.env` para `backups/` e **fazer o dump do banco antes de subir a imagem nova**: `docker exec dashboard_db pg_dump -U <superusuario> -d progressao | gzip > backups/progressao-pre-banca-parecer-<data>.sql.gz`, conferindo `gzip -t` e `ls -l`.
+3. Conferir que a `0010` (normas) já está aplicada ou vai junto: `alembic current` na VM deve mostrar `0009 (head)` ou `0010 (head)` antes de subir; a `0011` não sobe sem a `0010`.
+4. Construir as imagens do commit aprovado fora da VM, conferir o pacote do frontend com `scripts/check_bundle_no_secrets.sh` (a chave da MariTalk nunca entra no pacote) e conferir na imagem que `0011_board_opinion.py` está em `alembic/versions`.
+5. Avisar o usuário: as Etapas 6 (Banca e Parecer) e 7 (Requerimento e dossiê) aparecem na navegação; o botão **Concluir o processo** sai da Etapa 5 e passa para a Etapa 7; a ordem do dossiê vira um checklist com nove itens; a leitura da portaria usa a IA (texto mascarado) e a pessoa confere os dados.
+
+### Depois da partida: conferência
+
+Com `docker exec -it dashboard_db psql -U <superusuario> -d progressao`:
+
+1. `alembic current` no backend termina em `0011 (head)` e `docker logs progressao-funcional-backend-1` não mostra erro de migração.
+2. Cinco valores no tipo: `SELECT unnest(enum_range(NULL::generated_kind));` traz `TABELA`, `RELATORIO`, `COMPROVANTE`, `REQUERIMENTO` e `PARECER`.
+3. As quatro tabelas: `SELECT table_name FROM information_schema.tables WHERE table_name IN ('board_ordinances', 'board_opinions', 'request_settings', 'dossier_deliveries') ORDER BY 1;` devolve as quatro, e `SELECT count(*) FROM board_ordinances;` é 0 logo depois do deploy.
+4. Executor: o backend sobe sem erro nos logs (`app.documents.worker` não registra `recover error_type` nem `runner error_type`); a ordem do executor é geração, redação, leitura da portaria e OCR, e a leitura interrompida por um reinício volta a `FALHOU` com `INTERROMPIDA` (AD-008, PORT-07).
+5. `GET /api/health` 200 depois de `docker compose up -d --no-build` e `docker compose restart nginx`; `GET /api/dossier-order` segue com o formato de antes e `GET /api/processes/<id>/dossier` (autenticado) devolve os nove itens.
+6. Fumaça só com dados sintéticos (nunca `Documentos/` nem `Modelos/`): num processo sintético em andamento com Tabela `PRONTO`, enviar uma portaria sintética (lida pela IA ou, se a IA falhar, digitada), conferir número, data e membros com a página de origem; escolher a conclusão e gerar o Parecer (DOCX e PDF com o mesmo Total geral da Tabela); digitar a cidade e gerar o Requerimento; abrir a Etapa 7 e ver Requerimento, Tabela, Relatório, Comprovante, Portaria da banca e Parecer como gerados ou registrados, marcar "Currículo Lattes" como entregue e recarregar; mudar uma atividade validada e ver `TABELA_DESATUALIZADA`; abrir a confirmação de concluir e ver o aviso dos pendentes. Remover o processo e o docente sintéticos ao fim.
+
+### Voltar à versão anterior
+
+- **Caminho seguro: restaurar o dump** `progressao-pre-banca-parecer-<data>.sql.gz` e trocar as etiquetas das imagens para as do ponto de retorno. Restaurar o dump deixa órfãos os arquivos em `storage/generated/` (Pareceres e Requerimentos) e em `storage/uploads/` (portarias); são inofensivos e podem ser removidos à mão depois.
+- O `downgrade` da `0011` remove as tabelas `board_ordinances`, `board_opinions`, `request_settings` e `dossier_deliveries` e os quatro enums, e **perde** as portarias, os Pareceres, as cidades e as marcas "Entregue" já gravados, além dos registros de versões `REQUERIMENTO` e `PARECER`; os valores de `generated_kind` ficam. Se houve uso real, copiar antes o que importar (`SELECT * FROM board_ordinances`, `board_opinions`, `request_settings`, `dossier_deliveries`).
+- A imagem anterior ignora os dois valores novos de `generated_kind` desde que nenhuma linha os use; com linhas `REQUERIMENTO` ou `PARECER` no banco, voltar só a imagem pode quebrar a leitura dos documentos gerados. Nesse caso restaurar o dump.
+
 ## Memória do OCR (limite de 384 MB do `backend`)
 
 Medida em 2026-11-17 dentro de `docker run -m 384m --memory-swap 384m`, com a imagem do backend (Tesseract `por`) e PDFs sintéticos só de imagem (cada página é um PNG A4 a 300 dpi). O pico é o `memory.peak` do cgroup do contêiner, que inclui a geração do PDF de teste.
