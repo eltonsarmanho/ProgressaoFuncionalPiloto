@@ -190,42 +190,42 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| NBASE-01 | P1: Base de normas | Implemented | Implemented |
-| NBASE-02 | P1: Base de normas | Implemented | Implemented |
-| NBASE-03 | P1: Base de normas | Implemented | Implemented |
-| NBASE-04 | P1: Base de normas | Implemented | Implemented |
-| NBASE-05 | P1: Base de normas | Implemented | Implemented |
-| NBASE-06 | P1: Base de normas | Implemented | Implemented |
-| NBASE-07 | P1: Base de normas | Implemented | Implemented |
-| NBASE-08 | P1: Base de normas | Implemented | Implemented |
-| NBASE-09 | P1: Base de normas | Implemented | Implemented |
-| NBASE-10 | P1: Base de normas | Implemented | Implemented |
-| NBASE-11 | P1: Base de normas | Implemented | Implemented |
-| NBASE-12 | P1: Base de normas | Implemented | Implemented |
-| NLINK-01 | P1: Regras e alertas ligados à norma | Implemented | Implemented |
-| NLINK-02 | P1: Regras e alertas ligados à norma | Implemented | Implemented |
-| NLINK-03 | P1: Regras e alertas ligados à norma | Implemented | Implemented |
-| NLINK-04 | P1: Regras e alertas ligados à norma | Implemented | Implemented |
-| NLINK-05 | P1: Regras e alertas ligados à norma | Implemented | Implemented |
-| NLINK-06 | P1: Regras e alertas ligados à norma | Implemented | Implemented |
-| NTIT-01 | P1: Titulação exigida | Implemented | Implemented |
-| NTIT-02 | P1: Titulação exigida | Implemented | Implemented |
-| NTIT-03 | P1: Titulação exigida | Implemented | Implemented |
-| NTIT-04 | P1: Titulação exigida | Implemented | Implemented |
-| NTIT-05 | P1: Titulação exigida | Implemented | Implemented |
-| NTIT-06 | P1: Titulação exigida | Implemented | Implemented |
-| NTIT-07 | P1: Titulação exigida | Implemented | Implemented |
-| NTIT-08 | P1: Titulação exigida | Implemented | Implemented |
-| NMOV-01 | P1: Origem e destino informados | Implemented | Implemented |
-| NMOV-02 | P1: Origem e destino informados | Implemented | Implemented |
-| NMOV-03 | P1: Origem e destino informados | Implemented | Implemented |
-| NMOV-04 | P1: Origem e destino informados | Implemented | Implemented |
-| NMOV-05 | P1: Origem e destino informados | Implemented | Implemented |
-| NLIST-01 | P2: Lista de normas | Implemented | Implemented |
-| NLIST-02 | P2: Lista de normas | Implemented | Implemented |
-| NLIST-03 | P2: Lista de normas | Implemented | Implemented |
-| NMIN-01 | P2: Mínimo não definido | Implemented | Implemented |
-| NMIN-02 | P2: Mínimo não definido | Implemented | Implemented |
+| NBASE-01 | P1: Base de normas | Implemented | Verified |
+| NBASE-02 | P1: Base de normas | Implemented | Verified |
+| NBASE-03 | P1: Base de normas | Implemented | Verified |
+| NBASE-04 | P1: Base de normas | Implemented | Verified |
+| NBASE-05 | P1: Base de normas | Implemented | Verified |
+| NBASE-06 | P1: Base de normas | Implemented | Verified |
+| NBASE-07 | P1: Base de normas | Implemented | Verified |
+| NBASE-08 | P1: Base de normas | Implemented | Verified |
+| NBASE-09 | P1: Base de normas | Implemented | Verified |
+| NBASE-10 | P1: Base de normas | Implemented | Verified |
+| NBASE-11 | P1: Base de normas | Implemented | Verified |
+| NBASE-12 | P1: Base de normas | Implemented | Verified |
+| NLINK-01 | P1: Regras e alertas ligados à norma | Implemented | Verified |
+| NLINK-02 | P1: Regras e alertas ligados à norma | Implemented | Verified |
+| NLINK-03 | P1: Regras e alertas ligados à norma | Implemented | Verified |
+| NLINK-04 | P1: Regras e alertas ligados à norma | Implemented | Verified |
+| NLINK-05 | P1: Regras e alertas ligados à norma | Implemented | Verified |
+| NLINK-06 | P1: Regras e alertas ligados à norma | Implemented | Verified |
+| NTIT-01 | P1: Titulação exigida | Implemented | Verified |
+| NTIT-02 | P1: Titulação exigida | Implemented | Verified |
+| NTIT-03 | P1: Titulação exigida | Implemented | Verified |
+| NTIT-04 | P1: Titulação exigida | Implemented | Verified |
+| NTIT-05 | P1: Titulação exigida | Implemented | Verified |
+| NTIT-06 | P1: Titulação exigida | Implemented | Verified |
+| NTIT-07 | P1: Titulação exigida | Implemented | Verified |
+| NTIT-08 | P1: Titulação exigida | Implemented | Verified |
+| NMOV-01 | P1: Origem e destino informados | Implemented | Verified |
+| NMOV-02 | P1: Origem e destino informados | Implemented | Verified |
+| NMOV-03 | P1: Origem e destino informados | Implemented | Verified |
+| NMOV-04 | P1: Origem e destino informados | Implemented | Verified |
+| NMOV-05 | P1: Origem e destino informados | Implemented | Verified |
+| NLIST-01 | P2: Lista de normas | Implemented | Verified |
+| NLIST-02 | P2: Lista de normas | Implemented | Verified |
+| NLIST-03 | P2: Lista de normas | Implemented | Verified |
+| NMIN-01 | P2: Mínimo não definido | Implemented | Verified |
+| NMIN-02 | P2: Mínimo não definido | Implemented | Verified |
 
 **Coverage:** 36 total, 36 mapped to tasks, 0 unmapped
 
