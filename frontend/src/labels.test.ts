@@ -1,4 +1,12 @@
 import { describe, expect, it } from "vitest";
+import {
+  BOARD_ROLES,
+  CHECKLIST_STATES,
+  ORDINANCE_WARNING_CODES,
+  READING_CODES,
+  READING_STATES,
+  VALUE_SOURCES,
+} from "./api/board";
 import { ARTIFACT_KINDS, DOCUMENT_KINDS, GENERATION_ALERT_CODES, GENERATION_CODES, PENDING_BOARD_ITEMS } from "./api/generated";
 import { SCORING_ALERT_CODES, type InvalidReason, type Validity } from "./api/types";
 import {
@@ -13,7 +21,13 @@ import {
   invalidReasonText,
   needsCategoryMessage,
   DOCUMENT_CODE_LABELS,
+  BOARD_ROLE_LABELS,
+  CHECKLIST_STATE_LABELS,
   DOCUMENT_KIND_LABELS,
+  ORDINANCE_WARNING_LABELS,
+  READING_CODE_LABELS,
+  READING_STATE_LABELS,
+  VALUE_SOURCE_LABELS,
   PENDING_BOARD_LABELS,
   GENERATION_ALERT_LABELS,
   GENERATION_CODE_LABELS,
@@ -246,6 +260,49 @@ describe("PAR-07..10, DOS-07: tipos, códigos e pendentes da banca", () => {
       REQUERIMENTO: "Requerimento",
       PORTARIA_BANCA: "Portaria da banca",
       PARECER: "Parecer",
+    });
+  });
+});
+
+describe("PORT-02, PORT-03, PORT-07, DOS-02, DOS-03, DOS-05: rótulos da banca e do checklist", () => {
+  it("cada função da banca tem rótulo, e só elas", () => {
+    expect(Object.keys(BOARD_ROLE_LABELS).sort()).toEqual([...BOARD_ROLES].sort());
+    expect(BOARD_ROLE_LABELS).toEqual({ PRESIDENTE: "Presidente", MEMBRO: "Membro", SUPLENTE: "Suplente" });
+  });
+
+  it("PORT-05: a origem informada pela pessoa se chama 'informado pela pessoa'", () => {
+    expect(Object.keys(VALUE_SOURCE_LABELS).sort()).toEqual([...VALUE_SOURCES].sort());
+    expect(VALUE_SOURCE_LABELS.INFORMADO).toBe("informado pela pessoa");
+    expect(VALUE_SOURCE_LABELS.EXTRAIDO).toBeTruthy();
+  });
+
+  it("cada estado da leitura tem rótulo, e só eles", () => {
+    expect(Object.keys(READING_STATE_LABELS).sort()).toEqual([...READING_STATES].sort());
+    expect([...READING_STATES]).toEqual(["SEM_ARQUIVO", "PENDENTE", "LENDO", "LIDA", "FALHOU"]);
+    for (const state of READING_STATES) expect(READING_STATE_LABELS[state], state).toBeTruthy();
+  });
+
+  it("PORT-07: cada motivo da falha da leitura tem texto em português, e só eles", () => {
+    expect(Object.keys(READING_CODE_LABELS).sort()).toEqual([...READING_CODES].sort());
+    for (const code of READING_CODES) {
+      expect(READING_CODE_LABELS[code], code).toMatch(/\s/);
+      expect(READING_CODE_LABELS[code], code).not.toMatch(/[A-Z]{3,}_[A-Z]/);
+    }
+  });
+
+  it("PORT-03: os dois avisos da portaria têm texto, e só eles", () => {
+    expect(Object.keys(ORDINANCE_WARNING_LABELS).sort()).toEqual([...ORDINANCE_WARNING_CODES].sort());
+    expect([...ORDINANCE_WARNING_CODES].sort()).toEqual(["MEMBROS_NAO_ENCONTRADOS", "VALOR_SEM_ORIGEM"]);
+    for (const code of ORDINANCE_WARNING_CODES) expect(ORDINANCE_WARNING_LABELS[code], code).toMatch(/\s/);
+  });
+
+  it("DOS-02, DOS-03, DOS-05: o checklist tem Gerado, Registrada, Entregue e Pendente", () => {
+    expect(Object.keys(CHECKLIST_STATE_LABELS).sort()).toEqual([...CHECKLIST_STATES].sort());
+    expect(CHECKLIST_STATE_LABELS).toEqual({
+      GERADO: "Gerado",
+      REGISTRADA: "Registrada",
+      ENTREGUE: "Entregue",
+      PENDENTE: "Pendente",
     });
   });
 });

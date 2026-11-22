@@ -1,3 +1,4 @@
+import type { BoardRole, ChecklistState, OrdinanceWarningCode, ReadingCode, ReadingState, ValueSource } from "./api/board";
 import type {
   DocumentKind,
   EntrySource,
@@ -472,3 +473,49 @@ export function formatDay(iso: string): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(when.getDate())}/${pad(when.getMonth() + 1)}/${when.getFullYear()}`;
 }
+
+/* ---- Banca e dossiê (Etapas 6 e 7) ---- */
+
+export const BOARD_ROLE_LABELS: Record<BoardRole, string> = {
+  PRESIDENTE: "Presidente",
+  MEMBRO: "Membro",
+  SUPLENTE: "Suplente",
+};
+
+/** PORT-05: where a value of the ordinance came from; the page of an extracted one is shown beside it. */
+export const VALUE_SOURCE_LABELS: Record<ValueSource, string> = {
+  EXTRAIDO: "lido da portaria",
+  INFORMADO: "informado pela pessoa",
+};
+
+export const READING_STATE_LABELS: Record<ReadingState, string> = {
+  SEM_ARQUIVO: "Sem arquivo",
+  PENDENTE: "Na fila de leitura",
+  LENDO: "Lendo a portaria",
+  LIDA: "Portaria lida",
+  FALHOU: "A leitura falhou",
+};
+
+/** PORT-07: why a reading failed. */
+export const READING_CODE_LABELS: Record<ReadingCode, string> = {
+  IA_INDISPONIVEL: "A IA não está disponível agora.",
+  IA_CREDENCIAL_RECUSADA: "A credencial da IA foi recusada.",
+  RESPOSTA_INVALIDA: "A IA devolveu uma resposta inválida.",
+  TEXTO_ILEGIVEL: "Não foi possível ler o texto do arquivo.",
+  INTERROMPIDA: "O servidor reiniciou durante a leitura.",
+  ERRO_INTERNO: "Erro interno do servidor.",
+};
+
+/** PORT-03: the warnings of a reading. */
+export const ORDINANCE_WARNING_LABELS: Record<OrdinanceWarningCode, string> = {
+  VALOR_SEM_ORIGEM: "O valor não aparece no texto da página citada: confira e digite",
+  MEMBROS_NAO_ENCONTRADOS: "Nenhum membro foi encontrado na portaria: digite os membros",
+};
+
+/** DOS-02, DOS-03, DOS-05: the state of an item of the checklist of the dossier. */
+export const CHECKLIST_STATE_LABELS: Record<ChecklistState, string> = {
+  GERADO: "Gerado",
+  REGISTRADA: "Registrada",
+  ENTREGUE: "Entregue",
+  PENDENTE: "Pendente",
+};

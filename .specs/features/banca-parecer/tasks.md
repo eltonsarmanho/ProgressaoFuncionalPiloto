@@ -1366,7 +1366,7 @@ graph LR
 
 #### T42: Cliente da API da banca e do dossiê
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Tipos `BoardView`, `Ordinance`, `BoardMember`, `ReadingState`, `Opinion`, `ChecklistItem` e funções `getBoard`, `saveOrdinance`, `uploadOrdinance` (`FormData` com `expected_version` e `replace`), `rereadOrdinance`, `saveOpinion`, `saveCity`, `getDossier` e `setDelivered`, mais os rótulos em português das funções (`PRESIDENTE`, `MEMBRO`, `SUPLENTE`), das origens, dos estados e dos motivos da leitura, dos avisos (`VALOR_SEM_ORIGEM`, `MEMBROS_NAO_ENCONTRADOS`) e dos estados do checklist.
 **Where**: `frontend/src/api/board.ts` (new; os rótulos em `frontend/src/labels.ts`)
@@ -1381,10 +1381,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/api/board.test.ts` (novo), com `mockFetch`: cada função chama o método e o caminho certos com o corpo certo (`PUT /api/processes/p1/board/ordinance`, `PUT .../board/ordinance/file` com `FormData` com o arquivo, `expected_version` e `replace`, `POST .../board/ordinance/reread`, `PUT .../board/opinion`, `PUT .../request-settings`, `GET .../dossier`, `PUT .../dossier/items/CURRICULO_LATTES` com `{entregue: true}`); o 409 `VERSAO_DESATUALIZADA` e o 422 por campo chegam como `ApiError`
-- [ ] Testes em `frontend/src/labels.test.ts`: cada função, origem, estado, motivo e aviso tem rótulo, e só eles
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `frontend/src/api/board.test.ts` (novo), com `mockFetch`: cada função chama o método e o caminho certos com o corpo certo (`PUT /api/processes/p1/board/ordinance`, `PUT .../board/ordinance/file` com `FormData` com o arquivo, `expected_version` e `replace`, `POST .../board/ordinance/reread`, `PUT .../board/opinion`, `PUT .../request-settings`, `GET .../dossier`, `PUT .../dossier/items/CURRICULO_LATTES` com `{entregue: true}`); o 409 `VERSAO_DESATUALIZADA` e o 422 por campo chegam como `ApiError`
+- [x] Testes em `frontend/src/labels.test.ts`: cada função, origem, estado, motivo e aviso tem rótulo, e só eles
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: front
