@@ -421,7 +421,7 @@ graph LR
 
 #### T11: Repositório de normas
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Porta `NormRepository` (`get`, `get_by_code`, `list(include_archived)`, `by_codes(codes)`, `add`, `update` com versão otimista) em `ports.py`, `SqlNormRepository` e `uow.norms`.
 **Where**: `backend/app/infrastructure/database/repositories.py` (modify; a porta em `backend/app/domain/repositories/ports.py`)
@@ -436,9 +436,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_norm_repository.py` (novo): grava e lê uma norma com e sem arquivo; `list` sem arquivadas e com elas; `by_codes` ignora código ausente; `update` com versão velha levanta `StaleVersion`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/test_norm_repository.py` (novo): grava e lê uma norma com e sem arquivo; `list` sem arquivadas e com elas; `by_codes` ignora código ausente; `update` com versão velha levanta `StaleVersion`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full

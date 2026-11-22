@@ -1,7 +1,7 @@
 """SQLAlchemy implementations of the domain ports (AD-001)."""
 
 import uuid
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import asdict, replace
 from datetime import date, datetime
 from types import TracebackType
@@ -39,6 +39,7 @@ from app.domain.entities.generated import (
     GenerationState,
     WordingJob,
 )
+from app.domain.entities.norm import Norm, NormFile
 from app.domain.entities.process import FunctionalProcess, ProcessStatus
 from app.domain.entities.professor import Professor
 from app.domain.entities.report import DraftEntry, DraftSection, EntrySource, ReportDraft
@@ -79,6 +80,7 @@ from app.infrastructure.database.models import (
     GeneratedDocumentModel,
     GeneratedFileModel,
     LoginAttemptModel,
+    NormModel,
     ProcessingJobModel,
     ProfessorModel,
     ReportDraftModel,
@@ -116,7 +118,8 @@ def _versioned_update(
     model: type[ProfessorModel]
     | type[FunctionalProcessModel]
     | type[ActivityModel]
-    | type[DocumentModel],
+    | type[DocumentModel]
+    | type[NormModel],
     entity_id: UUID,
     expected_version: int,
     values: dict[str, Any],
@@ -410,6 +413,90 @@ class SqlAcademicUnitRepository:
     def list(self) -> Sequence[AcademicUnit]:
         models = self._s.scalars(select(AcademicUnitModel).order_by(AcademicUnitModel.name)).all()
         return [self._to_entity(m) for m in models]
+
+
+_NORM_FIELDS = (
+    "title",
+    "kind",
+    "issuer",
+    "published_on",
+    "valid_from",
+    "valid_to",
+    "source_url",
+    "notes",
+    "archived",
+)
+
+
+def _norm_file_values(norm: Norm) -> dict[str, Any]:
+    f = norm.file
+    return {
+        "file_internal_name": f.internal_name if f else None,
+        "file_original_name": f.original_name if f else None,
+        "file_size_bytes": f.size_bytes if f else None,
+        "file_sha256": f.sha256 if f else None,
+    }
+
+
+class SqlNormRepository:
+    def __init__(self, session: Session):
+        self._s = session
+
+    @staticmethod
+    def _to_entity(m: NormModel) -> Norm:
+        file = None
+        if m.file_internal_name is not None:
+            file = NormFile(
+                internal_name=m.file_internal_name,
+                original_name=m.file_original_name or "",
+                size_bytes=m.file_size_bytes or 0,
+                sha256=m.file_sha256 or "",
+            )
+        return Norm(
+            id=m.id,
+            code=m.code,
+            file=file,
+            version=m.version,
+            **{f: getattr(m, f) for f in _NORM_FIELDS},
+        )
+
+    def get(self, norm_id: UUID) -> Norm | None:
+        m = self._s.get(NormModel, norm_id, populate_existing=True)
+        return self._to_entity(m) if m else None
+
+    def get_by_code(self, code: str) -> Norm | None:
+        m = self._s.scalars(select(NormModel).where(NormModel.code == code)).first()
+        return self._to_entity(m) if m else None
+
+    def list(self, include_archived: bool = False) -> Sequence[Norm]:
+        stmt = select(NormModel).order_by(NormModel.title)
+        if not include_archived:
+            stmt = stmt.where(NormModel.archived.is_(False))
+        return [self._to_entity(m) for m in self._s.scalars(stmt).all()]
+
+    def by_codes(self, codes: Collection[str]) -> Mapping[str, Norm]:
+        wanted = set(codes)
+        if not wanted:
+            return {}
+        models = self._s.scalars(select(NormModel).where(NormModel.code.in_(wanted))).all()
+        return {m.code: self._to_entity(m) for m in models}
+
+    def add(self, norm: Norm) -> None:
+        values = {f: getattr(norm, f) for f in _NORM_FIELDS}
+        _insert(
+            self._s,
+            NormModel.__table__,
+            {"id": norm.id, "code": norm.code, "version": norm.version}
+            | values
+            | _norm_file_values(norm),
+            "Norma",
+        )
+
+    def update(self, norm: Norm, expected_version: int) -> None:
+        values = {f: getattr(norm, f) for f in _NORM_FIELDS} | _norm_file_values(norm)
+        norm.version = _versioned_update(
+            self._s, NormModel, norm.id, expected_version, values, "Norma"
+        )
 
 
 def career_definition(version: CareerVersion) -> dict[str, Any]:
@@ -2238,6 +2325,7 @@ class SqlUnitOfWork:
         self.professors = SqlProfessorRepository(self._session)
         self.processes = SqlProcessRepository(self._session)
         self.units = SqlAcademicUnitRepository(self._session)
+        self.norms = SqlNormRepository(self._session)
         self.career_versions = SqlCareerVersionRepository(self._session)
         self.scoring_tables = SqlScoringTableRepository(self._session)
         self.activities = SqlActivityRepository(self._session)

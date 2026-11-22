@@ -36,6 +36,7 @@ from app.domain.entities.generated import (
     GenerationState,
     WordingJob,
 )
+from app.domain.entities.norm import Norm
 from app.domain.entities.process import FunctionalProcess, ProcessStatus
 from app.domain.entities.professor import Professor
 from app.domain.entities.report import DraftEntry, DraftSection, ReportDocument, ReportDraft
@@ -119,6 +120,24 @@ class AcademicUnitRepository(Protocol):
     def update(self, unit: AcademicUnit) -> None: ...
 
     def list(self) -> Sequence[AcademicUnit]: ...
+
+
+class NormRepository(Protocol):
+    def get(self, norm_id: UUID) -> Norm | None: ...
+
+    def get_by_code(self, code: str) -> Norm | None: ...
+
+    def list(self, include_archived: bool = False) -> Sequence[Norm]: ...
+
+    def by_codes(self, codes: Collection[str]) -> Mapping[str, Norm]:
+        """The norms found for the codes, by code, in one query; a missing code is left out."""
+        ...
+
+    def add(self, norm: Norm) -> None: ...
+
+    def update(self, norm: Norm, expected_version: int) -> None:
+        """Saves every field but the code; StaleVersion if the row moved past expected_version."""
+        ...
 
 
 class CareerVersionRepository(Protocol):
@@ -789,6 +808,7 @@ class UnitOfWork(Protocol):
     professors: ProfessorRepository
     processes: ProcessRepository
     units: AcademicUnitRepository
+    norms: NormRepository
     career_versions: CareerVersionRepository
     scoring_tables: ScoringTableRepository
     activities: ActivityRepository
