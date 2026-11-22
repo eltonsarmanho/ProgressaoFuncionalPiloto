@@ -764,7 +764,7 @@ graph LR
 
 #### T23: Tipos e rótulos
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Tipos `Norm`, `NormKind`, `NormRef` e os campos novos de `Alert`, `Minimum`, `VersionRef` e da estrutura de carreira; rótulos `TITULACAO_INSUFICIENTE` e `NORM_KIND_LABELS`.
 **Where**: `frontend/src/api/types.ts` (modify; rótulos em `frontend/src/labels.ts`)
@@ -779,8 +779,8 @@ graph LR
 
 **Done when**:
 
-- [ ] `npm run build` sem erro de tipo
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] `npm run build` sem erro de tipo
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
 
 **Tests**: none
 **Gate**: build

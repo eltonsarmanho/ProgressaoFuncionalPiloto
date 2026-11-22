@@ -65,11 +65,77 @@ export const SCORING_ALERT_CODES = [
 ] as const;
 export type ScoringAlertCode = (typeof SCORING_ALERT_CODES)[number];
 
+/** NLINK-06: the norm an alert cites; all null (`norm_archived` false) when the rule has no registered norm. */
 export type Alert = {
   code: string;
   severity: Severity;
   message: string;
   norm_reference: string;
+  norm_code?: string | null;
+  norm_title?: string | null;
+  norm_url?: string | null;
+  /** `/api/norms/{id}/file` when the norm has a file attached. */
+  norm_file_url?: string | null;
+  norm_archived?: boolean;
+};
+
+/* ---- Normas ---- */
+
+export type NormKind = "LEI" | "RESOLUCAO" | "INSTRUCAO_NORMATIVA" | "MANUAL" | "TABELA" | "OUTRO";
+
+/** A norm as a rule cites it (NLINK-04, NMIN-02). */
+export type NormRef = {
+  code: string;
+  title: string;
+  source_url: string | null;
+  file_url: string | null;
+  archived: boolean;
+};
+
+/** A rule of the system that cites a norm (NLIST-01). */
+export type LinkedRule = {
+  kind: "CARREIRA" | "TABELA" | "TITULACAO";
+  name: string;
+  detail: string | null;
+};
+
+export type Norm = {
+  id: string;
+  code: string;
+  title: string;
+  kind: NormKind;
+  issuer: string;
+  published_on: string;
+  valid_from: string | null;
+  valid_to: string | null;
+  source_url: string | null;
+  notes: string | null;
+  archived: boolean;
+  version: number;
+  file: { original_name: string; size_bytes: number; url: string } | null;
+  linked_rules: LinkedRule[];
+};
+
+/** NLINK-01, NTIT-05: a career structure and its class rules, with the norms they cite. */
+export type CareerClass = {
+  code: string;
+  denominations: string[];
+  levels: number[];
+  promotion_min_months: number | null;
+  required_titration: Titration | null;
+};
+
+export type CareerVersion = {
+  id: string;
+  in_use: boolean;
+  name: string;
+  valid_from: string | null;
+  valid_to: string | null;
+  norm_reference: string;
+  progression_min_months: number;
+  classes: CareerClass[];
+  norm_code: string | null;
+  required_titration_norm_code: string | null;
 };
 
 export type ProcessFields = {
@@ -109,6 +175,9 @@ export type ActivityStatus = "AGUARDANDO_REVISAO" | "VALIDADA" | "REJEITADA";
 export type ScoringMode = "POR_UNIDADE" | "POR_BLOCO_DE_HORAS" | "CARGA_SEMANAL" | "VALOR_INFORMADO";
 export type TableStatus = "OFICIAL" | "PENDENTE_VALIDACAO";
 export type MinimumStatus = "ATINGE" | "NAO_ATINGE" | "NAO_DEFINIDO";
+
+/** NMIN-02: `norm` is the resolution cited when the minimum is not defined. */
+export type Minimum = { status: MinimumStatus; minimum: string | null; total: string; norm?: NormRef | null };
 export type Level = "GRADUACAO" | "POS_GRADUACAO";
 
 export type ScoringRow = {
@@ -160,7 +229,7 @@ export type ScoringResult = {
   rows: ScoringRow[];
   limit_adjustments: unknown[];
   alerts: Alert[];
-  minimum: { status: MinimumStatus; minimum: string | null; total: string };
+  minimum: Minimum;
 };
 
 export type VersionInfo = {
@@ -170,6 +239,7 @@ export type VersionInfo = {
   valid_from: string;
   valid_to: string | null;
   norm_reference: string;
+  norm_code?: string | null;
   status: TableStatus;
   /** Set when a newer version replaced this one: it is neither suggested nor choosable. */
   superseded_by_id: string | null;

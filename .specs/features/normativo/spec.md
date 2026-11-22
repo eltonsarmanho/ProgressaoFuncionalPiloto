@@ -207,7 +207,7 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NLINK-03 | P1: Regras e alertas ligados à norma | Implementing | Implementing |
 | NLINK-04 | P1: Regras e alertas ligados à norma | Implementing | Implementing |
 | NLINK-05 | P1: Regras e alertas ligados à norma | Implementing | Implementing |
-| NLINK-06 | P1: Regras e alertas ligados à norma | Implementing | Implementing |
+| NLINK-06 | P1: Regras e alertas ligados à norma | Implemented | Implemented |
 | NTIT-01 | P1: Titulação exigida | Implementing | Implementing |
 | NTIT-02 | P1: Titulação exigida | Implementing | Implementing |
 | NTIT-03 | P1: Titulação exigida | Implemented | Implemented |

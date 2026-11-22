@@ -1,5 +1,5 @@
 import type { DocumentKind, EntrySource, GenerationAlert, GenerationAlertCode, GenerationCode, GenerationState } from "./api/generated";
-import type { DocumentStatus, InvalidReason, Level, Modality, ProcessStatus, Severity, Validity } from "./api/types";
+import type { DocumentStatus, InvalidReason, Level, Modality, NormKind, ProcessStatus, Severity, Validity } from "./api/types";
 
 export const STATUS_LABELS: Record<ProcessStatus, string> = {
   RASCUNHO: "Rascunho",
@@ -66,6 +66,17 @@ export const ALERT_CODE_LABELS: Record<string, string> = {
   DATA_FIM_AUSENTE: "Sem data final: quantidade limitada aos anos completos até o fim do interstício",
   VALOR_UNITARIO_MANUAL: "Valor unitário informado por você",
   QUANTIDADE_ASSUMIDA: "Quantidade assumida como 1: confira",
+  TITULACAO_INSUFICIENTE: "Titulação insuficiente para a classe pretendida",
+};
+
+/** NBASE-01: the kinds of norm of the registry. */
+export const NORM_KIND_LABELS: Record<NormKind, string> = {
+  LEI: "Lei",
+  RESOLUCAO: "Resolução",
+  INSTRUCAO_NORMATIVA: "Instrução normativa",
+  MANUAL: "Manual",
+  TABELA: "Tabela",
+  OUTRO: "Outro",
 };
 
 /** SEC-07: the short name of each reason an activity is not valid (the counts of the section title). */
