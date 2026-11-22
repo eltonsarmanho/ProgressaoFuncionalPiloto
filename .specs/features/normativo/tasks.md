@@ -305,7 +305,7 @@ graph LR
 
 #### T7: Alerta `TITULACAO_INSUFICIENTE`
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `verify_process(p, versions, titration: Titration | None = None)`; com a classe pretendida diferente da atual, a classe pretendida com `required_titration` na estrutura escolhida por `select_version` e `titration` abaixo dela, emite `Alert(TITULACAO_INSUFICIENTE, ALERTA, "A classe <X> exige <titulação>; a titulação cadastrada do docente é <titulação>.", <norm_reference da regra>, version.required_titration_norm_code)`; os nomes das titulações em minúscula por extenso ("doutorado", "mestrado").
 **Where**: `backend/app/domain/rules/process_verification.py` (modify)
@@ -320,10 +320,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_titration_verification.py` (novo), com uma estrutura sintética declarada no nome: mestrado em promoção B→C com C exigindo doutorado dá o alerta com o texto exato e o código da regra (NTIT-01, 02); doutorado não dá (NTIT-03); progressão C1→C2 com mestrado não dá (NTIT-04); salto A1→C1 com mestrado dá (a classe pretendida difere); estrutura sem regra para a classe não dá (NTIT-05); `titration=None` não dá (Edge Case); processo que cruza 01/01/2025 confere pela estrutura do fim do interstício (Edge Case); severidade sempre `ALERTA` (NTIT-07)
-- [ ] Chamadas atuais de `verify_process` sem `titration` continuam passando
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_titration_verification.py` (novo), com uma estrutura sintética declarada no nome: mestrado em promoção B→C com C exigindo doutorado dá o alerta com o texto exato e o código da regra (NTIT-01, 02); doutorado não dá (NTIT-03); progressão C1→C2 com mestrado não dá (NTIT-04); salto A1→C1 com mestrado dá (a classe pretendida difere); estrutura sem regra para a classe não dá (NTIT-05); `titration=None` não dá (Edge Case); processo que cruza 01/01/2025 confere pela estrutura do fim do interstício (Edge Case); severidade sempre `ALERTA` (NTIT-07)
+- [x] Chamadas atuais de `verify_process` sem `titration` continuam passando
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

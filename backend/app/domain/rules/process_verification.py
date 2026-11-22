@@ -9,6 +9,7 @@ from datetime import date
 from enum import StrEnum
 
 from app.domain.entities.career import CareerVersion, Modality, select_version
+from app.domain.entities.professor import Titration, titration_at_least
 from app.domain.rules.interstice import Interstice
 from app.domain.rules.scoring_alerts import ScoringAlertCode
 
@@ -20,6 +21,14 @@ REF_MODALITY = "Res. 4.644/2015-CONSEPE, art. 1º, parágrafo único; Lei 12.772
 REF_RESTRUCTURING = "Lei 15.141/2025 (Lei 12.772/2012, art. 12, §7º, e Anexo II)"
 REF_NO_STRUCTURE = "Res. 4.644/2015-CONSEPE, art. 29; Lei 12.772/2012, art. 12"
 REF_INCOMPLETE = "Res. 4.644/2015-CONSEPE"
+REF_TITRATION = "Manual do Servidor da PROGEP, progressão e promoção"
+
+TITRATION_NAMES = {
+    Titration.GRADUACAO: "graduação",
+    Titration.ESPECIALIZACAO: "especialização",
+    Titration.MESTRADO: "mestrado",
+    Titration.DOUTORADO: "doutorado",
+}
 
 # NLINK-03: norm codes of the rules that do not come from a career structure
 NORM_RES_4644 = "RES-4644-2015-CONSEPE"
@@ -42,6 +51,7 @@ class AlertCode(StrEnum):
     MODALIDADE_INCOMPATIVEL = "MODALIDADE_INCOMPATIVEL"
     INTERSTICIO_INSUFICIENTE = "INTERSTICIO_INSUFICIENTE"
     DADOS_INCOMPLETOS = "DADOS_INCOMPLETOS"
+    TITULACAO_INSUFICIENTE = "TITULACAO_INSUFICIENTE"
 
 
 @dataclass(frozen=True)
@@ -170,7 +180,32 @@ def _structure_alerts(p: ProcessSnapshot, version: CareerVersion, dates_ok: bool
     return alerts
 
 
-def verify_process(p: ProcessSnapshot, versions: Sequence[CareerVersion]) -> list[Alert]:
+def _titration_alert(
+    p: ProcessSnapshot, version: CareerVersion, titration: Titration | None
+) -> Alert | None:
+    """NTIT-01..05: only a change of class is checked, against the target class rule."""
+    if titration is None or p.target_class == p.current_class:
+        return None
+    target = version.get_class(p.target_class)
+    required = target.required_titration if target else None
+    if required is None or titration_at_least(titration, required):
+        return None
+    return Alert(
+        AlertCode.TITULACAO_INSUFICIENTE,
+        Severity.ALERTA,
+        f"A classe {p.target_class} ({p.target_denomination}) exige "
+        f"{TITRATION_NAMES[required]}; a titulação cadastrada do docente é "
+        f"{TITRATION_NAMES[titration]}.",
+        REF_TITRATION,
+        version.required_titration_norm_code,
+    )
+
+
+def verify_process(
+    p: ProcessSnapshot,
+    versions: Sequence[CareerVersion],
+    titration: Titration | None = None,
+) -> list[Alert]:
     alerts: list[Alert] = []
     interstice = Interstice(p.start_date, p.end_date)
     dates_ok = p.end_date > p.start_date
@@ -220,6 +255,9 @@ def verify_process(p: ProcessSnapshot, versions: Sequence[CareerVersion]) -> lis
         )
     else:
         alerts.extend(_structure_alerts(p, version, dates_ok))
+        titration_alert = _titration_alert(p, version, titration)
+        if titration_alert is not None:
+            alerts.append(titration_alert)
 
     if p.modality is Modality.PROGRESSAO and (
         p.target_class != p.current_class or p.target_level != p.current_level + 1
