@@ -594,7 +594,7 @@ graph LR
 
 #### T17: Resolução das citações (`cite_norms`)
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `cite_norms(uow, codes) -> Mapping[str, NormCitation]`, numa só consulta (`by_codes`), ignorando `None`; código ausente fica fora do mapa e gera `logger.warning("norma não cadastrada: %s", code)`.
 **Where**: `backend/app/application/services/norm_citations.py` (new)
@@ -609,9 +609,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_norm_citations.py` (novo): dois códigos cadastrados viram duas citações; código ausente fica fora e o aviso com o código aparece no log (`caplog`); lista vazia não consulta o banco; norma arquivada vem com `archived` verdadeiro
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/test_norm_citations.py` (novo): dois códigos cadastrados viram duas citações; código ausente fica fora e o aviso com o código aparece no log (`caplog`); lista vazia não consulta o banco; norma arquivada vem com `archived` verdadeiro
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full
