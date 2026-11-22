@@ -237,7 +237,7 @@ graph LR
 
 #### T3: Validação dos dados da banca
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `BoardFieldError(FieldError)` com `code` opcional, `validate_board_data(number, members) -> list[BoardFieldError]` (até 15 membros; nome não vazio e até 200 caracteres; número até 50; `MEMBRO_REPETIDO` para o mesmo nome sem maiúsculas nem acentos), `validate_opinion_fields(place, notes)` (local até 100, observações até 5 000) e `validate_city(city)` (até 100).
 **Where**: `backend/app/domain/rules/board_rules.py` (new)
@@ -252,10 +252,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_board_rules.py` (novo): 15 membros passam e 16 dão erro no campo `members`; nome vazio, só com espaços, com 200 caracteres (passa) e com 201 (erro no campo do membro, `members[2].name`); número com 50 caracteres passa e com 51 dá erro em `number`; lista vazia passa (a pessoa pode gravar sem membros); "José da Silva" e "JOSE DA SILVA" dão `MEMBRO_REPETIDO` com o código no erro e o índice do segundo; o mesmo nome com funções diferentes também é repetido; observações com 5 000 caracteres passam e com 5 001 dão erro em `notes`; local com 100 passa e com 101 dá erro em `place`; cidade com 100 passa e com 101 dá erro em `city`
-- [ ] Teste de arquitetura passa
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_board_rules.py` (novo): 15 membros passam e 16 dão erro no campo `members`; nome vazio, só com espaços, com 200 caracteres (passa) e com 201 (erro no campo do membro, `members[2].name`); número com 50 caracteres passa e com 51 dá erro em `number`; lista vazia passa (a pessoa pode gravar sem membros); "José da Silva" e "JOSE DA SILVA" dão `MEMBRO_REPETIDO` com o código no erro e o índice do segundo; o mesmo nome com funções diferentes também é repetido; observações com 5 000 caracteres passam e com 5 001 dão erro em `notes`; local com 100 passa e com 101 dá erro em `place`; cidade com 100 passa e com 101 dá erro em `city`
+- [x] Teste de arquitetura passa
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
