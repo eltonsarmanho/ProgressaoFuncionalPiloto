@@ -474,7 +474,7 @@ graph LR
 
 #### T11: Checklist do dossiê
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ChecklistState` (`GERADO`, `REGISTRADA`, `ENTREGUE`, `PENDENTE`), `ChecklistItem(key, order, title, source, state, version_number, generation_id, outdated_table)` e `dossier_checklist(order, ready_by_kind, ordinance, delivered_keys, current_table_version_id) -> list[ChecklistItem]`: item gerado com versão `PRONTO` é `GERADO` com o número e o id da última versão; `PORTARIA_BANCA` com ao menos um membro é `REGISTRADA`; item `MANUAL` marcado é `ENTREGUE`; todo o resto é `PENDENTE`; a Tabela cuja última versão usou outra versão da tabela de pontuação traz `outdated_table`.
 **Where**: `backend/app/domain/rules/dossier_checklist.py` (new)
@@ -489,10 +489,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_dossier_checklist.py` (novo), com o arquivo real de configuração (T10) e dados sintéticos: a lista sai na ordem do arquivo e com os nove itens (DOS-01); só Tabela, Relatório e Comprovante prontos dão três `GERADO`, cada um com o número da última versão e o id, e seis `PENDENTE` (o teste independente da spec); a última versão `PRONTO` vale (uma `FALHOU` mais nova não esconde a pronta); portaria sem membro é `PENDENTE` e com um membro é `REGISTRADA` (DOS-03); item `MANUAL` marcado é `ENTREGUE` e desmarcado `PENDENTE`; marca em chave que não é `MANUAL` é ignorada; item sem versão, sem registro e sem marca é `PENDENTE` (DOS-05); `outdated_table` verdadeiro só na Tabela, só quando as duas versões existem e diferem, e falso para Relatório e Comprovante (DOS-06)
-- [ ] Teste de arquitetura passa
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (última tarefa de backend da fase: gate completo)
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_dossier_checklist.py` (novo), com o arquivo real de configuração (T10) e dados sintéticos: a lista sai na ordem do arquivo e com os nove itens (DOS-01); só Tabela, Relatório e Comprovante prontos dão três `GERADO`, cada um com o número da última versão e o id, e seis `PENDENTE` (o teste independente da spec); a última versão `PRONTO` vale (uma `FALHOU` mais nova não esconde a pronta); portaria sem membro é `PENDENTE` e com um membro é `REGISTRADA` (DOS-03); item `MANUAL` marcado é `ENTREGUE` e desmarcado `PENDENTE`; marca em chave que não é `MANUAL` é ignorada; item sem versão, sem registro e sem marca é `PENDENTE` (DOS-05); `outdated_table` verdadeiro só na Tabela, só quando as duas versões existem e diferem, e falso para Relatório e Comprovante (DOS-06)
+- [x] Teste de arquitetura passa
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (última tarefa de backend da fase: gate completo)
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: full
