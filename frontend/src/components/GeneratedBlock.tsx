@@ -5,7 +5,7 @@ import { generationErrorMessage, isConflict } from "../generationErrors";
 import { usePolling } from "../hooks/usePolling";
 import { DOCUMENT_KIND_LABELS, GENERATION_CODE_LABELS, GENERATION_STATE_LABELS, alertDetail, alertText, formatDay, formatSize } from "../labels";
 
-const OUTDATED_TABLE_NOTICE = "Gerada com outra versão da tabela de pontuação; gere de novo";
+export const OUTDATED_TABLE_NOTICE = "Gerada com outra versão da tabela de pontuação; gere de novo";
 
 /**
  * UIG-01, UIG-04, UIG-05, UIG-06, VER-09: the block of one generated document. The warning of the

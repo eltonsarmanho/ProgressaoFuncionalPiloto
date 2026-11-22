@@ -1510,7 +1510,7 @@ graph LR
 
 #### T47: Checklist do dossiê na tela
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `DossierChecklist` mostra os itens na ordem recebida, com a situação (Gerado, Registrada, Entregue, Pendente), o número da última versão e o link de download dos itens gerados, a caixa "Entregue" nos itens que o sistema não produz (grava na hora, sem justificativa) e o aviso "Gerada com outra versão da tabela de pontuação; gere de novo" no item da Tabela.
 **Where**: `frontend/src/components/DossierChecklist.tsx` (new)
@@ -1525,9 +1525,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/DossierChecklist.test.tsx` (novo), incorporando o que `DossierOrder.test.tsx` cobria (ORD-01: a lista na ordem recebida da API com o número de cada item, sem reordenar, e a mensagem de erro em vez da lista): três itens `GERADO` com "versão 2" e o link `/api/generated-documents/<id>/files/pdf` e seis `PENDENTE` (o teste independente da spec); "Portaria da banca" `REGISTRADA`; marcar a caixa "Currículo Lattes" faz `PUT .../dossier/items/CURRICULO_LATTES` com `{entregue: true}` e a lista nova mostra `ENTREGUE`, desmarcar volta a `PENDENTE`; a caixa só aparece nos itens `MANUAL`; o aviso da outra versão da tabela aparece só no item da Tabela; somente leitura desabilita as caixas com o motivo; erro de gravação aparece em `role="alert"`
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `frontend/src/components/DossierChecklist.test.tsx` (novo), incorporando o que `DossierOrder.test.tsx` cobria (ORD-01: a lista na ordem recebida da API com o número de cada item, sem reordenar, e a mensagem de erro em vez da lista): três itens `GERADO` com "versão 2" e o link `/api/generated-documents/<id>/files/pdf` e seis `PENDENTE` (o teste independente da spec); "Portaria da banca" `REGISTRADA`; marcar a caixa "Currículo Lattes" faz `PUT .../dossier/items/CURRICULO_LATTES` com `{entregue: true}` e a lista nova mostra `ENTREGUE`, desmarcar volta a `PENDENTE`; a caixa só aparece nos itens `MANUAL`; o aviso da outra versão da tabela aparece só no item da Tabela; somente leitura desabilita as caixas com o motivo; erro de gravação aparece em `role="alert"`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: front
