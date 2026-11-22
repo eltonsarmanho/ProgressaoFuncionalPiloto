@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { request } from "../api/client";
-import type { ConclusionPreview, ConclusionResult } from "../api/generated";
+import type { ConclusionPreview, ConclusionResult, PendingBoardItem } from "../api/generated";
 import { ARTIFACT_KINDS } from "../api/generated";
 import { errorCode, generationErrorMessage } from "../generationErrors";
-import { DOCUMENT_KIND_LABELS, GENERATION_ALERT_LABELS, formatSize } from "../labels";
+import { DOCUMENT_KIND_LABELS, GENERATION_ALERT_LABELS, PENDING_BOARD_LABELS, formatSize } from "../labels";
 import { Modal } from "./Modal";
 
 const plural = (n: number, one: string, many: string) => (n === 1 ? `1 ${one}` : `${n} ${many}`);
 const space = (bytes: number) => (bytes === 0 ? "0 KB" : formatSize(bytes));
 
 /**
- * UIG-09, DEL-01, DEL-03, DEL-04, DEL-08: "Concluir e excluir documentos de entrada". The dialog reads the
- * preview, lists the generated documents that are still missing (the button stays off), says what is
+ * UIG-09, DEL-01, DEL-03, DEL-04, DEL-08, DOS-07: "Concluir e excluir documentos de entrada". The dialog reads the
+ * preview, lists the generated documents that are still missing (the button stays off), warns of the board
+ * documents not yet generated or registered (DOS-07: a warning, it does not block), says what is
  * deleted and that it cannot be undone, and only sends `confirmar: true` after the user ticks the
  * confirmation. A partial deletion keeps the process open and offers to try again. There is no
  * justification field. `onChanged` tells the page to reload the process (it concluded, or its version moved).
@@ -51,6 +52,7 @@ export function ConcludeDialog({
   }, [processId, reloads]);
 
   const missing = preview ? ARTIFACT_KINDS.filter((kind) => !preview.artifacts[kind]) : [];
+  const pendingBoard = preview?.pending_board ?? [];
   const concluded = result?.status === "CONCLUIDO";
   const partial = result !== null && !concluded;
 
@@ -127,6 +129,13 @@ export function ConcludeDialog({
           {missing.length > 0 && (
             <p className="doc-warning sev-ALERTA">
               Falta gerar: {missing.map((kind) => DOCUMENT_KIND_LABELS[kind]).join(", ")}.
+            </p>
+          )}
+          {pendingBoard.length > 0 && (
+            <p className="doc-warning sev-ALERTA">
+              Ainda não gerados ou registrados:{" "}
+              {pendingBoard.map((item) => PENDING_BOARD_LABELS[item as PendingBoardItem] ?? item).join(", ")}. Dá para concluir
+              assim; depois de concluir o processo só pode ser lido.
             </p>
           )}
           <label className="check-head" htmlFor="conclude-confirm">

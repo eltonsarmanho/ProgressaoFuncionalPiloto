@@ -88,6 +88,48 @@ describe("DEL-04: só envia confirmar: true depois de marcar a confirmação", (
   });
 });
 
+describe("DOS-07: o aviso dos documentos da banca que ainda faltam", () => {
+  it("lista o Requerimento, a Portaria da banca e o Parecer pendentes e deixa concluir depois de marcar a confirmação", async () => {
+    const { calls, user } = setup(preview({ pending_board: ["REQUERIMENTO", "PORTARIA_BANCA", "PARECER"] }), {
+      [POST]: { status: 200, body: OK },
+    });
+    const d = await dialog();
+    expect(await within(d).findByText(/Ainda não gerados ou registrados:/)).toHaveTextContent(
+      "Ainda não gerados ou registrados: Requerimento, Portaria da banca, Parecer",
+    );
+    const button = within(d).getByRole("button", { name: "Concluir e excluir" });
+    expect(button).toBeDisabled();
+    await user.click(within(d).getByLabelText(/Confirmo a exclusão irreversível/));
+    expect(button).toBeEnabled();
+    await user.click(button);
+    await waitFor(() => expect(posts(calls)).toHaveLength(1));
+    expect(JSON.parse(String(posts(calls)[0].init?.body))).toEqual({ expected_version: 5, confirmar: true });
+  });
+
+  it("sem pendentes da banca o aviso não aparece", async () => {
+    setup(preview({ pending_board: [] }));
+    const d = await dialog();
+    await within(d).findByText(/serão excluídos/);
+    expect(within(d).queryByText(/Ainda não gerados ou registrados/)).not.toBeInTheDocument();
+  });
+
+  it("os pendentes da banca não são tratados como 'Falta gerar': só a Tabela, o Relatório e o Comprovante contam", async () => {
+    setup(preview({ pending_board: ["PARECER"] }));
+    const d = await dialog();
+    expect(await within(d).findByText(/Ainda não gerados ou registrados:/)).toHaveTextContent("Parecer");
+    expect(within(d).queryByText(/Falta gerar/)).not.toBeInTheDocument();
+  });
+
+  it("com a Tabela sem versão pronta o botão segue desligado e 'Falta gerar: Tabela de Pontuação' aparece, ao lado do aviso da banca", async () => {
+    setup(preview({ artifacts: { TABELA: false, RELATORIO: true, COMPROVANTE: true }, pending_board: ["REQUERIMENTO"] }));
+    const d = await dialog();
+    expect(await within(d).findByText(/Falta gerar:/)).toHaveTextContent("Falta gerar: Tabela de Pontuação.");
+    expect(within(d).getByText(/Ainda não gerados ou registrados:/)).toHaveTextContent("Requerimento");
+    await userEvent.click(within(d).getByLabelText(/Confirmo a exclusão irreversível/));
+    expect(within(d).getByRole("button", { name: "Concluir e excluir" })).toBeDisabled();
+  });
+});
+
 describe("DEL-08: exclusão parcial", () => {
   it("mostra quantos arquivos faltam e permite repetir até concluir", async () => {
     let answers = 0;

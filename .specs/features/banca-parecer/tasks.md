@@ -1481,7 +1481,7 @@ graph LR
 
 #### T46: Confirmação da conclusão com o aviso dos pendentes
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ConcludeDialog` considera faltantes só Tabela, Relatório e Comprovante (`ARTIFACT_KINDS`) e lista `pending_board` como aviso que não bloqueia o botão.
 **Where**: `frontend/src/components/ConcludeDialog.tsx` (modify)
@@ -1496,10 +1496,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ConcludeDialog.test.tsx`: com `pending_board` `["REQUERIMENTO", "PORTARIA_BANCA", "PARECER"]` o diálogo mostra "Ainda não gerados ou registrados: Requerimento, Portaria da banca, Parecer" e o botão "Concluir e excluir" **fica habilitado** depois de marcar a confirmação (o aviso não bloqueia); com a lista vazia o aviso não aparece; com `artifacts` sem a Tabela o botão fica desligado e "Falta gerar: Tabela de Pontuação" aparece como hoje; `artifacts` sem as chaves dos tipos da banca não os trata como faltantes
-- [ ] Teste existente: a fixture `preview()` de `test/generatedFixtures.ts` (T40) e os testes `DEL-01`, `DEL-03`, `DEL-04` seguem passando sem mudança de asserção
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `frontend/src/components/ConcludeDialog.test.tsx`: com `pending_board` `["REQUERIMENTO", "PORTARIA_BANCA", "PARECER"]` o diálogo mostra "Ainda não gerados ou registrados: Requerimento, Portaria da banca, Parecer" e o botão "Concluir e excluir" **fica habilitado** depois de marcar a confirmação (o aviso não bloqueia); com a lista vazia o aviso não aparece; com `artifacts` sem a Tabela o botão fica desligado e "Falta gerar: Tabela de Pontuação" aparece como hoje; `artifacts` sem as chaves dos tipos da banca não os trata como faltantes
+- [x] Teste existente: a fixture `preview()` de `test/generatedFixtures.ts` (T40) e os testes `DEL-01`, `DEL-03`, `DEL-04` seguem passando sem mudança de asserção
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: front
