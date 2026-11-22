@@ -850,7 +850,7 @@ graph LR
 
 #### T24: Parecer em DOCX
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `write_opinion_docx(model, target)` escreve o `OpinionDocument` em A4 com a fonte e as margens do `page` do modelo, cabeçalho centralizado, identificação, tabela dos pontos por grupo com o Total geral, conclusão, observações, local e data e uma linha de assinatura por membro, com `xml_safe` em todo texto e o rodapé `Página N de M`.
 **Where**: `backend/app/infrastructure/documents/opinion_docx.py` (new)
@@ -865,9 +865,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_opinion_docx.py` (novo): o DOCX abre, é A4 com as margens do modelo, e o texto sai na ordem de PAR-03 (cabeçalho, "PARECER", identificação, portaria, interstício, documentos analisados, pontos, Total geral, mínimo, conclusão, observações, local e data, assinaturas); o Total geral do documento é o do modelo; três membros dão três linhas de assinatura com nome e função; caractere de controle num nome ou nas observações não quebra o arquivo; o rodapé tem os campos `PAGE` e `NUMPAGES`; o arquivo é escrito no caminho dado, nunca em fluxo
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_opinion_docx.py` (novo): o DOCX abre, é A4 com as margens do modelo, e o texto sai na ordem de PAR-03 (cabeçalho, "PARECER", identificação, portaria, interstício, documentos analisados, pontos, Total geral, mínimo, conclusão, observações, local e data, assinaturas); o Total geral do documento é o do modelo; três membros dão três linhas de assinatura com nome e função; caractere de controle num nome ou nas observações não quebra o arquivo; o rodapé tem os campos `PAGE` e `NUMPAGES`; o arquivo é escrito no caminho dado, nunca em fluxo
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
