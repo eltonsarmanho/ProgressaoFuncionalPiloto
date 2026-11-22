@@ -1567,7 +1567,7 @@ graph LR
 
 #### T49: Etapa 5 sem a ordem do dossiê e sem o botão Concluir
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ProcessGenerated` deixa de mostrar o `DossierOrder` e a seção "Concluir o processo" (movidos para a Etapa 7); `DossierOrder.tsx` e o teste dele saem, substituídos pelo `DossierChecklist` (T47).
 **Where**: `frontend/src/pages/ProcessGenerated.tsx` (modify; remoção de `frontend/src/components/DossierOrder.tsx` e de `DossierOrder.test.tsx`)
@@ -1582,11 +1582,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/pages/ProcessGenerated.test.tsx`: a Etapa 5 mostra os três blocos (Tabela, Relatório e Comprovante) e **não** mostra "Ordem do dossiê" nem "Concluir o processo" nem o botão de concluir em nenhum status
-- [ ] Testes existentes que mudam por DOS-01 e DOS-07: `ProcessGenerated.test.tsx:65-76` (o teste "mostra a navegação ... os três blocos e a ordem do dossiê" perde a ordem do dossiê), `:131-168` (UIG-09 e a conclusão), `:208-237` (CAINI-10 e CAINI-11) saem daqui e estão em `ProcessDossier.test.tsx` (T48); `DossierOrder.test.tsx` (os quatro testes) tem os equivalentes em `DossierChecklist.test.tsx` (T47). Os testes de UIG-02, UIG-03, UIG-06, DEL-13 e GI-11 continuam como estão
-- [ ] Nenhuma referência restante a `DossierOrder` (`grep` no `frontend/src`)
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: contagem antes e depois registrada; os testes removidos estão listados com o equivalente que os substitui
+- [x] Testes primeiro em `frontend/src/pages/ProcessGenerated.test.tsx`: a Etapa 5 mostra os três blocos (Tabela, Relatório e Comprovante) e **não** mostra "Ordem do dossiê" nem "Concluir o processo" nem o botão de concluir em nenhum status
+- [x] Testes existentes que mudam por DOS-01 e DOS-07: `ProcessGenerated.test.tsx:65-76` (o teste "mostra a navegação ... os três blocos e a ordem do dossiê" perde a ordem do dossiê), `:131-168` (UIG-09 e a conclusão), `:208-237` (CAINI-10 e CAINI-11) saem daqui e estão em `ProcessDossier.test.tsx` (T48); `DossierOrder.test.tsx` (os quatro testes) tem os equivalentes em `DossierChecklist.test.tsx` (T47). Os testes de UIG-02, UIG-03, UIG-06, DEL-13 e GI-11 continuam como estão
+- [x] Nenhuma referência restante a `DossierOrder` (`grep` no `frontend/src`)
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: contagem antes e depois registrada; os testes removidos estão listados com o equivalente que os substitui
 
 **Tests**: unit
 **Gate**: front

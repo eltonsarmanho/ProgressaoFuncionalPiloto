@@ -1,10 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import { errorMessage, request } from "../api/client";
 import type { Activity, Process, TableChoice } from "../api/types";
 import { ComprovanteLayoutEditor } from "../components/ComprovanteLayoutEditor";
-import { ConcludeDialog } from "../components/ConcludeDialog";
-import { DossierOrder } from "../components/DossierOrder";
 import { GeneratedBlock } from "../components/GeneratedBlock";
 import { ReportDraftEditor } from "../components/ReportDraftEditor";
 import { StepNav } from "../components/StepNav";
@@ -38,8 +36,8 @@ function leftOutCount(activities: Activity[]): number {
 }
 
 /**
- * Etapa 5: the three generated documents, the draft of the report inside the Relatório, the arrangement
- * inside the Comprovante, the dossier order and the conclusion. In a concluded or archived process the
+ * Etapa 5: the three generated documents, the draft of the report inside the Relatório and the arrangement
+ * inside the Comprovante. The dossier checklist and the conclusion of the process are in the Etapa 7. In a concluded or archived process the
  * draft and the arrangement are read only; in a concluded one the Comprovante cannot be generated, since
  * its originals are gone, while every version already generated can still be downloaded (DEL-13).
  */
@@ -48,9 +46,7 @@ export function ProcessGenerated() {
   const [process, setProcess] = useState<Process | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [chosenTableVersionId, setChosenTableVersionId] = useState<string | null>(null);
-  const [concluding, setConcluding] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [reloads, setReloads] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,7 +60,7 @@ export function ProcessGenerated() {
     return () => {
       cancelled = true;
     };
-  }, [id, reloads]);
+  }, [id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -131,40 +127,6 @@ export function ProcessGenerated() {
               <ComprovanteLayoutEditor processId={id} readOnly={readOnly} />
             </Disclosure>
           </GeneratedBlock>
-          <DossierOrder />
-          {process.status === "EM_ANDAMENTO" && (
-            <section className="card" aria-labelledby="conclude-title">
-              <h2 id="conclude-title">Concluir o processo</h2>
-              <p className="muted">
-                Depois de gerar a Tabela, o Relatório e o Comprovante, conclua o processo para excluir do servidor os
-                documentos de entrada. Os documentos gerados e o histórico ficam.
-              </p>
-              <div className="btn-row">
-                <button type="button" className="btn btn-danger" onClick={() => setConcluding(true)}>
-                  Concluir e excluir documentos de entrada
-                </button>
-              </div>
-            </section>
-          )}
-          {process.status === "RASCUNHO" && (
-            <section className="card" aria-labelledby="conclude-title">
-              <h2 id="conclude-title">Concluir o processo</h2>
-              <p className="muted">Inicie o processo na Etapa 1 para poder concluir.</p>
-              <div className="btn-row">
-                <Link className="btn btn-secondary" to={`/processos/${id}`}>
-                  Ir para a Etapa 1
-                </Link>
-              </div>
-            </section>
-          )}
-          {concluding && (
-            <ConcludeDialog
-              processId={id}
-              processVersion={process.version}
-              onChanged={() => setReloads((n) => n + 1)}
-              onClose={() => setConcluding(false)}
-            />
-          )}
         </>
       )}
     </>

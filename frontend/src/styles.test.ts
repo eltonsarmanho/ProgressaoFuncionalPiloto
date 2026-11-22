@@ -162,7 +162,7 @@ describe("UIG-07: a Etapa 5 cabe em 360 px sem rolagem horizontal da página", (
         "./components/GeneratedBlock.tsx",
         "./components/ReportDraftEditor.tsx",
         "./components/ComprovanteLayoutEditor.tsx",
-        "./components/DossierOrder.tsx",
+        "./components/DossierChecklist.tsx",
         "./components/ConcludeDialog.tsx",
         "./pages/ProcessGenerated.tsx",
       ],

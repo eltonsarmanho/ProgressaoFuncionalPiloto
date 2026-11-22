@@ -6,7 +6,7 @@ import { setCsrfToken } from "../api/client";
 import type { DocumentKind } from "../api/generated";
 import type { Activity, Process, ProcessStatus } from "../api/types";
 import { mockFetch } from "../test/fetchMock";
-import { DOCUMENTS, draftView, generated, layoutView, preview } from "../test/generatedFixtures";
+import { DOCUMENTS, draftView, generated, layoutView } from "../test/generatedFixtures";
 import { ProcessGenerated } from "./ProcessGenerated";
 
 function process(status: ProcessStatus, version = 7): Process {
@@ -25,11 +25,6 @@ const ACTIVITIES = [
   activity("rejeitada", "REJEITADA", 2, 1),
 ];
 
-const DOSSIER = [
-  { order: 1, title: "Requerimento à CPPD", generated_by: null },
-  { order: 2, title: "Relatório de Atividades", generated_by: "RELATORIO" },
-];
-
 type Rows = Partial<Record<DocumentKind, ReturnType<typeof generated>[]>>;
 
 function setup(status: ProcessStatus, rows: Rows = {}, extra: Parameters<typeof mockFetch>[0] = {}) {
@@ -45,8 +40,6 @@ function setup(status: ProcessStatus, rows: Rows = {}, extra: Parameters<typeof 
     "GET /api/processes/p1/report-draft/wording": { status: 200, body: [] },
     "GET /api/processes/p1/comprovante-layout": { status: 200, body: layoutView() },
     "GET /api/processes/p1/documents": { status: 200, body: DOCUMENTS },
-    "GET /api/dossier-order": { status: 200, body: DOSSIER },
-    "GET /api/processes/p1/conclusion": { status: 200, body: preview() },
     ...extra,
   });
   render(
@@ -62,7 +55,7 @@ function setup(status: ProcessStatus, rows: Rows = {}, extra: Parameters<typeof 
 const block = (name: string) => screen.findByRole("region", { name });
 
 describe("UIG-01: a página da Etapa 5", () => {
-  it("mostra a navegação com a Etapa 5 atual, os três blocos e a ordem do dossiê", async () => {
+  it("mostra a navegação com a Etapa 5 atual e os três blocos", async () => {
     setup("EM_ANDAMENTO");
     expect(screen.getByRole("heading", { name: "Etapa 5 · Documentos gerados" })).toBeInTheDocument();
     const nav = screen.getByRole("navigation", { name: "Etapas do processo" });
@@ -70,9 +63,21 @@ describe("UIG-01: a página da Etapa 5", () => {
     await block("Tabela de Pontuação");
     await block("Relatório de Atividades");
     await block("Comprovante de Documentos");
-    const order = await screen.findByRole("list", { name: "Ordem de entrega do dossiê" });
-    expect(within(order).getAllByRole("listitem")).toHaveLength(2);
   });
+
+  it.each(["RASCUNHO", "EM_ANDAMENTO", "CONCLUIDO", "ARQUIVADO"] as const)(
+    "DOS-01, DOS-07: com o processo %s a Etapa 5 não mostra a ordem do dossiê nem a conclusão (estão na Etapa 7)",
+    async (status) => {
+      setup(status);
+      await block("Tabela de Pontuação");
+      await block("Comprovante de Documentos");
+      expect(screen.queryByText("Ordem do dossiê")).not.toBeInTheDocument();
+      expect(screen.queryByRole("list", { name: "Ordem de entrega do dossiê" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Concluir o processo" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Concluir e excluir documentos de entrada" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Ir para a Etapa 1" })).not.toBeInTheDocument();
+    },
+  );
 
   it("UIG-06: cada bloco avisa quantas atividades ficam de fora (pendentes e sem item; a rejeitada não conta)", async () => {
     setup("EM_ANDAMENTO");
@@ -128,45 +133,6 @@ describe("UIG-02, UIG-03: o editor do Relatório e o arranjo do Comprovante", ()
   });
 });
 
-describe("UIG-09: Concluir e excluir documentos de entrada", () => {
-  it("só o processo EM_ANDAMENTO oferece o botão, que abre a confirmação", async () => {
-    const { user } = setup("EM_ANDAMENTO");
-    await block("Tabela de Pontuação");
-    await user.click(await screen.findByRole("button", { name: "Concluir e excluir documentos de entrada" }));
-    const dialog = await screen.findByRole("dialog", { name: "Concluir e excluir documentos de entrada" });
-    expect(await within(dialog).findByText(/serão excluídos de forma irreversível/)).toBeInTheDocument();
-  });
-
-  it.each(["RASCUNHO", "ARQUIVADO"] as const)("o processo %s não oferece a conclusão", async (status) => {
-    setup(status);
-    await block("Tabela de Pontuação");
-    expect(screen.queryByRole("button", { name: "Concluir e excluir documentos de entrada" })).not.toBeInTheDocument();
-  });
-
-  it("ao concluir, a página recarrega o processo: o botão some e o Comprovante deixa de ser gerado", async () => {
-    const { state, user } = setup("EM_ANDAMENTO", {}, {
-      "POST /api/processes/p1/conclusion": {
-        status: 200,
-        body: { status: "CONCLUIDO", arquivos_removidos: 3, arquivos_pendentes: 0, bytes_liberados: 5_242_880, alertas: [] },
-      },
-    });
-    const comprovante = await block("Comprovante de Documentos");
-    await waitFor(() =>
-      expect(within(comprovante).getByRole("button", { name: "Gerar Comprovante de Documentos" })).toBeEnabled(),
-    );
-    await user.click(await screen.findByRole("button", { name: "Concluir e excluir documentos de entrada" }));
-    const dialog = await screen.findByRole("dialog");
-    state.status = "CONCLUIDO";
-    await user.click(await within(dialog).findByLabelText(/Confirmo a exclusão irreversível/));
-    await user.click(within(dialog).getByRole("button", { name: "Concluir e excluir" }));
-    expect(await within(dialog).findByText("Processo concluído.")).toBeInTheDocument();
-    await waitFor(() =>
-      expect(within(screen.getByRole("region", { name: "Comprovante de Documentos" })).getByRole("button", { name: "Gerar Comprovante de Documentos" })).toBeDisabled(),
-    );
-    expect(screen.queryByRole("button", { name: "Concluir e excluir documentos de entrada" })).not.toBeInTheDocument();
-  });
-});
-
 describe("DEL-13: processo CONCLUIDO", () => {
   const rows: Rows = {
     TABELA: [generated()],
@@ -202,37 +168,6 @@ describe("DEL-13: processo CONCLUIDO", () => {
     await user.click(within(comprovante).getByRole("button", { name: "Revisar arranjo do Comprovante" }));
     expect(await within(comprovante).findByRole("listitem", { name: "Algoritmos" })).toBeInTheDocument();
     expect(within(comprovante).queryByRole("button", { name: /Salvar arranjo|Subir|Descer|Remover|Acrescentar/ })).not.toBeInTheDocument();
-  });
-});
-
-describe("CAINI-10, CAINI-11: a Etapa 5 explica a conclusão conforme o status", () => {
-  const CONCLUDE = "Concluir e excluir documentos de entrada";
-  const DRAFT_TEXT = "Inicie o processo na Etapa 1 para poder concluir.";
-
-  it("CAINI-10: em rascunho mostra o título, o texto, o link para a Etapa 1 e nenhum botão de concluir", async () => {
-    setup("RASCUNHO");
-    await block("Tabela de Pontuação");
-    expect(await screen.findByRole("heading", { name: "Concluir o processo" })).toBeInTheDocument();
-    expect(screen.getByText(DRAFT_TEXT)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ir para a Etapa 1" })).toHaveAttribute("href", "/processos/p1");
-    expect(screen.queryByRole("button", { name: CONCLUDE })).not.toBeInTheDocument();
-  });
-
-  it("CAINI-11: em andamento mostra o botão de concluir e não o texto de rascunho", async () => {
-    setup("EM_ANDAMENTO");
-    await block("Tabela de Pontuação");
-    expect(await screen.findByRole("heading", { name: "Concluir o processo" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: CONCLUDE })).toBeInTheDocument();
-    expect(screen.queryByText(DRAFT_TEXT)).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Ir para a Etapa 1" })).not.toBeInTheDocument();
-  });
-
-  it.each(["CONCLUIDO", "ARQUIVADO"] as const)("CAINI-10, CAINI-11: com o processo %s não mostra o botão nem o texto de rascunho", async (status) => {
-    setup(status);
-    await block("Tabela de Pontuação");
-    expect(screen.queryByRole("button", { name: CONCLUDE })).not.toBeInTheDocument();
-    expect(screen.queryByText(DRAFT_TEXT)).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Ir para a Etapa 1" })).not.toBeInTheDocument();
   });
 });
 
