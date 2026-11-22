@@ -266,7 +266,7 @@ graph LR
 
 #### T4: Conferência da portaria lida pela IA
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `OrdinanceAi` (número, página do número, data, página da data, membros com nome, função e página), `GroundedOrdinance` com os avisos, `ground_ordinance(ai, pages) -> GroundedOrdinance` e `merge_reading(current, grounded)`. Cada valor é conferido no texto **original** da página citada; sem origem o valor fica vazio com `VALOR_SEM_ORIGEM`; lista sem membro dá `MEMBROS_NAO_ENCONTRADOS`; `merge_reading` não sobrescreve campo de origem `INFORMADO`.
 **Where**: `backend/app/domain/rules/ordinance_grounding.py` (new)
@@ -281,10 +281,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_ordinance_grounding.py` (novo), com páginas sintéticas: número, data e três membros que aparecem na página citada ficam com a página e `EXTRAIDO`; o número que só aparece em outra página fica vazio com `VALOR_SEM_ORIGEM` no campo; data em "10 de março de 2025" e em "10/03/2025" confere; nome com acento e caixa diferentes confere; página que não existe (0 ou 99) não dá origem; membro cujo nome não está na página é descartado com `VALOR_SEM_ORIGEM` e os outros ficam; função fora de `PRESIDENTE`, `MEMBRO` e `SUPLENTE` descarta o membro com o aviso; sem nenhum membro a lista fica vazia com `MEMBROS_NAO_ENCONTRADOS`; `merge_reading` mantém número, data e lista de origem `INFORMADO`, troca os de origem `EXTRAIDO` ou vazios, e a lista de membros é um campo só (basta um membro `INFORMADO` para a lista inteira ficar)
-- [ ] Teste de arquitetura passa
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_ordinance_grounding.py` (novo), com páginas sintéticas: número, data e três membros que aparecem na página citada ficam com a página e `EXTRAIDO`; o número que só aparece em outra página fica vazio com `VALOR_SEM_ORIGEM` no campo; data em "10 de março de 2025" e em "10/03/2025" confere; nome com acento e caixa diferentes confere; página que não existe (0 ou 99) não dá origem; membro cujo nome não está na página é descartado com `VALOR_SEM_ORIGEM` e os outros ficam; função fora de `PRESIDENTE`, `MEMBRO` e `SUPLENTE` descarta o membro com o aviso; sem nenhum membro a lista fica vazia com `MEMBROS_NAO_ENCONTRADOS`; `merge_reading` mantém número, data e lista de origem `INFORMADO`, troca os de origem `EXTRAIDO` ou vazios, e a lista de membros é um campo só (basta um membro `INFORMADO` para a lista inteira ficar)
+- [x] Teste de arquitetura passa
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
