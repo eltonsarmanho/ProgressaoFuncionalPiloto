@@ -112,7 +112,7 @@ class ScoringResult:
 
 
 def _row_alert(code: ScoringAlertCode, message: str, version: ScoringTableVersion) -> Alert:
-    return Alert(code, Severity.ALERTA, message, version.norm_reference)
+    return Alert(code, Severity.ALERTA, message, version.norm_reference, version.norm_code)
 
 
 def _limit_alert(label: str, before: Decimal, after: Decimal, version) -> Alert:

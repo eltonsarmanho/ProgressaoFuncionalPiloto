@@ -362,7 +362,7 @@ graph LR
 
 #### T9: `norm_code` na versão de tabela e nos alertas da pontuação
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ScoringTableVersion.norm_code: str | None = field(default=None, compare=False)`; os alertas de `scoring_table_choice.py` e de `scoring_engine.py:115` usam `version.norm_code` (escolha) ou `chosen.norm_code`; `TABELA_NAO_ENCONTRADA` usa `TABELA-OFICIAL-UFPA`.
 **Where**: `backend/app/domain/entities/scoring.py` (modify; os dois usos em `domain/rules/scoring_table_choice.py` e `domain/rules/scoring_engine.py` são uma linha cada)
@@ -377,9 +377,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_scoring_citations.py` (novo), com versões sintéticas declaradas no nome: alerta da escolha da tabela e alerta de linha do motor trazem o `norm_code` da versão; versão sem código dá `None`; `TABELA_NAO_ENCONTRADA` traz `TABELA-OFICIAL-UFPA`; duas versões que diferem só em `norm_code` são iguais na comparação
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_scoring_citations.py` (novo), com versões sintéticas declaradas no nome: alerta da escolha da tabela e alerta de linha do motor trazem o `norm_code` da versão; versão sem código dá `None`; `TABELA_NAO_ENCONTRADA` traz `TABELA-OFICIAL-UFPA`; duas versões que diferem só em `norm_code` são iguais na comparação
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

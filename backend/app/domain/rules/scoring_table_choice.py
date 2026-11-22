@@ -12,6 +12,7 @@ from app.domain.rules.process_verification import Alert, Severity
 from app.domain.rules.scoring_alerts import ScoringAlertCode
 
 REF_TABLE = "Res. 4.644/2015-CONSEPE, Anexo I"
+NORM_OFFICIAL_TABLE = "TABELA-OFICIAL-UFPA"
 
 
 def verify_table_choice(
@@ -28,6 +29,7 @@ def verify_table_choice(
                 "Não há versão de tabela de pontuação da unidade do docente vigente na data "
                 "final do interstício; escolha uma tabela explicitamente.",
                 REF_TABLE,
+                NORM_OFFICIAL_TABLE,
             )
         ]
     alerts: list[Alert] = []
@@ -38,6 +40,7 @@ def verify_table_choice(
                 Severity.ALERTA,
                 "A tabela escolhida pertence a outra unidade acadêmica que não a do docente.",
                 chosen.norm_reference,
+                chosen.norm_code,
             )
         )
     if chosen.status is TableStatus.PENDENTE_VALIDACAO:
@@ -48,6 +51,7 @@ def verify_table_choice(
                 "A tabela escolhida está pendente de validação normativa; o resultado "
                 "calculado com ela exige conferência.",
                 chosen.norm_reference,
+                chosen.norm_code,
             )
         )
     if not chosen.covers(interstice_end):
@@ -57,6 +61,7 @@ def verify_table_choice(
                 Severity.ALERTA,
                 "A versão da tabela escolhida não estava vigente na data final do interstício.",
                 chosen.norm_reference,
+                chosen.norm_code,
             )
         )
     return alerts

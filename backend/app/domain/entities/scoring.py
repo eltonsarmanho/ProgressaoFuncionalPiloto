@@ -61,6 +61,8 @@ class ScoringTableVersion:
     id: UUID | None = field(default=None, compare=False)  # persistence identity only
     # Set when a newer version replaces this one; not part of the rules, so not compared.
     superseded_by_id: UUID | None = field(default=None, compare=False)
+    # NLINK-01: the norm behind the version; a citation, not a rule, so not compared.
+    norm_code: str | None = field(default=None, compare=False)
 
     @property
     def is_superseded(self) -> bool:
