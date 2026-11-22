@@ -934,7 +934,7 @@ graph LR
 
 #### T27: Requerimento em PDF
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `write_request_pdf(model, target)` desenha o mesmo `RequestDocument` com reportlab e a Liberation Serif, na mesma ordem do DOCX.
 **Where**: `backend/app/infrastructure/documents/request_pdf.py` (new)
@@ -949,9 +949,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_request_pdf.py` (novo): o PDF é A4, o texto lido com `pymupdf` traz as frases na mesma ordem do DOCX, o parágrafo do pedido inteiro e a linha final "Belém, 10 de março de 2025."; a cidade em branco sai "__________"; só a Liberation Serif é listada; caractere de controle não vira caixa
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_request_pdf.py` (novo): o PDF é A4, o texto lido com `pymupdf` traz as frases na mesma ordem do DOCX, o parágrafo do pedido inteiro e a linha final "Belém, 10 de março de 2025."; a cidade em branco sai "__________"; só a Liberation Serif é listada; caractere de controle não vira caixa
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
