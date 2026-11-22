@@ -358,7 +358,8 @@ def test_asking_for_the_parecer_again_gives_version_2_and_keeps_version_1(client
 
     assert (first["version_number"], second["version_number"]) == (1, 2)
     listed = client.get(generations_url(scenario.process), params={"kind": "PARECER"}).json()
-    assert [r["version_number"] for r in listed] == [2, 1]
+    # the test clock gives both requests the same moment, so only the set is defined
+    assert sorted(r["version_number"] for r in listed) == [1, 2]
     assert client.get(file_url(first, "pdf")).status_code == 200
 
 
