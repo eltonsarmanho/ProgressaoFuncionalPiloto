@@ -1192,7 +1192,7 @@ graph LR
 
 #### T36: Rotas do arquivo da portaria
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `PUT /api/processes/{id}/board/ordinance/file` (multipart com o arquivo, `expected_version` e `replace`), `POST /api/processes/{id}/board/ordinance/reread` (`expected_version`) e `GET /api/processes/{id}/board/ordinance/file` (inline, `nosniff`, `CSP sandbox`; 404 sem arquivo e 410 `ARQUIVO_EXCLUIDO` depois da conclusão), com a mensagem do limite em 422.
 **Where**: `backend/app/presentation/api/board.py` (modify)
@@ -1207,9 +1207,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_board_file_api.py` (novo), com o extrator falso e um PDF sintético: o envio devolve 200 com a leitura `PENDENTE`; depois de rodar o executor (`run_next`) a leitura volta `LIDA` com número, data e três membros com a página de origem (o teste independente da spec, PORT-02); com o extrator falhando a leitura volta `FALHOU` com o motivo e os campos seguem editáveis pela rota da T35 (PORT-07); "Ler de novo" refaz; o envio de 20 MB + 1 byte e de arquivo de outro tipo dão 422 no campo `arquivo` com a mensagem do limite (PORT-10); segundo envio sem `replace` dá 409 `PORTARIA_EXISTENTE` e com `replace=true` troca (PORT-08); o `GET` do arquivo devolve o PDF com `X-Content-Type-Options: nosniff` e `Content-Security-Policy` com `sandbox`; sem arquivo 404; arquivo apagado pela conclusão 410; processo arquivado dá 409 no envio e na nova leitura; fora do acesso 404 nas três rotas; sem sessão 401
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_board_file_api.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/api/test_board_file_api.py` (novo), com o extrator falso e um PDF sintético: o envio devolve 200 com a leitura `PENDENTE`; depois de rodar o executor (`run_next`) a leitura volta `LIDA` com número, data e três membros com a página de origem (o teste independente da spec, PORT-02); com o extrator falhando a leitura volta `FALHOU` com o motivo e os campos seguem editáveis pela rota da T35 (PORT-07); "Ler de novo" refaz; o envio de 20 MB + 1 byte e de arquivo de outro tipo dão 422 no campo `arquivo` com a mensagem do limite (PORT-10); segundo envio sem `replace` dá 409 `PORTARIA_EXISTENTE` e com `replace=true` troca (PORT-08); o `GET` do arquivo devolve o PDF com `X-Content-Type-Options: nosniff` e `Content-Security-Policy` com `sandbox`; sem arquivo 404; arquivo apagado pela conclusão 410; processo arquivado dá 409 no envio e na nova leitura; fora do acesso 404 nas três rotas; sem sessão 401
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_board_file_api.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted

@@ -46,6 +46,10 @@ class OrdinanceDataIn(_Body):
         return [MemberInput(member.name, member.role) for member in self.members]
 
 
+class RereadIn(_Body):
+    expected_version: int
+
+
 class OpinionIn(_Body):
     conclusion: OpinionConclusion | None = None
     opinion_date: date | None = None
