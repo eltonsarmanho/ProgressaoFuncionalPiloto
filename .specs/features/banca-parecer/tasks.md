@@ -591,7 +591,7 @@ graph LR
 
 #### T15: Repositório das marcas "Entregue"
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Porta `DossierDeliveryRepository` (`mark(process_id, key, user_id, now) -> bool`, `unmark(process_id, key) -> bool`, `keys(process_id) -> set[str]`), `SqlDossierDeliveryRepository` e `uow.dossier_deliveries`; marcar é `INSERT ... ON CONFLICT DO NOTHING` e desmarcar é `DELETE`, ambos idempotentes, e devolvem se algo mudou.
 **Where**: `backend/app/infrastructure/database/repositories.py` (modify; a porta e o atributo do `UnitOfWork` em `backend/app/domain/repositories/ports.py`)
@@ -606,9 +606,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/documents/test_dossier_delivery_repository.py` (novo): marcar grava e devolve `True`; marcar de novo devolve `False` e não duplica; `keys` lista só as chaves do processo; desmarcar devolve `True` e depois `False`; marcas de outro processo não aparecem; `marked_by` e `marked_at` ficam gravados
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/documents/test_dossier_delivery_repository.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/documents/test_dossier_delivery_repository.py` (novo): marcar grava e devolve `True`; marcar de novo devolve `False` e não duplica; `keys` lista só as chaves do processo; desmarcar devolve `True` e depois `False`; marcas de outro processo não aparecem; `marked_by` e `marked_at` ficam gravados
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/documents/test_dossier_delivery_repository.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted

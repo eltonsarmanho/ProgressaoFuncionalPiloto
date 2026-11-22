@@ -10,6 +10,7 @@ from typing import Any, Self
 from uuid import UUID
 
 from sqlalchemy import Table, delete, exists, func, insert, select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -92,6 +93,7 @@ from app.infrastructure.database.models import (
     ComprovanteLayoutModel,
     DocumentModel,
     DocumentPageModel,
+    DossierDeliveryModel,
     ExtractionRunModel,
     FunctionalProcessModel,
     GeneratedDocumentModel,
@@ -2645,6 +2647,40 @@ class SqlRequestSettingsRepository:
         return self._to_entity(m)
 
 
+class SqlDossierDeliveryRepository:
+    """The "Entregue" marks: marking inserts and ignores a repeated key; unmarking deletes."""
+
+    def __init__(self, session: Session):
+        self._s = session
+
+    def mark(self, process_id: UUID, key: str, user_id: UUID, now: datetime) -> bool:
+        added = self._s.execute(
+            pg_insert(DossierDeliveryModel)
+            .values(process_id=process_id, item_key=key, marked_by=user_id, marked_at=now)
+            .on_conflict_do_nothing()
+            .returning(DossierDeliveryModel.item_key)
+        ).first()
+        return added is not None
+
+    def unmark(self, process_id: UUID, key: str) -> bool:
+        result = self._s.execute(
+            delete(DossierDeliveryModel).where(
+                DossierDeliveryModel.process_id == process_id,
+                DossierDeliveryModel.item_key == key,
+            )
+        )
+        return result.rowcount == 1
+
+    def keys(self, process_id: UUID) -> set[str]:
+        return set(
+            self._s.scalars(
+                select(DossierDeliveryModel.item_key).where(
+                    DossierDeliveryModel.process_id == process_id
+                )
+            )
+        )
+
+
 class SqlProcessPurgeRepository:
     """Deletes a process and everything below it in one transaction (GP-D2, GP-D3).
 
@@ -2783,6 +2819,7 @@ class SqlUnitOfWork:
         self.board = SqlBoardRepository(self._session)
         self.opinions = SqlOpinionRepository(self._session)
         self.request_settings = SqlRequestSettingsRepository(self._session)
+        self.dossier_deliveries = SqlDossierDeliveryRepository(self._session)
         self.process_purge = SqlProcessPurgeRepository(self._session)
         return self
 

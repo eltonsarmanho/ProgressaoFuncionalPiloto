@@ -619,6 +619,23 @@ class RequestSettingsRepository(Protocol):
         ...
 
 
+class DossierDeliveryRepository(Protocol):
+    """The "Entregue" marks of the dossier items the system does not produce (DOS-04)."""
+
+    def mark(self, process_id: UUID, key: str, user_id: UUID, now: datetime) -> bool:
+        """Stores the mark; marking again keeps the first and changes nothing. True when a mark
+        was added."""
+        ...
+
+    def unmark(self, process_id: UUID, key: str) -> bool:
+        """Removes the mark. True when one was removed."""
+        ...
+
+    def keys(self, process_id: UUID) -> set[str]:
+        """The keys marked in the process."""
+        ...
+
+
 class GenerationRepository(Protocol):
     """Generated documents: one row per request, one numbered version per PRONTO (VER-01)."""
 
@@ -968,6 +985,7 @@ class UnitOfWork(Protocol):
     board: BoardRepository
     opinions: OpinionRepository
     request_settings: RequestSettingsRepository
+    dossier_deliveries: DossierDeliveryRepository
     process_purge: ProcessPurgeRepository
 
     def __enter__(self) -> Self: ...
