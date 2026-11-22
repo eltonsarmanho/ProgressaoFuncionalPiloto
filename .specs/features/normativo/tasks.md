@@ -217,7 +217,7 @@ graph LR
 
 #### T4: Ordem das titulações
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `TITRATION_ORDER = (GRADUACAO, ESPECIALIZACAO, MESTRADO, DOUTORADO)` e `titration_at_least(actual, required) -> bool`.
 **Where**: `backend/app/domain/entities/professor.py` (modify)
@@ -232,9 +232,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_titration_order.py`: a ordem dos quatro valores; mestrado não atinge doutorado; doutorado atinge doutorado e mestrado; todo valor de `Titration` está na ordem (um valor novo sem lugar faz o teste falhar)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_titration_order.py`: a ordem dos quatro valores; mestrado não atinge doutorado; doutorado atinge doutorado e mestrado; todo valor de `Titration` está na ordem (um valor novo sem lugar faz o teste falhar)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

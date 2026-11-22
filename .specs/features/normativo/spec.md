@@ -208,9 +208,9 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NLINK-04 | P1: Regras e alertas ligados à norma | Design | Pending |
 | NLINK-05 | P1: Regras e alertas ligados à norma | Design | Pending |
 | NLINK-06 | P1: Regras e alertas ligados à norma | Implementing | Implementing |
-| NTIT-01 | P1: Titulação exigida | Design | Pending |
+| NTIT-01 | P1: Titulação exigida | Implementing | Implementing |
 | NTIT-02 | P1: Titulação exigida | Design | Pending |
-| NTIT-03 | P1: Titulação exigida | Design | Pending |
+| NTIT-03 | P1: Titulação exigida | Implementing | Implementing |
 | NTIT-04 | P1: Titulação exigida | Design | Pending |
 | NTIT-05 | P1: Titulação exigida | Design | Pending |
 | NTIT-06 | P1: Titulação exigida | Design | Pending |
