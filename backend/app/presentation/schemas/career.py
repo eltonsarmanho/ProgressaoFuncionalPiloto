@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from app.application.use_cases.career import VersionView
 from app.domain.entities.career import CareerClass, CareerVersion
+from app.domain.entities.professor import Titration
 
 
 class CareerClassIn(BaseModel):
@@ -14,6 +15,11 @@ class CareerClassIn(BaseModel):
     denominations: list[str]
     levels: list[int]
     promotion_min_months: int | None = None
+    required_titration: Titration | None = None  # NTIT-05: None, no titration rule
+
+
+def _blank_to_none(value: str | None) -> str | None:
+    return (value or "").strip() or None
 
 
 class CareerVersionIn(BaseModel):
@@ -23,6 +29,23 @@ class CareerVersionIn(BaseModel):
     norm_reference: str
     progression_min_months: int
     classes: list[CareerClassIn]
+    norm_code: str | None = None
+    required_titration_norm_code: str | None = None
+
+    def unset_links(self) -> frozenset[str]:
+        """The link fields the request left out, so that an old body does not erase them: a
+        field sent as null is cleared, a field not sent keeps the stored value."""
+        names = {
+            name
+            for name in ("norm_code", "required_titration_norm_code")
+            if name not in self.model_fields_set
+        }
+        names |= {
+            f"required_titration:{c.code}"
+            for c in self.classes
+            if "required_titration" not in c.model_fields_set
+        }
+        return frozenset(names)
 
     def to_entity(self) -> CareerVersion:
         return CareerVersion(
@@ -37,9 +60,12 @@ class CareerVersionIn(BaseModel):
                     denominations=tuple(c.denominations),
                     levels=tuple(c.levels),
                     promotion_min_months=c.promotion_min_months,
+                    required_titration=c.required_titration,
                 )
                 for c in self.classes
             ),
+            norm_code=_blank_to_none(self.norm_code),
+            required_titration_norm_code=_blank_to_none(self.required_titration_norm_code),
         )
 
 
@@ -64,7 +90,10 @@ class CareerVersionOut(CareerVersionIn):
                     denominations=list(c.denominations),
                     levels=list(c.levels),
                     promotion_min_months=c.promotion_min_months,
+                    required_titration=c.required_titration,
                 )
                 for c in v.classes
             ],
+            norm_code=v.norm_code,
+            required_titration_norm_code=v.required_titration_norm_code,
         )

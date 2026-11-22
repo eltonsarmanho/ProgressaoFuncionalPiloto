@@ -734,7 +734,7 @@ graph LR
 
 #### T22: API de carreira com norma e titulação
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `CareerVersionIn/Out` e `CareerClassIn/Out` ganham `norm_code`, `required_titration` e `required_titration_norm_code`; `career_definition` e `_audit_view` os gravam, para o `PUT` não apagar a ligação (risco do design).
 **Where**: `backend/app/presentation/schemas/career.py` (modify; o caso de uso em `application/use_cases/career.py`)
@@ -749,9 +749,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_career_api.py`: `GET` traz os três campos; `PUT` com eles grava e devolve; `PUT` sem eles (corpo antigo) mantém os valores gravados; titulação inválida dá 422; o ADMIN troca a denominação de uma classe sintética e a verificação do processo passa a mostrar `DENOMINACAO_DIVERGENTE` sem mudar a denominação gravada no processo (NMOV-05)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/api/test_career_api.py`: `GET` traz os três campos; `PUT` com eles grava e devolve; `PUT` sem eles (corpo antigo) mantém os valores gravados; titulação inválida dá 422; o ADMIN troca a denominação de uma classe sintética e a verificação do processo passa a mostrar `DENOMINACAO_DIVERGENTE` sem mudar a denominação gravada no processo (NMOV-05)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full
