@@ -189,7 +189,7 @@ graph LR
 
 #### T3: Validação dos campos da norma
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `validate_norm(fields) -> list[FieldError]`: código obrigatório no padrão `^[A-Z0-9][A-Z0-9-]{1,49}$`; título (até 500), tipo, órgão (até 255) e data de publicação obrigatórios; fim da vigência não anterior ao início; URL que começa com `https://` ou `http://`; observação até 5 000.
 **Where**: `backend/app/domain/rules/norm_rules.py` (new)
@@ -204,9 +204,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_norm_rules.py`: cada campo obrigatório ausente dá erro no campo certo; código em minúscula, com espaço ou com 51 caracteres é recusado e com 50 passa; fim igual ao início passa e um dia antes é recusado no campo do fim; `ftp://` e `www.` são recusados no campo da URL, `http://` e `https://` passam; URL vazia passa (é opcional)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_norm_rules.py`: cada campo obrigatório ausente dá erro no campo certo; código em minúscula, com espaço ou com 51 caracteres é recusado e com 50 passa; fim igual ao início passa e um dia antes é recusado no campo do fim; `ftp://` e `www.` são recusados no campo da URL, `http://` e `https://` passam; URL vazia passa (é opcional)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

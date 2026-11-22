@@ -191,9 +191,9 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | NBASE-01 | P1: Base de normas | Implementing | Implementing |
-| NBASE-02 | P1: Base de normas | Design | Pending |
-| NBASE-03 | P1: Base de normas | Design | Pending |
-| NBASE-04 | P1: Base de normas | Design | Pending |
+| NBASE-02 | P1: Base de normas | Implementing | Implementing |
+| NBASE-03 | P1: Base de normas | Implementing | Implementing |
+| NBASE-04 | P1: Base de normas | Implementing | Implementing |
 | NBASE-05 | P1: Base de normas | Design | Pending |
 | NBASE-06 | P1: Base de normas | Design | Pending |
 | NBASE-07 | P1: Base de normas | Design | Pending |
