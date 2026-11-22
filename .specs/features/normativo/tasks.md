@@ -506,7 +506,7 @@ graph LR
 
 #### T14: Armazenamento do PDF da norma
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Porta `NormFileStorage` (`save(staged) -> NormFile`, `open(internal_name) -> Path`, `delete(internal_name)`) e `LocalNormStorage` em `{storage_dir}/norms/{uuid}.pdf`, diretório 0700, arquivo 0600, nome interno validado por regex.
 **Where**: `backend/app/infrastructure/storage/norm_storage.py` (new; a porta em `ports.py`)
@@ -521,9 +521,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_norm_storage.py` (novo), em diretório temporário: grava e abre; permissões 0700 e 0600; `sha256` e tamanho corretos; `open` e `delete` recusam nome com `..` ou fora do padrão; `delete` de arquivo ausente não falha
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_norm_storage.py` (novo), em diretório temporário: grava e abre; permissões 0700 e 0600; `sha256` e tamanho corretos; `open` e `delete` recusam nome com `..` ou fora do padrão; `delete` de arquivo ausente não falha
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

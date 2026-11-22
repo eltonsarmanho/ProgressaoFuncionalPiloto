@@ -36,7 +36,7 @@ from app.domain.entities.generated import (
     GenerationState,
     WordingJob,
 )
-from app.domain.entities.norm import Norm
+from app.domain.entities.norm import Norm, NormFile
 from app.domain.entities.process import FunctionalProcess, ProcessStatus
 from app.domain.entities.professor import Professor, Titration
 from app.domain.entities.report import DraftEntry, DraftSection, ReportDocument, ReportDraft
@@ -463,6 +463,28 @@ class FileStorage(Protocol):
     def remove_process_dir(self, process_id: UUID) -> bool:
         """Removes the directory of the process only when it is empty; returns whether it went
         away. A missing or non-empty directory is left alone."""
+        ...
+
+
+@dataclass(frozen=True)
+class StagedNormFile:
+    """A norm PDF already on disk in a temporary path; `original_name` is display text only."""
+
+    path: Path
+    original_name: str
+
+
+class NormFileStorage(Protocol):
+    def save(self, staged: StagedNormFile) -> NormFile:
+        """Copies the staged file under a random name; size and SHA-256 come from the copy."""
+        ...
+
+    def open(self, internal_name: str) -> Path:
+        """The path of the stored file; ValueError for a name outside the pattern."""
+        ...
+
+    def delete(self, internal_name: str) -> None:
+        """Removes the file; a missing file is not an error."""
         ...
 
 
