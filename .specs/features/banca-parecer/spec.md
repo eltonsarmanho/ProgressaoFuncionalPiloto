@@ -229,7 +229,7 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 | REQ-06 | P1: Requerimento | Implementing | Implementing |
 | REQ-07 | P1: Requerimento | Implementing | Implementing |
 | REQ-08 | P1: Requerimento | Implementing | Implementing |
-| DOS-01 | P2: Checklist do dossiê | Design | Pending |
+| DOS-01 | P2: Checklist do dossiê | Implementing | Implementing |
 | DOS-02 | P2: Checklist do dossiê | Design | Pending |
 | DOS-03 | P2: Checklist do dossiê | Design | Pending |
 | DOS-04 | P2: Checklist do dossiê | Design | Pending |

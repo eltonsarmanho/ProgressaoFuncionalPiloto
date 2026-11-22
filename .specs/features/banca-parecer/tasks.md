@@ -444,7 +444,7 @@ graph LR
 
 #### T10: Ordem do dossiê com chave e origem
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `DossierSource` (`GERADO`, `PORTARIA_BANCA`, `MANUAL`); `DossierItem` ganha `key` e `source`; `load_dossier_order` lê os dois campos e valida (chave única e não vazia; `GERADO` exige `generated_by`; os outros não podem tê-lo); `dossier_order.json` passa a ter 9 itens com os dois da banca no fim, e o Requerimento e o Parecer com `generated_by`.
 **Where**: `backend/app/domain/entities/report.py` (modify; o carregador em `backend/app/infrastructure/documents/config_loader.py` e os dados em `backend/app/infrastructure/documents/config/dossier_order.json`)
@@ -459,11 +459,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_dossier_order_file.py`: o arquivo tem 9 itens com `order` de 1 a 9; os três primeiros e o quarto a sétimo mantêm os títulos de hoje; o oitavo é "Portaria da banca" (`PORTARIA_BANCA`) e o nono "Parecer da banca" (`PARECER`); os gerados são `REQUERIMENTO`, `RELATORIO`, `TABELA`, `COMPROVANTE` e `PARECER`, nessa ordem; as chaves são `REQUERIMENTO`, `PORTARIA_ULTIMA_PROGRESSAO`, `DECLARACAO_EXERCICIOS_ANTERIORES`, `RELATORIO`, `TABELA`, `COMPROVANTE`, `CURRICULO_LATTES`, `PORTARIA_BANCA` e `PARECER`; só os três primeiros itens que o sistema não produz são `MANUAL`
-- [ ] Testes novos em `backend/tests/unit/infrastructure/test_report_config_loader.py`: chave repetida, chave ausente, `source` fora dos três valores, `GERADO` sem `generated_by` e `MANUAL` com `generated_by` recusam o arquivo nomeando `dossier_order.json` e o campo
-- [ ] Testes existentes que mudam por DOS-01: `test_dossier_order_file.py` (as três funções: ordem 1 a 7, os três gerados, "4 itens sem gerador" e a ordem dos gerados), o fixture `DOSSIER` e os casos de `test_report_config_loader.py:312-356` (o arquivo passa a ter `key` e `source`), e `backend/tests/integration/api/test_dossier_order_api.py` (a rota `GET /api/dossier-order` segue com `order`, `title` e `generated_by`, agora com 9 itens e cinco tipos marcados; o JSON temporário do segundo teste ganha `key` e `source`)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture tests/integration/api/test_dossier_order_api.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_dossier_order_file.py`: o arquivo tem 9 itens com `order` de 1 a 9; os três primeiros e o quarto a sétimo mantêm os títulos de hoje; o oitavo é "Portaria da banca" (`PORTARIA_BANCA`) e o nono "Parecer da banca" (`PARECER`); os gerados são `REQUERIMENTO`, `RELATORIO`, `TABELA`, `COMPROVANTE` e `PARECER`, nessa ordem; as chaves são `REQUERIMENTO`, `PORTARIA_ULTIMA_PROGRESSAO`, `DECLARACAO_EXERCICIOS_ANTERIORES`, `RELATORIO`, `TABELA`, `COMPROVANTE`, `CURRICULO_LATTES`, `PORTARIA_BANCA` e `PARECER`; só os três primeiros itens que o sistema não produz são `MANUAL`
+- [x] Testes novos em `backend/tests/unit/infrastructure/test_report_config_loader.py`: chave repetida, chave ausente, `source` fora dos três valores, `GERADO` sem `generated_by` e `MANUAL` com `generated_by` recusam o arquivo nomeando `dossier_order.json` e o campo
+- [x] Testes existentes que mudam por DOS-01: `test_dossier_order_file.py` (as três funções: ordem 1 a 7, os três gerados, "4 itens sem gerador" e a ordem dos gerados), o fixture `DOSSIER` e os casos de `test_report_config_loader.py:312-356` (o arquivo passa a ter `key` e `source`), e `backend/tests/integration/api/test_dossier_order_api.py` (a rota `GET /api/dossier-order` segue com `order`, `title` e `generated_by`, agora com 9 itens e cinco tipos marcados; o JSON temporário do segundo teste ganha `key` e `source`)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture tests/integration/api/test_dossier_order_api.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: targeted

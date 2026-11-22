@@ -1,19 +1,63 @@
 {
   "items": [
-    {"order": 1, "title": "Requerimento à CPPD, conforme o modelo", "generated_by": null},
-    {"order": 2, "title": "Portaria da última progressão", "generated_by": null},
+    {
+      "order": 1,
+      "key": "REQUERIMENTO",
+      "title": "Requerimento à CPPD, conforme o modelo",
+      "source": "GERADO",
+      "generated_by": "REQUERIMENTO"
+    },
+    {
+      "order": 2,
+      "key": "PORTARIA_ULTIMA_PROGRESSAO",
+      "title": "Portaria da última progressão",
+      "source": "MANUAL"
+    },
     {
       "order": 3,
+      "key": "DECLARACAO_EXERCICIOS_ANTERIORES",
       "title": "Declaração de pagamento de exercícios anteriores, preenchida",
-      "generated_by": null
+      "source": "MANUAL"
     },
-    {"order": 4, "title": "Relatório de progressão funcional", "generated_by": "RELATORIO"},
-    {"order": 5, "title": "Tabela de Pontuação", "generated_by": "TABELA"},
+    {
+      "order": 4,
+      "key": "RELATORIO",
+      "title": "Relatório de progressão funcional",
+      "source": "GERADO",
+      "generated_by": "RELATORIO"
+    },
+    {
+      "order": 5,
+      "key": "TABELA",
+      "title": "Tabela de Pontuação",
+      "source": "GERADO",
+      "generated_by": "TABELA"
+    },
     {
       "order": 6,
+      "key": "COMPROVANTE",
       "title": "Documentação comprobatória, em ordem e numerada",
+      "source": "GERADO",
       "generated_by": "COMPROVANTE"
     },
-    {"order": 7, "title": "Currículo Lattes atualizado", "generated_by": null}
+    {
+      "order": 7,
+      "key": "CURRICULO_LATTES",
+      "title": "Currículo Lattes atualizado",
+      "source": "MANUAL"
+    },
+    {
+      "order": 8,
+      "key": "PORTARIA_BANCA",
+      "title": "Portaria da banca",
+      "source": "PORTARIA_BANCA"
+    },
+    {
+      "order": 9,
+      "key": "PARECER",
+      "title": "Parecer da banca",
+      "source": "GERADO",
+      "generated_by": "PARECER"
+    }
   ]
 }

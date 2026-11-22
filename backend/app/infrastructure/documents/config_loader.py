@@ -19,6 +19,7 @@ from typing import Any
 from app.domain.entities.generated import DocumentKind
 from app.domain.entities.report import (
     DossierItem,
+    DossierSource,
     EntrySpec,
     GroupBy,
     MatchRule,
@@ -325,10 +326,11 @@ class ReportConfigLoader:
 
 
 def load_dossier_order(path: Path = DOSSIER_ORDER) -> tuple[DossierItem, ...]:
-    """The documents of the dossier in delivery order; the order values must go up."""
+    """The documents of the dossier in delivery order; the order values must go up, each key is
+    unique, and `generated_by` is set exactly for the items the system generates (DOS-01)."""
     reader, data = _load_json(Path(path))
     root = reader.obj(data, "(arquivo)")
-    items, previous = [], 0
+    items, previous, keys = [], 0, set()
     for index, raw in enumerate(reader.items(root, "items", "")):
         field = f"items[{index}]"
         item = reader.obj(raw, field)
@@ -336,12 +338,29 @@ def load_dossier_order(path: Path = DOSSIER_ORDER) -> tuple[DossierItem, ...]:
         if order <= previous:
             raise reader.fail(f"{field}.order", "a ordem deve crescer ao longo do arquivo")
         previous = order
-        items.append(
-            DossierItem(
-                order, reader.text(item, "title", field), _generated_by(reader, item, field)
+        key = reader.text(item, "key", field)
+        if key in keys:
+            raise reader.fail(f"{field}.key", f"a chave {key!r} se repete")
+        keys.add(key)
+        source = _source(reader, item, field)
+        generated_by = _generated_by(reader, item, field)
+        if (source is DossierSource.GERADO) != (generated_by is not None):
+            raise reader.fail(
+                f"{field}.generated_by", "só o item de origem GERADO tem `generated_by`"
             )
+        items.append(
+            DossierItem(order, key, reader.text(item, "title", field), source, generated_by)
         )
     return tuple(items)
+
+
+def _source(reader: _Reader, item: dict[str, Any], field: str) -> DossierSource:
+    value = reader.require(item, "source", field)
+    try:
+        return DossierSource(value)
+    except ValueError:
+        allowed = ", ".join(s.value for s in DossierSource)
+        raise reader.fail(f"{field}.source", f"deve ser um de: {allowed}") from None
 
 
 def _generated_by(reader: _Reader, item: dict[str, Any], field: str) -> DocumentKind | None:

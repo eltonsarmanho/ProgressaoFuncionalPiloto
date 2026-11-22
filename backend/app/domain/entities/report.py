@@ -123,13 +123,24 @@ class ReportLayout:
     entry_style: str
 
 
+class DossierSource(StrEnum):
+    """Who produces a document of the dossier: the system, the board ordinance registered in
+    Stage 6, or the person, who only marks it as delivered (DOS-01)."""
+
+    GERADO = "GERADO"
+    PORTARIA_BANCA = "PORTARIA_BANCA"
+    MANUAL = "MANUAL"
+
+
 @dataclass(frozen=True)
 class DossierItem:
-    """One document of the dossier, in delivery order; `generated_by` is set for the ones the
-    system produces (ORD-01)."""
+    """One document of the dossier, in delivery order, with the key the marks refer to;
+    `generated_by` is set only for the ones the system produces (ORD-01, DOS-01)."""
 
     order: int
+    key: str
     title: str
+    source: DossierSource
     generated_by: DocumentKind | None = None
 
 

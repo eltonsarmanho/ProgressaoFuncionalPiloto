@@ -11,7 +11,7 @@ import pytest
 
 from app.domain.entities.activity import Activity
 from app.domain.entities.generated import DocumentKind
-from app.domain.entities.report import GroupBy, MatchRule
+from app.domain.entities.report import DossierSource, GroupBy, MatchRule
 from app.domain.rules.report_draft import ENTRY_MARKERS, GroupTarget, activity_fields
 from app.infrastructure.documents.config_loader import (
     ConfigError,
@@ -67,10 +67,29 @@ TEMPLATE = {
 REPORTS = {"default": "modelo-a", "templates": {"modelo-a": TEMPLATE}}
 DOSSIER = {
     "items": [
-        {"order": 1, "title": "Requerimento", "generated_by": None},
-        {"order": 2, "title": "Relatório", "generated_by": "RELATORIO"},
-        {"order": 3, "title": "Tabela", "generated_by": "TABELA"},
-        {"order": 4, "title": "Comprovante", "generated_by": "COMPROVANTE"},
+        {"order": 1, "key": "LATTES", "title": "Currículo", "source": "MANUAL"},
+        {
+            "order": 2,
+            "key": "RELATORIO",
+            "title": "Relatório",
+            "source": "GERADO",
+            "generated_by": "RELATORIO",
+        },
+        {
+            "order": 3,
+            "key": "TABELA",
+            "title": "Tabela",
+            "source": "GERADO",
+            "generated_by": "TABELA",
+        },
+        {
+            "order": 4,
+            "key": "COMPROVANTE",
+            "title": "Comprovante",
+            "source": "GERADO",
+            "generated_by": "COMPROVANTE",
+        },
+        {"order": 5, "key": "PORTARIA_BANCA", "title": "Portaria", "source": "PORTARIA_BANCA"},
     ]
 }
 
@@ -312,11 +331,12 @@ def test_the_page_setup_is_checked(tmp_path, path, value):
 def test_the_dossier_order_is_the_order_of_the_file_with_the_generated_ones_marked(tmp_path):
     items = load_dossier_order(write(tmp_path, "dossier_order.json", DOSSIER))
 
-    assert [(i.order, i.title, i.generated_by) for i in items] == [
-        (1, "Requerimento", None),
-        (2, "Relatório", DocumentKind.RELATORIO),
-        (3, "Tabela", DocumentKind.TABELA),
-        (4, "Comprovante", DocumentKind.COMPROVANTE),
+    assert [(i.order, i.key, i.title, i.source, i.generated_by) for i in items] == [
+        (1, "LATTES", "Currículo", DossierSource.MANUAL, None),
+        (2, "RELATORIO", "Relatório", DossierSource.GERADO, DocumentKind.RELATORIO),
+        (3, "TABELA", "Tabela", DossierSource.GERADO, DocumentKind.TABELA),
+        (4, "COMPROVANTE", "Comprovante", DossierSource.GERADO, DocumentKind.COMPROVANTE),
+        (5, "PORTARIA_BANCA", "Portaria", DossierSource.PORTARIA_BANCA, None),
     ]
 
 
@@ -334,6 +354,12 @@ def test_dossier_with_invalid_json_names_the_file(tmp_path):
         (1, {"generated_by": "PORTARIA"}, "items[1].generated_by"),
         (2, {"order": 2}, "items[2].order"),
         (0, {"order": "um"}, "items[0].order"),
+        (2, {"key": "RELATORIO"}, "items[2].key"),
+        (2, {"key": ""}, "items[2].key"),
+        (1, {"source": "OUTRA"}, "items[1].source"),
+        (1, {"generated_by": None}, "items[1].generated_by"),
+        (0, {"generated_by": "TABELA"}, "items[0].generated_by"),
+        (4, {"generated_by": "PARECER"}, "items[4].generated_by"),
     ],
 )
 def test_a_dossier_item_with_a_bad_title_marker_or_order_names_the_field(
@@ -348,6 +374,19 @@ def test_a_dossier_item_with_a_bad_title_marker_or_order_names_the_field(
 
     assert "dossier_order.json" in str(error.value)
     assert field in str(error.value)
+
+
+@pytest.mark.parametrize("missing", ["key", "source"])
+def test_a_dossier_item_without_key_or_source_names_the_field(tmp_path, missing):
+    data = copy.deepcopy(DOSSIER)
+    del data["items"][1][missing]
+    path = write(tmp_path, "dossier_order.json", data)
+
+    with pytest.raises(ConfigError) as error:
+        load_dossier_order(path)
+
+    assert "dossier_order.json" in str(error.value)
+    assert f"items[1].{missing}" in str(error.value)
 
 
 def test_a_dossier_without_items_is_refused(tmp_path):
