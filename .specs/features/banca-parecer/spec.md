@@ -204,7 +204,7 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 | PORT-07 | P1: Portaria da banca | Implementing | Implementing |
 | PORT-08 | P1: Portaria da banca | Implementing | Implementing |
 | PORT-09 | P1: Portaria da banca | Implementing | Implementing |
-| PORT-10 | P1: Portaria da banca | Design | Pending |
+| PORT-10 | P1: Portaria da banca | Implementing | Implementing |
 | PORT-11 | P1: Portaria da banca | Implementing | Implementing |
 | PORT-12 | P1: Portaria da banca | Implementing | Implementing |
 | PAR-01 | P1: Minuta do Parecer | Implementing | Implementing |
@@ -237,8 +237,8 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 | DOS-06 | P2: Checklist do dossiê | Implementing | Implementing |
 | DOS-07 | P2: Checklist do dossiê | Implementing | Implementing |
 | BNAV-01 | P1: Etapas 6 e 7 | Design | Pending |
-| BNAV-02 | P1: Etapas 6 e 7 | Design | Pending |
-| BNAV-03 | P1: Etapas 6 e 7 | Design | Pending |
+| BNAV-02 | P1: Etapas 6 e 7 | Implementing | Implementing |
+| BNAV-03 | P1: Etapas 6 e 7 | Implementing | Implementing |
 
 **Coverage:** 44 total, 0 mapped to tasks, 44 unmapped (Design pendente)
 

@@ -679,7 +679,7 @@ graph LR
 
 #### T18: Envio, substituição e nova leitura da portaria
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `UploadOrdinance.execute(actor, process_id, incoming, expected_version, replace)` valida o arquivo (PDF, PNG ou JPEG até 20 MB), guarda no `FileStorage` do processo, marca `PENDENTE`, audita e, com arquivo anterior, exige `replace=True` (senão 409 `PORTARIA_EXISTENTE`) e apaga o arquivo anterior só depois do commit; `RereadOrdinance.execute(actor, process_id, expected_version)` volta a leitura a `PENDENTE`. Nenhuma linha de `documents` é criada.
 **Where**: `backend/app/application/use_cases/board.py` (new)
@@ -694,9 +694,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_ordinance_upload.py` (novo), com PDF, PNG e JPEG sintéticos gerados no teste: o envio guarda o arquivo no disco, deixa `PENDENTE`, grava nome, tamanho, SHA-256 e páginas e audita (PORT-01); 20 MB + 1 byte e arquivo que não é PDF, PNG nem JPEG dão `UploadRejected` no campo `arquivo` com a mensagem do limite e nada fica no disco (PORT-10); segundo envio sem `replace` dá 409 `PORTARIA_EXISTENTE` e o arquivo anterior fica; com `replace` o arquivo anterior sai do disco **depois** do commit (falha no commit mantém os dois arquivos conhecidos e remove o novo), o novo é lido e a substituição é auditada (PORT-08); portaria só com dados digitados e sem arquivo aceita o envio sem `replace`; versão velha dá `StaleVersion` com o código `VERSAO_DESATUALIZADA` (PORT-12); processo concluído ou arquivado dá 409 `PROCESSO_SOMENTE_LEITURA` (BNAV-02); quem não acessa o processo recebe `NotFound` (BNAV-03); nenhum `Document` é criado, a lista da Etapa 2, `load_generation_inputs` e `compute_process_score` ficam iguais antes e depois do envio (PORT-09); "Ler de novo" passa a `PENDENTE`, sem arquivo recusa com 422 no campo `arquivo` e com leitura `PENDENTE` ou `LENDO` dá 409 `OPERACAO_EM_ANDAMENTO` (PORT-07)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_ordinance_upload.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_ordinance_upload.py` (novo), com PDF, PNG e JPEG sintéticos gerados no teste: o envio guarda o arquivo no disco, deixa `PENDENTE`, grava nome, tamanho, SHA-256 e páginas e audita (PORT-01); 20 MB + 1 byte e arquivo que não é PDF, PNG nem JPEG dão `UploadRejected` no campo `arquivo` com a mensagem do limite e nada fica no disco (PORT-10); segundo envio sem `replace` dá 409 `PORTARIA_EXISTENTE` e o arquivo anterior fica; com `replace` o arquivo anterior sai do disco **depois** do commit (falha no commit mantém os dois arquivos conhecidos e remove o novo), o novo é lido e a substituição é auditada (PORT-08); portaria só com dados digitados e sem arquivo aceita o envio sem `replace`; versão velha dá `StaleVersion` com o código `VERSAO_DESATUALIZADA` (PORT-12); processo concluído ou arquivado dá 409 `PROCESSO_SOMENTE_LEITURA` (BNAV-02); quem não acessa o processo recebe `NotFound` (BNAV-03); nenhum `Document` é criado, a lista da Etapa 2, `load_generation_inputs` e `compute_process_score` ficam iguais antes e depois do envio (PORT-09); "Ler de novo" passa a `PENDENTE`, sem arquivo recusa com 422 no campo `arquivo` e com leitura `PENDENTE` ou `LENDO` dá 409 `OPERACAO_EM_ANDAMENTO` (PORT-07)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_ordinance_upload.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted
