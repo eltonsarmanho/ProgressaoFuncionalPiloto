@@ -1107,7 +1107,7 @@ graph LR
 
 #### T33: Casos de uso do checklist do dossiê
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `GetDossier.execute(actor, process_id) -> list[ChecklistItem]` (lê a ordem pelo provedor injetado, a última versão `PRONTO` por tipo, a portaria, as marcas e a versão da tabela escolhida do processo, e chama `dossier_checklist`) e `SetDossierDelivery.execute(actor, process_id, key, delivered)`: 422 para chave que não é `MANUAL`, 409 em processo somente leitura, marcar e desmarcar idempotentes e auditados sem justificativa.
 **Where**: `backend/app/application/use_cases/dossier.py` (new)
@@ -1122,9 +1122,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_dossier.py` (novo): processo só com Tabela, Relatório e Comprovante prontos dá três `GERADO` e seis `PENDENTE` (o teste independente da spec); marcar "Currículo Lattes" e recarregar mostra `ENTREGUE` e o evento de auditoria (sem justificativa); marcar de novo não grava evento; desmarcar volta a `PENDENTE` e audita; chave de item gerado ou da portaria (`TABELA`, `PORTARIA_BANCA`) e chave inexistente dão 422; processo `CONCLUIDO` ou `ARQUIVADO` dá 409 `PROCESSO_SOMENTE_LEITURA` na marca (a leitura continua permitida); a portaria com membro mostra `REGISTRADA`; a última Tabela gerada com outra versão da tabela traz `outdated_table` e a escolha de outra versão o limpa; fora do acesso `NotFound` nas duas operações
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_dossier.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_dossier.py` (novo): processo só com Tabela, Relatório e Comprovante prontos dá três `GERADO` e seis `PENDENTE` (o teste independente da spec); marcar "Currículo Lattes" e recarregar mostra `ENTREGUE` e o evento de auditoria (sem justificativa); marcar de novo não grava evento; desmarcar volta a `PENDENTE` e audita; chave de item gerado ou da portaria (`TABELA`, `PORTARIA_BANCA`) e chave inexistente dão 422; processo `CONCLUIDO` ou `ARQUIVADO` dá 409 `PROCESSO_SOMENTE_LEITURA` na marca (a leitura continua permitida); a portaria com membro mostra `REGISTRADA`; a última Tabela gerada com outra versão da tabela traz `outdated_table` e a escolha de outra versão o limpa; fora do acesso `NotFound` nas duas operações
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_dossier.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted
