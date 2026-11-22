@@ -217,3 +217,41 @@ def test_a_mestrado_promoted_to_c_gets_the_titration_alert_with_the_manual_and_i
     assert "TITULACAO_INSUFICIENTE" not in [a["code"] for a in after["alerts"]]
     # the other alerts of the process stay
     assert alert_of(after, "INTERSTICIO_INSUFICIENTE")["norm_code"] == "LEI-12772-2012"
+
+
+# NTIT-07: the titration alert never blocks editing nor starting the process
+def test_the_titration_alert_does_not_block_editing_or_starting_the_process(client, admin, process):
+    headers = admin[1]
+    assert "TITULACAO_INSUFICIENTE" in [a["code"] for a in process["alerts"]]
+
+    edited = client.put(
+        f"/api/processes/{process['id']}",
+        json={**PROMOTION_B_C, "notes": "Observação sintética", "expected_version": 1},
+        headers=headers,
+    )
+    assert edited.status_code == 200, edited.text
+    assert edited.json()["notes"] == "Observação sintética"
+    assert alert_of(edited.json(), "TITULACAO_INSUFICIENTE")["severity"] == "ALERTA"
+
+    started = client.post(
+        f"/api/processes/{process['id']}/status",
+        json={"status": "EM_ANDAMENTO", "expected_version": edited.json()["version"]},
+        headers=headers,
+    )
+    assert started.status_code == 200, started.text
+    stored = read(client, process)
+    assert stored["status"] == "EM_ANDAMENTO"
+    assert alert_of(stored, "TITULACAO_INSUFICIENTE")["severity"] == "ALERTA"
+
+    edited_again = client.put(
+        f"/api/processes/{process['id']}",
+        json={
+            **PROMOTION_B_C,
+            "notes": "Observação sintética 2",
+            "expected_version": stored["version"],
+            "justificativa": "Ajuste sintético da observação",
+        },
+        headers=headers,
+    )
+    assert edited_again.status_code == 200, edited_again.text
+    assert alert_of(edited_again.json(), "TITULACAO_INSUFICIENTE")["severity"] == "ALERTA"
