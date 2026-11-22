@@ -301,7 +301,40 @@ def test_the_conclusion_preview_gives_the_state_of_each_kind():
         "files": 3,
         "bytes": 4096,
         "artifacts": {"TABELA": True, "RELATORIO": False},
+        "pending_board": [],
     }
+
+
+def test_the_conclusion_preview_lists_the_pending_board_documents_in_the_dossier_order():
+    preview = ConclusionPreview(
+        files=0,
+        bytes=0,
+        artifacts={DocumentKind.TABELA: True},
+        pending_board=("REQUERIMENTO", "PORTARIA_BANCA", "PARECER"),
+    )
+
+    body = ConclusionPreviewOut.of(preview).model_dump(mode="json")
+
+    assert body["pending_board"] == ["REQUERIMENTO", "PORTARIA_BANCA", "PARECER"]
+    assert body["artifacts"] == {"TABELA": True}
+
+
+def test_the_detail_of_a_parecer_summarizes_the_total_and_the_subtotals_of_its_snapshot():
+    snapshot = {
+        "table_version": {"id": str(uuid.uuid4()), "name": "Tabela oficial"},
+        "interstice": {"start": "2022-11-23", "end": "2024-11-23"},
+        "total": "211.00",
+        "subtotals": {"2": "52.00", "3": "7.00"},
+        "conclusion": "FAVORAVEL",
+    }
+    row = ready_row(kind=DocumentKind.PARECER, snapshot=snapshot)
+
+    body = GeneratedDocumentDetailOut.of(row).model_dump(mode="json")
+
+    assert body["kind"] == "PARECER"
+    assert body["summary"]["total"] == "211.00"
+    assert body["summary"]["subtotals"] == {"2": "52.00", "3": "7.00"}
+    assert body["summary"]["table_name"] == "Tabela oficial"
 
 
 def test_the_conclusion_result_uses_the_documented_names_and_the_partial_alert():

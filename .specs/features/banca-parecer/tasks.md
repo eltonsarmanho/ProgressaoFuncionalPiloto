@@ -1248,7 +1248,7 @@ graph LR
 
 #### T38: API dos documentos gerados com os dois tipos novos
 
-**Status**: Pending
+**Status**: Done
 
 **What**: As rotas existentes de `generated-documents` aceitam e devolvem `PARECER` e `REQUERIMENTO` (pedido, listagem por `kind`, detalhe com o resumo do instantâneo e download com o nome "Parecer_<anos>_v<n>" e "Requerimento_<anos>_v<n>"); `ConclusionPreviewOut` ganha `pending_board` e `artifacts` com os três tipos; testes de somente leitura e de 404 para os cinco tipos.
 **Where**: `backend/app/presentation/schemas/generated.py` (modify; as rotas de `backend/app/presentation/api/generated_documents.py` só mudam de teste)
@@ -1263,10 +1263,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_generated_documents_api.py` e em `backend/tests/unit/presentation/test_generated_schemas.py`: `POST` com `kind` `REQUERIMENTO` devolve 202 e a linha `GERANDO`; `POST` com `PARECER` sem conclusão devolve 422 com `code` `CONCLUSAO_AUSENTE` no corpo `detail[0]`, e a sequência `BANCA_SEM_MEMBROS`, `TABELA_AUSENTE`, `TABELA_DESATUALIZADA` a cada pré-requisito cumprido; depois de executar o executor, `GET ?kind=PARECER` lista a versão 1 `PRONTO` e o download do DOCX e do PDF devolve o arquivo exato com `Content-Disposition` `Parecer_2022-2024_v1.docx` e o `ETag` do SHA-256; pedir de novo gera a versão 2 (PAR-14); o resumo do detalhe do Parecer traz o `total` e os `subtotals`; **nos quatro estados do processo** (`RASCUNHO`, `EM_ANDAMENTO`, `CONCLUIDO`, `ARQUIVADO`) o teste parametrizado confere que `PARECER` e `REQUERIMENTO` dão 409 `PROCESSO_SOMENTE_LEITURA` em `CONCLUIDO` e `ARQUIVADO` e são aceitos nos outros dois, e que Tabela e Relatório seguem aceitos em `CONCLUIDO` (DEL-13) (risco do design: nenhum teste cobria geração em processo concluído ou arquivado nesse nível); `GET /conclusion` traz `pending_board` e `artifacts` só com os três tipos; os cinco tipos dão 404 a quem não acessa o processo
-- [ ] Testes existentes que mudam: `backend/tests/integration/api/test_conclusion_api.py` (o corpo da prévia ganha `pending_board`) e `test_conclusion_acceptance.py` (já ajustado na T5 para os três tipos; passa a conferir o aviso)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_generated_documents_api.py tests/integration/api/test_conclusion_api.py tests/integration/api/test_conclusion_acceptance.py tests/unit/presentation/test_generated_schemas.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/api/test_generated_documents_api.py` e em `backend/tests/unit/presentation/test_generated_schemas.py`: `POST` com `kind` `REQUERIMENTO` devolve 202 e a linha `GERANDO`; `POST` com `PARECER` sem conclusão devolve 422 com `code` `CONCLUSAO_AUSENTE` no corpo `detail[0]`, e a sequência `BANCA_SEM_MEMBROS`, `TABELA_AUSENTE`, `TABELA_DESATUALIZADA` a cada pré-requisito cumprido; depois de executar o executor, `GET ?kind=PARECER` lista a versão 1 `PRONTO` e o download do DOCX e do PDF devolve o arquivo exato com `Content-Disposition` `Parecer_2022-2024_v1.docx` e o `ETag` do SHA-256; pedir de novo gera a versão 2 (PAR-14); o resumo do detalhe do Parecer traz o `total` e os `subtotals`; **nos quatro estados do processo** (`RASCUNHO`, `EM_ANDAMENTO`, `CONCLUIDO`, `ARQUIVADO`) o teste parametrizado confere que `PARECER` e `REQUERIMENTO` dão 409 `PROCESSO_SOMENTE_LEITURA` em `CONCLUIDO` e `ARQUIVADO` e são aceitos nos outros dois, e que Tabela e Relatório seguem aceitos em `CONCLUIDO` (DEL-13) (risco do design: nenhum teste cobria geração em processo concluído ou arquivado nesse nível); `GET /conclusion` traz `pending_board` e `artifacts` só com os três tipos; os cinco tipos dão 404 a quem não acessa o processo
+- [x] Testes existentes que mudam: `backend/tests/integration/api/test_conclusion_api.py` (o corpo da prévia ganha `pending_board`) e `test_conclusion_acceptance.py` (já ajustado na T5 para os três tipos; passa a conferir o aviso)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_generated_documents_api.py tests/integration/api/test_conclusion_api.py tests/integration/api/test_conclusion_acceptance.py tests/unit/presentation/test_generated_schemas.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted

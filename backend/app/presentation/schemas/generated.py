@@ -568,15 +568,22 @@ class DeliveryIn(_Body):
 
 
 class ConclusionPreviewOut(BaseModel):
-    """What concluding frees and which generated kind already has a ready version."""
+    """What concluding frees, which required kind already has a ready version and which board
+    documents are still missing (a warning, never a block: DOS-07)."""
 
     files: int
     bytes: int
     artifacts: dict[DocumentKind, bool]
+    pending_board: list[str]
 
     @classmethod
     def of(cls, preview: ConclusionPreview) -> "ConclusionPreviewOut":
-        return cls(files=preview.files, bytes=preview.bytes, artifacts=dict(preview.artifacts))
+        return cls(
+            files=preview.files,
+            bytes=preview.bytes,
+            artifacts=dict(preview.artifacts),
+            pending_board=list(preview.pending_board),
+        )
 
 
 class ConclusionIn(_Body):

@@ -5,8 +5,13 @@ import uuid
 
 import pytest
 
+from app.domain.entities.generated import DocumentKind
+from app.domain.entities.process import ProcessStatus
 from app.domain.entities.user import Role
+from tests.integration.api.board_support import as_user, board_url, set_status
 from tests.integration.api.generated_support import (
+    add_activity,
+    add_ready,
     ask,
     choose_table,
     file_url,
@@ -228,3 +233,229 @@ def test_no_response_carries_a_file_path_a_stored_name_or_the_professor(client, 
         assert str(tmp_path) not in text
         assert "internal_name" not in text and '.docx"' not in text
         assert "Maria Docente" not in text
+
+
+# --- PARECER and REQUERIMENTO (PAR-02, PAR-07..10, PAR-14, REQ-01, BNAV-02, BNAV-03) -----------
+
+NEW_KINDS = ["PARECER", "REQUERIMENTO"]
+ALL_KINDS = ["TABELA", "RELATORIO", "COMPROVANTE", "REQUERIMENTO", "PARECER"]
+MEMBER = {"name": "Ana Presidente Souza", "role": "PRESIDENTE"}
+
+
+def save_opinion(client, scenario, conclusion="FAVORAVEL", version=0):
+    response = client.put(
+        board_url(scenario.process, "/opinion"),
+        json={"conclusion": conclusion, "opinion_date": "2025-04-01", "expected_version": version},
+        headers=scenario.headers,
+    )
+    assert response.status_code == 200, response.text
+
+
+def save_ordinance(client, scenario):
+    response = client.put(
+        board_url(scenario.process, "/ordinance"),
+        json={"number": "77/2025", "members": [MEMBER], "expected_version": 0},
+        headers=scenario.headers,
+    )
+    assert response.status_code == 200, response.text
+
+
+def refusal(response):
+    assert response.status_code == 422, response.text
+    [detail] = response.json()["detail"]
+    assert detail["field"] == "geracao" and detail["message"]
+    return detail["code"]
+
+
+def prepared(client, scenario):
+    """Everything a Parecer asks for: the conclusion, a member and a Tabela `PRONTO`."""
+    save_opinion(client, scenario)
+    save_ordinance(client, scenario)
+    return generate(client, scenario.headers, scenario.process, "TABELA")
+
+
+def test_a_requerimento_is_accepted_at_once_with_no_activity_and_no_table(
+    client, admin, process, scoring_tables
+):
+    response = ask(client, admin[1], process, "REQUERIMENTO")
+
+    assert response.status_code == 202
+    body = response.json()
+    assert set(body) == ROW_KEYS
+    assert (body["kind"], body["state"], body["version_number"]) == (
+        "REQUERIMENTO",
+        "GERANDO",
+        None,
+    )
+
+
+def test_a_parecer_is_refused_in_the_order_conclusion_members_table_and_outdated_table(
+    client, scenario
+):
+    process, headers = scenario.process, scenario.headers
+
+    assert refusal(ask(client, headers, process, "PARECER")) == "CONCLUSAO_AUSENTE"
+    save_opinion(client, scenario, conclusion=None)
+    assert refusal(ask(client, headers, process, "PARECER")) == "CONCLUSAO_AUSENTE"
+    save_opinion(client, scenario, version=1)
+    assert refusal(ask(client, headers, process, "PARECER")) == "BANCA_SEM_MEMBROS"
+    save_ordinance(client, scenario)
+    assert refusal(ask(client, headers, process, "PARECER")) == "TABELA_AUSENTE"
+    generate(client, headers, process, "TABELA")
+    accepted = ask(client, headers, process, "PARECER")
+    assert accepted.status_code == 202
+    assert run_executor(client) is True
+    add_activity(client, headers, process, title="Outra orientação")
+    stale = ask(client, headers, process, "PARECER")
+    assert refusal(stale) == "TABELA_DESATUALIZADA"
+    assert stale.json()["detail"][0]["message"] == (
+        "A pontuação mudou depois da última Tabela; gere a Tabela de novo"
+    )
+    generate(client, headers, process, "TABELA")
+    assert ask(client, headers, process, "PARECER").status_code == 202
+
+
+def test_the_parecer_is_listed_ready_and_downloads_both_files_with_the_plain_name_and_etag(
+    client, scenario
+):
+    prepared(client, scenario)
+
+    ready = generate(client, scenario.headers, scenario.process, "PARECER")
+
+    listed = client.get(generations_url(scenario.process), params={"kind": "PARECER"}).json()
+    assert [(r["kind"], r["state"], r["version_number"]) for r in listed] == [
+        ("PARECER", "PRONTO", 1)
+    ]
+    for extension, magic in (("docx", b"PK"), ("pdf", b"%PDF")):
+        response = client.get(file_url(ready, extension))
+        stored = next(f for f in ready["files"] if f["format"] == extension.upper())
+        assert response.status_code == 200
+        assert response.headers["content-disposition"] == (
+            f"attachment; filename*=UTF-8''Parecer_2022-2024_v1.{extension}"
+        )
+        assert response.headers["etag"] == f'"{stored["sha256"]}"'
+        assert stored["sha256"] == sha256(response.content)
+        assert response.content.startswith(magic)
+        assert len(response.content) == stored["size_bytes"]
+
+
+def test_the_requerimento_downloads_with_its_own_plain_name(client, scenario):
+    ready = generate(client, scenario.headers, scenario.process, "REQUERIMENTO")
+
+    response = client.get(file_url(ready, "pdf"))
+
+    assert response.status_code == 200
+    assert response.headers["content-disposition"] == (
+        "attachment; filename*=UTF-8''Requerimento_2022-2024_v1.pdf"
+    )
+
+
+def test_asking_for_the_parecer_again_gives_version_2_and_keeps_version_1(client, scenario):
+    prepared(client, scenario)
+    first = generate(client, scenario.headers, scenario.process, "PARECER")
+
+    second = generate(client, scenario.headers, scenario.process, "PARECER")
+
+    assert (first["version_number"], second["version_number"]) == (1, 2)
+    listed = client.get(generations_url(scenario.process), params={"kind": "PARECER"}).json()
+    assert [r["version_number"] for r in listed] == [2, 1]
+    assert client.get(file_url(first, "pdf")).status_code == 200
+
+
+def test_the_detail_of_the_parecer_has_the_total_and_the_subtotals_of_the_table(client, scenario):
+    table = prepared(client, scenario)
+    parecer = generate(client, scenario.headers, scenario.process, "PARECER")
+
+    table_summary = client.get(f"/api/generated-documents/{table['id']}").json()["summary"]
+    summary = client.get(f"/api/generated-documents/{parecer['id']}").json()["summary"]
+
+    scored = client.get(f"/api/processes/{scenario.process['id']}/scoring").json()
+    assert summary["total"] == scored["total"] == table_summary["total"]
+    assert summary["subtotals"] == table_summary["subtotals"] != {}
+
+
+def test_a_second_request_of_the_same_new_kind_while_one_runs_is_409(client, scenario):
+    assert ask(client, scenario.headers, scenario.process, "REQUERIMENTO").status_code == 202
+
+    second = ask(client, scenario.headers, scenario.process, "REQUERIMENTO")
+
+    assert second.status_code == 409
+    assert second.json()["code"] == "GERACAO_EM_ANDAMENTO"
+
+
+def set_state(uow_factory, scenario, status):
+    set_status(uow_factory, scenario.process, ProcessStatus(status))
+
+
+@pytest.mark.parametrize("status", ["RASCUNHO", "EM_ANDAMENTO", "CONCLUIDO", "ARQUIVADO"])
+@pytest.mark.parametrize("kind", NEW_KINDS)
+def test_the_parecer_and_the_requerimento_follow_the_state_of_the_process_in_the_four_states(
+    client, scenario, uow_factory, status, kind
+):
+    prepared(client, scenario)
+    set_state(uow_factory, scenario, status)
+
+    response = ask(client, scenario.headers, scenario.process, kind)
+
+    if status in ("CONCLUIDO", "ARQUIVADO"):
+        assert response.status_code == 409
+        assert response.json()["code"] == "PROCESSO_SOMENTE_LEITURA"
+    else:
+        assert response.status_code == 202
+        assert response.json()["kind"] == kind
+
+
+@pytest.mark.parametrize("kind", NEW_KINDS)
+def test_a_closed_process_gives_409_before_any_refusal_of_the_content(
+    client, scenario, uow_factory, kind
+):
+    set_state(uow_factory, scenario, "ARQUIVADO")
+
+    response = ask(client, scenario.headers, scenario.process, kind)
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "PROCESSO_SOMENTE_LEITURA"
+
+
+@pytest.mark.parametrize("kind", ["TABELA", "RELATORIO"])
+def test_the_table_and_the_report_are_still_accepted_in_a_concluded_process(
+    client, scenario, uow_factory, kind
+):
+    set_state(uow_factory, scenario, "CONCLUIDO")
+
+    assert ask(client, scenario.headers, scenario.process, kind).status_code == 202
+
+
+@pytest.mark.parametrize("kind", ALL_KINDS)
+def test_without_access_to_the_process_every_route_of_every_kind_is_404(
+    client, scenario, uow_factory, actors, kind
+):
+    add_ready(uow_factory, scenario.process, scenario.user, DocumentKind(kind))
+    with uow_factory() as uow:
+        ready = uow.generations.latest_ready_by_kind(uuid.UUID(scenario.process["id"]))
+    row = {"id": str(ready[DocumentKind(kind)].id)}
+
+    for outsider in (actors.other_docente, actors.other_secretaria):
+        outsider_headers = as_user(client, outsider)
+
+        assert ask(client, outsider_headers, scenario.process, kind).status_code == 404
+        listing = client.get(generations_url(scenario.process), params={"kind": kind})
+        assert listing.status_code == 404
+        assert client.get(f"/api/generated-documents/{row['id']}").status_code == 404
+        assert client.get(file_url(row, "pdf")).status_code == 404
+
+
+def test_the_conclusion_preview_names_the_board_documents_still_missing(
+    client, scenario, uow_factory
+):
+    url = f"/api/processes/{scenario.process['id']}/conclusion"
+    before = client.get(url).json()
+    add_ready(uow_factory, scenario.process, scenario.user, DocumentKind.REQUERIMENTO)
+    save_ordinance(client, scenario)
+    add_ready(uow_factory, scenario.process, scenario.user, DocumentKind.PARECER)
+    after = client.get(url).json()
+
+    assert before["pending_board"] == ["REQUERIMENTO", "PORTARIA_BANCA", "PARECER"]
+    assert before["artifacts"] == {"TABELA": False, "RELATORIO": False, "COMPROVANTE": False}
+    assert after["pending_board"] == []
+    assert after["artifacts"] == before["artifacts"]

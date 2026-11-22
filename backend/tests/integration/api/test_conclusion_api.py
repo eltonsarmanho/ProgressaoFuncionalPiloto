@@ -69,6 +69,7 @@ def test_the_preview_gives_files_bytes_and_whether_each_kind_has_a_ready_version
         "files": 1,
         "bytes": len(pdf("entrada")),
         "artifacts": {"TABELA": False, "RELATORIO": False, "COMPROVANTE": False},
+        "pending_board": ["REQUERIMENTO", "PORTARIA_BANCA", "PARECER"],
     }
     assert after["artifacts"] == {"TABELA": True, "RELATORIO": False, "COMPROVANTE": False}
 

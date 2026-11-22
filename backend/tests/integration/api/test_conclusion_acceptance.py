@@ -103,6 +103,7 @@ def test_concluding_removes_every_input_file_keeps_the_generated_ones_and_frees_
     preview = client.get(conclusion_url(done.process)).json()
     assert (preview["files"], preview["bytes"]) == (3, done.size_before)
     assert preview["artifacts"] == {"TABELA": True, "RELATORIO": True, "COMPROVANTE": True}
+    assert preview["pending_board"] == ["REQUERIMENTO", "PORTARIA_BANCA", "PARECER"]
 
     response = conclude(client, done)
 
