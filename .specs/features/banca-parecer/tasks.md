@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Design**: `.specs/features/banca-parecer/design.md`
 **Spec**: `.specs/features/banca-parecer/spec.md`
-**Status**: Draft (aguarda a validação do usuário)
+**Status**: Approved (usuário, 2026-11-22: "Aprovar e executar" + decisões da seção Notas confirmadas; 7 lotes por sub-agente + Verifier)
 
 Regras de execução desta feature:
 
@@ -21,7 +21,7 @@ Regras de execução desta feature:
 - **Gate em níveis**: o gate completo do backend leva cerca de 14 minutos, então cada tarefa roda o nível `targeted` (ou `quick`) com os arquivos que ela escreve e os testes existentes que ela lista; o gate `full` roda só na **última tarefa de backend de cada fase** (T7, T11, T16, T23, T32, T39), e o `build` ao fim da documentação (T50) e na verificação (T51). Tarefas de frontend rodam o gate `front`.
 - Classe, denominação e nível do processo saem sempre dos seis campos que o servidor digitou na Etapa 1 (NMOV-01 do `normativo`): nenhuma tarefa deduz a classe seguinte, a denominação ou o nível, e nenhum texto de documento usa `next_class` nem a estrutura de carreira para isso.
 - O Parecer e o Requerimento são gerados sem IA (PAR-11, REQ-08), e a conclusão do Parecer nunca é preenchida nem sugerida pelo sistema (PAR-12). A IA só lê a portaria (PORT-02), recebe só texto mascarado (PORT-04), e a chave da MariTalk fica só no backend (nunca em log, resposta, exceção nem pacote do frontend).
-- Sem campo de justificativa nas Etapas 6 e 7 (regra 5). A auditoria da portaria, do Parecer, da cidade e das marcas guarda identificadores, contagens, códigos e datas; **nome de membro da banca não entra no registro de auditoria** (decisão a confirmar na aprovação, ver Notas).
+- Sem campo de justificativa nas Etapas 6 e 7 (regra 5). A auditoria da portaria, do Parecer, da cidade e das marcas guarda identificadores, contagens, códigos e datas; **nome de membro da banca não entra no registro de auditoria** (decisão confirmada pelo usuário em 2026-11-22, ver Notas).
 - Documentos já gerados não mudam (AD-012): o Parecer e o Requerimento são versões imutáveis, numeradas só em `PRONTO`.
 - Cada tarefa que adiciona caso de uso a `Container` o liga na tarefa de ligação (T34); os testes de caso de uso montam o caso de uso direto com `uow_factory`, como em `backend/tests/integration/doc_usecases/`.
 
