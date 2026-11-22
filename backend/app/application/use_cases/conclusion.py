@@ -11,7 +11,7 @@ from uuid import UUID
 
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
-from app.application.services.purge_inputs import PurgeInputDocuments
+from app.application.services.purge_inputs import PurgeInputDocuments, ordinance_file_view
 from app.application.use_cases.processes import ENTITY, check_status_change
 from app.application.use_cases.scoring import _ScoringUseCase
 from app.domain.entities.audit import AuditAction
@@ -21,18 +21,31 @@ from app.domain.entities.process import ProcessStatus
 from app.domain.entities.user import User
 from app.domain.errors import Conflict, GenerationRefused
 from app.domain.repositories.ports import UnitOfWork
-from app.domain.rules.conclusion_rules import check_conclusion, purge_outcome, summarize_purge
+from app.domain.rules.conclusion_rules import (
+    PurgeableDocument,
+    check_conclusion,
+    purge_outcome,
+    summarize_purge,
+)
 
 
 class GetConclusionPreview(_ScoringUseCase):
     def execute(self, actor: User, process_id: UUID) -> ConclusionPreview:
         """Files and bytes the conclusion frees and the generated kinds that have a PRONTO
-        version (DEL-03). Every input document counts, the ones outside the interstice too."""
+        version (DEL-03). Every input document counts, the ones outside the interstice too, and
+        so does the ordinance file; `pending_board` lists the board documents still missing
+        (DOS-07)."""
         with self._uow_factory() as uow:
             self._readable(uow, actor, process_id)
             documents = uow.documents.list_for_process(process_id)
             ready = uow.generations.latest_ready_by_kind(process_id)
-            return summarize_purge(documents, ready)
+            ordinance = uow.board.get(process_id)
+            return summarize_purge(
+                documents,
+                ready,
+                ordinance_file_view(ordinance),
+                ordinance is not None and ordinance.is_registered,
+            )
 
 
 class ConcludeProcess(_ScoringUseCase):
@@ -70,9 +83,12 @@ class ConcludeProcess(_ScoringUseCase):
             # Takes the lock of the process row: a document sent from now on waits for this
             # transaction, so the documents read below are the ones that stay.
             uow.process_purge.busy_reasons(process_id)
-            left = [
+            left: list[PurgeableDocument] = [
                 d for d in uow.documents.list_for_process(process_id) if d.file_deleted_at is None
             ]
+            ordinance_file = ordinance_file_view(uow.board.get(process_id))
+            if ordinance_file is not None and ordinance_file.file_deleted_at is None:
+                left.append(ordinance_file)
             outcome = purge_outcome(removed.removed, len(left), removed.bytes_freed)
             self._audit.record(
                 uow,

@@ -9,6 +9,7 @@ import pytest
 from app.application.services.purge_inputs import PurgeInputDocuments
 from app.application.use_cases.conclusion import ConcludeProcess
 from app.domain.entities.audit import AuditAction
+from app.domain.entities.board import ReadingState
 from app.domain.entities.conclusion import ConclusionResult
 from app.domain.entities.generated import (
     ARTIFACT_KINDS,
@@ -19,10 +20,12 @@ from app.domain.entities.generated import (
 from app.domain.entities.process import ProcessStatus
 from app.domain.errors import Conflict, GenerationRefused, NotFound, StaleVersion
 from app.domain.repositories.ports import JobStatus, ProcessingJob
+from tests.integration.doc_usecases.board_support import MEMBERS, set_reading_state, stored_board
 from tests.integration.doc_usecases.conclusion_support import (
     add_all_ready,
     add_generation,
     add_input_document,
+    add_ordinance,
     add_stored_generation,
     file_of,
     state_of,
@@ -357,3 +360,112 @@ def test_a_row_only_document_is_closed_without_a_file(gen):
 
     assert result == ConclusionResult(S.CONCLUIDO, 1, 0, 33)
     assert state_of(gen, row_only).row.file_deleted_at is not None
+
+
+# --- the ordinance (DOS-07, PORT-09) ------------------------------------------------------
+
+
+def test_the_conclusion_without_requerimento_ordinance_and_parecer_concludes(gen):
+    set_status(gen.world, S.EM_ANDAMENTO)
+    add_all_ready(gen.world)  # Tabela, Relatório and Comprovante only
+
+    result = conclude(gen)
+
+    assert result == ConclusionResult(S.CONCLUIDO, 0, 0, 0)
+    assert stored(gen).status is S.CONCLUIDO
+
+
+def test_the_conclusion_removes_the_ordinance_file_and_keeps_number_date_and_members(gen, ready):
+    file, before = add_ordinance(gen, size=40, members=MEMBERS)
+
+    result = conclude(gen)
+
+    assert result == ConclusionResult(S.CONCLUIDO, 4, 0, 600 + 40)
+    assert not gen.originals.path(gen.world.process.id, file.internal_name).exists()
+    after = stored_board(gen.world)
+    assert after.file.deleted_at is not None
+    assert (after.number, after.ordinance_date, after.members) == (
+        before.number,
+        before.ordinance_date,
+        before.members,
+    )
+    assert after.is_registered
+
+
+def test_the_audit_counts_the_ordinance_file_and_names_no_file(gen, ready):
+    file, _ = add_ordinance(gen, size=40)
+    before = len(events(gen))
+
+    conclude(gen)
+
+    purge_event = next(
+        e for e in events(gen)[before:] if e.changes.get("operation", {}).get("after") == "PURGE"
+    )
+    assert {k: v["after"] for k, v in purge_event.changes.items()} == {
+        "operation": "PURGE",
+        "files_removed": 4,
+        "files_pending": 0,
+        "bytes_removed": 640,
+        "bytes_pending": 0,
+    }
+    assert file.original_name not in json.dumps(purge_event.changes)
+    assert file.internal_name not in json.dumps(purge_event.changes)
+
+
+def test_an_ordinance_file_that_cannot_be_removed_keeps_the_process_em_andamento(gen, ready):
+    file, _ = add_ordinance(gen, size=40)
+    storage = FlakyStorage(gen.originals, failing={file.internal_name})
+    before = len(events(gen))
+
+    result = conclude(gen, storage=storage)
+
+    assert (result.status, result.files_removed, result.files_pending) == (S.EM_ANDAMENTO, 3, 1)
+    assert [a.code for a in result.alerts] == [GenerationAlertCode.EXCLUSAO_PARCIAL]
+    assert stored(gen).status is S.EM_ANDAMENTO
+    assert stored_board(gen.world).file.deleted_at is None
+    new = events(gen)[before:]
+    assert {k: v["after"] for k, v in new[0].changes.items()} == {
+        "operation": "PURGE",
+        "files_removed": 3,
+        "files_pending": 1,
+        "bytes_removed": 600,
+        "bytes_pending": 40,
+    }
+    assert not any("status" in e.changes for e in new)
+
+
+def test_repeating_after_the_ordinance_file_failed_concludes(gen, ready):
+    file, _ = add_ordinance(gen, size=40)
+    conclude(gen, storage=FlakyStorage(gen.originals, failing={file.internal_name}))
+
+    result = conclude(gen)
+
+    assert result == ConclusionResult(S.CONCLUIDO, 1, 0, 40)
+    assert stored(gen).status is S.CONCLUIDO
+    assert stored_board(gen.world).file.deleted_at is not None
+
+
+def test_repeating_on_a_concluded_process_with_an_ordinance_changes_nothing(gen, ready):
+    add_ordinance(gen, size=40, members=MEMBERS)
+    conclude(gen)
+    process, board, count = stored(gen), stored_board(gen.world), len(events(gen))
+
+    again = conclude(gen)
+
+    assert again == ConclusionResult(S.CONCLUIDO, 0, 0, 0)
+    assert stored(gen) == process and stored_board(gen.world) == board
+    assert len(events(gen)) == count
+
+
+@pytest.mark.parametrize("state", [ReadingState.PENDENTE, ReadingState.LENDO])
+def test_a_reading_of_the_ordinance_in_progress_is_409_and_nothing_is_removed(gen, ready, state):
+    file, _ = add_ordinance(gen, size=40, state=ReadingState.PENDENTE)
+    set_reading_state(gen.world, state)
+
+    with pytest.raises(Conflict) as error:
+        conclude(gen)
+
+    assert error.value.code == "OPERACAO_EM_ANDAMENTO"
+    assert_nothing_removed(gen, ready)
+    assert gen.originals.path(gen.world.process.id, file.internal_name).exists()
+    assert stored_board(gen.world).file.deleted_at is None

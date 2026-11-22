@@ -1,5 +1,6 @@
-"""DEL-03, DEL-15: GetConclusionPreview tells the files and bytes the conclusion would free and
-which generated kinds have a PRONTO version."""
+"""DEL-03, DEL-15, DOS-07, PORT-09: GetConclusionPreview tells the files and bytes the conclusion
+would free (the ordinance file included), which generated kinds have a PRONTO version and which
+board documents are still missing."""
 
 import uuid
 
@@ -10,10 +11,12 @@ from app.application.use_cases.conclusion import GetConclusionPreview
 from app.domain.entities.conclusion import ConclusionPreview
 from app.domain.entities.generated import ARTIFACT_KINDS, DocumentKind, GenerationState
 from app.domain.errors import NotFound
+from tests.integration.doc_usecases.board_support import MEMBERS
 from tests.integration.doc_usecases.conclusion_support import (
     add_all_ready,
     add_generation,
     add_input_document,
+    add_ordinance,
 )
 from tests.integration.doc_usecases.generation_support import add_document
 from tests.integration.doc_usecases.test_purge_inputs import FixedClock
@@ -119,3 +122,75 @@ def test_the_owner_docente_and_the_unit_secretaria_can_read_it(gen, who):
     result = preview_uc(world).execute(getattr(world, who), world.process.id)
 
     assert (result.files, result.bytes) == (1, 7)
+
+
+# --- the ordinance (DOS-07, PORT-09) ------------------------------------------------------
+
+
+def test_a_document_and_an_ordinance_file_give_two_files_and_the_bytes_of_both(gen):
+    world = gen.world
+    add_input_document(gen, size=100)
+    add_ordinance(gen, size=40)
+
+    result = preview_uc(world).execute(world.admin, world.process.id)
+
+    assert (result.files, result.bytes) == (2, 140)
+
+
+def test_an_ordinance_without_a_file_or_with_the_file_already_removed_is_not_counted(gen):
+    world = gen.world
+    add_input_document(gen, size=100)
+    add_ordinance(gen, stored=False)  # only typed data
+
+    assert preview_uc(world).execute(world.admin, world.process.id).files == 1
+
+    with world.uow_factory() as uow:
+        uow.board.mark_file_deleted(world.process.id, FixedClock().now())  # no file to mark
+        uow.commit()
+    assert (preview_uc(world).execute(world.admin, world.process.id).bytes) == 100
+
+
+def test_the_ordinance_file_the_conclusion_removed_is_not_counted_again(gen):
+    world = gen.world
+    add_ordinance(gen, size=40)
+    PurgeInputDocuments(world.uow_factory, gen.originals, FixedClock()).execute(world.process.id)
+
+    result = preview_uc(world).execute(world.admin, world.process.id)
+
+    assert (result.files, result.bytes) == (0, 0)
+
+
+def test_the_pending_board_documents_leave_the_list_as_each_one_exists(gen):
+    world = gen.world
+
+    def pending():
+        return preview_uc(world).execute(world.admin, world.process.id).pending_board
+
+    assert pending() == ("REQUERIMENTO", "PORTARIA_BANCA", "PARECER")
+    add_generation(world, K.REQUERIMENTO)
+    assert pending() == ("PORTARIA_BANCA", "PARECER")
+    add_ordinance(gen, stored=False, members=MEMBERS)  # registered with members, no file
+    assert pending() == ("PARECER",)
+    add_generation(world, K.PARECER)
+    assert pending() == ()
+
+
+def test_an_ordinance_without_members_still_counts_as_pending_even_with_a_file(gen):
+    world = gen.world
+    add_ordinance(gen, members=())
+
+    result = preview_uc(world).execute(world.admin, world.process.id)
+
+    assert result.files == 1
+    assert "PORTARIA_BANCA" in result.pending_board
+
+
+def test_a_failed_or_running_requerimento_or_parecer_is_still_pending(gen):
+    world = gen.world
+    add_generation(world, K.REQUERIMENTO, GenerationState.FALHOU)
+    add_generation(world, K.PARECER, GenerationState.GERANDO)
+
+    result = preview_uc(world).execute(world.admin, world.process.id)
+
+    assert result.pending_board == ("REQUERIMENTO", "PORTARIA_BANCA", "PARECER")
+    assert set(result.artifacts) == set(ARTIFACT_KINDS)

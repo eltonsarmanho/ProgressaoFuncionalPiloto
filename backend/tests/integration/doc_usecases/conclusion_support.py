@@ -2,9 +2,11 @@
 from an activity, in synthetic data only."""
 
 import uuid
+from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
 
+from app.domain.entities.board import BoardOrdinance, OrdinanceFile, ReadingState, ValueSource
 from app.domain.entities.document import PageText, TextMethod
 from app.domain.entities.generated import (
     ARTIFACT_KINDS,
@@ -107,3 +109,32 @@ def add_stored_generation(gen, kind, content=b"gerado"):
         )
         uow.commit()
     return name, content
+
+
+def add_ordinance(gen, process=None, size=None, members=(), state=ReadingState.LIDA, stored=True):
+    """The ordinance of the process with a typed number and date. With `stored` its file really is
+    in the originals storage (`size` is the size the row declares); without it the ordinance has
+    only the typed data. Returns the file (or None) and the ordinance."""
+    world = gen.world
+    process = process or world.process
+    file = None
+    if stored:
+        content = CONTENT + uuid.uuid4().hex.encode()
+        name = gen.originals.save(process.id, "pdf", content)
+        file = OrdinanceFile(
+            name, "portaria.pdf", "application/pdf", size or len(content), "f" * 64, 1
+        )
+    ordinance = BoardOrdinance(
+        process.id,
+        number="77/2025",
+        number_source=ValueSource.INFORMADO,
+        ordinance_date=date(2025, 3, 10),
+        date_source=ValueSource.INFORMADO,
+        members=tuple(members),
+        file=file,
+        reading_state=state if stored else ReadingState.SEM_ARQUIVO,
+    )
+    with world.uow_factory() as uow:
+        saved = uow.board.create(ordinance, world.admin.id, 0)
+        uow.commit()
+    return file, saved

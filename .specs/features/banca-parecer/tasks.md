@@ -819,7 +819,7 @@ graph LR
 
 #### T23: Conclusão e prévia com a portaria e o aviso dos pendentes
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `PurgeInputDocuments` também apaga o arquivo da portaria (marca `file_deleted_at` e mantém número, data e membros) e o conta em `removed`, `pending` e `bytes_freed`; `GetConclusionPreview` devolve `files` e `bytes` com a portaria, `artifacts` com os três tipos e `pending_board`; `ConcludeProcess` conta a portaria entre os arquivos que ainda faltam antes de concluir.
 **Where**: `backend/app/application/services/purge_inputs.py` (modify; a prévia e o cálculo de `left` em `backend/app/application/use_cases/conclusion.py`)
@@ -834,10 +834,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_conclusion_preview.py` e `test_conclude_process.py`: a prévia de um processo com um documento e a portaria com arquivo soma 2 arquivos e os bytes dos dois; `pending_board` é `("REQUERIMENTO", "PORTARIA_BANCA", "PARECER")` sem nenhum dos três e vai perdendo cada item conforme o Requerimento fica `PRONTO`, a portaria ganha um membro e o Parecer fica `PRONTO`; a conclusão com Tabela, Relatório e Comprovante prontos e os três da banca pendentes **conclui** (o aviso não bloqueia); a conclusão apaga o arquivo da portaria do disco, mantém `number`, `ordinance_date` e `members` e marca `file_deleted_at`; falha ao apagar o arquivo da portaria deixa o processo `EM_ANDAMENTO` com `EXCLUSAO_PARCIAL` e repetir termina; repetir a conclusão não faz nada (DEL-09); leitura da portaria `PENDENTE` ou `LENDO` recusa a conclusão com 409 `OPERACAO_EM_ANDAMENTO`
-- [ ] Testes existentes que mudam por DOS-07: `backend/tests/integration/doc_usecases/test_purge_inputs.py` e `conclusion_support.py` (a portaria entra na contagem quando existe; sem portaria os números de hoje não mudam) e `test_conclusion_preview.py` (o campo novo `pending_board`)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (última tarefa de backend da fase: gate completo)
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_conclusion_preview.py` e `test_conclude_process.py`: a prévia de um processo com um documento e a portaria com arquivo soma 2 arquivos e os bytes dos dois; `pending_board` é `("REQUERIMENTO", "PORTARIA_BANCA", "PARECER")` sem nenhum dos três e vai perdendo cada item conforme o Requerimento fica `PRONTO`, a portaria ganha um membro e o Parecer fica `PRONTO`; a conclusão com Tabela, Relatório e Comprovante prontos e os três da banca pendentes **conclui** (o aviso não bloqueia); a conclusão apaga o arquivo da portaria do disco, mantém `number`, `ordinance_date` e `members` e marca `file_deleted_at`; falha ao apagar o arquivo da portaria deixa o processo `EM_ANDAMENTO` com `EXCLUSAO_PARCIAL` e repetir termina; repetir a conclusão não faz nada (DEL-09); leitura da portaria `PENDENTE` ou `LENDO` recusa a conclusão com 409 `OPERACAO_EM_ANDAMENTO`
+- [x] Testes existentes que mudam por DOS-07: `backend/tests/integration/doc_usecases/test_purge_inputs.py` e `conclusion_support.py` (a portaria entra na contagem quando existe; sem portaria os números de hoje não mudam) e `test_conclusion_preview.py` (o campo novo `pending_board`)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q` (última tarefa de backend da fase: gate completo)
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full

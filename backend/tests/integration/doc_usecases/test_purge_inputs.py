@@ -8,7 +8,12 @@ from datetime import UTC, datetime
 import pytest
 
 from app.application.services.purge_inputs import PurgeInputDocuments, PurgeOutcome
-from tests.integration.doc_usecases.conclusion_support import add_input_document, state_of
+from tests.integration.doc_usecases.board_support import MEMBERS, stored_board
+from tests.integration.doc_usecases.conclusion_support import (
+    add_input_document,
+    add_ordinance,
+    state_of,
+)
 from tests.integration.doc_usecases.generation_support import add_document
 
 NOW = datetime(2026, 11, 18, 10, 0, tzinfo=UTC)
@@ -196,3 +201,82 @@ def test_documents_added_by_row_only_have_their_rows_closed(gen):
 
     assert outcome == PurgeOutcome(removed=1, pending=0, bytes_freed=33)
     assert state_of(gen, row_only).row.file_deleted_at == NOW
+
+
+# --- the ordinance file (DOS-07, PORT-09) -------------------------------------------------
+
+
+def test_the_ordinance_file_goes_with_the_documents_and_the_data_stay(gen, three):
+    file, before = add_ordinance(gen, size=40, members=MEMBERS)
+    process_id = gen.world.process.id
+
+    outcome = purge(gen).execute(process_id)
+
+    assert outcome == PurgeOutcome(removed=4, pending=0, bytes_freed=600 + 40)
+    assert not gen.originals.path(process_id, file.internal_name).exists()
+    after = stored_board(gen.world)
+    assert after.file.deleted_at == NOW
+    assert (after.file.internal_name, after.file.original_name) == (
+        file.internal_name,
+        file.original_name,
+    )
+    assert (after.number, after.ordinance_date, after.members) == (
+        before.number,
+        before.ordinance_date,
+        before.members,
+    )
+
+
+def test_without_an_ordinance_the_numbers_are_the_same_as_before(gen, three):
+    assert purge(gen).execute(gen.world.process.id) == PurgeOutcome(3, 0, 600)
+
+    typed_only = gen.world.process
+    add_ordinance(gen, stored=False)  # typed data and no file: nothing to remove
+    assert purge(gen).execute(typed_only.id) == PurgeOutcome(0, 0, 0)
+    assert stored_board(gen.world).file is None
+
+
+def test_an_ordinance_file_that_cannot_be_removed_stays_pending_and_is_not_marked(gen, three):
+    file, _ = add_ordinance(gen, size=40)
+    storage = FlakyStorage(gen.originals, failing={file.internal_name})
+
+    outcome = purge(gen, storage).execute(gen.world.process.id)
+
+    assert outcome == PurgeOutcome(removed=3, pending=1, bytes_freed=600)
+    assert gen.originals.path(gen.world.process.id, file.internal_name).exists()
+    assert stored_board(gen.world).file.deleted_at is None
+
+
+def test_repeating_removes_the_ordinance_file_that_was_left_and_a_third_run_finds_nothing(gen):
+    file, _ = add_ordinance(gen, size=40)
+    purge(gen, FlakyStorage(gen.originals, failing={file.internal_name})).execute(
+        gen.world.process.id
+    )
+
+    again = purge(gen).execute(gen.world.process.id)
+    third = purge(gen).execute(gen.world.process.id)
+
+    assert again == PurgeOutcome(removed=1, pending=0, bytes_freed=40)
+    assert stored_board(gen.world).file.deleted_at == NOW
+    assert third == PurgeOutcome(0, 0, 0)
+
+
+def test_an_ordinance_file_that_is_already_absent_counts_as_removed(gen):
+    file, _ = add_ordinance(gen, size=40)
+    gen.originals.delete(gen.world.process.id, file.internal_name)
+
+    outcome = purge(gen).execute(gen.world.process.id)
+
+    assert outcome == PurgeOutcome(removed=1, pending=0, bytes_freed=40)
+    assert stored_board(gen.world).file.deleted_at == NOW
+
+
+def test_the_ordinance_of_another_process_is_left_alone(gen):
+    world = gen.world
+    file, _ = add_ordinance(gen, process=world.ifch_process, size=40)
+
+    outcome = purge(gen).execute(world.process.id)
+
+    assert outcome == PurgeOutcome(0, 0, 0)
+    assert gen.originals.path(world.ifch_process.id, file.internal_name).exists()
+    assert stored_board(world, world.ifch_process).file.deleted_at is None
