@@ -2,17 +2,19 @@
 
 import logging
 import uuid
-from collections.abc import Callable, Sequence
-from dataclasses import asdict, dataclass, fields, replace
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import asdict, dataclass, field, fields, replace
 from datetime import date
 from uuid import UUID
 
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
+from app.application.services.norm_citations import cite_norms
 from app.application.use_cases.units import require_active_unit
 from app.domain.entities.audit import AuditAction, AuditEvent
 from app.domain.entities.career import Modality
 from app.domain.entities.generated import GenerationCode
+from app.domain.entities.norm import NormCitation
 from app.domain.entities.process import FunctionalProcess, ProcessStatus, can_transition
 from app.domain.entities.user import Role, User
 from app.domain.errors import Conflict, Forbidden, NotFound, StaleVersion, ValidationFailed
@@ -62,14 +64,18 @@ class ProcessResult:
     interstice_days: int
     alerts: list[Alert]
     professor_name: str
+    norms: Mapping[str, NormCitation] = field(default_factory=dict)  # by norm code (NLINK-03)
 
 
 def audit_view(process: FunctionalProcess) -> dict:
     return {k: v for k, v in asdict(process).items() if k not in _AUDIT_EXCLUDED}
 
 
-def evaluate(uow: UnitOfWork, process: FunctionalProcess) -> ProcessResult:
-    """Interstice duration and verification alerts (PROC-02, PROC-04)."""
+def evaluate(
+    uow: UnitOfWork, process: FunctionalProcess, with_norms: bool = True
+) -> ProcessResult:
+    """Interstice duration and verification alerts (PROC-02, PROC-04), checked against the
+    titration now registered for the professor (NTIT-08) and with the norms they cite."""
     professor = uow.professors.get(process.professor_id)
     code = uow.career_versions.structure_code(professor.career_structure_id)
     versions = uow.career_versions.list_versions(code) if code else []
@@ -77,12 +83,14 @@ def evaluate(uow: UnitOfWork, process: FunctionalProcess) -> ProcessResult:
         **{f.name: getattr(process, f.name) for f in fields(ProcessSnapshot)}
     )
     interstice = Interstice(process.start_date, process.end_date)
+    alerts = verify_process(snapshot, versions, professor.titration)
     return ProcessResult(
         process=process,
         interstice_months=interstice.months(),
         interstice_days=interstice.days(),
-        alerts=verify_process(snapshot, versions),
+        alerts=alerts,
         professor_name=professor.full_name,
+        norms=cite_norms(uow, [a.norm_code for a in alerts]) if with_norms else {},
     )
 
 
@@ -144,7 +152,7 @@ class ListProcesses(_ProcessUseCase):
     def execute(self, actor: User) -> Sequence[ProcessResult]:
         with self._uow_factory() as uow:
             return [
-                evaluate(uow, p)
+                evaluate(uow, p, with_norms=False)  # the list shows only the alert counts
                 for p in uow.processes.list()
                 if self._policy.can_read_process(actor, p)
             ]

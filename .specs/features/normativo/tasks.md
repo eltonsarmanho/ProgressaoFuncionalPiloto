@@ -678,7 +678,7 @@ graph LR
 
 #### T20: Alertas do processo com a norma e a titulação do docente
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `processes.evaluate` passa `professor.titration` a `verify_process` e devolve o mapa de `cite_norms`; `AlertOut.of(alert, norms)` ganha `norm_code`, `norm_title`, `norm_url`, `norm_file_url` (`/api/norms/{id}/file` quando há arquivo), `norm_archived`; o inline de `ProcessOut.of` (`schemas/processes.py:110-118`) passa a usar `AlertOut.of`.
 **Where**: `backend/app/presentation/schemas/processes.py` (modify; o caso de uso em `application/use_cases/processes.py`)
@@ -693,9 +693,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_process_alert_norms.py` (novo): processo sintético com interstício curto na estrutura ligada traz `norm_code`, `norm_title` e `norm_url` da Lei 12.772 (NLINK-03, 06); norma com arquivo traz `norm_file_url` (NLINK-04); norma arquivada traz `norm_archived` verdadeiro; regra sem norma traz só `norm_reference` (NLINK-05); docente com mestrado em promoção para C traz `TITULACAO_INSUFICIENTE` com o Manual da PROGEP (NTIT-01); corrigir a titulação do docente para doutorado faz o alerta sumir na leitura seguinte (NTIT-08); os dois caminhos de montagem do alerta (lista e detalhe do processo) trazem os campos
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/api/test_process_alert_norms.py` (novo): processo sintético com interstício curto na estrutura ligada traz `norm_code`, `norm_title` e `norm_url` da Lei 12.772 (NLINK-03, 06); norma com arquivo traz `norm_file_url` (NLINK-04); norma arquivada traz `norm_archived` verdadeiro; regra sem norma traz só `norm_reference` (NLINK-05); docente com mestrado em promoção para C traz `TITULACAO_INSUFICIENTE` com o Manual da PROGEP (NTIT-01); corrigir a titulação do docente para doutorado faz o alerta sumir na leitura seguinte (NTIT-08); os dois caminhos de montagem do alerta (lista e detalhe do processo) trazem os campos
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full
