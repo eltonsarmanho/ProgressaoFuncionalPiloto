@@ -4,7 +4,7 @@ The table versions here are synthetic (one group, one item), not the official ta
 """
 
 from dataclasses import replace
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
@@ -65,6 +65,22 @@ def activity_without_evidence() -> Activity:
 def test_table_choice_alert_cites_the_synthetic_version_code(norm_code):
     [alert] = verify_table_choice(synthetic_version(norm_code), (OTHER_UNIT,), UNIT, END)
     assert alert.code is ScoringAlertCode.TABELA_DE_OUTRA_UNIDADE
+    assert alert.norm_code == norm_code
+
+
+@pytest.mark.parametrize("norm_code", [SYNTHETIC_CODE, None], ids=["linked", "unlinked"])
+def test_pending_validation_alert_cites_the_synthetic_version_code(norm_code):
+    version = replace(synthetic_version(norm_code), status=TableStatus.PENDENTE_VALIDACAO)
+    [alert] = verify_table_choice(version, (UNIT,), UNIT, END)
+    assert alert.code is ScoringAlertCode.TABELA_PENDENTE_VALIDACAO
+    assert alert.norm_code == norm_code
+
+
+@pytest.mark.parametrize("norm_code", [SYNTHETIC_CODE, None], ids=["linked", "unlinked"])
+def test_out_of_validity_alert_cites_the_synthetic_version_code(norm_code):
+    version = replace(synthetic_version(norm_code), valid_to=END - timedelta(days=1))
+    [alert] = verify_table_choice(version, (UNIT,), UNIT, END)
+    assert alert.code is ScoringAlertCode.TABELA_FORA_DE_VIGENCIA
     assert alert.norm_code == norm_code
 
 
