@@ -192,6 +192,42 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: N6 backend/app/domain/rules/table_document.py:157 (GTAB-02) (generation)
 - last seen: 2026-11-20T08:39:56Z
 
+### L-031 - When several branches of one function pass the same new field to an alert, assert that field for every branch, not for a sample branch
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `domain-rules` · harmful: 0
+- features: normativo
+- evidence: mutant T03 scoring_table_choice.py:61 (TABELA_FORA_DE_VIGENCIA) (domain-rules)
+- last seen: 2026-11-22T19:28:34Z
+
+### L-032 - Build the old-client request body without the new fields at every nesting level, not from a GET response that already carries them
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `api-layer` · harmful: 0
+- features: normativo
+- evidence: mutant P12 use_cases/career.py _keep_stored_links (per-class required_titration) (api-layer)
+- last seen: 2026-11-22T19:28:34Z
+
+### L-033 - Test a never-block requirement on every operation it names (create, edit, start), with the alert actually present
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `api-layer` · harmful: 0
+- features: normativo
+- evidence: NTIT-07 test_process_alert_norms.py:59-64 (api-layer)
+- last seen: 2026-11-22T19:28:34Z
+
+### L-034 - A defensive check that no test can fail is either untested or redundant; add a case that only that check rejects, or remove it
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `use-cases` · harmful: 0
+- features: normativo
+- evidence: mutant U10 use_cases/norms.py _check_pdf (extension check) (use-cases)
+- last seen: 2026-11-22T19:28:34Z
+
+### L-035 - Write the exact user-visible message into the spec with every interpolated part, so the design and the tests do not add or drop parts
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: normativo
+- evidence: NTIT-02 test_titration_verification.py:79 vs spec NTIT-02 (spec)
+- last seen: 2026-11-22T19:28:34Z
+
+### L-036 - When code enforces a rule the spec text does not state (for example a file extension on top of the content check), write the rule into the spec or drop it, so no test is left to guess
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: normativo
+- evidence: NBASE-06 mutant U10 norms.py _check_pdf (extension check) (spec)
+- last seen: 2026-11-22T20:05:49Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

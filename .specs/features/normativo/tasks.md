@@ -962,7 +962,7 @@ graph LR
 
 #### T30: Verifier
 
-**Status**: Pending
+**Status**: Done (volta 2 de 3: PASS)
 
 **What**: Agente diferente do autor confere cada critério da spec contra os testes (valor esperado = valor da spec), roda o sensor de discriminação numa cópia isolada (mutantes de comportamento em `process_verification.py`, `norm_rules.py`, `norm_citations.py`, `seed.py` e `NormLink.tsx`) e escreve `.specs/features/normativo/validation.md` com veredito, evidência `file:line`, resultado do sensor e faixa de commits.
 **Where**: `.specs/features/normativo/validation.md` (new)
@@ -977,9 +977,9 @@ graph LR
 
 **Done when**:
 
-- [ ] `validation.md` com veredito PASS ou lacunas viradas em tarefas de correção (até 3 voltas)
-- [ ] `python3 <skill-dir>/scripts/validate_state.py normativo` passa
-- [ ] A árvore real fica igual à de antes do sensor (`git status --porcelain`)
+- [x] `validation.md` com veredito PASS ou lacunas viradas em tarefas de correção (até 3 voltas) (volta 1 reprovou; correções FT1..FT6 em `e792068`..`7b06e61`; volta 2: PASS)
+- [x] `python3 <skill-dir>/scripts/validate_state.py normativo` passa
+- [x] A árvore real fica igual à de antes do sensor (`git status --porcelain`)
 
 **Tests**: none
 **Gate**: build

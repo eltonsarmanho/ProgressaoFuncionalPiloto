@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 31,
+  "next_id": 37,
   "lessons": [
     {
       "id": "L-001",
@@ -547,6 +547,114 @@
       ],
       "created": "2026-11-20T08:39:56Z",
       "last_seen": "2026-11-20T08:39:56Z"
+    },
+    {
+      "id": "L-031",
+      "key": "surviving_mutant::when several branches of one function pass the same new field to an alert assert that field for every branch not for a sample branch",
+      "text": "When several branches of one function pass the same new field to an alert, assert that field for every branch, not for a sample branch",
+      "signal": "surviving_mutant",
+      "scope": "domain-rules",
+      "status": "candidate",
+      "features": [
+        "normativo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutant T03 scoring_table_choice.py:61 (TABELA_FORA_DE_VIGENCIA) (domain-rules)"
+      ],
+      "created": "2026-11-22T19:28:34Z",
+      "last_seen": "2026-11-22T19:28:34Z"
+    },
+    {
+      "id": "L-032",
+      "key": "surviving_mutant::build the old client request body without the new fields at every nesting level not from a get response that already carries them",
+      "text": "Build the old-client request body without the new fields at every nesting level, not from a GET response that already carries them",
+      "signal": "surviving_mutant",
+      "scope": "api-layer",
+      "status": "candidate",
+      "features": [
+        "normativo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutant P12 use_cases/career.py _keep_stored_links (per-class required_titration) (api-layer)"
+      ],
+      "created": "2026-11-22T19:28:34Z",
+      "last_seen": "2026-11-22T19:28:34Z"
+    },
+    {
+      "id": "L-033",
+      "key": "ac_gap::test a never block requirement on every operation it names create edit start with the alert actually present",
+      "text": "Test a never-block requirement on every operation it names (create, edit, start), with the alert actually present",
+      "signal": "ac_gap",
+      "scope": "api-layer",
+      "status": "candidate",
+      "features": [
+        "normativo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "NTIT-07 test_process_alert_norms.py:59-64 (api-layer)"
+      ],
+      "created": "2026-11-22T19:28:34Z",
+      "last_seen": "2026-11-22T19:28:34Z"
+    },
+    {
+      "id": "L-034",
+      "key": "surviving_mutant::a defensive check that no test can fail is either untested or redundant add a case that only that check rejects or remove it",
+      "text": "A defensive check that no test can fail is either untested or redundant; add a case that only that check rejects, or remove it",
+      "signal": "surviving_mutant",
+      "scope": "use-cases",
+      "status": "candidate",
+      "features": [
+        "normativo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutant U10 use_cases/norms.py _check_pdf (extension check) (use-cases)"
+      ],
+      "created": "2026-11-22T19:28:34Z",
+      "last_seen": "2026-11-22T19:28:34Z"
+    },
+    {
+      "id": "L-035",
+      "key": "spec_precision_gap::write the exact user visible message into the spec with every interpolated part so the design and the tests do not add or drop parts",
+      "text": "Write the exact user-visible message into the spec with every interpolated part, so the design and the tests do not add or drop parts",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "normativo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "NTIT-02 test_titration_verification.py:79 vs spec NTIT-02 (spec)"
+      ],
+      "created": "2026-11-22T19:28:34Z",
+      "last_seen": "2026-11-22T19:28:34Z"
+    },
+    {
+      "id": "L-036",
+      "key": "spec_precision_gap::when code enforces a rule the spec text does not state for example a file extension on top of the content check write the rule into the spec or drop it so no test is left to guess",
+      "text": "When code enforces a rule the spec text does not state (for example a file extension on top of the content check), write the rule into the spec or drop it, so no test is left to guess",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "normativo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "NBASE-06 mutant U10 norms.py _check_pdf (extension check) (spec)"
+      ],
+      "created": "2026-11-22T20:05:49Z",
+      "last_seen": "2026-11-22T20:05:49Z"
     }
   ]
 }
