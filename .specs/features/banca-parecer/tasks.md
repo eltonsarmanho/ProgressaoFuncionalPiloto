@@ -650,7 +650,7 @@ graph LR
 
 #### T17: Extrator da portaria pela MariTalk
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Porta `OrdinanceExtractor.extract(text: str) -> OrdinanceAi` e `OrdinanceExtractionError(code)` (`IA_INDISPONIVEL`, `IA_CREDENCIAL_RECUSADA`, `RESPOSTA_INVALIDA`); `MariTalkOrdinanceExtractor` com schema JSON estrito (número, data AAAA-MM-DD, membros com nome, função e página, tudo obrigatório e anulável, `additionalProperties: false`), prompt que manda copiar só o que está no texto e nunca inventar, e resposta conferida contra o schema antes de virar `OrdinanceAi`.
 **Where**: `backend/app/infrastructure/ai/ordinance_extractor.py` (new; a porta e o erro em `backend/app/domain/repositories/ports.py`)
@@ -665,10 +665,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_ordinance_extractor.py` (novo), com `httpx.MockTransport`: o corpo do pedido leva `response_format` com `strict: true`, todas as propriedades em `required` e `additionalProperties: false`; a mensagem do usuário é exatamente o texto recebido (a porta só aceita `str`: nunca caminho nem bytes do arquivo, PORT-04); resposta válida vira `OrdinanceAi` com as páginas; campo a mais, campo ausente, função fora das três e tipo errado dão `RESPOSTA_INVALIDA`; 401 dá `IA_CREDENCIAL_RECUSADA`; erro de rede, 5xx e prazo dão `IA_INDISPONIVEL`; a chave só aparece no cabeçalho `Authorization`, nunca no `repr`, na exceção nem no log (`caplog`)
-- [ ] Teste de arquitetura passa
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_ordinance_extractor.py` (novo), com `httpx.MockTransport`: o corpo do pedido leva `response_format` com `strict: true`, todas as propriedades em `required` e `additionalProperties: false`; a mensagem do usuário é exatamente o texto recebido (a porta só aceita `str`: nunca caminho nem bytes do arquivo, PORT-04); resposta válida vira `OrdinanceAi` com as páginas; campo a mais, campo ausente, função fora das três e tipo errado dão `RESPOSTA_INVALIDA`; 401 dá `IA_CREDENCIAL_RECUSADA`; erro de rede, 5xx e prazo dão `IA_INDISPONIVEL`; a chave só aparece no cabeçalho `Authorization`, nunca no `repr`, na exceção nem no log (`caplog`)
+- [x] Teste de arquitetura passa
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

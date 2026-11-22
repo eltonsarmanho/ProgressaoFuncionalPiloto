@@ -49,6 +49,7 @@ from app.domain.entities.professor import Professor, Titration
 from app.domain.entities.report import DraftEntry, DraftSection, ReportDocument, ReportDraft
 from app.domain.entities.scoring import ScoringCriterion, ScoringTableVersion
 from app.domain.entities.user import Session, User
+from app.domain.rules.ordinance_grounding import OrdinanceAi
 from app.domain.rules.report_draft import ReportConfig
 from app.domain.rules.report_wording import WordingItem
 from app.domain.rules.table_document import TableDocument, TableHeader
@@ -512,6 +513,23 @@ class AiExtractor(Protocol):
         `professor_name` is the professor of the process, sent as context so the model does not
         take a student or a board member for the professor (REAL-01); never an identifier.
         """
+        ...
+
+
+class OrdinanceExtractionError(Exception):
+    """The provider could not read the ordinance; `code` is the reading code to record
+    (`IA_INDISPONIVEL`, `IA_CREDENCIAL_RECUSADA` or `RESPOSTA_INVALIDA`, PORT-07)."""
+
+    def __init__(self, code: OrdinanceReadingCode) -> None:
+        super().__init__(code.value)
+        self.code = code
+
+
+class OrdinanceExtractor(Protocol):
+    def extract(self, text: str) -> OrdinanceAi:
+        """Reads the number, the date and the members from the MASKED text of the ordinance, with
+        the `[PÁGINA n]` marks (PORT-04: only text, never the file). The answer is untrusted
+        until `ground_ordinance` checks it. Raises `OrdinanceExtractionError`."""
         ...
 
 
