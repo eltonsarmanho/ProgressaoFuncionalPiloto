@@ -990,7 +990,7 @@ graph LR
 
 #### T29: Validação do pedido de geração por tipo
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `RequestGeneration.execute` passa a validar por tipo. `PARECER` e `REQUERIMENTO`: processo gravável, senão 409 `PROCESSO_SOMENTE_LEITURA` (BNAV-02), e não exigem tabela escolhida nem atividades; `PARECER`, nesta ordem: `CONCLUSAO_AUSENTE`, `BANCA_SEM_MEMBROS`, `TABELA_AUSENTE`, `TABELA_DESATUALIZADA` (422), a última calculada por um auxiliar compartilhado `check_opinion_table(uow, process)` que compara o total e a versão da tabela do instantâneo da última Tabela `PRONTO` com o cálculo de agora. Tabela, Relatório e Comprovante seguem como hoje, com a geração em `CONCLUIDO` (DEL-13).
 **Where**: `backend/app/application/use_cases/generated_documents.py` (modify)
@@ -1005,10 +1005,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/doc_usecases/test_request_opinion.py` (novo): sem conclusão dá 422 `CONCLUSAO_AUSENTE` mesmo sem membros e sem Tabela (a ordem); com conclusão e sem membros `BANCA_SEM_MEMBROS`; com membros e sem Tabela `PRONTO` `TABELA_AUSENTE`; Tabela `PRONTO` e uma atividade validada que muda o total depois dela dá `TABELA_DESATUALIZADA` com a mensagem "A pontuação mudou depois da última Tabela; gere a Tabela de novo"; o mesmo total com **outra versão da tabela de pontuação** também dá `TABELA_DESATUALIZADA` (decisão do design); tudo em ordem grava a linha `GERANDO` do tipo `PARECER` e audita; o Parecer não exige atividades nem tabela escolhida e o Requerimento é aceito num processo sem atividade nem Tabela e sem nenhuma outra geração; processo `CONCLUIDO` ou `ARQUIVADO` recusa `PARECER` e `REQUERIMENTO` com 409 `PROCESSO_SOMENTE_LEITURA`, enquanto Tabela e Relatório continuam sendo aceitos em `CONCLUIDO` (DEL-13: os dois lados no mesmo teste); pedido do mesmo tipo com outro `GERANDO` dá 409 `GERACAO_EM_ANDAMENTO`; tipos diferentes coexistem; fora do acesso `NotFound`
-- [ ] Testes existentes que mudam por causa do pedido por tipo: `backend/tests/integration/doc_usecases/test_request_generation.py` e `test_request_refusals.py` (a parametrização sobre os cinco tipos passa a separar os três tipos de Tabela, Relatório e Comprovante dos dois da banca, que têm as próprias recusas; a recusa de espaço `ESPACO_INSUFICIENTE` vale para os cinco)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_request_opinion.py tests/integration/doc_usecases/test_request_generation.py tests/integration/doc_usecases/test_request_refusals.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/doc_usecases/test_request_opinion.py` (novo): sem conclusão dá 422 `CONCLUSAO_AUSENTE` mesmo sem membros e sem Tabela (a ordem); com conclusão e sem membros `BANCA_SEM_MEMBROS`; com membros e sem Tabela `PRONTO` `TABELA_AUSENTE`; Tabela `PRONTO` e uma atividade validada que muda o total depois dela dá `TABELA_DESATUALIZADA` com a mensagem "A pontuação mudou depois da última Tabela; gere a Tabela de novo"; o mesmo total com **outra versão da tabela de pontuação** também dá `TABELA_DESATUALIZADA` (decisão do design); tudo em ordem grava a linha `GERANDO` do tipo `PARECER` e audita; o Parecer não exige atividades nem tabela escolhida e o Requerimento é aceito num processo sem atividade nem Tabela e sem nenhuma outra geração; processo `CONCLUIDO` ou `ARQUIVADO` recusa `PARECER` e `REQUERIMENTO` com 409 `PROCESSO_SOMENTE_LEITURA`, enquanto Tabela e Relatório continuam sendo aceitos em `CONCLUIDO` (DEL-13: os dois lados no mesmo teste); pedido do mesmo tipo com outro `GERANDO` dá 409 `GERACAO_EM_ANDAMENTO`; tipos diferentes coexistem; fora do acesso `NotFound`
+- [x] Testes existentes que mudam por causa do pedido por tipo: `backend/tests/integration/doc_usecases/test_request_generation.py` e `test_request_refusals.py` (a parametrização sobre os cinco tipos passa a separar os três tipos de Tabela, Relatório e Comprovante dos dois da banca, que têm as próprias recusas; a recusa de espaço `ESPACO_INSUFICIENTE` vale para os cinco)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/doc_usecases/test_request_opinion.py tests/integration/doc_usecases/test_request_generation.py tests/integration/doc_usecases/test_request_refusals.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: targeted

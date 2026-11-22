@@ -13,6 +13,7 @@ import uuid
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -20,7 +21,7 @@ from uuid import UUID
 from app.application.services.access_policy import AccessPolicy
 from app.application.services.audit_service import AuditService
 from app.application.services.generation_inputs import GenerationInputs, load_generation_inputs
-from app.application.use_cases.scoring import _ScoringUseCase
+from app.application.use_cases.scoring import ProcessScore, _ScoringUseCase, compute_process_score
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.comprovante import (
     ComprovanteLayout,
@@ -77,6 +78,7 @@ logger = logging.getLogger("app.documents.generation")
 GENERATED_ENTITY = "generated_document"
 MB = 1024 * 1024
 _PIXELS_PER_MEGAPIXEL = 1_000_000
+_BOARD_KINDS = (DocumentKind.PARECER, DocumentKind.REQUERIMENTO)
 
 
 @dataclass(frozen=True)
@@ -147,7 +149,64 @@ def checked_comprovante_plan(
     return plan
 
 
-class RequestGeneration(_ScoringUseCase):
+class _EditUseCase(_ScoringUseCase):
+    """The writes of the report draft and of the arrangement of the Comprovante: refused in a
+    concluded or archived process, and a stale `expected_version` answers with its own code."""
+
+    def _editable(self, uow: UnitOfWork, actor: User, process_id: UUID) -> FunctionalProcess:
+        process = self._readable(uow, actor, process_id)
+        if process.status.is_read_only:
+            raise Conflict(
+                "Processo concluído ou arquivado não pode ser alterado",
+                GenerationCode.PROCESSO_SOMENTE_LEITURA.value,
+            )
+        return process
+
+    @staticmethod
+    @contextmanager
+    def _versioned() -> Iterator[None]:
+        try:
+            yield
+        except StaleVersion as error:
+            raise StaleVersion(str(error), GenerationCode.VERSAO_DESATUALIZADA.value) from None
+
+
+TABLE_OUTDATED_MESSAGE = "A pontuação mudou depois da última Tabela; gere a Tabela de novo"
+_CENTS = Decimal("0.01")
+
+
+@dataclass(frozen=True)
+class OpinionTable:
+    """The last Tabela `PRONTO` of the process and the score of now, found equal (PAR-10)."""
+
+    table: GeneratedDocument
+    score: ProcessScore
+
+
+def check_opinion_table(uow: UnitOfWork, process: FunctionalProcess) -> OpinionTable:
+    """The Tabela the Parecer copies from, or the refusal that says why it cannot be used.
+
+    `TABELA_AUSENTE` without a `PRONTO` Tabela; `TABELA_DESATUALIZADA` when the Total geral of the
+    score of now differs from the one of its snapshot, or when the table of points chosen now is
+    not the one the Tabela was made with (the total can match by chance). The request and the run
+    both use it, because the score can change between the two (PAR-10).
+    """
+    table = uow.generations.latest_ready_by_kind(process.id).get(DocumentKind.TABELA)
+    if table is None or table.snapshot is None:
+        raise GenerationRefused(
+            GenerationCode.TABELA_AUSENTE,
+            "Gere a Tabela de Pontuação antes de gerar o Parecer.",
+        )
+    score = compute_process_score(uow, process)
+    chosen = None if score.chosen is None else str(score.chosen.version.id)
+    same_total = Decimal(table.snapshot["total"]) == score.result.total.quantize(_CENTS)
+    same_version = table.snapshot["table_version"]["id"] == chosen
+    if not (same_total and same_version):
+        raise GenerationRefused(GenerationCode.TABELA_DESATUALIZADA, TABLE_OUTDATED_MESSAGE)
+    return OpinionTable(table, score)
+
+
+class RequestGeneration(_EditUseCase):
     def __init__(
         self,
         uow_factory: Callable[[], UnitOfWork],
@@ -172,37 +231,19 @@ class RequestGeneration(_ScoringUseCase):
         """Stores a GERANDO row for the executor to pick up (TAB-01, VER-04).
 
         A second request of the same kind while one is GERANDO is a 409 with the code
-        `GERACAO_EM_ANDAMENTO`, raised by the repository without a race.
+        `GERACAO_EM_ANDAMENTO`, raised by the repository without a race. The Parecer and the
+        Requerimento are refused in a concluded or archived process (BNAV-02); the Tabela, the
+        Relatório and the Comprovante are still generated there (DEL-13).
         """
         with self._uow_factory() as uow:
-            process = self._readable(uow, actor, process_id)
-            inputs = load_generation_inputs(uow, process)
-            if inputs.version is None:
-                raise GenerationRefused(
-                    GenerationCode.TABELA_NAO_ESCOLHIDA,
-                    "Escolha a tabela de pontuação do processo antes de gerar.",
-                )
-            if not inputs.activities:
-                raise GenerationRefused(
-                    GenerationCode.SEM_ATIVIDADES_VALIDADAS,
-                    "O processo não tem atividade validada.",
-                )
-            if kind is DocumentKind.RELATORIO:
-                for activity in inputs.activities:
-                    if not activity.title.strip() and not activity.description.strip():
-                        raise GenerationRefused(
-                            GenerationCode.ATIVIDADE_SEM_DESCRICAO,
-                            f"A atividade {activity.id} não tem título nem descrição.",
-                        )
-            if self._storage.free_bytes() < self._limits.min_free_bytes:
-                raise GenerationRefused(
-                    GenerationCode.ESPACO_INSUFICIENTE,
-                    "Não há espaço livre suficiente no servidor para gerar o documento.",
-                )
-            if kind is DocumentKind.COMPROVANTE:
-                checked_comprovante_plan(
-                    inputs, self._originals, self._inspector, self._limits, self._toc_capacity
-                )
+            if kind in _BOARD_KINDS:
+                process = self._editable(uow, actor, process_id)
+                if kind is DocumentKind.PARECER:
+                    self._check_opinion(uow, process)
+                self._check_space()
+            else:
+                process = self._readable(uow, actor, process_id)
+                self._check_table_kind(uow, process, kind)
             generation = GeneratedDocument(
                 id=uuid.uuid4(),
                 process_id=process.id,
@@ -224,6 +265,56 @@ class RequestGeneration(_ScoringUseCase):
             )
             uow.commit()
             return generation
+
+    def _check_table_kind(self, uow: UnitOfWork, process: FunctionalProcess, kind: DocumentKind):
+        """The refusals of the Tabela, the Relatório and the Comprovante, in their order."""
+        inputs = load_generation_inputs(uow, process)
+        if inputs.version is None:
+            raise GenerationRefused(
+                GenerationCode.TABELA_NAO_ESCOLHIDA,
+                "Escolha a tabela de pontuação do processo antes de gerar.",
+            )
+        if not inputs.activities:
+            raise GenerationRefused(
+                GenerationCode.SEM_ATIVIDADES_VALIDADAS,
+                "O processo não tem atividade validada.",
+            )
+        if kind is DocumentKind.RELATORIO:
+            for activity in inputs.activities:
+                if not activity.title.strip() and not activity.description.strip():
+                    raise GenerationRefused(
+                        GenerationCode.ATIVIDADE_SEM_DESCRICAO,
+                        f"A atividade {activity.id} não tem título nem descrição.",
+                    )
+        self._check_space()
+        if kind is DocumentKind.COMPROVANTE:
+            checked_comprovante_plan(
+                inputs, self._originals, self._inspector, self._limits, self._toc_capacity
+            )
+
+    def _check_space(self) -> None:
+        if self._storage.free_bytes() < self._limits.min_free_bytes:
+            raise GenerationRefused(
+                GenerationCode.ESPACO_INSUFICIENTE,
+                "Não há espaço livre suficiente no servidor para gerar o documento.",
+            )
+
+    @staticmethod
+    def _check_opinion(uow: UnitOfWork, process: FunctionalProcess) -> None:
+        """The refusals of the Parecer, in the order of the spec (PAR-07 to PAR-10)."""
+        opinion = uow.opinions.get(process.id)
+        if opinion is None or opinion.conclusion is None:
+            raise GenerationRefused(
+                GenerationCode.CONCLUSAO_AUSENTE,
+                "Escolha a conclusão do Parecer antes de gerar.",
+            )
+        ordinance = uow.board.get(process.id)
+        if ordinance is None or not ordinance.members:
+            raise GenerationRefused(
+                GenerationCode.BANCA_SEM_MEMBROS,
+                "Registre ao menos um membro da banca antes de gerar o Parecer.",
+            )
+        check_opinion_table(uow, process)
 
 
 _LEFT_OUT_LABELS = {
@@ -711,28 +802,6 @@ class RecoverInterruptedGenerations:
             removed,
         )
         return len(generations) + len(jobs)
-
-
-class _EditUseCase(_ScoringUseCase):
-    """The writes of the report draft and of the arrangement of the Comprovante: refused in a
-    concluded or archived process, and a stale `expected_version` answers with its own code."""
-
-    def _editable(self, uow: UnitOfWork, actor: User, process_id: UUID) -> FunctionalProcess:
-        process = self._readable(uow, actor, process_id)
-        if process.status.is_read_only:
-            raise Conflict(
-                "Processo concluído ou arquivado não pode ser alterado",
-                GenerationCode.PROCESSO_SOMENTE_LEITURA.value,
-            )
-        return process
-
-    @staticmethod
-    @contextmanager
-    def _versioned() -> Iterator[None]:
-        try:
-            yield
-        except StaleVersion as error:
-            raise StaleVersion(str(error), GenerationCode.VERSAO_DESATUALIZADA.value) from None
 
 
 GENERATED_NOT_FOUND = "Documento gerado não encontrado"
