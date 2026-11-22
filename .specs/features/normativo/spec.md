@@ -200,8 +200,8 @@ As regras institucionais do sistema (estruturas de carreira, interstício por cl
 | NBASE-08 | P1: Base de normas | Implementing | Implementing |
 | NBASE-09 | P1: Base de normas | Design | Pending |
 | NBASE-10 | P1: Base de normas | Design | Pending |
-| NBASE-11 | P1: Base de normas | Design | Pending |
-| NBASE-12 | P1: Base de normas | Design | Pending |
+| NBASE-11 | P1: Base de normas | Implemented | Implemented |
+| NBASE-12 | P1: Base de normas | Implemented | Implemented |
 | NLINK-01 | P1: Regras e alertas ligados à norma | Implementing | Implementing |
 | NLINK-02 | P1: Regras e alertas ligados à norma | Design | Pending |
 | NLINK-03 | P1: Regras e alertas ligados à norma | Implementing | Implementing |

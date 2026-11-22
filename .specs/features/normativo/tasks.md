@@ -534,7 +534,7 @@ graph LR
 
 #### T15: Semeadura das sete normas
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `seed_data/norms.json` com as sete normas do design (URLs e datas conferidas em `docs/referencias/normas/FONTES.md`; dia aproximado com a observação "data de publicação aproximada pelo ano") e `seed_norms(uow)`, chamado em `seed_reference_data`, que insere só código ausente, com auditoria só quando insere.
 **Where**: `backend/app/infrastructure/database/seed.py` (modify; dados em `seed_data/norms.json`, novo)
@@ -549,9 +549,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_seed_norms.py` (novo): base vazia recebe as sete normas, sem arquivo, com a URL de cada uma (a tabela oficial sem URL); rodar de novo não cria duplicata nem auditoria; norma com o mesmo código e título editado não é alterada (NBASE-12)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/integration/test_seed_norms.py` (novo): base vazia recebe as sete normas, sem arquivo, com a URL de cada uma (a tabela oficial sem URL); rodar de novo não cria duplicata nem auditoria; norma com o mesmo código e título editado não é alterada (NBASE-12)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full

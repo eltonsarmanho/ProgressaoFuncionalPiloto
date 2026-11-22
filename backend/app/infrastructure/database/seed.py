@@ -13,6 +13,8 @@ from typing import Any
 from app.application.services.audit_service import AuditService
 from app.application.use_cases.scoring_adoption import AdoptSupersedingVersion
 from app.domain.entities.academic_unit import AcademicUnit, UnitKind
+from app.domain.entities.audit import AuditAction
+from app.domain.entities.norm import Norm, NormKind
 from app.domain.entities.scoring import (
     ScoringCriterion,
     ScoringGroup,
@@ -35,6 +37,9 @@ IFCH = ("Instituto de Filosofia e Ciências Humanas", "IFCH", UnitKind.INSTITUTO
 
 SEED_DATA = Path(__file__).parent / "seed_data"
 OFFICIAL_TABLE_SEED = "ufpa.json"
+NORMS_SEED = "norms.json"
+NORM_ENTITY = "norm"
+NORM_SEED_JUSTIFICATION = "Semente das normas (NBASE-11)"
 OFFICIAL_TABLE_UNITS = ("FASI", "IFCH")
 # Tables replaced by the official UFPA table (OFI-08, OFI-09): archived, never deleted.
 LEGACY_TABLE_NAMES = ("Tabela de Pontuação do IFCH", "Tabela de Pontuação da FASI")
@@ -48,6 +53,48 @@ def _ensure_unit(uow: SqlUnitOfWork, spec: tuple[str, str, UnitKind], parent_id=
     unit = AcademicUnit(id=uuid.uuid4(), name=name, acronym=acronym, kind=kind, parent_id=parent_id)
     uow.units.add(unit)
     return unit
+
+
+def seed_norms(uow: SqlUnitOfWork) -> None:
+    """Insert the norms of `norms.json` whose code is missing (NBASE-11, NBASE-12).
+
+    Works inside the caller's transaction and never commits. A norm that already exists, edited
+    or not, is left exactly as it is; each insert is audited as a change by the system.
+    """
+    audit = AuditService(SystemClock())
+    existing = {n.code for n in uow.norms.list(include_archived=True)}
+    for data in json.loads((SEED_DATA / NORMS_SEED).read_text(encoding="utf-8")):
+        if data["code"] in existing:
+            continue
+        norm = Norm(
+            id=uuid.uuid4(),
+            code=data["code"],
+            title=data["title"],
+            kind=NormKind(data["kind"]),
+            issuer=data["issuer"],
+            published_on=date.fromisoformat(data["published_on"]),
+            source_url=data["source_url"],
+            notes=data["notes"],
+        )
+        uow.norms.add(norm)
+        audit.record(
+            uow,
+            None,
+            NORM_ENTITY,
+            norm.id,
+            AuditAction.CREATE,
+            {},
+            {
+                "code": norm.code,
+                "title": norm.title,
+                "kind": norm.kind,
+                "issuer": norm.issuer,
+                "published_on": norm.published_on,
+                "source_url": norm.source_url,
+                "notes": norm.notes,
+            },
+            NORM_SEED_JUSTIFICATION,
+        )
 
 
 def seed_reference_data(
@@ -64,6 +111,7 @@ def seed_reference_data(
         campus = _ensure_unit(uow, CAMPUS)
         _ensure_unit(uow, FASI, parent_id=campus.id)
         _ensure_unit(uow, IFCH)
+        seed_norms(uow)
 
         if uow.users.get_by_email(admin_email) is None:
             uow.users.add(

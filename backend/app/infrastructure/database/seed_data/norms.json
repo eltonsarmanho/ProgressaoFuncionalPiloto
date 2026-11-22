@@ -1,0 +1,65 @@
+[
+  {
+    "code": "LEI-12772-2012",
+    "title": "Lei nº 12.772/2012 (texto compilado, com as Leis 15.141/2025 e 15.367/2026)",
+    "kind": "LEI",
+    "issuer": "Presidência da República",
+    "published_on": "2012-01-01",
+    "source_url": "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2012/lei/l12772compilado.htm",
+    "notes": "data de publicação aproximada pelo ano"
+  },
+  {
+    "code": "RES-4644-2015-CONSEPE",
+    "title": "Resolução nº 4.644/2015-CONSEPE",
+    "kind": "RESOLUCAO",
+    "issuer": "CONSEPE/UFPA",
+    "published_on": "2015-01-01",
+    "source_url": "https://sege.ufpa.br/boletim_interno/downloads/resolucoes/consepe/2015/",
+    "notes": "data de publicação aproximada pelo ano"
+  },
+  {
+    "code": "RES-4074-2010-CONSEPE",
+    "title": "Resolução nº 4.074/2010-CONSEPE (Planos Acadêmicos)",
+    "kind": "RESOLUCAO",
+    "issuer": "CONSEPE/UFPA",
+    "published_on": "2010-01-01",
+    "source_url": "https://ppga.propesp.ufpa.br/ARQUIVOS/regimento_e_normas/Resolu%C3%A7%C3%A3o%204074%20Planos%20Academicos.pdf",
+    "notes": "data de publicação aproximada pelo ano"
+  },
+  {
+    "code": "IN-01-2026-IFCH",
+    "title": "Instrução Normativa nº 1/2026-IFCH",
+    "kind": "INSTRUCAO_NORMATIVA",
+    "issuer": "IFCH/UFPA",
+    "published_on": "2026-04-24",
+    "source_url": "https://ifch.ufpa.br/images/PDF/2026/IFCH-Instrucao_Normativa_sobre_processos_de_progressao_de_docentes.pdf",
+    "notes": null
+  },
+  {
+    "code": "MANUAL-PROGEP-PROGRESSAO",
+    "title": "Manual do Servidor: Progressão, promoção e revisão (Magistério Superior e EBTT)",
+    "kind": "MANUAL",
+    "issuer": "PROGEP/UFPA",
+    "published_on": "2026-11-12",
+    "source_url": "https://progep.ufpa.br/progep/index.php?option=com_content&view=article&id=2245",
+    "notes": "Texto atualizado em 12/11/2026."
+  },
+  {
+    "code": "CORRELACAO-PROGEP-2025",
+    "title": "Tabela de correlação do Magistério Superior (jan/2025)",
+    "kind": "TABELA",
+    "issuer": "PROGEP/UFPA",
+    "published_on": "2025-01-01",
+    "source_url": "https://progep.ufpa.br/progep/documentos/tabela-vencimentos/magisterio-superior/Correlacao-Magisterio-Superior-Jan2025.pdf",
+    "notes": "data de publicação aproximada pelo ano"
+  },
+  {
+    "code": "TABELA-OFICIAL-UFPA",
+    "title": "Tabela oficial de pontuação para progressão docente da UFPA",
+    "kind": "TABELA",
+    "issuer": "UFPA",
+    "published_on": "2026-11-17",
+    "source_url": null,
+    "notes": "Planilha fornecida em 2026-11-17, sem URL pública; a data de publicação é a do fornecimento."
+  }
+]
