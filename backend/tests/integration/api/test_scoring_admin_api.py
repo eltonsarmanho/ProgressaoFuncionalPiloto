@@ -77,6 +77,14 @@ def write_requests(client, headers, table, reference):
             json={"unit_ids": [str(reference["IFCH"].id)]},
             headers=headers,
         ),
+        "mark_in_use": client.put(
+            f"/api/scoring-units/{reference['FASI'].id}/default-version",
+            json={"version_id": version_id},
+            headers=headers,
+        ),
+        "clear_in_use": client.delete(
+            f"/api/scoring-units/{reference['FASI'].id}/default-version", headers=headers
+        ),
     }
 
 
@@ -158,6 +166,8 @@ def test_every_route_is_401_without_a_session(client, scoring_tables):
         ("post", f"/api/scoring-tables/{table_id}/versions/import"),
         ("put", f"/api/scoring-tables/{table_id}/units"),
         ("get", f"/api/scoring-tables/{table_id}/history"),
+        ("put", f"/api/scoring-units/{table_id}/default-version"),
+        ("delete", f"/api/scoring-units/{table_id}/default-version"),
     ]:
         assert getattr(client, method)(url).status_code == 401, url
 
@@ -504,3 +514,116 @@ def test_superseded_version_stays_read_only(client, admin):
 
     assert response.status_code == 409
     assert "somente leitura" in response.json()["detail"]
+
+
+# --- GTAB-02, GTAB-04, GTAB-15: mark and clear the version in use of a unit --------------------
+
+
+def mark(client, headers, unit_id, version_id):
+    return client.put(
+        f"/api/scoring-units/{unit_id}/default-version",
+        json={"version_id": str(version_id)},
+        headers=headers,
+    )
+
+
+def stored_mark(uow_factory, unit_id):
+    with uow_factory() as uow:
+        found = uow.scoring_tables.get_unit_default(unit_id)
+    return found.version_id if found else None
+
+
+def test_put_marks_the_version_and_answers_with_the_unit_and_the_version(
+    client, admin, reference, scoring_tables, uow_factory
+):
+    _, headers = admin
+    fasi, version = reference["FASI"], scoring_tables["OFICIAL"]
+
+    response = mark(client, headers, fasi.id, version.id)
+
+    assert response.status_code == 200
+    assert response.json() == {"unit_id": str(fasi.id), "version_id": str(version.id)}
+    assert stored_mark(uow_factory, fasi.id) == version.id
+
+
+def test_delete_clears_the_mark_with_204_and_again_with_204(
+    client, admin, reference, scoring_tables, uow_factory
+):
+    _, headers = admin
+    fasi = reference["FASI"]
+    mark(client, headers, fasi.id, scoring_tables["OFICIAL"].id)
+
+    first = client.delete(f"/api/scoring-units/{fasi.id}/default-version", headers=headers)
+    second = client.delete(f"/api/scoring-units/{fasi.id}/default-version", headers=headers)
+
+    assert (first.status_code, second.status_code) == (204, 204)
+    assert stored_mark(uow_factory, fasi.id) is None
+
+
+def test_marking_an_unknown_version_is_404(client, admin, reference):
+    _, headers = admin
+
+    response = mark(client, headers, reference["FASI"].id, uuid.uuid4())
+
+    assert response.status_code == 404
+
+
+def test_marking_for_an_unknown_unit_is_422_on_unit_id(client, admin, scoring_tables):
+    _, headers = admin
+
+    response = mark(client, headers, uuid.uuid4(), scoring_tables["OFICIAL"].id)
+
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["field"] == "unit_id"
+
+
+def test_marking_a_table_that_is_not_the_units_is_422_on_unit_id(
+    client, admin, reference, scoring_tables, uow_factory
+):
+    _, headers = admin
+
+    response = mark(client, headers, reference["FASI"].id, scoring_tables["OUTRA"].id)
+
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["field"] == "unit_id"
+    assert stored_mark(uow_factory, reference["FASI"].id) is None
+
+
+def test_marking_a_superseded_version_is_409_with_the_code(
+    client, admin, reference, legacy_table, scoring_tables
+):
+    _, headers = admin
+
+    response = mark(client, headers, reference["FASI"].id, scoring_tables["OFICIAL"].id)
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "VERSAO_SUBSTITUIDA"
+
+
+def test_marking_a_version_of_an_archived_table_is_409_with_the_code(
+    client, admin, reference, scoring_tables, uow_factory
+):
+    _, headers = admin
+    with uow_factory() as uow:
+        uow.scoring_tables.set_table_archived(scoring_tables["OFICIAL"].table_id, True)
+        uow.commit()
+
+    response = mark(client, headers, reference["FASI"].id, scoring_tables["OFICIAL"].id)
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "TABELA_ARQUIVADA"
+    assert stored_mark(uow_factory, reference["FASI"].id) is None
+
+
+@pytest.mark.parametrize("role", [Role.SECRETARIA, Role.DOCENTE])
+def test_marking_and_clearing_are_403_for_non_admin_and_change_nothing(
+    client, act_as, reference, scoring_tables, uow_factory, role
+):
+    _, headers = act_as("outro@ufpa.br", role)
+    fasi = reference["FASI"]
+
+    put = mark(client, headers, fasi.id, scoring_tables["OFICIAL"].id)
+    delete = client.delete(f"/api/scoring-units/{fasi.id}/default-version", headers=headers)
+
+    assert (put.status_code, delete.status_code) == (403, 403)
+    assert stored_mark(uow_factory, fasi.id) is None

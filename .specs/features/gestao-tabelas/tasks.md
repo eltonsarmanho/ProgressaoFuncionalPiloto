@@ -361,7 +361,7 @@ graph LR
 
 #### T8: Rotas de marcar e desmarcar a versão em uso
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `PUT /api/scoring-units/{unit_id}/default-version` (corpo `{version_id}`, resposta `UnitDefaultOut` com `unit_id` e `version_id`) e `DELETE` (204), com os esquemas `UnitDefaultIn` e `UnitDefaultOut` em `schemas/scoring_admin.py` e os dois casos de uso ligados em `app/presentation/dependencies.py`.
 **Where**: `backend/app/presentation/api/scoring_tables_admin.py` (modify)
@@ -376,10 +376,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_scoring_admin_api.py` (modifica): `PUT` 200 com o corpo esperado e `DELETE` 204; 403 para SECRETARIA e DOCENTE; 401 sem sessão; 404 de versão inexistente; 422 em `unit_id`; 409 com os códigos `VERSAO_SUBSTITUIDA` e `TABELA_ARQUIVADA` no corpo
-- [ ] As duas rotas entram nas listas de rotas de escrita dos testes de 403 e de 401 (`test_every_write_route_is_403_for_non_admin`, `test_every_route_is_401_without_a_session`, `test_scoring_admin_api.py:138-162`)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_scoring_admin_api.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/api/test_scoring_admin_api.py` (modifica): `PUT` 200 com o corpo esperado e `DELETE` 204; 403 para SECRETARIA e DOCENTE; 401 sem sessão; 404 de versão inexistente; 422 em `unit_id`; 409 com os códigos `VERSAO_SUBSTITUIDA` e `TABELA_ARQUIVADA` no corpo
+- [x] As duas rotas entram nas listas de rotas de escrita dos testes de 403 e de 401 (`test_every_write_route_is_403_for_non_admin`, `test_every_route_is_401_without_a_session`, `test_scoring_admin_api.py:138-162`)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_scoring_admin_api.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted

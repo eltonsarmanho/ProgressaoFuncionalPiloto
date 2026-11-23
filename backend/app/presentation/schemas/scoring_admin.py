@@ -46,6 +46,15 @@ class UnitsIn(BaseModel):
     unit_ids: list[UUID]
 
 
+class UnitDefaultIn(BaseModel):
+    version_id: UUID
+
+
+class UnitDefaultOut(BaseModel):
+    unit_id: UUID
+    version_id: UUID
+
+
 class AuditEntryOut(BaseModel):
     id: int
     occurred_at: datetime

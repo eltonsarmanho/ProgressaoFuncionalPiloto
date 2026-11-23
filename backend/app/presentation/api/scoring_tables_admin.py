@@ -4,7 +4,7 @@ from datetime import date
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Response, UploadFile
 from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
@@ -19,6 +19,8 @@ from app.presentation.schemas.scoring_admin import (
     TableCreateIn,
     TableDuplicateIn,
     TableHistoryOut,
+    UnitDefaultIn,
+    UnitDefaultOut,
     UnitsIn,
     VersionCreateIn,
 )
@@ -142,3 +144,19 @@ async def set_units(
 async def table_history(table_id: UUID, _: UserDep, container: ContainerDep) -> TableHistoryOut:
     history = await run_in_threadpool(container.table_history.execute, table_id)
     return TableHistoryOut.of(history)
+
+
+@router.put("/scoring-units/{unit_id}/default-version", response_model=UnitDefaultOut)
+async def set_unit_default(
+    unit_id: UUID, body: UnitDefaultIn, actor: UserDep, container: ContainerDep
+) -> UnitDefaultOut:
+    await run_in_threadpool(
+        container.set_unit_default_version.execute, actor, unit_id, body.version_id
+    )
+    return UnitDefaultOut(unit_id=unit_id, version_id=body.version_id)
+
+
+@router.delete("/scoring-units/{unit_id}/default-version", status_code=204)
+async def clear_unit_default(unit_id: UUID, actor: UserDep, container: ContainerDep) -> Response:
+    await run_in_threadpool(container.clear_unit_default_version.execute, actor, unit_id)
+    return Response(status_code=204)

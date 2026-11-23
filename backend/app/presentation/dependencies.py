@@ -115,6 +115,10 @@ from app.application.use_cases.scoring_admin import (
     SetTableUnits,
     UpdateVersionCriteria,
 )
+from app.application.use_cases.scoring_defaults import (
+    ClearUnitDefaultVersion,
+    SetUnitDefaultVersion,
+)
 from app.application.use_cases.units import ArchiveUnit, CreateUnit, ListUnits, UpdateUnit
 from app.application.use_cases.users import CreateUser, ListUsers
 from app.core.config import Settings
@@ -198,6 +202,8 @@ class Container:
     import_criteria_csv: ImportCriteriaCsv
     set_table_units: SetTableUnits
     table_history: GetTableHistory
+    set_unit_default_version: SetUnitDefaultVersion
+    clear_unit_default_version: ClearUnitDefaultVersion
     suggest_scoring_table: SuggestScoringTable
     choose_process_table: ChooseProcessTable
     calculate_process_score: CalculateProcessScore
@@ -363,6 +369,8 @@ def build_container(
         import_criteria_csv=ImportCriteriaCsv(uow_factory, audit),
         set_table_units=SetTableUnits(uow_factory, audit),
         table_history=GetTableHistory(uow_factory),
+        set_unit_default_version=SetUnitDefaultVersion(uow_factory, audit),
+        clear_unit_default_version=ClearUnitDefaultVersion(uow_factory, audit),
         suggest_scoring_table=SuggestScoringTable(uow_factory, audit, policy),
         choose_process_table=ChooseProcessTable(uow_factory, audit, policy),
         calculate_process_score=CalculateProcessScore(uow_factory, audit, policy),
