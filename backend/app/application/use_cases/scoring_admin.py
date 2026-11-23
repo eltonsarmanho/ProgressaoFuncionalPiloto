@@ -653,7 +653,9 @@ class CreateVersionFrom:
         require_admin(actor)
         reference = check_validity(valid_from, valid_to, norm_reference)
         with self._uow_factory() as uow:
-            if uow.scoring_tables.get_table(table_id) is None:
+            # Locked first, as DeleteScoringVersion does (unit, table, version): closing the open
+            # version before this lock could cross a deletion of that version (deadlock).
+            if not uow.scoring_tables.lock_table(table_id):
                 raise NotFound("Tabela de pontuação não encontrada")
             source = uow.scoring_tables.get_version(source_version_id)
             if source is None:
@@ -712,7 +714,8 @@ class ImportCriteriaCsv:
         require_admin(actor)
         reference = check_validity(valid_from, valid_to, norm_reference)
         with self._uow_factory() as uow:
-            if uow.scoring_tables.get_table(table_id) is None:
+            # Same lock order as CreateVersionFrom and DeleteScoringVersion (table, then version).
+            if not uow.scoring_tables.lock_table(table_id):
                 raise NotFound("Tabela de pontuação não encontrada")
             base = latest_version(uow.scoring_tables.list_versions(table_id))
             parsed = parse_criteria_csv(csv_text)

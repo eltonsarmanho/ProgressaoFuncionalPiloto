@@ -7,7 +7,9 @@ unpinned (verification of gestao-tabelas). Tables are synthetic.
   ClearUnitDefaultVersion);
 - deleting a version that is not the latest does not reopen the previous one (A11);
 - deleting the latest version reopens the previous one only if the deleted one closed it
-  (ADM-05), which the CREATE event of the deleted version records (fix F1 of validation.md).
+  (ADM-05), which the CREATE event of the deleted version records (fix F1 of validation.md);
+- creating a version while the latest one is deleted is not a deadlock (the table lock of
+  CreateVersionFrom and ImportCriteriaCsv, fix F8).
 """
 
 from datetime import date
@@ -165,3 +167,38 @@ def test_deleting_the_latest_does_not_reopen_an_adjacent_version_it_never_closed
     with world.uow_factory() as uow:
         assert uow.scoring_tables.get_version(inserted.id).valid_to == date(2025, 12, 31)
         assert uow.scoring_tables.get_version(first.id).valid_to == date(2023, 12, 31)
+
+
+def test_creating_a_version_while_the_latest_one_is_being_deleted_is_not_a_deadlock(
+    world, uc, engine
+):
+    table = uc.create_table.execute(
+        world.admin, "Tabela Sintética Corrida", [], date(2020, 1, 1), None, REFERENCE,
+        base_version_id=world.official_version.id,
+    )
+    first = table.versions[0].version
+    latest = uc.create_version.execute(
+        world.admin, table.table.id, first.id, date(2024, 1, 1), None, REFERENCE
+    ).version
+    gate = Gate()
+    holding = hooked_factory(engine, ("update_version",), lambda _n: gate.hold())
+    slow_creation = scoring_admin.CreateVersionFrom(holding, world.audit)
+    creating = Worker(
+        lambda: slow_creation.execute(
+            world.admin, table.table.id, first.id, date(2026, 1, 1), None, REFERENCE
+        )
+    ).start()
+    gate.wait_reached()  # the open version is closed and its row is locked, not committed
+    deleting = Worker(lambda: uc.delete.execute(world.admin, latest.id)).start()
+    wait_until_blocked(engine)  # the deletion has to wait for the creation
+
+    gate.release()
+    creating.join()
+    deleting.join()
+
+    assert creating.error is None  # a deadlock would abort one of the two with 40P01
+    assert deleting.error is None or isinstance(deleting.error, Conflict)
+    with world.uow_factory() as uow:
+        headers = uow.scoring_tables.list_version_headers(table.table.id)
+    assert date(2026, 1, 1) in {v.valid_from for v in headers}
+
