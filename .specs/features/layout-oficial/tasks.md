@@ -132,7 +132,7 @@ graph LR
 
 #### T1: Números por extenso
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `spell_number(n: int) -> str` escreve o cardinal em português, de 1 a 2999 (`ValueError` fora da faixa): "um", "vinte e sete", "cento e um", "mil e cem", "mil cento e um", "dois mil e vinte e cinco", com o "e" depois de "mil" só quando o resto é menor que 100 ou centena exata.
 **Where**: `backend/app/domain/rules/spelled_numbers.py` (new)
@@ -147,11 +147,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_spelled_numbers.py` (novo), com tabela de valores: 1 "um", 2 "dois", 3 "três", 10 "dez", 16 "dezesseis", 20 "vinte", 21 "vinte e um", 27 "vinte e sete", 31 "trinta e um", 100 "cem", 101 "cento e um", 110 "cento e dez", 200 "duzentos", 999 "novecentos e noventa e nove", 1000 "mil", 1001 "mil e um", 1100 "mil e cem", 1101 "mil cento e um", 1999 "mil novecentos e noventa e nove", 2000 "dois mil", 2020 "dois mil e vinte", 2025 "dois mil e vinte e cinco", 2026 "dois mil e vinte e seis", 2100 "dois mil e cem", 2101 "dois mil cento e um", 2200 "dois mil e duzentos", 2999 "dois mil novecentos e noventa e nove"; 0, -1 e 3000 dão `ValueError`
-- [ ] Conferência cruzada: para todo n de 1 a 2999, `numerals_from_words(normalize_title(spell_number(n)))` devolve `str(n)` (o leitor de números por extenso do projeto lê de volta o que este módulo escreve); a diferença que aparecer é investigada antes de mudar qualquer um dos dois e fica registrada nas Notas
-- [ ] O módulo não importa `app.infrastructure`, relógio nem IA (o teste de arquitetura passa)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_spelled_numbers.py` (novo), com tabela de valores: 1 "um", 2 "dois", 3 "três", 10 "dez", 16 "dezesseis", 20 "vinte", 21 "vinte e um", 27 "vinte e sete", 31 "trinta e um", 100 "cem", 101 "cento e um", 110 "cento e dez", 200 "duzentos", 999 "novecentos e noventa e nove", 1000 "mil", 1001 "mil e um", 1100 "mil e cem", 1101 "mil cento e um", 1999 "mil novecentos e noventa e nove", 2000 "dois mil", 2020 "dois mil e vinte", 2025 "dois mil e vinte e cinco", 2026 "dois mil e vinte e seis", 2100 "dois mil e cem", 2101 "dois mil cento e um", 2200 "dois mil e duzentos", 2999 "dois mil novecentos e noventa e nove"; 0, -1 e 3000 dão `ValueError`
+- [x] Conferência cruzada: para todo n de 1 a 2999, `numerals_from_words(normalize_title(spell_number(n)))` devolve `str(n)` (o leitor de números por extenso do projeto lê de volta o que este módulo escreve); a diferença que aparecer é investigada antes de mudar qualquer um dos dois e fica registrada nas Notas
+- [x] O módulo não importa `app.infrastructure`, relógio nem IA (o teste de arquitetura passa)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
