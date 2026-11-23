@@ -288,7 +288,7 @@ graph LR
 
 #### T6: Parecer em PDF pelo modelo
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `write_opinion_pdf(model, target)` reescrito para o mesmo modelo: A4 retrato, cabeçalho centralizado em Liberation Serif com a linha horizontal na largura do texto, "PARECER" em Liberation Sans Bold centralizado, a linha de local e data em Liberation Sans a partir da metade da largura do texto, o parágrafo justificado com recuo de primeira linha, entrelinha 1,5 e as runs em negrito (`<b>`), e as linhas dos membros centralizadas. Corpo a 12 pt, sem rodapé de página (usa `PdfCanvas`, não `NumberedCanvas`).
 **Where**: `backend/app/infrastructure/documents/opinion_pdf.py` (modify)
@@ -303,9 +303,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_opinion_pdf.py` (reescrito; os testes das seções de PAR-03, do Total geral, das assinaturas com função e do rodapé "Página N de M" são substituídos): o arquivo começa com `%PDF` e é A4; o texto lido com `pymupdf` traz, na ordem, o cabeçalho, "PARECER", a linha de local e data, o parágrafo inteiro e as linhas dos membros, e é igual, depois de normalizar espaços, ao texto do DOCX do mesmo modelo (AD-011); com três membros titulares o PDF tem uma página (PMOD-21) e com 15 membros de nomes de 200 caracteres tem mais de uma página e todos os nomes aparecem; as palavras da data estão em fonte bold e "Aos" não; "PARECER" e a linha de local e data estão na face Sans e o resto na Serif (só as faces Liberation listadas); a linha de local e data começa na metade da largura do texto (posição `x0` das palavras); a linha horizontal existe (um desenho de traço na largura do texto); nenhum texto "Página"; caractere de controle não vira caixa e marcação num nome sai como texto; o texto fica dentro das margens do modelo
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit/infrastructure/test_opinion_pdf.py tests/unit/infrastructure/test_opinion_docx.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado sem substituto
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_opinion_pdf.py` (reescrito; os testes das seções de PAR-03, do Total geral, das assinaturas com função e do rodapé "Página N de M" são substituídos): o arquivo começa com `%PDF` e é A4; o texto lido com `pymupdf` traz, na ordem, o cabeçalho, "PARECER", a linha de local e data, o parágrafo inteiro e as linhas dos membros, e é igual, depois de normalizar espaços, ao texto do DOCX do mesmo modelo (AD-011); com três membros titulares o PDF tem uma página (PMOD-21) e com 15 membros de nomes de 200 caracteres tem mais de uma página e todos os nomes aparecem; as palavras da data estão em fonte bold e "Aos" não; "PARECER" e a linha de local e data estão na face Sans e o resto na Serif (só as faces Liberation listadas); a linha de local e data começa na metade da largura do texto (posição `x0` das palavras); a linha horizontal existe (um desenho de traço na largura do texto); nenhum texto "Página"; caractere de controle não vira caixa e marcação num nome sai como texto; o texto fica dentro das margens do modelo
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit/infrastructure/test_opinion_pdf.py tests/unit/infrastructure/test_opinion_docx.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado sem substituto
 
 **Tests**: unit
 **Gate**: quick

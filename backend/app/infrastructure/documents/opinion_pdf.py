@@ -1,91 +1,80 @@
-"""The Parecer as PDF, drawn with reportlab (PAR-03).
+"""The Parecer as PDF, drawn with reportlab (PMOD-01, PMOD-02, PMOD-04 to PMOD-07, PMOD-21).
 
-Same model and same order as the DOCX: A4 portrait with the margins and the font size of the
-page of the model, the institutional header and the title centered, each section with its
-heading and lines, the table of points closed by the Total geral, one signature line for each
-member, and `Página N de M` at the foot. The numbers and the text are the ones of the
-`OpinionDocument`; nothing is summed or written here.
+Same model and same order as the DOCX: A4 portrait with the margins of the page of the model and
+12 pt text, the header centered in Liberation Serif with a rule across the text width, the title
+and the place and date line in Liberation Sans, the justified paragraph with its bold runs, and
+the centered member lines. No table and no page footer (`PdfCanvas`, not `NumberedCanvas`). The
+text is the one of the `OpinionDocument`; nothing is composed here.
 """
 
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-from reportlab.lib import colors
-from reportlab.lib.enums import TA_RIGHT
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
-from reportlab.platypus import KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.lib.units import cm
+from reportlab.platypus import BaseDocTemplate, Frame, HRFlowable, PageTemplate, Paragraph
 
-from app.domain.rules.opinion_document import OpinionDocument, OpinionSection, Signature
+from app.domain.rules.opinion_document import OpinionDocument, TextRun
 from app.infrastructure.documents.pdf_styles import (
     FONT_REGULAR,
-    NumberedCanvas,
-    PdfStyles,
-    build_styles,
+    FONT_SANS,
+    FONT_SANS_BOLD,
+    PdfCanvas,
     margins_from_page,
+    register_fonts,
 )
 from app.infrastructure.documents.text_safety import xml_safe
 
-_SIGNATURE_RULE = "_" * 42
-_SIGNATURE_GAP = 30
-_VALUE_WIDTH = 85  # points
-_GREY = colors.Color(0.9, 0.9, 0.9)
-_LINE = colors.Color(0.4, 0.4, 0.4)
-_JUSTIFIED = {"conclusao", "observacoes"}
+_BODY_PT = 12
+_LINE_SPACING = 1.5
+_FIRST_LINE_INDENT = 1.25 * cm
+_RULE_PT = 0.75
 
 
-def _p(text: str, style) -> Paragraph:
-    return Paragraph(escape(xml_safe(text)), style)
+def _text(text: str) -> str:
+    return escape(xml_safe(text))
 
 
-def _points_table(section: OpinionSection, styles: PdfStyles, width: float) -> Table:
-    value_style = ParagraphStyle("cell_right", parent=styles.cell, alignment=TA_RIGHT)
-    value_band = ParagraphStyle("band_right", parent=styles.band, alignment=TA_RIGHT)
-    rows = [[_p(r.label, styles.cell), _p(r.value, value_style)] for r in section.rows]
-    commands = [
-        ("FONTNAME", (0, 0), (-1, -1), FONT_REGULAR),
-        ("GRID", (0, 0), (-1, -1), 0.25, _LINE),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-    ]
-    if section.total is not None:
-        last = len(rows)
-        rows.append([_p(section.total.label, styles.band), _p(section.total.value, value_band)])
-        commands.append(("BACKGROUND", (0, last), (-1, last), _GREY))
-    table = Table(rows, colWidths=[width - _VALUE_WIDTH, _VALUE_WIDTH])
-    table.setStyle(TableStyle(commands))
-    return table
+def _markup(runs: tuple[TextRun, ...]) -> str:
+    return "".join(f"<b>{_text(r.text)}</b>" if r.bold else _text(r.text) for r in runs)
 
 
-def _section(section: OpinionSection, styles: PdfStyles, width: float) -> list:
-    story = []
-    if section.heading:
-        story.append(_p(section.heading, styles.heading))
-    style = styles.body if section.key in _JUSTIFIED else styles.body_left
-    for text in section.lines:
-        story.extend(_p(line, style) for line in xml_safe(text).split("\n"))
-    if section.rows or section.total is not None:
-        story.append(_points_table(section, styles, width))
-    return story
-
-
-def _signature(signature: Signature, styles: PdfStyles) -> KeepTogether:
-    centered = ParagraphStyle("signature", parent=styles.header_line, fontName=FONT_REGULAR)
-    return KeepTogether(
-        [
-            Spacer(1, _SIGNATURE_GAP),
-            _p(_SIGNATURE_RULE, centered),
-            _p(signature.name, styles.header_line),
-            _p(signature.role, centered),
-        ]
-    )
+def _style(name: str, font: str = FONT_REGULAR, **kwargs) -> ParagraphStyle:
+    kwargs.setdefault("leading", _BODY_PT * 1.2)
+    return ParagraphStyle(name, fontName=font, fontSize=_BODY_PT, **kwargs)
 
 
 def write_opinion_pdf(model: OpinionDocument, target: Path) -> None:
     """Writes the PDF to `target` (a path, never a stream)."""
-    page = model.page
-    styles = build_styles(page.font_size_pt)
-    margins = margins_from_page(page)
-    template = SimpleDocTemplate(
+    register_fonts()
+    margins = margins_from_page(model.page)
+    width = A4[0] - margins.left - margins.right
+    header = _style("opinion_header", alignment=TA_CENTER)
+    title = _style(
+        "opinion_title",
+        FONT_SANS_BOLD,
+        alignment=TA_CENTER,
+        spaceBefore=_BODY_PT,
+        spaceAfter=2 * _BODY_PT,
+    )
+    place_date = _style(
+        "opinion_place_date",
+        FONT_SANS,
+        alignment=TA_LEFT,
+        leftIndent=width / 2,
+        spaceAfter=2 * _BODY_PT,
+    )
+    body = _style(
+        "opinion_body",
+        alignment=TA_JUSTIFY,
+        firstLineIndent=_FIRST_LINE_INDENT,
+        leading=_BODY_PT * _LINE_SPACING,
+        spaceAfter=3 * _BODY_PT,
+    )
+    member = _style("opinion_member", alignment=TA_CENTER, spaceAfter=_BODY_PT / 2)
+    template = BaseDocTemplate(
         str(target),
         pagesize=A4,
         leftMargin=margins.left,
@@ -94,10 +83,24 @@ def write_opinion_pdf(model: OpinionDocument, target: Path) -> None:
         bottomMargin=margins.bottom,
         title=model.title,
     )
-    width = A4[0] - margins.left - margins.right
-    story: list = [_p(line, styles.header_line) for line in model.header_lines]
-    story += [Spacer(1, 6), _p(model.title, styles.title)]
-    for section in model.sections:
-        story += _section(section, styles, width)
-    story += [_signature(signature, styles) for signature in model.signatures]
-    template.build(story, canvasmaker=NumberedCanvas)
+    # No padding in the frame: the text, the rule and the half-width indent start at the margins.
+    frame = Frame(
+        margins.left,
+        margins.bottom,
+        width,
+        A4[1] - margins.top - margins.bottom,
+        leftPadding=0,
+        rightPadding=0,
+        topPadding=0,
+        bottomPadding=0,
+    )
+    template.addPageTemplates([PageTemplate(id="opinion", frames=[frame])])
+    story: list = [Paragraph(_text(line), header) for line in model.header_lines]
+    story += [
+        HRFlowable(width="100%", thickness=_RULE_PT, spaceBefore=_BODY_PT / 2, spaceAfter=0),
+        Paragraph(_text(model.title), title),
+        Paragraph(_text(model.place_date_line), place_date),
+        Paragraph(_markup(model.paragraph), body),
+    ]
+    story += [Paragraph(_text(line), member) for line in model.member_lines]
+    template.build(story, canvasmaker=PdfCanvas)
