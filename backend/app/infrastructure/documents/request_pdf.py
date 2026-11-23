@@ -3,7 +3,8 @@
 Same model and same order as the DOCX: A4 portrait with the margins and the font size of the
 page of the model, the institutional header and the title centered, the greeting, the marked
 option, the justified paragraph of the request, the evaluation line, place and date, the
-closing, the signature line with its caption, the SIAPE and the LGPD note.
+closing, the signature line with its caption, the SIAPE and the LGPD note. The emblem of the
+UFPA opens the first page (BRAS-05).
 """
 
 from pathlib import Path
@@ -20,6 +21,7 @@ from app.infrastructure.documents.pdf_styles import (
     FONT_REGULAR,
     PdfCanvas,
     build_styles,
+    emblem_flowables,
     margins_from_page,
 )
 from app.infrastructure.documents.text_safety import xml_safe
@@ -69,7 +71,8 @@ def write_request_pdf(model: RequestDocument, target: Path) -> None:
         bottomMargin=margins.bottom,
         title=model.title,
     )
-    story: list = [_p(line, styles.header_line) for line in model.header_lines]
+    story: list = [*emblem_flowables()]
+    story += [_p(line, styles.header_line) for line in model.header_lines]
     story += [
         Spacer(1, size),
         _p(model.title, styles.title),

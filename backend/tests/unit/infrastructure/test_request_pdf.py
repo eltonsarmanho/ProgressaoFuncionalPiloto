@@ -6,7 +6,11 @@ from dataclasses import replace
 from datetime import date
 
 import pymupdf
+import pytest
+from reportlab.lib.units import mm
 
+from app.infrastructure.documents import emblem
+from app.infrastructure.documents.emblem import EmblemUnavailable
 from app.infrastructure.documents.request_docx import write_request_docx
 from app.infrastructure.documents.request_pdf import write_request_pdf
 from tests.unit.domain.board_document_support import PROFESSOR
@@ -100,3 +104,37 @@ def test_the_letter_has_no_page_footer_just_as_the_docx_has_none(tmp_path):
 
     assert len(pdf) == 1
     assert not FOOTER.search(pdf[0].get_text())
+
+
+def test_the_first_page_has_the_emblem_centered_on_the_text_above_the_ministry(tmp_path):
+    # BRAS-05, BRAS-06
+    page = render(tmp_path, request_model())[0]
+
+    images = page.get_images(full=True)
+    assert len(images) == 1
+    (rect,) = page.get_image_rects(images[0][0])
+    text_center = (30 * mm + (page.rect.width - 20 * mm)) / 2  # margins of the model: 30 and 20
+    assert rect.width == pytest.approx(20 * mm, abs=0.5)
+    assert rect.height == pytest.approx(20 * mm * 351 / 279, abs=0.5)
+    assert (rect.x0 + rect.x1) / 2 == pytest.approx(text_center, abs=0.5)
+    ministry = page.search_for("MINISTÉRIO DA EDUCAÇÃO")[0]
+    assert rect.y1 + 3 * mm <= ministry.y0
+
+
+def test_the_request_with_the_emblem_is_still_one_page_and_the_sans_is_not_listed(tmp_path):
+    # BRAS-08: the emblem adds no page and no font
+    pdf = render(tmp_path, request_model(last_opinion=date(2025, 4, 2)))
+
+    assert len(pdf) == 1
+    names = {font[3].split("+")[-1] for page in pdf for font in page.get_fonts()}
+    assert names and all(name.startswith("LiberationSerif") for name in names)
+
+
+def test_without_the_emblem_file_the_writer_raises_and_writes_nothing(monkeypatch, tmp_path):
+    # BRAS-10
+    monkeypatch.setattr(emblem, "EMBLEM_FILE", tmp_path / "ufpa.png")
+    target = tmp_path / "requerimento.pdf"
+
+    with pytest.raises(EmblemUnavailable):
+        write_request_pdf(request_model(), target)
+    assert not target.exists()

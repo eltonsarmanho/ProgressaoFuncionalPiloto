@@ -669,7 +669,7 @@ graph LR
 
 #### T19: Brasão no Requerimento em PDF
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `write_request_pdf` começa a história com `emblem_flowables()` antes de "MINISTÉRIO DA EDUCAÇÃO".
 **Where**: `backend/app/infrastructure/documents/request_pdf.py` (modify)
@@ -684,9 +684,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_request_pdf.py`: a primeira página tem uma imagem de 56,7 pt de largura, centrada, acima de "MINISTÉRIO DA EDUCAÇÃO"; o texto lido do PDF é o de antes e igual ao do DOCX; o Requerimento segue em uma página A4 com o cenário sintético; só a Liberation Serif é listada; sem o arquivo levanta `EmblemUnavailable`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_request_pdf.py`: a primeira página tem uma imagem de 56,7 pt de largura, centrada, acima de "MINISTÉRIO DA EDUCAÇÃO"; o texto lido do PDF é o de antes e igual ao do DOCX; o Requerimento segue em uma página A4 com o cenário sintético; só a Liberation Serif é listada; sem o arquivo levanta `EmblemUnavailable`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
