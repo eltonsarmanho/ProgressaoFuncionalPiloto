@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 52,
+  "next_id": 55,
   "lessons": [
     {
       "id": "L-001",
@@ -925,6 +925,60 @@
       ],
       "created": "2026-11-23T17:12:02Z",
       "last_seen": "2026-11-23T17:12:02Z"
+    },
+    {
+      "id": "L-052",
+      "key": "surviving_mutant::write one lock race test per entry point that takes a lock and re check a claimed equivalent lock against every writer of the locked row including seed time ones",
+      "text": "Write one lock-race test per entry point that takes a lock, and re-check a claimed equivalent lock against every writer of the locked row, including seed-time ones.",
+      "signal": "surviving_mutant",
+      "scope": "backend-locks",
+      "status": "candidate",
+      "features": [
+        "gestao-tabelas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Mb10, N4 (backend-locks)"
+      ],
+      "created": "2026-11-23T18:35:12Z",
+      "last_seen": "2026-11-23T18:35:12Z"
+    },
+    {
+      "id": "L-053",
+      "key": "surviving_mutant::test a date built from local components in a mid year case where the month and the day both differ from the utc date not only at the year boundary",
+      "text": "Test a date built from local components in a mid-year case where the month and the day both differ from the UTC date, not only at the year boundary.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-dates",
+      "status": "candidate",
+      "features": [
+        "gestao-tabelas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Mn02, Mn03 (frontend-dates)"
+      ],
+      "created": "2026-11-23T18:35:12Z",
+      "last_seen": "2026-11-23T18:35:12Z"
+    },
+    {
+      "id": "L-054",
+      "key": "surviving_mutant::when a css rule gives a layout guarantee through a class assert in a behavior test that each element carries that class because a static test of the rule alone cannot see the class dropped",
+      "text": "When a CSS rule gives a layout guarantee through a class, assert in a behavior test that each element carries that class, because a static test of the rule alone cannot see the class dropped.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-css",
+      "status": "candidate",
+      "features": [
+        "gestao-tabelas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Mn09, Mn10 (frontend-css)"
+      ],
+      "created": "2026-11-23T18:35:12Z",
+      "last_seen": "2026-11-23T18:35:12Z"
     }
   ]
 }

@@ -318,6 +318,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: GTAB-03 validation.md (spec)
 - last seen: 2026-11-23T17:12:02Z
 
+### L-052 - Write one lock-race test per entry point that takes a lock, and re-check a claimed equivalent lock against every writer of the locked row, including seed-time ones.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `backend-locks` · harmful: 0
+- features: gestao-tabelas
+- evidence: Mb10, N4 (backend-locks)
+- last seen: 2026-11-23T18:35:12Z
+
+### L-053 - Test a date built from local components in a mid-year case where the month and the day both differ from the UTC date, not only at the year boundary.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-dates` · harmful: 0
+- features: gestao-tabelas
+- evidence: Mn02, Mn03 (frontend-dates)
+- last seen: 2026-11-23T18:35:12Z
+
+### L-054 - When a CSS rule gives a layout guarantee through a class, assert in a behavior test that each element carries that class, because a static test of the rule alone cannot see the class dropped.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-css` · harmful: 0
+- features: gestao-tabelas
+- evidence: Mn09, Mn10 (frontend-css)
+- last seen: 2026-11-23T18:35:12Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
