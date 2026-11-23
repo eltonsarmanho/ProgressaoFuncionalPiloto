@@ -331,7 +331,7 @@ graph LR
 
 #### T7: Semente da marcação inicial
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `seed_unit_defaults(uow)`, chamada por `main()` depois de `seed_scoring_tables` (as fixtures dos testes não a chamam): para cada unidade de `OFFICIAL_TABLE_UNITS` que tem a tabela oficial associada, nenhuma versão em uso e nenhum evento de auditoria da entidade `unit_scoring_default` com o id dela, marca a versão cujo nome é `version_name` de `ufpa.json` e grava um evento `CREATE` sem usuário. Se a tabela, a versão ou a unidade não existe, ou a versão está substituída ou a tabela arquivada, não marca e só registra no log, sem levantar erro (a semente roda sob `set -eu` na partida do contêiner). Mesma transação e mesmo `AuditService(SystemClock())` de `link_table_norms`.
 **Where**: `backend/app/infrastructure/database/seed.py` (modify)
@@ -346,11 +346,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_seed_scoring.py` (modifica): a primeira execução marca FASI e IFCH com a versão oficial atual e grava dois eventos sem usuário; a segunda execução não grava evento nem muda a linha; depois de o ADMIN desmarcar a FASI, nova execução não a remarca; unidade que perdeu a marcação por substituição (evento `DELETE` da tarefa anterior) não é remarcada; unidade sem a tabela oficial associada não é marcada; as fixtures que chamam só `seed_scoring_tables` seguem sem marcação
-- [ ] Robustez: sem a tabela oficial, sem a versão, sem a unidade, com a versão substituída ou com a tabela arquivada, a função termina sem levantar e sem marcar
-- [ ] `test_main_entrypoint_seeds_the_official_table` passa a conferir também as duas marcações, e `backend/tests/integration/test_seed.py` (que roda `main`) segue verde
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/test_seed_scoring.py tests/integration/test_seed_links.py tests/integration/test_seed.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/test_seed_scoring.py` (modifica): a primeira execução marca FASI e IFCH com a versão oficial atual e grava dois eventos sem usuário; a segunda execução não grava evento nem muda a linha; depois de o ADMIN desmarcar a FASI, nova execução não a remarca; unidade que perdeu a marcação por substituição (evento `DELETE` da tarefa anterior) não é remarcada; unidade sem a tabela oficial associada não é marcada; as fixtures que chamam só `seed_scoring_tables` seguem sem marcação
+- [x] Robustez: sem a tabela oficial, sem a versão, sem a unidade, com a versão substituída ou com a tabela arquivada, a função termina sem levantar e sem marcar
+- [x] `test_main_entrypoint_seeds_the_official_table` passa a conferir também as duas marcações, e `backend/tests/integration/test_seed.py` (que roda `main`) segue verde
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/test_seed_scoring.py tests/integration/test_seed_links.py tests/integration/test_seed.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted

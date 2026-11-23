@@ -9,6 +9,9 @@ from decimal import Decimal
 import pytest
 from sqlalchemy import text
 
+from app.application.services.audit_service import AuditService
+from app.application.use_cases.scoring_defaults import ClearUnitDefaultVersion
+from app.domain.entities.audit import AuditAction
 from app.domain.entities.career import Modality
 from app.domain.entities.process import FunctionalProcess
 from app.domain.entities.professor import Professor, Titration, WorkRegime
@@ -22,8 +25,13 @@ from app.domain.entities.scoring import (
 from app.domain.entities.user import Role, User
 from app.domain.errors import NotFound
 from app.domain.repositories.ports import ScoringTableRecord
+from app.infrastructure.clock import SystemClock
 from app.infrastructure.database import seed
-from app.infrastructure.database.seed import seed_reference_data, seed_scoring_tables
+from app.infrastructure.database.seed import (
+    seed_reference_data,
+    seed_scoring_tables,
+    seed_unit_defaults,
+)
 from tests.integration.test_seed import ADMIN_EMAIL, FakeHasher
 from tests.support.scoring_variants import add_legacy_ufpa_version
 
@@ -389,8 +397,170 @@ def test_main_entrypoint_seeds_the_official_table(migrated_url, engine, monkeypa
     seed.main()
 
     assert _counts(engine)["scoring_tables"] == 1
+    with engine.connect() as conn:
+        marks = conn.execute(
+            text(
+                "SELECT u.acronym, v.name FROM scoring_unit_defaults d "
+                "JOIN academic_units u ON u.id = d.unit_id "
+                "JOIN scoring_table_versions v ON v.id = d.version_id"
+            )
+        ).all()
+    assert sorted(marks) == [
+        ("FASI", seed._official_table_data()["version_name"]),
+        ("IFCH", seed._official_table_data()["version_name"]),
+    ]
 
 
 def test_archiving_an_unknown_table_is_not_found(uow_factory):
     with uow_factory() as uow, pytest.raises(NotFound):
         uow.scoring_tables.set_table_archived(uuid.uuid4(), True)
+
+
+# --- GTAB-09: the first mark of the version in use, once per unit -------------------------------
+
+UNIT_DEFAULT = "unit_scoring_default"
+
+
+def _marks(uow_factory) -> dict[str, uuid.UUID]:
+    with uow_factory() as uow:
+        acronyms = {u.id: u.acronym for u in uow.units.list()}
+        return {
+            acronyms[d.unit_id]: d.version_id for d in uow.scoring_tables.list_unit_defaults()
+        }
+
+
+def _mark_events(uow_factory, unit_id):
+    with uow_factory() as uow:
+        return list(uow.audit.list_for(UNIT_DEFAULT, str(unit_id)))
+
+
+def _official_version_id(uow_factory):
+    name = seed._official_table_data()["version_name"]
+    with uow_factory() as uow:
+        for table in uow.scoring_tables.list_tables():
+            for version in uow.scoring_tables.list_versions(table.id):
+                if version.name == name:
+                    return version.id
+    raise AssertionError("official version not seeded")
+
+
+def test_the_seeded_tables_alone_leave_the_units_without_a_mark(uow_factory, units, seeded):
+    assert _marks(uow_factory) == {}
+
+
+def test_the_first_run_marks_fasi_and_ifch_with_the_official_version_and_two_system_events(
+    uow_factory, units, seeded
+):
+    seed_unit_defaults(uow_factory())
+
+    official = _official_version_id(uow_factory)
+    assert _marks(uow_factory) == {"FASI": official, "IFCH": official}
+    for acronym in ("FASI", "IFCH"):
+        [event] = _mark_events(uow_factory, units[acronym])
+        assert event.user_id is None
+        assert event.action is AuditAction.CREATE
+        assert event.entity == UNIT_DEFAULT
+        assert event.changes == {"version_id": {"before": None, "after": str(official)}}
+
+
+def test_the_second_run_writes_no_event_and_changes_no_row(uow_factory, engine, units, seeded):
+    seed_unit_defaults(uow_factory())
+    with engine.connect() as conn:
+        rows = conn.execute(text("SELECT * FROM scoring_unit_defaults ORDER BY unit_id")).all()
+    events = {a: _mark_events(uow_factory, units[a]) for a in ("FASI", "IFCH")}
+
+    seed_unit_defaults(uow_factory())
+
+    with engine.connect() as conn:
+        after = conn.execute(text("SELECT * FROM scoring_unit_defaults ORDER BY unit_id")).all()
+    assert after == rows
+    assert {a: _mark_events(uow_factory, units[a]) for a in ("FASI", "IFCH")} == events
+
+
+def test_a_unit_that_the_admin_cleared_is_not_marked_again(uow_factory, units, seeded):
+    seed_unit_defaults(uow_factory())
+    admin = User(uuid.uuid4(), "adm@ufpa.br", "Adm", Role.ADMIN, "x")
+    with uow_factory() as uow:
+        uow.users.add(admin)
+        uow.commit()
+    ClearUnitDefaultVersion(uow_factory, AuditService(SystemClock())).execute(admin, units["FASI"])
+
+    seed_unit_defaults(uow_factory())
+
+    assert set(_marks(uow_factory)) == {"IFCH"}
+    assert [e.action for e in _mark_events(uow_factory, units["FASI"])] == [
+        AuditAction.CREATE,
+        AuditAction.DELETE,
+    ]
+
+
+def test_a_unit_that_lost_its_mark_by_supersession_is_not_marked_again(uow_factory, units, seeded):
+    seed_unit_defaults(uow_factory())
+    with uow_factory() as uow:  # what AdoptSupersedingVersion does: a system DELETE event
+        uow.scoring_tables.clear_unit_default(units["FASI"])
+        AuditService(SystemClock()).record(
+            uow, None, UNIT_DEFAULT, units["FASI"], AuditAction.DELETE,
+            {"version_id": uuid.uuid4()}, {"version_id": None},
+        )  # fmt: skip
+        uow.commit()
+
+    seed_unit_defaults(uow_factory())
+
+    assert set(_marks(uow_factory)) == {"IFCH"}
+
+
+def test_a_unit_without_the_official_table_associated_is_not_marked(uow_factory, units, seeded):
+    with uow_factory() as uow:
+        table = next(t for t in uow.scoring_tables.list_tables() if t.name == OFFICIAL)
+        uow.scoring_tables.set_table_units(table.id, [units["IFCH"]])
+        uow.commit()
+
+    seed_unit_defaults(uow_factory())
+
+    assert set(_marks(uow_factory)) == {"IFCH"}
+    assert _mark_events(uow_factory, units["FASI"]) == []
+
+
+def test_without_the_units_the_tables_or_the_version_it_ends_without_error_and_without_marks(
+    uow_factory, units
+):
+    seed_unit_defaults(uow_factory())  # units, but no table yet
+    assert _marks(uow_factory) == {}
+
+    with uow_factory() as uow:  # the table, without the version
+        uow.scoring_tables.add_table(
+            ScoringTableRecord(uuid.uuid4(), OFFICIAL, unit_ids=tuple(units.values()))
+        )
+        uow.commit()
+    seed_unit_defaults(uow_factory())
+    assert _marks(uow_factory) == {}
+
+
+def test_on_an_empty_database_it_ends_without_error(uow_factory):
+    seed_unit_defaults(uow_factory())
+
+    assert _marks(uow_factory) == {}
+
+
+def test_a_superseded_official_version_is_not_marked(uow_factory, units, seeded):
+    official = _official_version_id(uow_factory)
+    with uow_factory() as uow:
+        successor = replace(uow.scoring_tables.get_version(official), id=uuid.uuid4(), name="Nova")
+        uow.scoring_tables.add_version(successor)
+        uow.scoring_tables.set_superseded(official, successor.id)
+        uow.commit()
+
+    seed_unit_defaults(uow_factory())
+
+    assert _marks(uow_factory) == {}
+
+
+def test_an_archived_official_table_is_not_marked(uow_factory, units, seeded):
+    with uow_factory() as uow:
+        table = next(t for t in uow.scoring_tables.list_tables() if t.name == OFFICIAL)
+        uow.scoring_tables.set_table_archived(table.id, True)
+        uow.commit()
+
+    seed_unit_defaults(uow_factory())
+
+    assert _marks(uow_factory) == {}

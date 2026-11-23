@@ -4,6 +4,7 @@ Run with: python -m app.infrastructure.database.seed
 """
 
 import json
+import logging
 import uuid
 from dataclasses import replace
 from datetime import date
@@ -13,6 +14,7 @@ from typing import Any
 
 from app.application.services.audit_service import AuditService
 from app.application.use_cases.scoring_adoption import AdoptSupersedingVersion
+from app.application.use_cases.scoring_defaults import UNIT_DEFAULT_ENTITY
 from app.domain.entities.academic_unit import AcademicUnit, UnitKind
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.norm import Norm, NormKind
@@ -28,6 +30,8 @@ from app.domain.repositories.ports import PasswordHasher, ScoringTableRecord
 from app.domain.rules.career_catalog import MAGISTERIO_SUPERIOR_VERSIONS
 from app.infrastructure.clock import SystemClock
 from app.infrastructure.database.repositories import SqlUnitOfWork
+
+logger = logging.getLogger(__name__)
 
 STRUCTURE_CODE = "MAGISTERIO_SUPERIOR"
 STRUCTURE_NAME = "Magistério Superior"
@@ -315,6 +319,56 @@ def seed_scoring_tables(uow: SqlUnitOfWork) -> None:
         uow.commit()
 
 
+def seed_unit_defaults(uow: SqlUnitOfWork) -> None:
+    """Mark the current official version as in use of FASI and IFCH, once per unit (GTAB-09).
+
+    Only a unit that has the official table associated, no version in use and no audit event of
+    the entity `unit_scoring_default` is marked: a unit that the ADMIN cleared, or that lost its
+    mark when its version was superseded, has an event and is left alone, so the seed never
+    undoes what the ADMIN did. Each mark is audited as a system change. When the table, the
+    version or the unit is missing, the version is superseded or the table is archived, the unit
+    is not marked and the reason goes to the log: the seed runs under `set -eu` at the container
+    start and must not fail here. Never called by `seed_scoring_tables`.
+    """
+    with uow:
+        data = _official_table_data()
+        units = {u.acronym: u for u in uow.units.list()}
+        table = next(
+            (t for t in uow.scoring_tables.list_tables() if t.name == data["table_name"]), None
+        )
+        version = None
+        if table is not None:
+            version = next(
+                (v for v in uow.scoring_tables.list_versions(table.id)
+                 if v.name == data["version_name"]),
+                None,
+            )  # fmt: skip
+        if table is None or version is None or version.is_superseded or table.archived:
+            logger.warning("Versão oficial indisponível; nenhuma unidade foi marcada em uso")
+            return
+        audit = AuditService(SystemClock())
+        for acronym in OFFICIAL_TABLE_UNITS:
+            unit = units.get(acronym)
+            if unit is None or unit.archived or unit.id not in table.unit_ids:
+                logger.warning("Unidade %s sem a tabela oficial associada; sem marcação", acronym)
+                continue
+            if uow.scoring_tables.get_unit_default(unit.id) is not None:
+                continue
+            if uow.audit.list_for(UNIT_DEFAULT_ENTITY, str(unit.id)):
+                continue
+            uow.scoring_tables.set_unit_default(unit.id, version.id)
+            audit.record(
+                uow,
+                None,
+                UNIT_DEFAULT_ENTITY,
+                unit.id,
+                AuditAction.CREATE,
+                {"version_id": None},
+                {"version_id": version.id},
+            )
+        uow.commit()
+
+
 def main() -> None:
     from app.core.config import load_settings
     from app.infrastructure.database.session import make_engine, make_session_factory
@@ -330,6 +384,7 @@ def main() -> None:
             Argon2PasswordHasher(),
         )
         seed_scoring_tables(SqlUnitOfWork(make_session_factory(engine)))
+        seed_unit_defaults(SqlUnitOfWork(make_session_factory(engine)))
     finally:
         engine.dispose()
 
