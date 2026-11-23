@@ -202,11 +202,9 @@ describe("ADMUI-01: lista de tabelas e versões", () => {
   });
 
   describe("GTAB-34: o selo 'Encerrada' usa a data local, não a data em UTC", () => {
-    const zone = process.env.TZ;
     afterEach(() => {
       vi.useRealTimers();
-      if (zone === undefined) delete process.env.TZ;
-      else process.env.TZ = zone;
+      vi.unstubAllEnvs();
     });
 
     function markedUntil(validTo: string) {
@@ -217,7 +215,7 @@ describe("ADMUI-01: lista de tabelas e versões", () => {
     }
 
     it("às 23h de 31/12 em Belém (já é 01/01 em UTC), a versão marcada que termina em 31/12 ainda não acabou", async () => {
-      process.env.TZ = "America/Belem";
+      vi.stubEnv("TZ", "America/Belem");
       vi.useFakeTimers({ toFake: ["Date"] });
       vi.setSystemTime(new Date("2027-01-01T02:00:00Z")); // 23:00 of 2026-12-31 in Belém
 
@@ -230,7 +228,7 @@ describe("ADMUI-01: lista de tabelas e versões", () => {
     });
 
     it("depois da meia-noite local de 01/01, a mesma versão está encerrada", async () => {
-      process.env.TZ = "America/Belem";
+      vi.stubEnv("TZ", "America/Belem");
       vi.useFakeTimers({ toFake: ["Date"] });
       vi.setSystemTime(new Date("2027-01-01T03:30:00Z")); // 00:30 of 2027-01-01 in Belém
 
