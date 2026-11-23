@@ -810,7 +810,7 @@ graph LR
 
 #### T23: Extrair campos e envio dos formulários de administração
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `Field`, `useSubmit`, `FormProblem` e `Alert` de `ScoringAdminForms.tsx` passam para o módulo `formKit.tsx` (exportados), e `ScoringAdminForms.tsx` os importa. Refatoração pura: nenhum comportamento muda.
 **Where**: `frontend/src/components/formKit.tsx` (new)
@@ -825,10 +825,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/formKit.test.tsx` (novo): `Field` liga `label`, `aria-invalid` e `aria-describedby` ao erro; `useSubmit` mostra 422 por campo e erro geral em `role=alert` e trata 422 de `file` em lista à parte
-- [ ] `ScoringAdminForms.test.tsx` e `ScoringAdmin.test.tsx` seguem verdes sem edição
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/components/formKit.test.tsx` (novo): `Field` liga `label`, `aria-invalid` e `aria-describedby` ao erro; `useSubmit` mostra 422 por campo e erro geral em `role=alert` e trata 422 de `file` em lista à parte
+- [x] `ScoringAdminForms.test.tsx` e `ScoringAdmin.test.tsx` seguem verdes sem edição
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front
