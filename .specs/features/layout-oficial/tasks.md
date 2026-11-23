@@ -524,7 +524,7 @@ graph LR
 
 #### T14: Brasão na Tabela de Pontuação em PDF
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `write_table_pdf` começa a história com `emblem_flowables()` antes do título; o brasão aparece só na primeira página da Tabela paisagem, mesmo com muitas páginas.
 **Where**: `backend/app/infrastructure/documents/table_pdf.py` (modify)
@@ -539,9 +539,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_table_pdf.py`: a primeira página (paisagem) tem uma imagem de 56,7 pt de largura, centrada na área de texto, acima do título "TABELA DE PONTUAÇÃO"; numa Tabela de várias páginas as outras páginas não têm imagem; o texto lido com `pymupdf` é igual ao de antes (a Tabela em PDF e o DOCX seguem com o mesmo texto e a mesma ordem); a repetição do cabeçalho da tabela e o rodapé "Página N de M" seguem como estavam; sem o arquivo do brasão levanta `EmblemUnavailable`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_table_pdf.py`: a primeira página (paisagem) tem uma imagem de 56,7 pt de largura, centrada na área de texto, acima do título "TABELA DE PONTUAÇÃO"; numa Tabela de várias páginas as outras páginas não têm imagem; o texto lido com `pymupdf` é igual ao de antes (a Tabela em PDF e o DOCX seguem com o mesmo texto e a mesma ordem); a repetição do cabeçalho da tabela e o rodapé "Página N de M" seguem como estavam; sem o arquivo do brasão levanta `EmblemUnavailable`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

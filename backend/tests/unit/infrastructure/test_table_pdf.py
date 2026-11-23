@@ -4,8 +4,12 @@ import re
 from dataclasses import replace
 
 import pymupdf
+import pytest
+from reportlab.lib.units import mm
 
 from app.domain.rules.table_document import TableAlert
+from app.infrastructure.documents import emblem
+from app.infrastructure.documents.emblem import EmblemUnavailable
 from app.infrastructure.documents.table_pdf import write_table_pdf
 from tests.unit.domain.test_table_document_totals import HEADER
 from tests.unit.infrastructure.table_support import (
@@ -246,3 +250,51 @@ def test_the_old_version_keeps_the_title_that_says_outside_the_total_of_points(t
     text = text_of(render(tmp_path, scenario_table()))
 
     assert OLD_PIT_HEADING in text
+
+
+def emblem_rect(page: pymupdf.Page) -> pymupdf.Rect:
+    images = page.get_images(full=True)
+    assert len(images) == 1
+    (rect,) = page.get_image_rects(images[0][0])
+    return rect
+
+
+def test_the_first_page_has_the_emblem_centered_above_the_title(tmp_path):
+    # BRAS-01, BRAS-06
+    page = render(tmp_path, scenario_table())[0]
+
+    rect = emblem_rect(page)
+    assert rect.width == pytest.approx(20 * mm, abs=0.5)
+    assert rect.height == pytest.approx(20 * mm * 351 / 279, abs=0.5)
+    assert (rect.x0 + rect.x1) / 2 == pytest.approx(page.rect.width / 2, abs=0.5)
+    title = page.search_for("TABELA DE PONTUAÇÃO")[0]
+    assert rect.y1 + 3 * mm <= title.y0
+    assert rect.y0 < title.y0
+
+
+def test_only_the_first_page_of_a_long_table_has_the_emblem(tmp_path):
+    # BRAS-07
+    pdf = render(tmp_path, long_table(300))
+
+    assert pdf.page_count > 1
+    assert len(pdf[0].get_images()) == 1
+    assert all(page.get_images() == [] for page in list(pdf)[1:])
+
+
+def test_the_text_of_the_table_is_the_same_with_the_emblem(tmp_path):
+    # BRAS-08: the emblem adds no text and no page (the scenario had two pages before it)
+    pdf = render(tmp_path, scenario_table())
+
+    assert text_of(pdf).startswith("TABELA DE PONTUAÇÃO Docente: Maria Docente da Silva")
+    assert pdf.page_count == 2
+    assert "Página 1 de 2" in text_of(pdf)
+
+
+def test_without_the_emblem_file_the_writer_raises_and_writes_nothing(monkeypatch, tmp_path):
+    # BRAS-10
+    monkeypatch.setattr(emblem, "EMBLEM_FILE", tmp_path / "ufpa.png")
+    target = tmp_path / "tabela.pdf"
+
+    with pytest.raises(EmblemUnavailable):
+        write_table_pdf(scenario_table(), target)
+    assert not target.exists()

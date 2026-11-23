@@ -2,7 +2,8 @@
 
 A4 landscape. The table has five columns and a header row that repeats on every page; each group
 is a band with the name of the table and the subtotal, empty groups included. The numbers come
-from the `TableDocument` already written; nothing is summed here.
+from the `TableDocument` already written; nothing is summed here. The emblem of the UFPA opens
+the first page (BRAS-01).
 """
 
 from pathlib import Path
@@ -26,6 +27,7 @@ from app.infrastructure.documents.pdf_styles import (
     NumberedCanvas,
     PdfStyles,
     build_styles,
+    emblem_flowables,
 )
 from app.infrastructure.documents.table_text import (
     ALERTS_HEADING,
@@ -161,6 +163,7 @@ def write_table_pdf(document: TableDocument, target: Path) -> None:
     )
     width = page[0] - 2 * MARGIN
     story = [
+        *emblem_flowables(),
         *_identification(document, styles),
         _main_table(document, styles, width),
         Spacer(1, 8),
