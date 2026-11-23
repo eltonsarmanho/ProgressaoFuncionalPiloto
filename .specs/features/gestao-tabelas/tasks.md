@@ -1243,7 +1243,7 @@ graph LR
 
 #### T38: Verificação independente (sensor e relatório)
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Um Verifier novo (autor diferente) confere cada requisito da spec com evidência `arquivo:linha`, roda o sensor de discriminação em cópia isolada, confere que a árvore real não mudou, renderiza a tela em 360 px e em 1280 px num navegador sem cabeça e escreve `validation.md`.
 **Where**: `.specs/features/gestao-tabelas/validation.md` (new)
@@ -1258,13 +1258,13 @@ graph LR
 
 **Done when**:
 
-- [ ] `validation.md` com veredito PASS ou FAIL, evidência `arquivo:linha` por requisito, resultado do sensor e faixa de commits; os gaps viram tarefas de correção (no máximo 3 voltas)
-- [ ] Sensor: falhas injetadas em cópia isolada, com a árvore real igual antes e depois, que incluem marcação ignorada na sugestão, guarda de arquivada removida, guarda de substituída removida, exclusão sem bloqueio, exclusão que apaga versão usada, semente que remarca a unidade desmarcada, semente que re-arquiva tabela tocada pelo ADMIN, filtro de arquivadas, botão sem motivo e `<table>` de volta na lista; todas detectadas, ou as sobreviventes viram correção
-- [ ] Renderização: a tela em 360 px e em 1280 px num navegador sem cabeça com `scrollWidth` menor ou igual à largura da janela e nenhuma etiqueta partida em letras; sem navegador disponível, `validation.md` registra "risco residual: sem navegador" e o limite da prova estática (L-021)
-- [ ] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_state.py gestao-tabelas` sem erro e todos os requisitos `Verified`
-- [ ] Gate completo `build` passa
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] `validation.md` com veredito PASS ou FAIL, evidência `arquivo:linha` por requisito, resultado do sensor e faixa de commits; os gaps viram tarefas de correção (no máximo 3 voltas)
+- [x] Sensor: falhas injetadas em cópia isolada, com a árvore real igual antes e depois, que incluem marcação ignorada na sugestão, guarda de arquivada removida, guarda de substituída removida, exclusão sem bloqueio, exclusão que apaga versão usada, semente que remarca a unidade desmarcada, semente que re-arquiva tabela tocada pelo ADMIN, filtro de arquivadas, botão sem motivo e `<table>` de volta na lista; todas detectadas, ou as sobreviventes viram correção
+- [x] Renderização: a tela em 360 px e em 1280 px num navegador sem cabeça com `scrollWidth` menor ou igual à largura da janela e nenhuma etiqueta partida em letras; sem navegador disponível, `validation.md` registra "risco residual: sem navegador" e o limite da prova estática (L-021)
+- [x] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_state.py gestao-tabelas` sem erro e todos os requisitos `Verified`
+- [x] Gate completo `build` passa
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: none
 **Gate**: build

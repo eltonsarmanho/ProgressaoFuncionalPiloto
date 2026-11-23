@@ -211,51 +211,51 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| GTAB-01 | P1: Tabela em uso por unidade | Implemented | Implementing |
-| GTAB-02 | P1: Tabela em uso por unidade | Implemented | Implementing |
-| GTAB-03 | P1: Tabela em uso por unidade | Implemented | Implementing |
-| GTAB-04 | P1: Tabela em uso por unidade | Implemented | Implementing |
-| GTAB-05 | P1: Tabela em uso por unidade | Implemented | Implementing |
-| GTAB-06 | P1: Tabela em uso por unidade | Implemented | Implementing |
-| GTAB-07 | P1: Tabela em uso por unidade | Implemented | Implementing |
-| GTAB-08 | P1: Tabela em uso por unidade | Implemented | Implementing |
-| GTAB-09 | P1: Tabela em uso por unidade | Implemented | Implementing |
-| GTAB-10 | P1: Tabela em uso por unidade | Implemented | Implementing |
-| GTAB-11 | P1: Gestão das tabelas pela tela | Implemented | Implementing |
-| GTAB-12 | P1: Gestão das tabelas pela tela | Implemented | Implementing |
-| GTAB-13 | P1: Gestão das tabelas pela tela | Implemented | Implementing |
-| GTAB-14 | P1: Gestão das tabelas pela tela | Implemented | Implementing |
-| GTAB-15 | P1: Gestão das tabelas pela tela | Implemented | Implementing |
-| GTAB-16 | P1: Gestão das tabelas pela tela | Implemented | Implementing |
-| GTAB-17 | P1: Gestão das tabelas pela tela | Implemented | Implementing |
-| GTAB-18 | P1: Editar critérios na tela | Implemented | Implementing |
-| GTAB-19 | P1: Editar critérios na tela | Implemented | Implementing |
-| GTAB-20 | P1: Editar critérios na tela | Implemented | Implementing |
-| GTAB-21 | P1: Editar critérios na tela | Implemented | Implementing |
-| GTAB-22 | P1: Editar critérios na tela | Implemented | Implementing |
-| GTAB-23 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-24 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-25 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-26 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-27 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-28 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-29 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-30 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-31 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-32 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-33 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
-| GTAB-34 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
-| GTAB-35 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
-| GTAB-36 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
-| GTAB-37 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
-| GTAB-38 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
-| GTAB-39 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
-| GTAB-40 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
-| GTAB-41 | P1: Coerência com a semente e com as outras regras | Implemented | Implementing |
-| GTAB-42 | P1: Coerência com a semente e com as outras regras | Implemented | Implementing |
-| GTAB-43 | P1: Coerência com a semente e com as outras regras | Implemented | Implementing |
-| GTAB-44 | P1: Coerência com a semente e com as outras regras | Implemented | Implementing |
-| GTAB-45 | P1: Coerência com a semente e com as outras regras | Implemented | Implementing |
+| GTAB-01 | P1: Tabela em uso por unidade | Implemented | Verified |
+| GTAB-02 | P1: Tabela em uso por unidade | Implemented | Verified |
+| GTAB-03 | P1: Tabela em uso por unidade | Implemented | Verified |
+| GTAB-04 | P1: Tabela em uso por unidade | Implemented | Verified |
+| GTAB-05 | P1: Tabela em uso por unidade | Implemented | Verified |
+| GTAB-06 | P1: Tabela em uso por unidade | Implemented | Verified |
+| GTAB-07 | P1: Tabela em uso por unidade | Implemented | Verified |
+| GTAB-08 | P1: Tabela em uso por unidade | Implemented | Verified |
+| GTAB-09 | P1: Tabela em uso por unidade | Implemented | Verified |
+| GTAB-10 | P1: Tabela em uso por unidade | Implemented | Verified |
+| GTAB-11 | P1: Gestão das tabelas pela tela | Implemented | Verified |
+| GTAB-12 | P1: Gestão das tabelas pela tela | Implemented | Verified |
+| GTAB-13 | P1: Gestão das tabelas pela tela | Implemented | Verified |
+| GTAB-14 | P1: Gestão das tabelas pela tela | Implemented | Verified |
+| GTAB-15 | P1: Gestão das tabelas pela tela | Implemented | Verified |
+| GTAB-16 | P1: Gestão das tabelas pela tela | Implemented | Verified |
+| GTAB-17 | P1: Gestão das tabelas pela tela | Implemented | Verified |
+| GTAB-18 | P1: Editar critérios na tela | Implemented | Verified |
+| GTAB-19 | P1: Editar critérios na tela | Implemented | Verified |
+| GTAB-20 | P1: Editar critérios na tela | Implemented | Verified |
+| GTAB-21 | P1: Editar critérios na tela | Implemented | Verified |
+| GTAB-22 | P1: Editar critérios na tela | Implemented | Verified |
+| GTAB-23 | P1: Arquivar e excluir | Implemented | Verified |
+| GTAB-24 | P1: Arquivar e excluir | Implemented | Verified |
+| GTAB-25 | P1: Arquivar e excluir | Implemented | Verified |
+| GTAB-26 | P1: Arquivar e excluir | Implemented | Verified |
+| GTAB-27 | P1: Arquivar e excluir | Implemented | Verified |
+| GTAB-28 | P1: Arquivar e excluir | Implemented | Verified |
+| GTAB-29 | P1: Arquivar e excluir | Implemented | Verified |
+| GTAB-30 | P1: Arquivar e excluir | Implemented | Verified |
+| GTAB-31 | P1: Arquivar e excluir | Implemented | Verified |
+| GTAB-32 | P1: Arquivar e excluir | Implemented | Verified |
+| GTAB-33 | P1: Lista legível e com ações visíveis | Implemented | Verified |
+| GTAB-34 | P1: Lista legível e com ações visíveis | Implemented | Verified |
+| GTAB-35 | P1: Lista legível e com ações visíveis | Implemented | Verified |
+| GTAB-36 | P1: Lista legível e com ações visíveis | Implemented | Verified |
+| GTAB-37 | P1: Lista legível e com ações visíveis | Implemented | Verified |
+| GTAB-38 | P1: Lista legível e com ações visíveis | Implemented | Verified |
+| GTAB-39 | P1: Lista legível e com ações visíveis | Implemented | Verified |
+| GTAB-40 | P1: Lista legível e com ações visíveis | Implemented | Verified |
+| GTAB-41 | P1: Coerência com a semente e com as outras regras | Implemented | Verified |
+| GTAB-42 | P1: Coerência com a semente e com as outras regras | Implemented | Verified |
+| GTAB-43 | P1: Coerência com a semente e com as outras regras | Implemented | Verified |
+| GTAB-44 | P1: Coerência com a semente e com as outras regras | Implemented | Verified |
+| GTAB-45 | P1: Coerência com a semente e com as outras regras | Implemented | Verified |
 
 ## Success Criteria
 

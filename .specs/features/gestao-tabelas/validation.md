@@ -2,10 +2,18 @@
 
 **Date**: 2026-11-23
 **Spec**: `.specs/features/gestao-tabelas/spec.md` (45 requisitos GTAB-01..45), com as Assumptions, os Edge Cases, `design.md` (emendas A1 a A13), AD-028 e `CLAUDE.md`
-**Diff range**: `fa052e0..723e43c` (HEAD da implementação), branch `feat/inteligencia-documental`: 37 commits (T1 a T37, um por tarefa), 70 arquivos, +10366 −562 (código de produção e testes em 30 arquivos de `backend/app` e `frontend/src`: +3297 −277). Mais, depois da implementação, o commit de testes `8538269` desta verificação (só um arquivo novo de teste).
+**Diff range (rodada 1)**: `fa052e0..723e43c` (HEAD da implementação), branch `feat/inteligencia-documental`: 37 commits (T1 a T37, um por tarefa), 70 arquivos, +10366 −562 (código de produção e testes em 30 arquivos de `backend/app` e `frontend/src`: +3297 −277). Mais, depois da implementação, o commit de testes `8538269` desta verificação (só um arquivo novo de teste).
 **Verifier**: três agentes independentes (autor diferente; lentes backend, frontend com renderização e transversal com ensaio de deploy), consolidados por um quarto agente que refez as verificações que importam (abaixo, "Reverificação"). Nenhum leu `Documentos/`, `Modelos/`, `corpus-reports/`, `requeriment.txt`, `test/`, `backend/img/`, `AcessoVM.txt` nem `.env`; sem push, deploy, VM nem banco de produção; só dados sintéticos. Sensores em worktree isolado e em cópia sob o scratchpad (nunca `git stash`, nunca a árvore real). `git status --porcelain` da árvore real antes e depois da lente transversal: igual (`?? .claude/`, `?? backend/img/`, `?? requeriment.txt`, `?? test/`). As lentes backend e frontend não puderam rodar `git` na árvore real (o sandbox recusa); o frontend registrou um instantâneo de 833 arquivos (nome, mtime, tamanho) idêntico antes e depois, e o backend não escreveu na árvore real. O consolidador só escreveu este relatório e o arquivo de teste de `8538269`.
 
-**Result**: FAIL
+**Result**: PASS
+
+**Round 1 verdict**: FAIL (rodada 2 no fim deste arquivo: PASS, seção "Round 2"; o registro da rodada 1 fica abaixo)
+
+**Diff range (rodada 2)**: `fa052e0..HEAD` (`HEAD` = o commit de testes `175de9b`, mais o de comentários `6e147b4` e o commit desta verificação), branch `feat/inteligencia-documental`: 74 arquivos, +11576 −579 até `6e147b4`.
+
+---
+
+_Registro da rodada 1 (FAIL), mantido sem alteração de conteúdo:_
 
 Os 45 requisitos têm teste com `arquivo:linha`, e o comportamento do código confere com a spec em 43 deles, **com duas exceções confirmadas**: o GTAB-26 (a reabertura da versão anterior é deduzida das datas, e não do fechamento que a spec manda desfazer) e o GTAB-38 (três botões da tela têm 32 px, abaixo dos 44 px exigidos). O roteiro de deploy tem ainda um passo de volta que não funciona (`docs/deploy/vm.md`). O sensor deixou 5 mutantes válidos vivos depois dos três que o consolidador fechou com testes novos. Por isso o veredito é FAIL, com 3 tarefas de correção de produção e documentação (F1 a F3), tarefas de teste (F6, F7, F9) e as menores (F8, F10 a F14); F4 já está feito. A rodada de re-verificação vem depois delas.
 
@@ -16,7 +24,7 @@ Os 45 requisitos têm teste com `arquivo:linha`, e o comportamento do código co
 | Task | Status | Notes |
 | ---- | ------ | ----- |
 | T1 a T37 (Fase 1 a 6: banco e domínio, casos de uso, API, semente, frontend, documentação) | Done | 37 commits `0b63e33..723e43c`, um por tarefa, todos com `Co-Authored-By: Claude Sonnet 5.5`; a mensagem de cada um confere com a linha `Commit:` de `tasks.md`; nenhum adiciona `backend/img`, `requeriment.txt`, `test/`, `.env` nem arquivo de `Documentos/` ou `Modelos/`; a varredura das linhas novas não achou credencial |
-| T38 (Verifier) | Pending | FAIL; volta a `Done` depois das correções F1 a F7 e de uma rodada 2 |
+| T38 (Verifier) | Done (rodada 2) | rodada 1: FAIL; rodada 2: PASS (seção "Round 2") |
 
 **Test integrity**: nenhum arquivo de teste apagado (`git diff --diff-filter=D` vazio). Dois testes do frontend saíram de `ScoringAdmin.test.tsx` por decisão da spec (GTAB-15, a tela deixou de ser só do ADMIN: "SECRETARIA e DOCENTE são redirecionados" virou "veem o link e a lista" e o teste do ADMIN foi ampliado). Nenhum teste de backend removido. Asserções não foram enfraquecidas nas áreas tocadas (conferido pela lente transversal no diff).
 
@@ -187,7 +195,7 @@ Sensor em worktree isolado (backend e frontend) e em cópia sob o scratchpad (tr
 | **Mf52** | `UnitsDialog` descarta as unidades da tabela que não vêm na lista carregada | ❌ **Sobreviveu** → F7 |
 
 **Sensor depth**: completo (caminho crítico).
-**Result**: FAIL ❌. Os dois lados somam 124 mutantes válidos (77 + 47). Com os testes dos autores, 8 sobreviveram (Mb10, Mb13, Mb47, Mb49, Mb66, Mb71, Mf37, Mf52) e 116 morreram. Os três testes de `8538269` matam Mb13, Mb47 e Mb71 (medido pela lente backend com o mesmo texto de teste), o que deixa 5 vivos (Mb10, Mb49, Mb66, Mf37, Mf52) e 119 mortos. O sensor não gera F1 e F2, porque são defeitos do comportamento e não de teste: os acharam a sonda de teste e a renderização.
+**Sensor, rodada 1**: FAIL ❌. Os dois lados somam 124 mutantes válidos (77 + 47). Com os testes dos autores, 8 sobreviveram (Mb10, Mb13, Mb47, Mb49, Mb66, Mb71, Mf37, Mf52) e 116 morreram. Os três testes de `8538269` matam Mb13, Mb47 e Mb71 (medido pela lente backend com o mesmo texto de teste), o que deixa 5 vivos (Mb10, Mb49, Mb66, Mf37, Mf52) e 119 mortos. O sensor não gera F1 e F2, porque são defeitos do comportamento e não de teste: os acharam a sonda de teste e a renderização.
 
 ---
 
@@ -362,3 +370,130 @@ A tabela de `spec.md` **não muda** (veredito FAIL): as 45 linhas seguem em `Imp
 **Issues found**: F1 reabertura deduzida das datas; F2 três botões de 32 px; F3 volta de deploy que não funciona; F6 e F7 mutantes vivos; F8 a F14 menores (F4 já fechado em `8538269`).
 
 **Next steps**: executar F1 a F3 (e F6 a F9 se o usuário quiser fechar tudo antes do deploy), repetir o sensor de Mb10, Mb13, Mb47, Mb49, Mb66, Mb71, Mf37, Mf52 e a medida a 360 e 1280 px, e então a rodada 2. Sem push nem deploy sem a autorização do usuário.
+
+
+---
+
+# Round 2
+
+**Date**: 2026-11-23
+**Diff range**: `fa052e0..HEAD`. A rodada 2 verificou `cac86b0` (fim das correções F1 a F14); o consolidador acrescentou dois commits antes deste relatório: `175de9b` (só testes) e `6e147b4` (só dois comentários).
+**Verifier**: dois verificadores independentes (lentes backend e frontend com navegador; autor diferente) e um consolidador que reabriu o código e os testes de cada afirmação que decide o veredito. Nenhum leu `Documentos/`, `Modelos/`, `corpus-reports/`, `requeriment.txt`, `test/`, `backend/img/`, `AcessoVM.txt` nem `.env`; sem push, deploy nem VM; só dados sintéticos. Sensores em worktrees isolados (detached em `cac86b0`), nunca na árvore real e nunca com `git stash`; o worktree do consolidador foi removido. As lentes não puderam rodar `git status` na árvore real (o sandbox recusa) e usaram uma busca de arquivos mais novos que um marcador, sem achados; o consolidador rodou `git status --short` antes e depois do sensor: só os arquivos de teste e de comentário que ele mesmo comitou, mais `?? .claude/`, `?? backend/img/`, `?? requeriment.txt`, `?? test/`.
+
+## Correções verificadas
+
+Relido pelo consolidador no código (`backend/app/application/use_cases/scoring_admin.py`) e nos testes citados.
+
+| Correção | Estado | Evidência (`arquivo:linha`) |
+| -------- | ------ | --------------------------- |
+| F1 reabertura (GTAB-26) | Corrigido | `scoring_admin.py:628-636` grava `closed_version_id` no evento `CREATE` só quando a criação fechou de fato a versão aberta; `:976-1022` (`_reopen_previous`) reabre apenas a versão que `_closed_by` nomeia, que não está substituída e termina no dia anterior; o guarda `has_later_version` continua. `backend/tests/integration/scoring/test_admin_lock_and_boundary_gaps.py:128` (admin que encerrou a V1 não vê a V1 reaberta), `:146` (versão vizinha que a apagada nunca fechou), `:109` (meio da fila); `test_admin_delete_version.py` (fim de vigência devolvido, inclusive o `valid_to` explícito). O `xfail` saiu. Uma versão criada antes do registro não reabre nada, o que o GTAB-26 reescrito diz |
+| F2 alvos de toque (GTAB-38) | Corrigido | `frontend/src/styles.css`: `min-height: 2.75rem` em `.tbl-page-head .btn`, `.tbl-empty .btn` e `.tbl-retry`; `frontend/src/styles.test.ts` (alvo de toque dos três botões); renderização abaixo: 44 px |
+| F3 volta do deploy | Corrigido | `docs/deploy/vm.md:360-376` conferido pela lente backend num banco descartável: `alembic upgrade head` da árvore antiga com o banco em `0012` falha com "Can't locate revision identified by '0012'"; a rota A (`downgrade 0011` com a árvore nova, depois a imagem antiga) deixa o banco em `0011`; a rota B (restaurar o dump) e a troca das etiquetas Docker não foram reproduzidas (precisam da VM real) |
+| F6 travas (Mb10, Mb49) | Corrigido, com teste novo do consolidador | Mb49 morto por `test_admin_lock_and_boundary_gaps.py:204`. Mb10 **não é equivalente**: `AdoptSupersedingVersion` (`scoring_adoption.py:31-60`) supersede a versão e limpa as marcas sem trava de tabela. O comentário dos autores (a trava seria só defesa em profundidade) estava incompleto e foi corrigido em `6e147b4`; o teste novo mata o mutante (abaixo) |
+| F7 Mf37, Mf52, Mb66 | Corrigido | Mf37: `frontend/src/pages/ScoringAdmin.test.tsx:184`; Mf52: `frontend/src/components/ScoringTableDialogs.test.tsx` ("uma unidade da tabela que não está na lista carregada continua no corpo do PUT"); Mb66: `backend/tests/integration/test_seed_scoring.py` ("a unit that already has a mark keeps it even without any audit event") |
+| F8 impasse | Corrigido, com teste novo do consolidador | `CreateVersionFrom` (`scoring_admin.py:675`) e `ImportCriteriaCsv` (`:735`) pegam `lock_table` primeiro (ordem unidade, tabela, versão). O teste de corrida existia só para `CreateVersionFrom` (`test_admin_lock_and_boundary_gaps.py:170`); o da importação é novo (abaixo) |
+| F9 asserções de GTAB-15 | Corrigido | `ScoringAdmin.test.tsx`: todo botão do cartão da SECRETARIA e do DOCENTE é "Ver critérios de …" e "Nova tabela" não existe; Mn13a e Mn18 morrem |
+| F10 aparência | Corrigido | coluna de ação com `max-width: 16rem`, `margin-bottom` em `.tbl-page-head`, `SCORING_MODE_LABELS` na coluna "Modo"; Mn07, Mn08, Mn11 mortos; renderização sem enum cru |
+| F11 função privada | Corrigido | `seed.official_table_name()` pública, importada por `presentation/dependencies.py`; `test_the_public_official_table_name_is_the_name_in_the_seed_file` passa; N18 morto por 7 testes |
+| F12 motivos nas respostas | Corrigido para `TableOut` | `GetScoringTable` e `table_out()` nas cinco rotas de escrita da tabela; `test_the_answers_of_the_table_writes_carry_the_same_block_reasons_as_the_list`; N5a a N5e e N12 mortos. As respostas das duas rotas de versão ficam como estão (item "Achados menores" 4) |
+| F13 data local | Corrigido, reforçado | `localIsoDate` em `ScoringAdmin.tsx:18-21`; testes de Belém no fim do ano e, novos, no meio do ano (abaixo) |
+| F14 documentação | Corrigido | `STATE.md` AD-028 diz GTAB-01 a GTAB-45; GTAB-26 e GTAB-41 do `spec.md` reescritos e conferidos com o código; A11 e A12 nas linhas de rastreabilidade de GTAB-26 e GTAB-27 em `tasks.md` |
+
+## Sensor da rodada 2
+
+Profundidade completa (caminho crítico), em worktrees isolados. Lente backend: 6 mutantes da rodada 1 repetidos (Mb10, Mb13, Mb47, Mb49, Mb66, Mb71) e 20 novos (N1, N2, N2b, N3, N4, N5a a N5e, N7, N8, N11, N12, N17, N18), dos quais 18 válidos. Lente frontend: 18 execuções (2 da rodada 1 e 16 novas), 17 válidas (Mn13b equivalente).
+
+| Mutante | Falha injetada | Resultado |
+| ------- | -------------- | --------- |
+| Mb13, Mb47, Mb49, Mb66, Mb71 (rodada 1) | `ClearUnitDefaultVersion` sem `lock_unit`; `DeleteScoringVersion` sem `lock_table`; `DeleteScoringTable` sem `lock_table`; a semente sobrescreve a marca; reabre a anterior quando a apagada não é a última | ✅ Mortos (`test_admin_lock_and_boundary_gaps.py` e `test_seed_scoring.py`) |
+| N1, N2, N2b, N7 | reabertura por datas de novo; dia errado; `valid_to` sempre aberto; o `CREATE` nunca registra `closed_version_id` | ✅ Mortos (`test_deleting_the_latest_*`, `test_the_previous_version_takes_the_end_of_validity_of_the_deleted_one`) |
+| N3, N17 | `CreateVersionFrom` sem `lock_table`; exclusão de versão trava a versão antes da tabela | ✅ Mortos (`:170`, `:204`, `:42`) |
+| N5a a N5e, N12 | respostas de criar, duplicar, unidades, arquivar e desarquivar com motivos nulos; catálogo protegido vazio | ✅ Mortos (teste das respostas de escrita) |
+| N18 | `official_table_name()` devolve vazio | ✅ Morto (7 testes) |
+| N8 | grava a versão aberta como "fechada" mesmo quando a criação não fechou nada | Equivalente: uma versão que não fechou nada ou sobrepõe a aberta (409) ou começa antes e então `has_later_version` é verdadeiro e a exclusão não reabre; não conta |
+| N11 | `CreateVersionFrom` ignora o `False` do `lock_table` | Equivalente: `add_version` do repositório levanta o mesmo `NotFound` para tabela inexistente; não conta |
+| **Mb10** | `SetUnitDefaultVersion` sem `lock_version` | ❌ Sobreviveu aos 184 testes dos autores; **não equivalente** (a sonda da lente backend e o teste novo falham sem a trava) → morto pelo teste novo `test_admin_lock_and_boundary_gaps.py::test_marking_waits_for_a_concurrent_supersession_of_the_version_and_loses_to_it` (commit `175de9b`): sem a trava o `wait_until_blocked` estoura em 30 s e o teste falha (`tests/support/races.py:66`); com a trava passa |
+| **N4** | `ImportCriteriaCsv` sem `lock_table` | ❌ Sobreviveu aos 93 testes dos autores → morto por `test_importing_a_version_while_the_latest_one_is_being_deleted_is_not_a_deadlock` (`175de9b`): sem a trava a exclusão falha (a lente viu `DeadlockDetected`, `40P01`), com ela passa |
+| Mf37, Mf52 (rodada 1) | selo "Encerrada" sem exigir unidade marcada; `UnitsDialog` descarta unidades desconhecidas | ✅ Mortos (`ScoringAdmin.test.tsx:184`; `ScoringTableDialogs.test.tsx`) |
+| Mn01, Mn12 | `toISOString` de volta; `<=` na comparação do selo | ✅ Mortos (testes de Belém, 23h de 31/12) |
+| **Mn02** | mês sem `+1` em `localIsoDate` | ❌ Sobreviveu aos 141 testes → morto por "no meio do ano, a versão marcada que terminou ontem (04/08) está encerrada" (`ScoringAdmin.test.tsx`, `175de9b`) |
+| **Mn03** | dia UTC (`getUTCDate`) com mês local | ❌ Sobreviveu → morto por "no meio do ano, às 22h de 05/08 em Belém (já é 06/08 em UTC), o dia e o mês locais decidem o selo" (`175de9b`) |
+| **Mn09, Mn10** | tirar a classe `tbl-retry` de um dos dois "Tentar de novo" | ❌ Sobreviveram (a renderização do mutante mediu 32 px) → mortos por `expect(retry).toHaveClass("tbl-retry")` no teste GTAB-39 e pelo teste novo do erro com a lista carregada (`175de9b`) |
+| Mn04, Mn05, Mn06, Mn07, Mn08, Mn11, Mn13a, Mn18 | `min-height` de 2rem em cada seletor, coluna sem largura máxima, "Modo" sem rótulo, sem `margin-bottom`, barra e "Nova tabela" para todos os perfis | ✅ Mortos |
+| Mn13b | `barActions` sem o `isAdmin` | Equivalente: o `isAdmin &&` do JSX continua escondendo a barra; substituído por Mn18 |
+
+**Medida do consolidador, depois de `175de9b`** (worktree em `cac86b0` mais o arquivo de teste novo, mutante aplicado e desfeito, árvore real intacta): linha de base 9 passed no arquivo de corrida (antes eram 7) e 62 passed em `ScoringAdmin.test.tsx` (antes 59); N4: 1 failed, 8 passed; Mb10: 1 failed (o teste novo, `races.py:66`); Mn02, Mn03, Mn09 e Mn10: 1 failed cada, e o teste que falha é o novo esperado.
+
+**Sensor depth**: completo (caminho crítico).
+**Sensor, rodada 2**: PASS ✅. Dos mutantes válidos desta rodada, os 6 que sobreviveram (Mb10, N4, Mn02, Mn03, Mn09, Mn10) foram mortos por testes puros novos; os equivalentes (N8, N11, Mn13b) têm argumento; nenhum sobrevivente válido resta. O acumulado da rodada 1 (Mb10, Mb49, Mb66, Mf37, Mf52 vivos) também está morto.
+
+## Visual Check (rodada 2)
+
+Navegador: Chrome 146 headless com playwright-core (no scratchpad, não no repositório), sobre o build real da árvore `cac86b0` (que só difere do HEAD final em dois comentários), servidor estático e JSON sintético (3 tabelas visíveis e 1 arquivada: em uso, usada por processo, substituída, encerrada e em uso, referência de 90 caracteres, nome longo; erro 500 simulado por rota). ADMIN e SECRETARIA, 360 e 1280 px, nos estados lista, vazio, erro, erro com a lista, critérios, diálogo "Nova tabela".
+
+| Verificação | 360 px | 1280 px |
+| ----------- | ------ | ------- |
+| `scrollWidth == innerWidth`, em todos os estados | 360 = 360 ✅ | 1280 = 1280 ✅ |
+| Elementos cortados ou fora da janela | 0 ✅ | 0 ✅ |
+| Palavra quebrada letra por letra | nenhuma ✅ (só a referência sintética de 90 caracteres, `break-word`, 4 linhas) | nenhuma ✅ (2 linhas) |
+| Altura de "Nova tabela" | 44 px ✅ (era 32) | 44 px ✅ |
+| Altura de "Limpar filtros" (estado vazio) | 44 px ✅ (era 32) | 44 px ✅ |
+| Altura de "Tentar de novo" (erro inicial e erro com a lista) | 44 px ✅ (era 32) | 44 px ✅ |
+| Botões dos cartões e dos diálogos | 44 px ✅ | 44 px ✅ |
+| Coluna do botão bloqueado, folga do `h1`, coluna "Modo" | `h1` com 8 px até "Nova tabela" ✅; "Modo" mostra "Por unidade" | coluna limitada a 256 px, 16 px antes do cartão do filtro ✅; sem enum cru |
+| SECRETARIA | 5 botões "Ver critérios", sem "Nova tabela" nem barra ✅ | igual ✅ |
+
+Capturas em `/tmp/claude-1000/-home-nees-Documents-VSCodigo-ProgressaoFuncionalPiloto/118aba81-5621-4e3f-847f-fa68c56fc9d9/scratchpad/gtab-render2/`: `gtab-360.png`, `gtab-1280.png`, `gtab-empty-360.png`, `gtab-empty-1280.png`, `gtab-error-360.png`, `gtab-error-1280.png`, `gtab-error-inline-360.png`, `gtab-error-inline-1280.png`, `gtab-360-secretaria.png`, `gtab-1280-secretaria.png`, `gtab-360-criteria-archived.png`, `gtab-1280-criteria-archived.png`, `gtab-360-dialog-nova.png`, `gtab-1280-dialog-nova.png` e `result.json` com as medidas. O consolidador não repetiu a renderização; conferiu no código os seletores e as classes que a medida exercita e rodou os testes estáticos e de comportamento. O único controle abaixo de 44 px é o link "Sair" do cabeçalho global do aplicativo (22 px), anterior à feature e fora dos controles da página; fica fora do GTAB-38 e anotado como achado menor.
+
+Limite da prova (L-021): `styles.test.ts` continua estático e não mede altura; a prova dos 44 px é a renderização acima, e as asserções de classe (`tbl-retry`) e de seletor são o que impede a regressão silenciosa.
+
+## Regressões
+
+Nenhuma. Backend, 185 passed na execução de cobertura da lente (corrida e limites, exclusão de versão e de tabela, versões, importação, criação, API de administração, aceitação, semente, migração `0012`, marcações) e `ruff check` limpo; frontend, 141 passed nos 6 arquivos tocados, `eslint` e `npm run build` limpos. A ordem das travas (unidade, tabela, versão) segue sem ciclo (N17 morto). Uma observação sem ação: as respostas de escrita da tabela agora fazem uma segunda leitura depois do `commit`; se outro ADMIN apagar a tabela entre as duas, a escrita que deu certo responderia 404 (muito improvável).
+
+## Achados menores que ficam (nenhum bloqueia)
+
+Reverificados pelo consolidador; nenhum é blocker nem major, e nenhum quebra um requisito GTAB.
+
+1. **Rótulo do histórico (GTAB-17)**: `frontend/src/labels.ts:280-296` não tem rótulo para `closed_version_id`, que todo evento `CREATE` que fechou uma versão traz agora; a tela do histórico mostra a chave crua em inglês (o valor sai como nome da versão, porque `UUID_PATTERN` o captura, então o requisito "sem UUID" vale). Tarefa de correção opcional F15: `"Encerrou a versão"` em `HISTORY_CHANGE_LABELS` e a chave em `HISTORY_ID_KEYS`, com teste no diálogo de histórico.
+2. **Garantia de A11 limitada**: apagar a versão do meio e depois a última deixa a mais antiga fechada e a tabela sem versão corrente, porque o `closed_version_id` da última aponta para a versão já apagada; uma versão criada antes do registro não reabre nada. As duas limitações estão no texto do GTAB-26 ("a versão criada antes do registro nao reabre nenhuma"); a meta de A11 vale só para o par criado e apagado em sequência. Aceito como decisão da spec; o aviso na prévia de exclusão fica como melhoria futura.
+3. **Documentação das travas**: `tasks.md` (item 3) e `ports.py` não citam as duas travas novas; só documentação.
+4. **Respostas de versão**: `POST /scoring-tables/{id}/versions` e `.../versions/import` devolvem `VersionOut` com `read_only_reason`, `delete_blocked_reason` e `process_count` nos valores padrão (documentado no comentário de `VersionView`, `scoring_admin.py:53-57`); a tela recarrega a lista depois da escrita, então não há efeito visível. O F12 pedia só o `TableOut`.
+5. **Rota B do deploy** (restaurar o dump) e a troca das etiquetas Docker não foram reproduzidas; o ensaio cobriu a rota A.
+6. **Link "Sair"** de 22 px no cabeçalho global, fora da feature.
+7. **Seletor de unidade** com 42 px (spec-precision de GTAB-38, da rodada 1, sem mudança).
+
+## Gate (rodada 2)
+
+- **Comando**: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- **Execuções finais dos autores (não repetidas pelo Verifier em suíte inteira)**: backend **6738 passed**; frontend **923 passed**.
+- **Execuções do consolidador, depois dos commits `175de9b` e `6e147b4`**: `ruff check .` do backend limpo; `pytest -q tests/integration/scoring tests/integration/test_seed_scoring.py tests/integration/api/test_gestao_tabelas_acceptance.py`: **424 passed** em 209 s; frontend inteiro, `REQUIRE_DIST=1 npx vitest run`: **926 passed** (61 arquivos; os 923 dos autores mais os 3 testes novos de `175de9b`); `eslint` dos dois arquivos tocados limpo. O backend inteiro não foi repetido: o commit `175de9b` soma 2 testes ao total dos autores (esperado 6740, não medido) e `6e147b4` só muda comentários.
+- **Pulos**: nenhum novo. **Falhas**: nenhuma. O `xfail` estrito da rodada 1 saiu (F1).
+- **Integridade dos testes**: nenhum teste apagado ou enfraquecido nas correções (`git diff --diff-filter=D` sem arquivos de teste).
+
+## Requirement Traceability Update (rodada 2)
+
+Todos os GTAB-01 a GTAB-45 têm teste com `arquivo:linha` (tabelas da rodada 1) e passam. A rodada 2 fechou os dois gaps: GTAB-26 em `test_admin_lock_and_boundary_gaps.py:128`, `:146`, `:109` e `scoring_admin.py:628-636`, `:976-1022`; GTAB-38 pela renderização (44 px nos três botões) e `styles.test.ts`. O `spec.md` passa as 45 linhas para `Implemented / Verified`.
+
+| Requisito | Estado anterior | Estado novo |
+| --------- | --------------- | ----------- |
+| GTAB-01 a GTAB-45 | Implementing (GTAB-26 e GTAB-38 em Needs Fix) | ✅ Verified |
+
+## Lições
+
+Lições destiladas dos sinais fundamentados desta rodada (sobreviventes válidos e a falha de render): L-052 (uma prova de corrida por ponto de entrada que pega trava, e reconferir contra todo escritor da linha a trava dada como equivalente), L-053 (data montada pelos componentes locais, testada no meio do ano com mês e dia diferentes do UTC) e L-054 (garantia de layout dada por classe CSS, afirmada em teste de comportamento em cada elemento), registradas por `scripts/lessons.py` como candidatas (primeira ocorrência).
+
+## Summary
+
+**Overall**: ✅ Ready
+
+**Spec-anchored check**: 45 de 45 requisitos com a asserção no resultado que a spec define; os gaps da rodada 1 (GTAB-26, GTAB-38) estão fechados.
+**Sensor**: rodada 2 sem sobrevivente válido; 6 sobreviventes válidos mortos por testes puros novos (`175de9b`); N8, N11 e Mn13b equivalentes, com argumento.
+**Gate**: backend 6738 passed e frontend 923 passed (execuções finais dos autores); consolidador: 424 passed no backend tocado e 926 passed no frontend inteiro.
+**Render**: 360 e 1280 px sem rolagem horizontal, sem quebra em letras e os três botões em 44 px.
+
+**What works**: tudo o que a rodada 1 registrou, mais a reabertura pela marca de fechamento, as travas em ordem fixa com corrida real em cada ponto de entrada, as respostas de escrita com os motivos, a data local no selo "Encerrada", os alvos de toque de 44 px e o roteiro de volta do deploy.
+
+**Issues found**: só achados menores (lista acima); F15 opcional (rótulo de `closed_version_id`).
+
+**Next steps**: push e deploy só com a autorização do usuário; seguir o roteiro de `docs/deploy/vm.md`, que traz as duas rotas de volta.
