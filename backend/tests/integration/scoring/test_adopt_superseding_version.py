@@ -209,3 +209,78 @@ def test_a_version_already_superseded_by_another_one_is_left_alone(
     assert adopt() == 0
     assert chosen_version(world, draft) == legacy.id
     assert superseded_by(world, legacy) == newer.id
+
+
+# --- GTAB-09: the mark of a unit on a superseded version is cleared ------------------------------
+
+
+def mark_in_use(world, unit, version):
+    with world.uow_factory() as uow:
+        uow.scoring_tables.set_unit_default(unit.id, version.id)
+        uow.commit()
+
+
+def mark_of(world, unit):
+    with world.uow_factory() as uow:
+        found = uow.scoring_tables.get_unit_default(unit.id)
+    return found.version_id if found else None
+
+
+def mark_events(world, unit):
+    with world.uow_factory() as uow:
+        return list(uow.audit.list_for("unit_scoring_default", str(unit.id)))
+
+
+def test_the_unit_whose_version_in_use_is_superseded_loses_the_mark_with_a_system_delete_event(
+    world, legacy, adopt
+):
+    mark_in_use(world, world.fasi, legacy)
+
+    adopt()
+
+    assert mark_of(world, world.fasi) is None
+    [event] = mark_events(world, world.fasi)
+    assert event.action is AuditAction.DELETE
+    assert event.user_id is None
+    assert event.entity == "unit_scoring_default"
+    assert event.entity_id == str(world.fasi.id)
+    assert event.changes == {"version_id": {"before": str(legacy.id), "after": None}}
+
+
+def test_a_unit_with_another_version_in_use_keeps_it_and_gets_no_event(world, legacy, adopt):
+    mark_in_use(world, world.fasi, legacy)
+    mark_in_use(world, world.ifch, world.official_version)
+
+    adopt()
+
+    assert mark_of(world, world.ifch) == world.official_version.id
+    assert mark_events(world, world.ifch) == []
+
+
+def test_running_it_again_writes_no_new_mark_event(world, legacy, adopt):
+    mark_in_use(world, world.fasi, legacy)
+    adopt()
+    after_first = mark_events(world, world.fasi)
+
+    adopt()
+
+    assert mark_events(world, world.fasi) == after_first
+    assert len(after_first) == 1
+
+
+def test_without_a_mark_on_the_superseded_version_no_mark_event_is_written(world, legacy, adopt):
+    adopt()
+
+    assert mark_events(world, world.fasi) == []
+    assert mark_events(world, world.ifch) == []
+
+
+def test_the_mark_is_cleared_in_the_same_transaction_as_the_supersession(world, legacy, adopt):
+    mark_in_use(world, world.fasi, legacy)
+
+    with world.uow_factory() as uow:
+        adopt(uow)  # nothing is committed: the unit of work rolls it back
+
+    assert mark_of(world, world.fasi) == legacy.id
+    assert superseded_by(world, legacy) is None
+    assert mark_events(world, world.fasi) == []

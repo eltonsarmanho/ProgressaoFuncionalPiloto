@@ -219,7 +219,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | GTAB-06 | P1: Tabela em uso por unidade | Implemented | Implementing |
 | GTAB-07 | P1: Tabela em uso por unidade | Implemented | Implementing |
 | GTAB-08 | P1: Tabela em uso por unidade | Implemented | Implementing |
-| GTAB-09 | P1: Tabela em uso por unidade | Specified | Pending |
+| GTAB-09 | P1: Tabela em uso por unidade | Implemented | Implementing |
 | GTAB-10 | P1: Tabela em uso por unidade | Implemented | Implementing |
 | GTAB-11 | P1: Gestão das tabelas pela tela | Specified | Pending |
 | GTAB-12 | P1: Gestão das tabelas pela tela | Specified | Pending |

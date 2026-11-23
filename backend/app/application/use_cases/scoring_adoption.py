@@ -3,6 +3,7 @@
 from uuid import UUID
 
 from app.application.services.audit_service import AuditService
+from app.application.use_cases.scoring_defaults import UNIT_DEFAULT_ENTITY
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.process import ProcessStatus
 from app.domain.repositories.ports import UnitOfWork
@@ -19,7 +20,9 @@ class AdoptSupersedingVersion:
     the mark and the moves together, so a failure in the middle changes nothing. Idempotent: a
     second run finds the mark in place and no process left on the previous version. Processes
     that are concluded or archived keep their version, and so do the documents already generated
-    (AD-012). Each move is audited as a change made by the system (no actor).
+    (AD-012). Each move is audited as a change made by the system (no actor). The units that had
+    the previous version in use lose that mark in the same transaction (GTAB-09), each with a
+    system audit event; the other units keep theirs.
     """
 
     def __init__(self, audit: AuditService):
@@ -39,6 +42,7 @@ class AdoptSupersedingVersion:
             return 0  # another version already replaced it
         if previous.superseded_by_id is None:
             uow.scoring_tables.set_superseded(previous.id, new.id)
+        self._clear_unit_marks(uow, previous.id)
         moved = 0
         for process in uow.processes.list_using_version(previous.id, EDITABLE):
             uow.processes.set_scoring_table_version(process.id, new.id)
@@ -54,3 +58,16 @@ class AdoptSupersedingVersion:
             )
             moved += 1
         return moved
+
+    def _clear_unit_marks(self, uow: UnitOfWork, version_id: UUID) -> None:
+        for unit_id in uow.scoring_tables.unit_ids_defaulting_to(version_id):
+            uow.scoring_tables.clear_unit_default(unit_id)
+            self._audit.record(
+                uow,
+                None,
+                UNIT_DEFAULT_ENTITY,
+                unit_id,
+                AuditAction.DELETE,
+                {"version_id": version_id},
+                {"version_id": None},
+            )

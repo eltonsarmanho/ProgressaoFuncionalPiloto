@@ -302,7 +302,7 @@ graph LR
 
 #### T6: Versão substituída desfaz a marcação das unidades
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `AdoptSupersedingVersion`, ao marcar uma versão como substituída, desmarca as unidades cuja versão em uso é essa (`unit_ids_defaulting_to` e `clear_unit_default`), com um evento de auditoria sem usuário por unidade (entidade `unit_scoring_default`, ação `DELETE`), na mesma transação. As demais unidades ficam como estão.
 **Where**: `backend/app/application/use_cases/scoring_adoption.py` (modify)
@@ -317,10 +317,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_adopt_superseding_version.py` (modifica): a unidade cuja versão em uso é a substituída perde a marcação, com um evento `DELETE` de `user_id` nulo na entidade `unit_scoring_default`; a unidade com outra versão em uso não muda; uma segunda execução não grava evento; sem marcação não há evento
-- [ ] Os testes de adoção que já existem seguem verdes
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_adopt_superseding_version.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_adopt_superseding_version.py` (modifica): a unidade cuja versão em uso é a substituída perde a marcação, com um evento `DELETE` de `user_id` nulo na entidade `unit_scoring_default`; a unidade com outra versão em uso não muda; uma segunda execução não grava evento; sem marcação não há evento
+- [x] Os testes de adoção que já existem seguem verdes
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_adopt_superseding_version.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted
