@@ -1,5 +1,7 @@
-"""PAR-02 to PAR-04, PAR-10, PAR-11, PAR-14, VER-08: running the generation of the Parecer."""
+"""PAR-02, PAR-10, PAR-14, VER-08, PMOD-02, PMOD-03, PMOD-19, PMOD-20, PMOD-24, PMOD-25: running
+the generation of the Parecer, with the text of the official model."""
 
+import dataclasses
 import zipfile
 
 import pymupdf
@@ -55,8 +57,12 @@ def texts(gen, generation) -> dict[DocumentFormat, str]:
     }
 
 
-def comma(amount: str) -> str:
-    return amount.replace(".", ",")
+def flat(text: str) -> str:
+    return " ".join(text.split())
+
+
+def flat_texts(gen, generation) -> dict[DocumentFormat, str]:
+    return {fmt: flat(text) for fmt, text in texts(gen, generation).items()}
 
 
 def board(gen, conclusion=OpinionConclusion.FAVORAVEL):
@@ -92,40 +98,79 @@ def test_the_run_stores_version_1_ready_with_a_docx_and_a_pdf(gen):
         assert zipfile.is_zipfile(file_path(gen, parecer, fmt)) == (fmt is DocumentFormat.DOCX)
 
 
-def test_the_total_geral_of_the_snapshot_and_of_both_files_is_the_one_of_the_table(gen):
+def test_the_total_of_the_snapshot_is_the_one_of_the_table_and_no_file_prints_it(gen):
     add_scenario_211(gen.world)
     table = ready(gen, DocumentKind.TABELA)
     board(gen)
 
     parecer = ready(gen, DocumentKind.PARECER)
 
-    total = table.snapshot["total"]
-    assert parecer.snapshot["total"] == total
+    assert parecer.snapshot["total"] == table.snapshot["total"]
     assert parecer.snapshot["subtotals"] == table.snapshot["subtotals"]
-    for fmt, text in texts(gen, parecer).items():
-        assert f"Total geral\n{comma(total)}" in text, fmt
+    for fmt, text in flat_texts(gen, parecer).items():
+        for forbidden in ("Total geral", "Mínimo de referência", "Observações"):
+            assert forbidden not in text, (fmt, forbidden)
+        assert table.snapshot["total"].replace(".", ",") not in text, fmt  # "211,00"
 
 
-def test_the_conclusion_sentence_and_the_three_signature_lines_are_in_both_files(gen):
+def test_the_paragraph_of_the_model_and_the_titular_member_lines_are_in_both_files(gen):
     _, parecer = a_ready_parecer(gen)
 
-    for fmt, text in texts(gen, parecer).items():
-        assert "A banca manifesta-se FAVORÁVEL à" in text.replace("\n", " "), fmt
-        assert "referente ao interstício de 23/11/2022 a 23/11/2024." in text.replace("\n", " ")
-        for member in MEMBERS:
-            assert member.name in text, (fmt, member.name)
-        assert text.count("_" * 42) == 3, fmt
+    for fmt, text in flat_texts(gen, parecer).items():
+        assert (
+            "Aos dois dias do mês de abril de dois mil e vinte e cinco, reuniram-se os membros "
+            "da Banca de Análise, nomeados pela Portaria nº 77/2025, Ana Presidente Souza "
+            "(presidente), Bruno Membro Lima, responsáveis por analisar o Relatório de "
+            "Atividades do Professor" in text
+        ), fmt
+        assert "referente ao interstício de 23/11/2022 a 23/11/2024, para Classe D" in text, fmt
+        assert "Após a análise, os membros APROVARAM o referido relatório." in text, fmt
+        assert "Belém, 2 de Abril de 2025." in text, fmt
+        assert text.endswith("PRESIDENTE: Ana Presidente Souza MEMBRO 1: Bruno Membro Lima"), fmt
+        assert "Carla Suplente Reis" not in text, fmt
 
 
-def test_the_unfavorable_conclusion_says_desfavoravel(gen):
+def test_the_unfavorable_conclusion_says_nao_aprovaram(gen):
     ready_table(gen)
     board(gen, OpinionConclusion.DESFAVORAVEL)
 
     parecer = ready(gen, DocumentKind.PARECER)
 
     assert parecer.snapshot["conclusion"] == "DESFAVORAVEL"
-    for text in texts(gen, parecer).values():
-        assert "DESFAVORÁVEL" in text and "FAVORÁVEL à" not in text.replace("DESFAVORÁVEL", "")
+    for fmt, text in flat_texts(gen, parecer).items():
+        assert "os membros NÃO APROVARAM o referido relatório." in text, fmt
+        assert "os membros APROVARAM" not in text, fmt
+
+
+# --- the header with the campus of the unit (PMOD-02, PMOD-03) ----------------------------------
+
+
+def test_the_campus_of_the_unit_is_a_line_of_the_header_in_both_files(gen):
+    _, parecer = a_ready_parecer(gen)
+
+    for fmt, text in flat_texts(gen, parecer).items():
+        assert text.startswith(
+            "Universidade Federal do Pará Campus Universitário do Tocantins/Cametá "
+            "Faculdade de Sistemas de Informação – FASI PARECER"
+        ), fmt
+
+
+def test_a_unit_without_a_parent_campus_has_a_header_of_two_lines(gen):
+    ready_table(gen)
+    board(gen)
+    with gen.world.uow_factory() as uow:
+        unit = uow.units.get(gen.world.process.unit_id)
+        assert unit.parent_id is not None  # the premise: the seed links the unit to the campus
+        uow.units.update(dataclasses.replace(unit, parent_id=None))
+        uow.commit()
+
+    parecer = ready(gen, DocumentKind.PARECER)
+
+    for fmt, text in flat_texts(gen, parecer).items():
+        assert text.startswith(
+            "Universidade Federal do Pará Faculdade de Sistemas de Informação – FASI PARECER"
+        ), fmt
+        assert "Campus Universitário" not in text, fmt
 
 
 # --- the snapshot -------------------------------------------------------------------------------
@@ -147,9 +192,24 @@ def test_the_snapshot_names_the_table_the_versions_used_the_fields_and_the_ordin
     assert (snapshot["opinion_date"], snapshot["place"]) == ("2025-04-02", "Belém")
     assert (snapshot["ordinance_number"], snapshot["ordinance_date"]) == ("77/2025", "2025-03-10")
     assert snapshot["members"] == [{"name": m.name, "role": m.role.value} for m in MEMBERS]
-    for text in texts(gen, parecer).values():
-        assert "Relatório de Atividades: versão 1" in text.replace("\n", " ")
-        assert "Comprovante de Documentos: não gerado" in text.replace("\n", " ")
+    assert set(snapshot) == {
+        "table_generation_id",
+        "table_version",
+        "interstice",
+        "total",
+        "subtotals",
+        "minimum",
+        "versions_used",
+        "conclusion",
+        "opinion_date",
+        "place",
+        "ordinance_number",
+        "ordinance_date",
+        "members",
+    }
+    for text in flat_texts(gen, parecer).values():
+        assert "Relatório de Atividades: versão" not in text
+        assert "Comprovante de Documentos" not in text
 
 
 def test_the_snapshot_keeps_the_minimum_of_the_table(gen):
@@ -160,8 +220,6 @@ def test_the_snapshot_keeps_the_minimum_of_the_table(gen):
 
     assert table.snapshot["minimum"] == {"status": "NAO_ATINGE", "value": "100.00"}
     assert parecer.snapshot["minimum"] == table.snapshot["minimum"]
-    for text in texts(gen, parecer).values():
-        assert "Mínimo de referência: 100,00 pontos" in text
 
 
 def test_the_minimum_saved_in_the_table_wins_over_the_one_of_now(gen):
@@ -176,8 +234,6 @@ def test_the_minimum_saved_in_the_table_wins_over_the_one_of_now(gen):
     parecer = ready(gen, DocumentKind.PARECER)
 
     assert parecer.snapshot["minimum"] == {"status": "NAO_DEFINIDO", "value": None}
-    for text in texts(gen, parecer).values():
-        assert "Mínimo de referência: não definido pela norma aplicável" in text
 
 
 def test_a_table_of_before_the_field_uses_the_minimum_calculated_now(gen):
@@ -189,8 +245,6 @@ def test_a_table_of_before_the_field_uses_the_minimum_calculated_now(gen):
     parecer = ready(gen, DocumentKind.PARECER)
 
     assert parecer.snapshot["minimum"] == {"status": "NAO_ATINGE", "value": "100.00"}
-    for text in texts(gen, parecer).values():
-        assert "Mínimo de referência: 100,00 pontos" in text
 
 
 # --- the score moves between the request and the run (PAR-10) -----------------------------------
@@ -242,6 +296,7 @@ def test_a_conclusion_cleared_between_the_request_and_the_run_fails_the_row_with
 
 def test_asking_again_makes_version_2_and_both_stay_in_the_history_and_on_disk(gen):
     _, first = a_ready_parecer(gen)
+    before = {fmt: file_path(gen, first, fmt).read_bytes() for fmt in DocumentFormat}
 
     second = ready(gen, DocumentKind.PARECER)
 
@@ -253,6 +308,7 @@ def test_asking_again_makes_version_2_and_both_stay_in_the_history_and_on_disk(g
         for fmt in DocumentFormat:
             assert file_path(gen, version, fmt).is_file()
     assert {f.internal_name for f in first.files}.isdisjoint(f.internal_name for f in second.files)
+    assert {fmt: file_path(gen, first, fmt).read_bytes() for fmt in DocumentFormat} == before
 
 
 # --- no AI (PAR-11) -----------------------------------------------------------------------------

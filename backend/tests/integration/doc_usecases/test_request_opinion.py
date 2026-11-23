@@ -1,4 +1,5 @@
-"""PAR-07 to PAR-10, PAR-12, REQ-01, BNAV-02, BNAV-03: asking for a Parecer or a Requerimento."""
+"""PAR-07 to PAR-10, PAR-12, PMOD-22, PMOD-23, REQ-01, BNAV-02, BNAV-03: asking for a Parecer or a
+Requerimento."""
 
 import dataclasses
 from decimal import Decimal
@@ -8,7 +9,7 @@ import pytest
 from app.application.use_cases.generated_documents import GenerationLimits
 from app.application.use_cases.scoring import compute_process_score
 from app.domain.entities.audit import AuditAction
-from app.domain.entities.board import OpinionConclusion
+from app.domain.entities.board import BoardMember, BoardRole, OpinionConclusion, ValueSource
 from app.domain.entities.generated import (
     DocumentKind,
     GenerationCode,
@@ -86,6 +87,56 @@ def test_an_ordinance_with_no_member_is_the_same_as_no_ordinance(gen):
     add_typed_ordinance(gen.world, members=())
 
     assert refusal(gen, DocumentKind.PARECER).code == GenerationCode.BANCA_SEM_MEMBROS
+
+
+def alternate(name="Davi Suplente Rocha") -> BoardMember:
+    return BoardMember(name, BoardRole.SUPLENTE, 1, ValueSource.INFORMADO)
+
+
+def titular(name="Bruno Membro Lima") -> BoardMember:
+    return BoardMember(name, BoardRole.MEMBRO, 1, ValueSource.INFORMADO)
+
+
+def test_an_ordinance_with_only_alternates_is_refused_for_the_board_even_with_everything_else(gen):
+    ready_table(gen)
+    add_opinion(gen.world)
+    add_typed_ordinance(gen.world, members=(alternate(), alternate("Eva Suplente Dias")))
+
+    error = refusal(gen, DocumentKind.PARECER)
+
+    assert error.code == GenerationCode.BANCA_SEM_MEMBROS
+    assert [r.kind for r in rows(gen.world)] == [DocumentKind.TABELA]
+
+
+def test_only_alternates_and_no_conclusion_is_refused_for_the_conclusion_first(gen):
+    add_opinion(gen.world, conclusion=None)
+    add_typed_ordinance(gen.world, members=(alternate(),))
+
+    assert refusal(gen, DocumentKind.PARECER).code == GenerationCode.CONCLUSAO_AUSENTE
+
+
+def test_only_alternates_and_no_table_is_refused_for_the_board_before_the_table(gen):
+    add_opinion(gen.world)
+    add_typed_ordinance(gen.world, members=(alternate(),))
+
+    assert refusal(gen, DocumentKind.PARECER).code == GenerationCode.BANCA_SEM_MEMBROS
+
+
+def test_an_ordinance_with_an_alternate_and_one_member_is_accepted(gen):
+    ready_table(gen)
+    add_opinion(gen.world)
+    add_typed_ordinance(gen.world, members=(alternate(), titular()))
+
+    assert ask(gen, DocumentKind.PARECER).state is GenerationState.GERANDO
+
+
+def test_an_ordinance_with_only_a_president_is_accepted(gen):
+    ready_table(gen)
+    add_opinion(gen.world)
+    president = BoardMember("Ana Presidente Souza", BoardRole.PRESIDENTE, 1, ValueSource.INFORMADO)
+    add_typed_ordinance(gen.world, members=(president,))
+
+    assert ask(gen, DocumentKind.PARECER).state is GenerationState.GERANDO
 
 
 def test_members_and_no_ready_table_is_refused_for_the_table(gen):

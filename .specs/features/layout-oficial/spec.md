@@ -209,8 +209,8 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | PMOD-01 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-02 | P1: Texto do Parecer | Execute | In Progress |
-| PMOD-03 | P1: Texto do Parecer | Execute | In Progress |
+| PMOD-02 | P1: Texto do Parecer | Implemented | Implemented |
+| PMOD-03 | P1: Texto do Parecer | Implemented | Implemented |
 | PMOD-04 | P1: Texto do Parecer | Implemented | Implemented |
 | PMOD-05 | P1: Texto do Parecer | Implemented | Implemented |
 | PMOD-06 | P1: Texto do Parecer | Implemented | Implemented |
@@ -229,10 +229,10 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | PMOD-19 | P1: Texto do Parecer | Execute | In Progress |
 | PMOD-20 | P1: Gerar o Parecer | Execute | In Progress |
 | PMOD-21 | P1: Gerar o Parecer | Execute | In Progress |
-| PMOD-22 | P1: Gerar o Parecer | Tasks | In Tasks |
-| PMOD-23 | P1: Gerar o Parecer | Tasks | In Tasks |
-| PMOD-24 | P1: Gerar o Parecer | Tasks | In Tasks |
-| PMOD-25 | P1: Gerar o Parecer | Tasks | In Tasks |
+| PMOD-22 | P1: Gerar o Parecer | Implemented | Implemented |
+| PMOD-23 | P1: Gerar o Parecer | Implemented | Implemented |
+| PMOD-24 | P1: Gerar o Parecer | Execute | In Progress |
+| PMOD-25 | P1: Gerar o Parecer | Implemented | Implemented |
 | PMOD-26 | P1: Etapa 6 sem Observações | Tasks | In Tasks |
 | PMOD-27 | P1: Etapa 6 sem Observações | Tasks | In Tasks |
 | PMOD-28 | P1: Etapa 6 sem Observações | Tasks | In Tasks |

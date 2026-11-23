@@ -48,20 +48,24 @@ def test_the_report_in_docx_is_a_docx_with_the_title(target):
     assert "RELATÓRIO DE ATIVIDADES" in [p.text for p in Document(str(target)).paragraphs]
 
 
-def test_the_opinion_in_pdf_is_a_pdf_with_the_title_and_the_total_geral(target):
+def test_the_opinion_in_pdf_is_a_pdf_with_the_title_and_the_paragraph_of_the_model(target):
     FileDocumentWriter().write_opinion(opinion_model(), DocumentFormat.PDF, target)
 
     assert target.read_bytes().startswith(b"%PDF")
-    text = " ".join(page.get_text() for page in pymupdf.open(target, filetype="pdf"))
+    pages = pymupdf.open(target, filetype="pdf")
+    text = " ".join(" ".join(page.get_text().split()) for page in pages)
     assert "PARECER" in text
-    assert "211,00" in text
+    assert "reuniram-se os membros da Banca de Análise" in text
+    assert "211,00" not in text
 
 
-def test_the_opinion_in_docx_is_a_docx_with_the_title_paragraph(target):
+def test_the_opinion_in_docx_is_a_docx_with_the_title_and_the_paragraph_of_the_model(target):
     FileDocumentWriter().write_opinion(opinion_model(), DocumentFormat.DOCX, target)
 
     assert zipfile.is_zipfile(target)
-    assert "PARECER" in [p.text for p in Document(str(target)).paragraphs]
+    texts = [p.text for p in Document(str(target)).paragraphs]
+    assert "PARECER" in texts
+    assert any("reuniram-se os membros da Banca de Análise" in text for text in texts)
 
 
 def test_the_request_in_pdf_is_a_pdf_with_the_greeting(target):

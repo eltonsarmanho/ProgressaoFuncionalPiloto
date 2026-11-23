@@ -24,7 +24,7 @@ from app.application.services.audit_service import AuditService
 from app.application.services.generation_inputs import GenerationInputs, load_generation_inputs
 from app.application.use_cases.scoring import ProcessScore, _ScoringUseCase, compute_process_score
 from app.domain.entities.audit import AuditAction
-from app.domain.entities.board import BoardOpinion, BoardOrdinance
+from app.domain.entities.board import BoardOpinion, BoardOrdinance, BoardRole
 from app.domain.entities.comprovante import (
     ComprovanteLayout,
     ComprovantePlan,
@@ -84,6 +84,7 @@ GENERATED_ENTITY = "generated_document"
 MB = 1024 * 1024
 _PIXELS_PER_MEGAPIXEL = 1_000_000
 _BOARD_KINDS = (DocumentKind.PARECER, DocumentKind.REQUERIMENTO)
+_TITULAR_ROLES = (BoardRole.PRESIDENTE, BoardRole.MEMBRO)
 # the kinds that read the activities, the score and the table of the process to be built
 _INPUT_KINDS = (DocumentKind.TABELA, DocumentKind.RELATORIO, DocumentKind.COMPROVANTE)
 
@@ -223,13 +224,15 @@ class OpinionInputs:
 
 
 def check_opinion_inputs(uow: UnitOfWork, process: FunctionalProcess) -> OpinionInputs:
-    """The refusals of the Parecer in the order of the spec (PAR-07 to PAR-10); used by the
-    request and again by the run, because the person can change any of them in between."""
+    """The refusals of the Parecer in the order of the spec (PAR-07 to PAR-10, PMOD-22, PMOD-23);
+    used by the request and again by the run, because the person can change any of them in
+    between. A board of alternates only has nobody to name in the Parecer: it is a board with no
+    members."""
     opinion = uow.opinions.get(process.id)
     if opinion is None or opinion.conclusion is None:
         raise GenerationRefused(GenerationCode.CONCLUSAO_AUSENTE, CONCLUSION_MISSING_MESSAGE)
     ordinance = uow.board.get(process.id)
-    if ordinance is None or not ordinance.members:
+    if ordinance is None or not any(m.role in _TITULAR_ROLES for m in ordinance.members):
         raise GenerationRefused(GenerationCode.BANCA_SEM_MEMBROS, NO_MEMBERS_MESSAGE)
     return OpinionInputs(opinion, ordinance, check_opinion_table(uow, process))
 
@@ -753,7 +756,8 @@ class RunGeneration:
 
     def _opinion(self, generation: GeneratedDocument, scratch: _Scratch) -> _Produced:
         """The Parecer from the snapshot of the last Tabela, the ordinance and the conclusion the
-        person chose; the text is built by rules, never by the AI (PAR-02 to PAR-04, PAR-11)."""
+        person chose; the text is built by rules, never by the AI (PAR-02, PMOD-25). The snapshot
+        keeps the total, the subtotals and the minimum although the document does not print them."""
         config = self._report_config.load()
         with self._uow_factory() as uow:
             process = uow.processes.get(generation.process_id)
@@ -761,6 +765,7 @@ class RunGeneration:
             unit = uow.units.get(process.unit_id)
             if professor is None or unit is None:
                 raise NotFound("Docente ou unidade do processo não encontrado")
+            parent_unit = None if unit.parent_id is None else uow.units.get(unit.parent_id)
             checked = check_opinion_inputs(uow, process)
             ready = uow.generations.latest_ready_by_kind(process.id)
         table = checked.table
@@ -770,17 +775,13 @@ class RunGeneration:
             for kind in (DocumentKind.TABELA, DocumentKind.RELATORIO, DocumentKind.COMPROVANTE)
         }
         minimum = _opinion_minimum(snapshot_in, table.score)
-        chosen = table.score.chosen
         model = build_opinion(
             process,
             professor,
             unit,
+            parent_unit,
             checked.ordinance,
             checked.opinion,
-            snapshot_in,
-            versions,
-            minimum,
-            {} if chosen is None else {g.number: g.name for g in chosen.version.groups},
             config.layout.page,
         )
         outputs = []

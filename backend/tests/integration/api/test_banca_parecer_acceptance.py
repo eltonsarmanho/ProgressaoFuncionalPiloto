@@ -4,7 +4,6 @@ Parecer, the Requerimento, the checklist and the conclusion. The success criteri
 checked here: the Total geral of the Parecer is the one of the Tabela, the conclusion is never
 filled without the person, and the AI is not called to generate the two documents."""
 
-import re
 from datetime import date
 
 import pytest
@@ -16,7 +15,7 @@ from app.infrastructure.ai.maritalk import MariTalkClient
 from tests.integration.api.board_support import board_url, set_status, settings_url
 from tests.integration.api.conftest import login
 from tests.integration.api.documents_support import pdf, stored_files
-from tests.integration.api.generated_readers import docx_text, pdf_text, pt
+from tests.integration.api.generated_readers import docx_text, pdf_text
 from tests.integration.api.generated_support import (
     add_activity,
     add_ready,
@@ -169,12 +168,6 @@ def flow(make_client, admin, process, scoring_tables, monkeypatch, tmp_path):
     return scenario
 
 
-def total_geral(text: str) -> str:
-    found = re.search(r"Total geral\s+(\d[\d.]*,\d{2})", text)
-    assert found, text[-400:]
-    return found.group(1)
-
-
 # --- PORT-02, PORT-09: the ordinance is read and stays out of the rest ---------------------------
 
 
@@ -208,7 +201,7 @@ def test_the_ordinance_is_read_corrected_and_never_touches_documents_activities_
 # --- PAR-02, PAR-10, PAR-12: the Parecer ---------------------------------------------------------
 
 
-def test_the_parecer_has_the_total_of_the_tabela_the_conclusion_and_three_signature_lines(flow):
+def test_the_parecer_follows_the_model_with_the_titular_members_and_the_total_of_the_tabela(flow):
     flow.send_ordinance()
     flow.read_ordinance()
     flow.correct_a_member()
@@ -224,16 +217,22 @@ def test_the_parecer_has_the_total_of_the_tabela_the_conclusion_and_three_signat
     parecer = flow.generate("PARECER")
 
     total = flow.scoring()["total"]
+    # the document no longer prints the total; the summary of the version keeps the one of the
+    # snapshot, which is the one of the Tabela
     assert (
         flow.detail(parecer)["summary"]["total"] == flow.detail(table)["summary"]["total"] == total
     )
     for fmt, text in flow.texts(parecer).items():
-        assert total_geral(text) == pt(total), fmt
-        assert "A banca manifesta-se FAVORÁVEL à" in text, fmt
-        assert text.count(SIGNATURE_LINE) == 3, fmt
-        for name in ("Maria Aparecida Souza", CORRECTED, "Ana Beatriz Lima"):
-            assert name in text, (fmt, name)
-        assert "123/2025" in text and "10/03/2025" in text, fmt
+        assert (
+            "Ao primeiro dia do mês de abril de dois mil e vinte e cinco, reuniram-se os membros "
+            "da Banca de Análise, nomeados pela Portaria nº 123/2025, Maria Aparecida Souza "
+            f"(presidente), {CORRECTED}, responsáveis por analisar"
+        ) in text, fmt
+        assert "Após a análise, os membros APROVARAM o referido relatório." in text, fmt
+        assert text.endswith(f"PRESIDENTE: Maria Aparecida Souza MEMBRO 1: {CORRECTED}"), fmt
+        assert "Total geral" not in text and "Observações" not in text, fmt
+        assert "Ana Beatriz Lima" not in text, fmt  # the alternate is not in the Parecer
+        assert text.count(SIGNATURE_LINE) == 0, fmt
 
 
 def test_changing_a_validated_activity_refuses_the_parecer_until_the_tabela_is_made_again(flow):
@@ -254,8 +253,7 @@ def test_changing_a_validated_activity_refuses_the_parecer_until_the_tabela_is_m
         flow.detail(table)["summary"]["total"] == flow.detail(parecer)["summary"]["total"] == total
     )
     for fmt, text in flow.texts(parecer).items():
-        assert total_geral(text) == pt(total), fmt
-        assert "DESFAVORÁVEL" in text, fmt
+        assert "os membros NÃO APROVARAM o referido relatório." in text, fmt
 
 
 # --- REQ-04, PAR-11: the Requerimento and the AI -------------------------------------------------
