@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Design**: `.specs/features/gestao-tabelas/design.md` (aprovado em 2026-11-23, com as emendas A1 a A10)
 **Spec**: `.specs/features/gestao-tabelas/spec.md` (aprovada em 2026-11-23; GTAB-01 a GTAB-45)
-**Status**: Draft (aguarda a aprovação do usuário)
+**Status**: Approved (usuário, 2026-11-23: "Aprovado", com as emendas A11 a A13; 4 lotes por sub-agente em sequência, cada um conferido no git antes do seguinte, mais o Verifier; o usuário autorizou o deploy depois da execução)
 
 Regras de execução desta feature:
 
