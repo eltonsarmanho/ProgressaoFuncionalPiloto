@@ -1320,8 +1320,8 @@ Conferência de cobertura: os 45 requisitos da spec têm ao menos uma tarefa (a 
 | GTAB-23 | T11, T15, T21, T32 |
 | GTAB-24 | T3, T4, T5, T12, T32 |
 | GTAB-25 | T10, T11, T19, T32 |
-| GTAB-26 | T13, T15, T21 |
-| GTAB-27 | T10, T13, T19, T33 |
+| GTAB-26 | T13, T15, T21 (emenda A11 de `design.md`; rodada 2, F1) |
+| GTAB-27 | T10, T13, T19, T33 (emenda A12 de `design.md`) |
 | GTAB-28 | T14, T15, T21 |
 | GTAB-29 | T10, T14, T19, T33 |
 | GTAB-30 | T13, T14, T15, T33 |
@@ -1366,8 +1366,8 @@ Conferência de cobertura: os 45 requisitos da spec têm ao menos uma tarefa (a 
 1. **Ordem da marcação e da substituição.** `AdoptSupersedingVersion` (único lugar onde se substitui versão) desfaz a marcação com um evento `DELETE` sem usuário; por isso a semente da marcação, que só age em unidade sem evento anterior, não a refaz. A guarda de `pick_unit_default` cobre também os testes que chamam `set_superseded` direto no repositório.
 2. **Tabela oficial protegida.** O caso de uso de exclusão não lê `ufpa.json`: o `ProtectedCatalog(official_table_name)` é montado em `presentation/dependencies.py` a partir de `seed.official_table_name()` e injetado nos casos de exclusão e na lista (para `delete_blocked_reason`); toda versão da tabela oficial é protegida, não só a atual. Nos testes de caso de uso o catálogo é montado com o nome da tabela sintética que o teste cria; nos testes de API vale a fiação real.
 3. **Ordem das travas.** Sempre unidade, depois tabela, depois versão (`lock_unit`, `lock_table`, `lock_version`): marcar trava as três, na ordem; arquivar e retirar unidade travam a tabela; excluir versão trava a tabela e a versão; excluir tabela trava a tabela e todas as suas versões; escolher tabela no processo trava só a versão. Cada caso de uso relê os fatos depois de travar; uma violação de FK que escape vira 409. Os testes de corrida usam duas unidades de trabalho, a primeira segura a trava e a segunda espera, com tempo limite.
-4. **Excluir a versão mais recente.** Se ela tinha fechado a anterior (ADM-05), a anterior volta a ter o `valid_to` da apagada, com evento `UPDATE`, para a tabela não ficar sem versão vigente. "Tinha fechado" vem do `closed_version_id` do evento `CREATE` da apagada (rodada 2, F1), não das datas. É um acréscimo à spec, decorrente de GTAB-26, e entra no `design.md` como detalhe de execução.
-5. **Última versão da tabela.** A única versão de uma tabela não se exclui (`ULTIMA_VERSAO_DA_TABELA`): o caminho é "Excluir tabela", para não existir tabela sem versão (que não duplica, não versiona e não tem critério).
+4. **Excluir a versão mais recente.** Se ela tinha fechado a anterior (ADM-05), a anterior volta a ter o `valid_to` da apagada, com evento `UPDATE`, para a tabela não ficar sem versão vigente. "Tinha fechado" vem do `closed_version_id` do evento `CREATE` da apagada (rodada 2, F1), não das datas. É um acréscimo à spec, decorrente de GTAB-26 (emenda A11 de `design.md`).
+5. **Última versão da tabela** (emenda A12 de `design.md`, GTAB-27). A única versão de uma tabela não se exclui (`ULTIMA_VERSAO_DA_TABELA`): o caminho é "Excluir tabela", para não existir tabela sem versão (que não duplica, não versiona e não tem critério).
 6. **Etiqueta "Encerrada".** A versão em uso cuja vigência já acabou (porque uma versão nova a fechou, ADM-05) mostra "Encerrada" no cartão e continua marcada até o ADMIN marcar a nova (Edge Case da spec).
 7. **Nome do autor no histórico.** O histórico devolve só `user_id`; a tela resolve o nome por `GET /api/users` (o botão é só do ADMIN), com "Sistema" e "Usuário removido" como alternativas. Nenhuma mudança de API para isso.
 8. **Duplicar-nome.** Continua 422 no campo `name` (a spec foi corrigida pela emenda A7); nenhuma tarefa muda isso.

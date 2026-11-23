@@ -230,7 +230,7 @@
 - **Decision**: O ADMIN gerencia as tabelas de pontuação pela tela e marca, por unidade acadêmica, a versão em uso (no máximo uma por unidade), que passa a ser a sugestão do processo novo; sem marcação vale a sugestão por vigência de SEL-02. Qualquer tabela pode ser criada e usada, com os avisos que já existem. Arquivar vale para a tabela inteira (reversível); excluir vale para versão ou tabela que nenhum processo usa e que não está em uso de unidade. A versão substituída (AD-023) segue sem poder ser marcada nem escolhida.
 - **Reason**: Pedido do usuário em 2026-11-23: um CRUD para gerenciar e selecionar a tabela em uso e uma interface melhor. Respostas: padrão por unidade, qualquer tabela com avisos, arquivar, excluir e editar critérios na tela, layout e ações visíveis.
 - **Trade-off**: A regra 11 do `CLAUDE.md` deixa de dizer que a oficial é a única tabela em uso (passa a ser a em uso inicial); mais um conceito (a marcação por unidade) ao lado da escolha por processo; uma migração nova. A sugestão por vigência fica como alternativa para unidade sem marcação.
-- **Implementation**: feature `gestao-tabelas` (GTAB-01 a GTAB-40). Imagens novas do backend e do frontend e a migração no deploy, que só sai com a autorização do usuário.
+- **Implementation**: feature `gestao-tabelas` (GTAB-01 a GTAB-45). Imagens novas do backend e do frontend e a migração no deploy, que só sai com a autorização do usuário.
 - **Scope**: `gestao-tabelas`; toca `pontuacao` (SEL-02 e a tela de administração, ADM e P3) e `grupo-i-no-total` (AD-023)
 - **Date**: 2026-11-23
 - **Status**: active
