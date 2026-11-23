@@ -96,3 +96,11 @@ def is_pit_criterion(version: ScoringTableVersion, criterion: ScoringCriterion) 
         and group is not None
         and not group.counts_in_total
     )
+
+
+@dataclass(frozen=True)
+class UnitScoringDefault:
+    """The version of scoring table in use of an academic unit (GTAB-01): at most one per unit."""
+
+    unit_id: UUID
+    version_id: UUID

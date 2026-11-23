@@ -213,11 +213,11 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | -------------- | ----- | ----- | ------ |
 | GTAB-01 | P1: Tabela em uso por unidade | Implemented | Implementing |
 | GTAB-02 | P1: Tabela em uso por unidade | Specified | Pending |
-| GTAB-03 | P1: Tabela em uso por unidade | Specified | Pending |
+| GTAB-03 | P1: Tabela em uso por unidade | Implemented | Implementing |
 | GTAB-04 | P1: Tabela em uso por unidade | Specified | Pending |
 | GTAB-05 | P1: Tabela em uso por unidade | Specified | Pending |
-| GTAB-06 | P1: Tabela em uso por unidade | Specified | Pending |
-| GTAB-07 | P1: Tabela em uso por unidade | Specified | Pending |
+| GTAB-06 | P1: Tabela em uso por unidade | Implemented | Implementing |
+| GTAB-07 | P1: Tabela em uso por unidade | Implemented | Implementing |
 | GTAB-08 | P1: Tabela em uso por unidade | Specified | Pending |
 | GTAB-09 | P1: Tabela em uso por unidade | Specified | Pending |
 | GTAB-10 | P1: Tabela em uso por unidade | Specified | Pending |

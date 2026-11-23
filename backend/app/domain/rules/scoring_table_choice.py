@@ -1,6 +1,7 @@
-"""Verification of the scoring table chosen for a process (SEL-03, SEL-05..SEL-07).
+"""Verification of the scoring table chosen for a process (SEL-03, SEL-05..SEL-07) and the guards
+of the version in use of a unit (GTAB-03, GTAB-06, GTAB-07).
 
-Pure function: reports alerts only; never blocks the choice.
+Pure functions: the verification reports alerts only and never blocks the choice.
 """
 
 from collections.abc import Collection
@@ -65,3 +66,23 @@ def verify_table_choice(
             )
         )
     return alerts
+
+
+def pick_unit_default(
+    default_version: ScoringTableVersion | None,
+    *,
+    table_archived: bool,
+    table_unit_ids: Collection[UUID],
+    unit_id: UUID,
+) -> ScoringTableVersion | None:
+    """The version in use of the unit when it still passes the guards, else None (GTAB-06).
+
+    The guards are: the version is not superseded, its table is not archived and its table is
+    still associated with the unit. The validity is not asked: a version in use outside its
+    validity is still suggested (GTAB-07).
+    """
+    if default_version is None or default_version.is_superseded:
+        return None
+    if table_archived or unit_id not in table_unit_ids:
+        return None
+    return default_version

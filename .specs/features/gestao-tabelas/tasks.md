@@ -180,7 +180,7 @@ graph LR
 
 #### T2: Regra pura da versão em uso e entidade
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `UnitScoringDefault(unit_id, version_id)` (dataclass congelada, em `backend/app/domain/entities/scoring.py`) e `pick_unit_default(default_version, *, table_archived, table_unit_ids, unit_id)`: devolve a versão em uso quando ela não está substituída, a tabela não está arquivada e a tabela ainda está associada à unidade; senão `None`. A vigência não é exigida (GTAB-07).
 **Where**: `backend/app/domain/rules/scoring_table_choice.py` (modify)
@@ -195,10 +195,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_scoring_table_choice.py` (modifica): devolve a versão quando as três guardas passam; devolve-a também fora de vigência; cada guarda que falha (versão substituída, tabela arquivada, unidade fora da tabela) devolve `None`; sem versão em uso devolve `None`
-- [ ] As asserções que o arquivo já tem seguem verdes e o módulo não importa FastAPI, SQLAlchemy nem `app.infrastructure` (o teste de arquitetura passa)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/unit/domain/test_scoring_table_choice.py` (modifica): devolve a versão quando as três guardas passam; devolve-a também fora de vigência; cada guarda que falha (versão substituída, tabela arquivada, unidade fora da tabela) devolve `None`; sem versão em uso devolve `None`
+- [x] As asserções que o arquivo já tem seguem verdes e o módulo não importa FastAPI, SQLAlchemy nem `app.infrastructure` (o teste de arquitetura passa)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: quick
