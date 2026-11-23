@@ -1,4 +1,5 @@
-"""TAB-02, REL-02: Brazilian Portuguese formatting of dates, decimals, periods and ranges."""
+"""TAB-02, REL-02, PMOD-05, PMOD-12: Brazilian Portuguese formatting of dates, decimals, periods,
+ranges, Roman numerals and the place and date line."""
 
 from datetime import date
 from decimal import Decimal
@@ -13,6 +14,8 @@ from app.domain.rules.pt_format import (
     format_interstice,
     format_long_date,
     format_period,
+    format_place_date,
+    to_roman,
 )
 
 
@@ -124,5 +127,88 @@ def test_a_long_date_does_not_depend_on_the_system_locale():
             except locale.Error:
                 continue
             assert format_long_date(date(2025, 3, 10)) == "10 de março de 2025"
+    finally:
+        locale.setlocale(locale.LC_TIME, previous)
+
+
+# --- Roman numerals (PMOD-12) ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("number", "roman"),
+    [
+        (1, "I"),
+        (2, "II"),
+        (3, "III"),
+        (4, "IV"),
+        (5, "V"),
+        (9, "IX"),
+        (10, "X"),
+        (14, "XIV"),
+        (40, "XL"),
+        (90, "XC"),
+        (400, "CD"),
+        (1994, "MCMXCIV"),
+        (3999, "MMMCMXCIX"),
+    ],
+)
+def test_a_number_is_written_in_roman_numerals(number, roman):
+    assert to_roman(number) == roman
+
+
+@pytest.mark.parametrize("number", [0, -1, 4000])
+def test_a_number_out_of_one_to_3999_has_no_roman_numeral(number):
+    with pytest.raises(ValueError):
+        to_roman(number)
+
+
+# --- place and date line (PMOD-05) ----------------------------------------------------------
+
+
+def test_the_place_and_date_line_has_the_day_without_zero_and_the_month_capitalized():
+    assert format_place_date(date(2025, 4, 2)) == "2 de Abril de 2025"
+
+
+@pytest.mark.parametrize(
+    ("month", "name"),
+    [
+        (1, "Janeiro"),
+        (2, "Fevereiro"),
+        (3, "Março"),
+        (4, "Abril"),
+        (5, "Maio"),
+        (6, "Junho"),
+        (7, "Julho"),
+        (8, "Agosto"),
+        (9, "Setembro"),
+        (10, "Outubro"),
+        (11, "Novembro"),
+        (12, "Dezembro"),
+    ],
+)
+def test_each_month_of_the_place_and_date_line_has_a_capital_and_the_right_spelling(month, name):
+    assert format_place_date(date(2026, month, 15)) == f"15 de {name} de 2026"
+
+
+def test_the_day_of_the_place_and_date_line_has_a_zero_only_when_it_has_two_digits():
+    assert format_place_date(date(2025, 5, 27)) == "27 de Maio de 2025"
+    assert format_place_date(date(2025, 5, 7)) == "7 de Maio de 2025"
+
+
+def test_a_leap_day_is_written_in_the_place_and_date_line():
+    assert format_place_date(date(2024, 2, 29)) == "29 de Fevereiro de 2024"
+
+
+def test_the_place_and_date_line_does_not_depend_on_the_system_locale():
+    import locale
+
+    previous = locale.setlocale(locale.LC_TIME)
+    try:
+        for name in ("en_US.UTF-8", "fr_FR.UTF-8", "C"):
+            try:
+                locale.setlocale(locale.LC_TIME, name)
+            except locale.Error:
+                continue
+            assert format_place_date(date(2025, 3, 10)) == "10 de Março de 2025"
     finally:
         locale.setlocale(locale.LC_TIME, previous)

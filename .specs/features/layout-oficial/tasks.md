@@ -162,7 +162,7 @@ graph LR
 
 #### T2: Algarismos romanos e linha de local e data
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `to_roman(n: int) -> str` (1 a 3999, `ValueError` fora) e `format_place_date(value: date) -> str` ("2 de Abril de 2025": dia sem zero à esquerda, mês em português com inicial maiúscula, ano com quatro dígitos, sem depender do idioma do sistema), as duas em `pt_format.py`.
 **Where**: `backend/app/domain/rules/pt_format.py` (modify)
@@ -177,9 +177,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_pt_format.py`: `to_roman` dá I, II, III, IV, V, IX, X, XIV, XL, XC, CD, MCMXCIV (1994) e MMMCMXCIX (3999); 0, -1 e 4000 dão `ValueError`; `format_place_date(date(2025, 4, 2))` é "2 de Abril de 2025"; os doze meses saem com a inicial maiúscula e a grafia certa, incluindo "Março"; dia 27 ("27 de Maio de 2025") e dia 7 sem zero ("7 de Maio de 2025"); 29 de fevereiro de 2024; o resultado não muda com `LC_TIME` diferente; `format_long_date` segue devolvendo "10 de março de 2025" (testes existentes intactos)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/domain/test_pt_format.py`: `to_roman` dá I, II, III, IV, V, IX, X, XIV, XL, XC, CD, MCMXCIV (1994) e MMMCMXCIX (3999); 0, -1 e 4000 dão `ValueError`; `format_place_date(date(2025, 4, 2))` é "2 de Abril de 2025"; os doze meses saem com a inicial maiúscula e a grafia certa, incluindo "Março"; dia 27 ("27 de Maio de 2025") e dia 7 sem zero ("7 de Maio de 2025"); 29 de fevereiro de 2024; o resultado não muda com `LC_TIME` diferente; `format_long_date` segue devolvendo "10 de março de 2025" (testes existentes intactos)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
