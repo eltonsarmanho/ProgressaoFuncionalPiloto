@@ -207,6 +207,9 @@ A spec foi aprovada antes da leitura do código. Estas emendas decorrem dela e f
 | A8 | **GTAB-19**: a versão que não é a mais recente da tabela também fica só leitura (`VERSAO_NAO_MAIS_RECENTE`), como o backend já recusa |
 | A9 | **GTAB-35**: "Nova versão" age sobre a versão escolhida como origem; "Importar CSV", "Duplicar" e "Unidades" agem sobre a tabela |
 | A10 | **GTAB-10 e a etiqueta**: o campo `in_use` não muda; os campos novos são `process_count` e `default_for_unit_ids` |
+| A11 | **GTAB-26** (acréscimo de execução, aprovado ao validar as tarefas): excluir a versão mais recente, que tinha fechado a anterior, devolve à anterior o fim de vigência da apagada, para a tabela não ficar sem versão vigente |
+| A12 | **GTAB-27** (acréscimo de execução): a única versão de uma tabela não se exclui (`ULTIMA_VERSAO_DA_TABELA`); o caminho é excluir a tabela |
+| A13 | **GTAB-42** (precisão): todas as versões da tabela oficial são protegidas, pelo nome da tabela, e não só a versão atual; o `ProtectedCatalog` leva só o nome da tabela |
 
 ---
 
