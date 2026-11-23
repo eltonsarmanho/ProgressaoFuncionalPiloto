@@ -753,7 +753,7 @@ graph LR
 
 #### T22: Aceitação dos cinco documentos e do brasão ausente
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Teste de aceitação em nível de caso de uso, sobre um processo sintético: os cinco documentos são gerados (Tabela, Relatório, Comprovante, Requerimento e Parecer) e cada arquivo gerado tem o brasão; o Parecer segue o modelo; sem o arquivo do brasão nenhuma geração produz arquivo; uma versão antiga não muda.
 **Where**: `backend/tests/integration/doc_usecases/test_layout_oficial_generation.py` (new)
@@ -768,12 +768,12 @@ graph LR
 
 **Done when**:
 
-- [ ] Teste: para cada um dos cinco tipos gerados pelo executor, cada DOCX tem no pacote uma imagem PNG e o primeiro elemento do corpo é o parágrafo dela, centralizado com 2,0 cm de largura, e cada PDF tem imagem na primeira página, centrada e acima do primeiro texto, e nenhuma nas demais; o Comprovante (só PDF) tem a imagem só na capa (BRAS-01 a BRAS-05, BRAS-06, BRAS-07)
-- [ ] Teste: o texto do Parecer gerado (DOCX e PDF) contém o parágrafo do modelo com "reuniram-se os membros da Banca de Análise", o número da portaria, a data por extenso e "APROVARAM o referido relatório", e **nenhum** dos textos "Total geral", "Mínimo de referência" e "Observações" (PMOD-19, PMOD-20); o instantâneo da versão tem o total da Tabela (PMOD-24)
-- [ ] Teste de falha: com `EMBLEM_FILE` apontado para um caminho inexistente, pedir e rodar a Tabela, o Relatório, o Comprovante, o Requerimento e o Parecer deixa cada linha `FALHOU` com `ERRO_INTERNO` e a mensagem fixa do código, sem nenhum arquivo em `storage` para a versão, e o log de erro traz o tipo `EmblemUnavailable` e o identificador da geração, sem o caminho do servidor (BRAS-10)
-- [ ] Teste de imutabilidade: depois de gerar a versão 1 do Parecer e da Tabela, os SHA-256 dos arquivos dela são os mesmos depois de gerar a versão 2 (BRAS-11, AD-012)
-- [ ] Gate check passes (último de backend da fase, gate completo): `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Teste: para cada um dos cinco tipos gerados pelo executor, cada DOCX tem no pacote uma imagem PNG e o primeiro elemento do corpo é o parágrafo dela, centralizado com 2,0 cm de largura, e cada PDF tem imagem na primeira página, centrada e acima do primeiro texto, e nenhuma nas demais; o Comprovante (só PDF) tem a imagem só na capa (BRAS-01 a BRAS-05, BRAS-06, BRAS-07)
+- [x] Teste: o texto do Parecer gerado (DOCX e PDF) contém o parágrafo do modelo com "reuniram-se os membros da Banca de Análise", o número da portaria, a data por extenso e "APROVARAM o referido relatório", e **nenhum** dos textos "Total geral", "Mínimo de referência" e "Observações" (PMOD-19, PMOD-20); o instantâneo da versão tem o total da Tabela (PMOD-24)
+- [x] Teste de falha: com `EMBLEM_FILE` apontado para um caminho inexistente, pedir e rodar a Tabela, o Relatório, o Comprovante, o Requerimento e o Parecer deixa cada linha `FALHOU` com `ERRO_INTERNO` e a mensagem fixa do código, sem nenhum arquivo em `storage` para a versão, e o log de erro traz o tipo `EmblemUnavailable` e o identificador da geração, sem o caminho do servidor (BRAS-10)
+- [x] Teste de imutabilidade: depois de gerar a versão 1 do Parecer e da Tabela, os SHA-256 dos arquivos dela são os mesmos depois de gerar a versão 2 (BRAS-11, AD-012)
+- [x] Gate check passes (último de backend da fase, gate completo): `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: integration
 **Gate**: full

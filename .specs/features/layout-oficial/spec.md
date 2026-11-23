@@ -226,12 +226,12 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | PMOD-16 | P1: Texto do Parecer | Implemented | Implemented |
 | PMOD-17 | P1: Texto do Parecer | Implemented | Implemented |
 | PMOD-18 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-19 | P1: Texto do Parecer | Execute | In Progress |
-| PMOD-20 | P1: Gerar o Parecer | Execute | In Progress |
-| PMOD-21 | P1: Gerar o Parecer | Execute | In Progress |
+| PMOD-19 | P1: Texto do Parecer | Implemented | Implemented |
+| PMOD-20 | P1: Gerar o Parecer | Implemented | Implemented |
+| PMOD-21 | P1: Gerar o Parecer | Implemented | Implemented |
 | PMOD-22 | P1: Gerar o Parecer | Implemented | Implemented |
 | PMOD-23 | P1: Gerar o Parecer | Implemented | Implemented |
-| PMOD-24 | P1: Gerar o Parecer | Execute | In Progress |
+| PMOD-24 | P1: Gerar o Parecer | Implemented | Implemented |
 | PMOD-25 | P1: Gerar o Parecer | Implemented | Implemented |
 | PMOD-26 | P1: Etapa 6 sem Observações | Implemented | Implemented |
 | PMOD-27 | P1: Etapa 6 sem Observações | Implemented | Implemented |
@@ -242,12 +242,12 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | BRAS-03 | P1: Brasão | Implemented | Implemented |
 | BRAS-04 | P1: Brasão | Implemented | Implemented |
 | BRAS-05 | P1: Brasão | Implemented | Implemented |
-| BRAS-06 | P1: Brasão | Execute | In Progress |
-| BRAS-07 | P1: Brasão | Execute | In Progress |
-| BRAS-08 | P1: Brasão | Execute | In Progress |
+| BRAS-06 | P1: Brasão | Implemented | Implemented |
+| BRAS-07 | P1: Brasão | Implemented | Implemented |
+| BRAS-08 | P1: Brasão | Implemented | Implemented |
 | BRAS-09 | P1: Brasão | Execute | In Progress |
-| BRAS-10 | P1: Brasão | Execute | In Progress |
-| BRAS-11 | P1: Brasão | Tasks | In Tasks |
+| BRAS-10 | P1: Brasão | Implemented | Implemented |
+| BRAS-11 | P1: Brasão | Implemented | Implemented |
 
 **Substituições na spec `banca-parecer`** (a marcar na tarefa de documentação): PAR-01 (o campo "observações" sai), PAR-03, PAR-04, PAR-05, PAR-06 e PAR-13 ficam substituídos por PMOD-01 a PMOD-19, PMOD-26 a PMOD-29; PAR-02 e PAR-07 a PAR-12 e PAR-14 seguem em vigor (PMOD-20, PMOD-22 a PMOD-25).
 
