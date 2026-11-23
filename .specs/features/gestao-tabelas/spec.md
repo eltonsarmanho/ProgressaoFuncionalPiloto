@@ -1,6 +1,6 @@
 # Gestão das tabelas de pontuação: tabela em uso por unidade, CRUD na tela e interface melhor (gestao-tabelas) Specification
 
-**Status**: Draft (aguarda a aprovação do usuário)
+**Status**: Approved (usuário, 2026-11-23: "sim", incluindo os padrões do agente marcados com "n" e a reescrita da regra 11 do `CLAUDE.md`)
 **Origem**: pedido do usuário em 2026-11-23 sobre a tela "Tabelas de pontuação": criar um mecanismo de CRUD onde o ADMIN gerencia e seleciona a tabela em uso, e melhorar a UX da tela. Respostas do usuário na mesma data: a "tabela em uso" é um padrão por unidade; qualquer tabela pode ser usada, com avisos; o CRUD inclui arquivar, excluir e editar critérios na tela; a UX cobre layout e legibilidade e ações visíveis.
 
 ## Problem Statement
@@ -40,20 +40,20 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | O que é "tabela em uso" | Uma versão de tabela marcada como padrão de uma unidade acadêmica (no máximo uma por unidade); o processo novo da unidade a recebe como sugestão | Resposta do usuário em 2026-11-23: "Padrão por unidade" | y |
 | Quem pode | Só o ADMIN faz qualquer escrita; os demais perfis leem (ADM-11) | Padrão de ADM-01 a ADM-11 | y |
 | Limite das tabelas | Qualquer tabela pode ser criada, editada e marcada em uso; as não oficiais seguem com os avisos que já existem (`TABELA_PENDENTE_VALIDACAO`, `TABELA_FORA_DE_VIGENCIA`, `TABELA_DE_OUTRA_UNIDADE`). A regra 11 do `CLAUDE.md` passa a dizer que a tabela oficial da UFPA é o padrão inicial da FASI e do IFCH, não a única | Resposta do usuário em 2026-11-23: "Qualquer tabela, avisos" | y |
-| Reescrever a regra 11 do `CLAUDE.md` | Feito na tarefa de documentação da feature, com a aprovação desta spec | `CLAUDE.md` é instrução do projeto; a mudança nasce da decisão acima | n |
-| O que a marcação aceita | Versão de uma tabela não arquivada, associada à unidade e não substituída; vigência não é exigida (fora de vigência vale, com o alerta de SEL-07 ao confirmar no processo) | Padrão do agente; evita bloquear o ADMIN e reaproveita os alertas | n |
-| Unidade sem versão em uso | Mantém a sugestão por vigência de SEL-02 (versão associada à unidade, vigente na data final do interstício, a de início mais recente) | Padrão do agente; nenhuma unidade perde a sugestão que tem hoje | n |
-| Semente da marcação | No deploy, cada unidade que tem a tabela oficial da UFPA associada e nenhuma versão em uso passa a ter a versão "Tabela oficial de pontuação UFPA, Grupo I no total" em uso, com auditoria sem usuário; é idempotente | Padrão do agente; é a versão que a sugestão já escolhe hoje (AD-023) | n |
-| Justificativa nas operações | A marcação em uso, o arquivamento e a exclusão agem na hora, sem campo de justificativa (como as Etapas 2 a 4); a edição de critério continua exigindo a referência normativa da alteração (ADM-03) e a versão nova continua exigindo vigência e referência (ADM-05) | Padrão do agente; a regra 5 vale para as Etapas 2 a 4, e ADM-03 e ADM-05 já existem | n |
-| Arquivar | Arquivar a tabela a tira de toda lista de escolha (sugestão, escolha na Etapa 4 e marcação em uso); processos que a usam continuam lendo e calculando com ela; desarquivar a devolve. Não se arquiva a tabela que tem versão em uso de alguma unidade | Padrão do agente; evita unidade sem tabela em uso por engano | n |
-| Excluir versão | Só a versão que nenhum processo usa, que não está em uso de nenhuma unidade e que não substitui outra versão; apaga a versão, os grupos e os critérios; a auditoria fica | Padrão do agente; protege processos e a cadeia de substituição | n |
-| Excluir tabela | Só a tabela sem versão usada por processo e sem versão em uso de unidade; apaga a tabela, as versões, os critérios e as associações de unidade; pede confirmação com a lista do que sai, como na regra 9; a auditoria fica | Padrão do agente, no mesmo molde da exclusão de processo | n |
-| Etiquetas | "Em uso" passa a significar o padrão da unidade (com a sigla da unidade); o que hoje se chama "Em uso" (algum processo usa a versão) passa a "Usada por processo" | Evita dois sentidos para a mesma palavra | n |
-| Filtros da lista | Filtro por unidade e por "mostrar arquivadas" (desligado por padrão) | Parte de "layout e legibilidade" aprovada pelo usuário | n |
-| Migração | Uma migração nova cria a tabela da marcação em uso e nenhuma outra; sem apagar coluna | Padrão do agente | n |
+| Reescrever a regra 11 do `CLAUDE.md` | Feito em 2026-11-23, com a aprovação desta spec | `CLAUDE.md` é instrução do projeto; a mudança nasce da decisão acima | y |
+| O que a marcação aceita | Versão de uma tabela não arquivada, associada à unidade e não substituída; vigência não é exigida (fora de vigência vale, com o alerta de SEL-07 ao confirmar no processo) | Padrão do agente; evita bloquear o ADMIN e reaproveita os alertas | y |
+| Unidade sem versão em uso | Mantém a sugestão por vigência de SEL-02 (versão associada à unidade, vigente na data final do interstício, a de início mais recente) | Padrão do agente; nenhuma unidade perde a sugestão que tem hoje | y |
+| Semente da marcação | No deploy, cada unidade que tem a tabela oficial da UFPA associada e nenhuma versão em uso passa a ter a versão "Tabela oficial de pontuação UFPA, Grupo I no total" em uso, com auditoria sem usuário; é idempotente | Padrão do agente; é a versão que a sugestão já escolhe hoje (AD-023) | y |
+| Justificativa nas operações | A marcação em uso, o arquivamento e a exclusão agem na hora, sem campo de justificativa (como as Etapas 2 a 4); a edição de critério continua exigindo a referência normativa da alteração (ADM-03) e a versão nova continua exigindo vigência e referência (ADM-05) | Padrão do agente; a regra 5 vale para as Etapas 2 a 4, e ADM-03 e ADM-05 já existem | y |
+| Arquivar | Arquivar a tabela a tira de toda lista de escolha (sugestão, escolha na Etapa 4 e marcação em uso); processos que a usam continuam lendo e calculando com ela; desarquivar a devolve. Não se arquiva a tabela que tem versão em uso de alguma unidade | Padrão do agente; evita unidade sem tabela em uso por engano | y |
+| Excluir versão | Só a versão que nenhum processo usa, que não está em uso de nenhuma unidade e que não substitui outra versão; apaga a versão, os grupos e os critérios; a auditoria fica | Padrão do agente; protege processos e a cadeia de substituição | y |
+| Excluir tabela | Só a tabela sem versão usada por processo e sem versão em uso de unidade; apaga a tabela, as versões, os critérios e as associações de unidade; pede confirmação com a lista do que sai, como na regra 9; a auditoria fica | Padrão do agente, no mesmo molde da exclusão de processo | y |
+| Etiquetas | "Em uso" passa a significar o padrão da unidade (com a sigla da unidade); o que hoje se chama "Em uso" (algum processo usa a versão) passa a "Usada por processo" | Evita dois sentidos para a mesma palavra | y |
+| Filtros da lista | Filtro por unidade e por "mostrar arquivadas" (desligado por padrão) | Parte de "layout e legibilidade" aprovada pelo usuário | y |
+| Migração | Uma migração nova cria a tabela da marcação em uso e nenhuma outra; sem apagar coluna | Padrão do agente | y |
 | Deploy | Imagens novas do backend e do frontend e migração; só com a autorização do usuário | CLAUDE.md: push e deploy só com autorização | y |
 
-**Open questions:** none - all resolved or logged above (as linhas com "n" são padrões do agente, a confirmar na aprovação).
+**Open questions:** none - all resolved or logged above (as linhas com "n" são padrões do agente, aprovados com a spec em 2026-11-23).
 
 ---
 
