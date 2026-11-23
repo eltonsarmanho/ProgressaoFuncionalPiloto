@@ -231,7 +231,7 @@ graph LR
 
 #### T4: Liberation Sans no PDF
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `LiberationSans-Regular.ttf` e `LiberationSans-Bold.ttf` versionadas ao lado das Serif (mesma versão 2.1.5 e mesma licença OFL, copiadas de `/usr/share/fonts/truetype/liberation/`), registradas por `register_fonts` como `FONT_SANS` e `FONT_SANS_BOLD`; o `OFL.txt` passa a citar a Liberation Sans. As quatro faces Serif e todos os estilos existentes não mudam.
 **Where**: `backend/app/infrastructure/documents/pdf_styles.py` (modify; os dois arquivos `.ttf` e o `OFL.txt` em `backend/app/infrastructure/documents/fonts/`)
@@ -246,10 +246,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_pdf_styles.py`: a pasta de fontes tem os seis `.ttf` e o `OFL.txt` (o teste existente já aceita arquivos a mais; ganha a Sans); `register_fonts()` registra `FONT_SANS` e `FONT_SANS_BOLD` e pode ser chamada de novo; um PDF que escreve em `FONT_SANS_BOLD` lista só a face Sans em subconjunto e nenhuma fonte base 14 (como o teste de Serif); os testes existentes que exigem "só a Serif" nos PDFs dos outros documentos seguem passando
-- [ ] Os dois `.ttf` têm o mesmo conteúdo dos do sistema (comparação de hash no teste de pasta não é exigida; basta abrir com `TTFont`)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_pdf_styles.py`: a pasta de fontes tem os seis `.ttf` e o `OFL.txt` (o teste existente já aceita arquivos a mais; ganha a Sans); `register_fonts()` registra `FONT_SANS` e `FONT_SANS_BOLD` e pode ser chamada de novo; um PDF que escreve em `FONT_SANS_BOLD` lista só a face Sans em subconjunto e nenhuma fonte base 14 (como o teste de Serif); os testes existentes que exigem "só a Serif" nos PDFs dos outros documentos seguem passando
+- [x] Os dois `.ttf` têm o mesmo conteúdo dos do sistema (comparação de hash no teste de pasta não é exigida; basta abrir com `TTFont`)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

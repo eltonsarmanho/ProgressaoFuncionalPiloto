@@ -2,7 +2,8 @@
 
 The font is Liberation Serif, versioned in `fonts/` with its license (SIL OFL 1.1): the slim
 image has no fonts and Liberation Serif has the metrics of Times New Roman, which the model of
-the report asks for. reportlab embeds only the glyphs used (a subset).
+the report asks for. Liberation Sans (the metrics of Arial) is versioned with it for the title of
+the Parecer (PMOD-04). reportlab embeds only the glyphs used (a subset).
 """
 
 from dataclasses import dataclass
@@ -22,17 +23,22 @@ FONT_REGULAR = "LiberationSerif"
 FONT_BOLD = "LiberationSerif-Bold"
 FONT_ITALIC = "LiberationSerif-Italic"
 FONT_BOLD_ITALIC = "LiberationSerif-BoldItalic"
+FONT_SANS = "LiberationSans"
+FONT_SANS_BOLD = "LiberationSans-Bold"
 _FILES = {
     FONT_REGULAR: "LiberationSerif-Regular.ttf",
     FONT_BOLD: "LiberationSerif-Bold.ttf",
     FONT_ITALIC: "LiberationSerif-Italic.ttf",
     FONT_BOLD_ITALIC: "LiberationSerif-BoldItalic.ttf",
+    FONT_SANS: "LiberationSans-Regular.ttf",
+    FONT_SANS_BOLD: "LiberationSans-Bold.ttf",
 }
 LEADING_FACTOR = 1.2
 
 
 def register_fonts() -> None:
-    """Registers the four faces and the family, so `<b>` and `<i>` pick the right face."""
+    """Registers the four Serif faces and their family, so `<b>` and `<i>` pick the right face,
+    and the two Sans faces."""
     if FONT_REGULAR in pdfmetrics.getRegisteredFontNames():
         return
     for name, file in _FILES.items():
