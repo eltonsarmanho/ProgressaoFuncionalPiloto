@@ -3,9 +3,13 @@
 import uuid
 
 import pytest
+from sqlalchemy import event
 
+from app.application.use_cases.scoring_admin import ListScoringTables
 from app.domain.entities.user import Role
+from app.domain.repositories.ports import ScoringTableRecord
 from tests.integration.api.factories import add_professor, process_payload
+from tests.integration.test_scoring_repositories import make_version
 
 GROUP_COUNTS = [2, 16, 9, 6, 5, 14, 11, 37]
 OFFICIAL_NAME = "Tabela de Pontuação da UFPA"
@@ -169,3 +173,108 @@ def test_a_superseded_version_lists_the_version_that_replaced_it(
     assert by_id == {str(old.id): str(new.id), str(new.id): None}
     one = client.get(f"/api/scoring-versions/{old.id}").json()
     assert one["superseded_by_id"] == str(new.id)
+
+
+# --- GTAB-10: process count and the units that have the version in use -------------------------
+
+
+def versions_by_id(client):
+    return {
+        v["id"]: v for table in client.get("/api/scoring-tables").json() for v in table["versions"]
+    }
+
+
+def add_processes_on(client, headers, uow_factory, unit, version_id, count, first_siape):
+    """`count` processes of `count` professors of the unit, each with the version chosen."""
+    for n in range(count):
+        professor = add_professor(uow_factory, unit, siape=str(first_siape + n))
+        created = client.post("/api/processes", json=process_payload(professor), headers=headers)
+        assert created.status_code == 201, created.text
+        with uow_factory() as uow:
+            uow.processes.set_scoring_table_version(uuid.UUID(created.json()["id"]), version_id)
+            uow.commit()
+
+
+def test_process_count_is_0_1_and_2_and_in_use_means_some_process_uses_it(
+    client, act_as, scoring_tables, reference, uow_factory
+):
+    _, headers = act_as("admin@ufpa.br", Role.ADMIN)
+    official, other = scoring_tables["OFICIAL"], scoring_tables["OUTRA"]
+    before = versions_by_id(client)
+    assert (before[str(official.id)]["process_count"], before[str(other.id)]["process_count"]) == (
+        0,
+        0,
+    )
+
+    add_processes_on(client, headers, uow_factory, reference["FASI"], other.id, 1, 2000001)
+    add_processes_on(client, headers, uow_factory, reference["FASI"], official.id, 2, 2000011)
+
+    after = versions_by_id(client)
+    assert after[str(other.id)]["process_count"] == 1
+    assert after[str(official.id)]["process_count"] == 2
+    assert after[str(other.id)]["in_use"] is True
+    assert after[str(official.id)]["in_use"] is True
+    assert version_detail(client, scoring_tables, "OFICIAL")["process_count"] == 2
+
+
+def test_default_for_unit_ids_follows_the_marks_and_does_not_make_the_version_in_use(
+    client, docente, scoring_tables, reference, uow_factory
+):
+    official, other = scoring_tables["OFICIAL"], scoring_tables["OUTRA"]
+    fasi, ifch = reference["FASI"], reference["IFCH"]
+    with uow_factory() as uow:
+        uow.scoring_tables.set_unit_default(fasi.id, official.id)
+        uow.scoring_tables.set_unit_default(ifch.id, official.id)
+        uow.commit()
+
+    marked = versions_by_id(client)
+    assert sorted(marked[str(official.id)]["default_for_unit_ids"]) == sorted(
+        [str(fasi.id), str(ifch.id)]
+    )
+    assert marked[str(other.id)]["default_for_unit_ids"] == []
+    assert marked[str(official.id)]["in_use"] is False  # in use means "a process uses it"
+    assert marked[str(official.id)]["process_count"] == 0
+    assert version_detail(client, scoring_tables, "OFICIAL")["default_for_unit_ids"] == (
+        marked[str(official.id)]["default_for_unit_ids"]
+    )
+
+    with uow_factory() as uow:
+        uow.scoring_tables.clear_unit_default(fasi.id)
+        uow.commit()
+
+    assert versions_by_id(client)[str(official.id)]["default_for_unit_ids"] == [str(ifch.id)]
+
+
+def _count_statements(engine, call) -> int:
+    seen: list[str] = []
+
+    def record(conn, cursor, statement, *args):
+        seen.append(statement)
+
+    event.listen(engine, "before_cursor_execute", record)
+    try:
+        call()
+    finally:
+        event.remove(engine, "before_cursor_execute", record)
+    return len(seen)
+
+
+def test_the_number_of_queries_of_the_list_does_not_grow_with_the_versions(engine, uow_factory):
+    tables = [ScoringTableRecord(uuid.uuid4(), f"Tabela Sintética {n}") for n in range(3)]
+    with uow_factory() as uow:
+        for table in tables:
+            uow.scoring_tables.add_table(table)
+            uow.scoring_tables.add_version(make_version(table.id, name="v1"))
+        uow.commit()
+    use_case = ListScoringTables(uow_factory)
+
+    with_one_version = _count_statements(engine, use_case.execute)
+    with uow_factory() as uow:
+        for table in tables:
+            for n in range(2, 6):
+                uow.scoring_tables.add_version(make_version(table.id, name=f"v{n}"))
+        uow.commit()
+    with_five_versions = _count_statements(engine, use_case.execute)
+
+    assert [len(v.versions) for v in use_case.execute()] == [5, 5, 5]
+    assert with_five_versions == with_one_version

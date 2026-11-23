@@ -390,7 +390,7 @@ graph LR
 
 #### T9: Lista de tabelas com contagem de processos e unidades em uso
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `VersionView` e `VersionSummaryOut` ganham `process_count` e `default_for_unit_ids` (aditivos; `in_use` continua igual, "algum processo usa"). `ListScoringTables` e `ListTableVersions` passam a usar `version_process_counts()`, `list_unit_defaults()` e `list_version_headers`, sem carregar grupos e critérios e sem uma consulta por versão.
 **Where**: `backend/app/application/use_cases/scoring_admin.py` (modify)
@@ -405,11 +405,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_scoring_tables_api.py` (modifica): `process_count` com 0, 1 e 2 processos; `default_for_unit_ids` depois de marcar e depois de desmarcar; `in_use` com o mesmo sentido de antes; a lista de versões de uma tabela continua igual à da tabela (`test_scoring_tables_api.py:54-60`); um teste conta as consultas SQL da lista com 3 tabelas de 1 versão e com 3 tabelas de 5 versões e afirma que o total é o mesmo (não cresce com as versões)
-- [ ] Os consumidores de `in_use` seguem verdes: `test_scoring_tables_api.py:51, 125-126`, `test_scoring_process_api.py:184, 188`
-- [ ] Gate completo do backend (fim da fase): o `full` passa; os testes instáveis conhecidos (`test_a_database_error_while_claiming_does_not_kill_the_thread`, `test_an_output_above_the_limit_fails_and_leaves_no_file`) rodam de novo sozinhos antes de qualquer conclusão
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/api/test_scoring_tables_api.py` (modifica): `process_count` com 0, 1 e 2 processos; `default_for_unit_ids` depois de marcar e depois de desmarcar; `in_use` com o mesmo sentido de antes; a lista de versões de uma tabela continua igual à da tabela (`test_scoring_tables_api.py:54-60`); um teste conta as consultas SQL da lista com 3 tabelas de 1 versão e com 3 tabelas de 5 versões e afirma que o total é o mesmo (não cresce com as versões)
+- [x] Os consumidores de `in_use` seguem verdes: `test_scoring_tables_api.py:51, 125-126`, `test_scoring_process_api.py:184, 188`
+- [x] Gate completo do backend (fim da fase): o `full` passa; os testes instáveis conhecidos (`test_a_database_error_while_claiming_does_not_kill_the_thread`, `test_an_output_above_the_limit_fails_and_leaves_no_file`) rodam de novo sozinhos antes de qualquer conclusão
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: full

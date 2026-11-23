@@ -6,7 +6,7 @@ Every administration write is ADMIN-only and audited (entities `scoring_table` a
 
 import copy
 import uuid
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import date, timedelta
 from decimal import Decimal
@@ -35,7 +35,9 @@ _ROMAN = ("I", "II", "III", "IV", "V", "VI", "VII", "VIII")
 @dataclass(frozen=True)
 class VersionView:
     version: ScoringTableVersion
-    in_use: bool
+    in_use: bool  # some process uses the version (the sense it always had)
+    process_count: int = 0  # GTAB-10
+    default_for_unit_ids: tuple[UUID, ...] = ()  # the units that have it as the one in use
 
 
 @dataclass(frozen=True)
@@ -44,8 +46,33 @@ class TableView:
     versions: list[VersionView]
 
 
-def _views(uow: UnitOfWork, versions) -> list[VersionView]:
-    return [VersionView(v, uow.scoring_tables.version_in_use(v.id)) for v in versions]
+@dataclass(frozen=True)
+class _VersionFacts:
+    process_counts: Mapping[UUID, int]
+    default_units: Mapping[UUID, tuple[UUID, ...]]
+
+
+def _facts(uow: UnitOfWork) -> _VersionFacts:
+    """The process counts and the marks of all versions, in two reads (no query per version)."""
+    marks: dict[UUID, list[UUID]] = {}
+    for default in uow.scoring_tables.list_unit_defaults():
+        marks.setdefault(default.version_id, []).append(default.unit_id)
+    return _VersionFacts(
+        uow.scoring_tables.version_process_counts(),
+        {version_id: tuple(sorted(unit_ids)) for version_id, unit_ids in marks.items()},
+    )
+
+
+def _views(facts: _VersionFacts, versions) -> list[VersionView]:
+    return [
+        VersionView(
+            v,
+            facts.process_counts.get(v.id, 0) > 0,
+            facts.process_counts.get(v.id, 0),
+            facts.default_units.get(v.id, ()),
+        )
+        for v in versions
+    ]
 
 
 class ListScoringTables:
@@ -54,8 +81,9 @@ class ListScoringTables:
 
     def execute(self) -> list[TableView]:
         with self._uow_factory() as uow:
+            facts = _facts(uow)
             return [
-                TableView(t, _views(uow, uow.scoring_tables.list_versions(t.id)))
+                TableView(t, _views(facts, uow.scoring_tables.list_version_headers(t.id)))
                 for t in uow.scoring_tables.list_tables()
             ]
 
@@ -68,7 +96,7 @@ class ListTableVersions:
         with self._uow_factory() as uow:
             if uow.scoring_tables.get_table(table_id) is None:
                 raise NotFound("Tabela de pontuação não encontrada")
-            return _views(uow, uow.scoring_tables.list_versions(table_id))
+            return _views(_facts(uow), uow.scoring_tables.list_version_headers(table_id))
 
 
 class GetScoringVersion:
@@ -80,7 +108,7 @@ class GetScoringVersion:
             version = uow.scoring_tables.get_version(version_id)
             if version is None:
                 raise NotFound("Versão da tabela de pontuação não encontrada")
-            return _views(uow, [version])[0]
+            return _views(_facts(uow), [version])[0]
 
 
 def _audit_table(table: ScoringTableRecord) -> dict:
@@ -604,7 +632,7 @@ class SetTableUnits:
                 _audit_table(before),
                 _audit_table(after),
             )
-            view = TableView(after, _views(uow, uow.scoring_tables.list_versions(table_id)))
+            view = TableView(after, _views(_facts(uow), uow.scoring_tables.list_versions(table_id)))
             uow.commit()
         return view
 
@@ -630,4 +658,4 @@ class GetTableHistory:
             for v in versions:
                 events.extend(uow.audit.list_for(VERSION_ENTITY, str(v.id)))
             events.sort(key=lambda e: (e.occurred_at, e.id or 0))
-            return TableHistory(_views(uow, versions), events)
+            return TableHistory(_views(_facts(uow), versions), events)

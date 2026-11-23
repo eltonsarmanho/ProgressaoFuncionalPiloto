@@ -83,11 +83,18 @@ class VersionRefOut(BaseModel):
 
 
 class VersionSummaryOut(VersionRefOut):
-    in_use: bool
+    in_use: bool  # some process uses the version
+    process_count: int
+    default_for_unit_ids: list[UUID]
 
     @classmethod
     def of(cls, view: VersionView) -> "VersionSummaryOut":
-        return cls(**VersionRefOut.of_version(view.version).model_dump(), in_use=view.in_use)
+        return cls(
+            **VersionRefOut.of_version(view.version).model_dump(),
+            in_use=view.in_use,
+            process_count=view.process_count,
+            default_for_unit_ids=list(view.default_for_unit_ids),
+        )
 
 
 class VersionOut(VersionSummaryOut):
