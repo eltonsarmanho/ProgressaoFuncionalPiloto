@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ScoringTableInfo, Unit } from "../api/types";
 import { setCsrfToken } from "../api/client";
 import { mockFetch } from "../test/fetchMock";
-import { CreateTableDialog, SetDefaultDialog, UnitsDialog } from "./ScoringTableDialogs";
+import { CreateTableDialog, HistoryDialog, SetDefaultDialog, UnitsDialog } from "./ScoringTableDialogs";
 
 const UNITS: Unit[] = [
   { id: "u1", name: "Faculdade de Sistemas", acronym: "FASI", kind: "FACULDADE", parent_id: null, archived: false },
@@ -366,5 +366,128 @@ describe("GTAB-02, GTAB-16, GTAB-35: definir como em uso com várias unidades", 
 
     expect(await screen.findByText("A tabela não está associada à unidade")).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Unidade" })).toHaveAttribute("aria-invalid", "true");
+  });
+});
+
+describe("GTAB-17, GTAB-35: histórico da tabela", () => {
+  const UUID_VERSION = "33333333-3333-4333-8333-333333333333";
+  const UUID_ADMIN = "44444444-4444-4444-8444-444444444444";
+  const UUID_GONE = "55555555-5555-4555-8555-555555555555";
+  const HISTORY = {
+    versions: [
+      { ...VERSION, id: UUID_VERSION, name: "Sintética 2026", valid_from: "2026-03-01", valid_to: null, norm_reference: "Res. sintética 1", status: "OFICIAL" },
+    ],
+    events: [
+      {
+        id: 1,
+        occurred_at: "2026-11-20T15:00:00Z",
+        user_id: UUID_ADMIN,
+        entity: "scoring_table",
+        entity_id: "t1",
+        action: "ARCHIVE",
+        changes: { archived: { before: false, after: true } },
+        justification: null,
+      },
+      {
+        id: 2,
+        occurred_at: "2026-11-21T15:00:00Z",
+        user_id: null,
+        entity: "scoring_version",
+        entity_id: UUID_VERSION,
+        action: "UPDATE",
+        changes: { "criteria.2.7.unit_points": { before: "10", after: "12" } },
+        justification: "Res. sintética 3, art. 2º",
+      },
+      {
+        id: 3,
+        occurred_at: "2026-11-22T15:00:00Z",
+        user_id: UUID_GONE,
+        entity: "scoring_table",
+        entity_id: "t1",
+        action: "UPDATE",
+        changes: { unit_ids: { before: ["u1"], after: ["u1", "u2"] } },
+        justification: null,
+      },
+    ],
+  };
+  const USERS = [{ id: UUID_ADMIN, name: "Maria Admin", role: "ADMIN" }];
+
+  function setup(routes: Parameters<typeof mockFetch>[0] = {}) {
+    setCsrfToken("csrf-abc");
+    const mock = mockFetch({
+      "GET /api/scoring-tables/t1/history": { status: 200, body: HISTORY },
+      "GET /api/users": { status: 200, body: USERS },
+      ...routes,
+    });
+    const onClose = vi.fn();
+    render(<HistoryDialog table={TABLES[0]} units={UNITS} onClose={onClose} />);
+    return { ...mock, onClose, user: userEvent.setup() };
+  }
+
+  it("mostra as versões com vigência, situação e referência", async () => {
+    setup();
+
+    const versions = await screen.findByRole("list", { name: "Versões da tabela" });
+    expect(versions).toHaveTextContent("Sintética 2026");
+    expect(versions).toHaveTextContent("01/03/2026 a em aberto");
+    expect(versions).toHaveTextContent("Oficial");
+    expect(versions).toHaveTextContent("Res. sintética 1");
+  });
+
+  it("mostra cada evento com data, nome do autor ('Sistema' sem usuário, 'Usuário removido' para id desconhecido), ação e o que mudou", async () => {
+    setup();
+
+    const events = await screen.findByRole("list", { name: "Eventos de auditoria" });
+    const [archive, edit, units] = within(events).getAllByRole("listitem");
+    expect(archive).toHaveTextContent("20/11/2026");
+    expect(archive).toHaveTextContent("Maria Admin");
+    expect(archive).toHaveTextContent("Arquivamento");
+    expect(archive).toHaveTextContent("Tabela");
+    expect(archive).toHaveTextContent("Arquivada: não → sim");
+    expect(edit).toHaveTextContent("Sistema");
+    expect(edit).toHaveTextContent("Alteração");
+    expect(edit).toHaveTextContent('Versão "Sintética 2026"');
+    expect(edit).toHaveTextContent("II.7: Pontos por unidade: 10 → 12");
+    expect(edit).toHaveTextContent("Referência: Res. sintética 3, art. 2º");
+    expect(units).toHaveTextContent("Usuário removido");
+    expect(units).toHaveTextContent("Unidades: FASI → FASI, IFCH");
+  });
+
+  it("nenhum UUID aparece no diálogo", async () => {
+    setup();
+
+    const dialog = await screen.findByRole("dialog", { name: "Histórico de Tabela sintética A" });
+    await screen.findByRole("list", { name: "Eventos de auditoria" });
+    expect(dialog.textContent).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+  });
+
+  it("mostra 'Carregando…' enquanto os dados não chegam", async () => {
+    setup();
+
+    expect(screen.getByText("Carregando…")).toBeInTheDocument();
+    await screen.findByRole("list", { name: "Eventos de auditoria" });
+    expect(screen.queryByText("Carregando…")).not.toBeInTheDocument();
+  });
+
+  it("se a API falha mostra o erro e 'Tentar de novo' carrega o histórico", async () => {
+    let loads = 0;
+    const { user } = setup({
+      "GET /api/scoring-tables/t1/history": () => {
+        loads += 1;
+        return loads === 1 ? { status: 500, body: { detail: "Falha no servidor" } } : { status: 200, body: HISTORY };
+      },
+    });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Falha no servidor");
+    await user.click(screen.getByRole("button", { name: "Tentar de novo" }));
+
+    expect(await screen.findByRole("list", { name: "Eventos de auditoria" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("sem eventos diz que não há eventos", async () => {
+    setup({ "GET /api/scoring-tables/t1/history": { status: 200, body: { ...HISTORY, events: [] } } });
+
+    expect(await screen.findByText("Nenhum evento registrado.")).toBeInTheDocument();
   });
 });

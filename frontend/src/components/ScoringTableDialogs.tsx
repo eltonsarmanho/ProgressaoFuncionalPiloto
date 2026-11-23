@@ -1,8 +1,18 @@
-import { useId, useState } from "react";
-import { request } from "../api/client";
+import { useEffect, useId, useState } from "react";
+import { errorMessage, request } from "../api/client";
 import type { ScoringTableInfo, ScoringVersionSummary, Unit } from "../api/types";
 import { FieldError } from "./FieldError";
-import { SET_DEFAULT_LABELS, blockReasonText } from "../labels";
+import {
+  HISTORY_ACTION_LABELS,
+  HISTORY_ENTITY_LABELS,
+  SET_DEFAULT_LABELS,
+  TABLE_STATUS_LABELS,
+  blockReasonText,
+  formatDate,
+  formatDateTime,
+  historyChangeLabel,
+  historyValueText,
+} from "../labels";
 import { Alert, Field, FormProblem, conflictCode, useSubmit } from "./formKit";
 import { Modal } from "./Modal";
 
@@ -261,6 +271,122 @@ export function SetDefaultDialog({
           </button>
         </div>
       </form>
+    </Modal>
+  );
+}
+
+type HistoryEvent = {
+  id: number;
+  occurred_at: string;
+  user_id: string | null;
+  entity: string;
+  entity_id: string;
+  action: string;
+  changes: Record<string, { before?: unknown; after?: unknown }>;
+  justification: string | null;
+};
+type History = { versions: ScoringVersionSummary[]; events: HistoryEvent[] };
+type UserRef = { id: string; name: string };
+
+/** GTAB-17, GTAB-35: the versions and the audit events of a table, with names instead of ids. */
+export function HistoryDialog({
+  table,
+  units,
+  onClose,
+}: {
+  table: ScoringTableInfo;
+  units: Unit[];
+  onClose: () => void;
+}) {
+  const [data, setData] = useState<{ history: History; users: UserRef[] } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let live = true;
+    Promise.all([
+      request<History>("GET", `/api/scoring-tables/${table.id}/history`),
+      request<UserRef[]>("GET", "/api/users"),
+    ])
+      .then(([history, users]) => live && setData({ history, users }))
+      .catch((err) => live && setError(errorMessage(err)));
+    return () => {
+      live = false;
+    };
+  }, [table.id, attempt]);
+
+  function retry() {
+    setError(null);
+    setAttempt((n) => n + 1);
+  }
+
+  const versionNames = new Map<string, string>([
+    ...table.versions.map((v) => [v.id, v.name] as [string, string]),
+    ...(data?.history.versions ?? []).map((v) => [v.id, v.name] as [string, string]),
+  ]);
+  const names = (id: string): string | null =>
+    units.find((u) => u.id === id)?.acronym ?? versionNames.get(id) ?? (id === table.id ? table.name : null);
+  const authorOf = (event: HistoryEvent): string =>
+    event.user_id === null
+      ? "Sistema"
+      : (data?.users.find((u) => u.id === event.user_id)?.name ?? "Usuário removido");
+  const subjectOf = (event: HistoryEvent): string =>
+    event.entity === "scoring_version"
+      ? `Versão "${versionNames.get(event.entity_id) ?? "removida"}"`
+      : (HISTORY_ENTITY_LABELS[event.entity] ?? event.entity);
+
+  return (
+    <Modal title={`Histórico de ${table.name}`} onClose={onClose}>
+      {error && (
+        <div role="alert" className="error">
+          <p>{error}</p>
+          <button type="button" className="btn btn-secondary" onClick={retry}>
+            Tentar de novo
+          </button>
+        </div>
+      )}
+      {!data && !error && <p className="muted">Carregando…</p>}
+      {data && (
+        <>
+          <h3>Versões</h3>
+          <ul aria-label="Versões da tabela" className="tbl-versions">
+            {data.history.versions.map((v) => (
+              <li key={v.id} className="tbl-version">
+                <p className="tbl-version-name">{v.name}</p>
+                <p className="tbl-meta">
+                  Vigência: {formatDate(v.valid_from)} a {v.valid_to ? formatDate(v.valid_to) : "em aberto"} ·{" "}
+                  {TABLE_STATUS_LABELS[v.status] ?? v.status}
+                </p>
+                <p className="tbl-meta">Referência normativa: {v.norm_reference}</p>
+              </li>
+            ))}
+          </ul>
+          <h3>Eventos</h3>
+          {data.history.events.length === 0 ? (
+            <p className="muted">Nenhum evento registrado.</p>
+          ) : (
+            <ul aria-label="Eventos de auditoria" className="tbl-versions">
+              {data.history.events.map((event) => (
+                <li key={event.id} className="tbl-version">
+                  <p className="tbl-version-name">
+                    {formatDateTime(event.occurred_at)} · {authorOf(event)}
+                  </p>
+                  <p className="tbl-meta">
+                    {HISTORY_ACTION_LABELS[event.action] ?? event.action} · {subjectOf(event)}
+                  </p>
+                  {Object.entries(event.changes).map(([key, change]) => (
+                    <p className="tbl-meta" key={key}>
+                      {historyChangeLabel(key)}: {historyValueText(key, change.before, names)} →{" "}
+                      {historyValueText(key, change.after, names)}
+                    </p>
+                  ))}
+                  {event.justification && <p className="tbl-meta">Referência: {event.justification}</p>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
     </Modal>
   );
 }

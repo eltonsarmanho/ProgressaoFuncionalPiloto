@@ -44,6 +44,8 @@ import {
   inUseBadge,
   SET_DEFAULT_LABELS,
   SCORING_MODE_LABELS,
+  formatDateTime,
+  historyValueText,
 } from "./labels";
 
 describe("UIG-05: rótulos em português dos documentos gerados", () => {
@@ -418,5 +420,38 @@ describe("GTAB-21: modos de pontuação em português", () => {
       CARGA_SEMANAL: "Carga semanal",
       VALOR_INFORMADO: "Valor informado",
     });
+  });
+});
+
+describe("GTAB-17: valores e datas do histórico em texto", () => {
+  const UUID = "11111111-1111-4111-8111-111111111111";
+  const names = (id: string) => (id === UUID ? "FASI" : null);
+
+  it("a data e a hora do evento saem em dd/mm/aaaa hh:mm", () => {
+    expect(formatDateTime("2026-11-22T15:30:00Z")).toMatch(/^22\/11\/2026 \d{2}:\d{2}$/);
+  });
+
+  it("booleano vira sim ou não e ausente vira traço", () => {
+    expect(historyValueText("archived", false, names)).toBe("não");
+    expect(historyValueText("archived", true, names)).toBe("sim");
+    expect(historyValueText("valid_to", null, names)).toBe("—");
+    expect(historyValueText("valid_to", undefined, names)).toBe("—");
+  });
+
+  it("data ISO, situação, modo e decimal saem como o resto da tela", () => {
+    expect(historyValueText("valid_from", "2026-03-01", names)).toBe("01/03/2026");
+    expect(historyValueText("status", "PENDENTE_VALIDACAO", names)).toBe("Pendente de validação");
+    expect(historyValueText("criteria.2.7.mode", "POR_BLOCO_DE_HORAS", names)).toBe("Por bloco de horas");
+    expect(historyValueText("criteria.2.7.unit_points", "12.50", names)).toBe("12,50");
+  });
+
+  it("um id vira o nome que a tela conhece e, sem nome, 'item removido'; nunca o UUID", () => {
+    expect(historyValueText("version_id", UUID, names)).toBe("FASI");
+    expect(historyValueText("version_id", "22222222-2222-4222-8222-222222222222", names)).toBe("item removido");
+  });
+
+  it("uma lista vira os itens separados por vírgula e a lista vazia vira 'nenhuma'", () => {
+    expect(historyValueText("unit_ids", [UUID], names)).toBe("FASI");
+    expect(historyValueText("unit_ids", [], names)).toBe("nenhuma");
   });
 });

@@ -320,6 +320,45 @@ export function historyChangeLabel(key: string): string {
   return HISTORY_CHANGE_LABELS[key] ?? key;
 }
 
+/** The audit keys whose values are ids of a unit, a version or a table (GTAB-17). */
+const HISTORY_ID_KEYS = new Set([
+  "unit_ids",
+  "version_id",
+  "table_id",
+  "duplicated_from",
+  "copied_from_version_id",
+]);
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** "2026-11-22T15:30:00Z" -> "22/11/2026 12:30" (the time zone of the browser). */
+export function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/**
+ * GTAB-17: a value of an audit change as text. An id becomes the name `names` knows (or "item removido"), never the
+ * raw id; a boolean is sim or não; a list is its items; a missing value is a dash.
+ */
+export function historyValueText(key: string, value: unknown, names: (id: string) => string | null): string {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "boolean") return value ? "sim" : "não";
+  if (Array.isArray(value)) {
+    return value.length === 0 ? "nenhuma" : value.map((item) => historyValueText(key, item, names)).join(", ");
+  }
+  if (typeof value === "string") {
+    if (HISTORY_ID_KEYS.has(key) || UUID_PATTERN.test(value)) return names(value) ?? "item removido";
+    if (ISO_DAY.test(value)) return formatDate(value);
+    if (key === "status") return TABLE_STATUS_LABELS[value] ?? value;
+    if (key.endsWith(".mode")) return (SCORING_MODE_LABELS as Record<string, string>)[value] ?? value;
+    if (/^\d+\.\d+$/.test(value)) return formatDecimal(value);
+    return value;
+  }
+  return String(value);
+}
+
 /** "414.00" -> "414,00" (pt-BR); null/undefined -> "—". */
 export function formatDecimal(value: string | null | undefined): string {
   if (value == null || value === "") return "—";

@@ -1182,7 +1182,7 @@ graph LR
 
 #### T36: Histórico da tabela
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Botão "Histórico" por tabela (só ADMIN) e `Modal` que carrega `GET /api/scoring-tables/{id}/history` e lista as versões e os eventos de auditoria devolvidos (`TableHistoryOut`), com data, autor e o que mudou em texto. O autor vem de `GET /api/users` (lista só do ADMIN, que é quem vê o botão), por id, com "Sistema" quando não há usuário e "Usuário removido" quando o id não está na lista; a entidade, a ação e as chaves de mudança saem pelos rótulos de `labels.ts`, sem mostrar id cru.
 **Where**: `frontend/src/components/ScoringTableDialogs.tsx` (modify)
@@ -1197,9 +1197,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ScoringTableDialogs.test.tsx` (modifica): o diálogo mostra as versões com vigência e referência e os eventos com data e o nome do autor ("Sistema" sem usuário, "Usuário removido" para id desconhecido), a ação e o que mudou em texto (por exemplo "Arquivada: não → sim") e nenhum UUID aparece; falha da API mostra o erro com "Tentar de novo"; só o ADMIN vê o botão
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/components/ScoringTableDialogs.test.tsx` (modifica): o diálogo mostra as versões com vigência e referência e os eventos com data e o nome do autor ("Sistema" sem usuário, "Usuário removido" para id desconhecido), a ação e o que mudou em texto (por exemplo "Arquivada: não → sim") e nenhum UUID aparece; falha da API mostra o erro com "Tentar de novo"; só o ADMIN vê o botão
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front

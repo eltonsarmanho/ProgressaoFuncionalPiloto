@@ -1077,3 +1077,35 @@ describe("GTAB-19, GTAB-20, GTAB-22, GTAB-16: edição de critério na lista de 
     expect(within(criteria).queryByRole("button", { name: /^Editar/ })).not.toBeInTheDocument();
   });
 });
+
+describe("GTAB-17, GTAB-35: histórico pela página", () => {
+  it("só o ADMIN vê 'Histórico' e o botão abre o diálogo com os eventos", async () => {
+    renderAdmin("ADMIN", {
+      "GET /api/scoring-tables/t-fasi/history": {
+        status: 200,
+        body: {
+          versions: [FASI_V1],
+          events: [
+            { id: 1, occurred_at: "2026-11-20T15:00:00Z", user_id: ME.id, entity: "scoring_table", entity_id: "t-fasi", action: "CREATE", changes: { name: { before: null, after: "Tabela da FASI" } }, justification: null },
+          ],
+        },
+      },
+      "GET /api/users": { status: 200, body: [{ id: ME.id, name: "Admin", role: "ADMIN" }] },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    await user.click(within(fasi).getByRole("button", { name: "Histórico da tabela Tabela da FASI" }));
+
+    const events = await screen.findByRole("list", { name: "Eventos de auditoria" });
+    expect(events).toHaveTextContent("Admin");
+    expect(events).toHaveTextContent("Criação");
+    expect(events).toHaveTextContent("Nome: — → Tabela da FASI");
+  });
+
+  it.each(["SECRETARIA", "DOCENTE"])("%s não vê 'Histórico'", async (role) => {
+    renderAdmin(role);
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+    expect(within(fasi).queryByRole("button", { name: /^Histórico/ })).not.toBeInTheDocument();
+  });
+});

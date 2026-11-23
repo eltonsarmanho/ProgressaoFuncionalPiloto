@@ -4,7 +4,7 @@ import type { ScoringTableInfo, ScoringVersionSummary, Unit } from "../api/types
 import { CsvDialog, DuplicateDialog, VersionDialog } from "./ScoringAdminForms";
 import { SET_DEFAULT_LABELS, blockReasonText } from "../labels";
 import { DeleteScoringDialog, type DeleteTarget } from "./DeleteScoringDialog";
-import { SetDefaultDialog, UnitsDialog } from "./ScoringTableDialogs";
+import { HistoryDialog, SetDefaultDialog, UnitsDialog } from "./ScoringTableDialogs";
 import type { TableAction } from "./VersionRow";
 
 /** What an action needs from the page: the announcement, the reload and a place for its dialog (GTAB-16). */
@@ -200,6 +200,16 @@ const defaultActions: VersionActionBuilder = (ctx, table, version) => {
   return [set, ...clears];
 };
 
+/** GTAB-17, GTAB-35: "Histórico" of a table. */
+const historyAction: TableActionBuilder = (ctx, table) => [
+  {
+    key: "history",
+    label: "Histórico",
+    ariaLabel: `Histórico da tabela ${table.name}`,
+    run: () => ctx.open(<HistoryDialog table={table} units={ctx.units} onClose={ctx.close} />),
+  },
+];
+
 /** GTAB-23, GTAB-25, GTAB-35: "Arquivar" or "Desarquivar" of a table, at once, blocked with the reason and the acronyms. */
 const archiveAction: TableActionBuilder = (ctx, table) => {
   const archiving = !table.archived;
@@ -225,7 +235,7 @@ const archiveAction: TableActionBuilder = (ctx, table) => {
 
 /** The registry of the actions of a version and of a table; each operation adds its builder here (GTAB-35). */
 const VERSION_ACTIONS: VersionActionBuilder[] = [defaultActions, newVersionAction, deleteVersionAction];
-const TABLE_ACTIONS: TableActionBuilder[] = [formActions, unitsAction, archiveAction, deleteTableAction];
+const TABLE_ACTIONS: TableActionBuilder[] = [formActions, unitsAction, historyAction, archiveAction, deleteTableAction];
 
 export function versionActions(ctx: ActionContext, table: ScoringTableInfo, version: ScoringVersionSummary): TableAction[] {
   return VERSION_ACTIONS.flatMap((build) => build(ctx, table, version));
