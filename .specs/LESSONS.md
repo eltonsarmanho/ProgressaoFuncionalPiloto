@@ -246,6 +246,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: DOS-01 backend/tests/unit/infrastructure/test_dossier_order_file.py:8 (spec-wording)
 - last seen: 2026-11-23T00:26:01Z
 
+### L-040 - Assert the same layout properties (alignment, justification, line spacing, font size) in every output format of a document, not only in the first one tested.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `documents` · harmful: 0
+- features: layout-oficial
+- evidence: M84,M85,M88,M89,M82,M90 (backend/tests/unit/infrastructure/test_opinion_pdf.py) (documents)
+- last seen: 2026-11-23T04:24:51Z
+
+### L-041 - Bound a measured spacing from both sides; a lower-bound-only assertion lets any larger gap pass.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `documents` · harmful: 0
+- features: layout-oficial
+- evidence: M76 (backend/tests/unit/infrastructure/test_emblem_pdf.py:57) (documents)
+- last seen: 2026-11-23T04:24:51Z
+
+### L-042 - Assert the value of a boolean formatting flag, not only that its element exists.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `documents` · harmful: 0
+- features: layout-oficial
+- evidence: M43 (backend/tests/unit/infrastructure/test_emblem_docx.py:66) (documents)
+- last seen: 2026-11-23T04:24:51Z
+
+### L-043 - State in the spec the color of a drawn rule and what a line does when it does not fit its width.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `documents` · harmful: 0
+- features: layout-oficial
+- evidence: PMOD-02, PMOD-05 (validation.md V1, V2) (documents)
+- last seen: 2026-11-23T04:24:51Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

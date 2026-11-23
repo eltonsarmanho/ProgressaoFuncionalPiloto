@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 40,
+  "next_id": 44,
   "lessons": [
     {
       "id": "L-001",
@@ -709,6 +709,78 @@
       ],
       "created": "2026-11-23T00:26:01Z",
       "last_seen": "2026-11-23T00:26:01Z"
+    },
+    {
+      "id": "L-040",
+      "key": "surviving_mutant::assert the same layout properties alignment justification line spacing font size in every output format of a document not only in the first one tested",
+      "text": "Assert the same layout properties (alignment, justification, line spacing, font size) in every output format of a document, not only in the first one tested.",
+      "signal": "surviving_mutant",
+      "scope": "documents",
+      "status": "candidate",
+      "features": [
+        "layout-oficial"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M84,M85,M88,M89,M82,M90 (backend/tests/unit/infrastructure/test_opinion_pdf.py) (documents)"
+      ],
+      "created": "2026-11-23T04:24:51Z",
+      "last_seen": "2026-11-23T04:24:51Z"
+    },
+    {
+      "id": "L-041",
+      "key": "surviving_mutant::bound a measured spacing from both sides a lower bound only assertion lets any larger gap pass",
+      "text": "Bound a measured spacing from both sides; a lower-bound-only assertion lets any larger gap pass.",
+      "signal": "surviving_mutant",
+      "scope": "documents",
+      "status": "candidate",
+      "features": [
+        "layout-oficial"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M76 (backend/tests/unit/infrastructure/test_emblem_pdf.py:57) (documents)"
+      ],
+      "created": "2026-11-23T04:24:51Z",
+      "last_seen": "2026-11-23T04:24:51Z"
+    },
+    {
+      "id": "L-042",
+      "key": "surviving_mutant::assert the value of a boolean formatting flag not only that its element exists",
+      "text": "Assert the value of a boolean formatting flag, not only that its element exists.",
+      "signal": "surviving_mutant",
+      "scope": "documents",
+      "status": "candidate",
+      "features": [
+        "layout-oficial"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M43 (backend/tests/unit/infrastructure/test_emblem_docx.py:66) (documents)"
+      ],
+      "created": "2026-11-23T04:24:51Z",
+      "last_seen": "2026-11-23T04:24:51Z"
+    },
+    {
+      "id": "L-043",
+      "key": "spec_precision_gap::state in the spec the color of a drawn rule and what a line does when it does not fit its width",
+      "text": "State in the spec the color of a drawn rule and what a line does when it does not fit its width.",
+      "signal": "spec_precision_gap",
+      "scope": "documents",
+      "status": "candidate",
+      "features": [
+        "layout-oficial"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PMOD-02, PMOD-05 (validation.md V1, V2) (documents)"
+      ],
+      "created": "2026-11-23T04:24:51Z",
+      "last_seen": "2026-11-23T04:24:51Z"
     }
   ]
 }

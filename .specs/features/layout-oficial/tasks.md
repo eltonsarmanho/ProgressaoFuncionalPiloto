@@ -845,7 +845,7 @@ graph LR
 
 #### T25: Verifier
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Agente diferente do autor confere cada critério da spec contra os testes (valor esperado = valor da spec), roda o sensor de discriminação numa cópia isolada (mutantes de comportamento em `opinion_document.py`, `spelled_numbers.py`, `pt_format.py`, `emblem.py`, `docx_support.py`, `pdf_styles.py`, `front_matter.py` e `generated_documents.py`) e escreve `.specs/features/layout-oficial/validation.md` com veredito, evidência `file:line`, resultado do sensor e faixa de commits.
 **Where**: `.specs/features/layout-oficial/validation.md` (new)
@@ -860,10 +860,10 @@ graph LR
 
 **Done when**:
 
-- [ ] `validation.md` com veredito PASS ou lacunas viradas em tarefas de correção (até 3 voltas)
-- [ ] `python3 <skill-dir>/scripts/validate_state.py layout-oficial` passa
-- [ ] A árvore real fica igual à de antes do sensor (`git status --porcelain`)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] `validation.md` com veredito PASS ou lacunas viradas em tarefas de correção (até 3 voltas)
+- [x] `python3 <skill-dir>/scripts/validate_state.py layout-oficial` passa
+- [x] A árvore real fica igual à de antes do sensor (`git status --porcelain`)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
 
 **Tests**: none
 **Gate**: build

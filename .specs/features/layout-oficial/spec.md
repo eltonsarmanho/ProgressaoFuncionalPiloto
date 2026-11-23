@@ -208,50 +208,50 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| PMOD-01 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-02 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-03 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-04 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-05 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-06 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-07 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-08 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-09 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-10 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-11 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-12 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-13 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-14 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-15 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-16 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-17 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-18 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-19 | P1: Texto do Parecer | Implemented | Implemented |
-| PMOD-20 | P1: Gerar o Parecer | Implemented | Implemented |
-| PMOD-21 | P1: Gerar o Parecer | Implemented | Implemented |
-| PMOD-22 | P1: Gerar o Parecer | Implemented | Implemented |
-| PMOD-23 | P1: Gerar o Parecer | Implemented | Implemented |
-| PMOD-24 | P1: Gerar o Parecer | Implemented | Implemented |
-| PMOD-25 | P1: Gerar o Parecer | Implemented | Implemented |
-| PMOD-26 | P1: Etapa 6 sem Observações | Implemented | Implemented |
-| PMOD-27 | P1: Etapa 6 sem Observações | Implemented | Implemented |
-| PMOD-28 | P1: Etapa 6 sem Observações | Implemented | Implemented |
-| PMOD-29 | P1: Etapa 6 sem Observações | Implemented | Implemented |
-| BRAS-01 | P1: Brasão | Implemented | Implemented |
-| BRAS-02 | P1: Brasão | Implemented | Implemented |
-| BRAS-03 | P1: Brasão | Implemented | Implemented |
-| BRAS-04 | P1: Brasão | Implemented | Implemented |
-| BRAS-05 | P1: Brasão | Implemented | Implemented |
-| BRAS-06 | P1: Brasão | Implemented | Implemented |
-| BRAS-07 | P1: Brasão | Implemented | Implemented |
-| BRAS-08 | P1: Brasão | Implemented | Implemented |
-| BRAS-09 | P1: Brasão | Implemented | Implemented |
-| BRAS-10 | P1: Brasão | Implemented | Implemented |
-| BRAS-11 | P1: Brasão | Implemented | Implemented |
+| PMOD-01 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-02 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-03 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-04 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-05 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-06 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-07 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-08 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-09 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-10 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-11 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-12 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-13 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-14 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-15 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-16 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-17 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-18 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-19 | P1: Texto do Parecer | Implemented | Verified |
+| PMOD-20 | P1: Gerar o Parecer | Implemented | Verified |
+| PMOD-21 | P1: Gerar o Parecer | Implemented | Verified |
+| PMOD-22 | P1: Gerar o Parecer | Implemented | Verified |
+| PMOD-23 | P1: Gerar o Parecer | Implemented | Verified |
+| PMOD-24 | P1: Gerar o Parecer | Implemented | Verified |
+| PMOD-25 | P1: Gerar o Parecer | Implemented | Verified |
+| PMOD-26 | P1: Etapa 6 sem Observações | Implemented | Verified |
+| PMOD-27 | P1: Etapa 6 sem Observações | Implemented | Verified |
+| PMOD-28 | P1: Etapa 6 sem Observações | Implemented | Verified |
+| PMOD-29 | P1: Etapa 6 sem Observações | Implemented | Verified |
+| BRAS-01 | P1: Brasão | Implemented | Verified |
+| BRAS-02 | P1: Brasão | Implemented | Verified |
+| BRAS-03 | P1: Brasão | Implemented | Verified |
+| BRAS-04 | P1: Brasão | Implemented | Verified |
+| BRAS-05 | P1: Brasão | Implemented | Verified |
+| BRAS-06 | P1: Brasão | Implemented | Verified |
+| BRAS-07 | P1: Brasão | Implemented | Verified |
+| BRAS-08 | P1: Brasão | Implemented | Verified |
+| BRAS-09 | P1: Brasão | Implemented | Verified |
+| BRAS-10 | P1: Brasão | Implemented | Verified |
+| BRAS-11 | P1: Brasão | Implemented | Verified |
 
 **Substituições na spec `banca-parecer`** (a marcar na tarefa de documentação): PAR-01 (o campo "observações" sai), PAR-03, PAR-04, PAR-05, PAR-06 e PAR-13 ficam substituídos por PMOD-01 a PMOD-19, PMOD-26 a PMOD-29; PAR-02 e PAR-07 a PAR-12 e PAR-14 seguem em vigor (PMOD-20, PMOD-22 a PMOD-25).
 
-**Coverage:** 40 total, 40 mapped to tasks, 0 unmapped
+**Coverage:** 40 total, 40 mapped to tasks, 0 unmapped. Todos `Verified` (Verificador independente, `validation.md`, PASS na rodada 2, 2026-11-23).
 
 ---
 
