@@ -29,8 +29,15 @@ export function Field({
   );
 }
 
-/** Shared submit flow: busy flag, 422 per field, any other error as an alert. */
-export function useSubmit(action: () => Promise<void>, onChanged: () => void) {
+/**
+ * Shared submit flow: busy flag, 422 per field, any other error as an alert. `explain` lets the form write
+ * its own sentence for an error it knows (a coded 409); it answers null to leave the text to the API.
+ */
+export function useSubmit(
+  action: () => Promise<void>,
+  onChanged: () => void,
+  explain?: (error: unknown) => string | null,
+) {
   const [errors, setErrors] = useState<Errors>({});
   const [fileIssues, setFileIssues] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -53,13 +60,20 @@ export function useSubmit(action: () => Promise<void>, onChanged: () => void) {
       } else if (err instanceof FormProblem) {
         setErrors({ [err.field]: err.message });
       } else {
-        setError(errorMessage(err));
+        setError(explain?.(err) ?? errorMessage(err));
       }
     } finally {
       setBusy(false);
     }
   }
   return { submit, errors, fileIssues, error, busy };
+}
+
+/** The stable code of a 409 (`{detail, code}`), or null for any other error. */
+export function conflictCode(error: unknown): string | null {
+  if (!(error instanceof ApiError) || error.status !== 409) return null;
+  const code = (error.body as { code?: unknown } | undefined)?.code;
+  return typeof code === "string" ? code : null;
 }
 
 export class FormProblem extends Error {

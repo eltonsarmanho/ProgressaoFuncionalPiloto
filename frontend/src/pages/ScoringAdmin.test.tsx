@@ -500,3 +500,38 @@ describe("GTAB-11, GTAB-16, GTAB-35: nova tabela pela página", () => {
     expect(calls.filter((c) => c.method === "POST").map((c) => c.path)).toEqual(["/api/scoring-tables"]);
   });
 });
+
+describe("GTAB-14, GTAB-16, GTAB-35: unidades da tabela pela página", () => {
+  it("só o ADMIN vê 'Unidades' em cada tabela", async () => {
+    renderAdmin("DOCENTE");
+    await screen.findByRole("region", { name: "Tabela da FASI" });
+    expect(screen.queryByRole("button", { name: /^Unidades da tabela/ })).not.toBeInTheDocument();
+  });
+
+  it("o ADMIN troca as unidades: o PUT sai, o diálogo fecha, a lista recarrega e o status anuncia", async () => {
+    let loads = 0;
+    const { calls } = renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": () => {
+        loads += 1;
+        return { status: 200, body: TABLES };
+      },
+      "PUT /api/scoring-tables/t-fasi/units": { status: 200, body: TABLES[0] },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+    const opener = within(fasi).getByRole("button", { name: "Unidades da tabela Tabela da FASI" });
+
+    await user.click(opener);
+    const dialog = await screen.findByRole("dialog", { name: "Unidades da tabela Tabela da FASI" });
+    await user.click(within(dialog).getByRole("checkbox", { name: "ICEN" }));
+    await user.click(within(dialog).getByRole("button", { name: "Salvar unidades" }));
+
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await vi.waitFor(() => expect(loads).toBe(2));
+    const put = calls.find((c) => c.method === "PUT" && c.path === "/api/scoring-tables/t-fasi/units");
+    expect(JSON.parse(String(put?.init?.body))).toEqual({ unit_ids: ["u1", "u3"] });
+    const pageStatus = screen.getAllByRole("status").find((el) => el.tagName === "P") as HTMLElement;
+    expect(pageStatus).toHaveTextContent('Unidades da tabela "Tabela da FASI" atualizadas.');
+    expect(opener).toHaveFocus();
+  });
+});

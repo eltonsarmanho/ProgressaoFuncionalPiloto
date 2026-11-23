@@ -2,7 +2,8 @@ import { useId, useState } from "react";
 import { request } from "../api/client";
 import type { ScoringTableInfo, Unit } from "../api/types";
 import { FieldError } from "./FieldError";
-import { Alert, Field, useSubmit } from "./formKit";
+import { blockReasonText } from "../labels";
+import { Alert, Field, conflictCode, useSubmit } from "./formKit";
 import { Modal } from "./Modal";
 
 type DialogProps = {
@@ -138,6 +139,59 @@ export function CreateTableDialog({
         <div className="btn-row">
           <button type="submit" className="btn btn-primary" disabled={busy}>
             Criar tabela
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={onClose}>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+/** GTAB-14, GTAB-16, GTAB-43: the units of a table; an archived unit it already has stays checked and marked. */
+export function UnitsDialog({
+  table,
+  units,
+  onDone,
+  onClose,
+}: DialogProps & { table: ScoringTableInfo; units: Unit[] }) {
+  const id = useId();
+  const offered = units.filter((u) => !u.archived || table.unit_ids.includes(u.id));
+  const [unitIds, setUnitIds] = useState<ReadonlySet<string>>(new Set(table.unit_ids));
+  // the units that have a version of this table in use: the ones the server refuses to take out (GTAB-43)
+  const markedIds = new Set(table.versions.flatMap((v) => v.default_for_unit_ids));
+
+  const { submit, error, busy } = useSubmit(
+    async () => {
+      const kept = offered.filter((u) => unitIds.has(u.id)).map((u) => u.id);
+      const unknown = table.unit_ids.filter((unitId) => unitIds.has(unitId) && !kept.includes(unitId));
+      await request("PUT", `/api/scoring-tables/${table.id}/units`, { unit_ids: [...kept, ...unknown] });
+    },
+    () => onDone(`Unidades da tabela "${table.name}" atualizadas.`),
+    (err) => {
+      if (conflictCode(err) !== "UNIDADE_COM_VERSAO_EM_USO") return null;
+      const acronyms = offered.filter((u) => table.unit_ids.includes(u.id) && !unitIds.has(u.id) && markedIds.has(u.id));
+      // without the acronyms the server's sentence is the one that names the units
+      return acronyms.length > 0
+        ? blockReasonText("UNIDADE_COM_VERSAO_EM_USO", { acronyms: acronyms.map((u) => u.acronym) })
+        : null;
+    },
+  );
+
+  return (
+    <Modal title={`Unidades da tabela ${table.name}`} onClose={onClose}>
+      <form onSubmit={submit} noValidate aria-label="Unidades da tabela">
+        <UnitChecklist
+          units={offered}
+          checked={unitIds}
+          onToggle={(unitId) => setUnitIds((set) => toggled(set, unitId))}
+          idBase={`${id}-units`}
+        />
+        <Alert message={error} />
+        <div className="btn-row">
+          <button type="submit" className="btn btn-primary" disabled={busy}>
+            Salvar unidades
           </button>
           <button type="button" className="btn btn-secondary" onClick={onClose}>
             Cancelar

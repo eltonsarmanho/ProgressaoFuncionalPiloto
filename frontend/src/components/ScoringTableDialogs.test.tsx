@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ScoringTableInfo, Unit } from "../api/types";
 import { setCsrfToken } from "../api/client";
 import { mockFetch } from "../test/fetchMock";
-import { CreateTableDialog } from "./ScoringTableDialogs";
+import { CreateTableDialog, UnitsDialog } from "./ScoringTableDialogs";
 
 const UNITS: Unit[] = [
   { id: "u1", name: "Faculdade de Sistemas", acronym: "FASI", kind: "FACULDADE", parent_id: null, archived: false },
@@ -188,5 +188,98 @@ describe("GTAB-11, GTAB-35: nova tabela", () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(calls).toEqual([]);
+  });
+});
+
+describe("GTAB-14, GTAB-43, GTAB-16: unidades da tabela", () => {
+  const WITH_ARCHIVED: ScoringTableInfo = { ...TABLES[0], unit_ids: ["u1", "u3"] };
+
+  function setup(routes: Parameters<typeof mockFetch>[0] = {}, table: ScoringTableInfo = WITH_ARCHIVED) {
+    setCsrfToken("csrf-abc");
+    const mock = mockFetch({ ...routes });
+    const onDone = vi.fn();
+    const onClose = vi.fn();
+    render(<UnitsDialog table={table} units={UNITS} onDone={onDone} onClose={onClose} />);
+    return { ...mock, onDone, onClose, user: userEvent.setup() };
+  }
+
+  it("mostra as unidades da tabela marcadas e a arquivada que ela já tem, marcada e rotulada", () => {
+    setup();
+
+    const dialog = screen.getByRole("dialog", { name: "Unidades da tabela Tabela sintética A" });
+    expect(within(dialog).getByRole("checkbox", { name: "FASI" })).toBeChecked();
+    expect(within(dialog).getByRole("checkbox", { name: "IFCH" })).not.toBeChecked();
+    expect(within(dialog).getByRole("checkbox", { name: "ICEN (arquivada)" })).toBeChecked();
+  });
+
+  it("uma unidade arquivada que a tabela não tem não é oferecida", () => {
+    setup({}, { ...TABLES[0], unit_ids: ["u1"] });
+
+    expect(screen.queryByRole("checkbox", { name: /ICEN/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("checkbox")).toHaveLength(2);
+  });
+
+  it("o PUT leva todas as unidades marcadas, inclusive a arquivada que a tabela já tinha, e o sucesso é anunciado", async () => {
+    const { calls, onDone, user } = setup({
+      "PUT /api/scoring-tables/t1/units": { status: 200, body: { id: "t1" } },
+    });
+
+    await user.click(screen.getByRole("checkbox", { name: "IFCH" }));
+    await user.click(screen.getByRole("button", { name: "Salvar unidades" }));
+
+    await vi.waitFor(() => expect(onDone).toHaveBeenCalledWith('Unidades da tabela "Tabela sintética A" atualizadas.'));
+    expect(bodyOf(calls, "PUT /api/scoring-tables/t1/units")).toEqual({ unit_ids: ["u1", "u2", "u3"] });
+  });
+
+  it("tirar uma unidade a remove do corpo do PUT", async () => {
+    const { calls, onDone, user } = setup({
+      "PUT /api/scoring-tables/t1/units": { status: 200, body: { id: "t1" } },
+    });
+
+    await user.click(screen.getByRole("checkbox", { name: "FASI" }));
+    await user.click(screen.getByRole("button", { name: "Salvar unidades" }));
+
+    await vi.waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
+    expect(bodyOf(calls, "PUT /api/scoring-tables/t1/units")).toEqual({ unit_ids: ["u3"] });
+  });
+
+  it("o 409 de unidade com versão em uso mostra as siglas, mantém as marcações e não anuncia sucesso", async () => {
+    const withMark: ScoringTableInfo = {
+      ...WITH_ARCHIVED,
+      versions: [{ ...VERSION, default_for_unit_ids: ["u1"] }],
+    };
+    const { onDone, user } = setup(
+      {
+        "PUT /api/scoring-tables/t1/units": {
+          status: 409,
+          body: { detail: "texto do servidor", code: "UNIDADE_COM_VERSAO_EM_USO" },
+        },
+      },
+      withMark,
+    );
+
+    await user.click(screen.getByRole("checkbox", { name: "FASI" }));
+    await user.click(screen.getByRole("button", { name: "Salvar unidades" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("A unidade FASI tem versão desta tabela em uso; desmarque a versão antes de retirar a unidade.");
+    expect(alert).not.toHaveTextContent("texto do servidor");
+    expect(screen.getByRole("checkbox", { name: "FASI" })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "ICEN (arquivada)" })).toBeChecked();
+    expect(onDone).not.toHaveBeenCalled();
+  });
+
+  it("se a tela não sabe as siglas do 409, mostra o texto do servidor, que já as traz", async () => {
+    const { user } = setup({
+      "PUT /api/scoring-tables/t1/units": {
+        status: 409,
+        body: { detail: "A tabela tem versão em uso da unidade FASI; desmarque a versão antes de retirá-la", code: "UNIDADE_COM_VERSAO_EM_USO" },
+      },
+    });
+
+    await user.click(screen.getByRole("checkbox", { name: "FASI" }));
+    await user.click(screen.getByRole("button", { name: "Salvar unidades" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("da unidade FASI; desmarque a versão antes de retirá-la");
   });
 });

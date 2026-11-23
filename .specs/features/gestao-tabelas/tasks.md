@@ -984,7 +984,7 @@ graph LR
 
 #### T29: Associar unidades
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Botão "Unidades" por tabela e `Modal` com as unidades em caixas de seleção, enviando `PUT /api/scoring-tables/{id}/units` (`UnitsIn`). As unidades arquivadas que a tabela já tem aparecem marcadas e com o rótulo "arquivada", para o envio não as tirar em silêncio. O 409 `UNIDADE_COM_VERSAO_EM_USO` aparece no diálogo com as siglas e nada muda.
 **Where**: `frontend/src/components/ScoringTableDialogs.tsx` (modify)
@@ -999,9 +999,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ScoringTableDialogs.test.tsx` (modifica): o `PUT` leva a lista de unidades marcadas, inclusive a arquivada que a tabela já tinha; o 409 mostra o texto com as siglas e mantém as marcações do diálogo; sucesso recarrega a lista e anuncia em texto
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/components/ScoringTableDialogs.test.tsx` (modifica): o `PUT` leva a lista de unidades marcadas, inclusive a arquivada que a tabela já tinha; o 409 mostra o texto com as siglas e mantém as marcações do diálogo; sucesso recarrega a lista e anuncia em texto
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front

@@ -4,8 +4,16 @@ import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "../api/client";
 import { Alert, Field, FormProblem, useSubmit } from "./formKit";
 
-function Harness({ action, onChanged }: { action: () => Promise<void>; onChanged: () => void }) {
-  const { submit, errors, fileIssues, error, busy } = useSubmit(action, onChanged);
+function Harness({
+  action,
+  onChanged,
+  explain,
+}: {
+  action: () => Promise<void>;
+  onChanged: () => void;
+  explain?: (error: unknown) => string | null;
+}) {
+  const { submit, errors, fileIssues, error, busy } = useSubmit(action, onChanged, explain);
   return (
     <form onSubmit={submit} noValidate aria-label="Formulário de teste">
       <Field id="nome" label="Nome da tabela" error={errors.name}>
@@ -26,9 +34,9 @@ function Harness({ action, onChanged }: { action: () => Promise<void>; onChanged
   );
 }
 
-async function send(action: () => Promise<void>) {
+async function send(action: () => Promise<void>, explain?: (error: unknown) => string | null) {
   const onChanged = vi.fn();
-  render(<Harness action={action} onChanged={onChanged} />);
+  render(<Harness action={action} onChanged={onChanged} explain={explain} />);
   await userEvent.setup().click(screen.getByRole("button", { name: "Enviar" }));
   return onChanged;
 }
@@ -106,5 +114,27 @@ describe("formKit: useSubmit", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent("Vigência sobrepõe a versão \"FASI 2022\"");
     expect(screen.getByLabelText("Nome da tabela")).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("um erro que o chamador explica aparece com o texto dele, e o que ele não explica segue o texto da API", async () => {
+    const conflict = new ApiError(409, "Texto do servidor", { code: "UNIDADE_COM_VERSAO_EM_USO" });
+    await send(
+      async () => {
+        throw conflict;
+      },
+      (err) => (err === conflict ? "Texto da tela" : null),
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent("Texto da tela");
+    expect(screen.queryByText("Texto do servidor")).not.toBeInTheDocument();
+  });
+
+  it("quando o chamador devolve null o texto da API aparece", async () => {
+    await send(
+      async () => {
+        throw new ApiError(409, "Texto do servidor");
+      },
+      () => null,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent("Texto do servidor");
   });
 });

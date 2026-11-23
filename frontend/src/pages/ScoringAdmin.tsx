@@ -89,6 +89,7 @@ export function ScoringAdmin() {
     reload,
     open: setDialog,
     close: () => setDialog(null),
+    units,
   };
 
   function done(message: string) {
