@@ -611,7 +611,7 @@ graph LR
 
 #### T17: Brasão na capa do Comprovante
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `_cover` desenha o brasão no topo da capa, centralizado em `PAGE_WIDTH / 2`, e só nela (o sumário, os separadores e as páginas originais não mudam); o título "COMPROVANTE DE DOCUMENTOS" continua em `PAGE_HEIGHT - 70 mm`, com espaço para o brasão acima.
 **Where**: `backend/app/infrastructure/documents/front_matter.py` (modify)
@@ -626,10 +626,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_front_matter.py`: a página 1 (a capa) tem uma imagem de 56,7 pt de largura com o centro em 297,6 pt (metade da A4) e o topo acima do título "COMPROVANTE DE DOCUMENTOS", sem encostar nele; as páginas do sumário e os separadores não têm imagem; o número de páginas geradas e a capacidade do sumário (`TOC_CAPACITY`) são os mesmos de antes; a capa continua sem número no rodapé e as demais com o próprio; o texto da capa é o de antes; sem o arquivo do brasão `write_front_matter` levanta `EmblemUnavailable`
-- [ ] Teste de montagem em `backend/tests/unit/infrastructure/test_comprovante_assembler.py`: sem o brasão a montagem falha e não deixa o arquivo de destino nem os temporários (`.front`, `.final`); com ele, o PDF montado tem imagem só na primeira página das geradas e o número de páginas do plano
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_front_matter.py`: a página 1 (a capa) tem uma imagem de 56,7 pt de largura com o centro em 297,6 pt (metade da A4) e o topo acima do título "COMPROVANTE DE DOCUMENTOS", sem encostar nele; as páginas do sumário e os separadores não têm imagem; o número de páginas geradas e a capacidade do sumário (`TOC_CAPACITY`) são os mesmos de antes; a capa continua sem número no rodapé e as demais com o próprio; o texto da capa é o de antes; sem o arquivo do brasão `write_front_matter` levanta `EmblemUnavailable`
+- [x] Teste de montagem em `backend/tests/unit/infrastructure/test_comprovante_assembler.py`: sem o brasão a montagem falha e não deixa o arquivo de destino nem os temporários (`.front`, `.final`); com ele, o PDF montado tem imagem só na primeira página das geradas e o número de páginas do plano
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

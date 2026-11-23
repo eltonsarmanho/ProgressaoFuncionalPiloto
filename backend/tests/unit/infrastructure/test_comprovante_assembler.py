@@ -17,7 +17,9 @@ from app.domain.entities.comprovante import (
 )
 from app.domain.entities.generated import GenerationAlertCode, GenerationCode
 from app.domain.rules.comprovante_plan import ComprovanteRefused, plan_comprovante
+from app.infrastructure.documents import emblem
 from app.infrastructure.documents.comprovante_assembler import PdfComprovanteAssembler
+from app.infrastructure.documents.emblem import EmblemUnavailable
 from app.infrastructure.documents.front_matter import TOC_CAPACITY
 from app.infrastructure.documents.source_pages import STRIP_HEIGHT
 from tests.support.pdf_pages import render, source_pdf, write_image
@@ -342,3 +344,37 @@ def test_an_image_document_is_assembled_as_a_page_and_a_raster_page_keeps_its_al
     assert (pdf[first - 1].rect.width, pdf[first - 1].rect.height) == (288.0, 384.0 + STRIP_HEIGHT)
     assert [a.code for a in result.alerts] == [GenerationAlertCode.PAGINA_RASTERIZADA]
     assert "girado.pdf" in result.alerts[0].message
+
+
+def test_without_the_emblem_the_assembly_fails_and_leaves_no_file(monkeypatch, tmp_path):
+    # BRAS-10, BRAS-03
+    process = build(tmp_path, THREE_GROUPS)
+    monkeypatch.setattr(emblem, "EMBLEM_FILE", tmp_path / "ufpa.png")
+    target = tmp_path / "saida.pdf"
+
+    with pytest.raises(EmblemUnavailable):
+        assemble(process, target)
+
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["original_0.pdf", "original_1.pdf"]
+
+
+def test_the_assembled_comprovante_has_the_emblem_only_on_its_cover(tmp_path):
+    # BRAS-03, BRAS-07
+    process = build(tmp_path, THREE_GROUPS)
+    target = tmp_path / "saida.pdf"
+
+    result = assemble(process, target)
+
+    pdf = pymupdf.open(target)
+    generated_pages = [p.number - 1 for p in process.plan.pages if p.kind is not PageKind.ORIGINAL]
+    assert len(pdf) == result.pages == len(process.plan.pages)
+    with_emblem = [
+        number
+        for number in generated_pages
+        if any(
+            round(rect.width) == 57
+            for image in pdf[number].get_images(full=True)
+            for rect in pdf[number].get_image_rects(image[0])
+        )
+    ]
+    assert with_emblem == [0]

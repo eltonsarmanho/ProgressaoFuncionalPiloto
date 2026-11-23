@@ -7,6 +7,7 @@ from uuid import uuid4
 
 import pymupdf
 import pytest
+from reportlab.lib.units import mm
 
 from app.domain.entities.comprovante import (
     ComprovantePlan,
@@ -15,6 +16,8 @@ from app.domain.entities.comprovante import (
     TocEntry,
     TocLevel,
 )
+from app.infrastructure.documents import emblem
+from app.infrastructure.documents.emblem import EmblemUnavailable
 from app.infrastructure.documents.front_matter import TOC_CAPACITY, write_front_matter
 from tests.unit.domain.comprovante_support import make_activity
 from tests.unit.infrastructure.comprovante_support import (
@@ -184,3 +187,66 @@ def test_a_title_longer_than_the_line_still_fits_on_one_line(tmp_path):
     assert "…" in shown[start]
     assert shown[start].endswith(" —")  # no page: the number column is still at the end
     assert shown[start + 1] == "Sem comprovante anexado"
+
+
+def emblem_rect(page: pymupdf.Page) -> pymupdf.Rect:
+    images = page.get_images(full=True)
+    assert len(images) == 1
+    (rect,) = page.get_image_rects(images[0][0])
+    return rect
+
+
+def test_the_cover_has_the_emblem_centered_above_the_title_without_touching_it(tmp_path):
+    # BRAS-03, BRAS-06
+    pdf = render(tmp_path, plan_for([make_activity(1, 1)]))
+
+    page = pdf[0]
+    rect = emblem_rect(page)
+    title = page.search_for("COMPROVANTE DE DOCUMENTOS")[0]
+    assert rect.width == pytest.approx(20 * mm, abs=0.5)
+    assert rect.height == pytest.approx(20 * mm * 351 / 279, abs=0.5)
+    assert (rect.x0 + rect.x1) / 2 == pytest.approx(297.6, abs=0.5)  # half of the A4 width
+    assert rect.y1 + 3 * mm <= title.y0
+
+
+def test_only_the_cover_has_the_emblem_not_the_table_of_contents_nor_the_separators(tmp_path):
+    # BRAS-03, BRAS-07
+    plan, _ = plan_with_toc_lines(TOC_CAPACITY + 1)
+    pdf = render(tmp_path, plan)
+    kinds = [p.kind for p in generated(plan)]
+
+    assert PageKind.SUMARIO in kinds and PageKind.SEPARADOR in kinds
+    assert len(pdf[0].get_images()) == 1
+    assert all(page.get_images() == [] for page in list(pdf)[1:])
+
+
+def test_the_emblem_does_not_change_the_pages_nor_the_capacity_of_the_table_of_contents(tmp_path):
+    # BRAS-03: the number of pages the plan predicted is the one written
+    plan, _ = plan_with_toc_lines(TOC_CAPACITY)
+
+    pdf = render(tmp_path, plan)
+
+    assert TOC_CAPACITY == 44  # the capacity before the emblem
+    assert len(toc_pages(plan)) == 1
+    assert len(pdf) == len(generated(plan))
+    assert f"{FOOTER}{toc_pages(plan)[0].number}" in rows(pdf[1])[-1]
+
+
+def test_the_cover_text_is_the_one_of_before_and_has_no_number(tmp_path):
+    # BRAS-08
+    pdf = render(tmp_path, plan_for([make_activity(1, 1)]))
+
+    shown = rows(pdf[0])
+    assert shown[0] == "COMPROVANTE DE DOCUMENTOS"
+    assert shown[1].startswith("Docente: Maria Docente da Silva")
+    assert FOOTER not in pdf[0].get_text()
+
+
+def test_without_the_emblem_file_the_front_matter_raises_and_writes_nothing(monkeypatch, tmp_path):
+    # BRAS-10
+    monkeypatch.setattr(emblem, "EMBLEM_FILE", tmp_path / "ufpa.png")
+    target = tmp_path / "front.pdf"
+
+    with pytest.raises(EmblemUnavailable):
+        write_front_matter(plan_for([make_activity(1, 1)]), front(), target)
+    assert not target.exists()

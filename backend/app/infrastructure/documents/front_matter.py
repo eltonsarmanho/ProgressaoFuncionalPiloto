@@ -1,5 +1,5 @@
 """Cover, table of contents and group separators of the Comprovante, drawn with reportlab
-(CMP-01, CMP-04).
+(CMP-01, CMP-04). The emblem of the UFPA is on top of the cover and on no other page (BRAS-03).
 
 The generated pages are written to one PDF in the order of the plan; the assembler takes them
 from there, between the original pages. The table of contents is drawn in lines of a fixed height
@@ -37,6 +37,7 @@ from app.infrastructure.documents.pdf_styles import (
     FONT_REGULAR,
     PdfCanvas,
     build_styles,
+    draw_emblem,
 )
 from app.infrastructure.documents.text_safety import xml_safe
 
@@ -45,6 +46,7 @@ MARGIN_X = 20 * mm
 LINE_HEIGHT = 15.0
 _FIRST_LINE_Y = PAGE_HEIGHT - 28 * mm - 44  # baseline of the first line, under the heading
 _LAST_LINE_Y = 24 * mm
+_EMBLEM_TOP = PAGE_HEIGHT - 30 * mm  # the emblem hangs from here, above the title at 70 mm
 TOC_CAPACITY = int((_FIRST_LINE_Y - _LAST_LINE_Y) // LINE_HEIGHT) + 1
 FOOTER_SIZE = 9
 EMPTY_NUMBER = "—"
@@ -149,6 +151,7 @@ def _draw_paragraphs(canvas: PdfCanvas, texts: Iterable[str], style, top: float)
 def _cover(canvas: PdfCanvas, front: ComprovanteFront) -> None:
     styles = build_styles(12)
     header = front.header
+    draw_emblem(canvas, PAGE_WIDTH / 2, _EMBLEM_TOP)
     below = _draw_paragraphs(
         canvas, ["COMPROVANTE DE DOCUMENTOS"], styles.title, PAGE_HEIGHT - 70 * mm
     )
