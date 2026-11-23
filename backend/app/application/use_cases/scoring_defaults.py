@@ -53,13 +53,13 @@ class SetUnitDefaultVersion:
             repo.lock_unit(unit_id)
             if version.table_id is None or not repo.lock_table(version.table_id):
                 raise NotFound("Tabela de pontuação não encontrada")
-            # The version lock is defence in depth (no test fails without it, on purpose): every
-            # writer that deletes, closes or supersedes the version row (DeleteScoringVersion,
-            # DeleteScoringTable, CreateVersionFrom, ImportCriteriaCsv) already takes the table
-            # lock taken just above, so the table lock serializes them with this mark. The only
-            # other holder of a version lock is the choice of a table in a process, which cannot
-            # invalidate a mark. The lock keeps the order unit, table, version for any writer
-            # that later locks the version without the table.
+            # The version lock serializes this mark with the writers of the version row that do
+            # not take the table lock: AdoptSupersedingVersion (the seed) supersedes a version and
+            # clears its marks without it (test_marking_waits_for_a_concurrent_supersession...).
+            # DeleteScoringVersion, DeleteScoringTable, CreateVersionFrom and ImportCriteriaCsv
+            # already take the table lock above. The only other holder of a version lock is the
+            # choice of a table in a process, which cannot invalidate a mark. Order: unit, table,
+            # version.
             if not repo.lock_version(version_id):
                 raise NotFound(VERSION_NOT_FOUND)
             # Read again under the locks: the table may have been archived or lost the unit.

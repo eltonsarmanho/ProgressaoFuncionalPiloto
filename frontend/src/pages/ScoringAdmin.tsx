@@ -13,13 +13,13 @@ type Selection = { tableId: string; versionId: string };
 
 const ALL_UNITS = "";
 
-/** The count of the list: "1 tabela", "3 tabelas". */
 /** The date of the user's own calendar as `aaaa-mm-dd`; `toISOString` would give the UTC date. */
 function localIsoDate(date: Date): string {
   const two = (n: number) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${two(date.getMonth() + 1)}-${two(date.getDate())}`;
 }
 
+/** The count of the list: "1 tabela", "3 tabelas". */
 function countText(n: number): string {
   return `${n} ${n === 1 ? "tabela" : "tabelas"}`;
 }
