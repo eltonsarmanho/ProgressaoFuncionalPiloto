@@ -379,7 +379,7 @@ graph LR
 
 #### T9: Formulário da minuta do Parecer sem Observações
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `OpinionForm` perde o campo "Observações da banca", o contador, `MAX_NOTES_LENGTH` e o `formatCount` que só ele usava ali; `saveOpinion` manda o corpo `{ conclusion, opinion_date, place, expected_version }`; os tipos `Opinion` e o corpo de `saveOpinion` perdem `notes`.
 **Where**: `frontend/src/components/OpinionForm.tsx` (modify; `frontend/src/api/board.ts`)
@@ -394,10 +394,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro, reescritos: `frontend/src/components/OpinionForm.test.tsx`: o formulário tem só a conclusão (dois botões de rádio sem seleção inicial), a data e o local e não tem o campo "Observações da banca" nem contador (PMOD-26); salvar manda um corpo sem a chave `notes`; o 422 de `place` aparece junto do campo (o teste do 422 de `notes` é substituído pelo de `place` sozinho); em somente leitura os três campos ficam desabilitados; `frontend/src/api/board.test.ts`: o objeto `opinion` das respostas simuladas e o corpo de `saveOpinion` sem `notes`
-- [ ] O TypeScript acusa qualquer uso restante de `notes` do Parecer (fixtures de `ProcessBoard` e outras páginas); `grep -rn "notes" frontend/src` só acha o campo "Observações" do processo (Etapa 1) e as normas, não o Parecer
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado sem substituto
+- [x] Testes primeiro, reescritos: `frontend/src/components/OpinionForm.test.tsx`: o formulário tem só a conclusão (dois botões de rádio sem seleção inicial), a data e o local e não tem o campo "Observações da banca" nem contador (PMOD-26); salvar manda um corpo sem a chave `notes`; o 422 de `place` aparece junto do campo (o teste do 422 de `notes` é substituído pelo de `place` sozinho); em somente leitura os três campos ficam desabilitados; `frontend/src/api/board.test.ts`: o objeto `opinion` das respostas simuladas e o corpo de `saveOpinion` sem `notes`
+- [x] O TypeScript acusa qualquer uso restante de `notes` do Parecer (fixtures de `ProcessBoard` e outras páginas); `grep -rn "notes" frontend/src` só acha o campo "Observações" do processo (Etapa 1) e as normas, não o Parecer
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado sem substituto
 
 **Tests**: unit
 **Gate**: front

@@ -29,7 +29,7 @@ const BOARD: BoardView = {
     warnings: [],
     version: 3,
   },
-  opinion: { conclusion: null, opinion_date: null, place: null, notes: null, version: 1 },
+  opinion: { conclusion: null, opinion_date: null, place: null, version: 1 },
   request_settings: { city: null, version: 1 },
 };
 
@@ -89,9 +89,9 @@ describe("PORT-02, PAR-01, DOS-02: cliente da API da banca e do dossiê", () => 
     expect(JSON.parse(calls[0].init!.body as string)).toEqual({ expected_version: 3 });
   });
 
-  it("PAR-01: saveOpinion faz PUT da conclusão, da data, do local e das observações com a versão", async () => {
+  it("PAR-01: saveOpinion faz PUT da conclusão, da data e do local com a versão, sem observações", async () => {
     const { calls } = mockFetch({ "PUT /api/processes/p1/board/opinion": { status: 200, body: BOARD.opinion } });
-    const body = { conclusion: "FAVORAVEL" as const, opinion_date: "2026-11-20", place: "Belém", notes: "Sem ressalvas", expected_version: 1 };
+    const body = { conclusion: "FAVORAVEL" as const, opinion_date: "2026-11-20", place: "Belém", expected_version: 1 };
     await saveOpinion("p1", body);
     expect(JSON.parse(calls[0].init!.body as string)).toEqual(body);
   });

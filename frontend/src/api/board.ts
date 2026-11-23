@@ -5,7 +5,7 @@
  *
  * Dates travel as `YYYY-MM-DD` strings, as in `types.ts`. The first save of each part sends
  * `expected_version` 0; a stale version is a 409 `VERSAO_DESATUALIZADA` and a value over a limit is a
- * 422 that names the field (`members[1].name`, `place`, `notes`, `city`). No call asks for a
+ * 422 that names the field (`members[1].name`, `place`, `city`). No call asks for a
  * justification (regra 5).
  */
 import { request } from "./client";
@@ -69,7 +69,6 @@ export type Opinion = {
   conclusion: OpinionConclusion | null;
   opinion_date: string | null;
   place: string | null;
-  notes: string | null;
   version: number;
 };
 
@@ -88,7 +87,6 @@ export type OpinionBody = {
   conclusion: OpinionConclusion | null;
   opinion_date: string | null;
   place: string | null;
-  notes: string | null;
   expected_version: number;
 };
 

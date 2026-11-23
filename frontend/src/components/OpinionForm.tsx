@@ -1,11 +1,8 @@
 import { useState } from "react";
 import { saveOpinion, type Opinion, type OpinionConclusion } from "../api/board";
 import { boardFailure } from "../boardErrors";
-import { OPINION_CONCLUSION_LABELS, formatCount } from "../labels";
+import { OPINION_CONCLUSION_LABELS } from "../labels";
 import { FieldError } from "./FieldError";
-
-/** PAR-13: the longest text of the notes of the board the server accepts. */
-export const MAX_NOTES_LENGTH = 5000;
 
 const CONCLUSIONS: OpinionConclusion[] = ["FAVORAVEL", "DESFAVORAVEL"];
 
@@ -16,7 +13,7 @@ const fieldProps = (field: string, errors: Record<string, string>) => ({
 });
 
 /**
- * PAR-01, PAR-12, PAR-13, BNAV-02: the fields of the Parecer the person fills in the Etapa 6. The
+ * PAR-01, PAR-12, PMOD-26, BNAV-02: the fields of the Parecer the person fills in the Etapa 6. The
  * conclusion is two radio buttons with no initial selection: the screen reads no total and no
  * minimum and never suggests it. No justification is asked (regra 5).
  *
@@ -42,21 +39,18 @@ export function OpinionForm({
   const [conclusion, setConclusion] = useState<OpinionConclusion | null>(opinion.conclusion);
   const [date, setDate] = useState(opinion.opinion_date ?? "");
   const [place, setPlace] = useState(opinion.place ?? "");
-  const [notes, setNotes] = useState(opinion.notes ?? "");
   const [seen, setSeen] = useState(opinion.version);
   if (seen !== opinion.version) {
     setSeen(opinion.version);
     setConclusion(opinion.conclusion);
     setDate(opinion.opinion_date ?? "");
     setPlace(opinion.place ?? "");
-    setNotes(opinion.notes ?? "");
   }
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const tooLong = notes.length > MAX_NOTES_LENGTH;
   const locked = readOnly || busy;
 
   async function save() {
@@ -69,7 +63,6 @@ export function OpinionForm({
           conclusion,
           opinion_date: date || null,
           place: place.trim() || null,
-          notes: notes || null,
           expected_version: opinion.version,
         }),
       );
@@ -128,28 +121,13 @@ export function OpinionForm({
         <FieldError id="opinion-place-error" message={errors.place} />
       </div>
 
-      <div className="field">
-        <label htmlFor="opinion-notes">Observações da banca</label>
-        <textarea
-          {...fieldProps("notes", errors)}
-          rows={5}
-          value={notes}
-          disabled={locked}
-          onChange={(event) => setNotes(event.target.value)}
-        />
-        <small className={tooLong ? "error" : "muted"}>
-          {`${formatCount(notes.length)} / ${formatCount(MAX_NOTES_LENGTH)}`}
-        </small>
-        <FieldError id="opinion-notes-error" message={errors.notes} />
-      </div>
-
       {message && (
         <p role="alert" className="error">
           {message}
         </p>
       )}
       <div className="btn-row">
-        <button type="button" className="btn btn-primary" disabled={locked || tooLong} onClick={() => void save()}>
+        <button type="button" className="btn btn-primary" disabled={locked} onClick={() => void save()}>
           Salvar minuta do Parecer
         </button>
       </div>

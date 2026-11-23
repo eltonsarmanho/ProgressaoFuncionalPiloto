@@ -44,7 +44,7 @@ export function emptyOrdinance(over: Partial<Ordinance> = {}): Ordinance {
 
 /** The fields of the Parecer as the server sends them before anyone saved them: no conclusion. */
 export function opinion(over: Partial<Opinion> = {}): Opinion {
-  return { conclusion: null, opinion_date: null, place: null, notes: null, version: 0, ...over };
+  return { conclusion: null, opinion_date: null, place: null, version: 0, ...over };
 }
 
 export function requestSettings(over: Partial<RequestSettings> = {}): RequestSettings {
