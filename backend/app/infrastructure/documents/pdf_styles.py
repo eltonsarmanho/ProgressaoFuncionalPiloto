@@ -4,6 +4,9 @@ The font is Liberation Serif, versioned in `fonts/` with its license (SIL OFL 1.
 image has no fonts and Liberation Serif has the metrics of Times New Roman, which the model of
 the report asks for. Liberation Sans (the metrics of Arial) is versioned with it for the title of
 the Parecer (PMOD-04). reportlab embeds only the glyphs used (a subset).
+
+The emblem of the UFPA on top of the first page is also made here: `emblem_flowables` for the
+documents that flow and `draw_emblem` for the cover of the Comprovante, drawn by hand (BRAS-06).
 """
 
 from dataclasses import dataclass
@@ -15,8 +18,10 @@ from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
+from reportlab.platypus import Flowable, Image, Spacer
 
 from app.domain.entities.report import PageSetup
+from app.infrastructure.documents.emblem import EMBLEM_GAP_MM, emblem_path, emblem_size_mm
 
 FONTS_DIR = Path(__file__).parent / "fonts"
 FONT_REGULAR = "LiberationSerif"
@@ -171,3 +176,22 @@ def build_styles(font_size: float) -> PdfStyles:
         cell_header=_style("cell_header", font_size, FONT_BOLD, alignment=TA_CENTER),
         band=_style("band", font_size, FONT_BOLD, alignment=TA_LEFT),
     )
+
+
+def emblem_flowables() -> list[Flowable]:
+    """The emblem centered on the text area (20 mm wide, the height in proportion) and a space of
+    3 mm below, to open the story of a flowing document (BRAS-06)."""
+    path = emblem_path()
+    width_mm, height_mm = emblem_size_mm()
+    image = Image(str(path), width=width_mm * mm, height=height_mm * mm)
+    image.hAlign = "CENTER"
+    return [image, Spacer(1, EMBLEM_GAP_MM * mm)]
+
+
+def draw_emblem(canvas: Canvas, center_x: float, top_y: float) -> None:
+    """The same emblem drawn on `canvas`, centered on `center_x` with its top at `top_y` (points,
+    y from the bottom of the page)."""
+    path = emblem_path()
+    width_mm, height_mm = emblem_size_mm()
+    width, height = width_mm * mm, height_mm * mm
+    canvas.drawImage(str(path), center_x - width / 2, top_y - height, width=width, height=height)

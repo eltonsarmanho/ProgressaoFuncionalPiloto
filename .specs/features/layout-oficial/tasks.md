@@ -467,7 +467,7 @@ graph LR
 
 #### T12: Brasão nos PDF
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `emblem_flowables()` em `pdf_styles.py` devolve o brasão como `Image` centralizada (20,0 mm de largura, altura proporcional) seguido de um `Spacer` de 3 mm, para o início da história de um documento de fluxo; `draw_emblem(canvas, center_x, top_y)` desenha o mesmo brasão num canvas, para a capa do Comprovante, que é desenhada à mão.
 **Where**: `backend/app/infrastructure/documents/pdf_styles.py` (modify)
@@ -482,9 +482,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_emblem_pdf.py` (novo): uma história de `SimpleDocTemplate` A4 que começa com `emblem_flowables()` e um parágrafo tem, na primeira página, uma imagem (`page.get_images()`) cujo retângulo (`page.get_image_rects`) tem 56,7 pt de largura (20 mm, tolerância de 0,5 pt), altura proporcional a 351 ÷ 279 e centro horizontal igual ao centro da área de texto (tolerância de 0,5 pt), e o topo da imagem fica acima da primeira linha de texto; o espaço entre a base da imagem e o texto é de pelo menos 3 mm; a mesma história numa página paisagem (`landscape(A4)`) centraliza na área de texto paisagem; `draw_emblem` num `PdfCanvas` desenha a imagem com o centro e o topo pedidos; sem o arquivo (por `monkeypatch`) as duas funções levantam `EmblemUnavailable`; o PDF só lista as fontes que já listava (a imagem não adiciona fonte)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_emblem_pdf.py` (novo): uma história de `SimpleDocTemplate` A4 que começa com `emblem_flowables()` e um parágrafo tem, na primeira página, uma imagem (`page.get_images()`) cujo retângulo (`page.get_image_rects`) tem 56,7 pt de largura (20 mm, tolerância de 0,5 pt), altura proporcional a 351 ÷ 279 e centro horizontal igual ao centro da área de texto (tolerância de 0,5 pt), e o topo da imagem fica acima da primeira linha de texto; o espaço entre a base da imagem e o texto é de pelo menos 3 mm; a mesma história numa página paisagem (`landscape(A4)`) centraliza na área de texto paisagem; `draw_emblem` num `PdfCanvas` desenha a imagem com o centro e o topo pedidos; sem o arquivo (por `monkeypatch`) as duas funções levantam `EmblemUnavailable`; o PDF só lista as fontes que já listava (a imagem não adiciona fonte)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
