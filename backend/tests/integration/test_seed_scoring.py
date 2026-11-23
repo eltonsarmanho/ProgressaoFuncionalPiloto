@@ -10,6 +10,7 @@ import pytest
 from sqlalchemy import text
 
 from app.application.services.audit_service import AuditService
+from app.application.use_cases.scoring_admin import ArchiveScoringTable, SetTableUnits
 from app.application.use_cases.scoring_defaults import ClearUnitDefaultVersion
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.career import Modality
@@ -564,3 +565,100 @@ def test_an_archived_official_table_is_not_marked(uow_factory, units, seeded):
     seed_unit_defaults(uow_factory())
 
     assert _marks(uow_factory) == {}
+
+
+# --- GTAB-41: the seed leaves alone a legacy table that a person has changed ---------------------
+
+
+@pytest.fixture
+def admin(uow_factory):
+    user = User(uuid.uuid4(), "adm-tabelas@ufpa.br", "Adm", Role.ADMIN, "x")
+    with uow_factory() as uow:
+        uow.users.add(user)
+        uow.commit()
+    return user
+
+
+def _legacy_ids(uow_factory, units) -> dict[str, uuid.UUID]:
+    return {
+        name: _add_legacy_table(uow_factory, units, name, acronym)
+        for name, acronym in zip(LEGACY, ("IFCH", "FASI"), strict=True)
+    }
+
+
+def test_a_legacy_table_the_admin_unarchived_and_reassociated_stays_that_way(
+    uow_factory, units, admin
+):
+    ids = _legacy_ids(uow_factory, units)
+    seed_scoring_tables(uow_factory())  # the first start archives and detaches both (OFI-09)
+    audit = AuditService(SystemClock())
+    fasi_table = ids[LEGACY[1]]
+    ArchiveScoringTable(uow_factory, audit).execute(admin, fasi_table, False)
+    SetTableUnits(uow_factory, audit).execute(admin, fasi_table, [units["FASI"]])
+
+    seed_scoring_tables(uow_factory())
+    seed_scoring_tables(uow_factory())  # and a start after it changes nothing either
+
+    table, _, acronyms = _by_table(uow_factory)[LEGACY[1]]
+    assert (table.archived, acronyms) == (False, {"FASI"})
+
+
+def test_a_legacy_table_the_admin_only_unarchived_is_not_archived_again(
+    uow_factory, units, admin
+):
+    ids = _legacy_ids(uow_factory, units)
+    seed_scoring_tables(uow_factory())
+    ArchiveScoringTable(uow_factory, AuditService(SystemClock())).execute(
+        admin, ids[LEGACY[0]], False
+    )
+
+    seed_scoring_tables(uow_factory())
+
+    assert _by_table(uow_factory)[LEGACY[0]][0].archived is False
+
+
+def test_a_legacy_table_whose_units_the_admin_changed_keeps_them_unarchived(
+    uow_factory, units, admin
+):
+    ids = _legacy_ids(uow_factory, units)
+    SetTableUnits(uow_factory, AuditService(SystemClock())).execute(
+        admin, ids[LEGACY[0]], [units["IFCH"], units["FASI"]]
+    )
+
+    seed_scoring_tables(uow_factory())
+
+    table, _, acronyms = _by_table(uow_factory)[LEGACY[0]]
+    assert (table.archived, acronyms) == (False, {"IFCH", "FASI"})
+
+
+def test_the_legacy_table_nobody_touched_is_still_archived_and_detached_beside_one_that_was(
+    uow_factory, units, admin
+):
+    ids = _legacy_ids(uow_factory, units)
+    SetTableUnits(uow_factory, AuditService(SystemClock())).execute(
+        admin, ids[LEGACY[1]], [units["FASI"], units["IFCH"]]
+    )
+
+    seed_scoring_tables(uow_factory())
+
+    tables = _by_table(uow_factory)
+    touched, _, touched_units = tables[LEGACY[1]]
+    untouched, _, untouched_units = tables[LEGACY[0]]
+    assert (touched.archived, touched_units) == (False, {"FASI", "IFCH"})
+    assert (untouched.archived, untouched_units) == (True, set())
+
+
+def test_a_system_event_on_a_legacy_table_does_not_count_as_a_person_changing_it(
+    uow_factory, units
+):
+    ids = _legacy_ids(uow_factory, units)
+    with uow_factory() as uow:
+        AuditService(SystemClock()).record(
+            uow, None, "scoring_table", ids[LEGACY[0]], AuditAction.UPDATE, {}, {"x": 1}
+        )
+        uow.commit()
+
+    seed_scoring_tables(uow_factory())
+
+    table, _, acronyms = _by_table(uow_factory)[LEGACY[0]]
+    assert (table.archived, acronyms) == (True, set())

@@ -721,7 +721,7 @@ graph LR
 
 #### T20: Semente não desfaz o que o ADMIN mexeu nas tabelas antigas
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `_archive_legacy_tables` passa a pular a tabela que alguma pessoa já alterou (existe evento de auditoria da entidade `scoring_table` com esse id e `user_id` não nulo) e continua arquivando e desassociando a que nenhuma pessoa tocou.
 **Where**: `backend/app/infrastructure/database/seed.py` (modify)
@@ -736,10 +736,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_seed_scoring.py` (modifica): tabela antiga que o ADMIN desarquivou (pelo caso de uso de arquivar) e reassociou continua assim depois de nova execução da semente; tabela antiga sem toque de pessoa continua sendo arquivada e desassociada; a semente continua idempotente
-- [ ] Os testes de OFI-09 que já existem seguem verdes
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/test_seed_scoring.py tests/integration/test_seed_links.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/test_seed_scoring.py` (modifica): tabela antiga que o ADMIN desarquivou (pelo caso de uso de arquivar) e reassociou continua assim depois de nova execução da semente; tabela antiga sem toque de pessoa continua sendo arquivada e desassociada; a semente continua idempotente
+- [x] Os testes de OFI-09 que já existem seguem verdes
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/test_seed_scoring.py tests/integration/test_seed_links.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted

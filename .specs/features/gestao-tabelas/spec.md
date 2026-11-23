@@ -251,7 +251,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | GTAB-38 | P1: Lista legível e com ações visíveis | Specified | Pending |
 | GTAB-39 | P1: Lista legível e com ações visíveis | Specified | Pending |
 | GTAB-40 | P1: Lista legível e com ações visíveis | Specified | Pending |
-| GTAB-41 | P1: Coerência com a semente e com as outras regras | Specified | Pending |
+| GTAB-41 | P1: Coerência com a semente e com as outras regras | Implemented | Implementing |
 | GTAB-42 | P1: Coerência com a semente e com as outras regras | Implemented | Implementing |
 | GTAB-43 | P1: Coerência com a semente e com as outras regras | Implemented | Implementing |
 | GTAB-44 | P1: Coerência com a semente e com as outras regras | Implemented | Implementing |

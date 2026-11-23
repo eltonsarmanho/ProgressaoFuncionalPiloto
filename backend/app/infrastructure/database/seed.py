@@ -46,6 +46,7 @@ NORMS_SEED = "norms.json"
 NORM_ENTITY = "norm"
 CAREER_VERSION_ENTITY = "career_version"
 SCORING_VERSION_ENTITY = "scoring_version"
+SCORING_TABLE_ENTITY = "scoring_table"
 LINK_JUSTIFICATION = "Ligação às normas (NLINK-01, NLINK-02, NTIT-06)"
 NORM_SEED_JUSTIFICATION = "Semente das normas (NBASE-11)"
 OFFICIAL_TABLE_UNITS = ("FASI", "IFCH")
@@ -267,10 +268,17 @@ def link_table_norms(uow: SqlUnitOfWork) -> None:
 def _archive_legacy_tables(uow: SqlUnitOfWork) -> None:
     """Archive the IFCH and FASI tables and detach their units (OFI-09).
 
-    A table with any version chosen by a process stays exactly as it is.
+    A table with any version chosen by a process stays exactly as it is, and so does a table
+    that a person has already changed (an audit event of the table with a user): the ADMIN can
+    unarchive and reassociate it without the next start undoing it (GTAB-41).
     """
     for table in uow.scoring_tables.list_tables():
         if table.name not in LEGACY_TABLE_NAMES:
+            continue
+        if any(
+            event.user_id is not None
+            for event in uow.audit.list_for(SCORING_TABLE_ENTITY, str(table.id))
+        ):
             continue
         if any(
             uow.scoring_tables.version_in_use(v.id)
