@@ -193,6 +193,8 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 
 ## Requirement Traceability
 
+> **2026-11-23, modelo oficial do Parecer (`layout-oficial`).** PAR-03, PAR-04, PAR-05 e PAR-06 (as seções, a tabela e os totais do Parecer) ficam substituídos por PMOD-01 a PMOD-19, PAR-13 (o limite das observações) por PMOD-26 a PMOD-29, e PAR-01 é alterado: o campo "observações" sai. O texto dos critérios fica acima como estava, para a história. PAR-02 e PAR-07 a PAR-12 e PAR-14 seguem em vigor.
+
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | PORT-01 | P1: Portaria da banca | Implemented | Verified |
@@ -207,19 +209,19 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 | PORT-10 | P1: Portaria da banca | Implemented | Verified |
 | PORT-11 | P1: Portaria da banca | Implemented | Verified |
 | PORT-12 | P1: Portaria da banca | Implemented | Verified |
-| PAR-01 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-01 | P1: Minuta do Parecer | Amended | Amended by layout-oficial PMOD-26 |
 | PAR-02 | P1: Minuta do Parecer | Implemented | Verified |
-| PAR-03 | P1: Minuta do Parecer | Implemented | Verified |
-| PAR-04 | P1: Minuta do Parecer | Implemented | Verified |
-| PAR-05 | P1: Minuta do Parecer | Implemented | Verified |
-| PAR-06 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-03 | P1: Minuta do Parecer | Superseded | Superseded by layout-oficial PMOD-01 to PMOD-19 |
+| PAR-04 | P1: Minuta do Parecer | Superseded | Superseded by layout-oficial PMOD-01 to PMOD-19 |
+| PAR-05 | P1: Minuta do Parecer | Superseded | Superseded by layout-oficial PMOD-01 to PMOD-19 |
+| PAR-06 | P1: Minuta do Parecer | Superseded | Superseded by layout-oficial PMOD-01 to PMOD-19 |
 | PAR-07 | P1: Minuta do Parecer | Implemented | Verified |
 | PAR-08 | P1: Minuta do Parecer | Implemented | Verified |
 | PAR-09 | P1: Minuta do Parecer | Implemented | Verified |
 | PAR-10 | P1: Minuta do Parecer | Implemented | Verified |
 | PAR-11 | P1: Minuta do Parecer | Implemented | Verified |
 | PAR-12 | P1: Minuta do Parecer | Implemented | Verified |
-| PAR-13 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-13 | P1: Minuta do Parecer | Superseded | Superseded by layout-oficial PMOD-26 to PMOD-29 |
 | PAR-14 | P1: Minuta do Parecer | Implemented | Verified |
 | REQ-01 | P1: Requerimento | Implemented | Verified |
 | REQ-02 | P1: Requerimento | Implemented | Verified |

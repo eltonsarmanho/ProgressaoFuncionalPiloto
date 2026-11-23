@@ -786,7 +786,7 @@ graph LR
 
 #### T23: Requisitos de banca-parecer substituídos
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Na spec de `banca-parecer`, PAR-03, PAR-04, PAR-05, PAR-06 e PAR-13 ficam marcados como substituídos por PMOD-01 a PMOD-19 e PMOD-26 a PMOD-29, e PAR-01 como alterado (o campo "observações" sai); a tabela de rastreabilidade ganha o estado `Superseded` com a referência, e o texto dos critérios fica como estava, para a história.
 **Where**: `.specs/features/banca-parecer/spec.md` (modify)
@@ -801,9 +801,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Cada um dos seis requisitos tem, na tabela, o estado `Superseded by layout-oficial PMOD-<ids>` (PAR-01: `Amended by layout-oficial PMOD-26`), e uma nota curta acima da tabela diz a data (2026-11-23) e o motivo (modelo oficial do Parecer); a linha "Coverage" e os requisitos que seguem em vigor (PAR-02, PAR-07 a PAR-12, PAR-14) não mudam
-- [ ] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py banca-parecer` continua passando
-- [ ] Gate check passes: build gate only (documentação): `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run` roda na T24
+- [x] Cada um dos seis requisitos tem, na tabela, o estado `Superseded by layout-oficial PMOD-<ids>` (PAR-01: `Amended by layout-oficial PMOD-26`), e uma nota curta acima da tabela diz a data (2026-11-23) e o motivo (modelo oficial do Parecer); a linha "Coverage" e os requisitos que seguem em vigor (PAR-02, PAR-07 a PAR-12, PAR-14) não mudam
+- [x] `python3 ~/.claude/skills/tlc-spec-driven/scripts/validate_spec.py banca-parecer` continua passando
+- [x] Gate check passes: build gate only (documentação): `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run` roda na T24
 
 **Tests**: none
 **Gate**: build
