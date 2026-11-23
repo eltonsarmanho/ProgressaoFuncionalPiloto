@@ -195,52 +195,52 @@ Depois da Etapa 5, o docente ainda monta à mão o Requerimento à CPPD e confer
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| PORT-01 | P1: Portaria da banca | Implementing | Implementing |
-| PORT-02 | P1: Portaria da banca | Implementing | Implementing |
-| PORT-03 | P1: Portaria da banca | Implementing | Implementing |
-| PORT-04 | P1: Portaria da banca | Implementing | Implementing |
-| PORT-05 | P1: Portaria da banca | Implementing | Implementing |
-| PORT-06 | P1: Portaria da banca | Implementing | Implementing |
-| PORT-07 | P1: Portaria da banca | Implementing | Implementing |
-| PORT-08 | P1: Portaria da banca | Implementing | Implementing |
-| PORT-09 | P1: Portaria da banca | Implementing | Implementing |
-| PORT-10 | P1: Portaria da banca | Implementing | Implementing |
-| PORT-11 | P1: Portaria da banca | Implementing | Implementing |
-| PORT-12 | P1: Portaria da banca | Implementing | Implementing |
-| PAR-01 | P1: Minuta do Parecer | Implementing | Implementing |
-| PAR-02 | P1: Minuta do Parecer | Implementing | Implementing |
-| PAR-03 | P1: Minuta do Parecer | Implementing | Implementing |
-| PAR-04 | P1: Minuta do Parecer | Implementing | Implementing |
-| PAR-05 | P1: Minuta do Parecer | Implementing | Implementing |
-| PAR-06 | P1: Minuta do Parecer | Implementing | Implementing |
-| PAR-07 | P1: Minuta do Parecer | Implementing | Implementing |
-| PAR-08 | P1: Minuta do Parecer | Implementing | Implementing |
-| PAR-09 | P1: Minuta do Parecer | Implementing | Implementing |
-| PAR-10 | P1: Minuta do Parecer | Implementing | Implementing |
-| PAR-11 | P1: Minuta do Parecer | Implementing | Implementing |
-| PAR-12 | P1: Minuta do Parecer | Implementing | Implementing |
-| PAR-13 | P1: Minuta do Parecer | Implementing | Implementing |
-| PAR-14 | P1: Minuta do Parecer | Implementing | Implementing |
-| REQ-01 | P1: Requerimento | Implementing | Implementing |
-| REQ-02 | P1: Requerimento | Implementing | Implementing |
-| REQ-03 | P1: Requerimento | Implementing | Implementing |
-| REQ-04 | P1: Requerimento | Implementing | Implementing |
-| REQ-05 | P1: Requerimento | Implementing | Implementing |
-| REQ-06 | P1: Requerimento | Implementing | Implementing |
-| REQ-07 | P1: Requerimento | Implementing | Implementing |
-| REQ-08 | P1: Requerimento | Implementing | Implementing |
-| DOS-01 | P2: Checklist do dossiê | Implementing | Implementing |
-| DOS-02 | P2: Checklist do dossiê | Implementing | Implementing |
-| DOS-03 | P2: Checklist do dossiê | Implementing | Implementing |
-| DOS-04 | P2: Checklist do dossiê | Implementing | Implementing |
-| DOS-05 | P2: Checklist do dossiê | Implementing | Implementing |
-| DOS-06 | P2: Checklist do dossiê | Implementing | Implementing |
-| DOS-07 | P2: Checklist do dossiê | Implementing | Implementing |
-| BNAV-01 | P1: Etapas 6 e 7 | Implementing | Implementing |
-| BNAV-02 | P1: Etapas 6 e 7 | Implementing | Implementing |
-| BNAV-03 | P1: Etapas 6 e 7 | Implementing | Implementing |
+| PORT-01 | P1: Portaria da banca | Implemented | Verified |
+| PORT-02 | P1: Portaria da banca | Implemented | Verified |
+| PORT-03 | P1: Portaria da banca | Implemented | Verified |
+| PORT-04 | P1: Portaria da banca | Implemented | Verified |
+| PORT-05 | P1: Portaria da banca | Implemented | Verified |
+| PORT-06 | P1: Portaria da banca | Implemented | Verified |
+| PORT-07 | P1: Portaria da banca | Implemented | Verified |
+| PORT-08 | P1: Portaria da banca | Implemented | Verified |
+| PORT-09 | P1: Portaria da banca | Implemented | Verified |
+| PORT-10 | P1: Portaria da banca | Implemented | Verified |
+| PORT-11 | P1: Portaria da banca | Implemented | Verified |
+| PORT-12 | P1: Portaria da banca | Implemented | Verified |
+| PAR-01 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-02 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-03 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-04 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-05 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-06 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-07 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-08 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-09 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-10 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-11 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-12 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-13 | P1: Minuta do Parecer | Implemented | Verified |
+| PAR-14 | P1: Minuta do Parecer | Implemented | Verified |
+| REQ-01 | P1: Requerimento | Implemented | Verified |
+| REQ-02 | P1: Requerimento | Implemented | Verified |
+| REQ-03 | P1: Requerimento | Implemented | Verified |
+| REQ-04 | P1: Requerimento | Implemented | Verified |
+| REQ-05 | P1: Requerimento | Implemented | Verified |
+| REQ-06 | P1: Requerimento | Implemented | Verified |
+| REQ-07 | P1: Requerimento | Implemented | Verified |
+| REQ-08 | P1: Requerimento | Implemented | Verified |
+| DOS-01 | P2: Checklist do dossiê | Implemented | Verified |
+| DOS-02 | P2: Checklist do dossiê | Implemented | Verified |
+| DOS-03 | P2: Checklist do dossiê | Implemented | Verified |
+| DOS-04 | P2: Checklist do dossiê | Implemented | Verified |
+| DOS-05 | P2: Checklist do dossiê | Implemented | Verified |
+| DOS-06 | P2: Checklist do dossiê | Implemented | Verified |
+| DOS-07 | P2: Checklist do dossiê | Implemented | Verified |
+| BNAV-01 | P1: Etapas 6 e 7 | Implemented | Verified |
+| BNAV-02 | P1: Etapas 6 e 7 | Implemented | Verified |
+| BNAV-03 | P1: Etapas 6 e 7 | Implemented | Verified |
 
-**Coverage:** 44 total, 0 mapped to tasks, 44 unmapped (Design pendente)
+**Coverage:** 44 total, 44 mapped to tasks, 0 unmapped
 
 ---
 

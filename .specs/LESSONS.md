@@ -228,6 +228,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: NBASE-06 mutant U10 norms.py _check_pdf (extension check) (spec)
 - last seen: 2026-11-22T20:05:49Z
 
+### L-037 - When a spec says a refusal carries the limit message, state the error code and the literal text or number the message must contain
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec-wording` · harmful: 0
+- features: banca-parecer
+- evidence: PORT-10 backend/app/domain/rules/upload_validation.py:130 (spec-wording)
+- last seen: 2026-11-23T00:26:01Z
+
+### L-038 - When a spec lists the sections of a generated document, fix the literal text of every line a test must assert, not only the key sentence
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec-wording` · harmful: 0
+- features: banca-parecer
+- evidence: PAR-03 backend/tests/unit/domain/test_opinion_document.py:136 (spec-wording)
+- last seen: 2026-11-23T00:26:01Z
+
+### L-039 - Name configured checklist items by the key or literal title stored in the config file, never by a shortened name the file does not contain
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec-wording` · harmful: 0
+- features: banca-parecer
+- evidence: DOS-01 backend/tests/unit/infrastructure/test_dossier_order_file.py:8 (spec-wording)
+- last seen: 2026-11-23T00:26:01Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

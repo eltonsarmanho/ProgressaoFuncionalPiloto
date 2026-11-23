@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 37,
+  "next_id": 40,
   "lessons": [
     {
       "id": "L-001",
@@ -655,6 +655,60 @@
       ],
       "created": "2026-11-22T20:05:49Z",
       "last_seen": "2026-11-22T20:05:49Z"
+    },
+    {
+      "id": "L-037",
+      "key": "spec_precision_gap::when a spec says a refusal carries the limit message state the error code and the literal text or number the message must contain",
+      "text": "When a spec says a refusal carries the limit message, state the error code and the literal text or number the message must contain",
+      "signal": "spec_precision_gap",
+      "scope": "spec-wording",
+      "status": "candidate",
+      "features": [
+        "banca-parecer"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PORT-10 backend/app/domain/rules/upload_validation.py:130 (spec-wording)"
+      ],
+      "created": "2026-11-23T00:26:01Z",
+      "last_seen": "2026-11-23T00:26:01Z"
+    },
+    {
+      "id": "L-038",
+      "key": "spec_precision_gap::when a spec lists the sections of a generated document fix the literal text of every line a test must assert not only the key sentence",
+      "text": "When a spec lists the sections of a generated document, fix the literal text of every line a test must assert, not only the key sentence",
+      "signal": "spec_precision_gap",
+      "scope": "spec-wording",
+      "status": "candidate",
+      "features": [
+        "banca-parecer"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PAR-03 backend/tests/unit/domain/test_opinion_document.py:136 (spec-wording)"
+      ],
+      "created": "2026-11-23T00:26:01Z",
+      "last_seen": "2026-11-23T00:26:01Z"
+    },
+    {
+      "id": "L-039",
+      "key": "spec_precision_gap::name configured checklist items by the key or literal title stored in the config file never by a shortened name the file does not contain",
+      "text": "Name configured checklist items by the key or literal title stored in the config file, never by a shortened name the file does not contain",
+      "signal": "spec_precision_gap",
+      "scope": "spec-wording",
+      "status": "candidate",
+      "features": [
+        "banca-parecer"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DOS-01 backend/tests/unit/infrastructure/test_dossier_order_file.py:8 (spec-wording)"
+      ],
+      "created": "2026-11-23T00:26:01Z",
+      "last_seen": "2026-11-23T00:26:01Z"
     }
   ]
 }

@@ -1629,7 +1629,7 @@ graph LR
 
 #### T51: Verifier
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Agente diferente do autor confere cada critério da spec contra os testes (valor esperado = valor da spec), roda o sensor de discriminação numa cópia isolada (mutantes de comportamento em `ordinance_grounding.py`, `board_rules.py`, `opinion_document.py`, `request_document.py`, `dossier_checklist.py`, `conclusion_rules.py`, `RequestGeneration`, `RunOrdinanceReading` e `OpinionForm.tsx`) e escreve `.specs/features/banca-parecer/validation.md` com veredito, evidência `file:line`, resultado do sensor e faixa de commits.
 **Where**: `.specs/features/banca-parecer/validation.md` (new)
@@ -1644,10 +1644,10 @@ graph LR
 
 **Done when**:
 
-- [ ] `validation.md` com veredito PASS ou lacunas viradas em tarefas de correção (até 3 voltas)
-- [ ] `python3 <skill-dir>/scripts/validate_state.py banca-parecer` passa
-- [ ] A árvore real fica igual à de antes do sensor (`git status --porcelain`)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] `validation.md` com veredito PASS ou lacunas viradas em tarefas de correção (até 3 voltas)
+- [x] `python3 <skill-dir>/scripts/validate_state.py banca-parecer` passa
+- [x] A árvore real fica igual à de antes do sensor (`git status --porcelain`)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
 
 **Tests**: none
 **Gate**: build
