@@ -179,7 +179,7 @@ Com `docker exec -it dashboard_db psql -U <superusuario> -d progressao`:
 
 ## Deploy das normas (feature `normativo`)
 
-Esta seção descreve o procedimento; **nada foi executado**. **Push e deploy só com a autorização explícita do usuário**, como nos outros deploys. A versão traz a migração `0010_norms`, as sete normas semeadas, a ligação das estruturas de carreira e da tabela oficial às normas, a titulação das classes C e D da estrutura da Lei 15.141/2025, os alertas com a norma e a página "Normas". Ver a AD-024 em `.specs/STATE.md`.
+Esta seção descreve o procedimento, executado em 2026-11-23 junto com a banca e o Parecer (registro em "Deploy executado em 2026-11-23", ao fim da seção da banca). **Push e deploy só com a autorização explícita do usuário**, como nos outros deploys. A versão traz a migração `0010_norms`, as sete normas semeadas, a ligação das estruturas de carreira e da tabela oficial às normas, a titulação das classes C e D da estrutura da Lei 15.141/2025, os alertas com a norma e a página "Normas". Ver a AD-024 em `.specs/STATE.md`.
 
 ### O que muda na VM
 
@@ -219,7 +219,7 @@ Com `docker exec -it dashboard_db psql -U <superusuario> -d progressao`:
 
 ## Deploy da banca e do Parecer (feature `banca-parecer`)
 
-Esta seção descreve o procedimento; **nada foi executado**. **Push e deploy só com a autorização explícita do usuário**, como nos outros deploys. A versão traz a migração `0011_board_opinion`, a portaria da banca lida pela IA, o Parecer e o Requerimento como documentos gerados, o checklist do dossiê e as Etapas 6 e 7 (o botão Concluir passa da Etapa 5 para a Etapa 7). Ver a AD-025 em `.specs/STATE.md`.
+Esta seção descreve o procedimento, executado em 2026-11-23 (registro em "Deploy executado em 2026-11-23", ao fim da seção). **Push e deploy só com a autorização explícita do usuário**, como nos outros deploys. A versão traz a migração `0011_board_opinion`, a portaria da banca lida pela IA, o Parecer e o Requerimento como documentos gerados, o checklist do dossiê e as Etapas 6 e 7 (o botão Concluir passa da Etapa 5 para a Etapa 7). Ver a AD-025 em `.specs/STATE.md`.
 
 ### O que muda na VM
 
@@ -251,6 +251,14 @@ Com `docker exec -it dashboard_db psql -U <superusuario> -d progressao`:
 4. Executor: o backend sobe sem erro nos logs (`app.documents.worker` não registra `recover error_type` nem `runner error_type`); a ordem do executor é geração, redação, leitura da portaria e OCR, e a leitura interrompida por um reinício volta a `FALHOU` com `INTERROMPIDA` (AD-008, PORT-07).
 5. `GET /api/health` 200 depois de `docker compose up -d --no-build` e `docker compose restart nginx`; `GET /api/dossier-order` segue com o formato de antes e `GET /api/processes/<id>/dossier` (autenticado) devolve os nove itens.
 6. Fumaça só com dados sintéticos (nunca `Documentos/` nem `Modelos/`): num processo sintético em andamento com Tabela `PRONTO`, enviar uma portaria sintética (lida pela IA ou, se a IA falhar, digitada), conferir número, data e membros com a página de origem; escolher a conclusão e gerar o Parecer (DOCX e PDF com o mesmo Total geral da Tabela); digitar a cidade e gerar o Requerimento; abrir a Etapa 7 e ver Requerimento, Tabela, Relatório, Comprovante, Portaria da banca e Parecer como gerados ou registrados, marcar "Currículo Lattes" como entregue e recarregar; mudar uma atividade validada e ver `TABELA_DESATUALIZADA`; abrir a confirmação de concluir e ver o aviso dos pendentes. Remover o processo e o docente sintéticos ao fim.
+
+### Deploy executado em 2026-11-23
+
+- Commit publicado: `dd5e21f` (`git archive`; imagens construídas fora da VM; `0010_norms.py`, `0011_board_opinion.py` e `seed_data/norms.json` conferidos na imagem; pacote do frontend limpo em `scripts/check_bundle_no_secrets.sh`). Gate antes do envio: backend `ruff` limpo e 6312 testes passados; frontend `lint`, `build` e 765 testes. `docker-compose.yml`, `deploy/`, `nginx/`, os `Dockerfile` e os `requirements` não mudaram desde `f18f162`. Foram juntos o `normativo` (migração `0010`) e o `banca-parecer` (migração `0011`), mais os commits de `inteligencia-documental` posteriores a `f18f162`, sem outra migração.
+- Antes: nenhuma geração `GERANDO` e nenhum documento `PROCESSANDO`. Retorno: imagens `progressao-funcional-backend:normativo-banca-pre-dd5e21f` e `progressao-funcional-frontend:normativo-banca-pre-dd5e21f` (as de `f18f162`), dump `backups/progressao-pre-normativo-banca-parecer-2026-11-23.sql.gz` (modo 600, `gzip -t` ok) e cópias de `docker-compose.override.yml` e `.env` em `backups/`.
+- Depois: `alembic current` = `0011 (head)`; `GET /api/health` 200 (direto e pelo endereço público); sem erro nos logs. Sete normas semeadas, sem arquivo; as duas estruturas de carreira e as versões da tabela oficial ligadas às normas; classes C e D da Lei 15.141 com doutorado; 7 eventos de auditoria de norma, 2 de carreira e 2 de tabela, **iguais depois de reiniciar o backend** (seed idempotente); `generated_kind` com os cinco valores; as quatro tabelas da banca criadas e vazias; 1 processo em `RASCUNHO`, 8 documentos gerados `PRONTO`, 5 `REQUER_REVISAO` e 51 `PROCESSADO` como estavam.
+- Fumaça sintética pelo endereço público (docentes de SIAPE fictício 9999101 a 9999103, processos sintéticos excluídos ao fim): 14 de 15 verificações passaram e a 14 passou em parte. Normativo: normas, titulação (`TITULACAO_INSUFICIENTE` com o Manual da PROGEP só para mestrado), salto A1 para C1 como `ALERTA` com início do processo, mínimo não definido com a norma, criar e arquivar norma. Banca: portaria digitada, conclusão sem valor inicial, `CONCLUSAO_AUSENTE`, Parecer com o Total igual ao da Tabela (DOCX, PDF e resumo), Requerimento com a data do Parecer, checklist com nove itens e marca "Entregue", `TABELA_DESATUALIZADA`, aviso de pendentes na conclusão, leitura real da portaria pela IA (`LIDA`), `PORTARIA_EXISTENTE` e substituição, `PROCESSO_SOMENTE_LEITURA` no arquivado. Não exercida: o 404 de um DOCENTE que não é dono do processo (não há rota para excluir usuário). Sem `Traceback`, `ERROR` nem 5xx nos logs.
+- Resíduos da fumaça (não há rota de exclusão): a norma arquivada `SMOKE-TESTE-NORMA` e três docentes sintéticos arquivados.
 
 ### Voltar à versão anterior
 
