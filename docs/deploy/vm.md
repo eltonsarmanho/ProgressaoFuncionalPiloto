@@ -357,9 +357,23 @@ Quando uma versão nova da tabela oficial substituir a atual (AD-023, `AdoptSupe
 
 ### Voltar à versão anterior
 
-- **Caminho seguro: restaurar o dump** `progressao-pre-gestao-tabelas-<data>.sql.gz` e trocar as etiquetas das imagens para as do ponto de retorno (`docker tag progressao-funcional-backend:tabelas-pre-<commit> progressao-funcional-backend:latest`, o mesmo para o `frontend`, e `docker compose up -d --no-build`).
-- O `downgrade` da `0012` só remove a tabela `scoring_unit_defaults`: **perde as marcações em uso** e deixa as tabelas, as versões e a auditoria como estão. Tabelas excluídas e arquivadas por pessoas depois do deploy não voltam sem o dump; as linhas de auditoria que o dump não tem somem com ele.
-- A imagem anterior ignora a tabela nova e volta a sugerir por vigência; não há dado novo em outra tabela, então voltar só a imagem funciona se nenhuma versão ou tabela foi excluída (a imagem anterior também lê o campo `archived`, que já existia).
+**Não basta trocar só a etiqueta das imagens.** Com `alembic_version` em `0012`, a imagem anterior não tem a revisão `0012`: o `alembic upgrade head` do `docker-entrypoint.sh` falha com "Can't locate revision identified by '0012'" e, como o script roda com `set -eu`, o contêiner sai e o Docker o reinicia em laço. Há duas rotas, e ambas põem o banco de volta em `0011` **antes** de subir a imagem anterior.
+
+**Rota A: `downgrade` com a imagem nova (mantém os dados feitos depois do deploy, perde as marcações).**
+
+1. Com o contêiner do backend ainda na imagem nova: `docker compose exec backend alembic downgrade 0011`. Remove a tabela `scoring_unit_defaults` (as marcações de versão em uso) e deixa as tabelas, as versões e a auditoria como estão.
+2. Conferir: `docker compose exec backend alembic current` mostra `0011` (sem `(head)`, porque a imagem nova tem a `0012` como cabeça) e `SELECT to_regclass('scoring_unit_defaults');` no `psql` devolve nulo.
+3. Parar o backend para ele não reiniciar sobre o esquema antigo: `docker compose stop backend`.
+4. Só então trocar as etiquetas para as do ponto de retorno (`docker tag progressao-funcional-backend:tabelas-pre-<commit> progressao-funcional-backend:latest`, o mesmo para o `frontend`) e subir: `docker compose up -d --no-build` e `docker compose restart nginx`.
+5. Conferir: `alembic current` no backend termina em `0011 (head)`, `docker logs progressao-funcional-backend-1` sem erro de migração, `GET /api/health` 200.
+
+Se o contêiner da imagem nova não estiver de pé, use `docker compose run --rm --entrypoint alembic backend downgrade 0011` (o `docker-entrypoint.sh` ignora argumentos e rodaria `alembic upgrade head` de novo, o que repõe a `0012`) ou a rota B.
+
+**Rota B: restaurar o dump** `progressao-pre-gestao-tabelas-<data>.sql.gz` (feito com o banco em `0011`), trocar as etiquetas das imagens para as do ponto de retorno e subir com `docker compose up -d --no-build`. O dump devolve também `alembic_version = 0011`, então a imagem anterior sobe. É o caminho seguro quando algo mais saiu do esperado.
+
+- O que cada rota perde: a rota A perde só as marcações em uso (a imagem anterior volta a sugerir por vigência); tabelas e versões excluídas ou arquivadas por pessoas depois do deploy não voltam sem o dump. A rota B perde tudo o que foi gravado depois do dump, inclusive as linhas de auditoria, que somem com ele.
+- Depois de voltar pela rota A e de subir a versão nova de novo, a semente **não remarca** FASI e IFCH (a auditoria guarda os eventos de marcação anteriores, GTAB-09): marcar a versão oficial das duas unidades pela tela.
+- Não há dado novo em outra tabela; a imagem anterior também lê o campo `archived`, que já existia.
 
 ### Commits a publicar
 
