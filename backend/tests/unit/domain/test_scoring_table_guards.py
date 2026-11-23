@@ -5,6 +5,8 @@ from dataclasses import replace
 from datetime import date
 from uuid import uuid4
 
+import pytest
+
 from app.domain.entities.scoring import ScoringTableVersion, TableStatus
 from app.domain.rules.scoring_table_guards import (
     TableFacts,
@@ -79,10 +81,19 @@ def test_a_superseded_version_of_the_official_table_can_be_deleted():
     assert version_delete_blockers(free_version(is_official=True, is_superseded=True)) == []
 
 
-def test_a_superseded_official_version_still_has_the_other_blockers():
-    facts = free_version(is_official=True, is_superseded=True, process_count=1)
+@pytest.mark.parametrize(
+    ("changes", "code"),
+    [
+        ({"process_count": 1}, "VERSAO_USADA_POR_PROCESSO"),
+        ({"default_unit_acronyms": ("FASI",)}, "VERSAO_EM_USO_DE_UNIDADE"),
+        ({"replaces_other": True}, "VERSAO_SUBSTITUI_OUTRA"),
+    ],
+    ids=["used-by-process", "in-use-of-unit", "replaces-other"],
+)
+def test_a_superseded_official_version_still_has_the_other_blockers(changes, code):
+    facts = free_version(is_official=True, is_superseded=True, **changes)
 
-    assert codes(version_delete_blockers(facts)) == ["VERSAO_USADA_POR_PROCESSO"]
+    assert codes(version_delete_blockers(facts)) == [code]
 
 
 def test_a_version_used_by_processes_says_how_many():
@@ -182,6 +193,9 @@ def test_each_table_delete_blocker_alone():
     marked = table_delete_blockers(free_table(default_unit_acronyms=("FASI",)))
 
     assert codes(official) == ["TABELA_OFICIAL_PROTEGIDA"]
+    assert official[0].message == (
+        "A tabela oficial da UFPA não pode ser excluída; arquive-a se não for mais usada"
+    )
     assert codes(used) == ["VERSAO_USADA_POR_PROCESSO"]
     assert used[0].message == (
         "A tabela tem versões usadas por 2 processos e não pode ser excluída"

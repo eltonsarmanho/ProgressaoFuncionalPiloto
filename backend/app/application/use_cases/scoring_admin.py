@@ -96,8 +96,9 @@ def _views(facts: _VersionFacts, versions) -> list[VersionView]:
 
 @dataclass(frozen=True)
 class ProtectedCatalog:
-    """The table the seed recreates at every start: it and all its versions are never deleted
-    (GTAB-42). The name comes from the wiring, so this layer reads no infrastructure data."""
+    """The table the seed recreates at every start: it and its current (not superseded) version
+    are never deleted (GTAB-42, A14). The name comes from the wiring, so this layer reads no
+    infrastructure data."""
 
     official_table_name: str
 
