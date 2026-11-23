@@ -310,12 +310,20 @@ describe("ADMUI-01: lista de tabelas e versões", () => {
     const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
     expect(screen.getByTestId("location")).toHaveTextContent(/^\/administracao\/tabelas$/);
     expect(within(fasi).getByRole("button", { name: "Ver critérios de FASI 2026" })).toBeInTheDocument();
+    for (const card of [fasi, screen.getByRole("region", { name: "Tabela do IFCH" })]) {
+      const names = within(card).getAllByRole("button").map((button) => button.getAttribute("aria-label"));
+      expect(names.length).toBeGreaterThan(0);
+      for (const name of names) expect(name).toMatch(/^Ver critérios de /);
+    }
+    expect(screen.queryByRole("button", { name: "Nova tabela" })).not.toBeInTheDocument();
     await user.click(within(fasi).getByRole("button", { name: "Ver critérios de FASI 2026" }));
     const criteria = await screen.findByRole("region", { name: "Critérios de Tabela da FASI · FASI 2026" });
     expect(within(criteria).getByText("Orientação de TCC")).toBeInTheDocument();
-    for (const name of ["Duplicar tabela", "Criar nova versão", "Importar CSV"]) {
-      expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
-    }
+    expect(
+      screen.queryByRole("button", {
+        name: /Duplicar|Nova versão|Importar CSV|Excluir|Arquivar|Desarquivar|Unidades da tabela|como em uso|Remover marcação|Histórico|Editar/,
+      }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Nome da nova tabela")).not.toBeInTheDocument();
   });
 
