@@ -451,7 +451,7 @@ graph LR
 
 #### T11: Arquivar e desarquivar tabela
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ArchiveScoringTable.execute(actor, table_id, archive)` devolve a `TableView`: `require_admin`, 404, trava a tabela (`lock_table`) e, ao arquivar, relê as marcações e recusa com 409 `TABELA_COM_VERSAO_EM_USO` listando as siglas quando alguma unidade tem versão da tabela em uso (`table_archive_blockers`). Auditoria na entidade `scoring_table`: `{archived: {before, after}}`, ação `ARCHIVE` ao arquivar e `UPDATE` ao desarquivar; arquivar o arquivado e desarquivar o não arquivado não gravam evento. Desarquivar não remarca nenhuma versão.
 **Where**: `backend/app/application/use_cases/scoring_admin.py` (modify)
@@ -466,11 +466,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_admin_archive.py` (novo): arquivar e desarquivar com o evento certo e o usuário; repetir não grava evento; recusa 409 com o código e as siglas quando uma unidade tem a versão da tabela em uso, e a tabela continua não arquivada; não ADMIN 403; tabela inexistente 404; desarquivar não cria marcação
-- [ ] Corrida: arquivar enquanto outra unidade de trabalho marca uma versão da tabela termina com a marcação recusada ou o arquivamento recusado, nunca arquivada e marcada ao mesmo tempo
-- [ ] Uma tabela arquivada continua legível: `get_table`, `get_version` e a pontuação de um processo que a usa funcionam (afirmar o total de um processo com tabela arquivada)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_admin_archive.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_admin_archive.py` (novo): arquivar e desarquivar com o evento certo e o usuário; repetir não grava evento; recusa 409 com o código e as siglas quando uma unidade tem a versão da tabela em uso, e a tabela continua não arquivada; não ADMIN 403; tabela inexistente 404; desarquivar não cria marcação
+- [x] Corrida: arquivar enquanto outra unidade de trabalho marca uma versão da tabela termina com a marcação recusada ou o arquivamento recusado, nunca arquivada e marcada ao mesmo tempo
+- [x] Uma tabela arquivada continua legível: `get_table`, `get_version` e a pontuação de um processo que a usa funcionam (afirmar o total de um processo com tabela arquivada)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_admin_archive.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted

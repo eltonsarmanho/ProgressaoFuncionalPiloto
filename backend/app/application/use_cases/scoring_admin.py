@@ -6,7 +6,7 @@ Every administration write is ADMIN-only and audited (entities `scoring_table` a
 
 import copy
 import uuid
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import date, timedelta
 from decimal import Decimal
@@ -26,6 +26,7 @@ from app.domain.entities.scoring import (
 from app.domain.entities.user import User
 from app.domain.errors import Conflict, DomainError, NotFound, ValidationFailed
 from app.domain.repositories.ports import ScoringTableRecord, UnitOfWork
+from app.domain.rules.scoring_table_guards import TableFacts, table_archive_blockers
 
 TABLE_ENTITY = "scoring_table"
 VERSION_ENTITY = "scoring_version"
@@ -109,6 +110,30 @@ class GetScoringVersion:
             if version is None:
                 raise NotFound("Versão da tabela de pontuação não encontrada")
             return _views(_facts(uow), [version])[0]
+
+
+def _default_acronyms(uow: UnitOfWork, version_ids: Collection[UUID]) -> tuple[str, ...]:
+    """The acronyms of the units that have one of the versions as the one in use, sorted."""
+    acronyms = []
+    for default in uow.scoring_tables.list_unit_defaults():
+        if default.version_id in version_ids:
+            unit = uow.units.get(default.unit_id)
+            acronyms.append(unit.acronym if unit else str(default.unit_id))
+    return tuple(sorted(acronyms))
+
+
+def _table_facts(
+    uow: UnitOfWork, table: ScoringTableRecord, official_table_name: str | None = None
+) -> TableFacts:
+    """What the blocking rules read about a table (GTAB-25, GTAB-29), from the current state."""
+    version_ids = {v.id for v in uow.scoring_tables.list_version_headers(table.id)}
+    counts = uow.scoring_tables.version_process_counts()
+    return TableFacts(
+        is_official=official_table_name is not None and table.name == official_table_name,
+        process_count=sum(counts.get(version_id, 0) for version_id in version_ids),
+        default_unit_acronyms=_default_acronyms(uow, version_ids),
+        table_archived=table.archived,
+    )
 
 
 def _audit_table(table: ScoringTableRecord) -> dict:
@@ -633,6 +658,50 @@ class SetTableUnits:
                 _audit_table(after),
             )
             view = TableView(after, _views(_facts(uow), uow.scoring_tables.list_versions(table_id)))
+            uow.commit()
+        return view
+
+
+class ArchiveScoringTable:
+    """GTAB-23, GTAB-25: archive or unarchive a table; it acts at once, without justification.
+
+    The table is locked before the marks are read, so a mark that is being written either
+    commits first (the archiving is refused) or waits and finds the table archived (it is
+    refused, GTAB-24). Unarchiving never marks a version again.
+    """
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], audit: AuditService):
+        self._uow_factory = uow_factory
+        self._audit = audit
+
+    def execute(self, actor: User, table_id: UUID, archive: bool) -> TableView:
+        require_admin(actor)
+        with self._uow_factory() as uow:
+            repo = uow.scoring_tables
+            if not repo.lock_table(table_id):
+                raise NotFound("Tabela de pontuação não encontrada")
+            table = repo.get_table(table_id)
+            if table is None:
+                raise NotFound("Tabela de pontuação não encontrada")
+            if archive and not table.archived:
+                blockers = table_archive_blockers(_table_facts(uow, table))
+                if blockers:
+                    raise Conflict(blockers[0].message, code=blockers[0].code)
+            if table.archived != archive:
+                repo.set_table_archived(table_id, archive)
+            self._audit.record(
+                uow,
+                actor.id,
+                TABLE_ENTITY,
+                table_id,
+                AuditAction.ARCHIVE if archive else AuditAction.UPDATE,
+                {"archived": table.archived},
+                {"archived": archive},
+            )
+            view = TableView(
+                repo.get_table(table_id),
+                _views(_facts(uow), repo.list_version_headers(table_id)),
+            )
             uow.commit()
         return view
 
