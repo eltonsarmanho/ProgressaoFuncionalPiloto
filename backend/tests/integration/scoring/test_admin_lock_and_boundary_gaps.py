@@ -7,9 +7,7 @@ unpinned (verification of gestao-tabelas). Tables are synthetic.
   ClearUnitDefaultVersion);
 - deleting a version that is not the latest does not reopen the previous one (A11);
 - deleting the latest version reopens the previous one only if the deleted one closed it
-  (ADM-05), which the CREATE event of the deleted version records (fix F1 of validation.md);
-- creating a version while the latest one is deleted is not a deadlock (the table lock of
-  CreateVersionFrom and ImportCriteriaCsv, fix F8).
+  (ADM-05), which the CREATE event of the deleted version records (fix F1 of validation.md).
 """
 
 from datetime import date
@@ -202,3 +200,35 @@ def test_creating_a_version_while_the_latest_one_is_being_deleted_is_not_a_deadl
         headers = uow.scoring_tables.list_version_headers(table.table.id)
     assert date(2026, 1, 1) in {v.valid_from for v in headers}
 
+
+def test_deleting_a_table_waits_for_a_version_being_created_and_removes_it_too(world, uc, engine):
+    table = uc.create_table.execute(
+        world.admin, "Tabela Sintética Excluída", [], date(2020, 1, 1), None, REFERENCE,
+        base_version_id=world.official_version.id,
+    )
+    first = table.versions[0].version
+    gate = Gate()
+    holding = hooked_factory(engine, ("lock_table",), lambda _n: gate.hold())
+    slow_creation = scoring_admin.CreateVersionFrom(holding, world.audit)
+    creating = Worker(
+        lambda: slow_creation.execute(
+            world.admin, table.table.id, first.id, date(2026, 1, 1), None, REFERENCE
+        )
+    ).start()
+    gate.wait_reached()  # the creation holds the table lock and has not written anything yet
+    deleting = Worker(
+        lambda: scoring_admin.DeleteScoringTable(
+            world.uow_factory, world.audit, ProtectedCatalog(OFFICIAL_TABLE)
+        ).execute(world.admin, table.table.id)
+    ).start()
+    wait_until_blocked(engine)  # the deletion has to wait for the table lock
+
+    gate.release()
+    creating.join()
+    deleting.join()
+
+    assert creating.error is None
+    assert deleting.error is None  # without its own table lock it would meet the new version
+    with world.uow_factory() as uow:
+        assert uow.scoring_tables.get_table(table.table.id) is None
+        assert uow.scoring_tables.get_version(first.id) is None
