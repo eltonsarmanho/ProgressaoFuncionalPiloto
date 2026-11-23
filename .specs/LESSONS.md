@@ -270,6 +270,54 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: PMOD-02, PMOD-05 (validation.md V1, V2) (documents)
 - last seen: 2026-11-23T04:24:51Z
 
+### L-044 - Give every lock taken by a concurrent use case a race test that fails when only that lock is removed.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `use-cases` · harmful: 0
+- features: gestao-tabelas
+- evidence: Mb47 validation.md (use-cases)
+- last seen: 2026-11-23T17:12:01Z
+
+### L-045 - Test a rule that applies only to the latest element on a middle element too, not only on the first and last.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `use-cases` · harmful: 0
+- features: gestao-tabelas
+- evidence: Mb71 validation.md (use-cases)
+- last seen: 2026-11-23T17:12:01Z
+
+### L-046 - Undo a change from the recorded event that made it, not from a date or value pattern that another action can also produce.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `use-cases` · harmful: 0
+- features: gestao-tabelas
+- evidence: GTAB-26 scoring_admin.py:950 (use-cases)
+- last seen: 2026-11-23T17:12:02Z
+
+### L-047 - Measure the rendered size of every control in every state of a screen against a stated minimum, because a CSS test covers only the selectors it names.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend-layout` · harmful: 0
+- features: gestao-tabelas
+- evidence: GTAB-38 styles.css:526 (frontend-layout)
+- last seen: 2026-11-23T17:12:02Z
+
+### L-048 - When a badge needs two conditions, test the case where only one of them holds.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: gestao-tabelas
+- evidence: Mf37 validation.md (frontend)
+- last seen: 2026-11-23T17:12:02Z
+
+### L-049 - When a spec lists two conditions and one implies the other, state which one decides or test each alone.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: gestao-tabelas
+- evidence: Mb66 validation.md (spec)
+- last seen: 2026-11-23T17:12:02Z
+
+### L-050 - Rehearse the rollback path of a migration with the previous image before documenting it as safe.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `deploy-docs` · harmful: 0
+- features: gestao-tabelas
+- evidence: docs/deploy/vm.md:362 (deploy-docs)
+- last seen: 2026-11-23T17:12:02Z
+
+### L-051 - When several refusals can apply at once, state their order in the spec.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: gestao-tabelas
+- evidence: GTAB-03 validation.md (spec)
+- last seen: 2026-11-23T17:12:02Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
