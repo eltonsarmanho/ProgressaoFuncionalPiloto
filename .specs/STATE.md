@@ -217,6 +217,15 @@
 - **Date**: 2026-11-23
 - **Status**: active
 
+### AD-027
+- **Decision**: A Etapa 1 e a API de processos deixam de ter os cinco campos "Nome do responsável", "Cargo do responsável", "Portaria de designação do responsável", "Unidade administrativa responsável" e "Observações", e o alerta `DADOS_INCOMPLETOS` deixa de existir. As cinco colunas de `functional_processes` ficam no banco com os valores já gravados, sem leitura, exibição nem alteração; o corpo de `POST` e `PUT` que ainda traga as chaves antigas é aceito e as ignora.
+- **Reason**: Pergunta do usuário em 2026-11-23: nenhum documento gerado (Tabela, Relatório, Comprovante, Requerimento e Parecer) lê esses campos; o único efeito era o alerta de campo em branco. O usuário escolheu tirá-los da tela e do alerta.
+- **Trade-off**: As colunas ficam mortas no banco (retirá-las exigiria uma migração que se desfaz mal e nada ganha, como em AD-026). Se um documento oficial passar a pedir o responsável, o campo volta por uma feature nova, com o documento e a posição definidos.
+- **Implementation**: feature `processo-enxuto` (ENX-01 a ENX-07), sem migração e sem semeadura. Imagens novas do backend e do frontend no deploy, que só sai com a autorização do usuário.
+- **Scope**: `processo-enxuto`; toca `fundacao` (PROC-01 e o alerta `DADOS_INCOMPLETOS`) e a Etapa 1 do frontend
+- **Date**: 2026-11-23
+- **Status**: active
+
 ## Handoff
 
 - **Medido em 2026-11-20** (antes do commit que grava este Handoff): HEAD `93aa44d`, branch `feat/inteligencia-documental`, `git status --porcelain` só com `requeriment.txt` e `test/` sem versionar (o `stash@{0}` antigo não é desta feature e não foi tocado). O `origin/feat/inteligencia-documental` está em `a136faf`.
