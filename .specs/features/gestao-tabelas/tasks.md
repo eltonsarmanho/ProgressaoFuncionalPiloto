@@ -241,7 +241,7 @@ graph LR
 
 #### T4: Casos de uso: marcar e desmarcar a versão em uso
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `SetUnitDefaultVersion(actor, unit_id, version_id)` e `ClearUnitDefaultVersion(actor, unit_id)` em `scoring_defaults.py` (novo), com a constante `UNIT_DEFAULT_ENTITY = "unit_scoring_default"`. Ordem: `require_admin` (403); versão existe (404); unidade existe e não está arquivada, e a tabela da versão está associada a ela (422 no campo `unit_id`, com verificação própria, porque `_check_units` olha só `None` e usa o campo `unit_ids`); trava na ordem fixa unidade, tabela, versão (`lock_unit`, `lock_table`, `lock_version`); **relê** a versão e a tabela sob a trava e então confere versão não substituída (409 `VERSAO_SUBSTITUIDA`) e tabela não arquivada (409 `TABELA_ARQUIVADA`); grava e audita. Auditoria: entidade `unit_scoring_default`, `entity_id` = id da unidade, `{version_id: {before, after}}`, ação `CREATE` na primeira marcação, `UPDATE` na troca e `DELETE` ao desmarcar; marcar a mesma versão de novo e desmarcar quem não tem marcação não gravam evento.
 **Where**: `backend/app/application/use_cases/scoring_defaults.py` (new)
@@ -256,11 +256,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_unit_defaults.py` (novo): o ADMIN marca (evento `CREATE` com o usuário), troca (`UPDATE` com antes e depois), marca de novo a mesma versão (nenhum evento novo), desmarca (`DELETE`) e desmarca quem não tem marcação (nenhum evento)
-- [ ] Cada recusa e a ordem delas: não ADMIN 403; versão inexistente 404; unidade arquivada ou inexistente e tabela não associada à unidade, 422 em `unit_id`; versão substituída 409 `VERSAO_SUBSTITUIDA`; tabela arquivada 409 `TABELA_ARQUIVADA`; com tabela arquivada e versão substituída juntas vale o 422 antes dos 409
-- [ ] Corrida (duas unidades de trabalho, a primeira segura a trava e a segunda espera): duas marcações da mesma unidade com versões diferentes terminam com uma linha só, um evento `CREATE` e um `UPDATE`, e a versão final é a da última; marcar uma versão enquanto a tabela dela está sendo arquivada termina em 409 `TABELA_ARQUIVADA` e sem marcação, ou com a marcação e o arquivamento recusado, nunca os dois
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_unit_defaults.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_unit_defaults.py` (novo): o ADMIN marca (evento `CREATE` com o usuário), troca (`UPDATE` com antes e depois), marca de novo a mesma versão (nenhum evento novo), desmarca (`DELETE`) e desmarca quem não tem marcação (nenhum evento)
+- [x] Cada recusa e a ordem delas: não ADMIN 403; versão inexistente 404; unidade arquivada ou inexistente e tabela não associada à unidade, 422 em `unit_id`; versão substituída 409 `VERSAO_SUBSTITUIDA`; tabela arquivada 409 `TABELA_ARQUIVADA`; com tabela arquivada e versão substituída juntas vale o 422 antes dos 409
+- [x] Corrida (duas unidades de trabalho, a primeira segura a trava e a segunda espera): duas marcações da mesma unidade com versões diferentes terminam com uma linha só, um evento `CREATE` e um `UPDATE`, e a versão final é a da última; marcar uma versão enquanto a tabela dela está sendo arquivada termina em 409 `TABELA_ARQUIVADA` e sem marcação, ou com a marcação e o arquivamento recusado, nunca os dois
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_unit_defaults.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted
