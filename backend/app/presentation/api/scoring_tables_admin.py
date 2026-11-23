@@ -33,12 +33,18 @@ ContainerDep = Annotated[Container, Depends(get_container)]
 UserDep = Annotated[User, Depends(current_user)]
 
 
+async def table_out(container: Container, table_id: UUID) -> TableOut:
+    """The table as the list shows it, with the reasons that block its actions (GTAB-36)."""
+    view = await run_in_threadpool(container.get_scoring_table.execute, table_id)
+    return TableOut.of(view)
+
+
 @router.post("/scoring-tables", response_model=TableOut, status_code=201)
 async def create_table(body: TableCreateIn, actor: UserDep, container: ContainerDep) -> TableOut:
     view = await run_in_threadpool(
         container.create_scoring_table.execute, actor, **body.model_dump()
     )
-    return TableOut.of(view)
+    return await table_out(container, view.table.id)
 
 
 @router.post("/scoring-tables/{table_id}/duplicate", response_model=TableOut, status_code=201)
@@ -48,7 +54,7 @@ async def duplicate_table(
     view = await run_in_threadpool(
         container.duplicate_scoring_table.execute, actor, table_id, body.new_name, body.unit_ids
     )
-    return TableOut.of(view)
+    return await table_out(container, view.table.id)
 
 
 @router.post("/scoring-tables/{table_id}/versions", response_model=VersionOut, status_code=201)
@@ -139,7 +145,7 @@ async def set_units(
     view = await run_in_threadpool(
         container.set_table_units.execute, actor, table_id, body.unit_ids
     )
-    return TableOut.of(view)
+    return await table_out(container, view.table.id)
 
 
 @router.get("/scoring-tables/{table_id}/history", response_model=TableHistoryOut)
@@ -167,13 +173,13 @@ async def clear_unit_default(unit_id: UUID, actor: UserDep, container: Container
 @router.post("/scoring-tables/{table_id}/archive", response_model=TableOut)
 async def archive_table(table_id: UUID, actor: UserDep, container: ContainerDep) -> TableOut:
     view = await run_in_threadpool(container.archive_scoring_table.execute, actor, table_id, True)
-    return TableOut.of(view)
+    return await table_out(container, view.table.id)
 
 
 @router.post("/scoring-tables/{table_id}/unarchive", response_model=TableOut)
 async def unarchive_table(table_id: UUID, actor: UserDep, container: ContainerDep) -> TableOut:
     view = await run_in_threadpool(container.archive_scoring_table.execute, actor, table_id, False)
-    return TableOut.of(view)
+    return await table_out(container, view.table.id)
 
 
 @router.get(

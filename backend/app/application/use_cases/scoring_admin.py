@@ -195,6 +195,23 @@ class ListScoringTables:
             ]
 
 
+class GetScoringTable:
+    """One table as `ListScoringTables` shows it, with the reasons that block its actions: the
+    answer of the routes that write a table (the reasons are the same as in the list)."""
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], catalog: ProtectedCatalog):
+        self._uow_factory = uow_factory
+        self._catalog = catalog
+
+    def execute(self, table_id: UUID) -> TableView:
+        with self._uow_factory() as uow:
+            table = uow.scoring_tables.get_table(table_id)
+            if table is None:
+                raise NotFound(TABLE_NOT_FOUND)
+            headers = uow.scoring_tables.list_version_headers(table_id)
+            return _table_view(table, headers, _reading(uow), self._catalog)
+
+
 class ListTableVersions:
     def __init__(self, uow_factory: Callable[[], UnitOfWork], catalog: ProtectedCatalog):
         self._uow_factory = uow_factory

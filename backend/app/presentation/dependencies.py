@@ -110,6 +110,7 @@ from app.application.use_cases.scoring_admin import (
     DeleteScoringTable,
     DeleteScoringVersion,
     DuplicateScoringTable,
+    GetScoringTable,
     GetScoringVersion,
     GetTableHistory,
     ImportCriteriaCsv,
@@ -200,6 +201,7 @@ class Container:
     update_career_version: UpdateCareerVersion
     list_scoring_tables: ListScoringTables
     list_table_versions: ListTableVersions
+    get_scoring_table: GetScoringTable
     get_scoring_version: GetScoringVersion
     create_scoring_table: CreateScoringTable
     duplicate_scoring_table: DuplicateScoringTable
@@ -373,6 +375,7 @@ def build_container(
         update_career_version=UpdateCareerVersion(uow_factory, audit),
         list_scoring_tables=ListScoringTables(uow_factory, protected_catalog),
         list_table_versions=ListTableVersions(uow_factory, protected_catalog),
+        get_scoring_table=GetScoringTable(uow_factory, protected_catalog),
         get_scoring_version=GetScoringVersion(uow_factory, protected_catalog),
         create_scoring_table=CreateScoringTable(uow_factory, audit),
         duplicate_scoring_table=DuplicateScoringTable(uow_factory, audit),

@@ -857,3 +857,55 @@ def test_the_preview_of_a_free_table_has_no_blocker_and_the_blockers_carry_count
             "acronyms": ["FASI"],
         }
     ]
+
+
+# --- F12: the answer of a write is the table as the list shows it, with the block reasons ---------
+
+
+def listed(client, table_id):
+    return next(t for t in client.get("/api/scoring-tables").json() if t["id"] == table_id)
+
+
+def test_the_answers_of_the_table_writes_carry_the_same_block_reasons_as_the_list(
+    client, admin, reference
+):
+    _, headers = admin
+    table = official(client)
+    new_body = {
+        "name": "Tabela Sintética Resposta",
+        "unit_ids": [],
+        "valid_from": "2026-01-01",
+        "norm_reference": REFERENCE,
+    }
+
+    writes = {
+        "units": lambda: client.put(
+            f"/api/scoring-tables/{table['id']}/units",
+            json={"unit_ids": [str(reference["FASI"].id)]},
+            headers=headers,
+        ),
+        "archive": lambda: client.post(
+            f"/api/scoring-tables/{table['id']}/archive", headers=headers
+        ),
+        "unarchive": lambda: client.post(
+            f"/api/scoring-tables/{table['id']}/unarchive", headers=headers
+        ),
+        "create": lambda: client.post("/api/scoring-tables", json=new_body, headers=headers),
+        "duplicate": lambda: client.post(
+            f"/api/scoring-tables/{table['id']}/duplicate",
+            json={"new_name": "Cópia Sintética Resposta"},
+            headers=headers,
+        ),
+    }
+
+    answers = {}
+    for name, write in writes.items():
+        response = write()
+        assert response.status_code in (200, 201), name
+        assert response.json() == listed(client, response.json()["id"]), name
+        answers[name] = response
+    # the official table is protected from deletion, and the answers say so (not a null)
+    assert answers["units"].json()["delete_blocked_reason"] == "TABELA_OFICIAL_PROTEGIDA"
+    # the only version of a new table cannot be deleted: its own reason is in the answer
+    [only] = answers["create"].json()["versions"]
+    assert only["delete_blocked_reason"] == "ULTIMA_VERSAO_DA_TABELA"
