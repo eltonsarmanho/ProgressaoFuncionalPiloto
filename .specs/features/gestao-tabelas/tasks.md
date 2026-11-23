@@ -750,7 +750,7 @@ graph LR
 
 #### T21: Aceitação do backend ponta a ponta
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Um cenário de API que percorre os testes independentes da spec com dados sintéticos: duas versões na FASI, marcar a segunda, abrir a pontuação de um processo novo e ver a segunda sugerida; trocar a marcação; um processo que já tinha tabela mantém a dele; arquivar a tabela e ver que some da sugestão e da escolha; desarquivar; excluir uma versão não usada; tentar excluir a usada e a oficial e ver o 409; excluir a tabela com a prévia; desmarcar uma unidade e reiniciar a semente (ela continua sem marcação); desarquivar uma tabela antiga e reiniciar a semente (continua desarquivada); conferir a auditoria de cada passo e que os documentos gerados e o total de um processo existente não mudaram.
 **Where**: `backend/tests/integration/api/test_gestao_tabelas_acceptance.py` (new)
@@ -765,10 +765,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro: o cenário acima, em passos, com asserções de status, corpo, auditoria e banco; um segundo cenário prova que um não ADMIN lê a lista e recebe 403 em toda escrita da feature
-- [ ] Gate completo do backend (fim da fase): o `full` passa; os dois testes instáveis conhecidos rodam de novo sozinhos antes de qualquer conclusão
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro: o cenário acima, em passos, com asserções de status, corpo, auditoria e banco; um segundo cenário prova que um não ADMIN lê a lista e recebe 403 em toda escrita da feature
+- [x] Gate completo do backend (fim da fase): o `full` passa; os dois testes instáveis conhecidos rodam de novo sozinhos antes de qualquer conclusão
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: full
