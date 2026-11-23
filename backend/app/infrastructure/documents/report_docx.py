@@ -13,7 +13,11 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Mm, Pt
 
 from app.domain.entities.report import DocumentSection, ReportDocument
-from app.infrastructure.documents.docx_support import add_page_footer, set_default_font
+from app.infrastructure.documents.docx_support import (
+    add_emblem,
+    add_page_footer,
+    set_default_font,
+)
 from app.infrastructure.documents.text_safety import xml_safe
 
 _SPACE_AFTER_PT = 4
@@ -73,6 +77,7 @@ def write_report_docx(model: ReportDocument, target: Path) -> None:
     section.page_width, section.page_height = Mm(210), Mm(297)
     section.left_margin, section.right_margin = Mm(page.margin_left_mm), Mm(page.margin_right_mm)
     section.top_margin, section.bottom_margin = Mm(page.margin_top_mm), Mm(page.margin_bottom_mm)
+    add_emblem(document)
     for line in model.header_lines:
         _centered(document, line)
     _centered(document, model.title, size=page.font_size_pt + 2)

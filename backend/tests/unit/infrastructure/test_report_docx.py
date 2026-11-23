@@ -3,17 +3,20 @@
 import zipfile
 from dataclasses import replace
 
+import pytest
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from lxml import etree
 
 from app.domain.entities.report import DocumentGroup, DocumentSection
+from app.infrastructure.documents import emblem
+from app.infrastructure.documents.emblem import EmblemUnavailable
 from app.infrastructure.documents.report_docx import write_report_docx
 from tests.unit.domain.test_table_document_totals import HEADER
 from tests.unit.infrastructure.report_model_support import report_document, synthetic_activities
 
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-NS = {"w": W}
+NS = {"w": W, "wp": "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"}
 
 
 def write(tmp_path, model):
@@ -35,7 +38,7 @@ def has_lines(texts: list[str], entry: str) -> bool:
 def test_the_document_opens_with_the_institutional_header_centered_then_the_title(tmp_path):
     document = Document(str(write(tmp_path, report_document())))
 
-    first = document.paragraphs[:3]
+    first = document.paragraphs[1:4]  # the paragraph of the emblem (BRAS-02) comes before them
     assert [p.text for p in first] == [
         "Serviço Público Federal",
         "Universidade Federal do Pará",
@@ -44,7 +47,7 @@ def test_the_document_opens_with_the_institutional_header_centered_then_the_titl
     assert all(p.alignment == WD_ALIGN_PARAGRAPH.CENTER for p in first)
     texts = [p.text for p in document.paragraphs]
     title = texts.index("RELATÓRIO DE ATIVIDADES")
-    assert title > 2
+    assert title > 3
     assert document.paragraphs[title].alignment == WD_ALIGN_PARAGRAPH.CENTER
 
 
@@ -189,3 +192,42 @@ def test_a_hundred_sections_worth_of_entries_are_written(tmp_path):
     texts = paragraphs(write(tmp_path, report_document(activities)))
 
     assert len([t for t in texts if t.startswith("Título: Projeto de pesquisa")]) == 101
+
+
+def test_the_first_element_is_the_centered_emblem_followed_by_the_three_header_lines(tmp_path):
+    # BRAS-02, BRAS-06
+    path = write(tmp_path, report_document())
+
+    with zipfile.ZipFile(path) as archive:
+        body = etree.fromstring(archive.read("word/document.xml")).find("w:body", NS)
+    first = body[0]
+    assert first.tag == f"{{{W}}}p"
+    assert first.find("w:pPr/w:jc", NS).get(f"{{{W}}}val") == "center"
+    assert int(first.find(".//wp:inline/wp:extent", NS).get("cx")) == 720_000
+    assert [p.text for p in Document(str(path)).paragraphs[:4]] == [
+        "",
+        "Serviço Público Federal",
+        "Universidade Federal do Pará",
+        "Faculdade de Testes",
+    ]
+
+
+def test_the_package_has_a_single_image(tmp_path):
+    # BRAS-07
+    path = write(tmp_path, report_document())
+
+    with zipfile.ZipFile(path) as archive:
+        media = [n for n in archive.namelist() if n.startswith("word/media/")]
+        body = etree.fromstring(archive.read("word/document.xml"))
+    assert len(media) == 1
+    assert len(body.findall(".//w:drawing", NS)) == 1
+
+
+def test_without_the_emblem_file_the_writer_raises_and_writes_nothing(monkeypatch, tmp_path):
+    # BRAS-10
+    monkeypatch.setattr(emblem, "EMBLEM_FILE", tmp_path / "ufpa.png")
+    target = tmp_path / "relatorio.docx"
+
+    with pytest.raises(EmblemUnavailable):
+        write_report_docx(report_document(), target)
+    assert not target.exists()

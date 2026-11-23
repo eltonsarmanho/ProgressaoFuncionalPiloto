@@ -552,7 +552,7 @@ graph LR
 
 #### T15: Brasão no Relatório de Atividades em DOCX
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `write_report_docx` chama `add_emblem(document)` antes das linhas do cabeçalho institucional.
 **Where**: `backend/app/infrastructure/documents/report_docx.py` (modify)
@@ -567,10 +567,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_report_docx.py`: o primeiro elemento do corpo é o parágrafo do brasão, centralizado, com 720 000 EMU de largura, e logo depois vêm as três linhas do cabeçalho; só há uma imagem no pacote; sem o arquivo levanta `EmblemUnavailable`
-- [ ] Testes existentes que mudam por BRAS-02: `test_the_document_opens_with_the_institutional_header_centered_then_the_title` (lê `document.paragraphs[:3]`) passa a ler as três linhas depois do parágrafo do brasão, e `test_nothing_is_added_beyond_the_header_the_titles_the_subtitles_and_the_draft` segue passando (o parágrafo do brasão tem texto vazio, que já está no conjunto esperado); o texto de todos os outros parágrafos é o de antes
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_report_docx.py`: o primeiro elemento do corpo é o parágrafo do brasão, centralizado, com 720 000 EMU de largura, e logo depois vêm as três linhas do cabeçalho; só há uma imagem no pacote; sem o arquivo levanta `EmblemUnavailable`
+- [x] Testes existentes que mudam por BRAS-02: `test_the_document_opens_with_the_institutional_header_centered_then_the_title` (lê `document.paragraphs[:3]`) passa a ler as três linhas depois do parágrafo do brasão, e `test_nothing_is_added_beyond_the_header_the_titles_the_subtitles_and_the_draft` segue passando (o parágrafo do brasão tem texto vazio, que já está no conjunto esperado); o texto de todos os outros parágrafos é o de antes
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
