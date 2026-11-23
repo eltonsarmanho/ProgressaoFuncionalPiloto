@@ -684,10 +684,15 @@ class SetTableUnits:
     def execute(self, actor: User, table_id: UUID, unit_ids: Sequence[UUID]) -> TableView:
         require_admin(actor)
         with self._uow_factory() as uow:
+            # The table is locked before the marks are read: a mark being written either
+            # commits first (the removal is refused) or waits and finds the unit out (GTAB-43).
+            if not uow.scoring_tables.lock_table(table_id):
+                raise NotFound(TABLE_NOT_FOUND)
             before = uow.scoring_tables.get_table(table_id)
             if before is None:
-                raise NotFound("Tabela de pontuação não encontrada")
+                raise NotFound(TABLE_NOT_FOUND)
             units = _check_units(uow, unit_ids)
+            self._refuse_units_in_use(uow, table_id, set(before.unit_ids) - set(units))
             uow.scoring_tables.set_table_units(table_id, units)
             after = uow.scoring_tables.get_table(table_id)
             self._audit.record(
@@ -702,6 +707,32 @@ class SetTableUnits:
             view = TableView(after, _views(_facts(uow), uow.scoring_tables.list_versions(table_id)))
             uow.commit()
         return view
+
+    @staticmethod
+    def _refuse_units_in_use(uow: UnitOfWork, table_id: UUID, removed: set[UUID]) -> None:
+        """GTAB-43: a unit that has a version of this table in use cannot be taken out of it."""
+        if not removed:
+            return
+        version_ids = {v.id for v in uow.scoring_tables.list_version_headers(table_id)}
+        in_use = [
+            default.unit_id
+            for default in uow.scoring_tables.list_unit_defaults()
+            if default.unit_id in removed and default.version_id in version_ids
+        ]
+        if not in_use:
+            return
+        acronyms = sorted(
+            unit.acronym for unit in map(uow.units.get, in_use) if unit is not None
+        )
+        subject, pronoun = ("das unidades", "retirá-las") if len(acronyms) > 1 else (
+            "da unidade",
+            "retirá-la",
+        )
+        raise Conflict(
+            f"A tabela tem versão em uso {subject} {', '.join(acronyms)}; "
+            f"desmarque a versão antes de {pronoun}",
+            code="UNIDADE_COM_VERSAO_EM_USO",
+        )
 
 
 class ArchiveScoringTable:

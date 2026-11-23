@@ -605,7 +605,7 @@ graph LR
 
 #### T16: Tirar unidade de tabela que a tem em uso é recusado
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `SetTableUnits` trava a tabela e recusa, com 409 `UNIDADE_COM_VERSAO_EM_USO` e as siglas no texto, a retirada de uma unidade cuja versão em uso pertence a essa tabela; as associações não mudam. Acrescentar unidades segue como antes.
 **Where**: `backend/app/application/use_cases/scoring_admin.py` (modify)
@@ -620,9 +620,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_admin_units.py` (novo): retirar a unidade que tem a versão da tabela em uso responde 409 com o código e a sigla e deixa as associações como estavam; retirar uma unidade sem marcação, ou cuja marcação é de outra tabela, funciona; acrescentar unidades funciona; não ADMIN 403; corrida: retirar a unidade enquanto outra unidade de trabalho marca uma versão da tabela termina com uma das duas recusada, nunca com marcação de unidade que saiu da tabela
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_admin_units.py tests/integration/api/test_scoring_admin_api.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_admin_units.py` (novo): retirar a unidade que tem a versão da tabela em uso responde 409 com o código e a sigla e deixa as associações como estavam; retirar uma unidade sem marcação, ou cuja marcação é de outra tabela, funciona; acrescentar unidades funciona; não ADMIN 403; corrida: retirar a unidade enquanto outra unidade de trabalho marca uma versão da tabela termina com uma das duas recusada, nunca com marcação de unidade que saiu da tabela
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_admin_units.py tests/integration/api/test_scoring_admin_api.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted
