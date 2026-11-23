@@ -422,7 +422,7 @@ graph LR
 
 #### T10: Regras puras de bloqueio (arquivar, excluir, somente leitura)
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Módulo puro com `Blocker(code, message)`, `VersionFacts` e `TableFacts` e as funções `version_delete_blockers`, `table_archive_blockers`, `table_delete_blockers` e `criteria_read_only_reason`. Fatos: processos que usam, siglas das unidades com a versão em uso, se substitui outra versão, se está substituída, se existe versão da mesma tabela com `valid_from` posterior (inclusive substituída), se é a única versão da tabela, se a tabela está arquivada e se a tabela é a oficial (pelo nome, todas as versões dela). Ordem da exclusão de versão: `TABELA_OFICIAL_PROTEGIDA`, `VERSAO_USADA_POR_PROCESSO` (com a quantidade), `VERSAO_EM_USO_DE_UNIDADE` (com as siglas), `VERSAO_SUBSTITUI_OUTRA`, `ULTIMA_VERSAO_DA_TABELA` (a tabela sem versão fica sem sentido: use "Excluir tabela"). Arquivar: `TABELA_COM_VERSAO_EM_USO` (siglas). Excluir tabela: `TABELA_OFICIAL_PROTEGIDA`, `VERSAO_USADA_POR_PROCESSO`, `VERSAO_EM_USO_DE_UNIDADE`. Somente leitura de critérios, na ordem que `UpdateVersionCriteria` já segue: `VERSAO_SUBSTITUIDA`, `VERSAO_NAO_MAIS_RECENTE`, `VERSAO_USADA_POR_PROCESSO`. É a fonte única dos códigos e dos textos, usada pelos casos de uso e pela lista.
 **Where**: `backend/app/domain/rules/scoring_table_guards.py` (new)
@@ -437,10 +437,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_scoring_table_guards.py` (novo): cada bloqueio sozinho e combinados, na ordem dita; a mensagem traz a quantidade de processos e a lista de siglas ordenada; fatos sem bloqueio devolvem lista vazia; qualquer versão da tabela oficial (não só a atual) é protegida; a única versão de uma tabela não oficial tem `ULTIMA_VERSAO_DA_TABELA`; `criteria_read_only_reason` respeita a ordem substituída, não mais recente (também quando a versão posterior está substituída), usada por processo, e devolve `None` quando a versão é editável
-- [ ] O módulo é Python puro (o teste de arquitetura passa)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/unit/domain/test_scoring_table_guards.py` (novo): cada bloqueio sozinho e combinados, na ordem dita; a mensagem traz a quantidade de processos e a lista de siglas ordenada; fatos sem bloqueio devolvem lista vazia; qualquer versão da tabela oficial (não só a atual) é protegida; a única versão de uma tabela não oficial tem `ULTIMA_VERSAO_DA_TABELA`; `criteria_read_only_reason` respeita a ordem substituída, não mais recente (também quando a versão posterior está substituída), usada por processo, e devolve `None` quando a versão é editável
+- [x] O módulo é Python puro (o teste de arquitetura passa)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: quick
