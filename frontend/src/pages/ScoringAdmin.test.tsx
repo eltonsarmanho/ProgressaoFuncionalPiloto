@@ -181,6 +181,26 @@ describe("ADMUI-01: lista de tabelas e versões", () => {
     expect(second).not.toHaveTextContent("Em uso (");
   });
 
+  it("GTAB-34: a versão de vigência já acabada que nenhuma unidade tem em uso não é 'Encerrada'", async () => {
+    renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": {
+        status: 200,
+        body: [
+          {
+            ...TABLES[0],
+            versions: [{ ...FASI_V1, default_for_unit_ids: [], in_use: false }, FASI_V2],
+          },
+        ],
+      },
+    });
+
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+    const [first] = Array.from(fasi.querySelectorAll(".tbl-version"));
+    expect(first).toHaveTextContent("31/12/2024");
+    expect(first).not.toHaveTextContent("Em uso (");
+    expect(first).not.toHaveTextContent("Encerrada");
+  });
+
   it("GTAB-34: 'Substituída' e 'Arquivada' aparecem nos casos certos", async () => {
     renderAdmin("ADMIN", {
       "GET /api/scoring-tables": { status: 200, body: [...TABLES, OLD_TABLE] },

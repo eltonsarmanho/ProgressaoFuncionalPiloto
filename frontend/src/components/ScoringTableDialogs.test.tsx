@@ -231,6 +231,21 @@ describe("GTAB-14, GTAB-43, GTAB-16: unidades da tabela", () => {
     expect(bodyOf(calls, "PUT /api/scoring-tables/t1/units")).toEqual({ unit_ids: ["u1", "u2", "u3"] });
   });
 
+  it("uma unidade da tabela que não está na lista carregada continua no corpo do PUT", async () => {
+    const { calls, onDone, user } = setup(
+      { "PUT /api/scoring-tables/t1/units": { status: 200, body: { id: "t1" } } },
+      { ...TABLES[0], unit_ids: ["u1", "u-fora-da-lista"] },
+    );
+
+    await user.click(screen.getByRole("checkbox", { name: "IFCH" }));
+    await user.click(screen.getByRole("button", { name: "Salvar unidades" }));
+
+    await vi.waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
+    expect(bodyOf(calls, "PUT /api/scoring-tables/t1/units")).toEqual({
+      unit_ids: ["u1", "u2", "u-fora-da-lista"],
+    });
+  });
+
   it("tirar uma unidade a remove do corpo do PUT", async () => {
     const { calls, onDone, user } = setup({
       "PUT /api/scoring-tables/t1/units": { status: 200, body: { id: "t1" } },

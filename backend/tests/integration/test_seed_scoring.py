@@ -510,6 +510,23 @@ def test_a_unit_that_lost_its_mark_by_supersession_is_not_marked_again(uow_facto
     assert set(_marks(uow_factory)) == {"IFCH"}
 
 
+def test_a_unit_that_already_has_a_mark_keeps_it_even_without_any_audit_event(
+    uow_factory, units, seeded
+):
+    official = _official_version_id(uow_factory)
+    with uow_factory() as uow:  # a mark written straight to the repository: no audit event
+        other = replace(uow.scoring_tables.get_version(official), id=uuid.uuid4(), name="Outra")
+        uow.scoring_tables.add_version(other)
+        uow.scoring_tables.set_unit_default(units["FASI"], other.id)
+        uow.commit()
+    assert _mark_events(uow_factory, units["FASI"]) == []
+
+    seed_unit_defaults(uow_factory())
+
+    assert _marks(uow_factory) == {"FASI": other.id, "IFCH": official}
+    assert _mark_events(uow_factory, units["FASI"]) == []
+
+
 def test_a_unit_without_the_official_table_associated_is_not_marked(uow_factory, units, seeded):
     with uow_factory() as uow:
         table = next(t for t in uow.scoring_tables.list_tables() if t.name == OFFICIAL)
