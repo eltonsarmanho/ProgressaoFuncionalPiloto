@@ -292,3 +292,91 @@ describe("GRES-08: o painel da Etapa 4 cabe em 360 px sem rolagem horizontal da 
     expect(css).toMatch(/\.muted\s*{[^}]*color:\s*var\(--muted\)/);
   });
 });
+
+describe("GTAB-38: a lista de tabelas de pontuação cabe em 360 px e não quebra palavra em letras", () => {
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
+    selector: m[1].replace(/@media[^{]*$/, "").trim(),
+    body: m[2],
+  }));
+  const tbl = rules.filter((r) => r.selector.includes(".tbl-"));
+  const rule = (selector: string) => rules.find((r) => r.selector === selector);
+  const minHeightPx = (body: string) => {
+    const m = body.match(/min-height\s*:\s*([\d.]+)(px|rem|em)/);
+    return m ? toPx(m[1], m[2]) : 0;
+  };
+
+  it("o cartão da tabela quebra a palavra só onde precisa (break-word) e deixa o conteúdo encolher (min-width: 0)", () => {
+    const card = rule(".tbl-card");
+    expect(card).toBeDefined();
+    expect(card!.body).toMatch(/overflow-wrap\s*:\s*break-word/);
+    expect(card!.body).toMatch(/min-width\s*:\s*0/);
+    const version = rule(".tbl-version");
+    expect(version!.body).toMatch(/overflow-wrap\s*:\s*break-word/);
+    expect(version!.body).toMatch(/min-width\s*:\s*0/);
+  });
+
+  it("nenhuma regra .tbl-* usa overflow-wrap: anywhere nem word-break: break-all (a causa das letras quebradas)", () => {
+    expect(tbl.length).toBeGreaterThan(5);
+    for (const r of tbl) {
+      expect(r.body, r.selector).not.toMatch(/overflow-wrap\s*:\s*anywhere/);
+      expect(r.body, r.selector).not.toMatch(/word-break\s*:\s*break-all/);
+    }
+  });
+
+  it("a barra de ações quebra em linhas em vez de estourar a largura", () => {
+    expect(rule(".tbl-actions")!.body).toMatch(/display\s*:\s*flex/);
+    expect(rule(".tbl-actions")!.body).toMatch(/flex-wrap\s*:\s*wrap/);
+    expect(rule(".tbl-badges")!.body).toMatch(/flex-wrap\s*:\s*wrap/);
+  });
+
+  it("o botão da barra e os botões dos diálogos têm alvo de toque de pelo menos 2,75 rem (44 px)", () => {
+    expect(minHeightPx(rule(".tbl-actions .btn")!.body)).toBeGreaterThanOrEqual(2.75 * PX_PER_REM);
+    expect(minHeightPx(rule(".modal .btn")!.body)).toBeGreaterThanOrEqual(2.75 * PX_PER_REM);
+  });
+
+  it("nenhuma regra .tbl-* impõe largura mínima, fixa ou de grade acima de 360 px", () => {
+    const wide = tbl.flatMap((r) => [
+      ...[...r.body.matchAll(/(?:^|[\s;])(width|min-width|flex-basis)\s*:\s*([\d.]+)(px|rem|em)/g)].map((m) => ({
+        selector: r.selector,
+        prop: m[1],
+        px: toPx(m[2], m[3]),
+      })),
+      ...[...r.body.matchAll(/minmax\(\s*([\d.]+)(px|rem|em)/g)].map((m) => ({
+        selector: r.selector,
+        prop: "minmax",
+        px: toPx(m[1], m[2]),
+      })),
+    ]);
+    expect(wide.filter((d) => d.px > 360)).toEqual([]);
+  });
+
+  it("as regras da lista não forçam rolagem horizontal, tabela nem linha sem quebra", () => {
+    for (const r of tbl) {
+      expect(r.body, r.selector).not.toMatch(/overflow(-x)?\s*:\s*(auto|scroll)/);
+      expect(r.body, r.selector).not.toMatch(/white-space\s*:\s*nowrap/);
+      expect(r.body, r.selector).not.toMatch(/display\s*:\s*(table|inline-table)|table-layout/);
+    }
+  });
+
+  it("o botão desabilitado com motivo (aria-disabled) continua legível e o motivo aparece em texto", () => {
+    expect(rule('.tbl-actions .btn[aria-disabled="true"]')!.body).toMatch(/cursor\s*:\s*not-allowed/);
+    expect(rule(".tbl-reason")).toBeDefined();
+  });
+
+  it("o filtro de arquivadas tem regra própria para a caixa de seleção (a regra global dos campos a esticaria)", () => {
+    expect(css).toMatch(/input\s*,[^{]*{[^}]*width:\s*100%/); // the global rule exists
+    const own = rule(".tbl-filter-archived input");
+    expect(own).toBeDefined();
+    expect(own!.body).toMatch(/width\s*:\s*auto/);
+    expect(own!.body).toMatch(/display\s*:\s*inline-block/);
+    expect(minHeightPx(rule(".tbl-filter-archived")!.body)).toBeGreaterThanOrEqual(2.75 * PX_PER_REM);
+  });
+
+  it("o bloco fica no fim do arquivo, depois do último @media, para não mudar o primeiro @media dos outros testes", () => {
+    const first = css.indexOf(".tbl-");
+    expect(first).toBeGreaterThan(css.lastIndexOf("@media"));
+    const before = css.slice(0, first);
+    expect(before.split("{").length).toBe(before.split("}").length); // nothing is open before the block
+    expect(css.slice(first)).not.toContain("@media");
+  });
+});

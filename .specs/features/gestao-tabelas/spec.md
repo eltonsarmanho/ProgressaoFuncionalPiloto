@@ -245,10 +245,10 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | GTAB-32 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-33 | P1: Lista legível e com ações visíveis | Specified | Pending |
 | GTAB-34 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
-| GTAB-35 | P1: Lista legível e com ações visíveis | Specified | Pending |
+| GTAB-35 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
 | GTAB-36 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
 | GTAB-37 | P1: Lista legível e com ações visíveis | Specified | Pending |
-| GTAB-38 | P1: Lista legível e com ações visíveis | Specified | Pending |
+| GTAB-38 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
 | GTAB-39 | P1: Lista legível e com ações visíveis | Specified | Pending |
 | GTAB-40 | P1: Lista legível e com ações visíveis | Specified | Pending |
 | GTAB-41 | P1: Coerência com a semente e com as outras regras | Implemented | Implementing |

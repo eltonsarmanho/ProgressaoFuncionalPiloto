@@ -867,7 +867,7 @@ graph LR
 
 #### T25: Bloco de estilos dos cartões de tabela
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Bloco novo `.tbl-*` no **fim** de `styles.css` (depois das regras `@media` existentes, para não mudar o primeiro `@media` que os testes TELA-08 e UIM encontram) para os cartões de tabela e de versão, as etiquetas e a barra de botões: `overflow-wrap: break-word` e `min-width: 0` nos cartões (o `overflow-wrap: anywhere` do `body`, `styles.css:22-25`, é a causa das letras quebradas; nenhuma regra `.tbl-*` usa `anywhere` nem `word-break: break-all`), `flex-wrap: wrap` na barra de ações, `min-height: 2.75rem` nos botões da barra e dos diálogos desta tela (`.modal .btn`), o rótulo do filtro de arquivadas sem a regra global `input {display:block; width:100%}`, sem `<table>` e sem larguras acima de 360 px. `.scoring-table` não muda (`ReviewHighlight` e `Norms` a usam).
 **Where**: `frontend/src/styles.css` (modify)
@@ -882,10 +882,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/styles.test.ts` (modifica), bloco `GTAB-38`: o CSS tem `.tbl-card` com `overflow-wrap: break-word` e `min-width: 0`; nenhuma regra `.tbl-*` usa `overflow-wrap: anywhere` nem `word-break: break-all`; a barra de ações tem `flex-wrap: wrap`; o botão da barra e `.modal .btn` têm `min-height` de pelo menos `2.75rem`; nenhuma regra `.tbl-*` usa `width`, `min-width`, `flex-basis` ou `minmax` acima de 360 px (o teste global UI-06 segue verde); o checkbox do filtro tem regra própria; o bloco fica depois do último `@media` do arquivo
-- [ ] O teste TELA-08 de `.scoring-table` e os testes UIM seguem verdes (a classe e os primeiros `@media` não mudaram)
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/styles.test.ts` (modifica), bloco `GTAB-38`: o CSS tem `.tbl-card` com `overflow-wrap: break-word` e `min-width: 0`; nenhuma regra `.tbl-*` usa `overflow-wrap: anywhere` nem `word-break: break-all`; a barra de ações tem `flex-wrap: wrap`; o botão da barra e `.modal .btn` têm `min-height` de pelo menos `2.75rem`; nenhuma regra `.tbl-*` usa `width`, `min-width`, `flex-basis` ou `minmax` acima de 360 px (o teste global UI-06 segue verde); o checkbox do filtro tem regra própria; o bloco fica depois do último `@media` do arquivo
+- [x] O teste TELA-08 de `.scoring-table` e os testes UIM seguem verdes (a classe e os primeiros `@media` não mudaram)
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front

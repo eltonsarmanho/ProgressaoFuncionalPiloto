@@ -1257,3 +1257,156 @@ a.btn {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/*
+ * GTAB-34, GTAB-35, GTAB-38: the list of scoring tables, as cards and lists (never a <table>).
+ * The global `overflow-wrap: anywhere` of the body breaks words letter by letter in a narrow flex
+ * item, so these rules use `break-word` with `min-width: 0` and give no fixed width. Keep this
+ * block at the end of the file, after every media query.
+ */
+.tbl-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tbl-page-head h1 {
+  margin: 0;
+}
+
+.tbl-status:empty {
+  margin: 0;
+}
+
+.tbl-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: flex-end;
+}
+
+.tbl-filters .field {
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.tbl-filter-archived {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+}
+
+.tbl-filter-archived input {
+  display: inline-block;
+  width: auto;
+  margin: 0;
+}
+
+.tbl-count {
+  margin: 0.5rem 0;
+  color: var(--muted);
+}
+
+.tbl-card {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.tbl-card h2 {
+  margin: 0 0 0.25rem;
+  overflow-wrap: break-word;
+}
+
+.tbl-units {
+  margin: 0.25rem 0;
+  color: var(--muted);
+  overflow-wrap: break-word;
+}
+
+.tbl-versions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tbl-version {
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-wrap: break-word;
+}
+
+.tbl-version-name {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+
+.tbl-meta {
+  margin: 0.25rem 0;
+  overflow-wrap: break-word;
+}
+
+.tbl-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.4rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tbl-badges .badge {
+  margin: 0;
+}
+
+.tbl-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin-top: 0.5rem;
+}
+
+.tbl-action {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tbl-actions .btn {
+  min-height: 2.75rem;
+}
+
+.tbl-actions .btn[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tbl-reason {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  overflow-wrap: break-word;
+}
+
+.tbl-empty {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+}
+
+.modal .btn {
+  min-height: 2.75rem;
+}
