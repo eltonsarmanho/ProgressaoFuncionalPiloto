@@ -163,6 +163,32 @@ def test_the_removed_fields_sent_by_an_old_client_are_ignored_and_not_stored(
     assert legacy_row(engine, response.json()["id"]) == dict.fromkeys(REMOVED_FIELDS)
 
 
+# ENX-04 (PUT branch): a removed key sent alone by an old client is ignored, not stored or echoed
+@pytest.mark.parametrize("key", REMOVED_FIELDS)
+def test_a_removed_field_sent_in_an_edition_is_ignored_and_not_stored(
+    client, secretaria, fasi_professor, engine, key
+):
+    _, headers = secretaria
+    created = client.post(
+        "/api/processes", json=process_payload(fasi_professor, FASI_2022_2024), headers=headers
+    ).json()
+
+    response = client.put(
+        f"/api/processes/{created['id']}",
+        json={
+            **process_payload(fasi_professor, FASI_2022_2024),
+            key: LEGACY_VALUES[key],
+            "expected_version": created["version"],
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 200, response.text
+    assert set(REMOVED_FIELDS).isdisjoint(response.json())
+    assert response.json()["alerts"] == []
+    assert legacy_row(engine, created["id"]) == dict.fromkeys(REMOVED_FIELDS)
+
+
 # ENX-05, ENX-07: old values stay in the table, untouched by a new save and absent from the audit
 def test_old_values_stay_in_the_columns_when_the_process_is_saved_again(
     client, secretaria, fasi_professor, engine, uow_factory
