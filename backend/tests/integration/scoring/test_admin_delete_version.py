@@ -249,7 +249,27 @@ def test_the_only_version_of_a_table_is_409_ultima_versao(world, uc):
     assert stored(world, only.id) is not None
 
 
-def test_every_version_of_the_official_table_is_protected_not_only_the_current_one(world, uc):
+def test_a_superseded_version_of_the_official_table_can_be_deleted(world, uc):
+    old = replace(
+        world.official_version,
+        id=uuid.uuid4(),
+        name="Versão oficial antiga",
+        valid_from=date(2000, 1, 1),
+        valid_to=date(2000, 12, 31),
+        superseded_by_id=None,
+    )
+    with world.uow_factory() as uow:
+        uow.scoring_tables.add_version(old)
+        uow.scoring_tables.set_superseded(old.id, world.official_version.id)
+        uow.commit()
+
+    uc.delete.execute(world.admin, old.id)
+
+    assert stored(world, old.id) is None
+    assert stored(world, world.official_version.id) is not None
+
+
+def test_every_current_version_of_the_official_table_is_protected(world, uc):
     newer = replace(
         world.official_version,
         id=uuid.uuid4(),

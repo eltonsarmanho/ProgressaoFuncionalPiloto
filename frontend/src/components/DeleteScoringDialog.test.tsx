@@ -212,7 +212,7 @@ describe("GTAB-28, GTAB-30, GTAB-35: excluir tabela com prévia", () => {
     });
 
     expect(await screen.findByRole("list", { name: "Por que não pode ser excluída" })).toHaveTextContent(
-      "A tabela oficial da UFPA e as suas versões não podem ser excluídas",
+      "A tabela oficial da UFPA e a versão atual dela não podem ser excluídas; só as versões substituídas",
     );
     expect(confirmButton()).toBeDisabled();
   });

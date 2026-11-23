@@ -210,6 +210,7 @@ A spec foi aprovada antes da leitura do código. Estas emendas decorrem dela e f
 | A11 | **GTAB-26** (acréscimo de execução, aprovado ao validar as tarefas): excluir a versão mais recente, que tinha fechado a anterior, devolve à anterior o fim de vigência da apagada, para a tabela não ficar sem versão vigente |
 | A12 | **GTAB-27** (acréscimo de execução): a única versão de uma tabela não se exclui (`ULTIMA_VERSAO_DA_TABELA`); o caminho é excluir a tabela |
 | A13 | **GTAB-42** (precisão): todas as versões da tabela oficial são protegidas, pelo nome da tabela, e não só a versão atual; o `ProtectedCatalog` leva só o nome da tabela |
+| A14 | **GTAB-42** (decisão do usuário em 2026-11-23, no lugar de A13): só a tabela oficial e a versão atual dela (não substituída) são protegidas; as versões substituídas da tabela oficial podem ser excluídas, porque a semente não as recria |
 
 ---
 

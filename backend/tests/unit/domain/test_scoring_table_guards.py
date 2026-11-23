@@ -65,14 +65,24 @@ def test_a_free_version_has_no_delete_blocker():
     assert version_delete_blockers(free_version()) == []
 
 
-def test_the_official_table_protects_every_one_of_its_versions():
+def test_the_official_table_protects_the_versions_that_are_not_superseded():
     blockers = version_delete_blockers(free_version(is_official=True))
 
     assert codes(blockers) == ["TABELA_OFICIAL_PROTEGIDA"]
     assert blockers[0].message == (
-        "A tabela oficial da UFPA e as suas versões não podem ser excluídas; "
-        "arquive-a se não for mais usada"
+        "A versão atual da tabela oficial da UFPA não pode ser excluída; "
+        "só as versões substituídas podem ser excluídas"
     )
+
+
+def test_a_superseded_version_of_the_official_table_can_be_deleted():
+    assert version_delete_blockers(free_version(is_official=True, is_superseded=True)) == []
+
+
+def test_a_superseded_official_version_still_has_the_other_blockers():
+    facts = free_version(is_official=True, is_superseded=True, process_count=1)
+
+    assert codes(version_delete_blockers(facts)) == ["VERSAO_USADA_POR_PROCESSO"]
 
 
 def test_a_version_used_by_processes_says_how_many():

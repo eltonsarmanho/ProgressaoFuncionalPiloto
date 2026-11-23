@@ -38,7 +38,7 @@ class VersionFacts:
     has_later_version: bool  # some version of the table starts after it (superseded or not)
     is_only_version: bool
     table_archived: bool
-    is_official: bool  # the table is the official one (by name): all its versions count
+    is_official: bool  # the table is the official one (by name); only its current versions count
 
 
 @dataclass(frozen=True)
@@ -64,19 +64,26 @@ def _plural(count: int, one: str, many: str) -> str:
     return f"{count} {one if count == 1 else many}"
 
 
-def _official() -> Blocker:
+def _official_version() -> Blocker:
     return Blocker(
         OFFICIAL_TABLE_PROTECTED,
-        "A tabela oficial da UFPA e as suas versões não podem ser excluídas; "
-        "arquive-a se não for mais usada",
+        "A versão atual da tabela oficial da UFPA não pode ser excluída; "
+        "só as versões substituídas podem ser excluídas",
+    )
+
+
+def _official_table() -> Blocker:
+    return Blocker(
+        OFFICIAL_TABLE_PROTECTED,
+        "A tabela oficial da UFPA não pode ser excluída; arquive-a se não for mais usada",
     )
 
 
 def version_delete_blockers(facts: VersionFacts) -> list[Blocker]:
     """Why the version cannot be deleted, in the order the use case answers (GTAB-27)."""
     blockers: list[Blocker] = []
-    if facts.is_official:
-        blockers.append(_official())
+    if facts.is_official and not facts.is_superseded:
+        blockers.append(_official_version())
     if facts.process_count > 0:
         blockers.append(
             Blocker(
@@ -133,7 +140,7 @@ def table_delete_blockers(facts: TableFacts) -> list[Blocker]:
     """Why the table cannot be deleted, in the order the use case answers (GTAB-29)."""
     blockers: list[Blocker] = []
     if facts.is_official:
-        blockers.append(_official())
+        blockers.append(_official_table())
     if facts.process_count > 0:
         blockers.append(
             Blocker(

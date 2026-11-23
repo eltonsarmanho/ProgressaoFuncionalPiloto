@@ -205,7 +205,7 @@ export const BLOCK_REASON_LABELS: Record<BlockReasonCode, string> = {
   TABELA_COM_VERSAO_EM_USO:
     "A tabela tem versão em uso de unidades; marque outra tabela ou desmarque a versão antes de arquivar ou excluir.",
   TABELA_OFICIAL_PROTEGIDA:
-    "A tabela oficial da UFPA e as suas versões não podem ser excluídas; arquive-a se não for mais usada.",
+    "A tabela oficial da UFPA e a versão atual dela não podem ser excluídas; só as versões substituídas. Arquive a tabela se não for mais usada.",
   UNIDADE_COM_VERSAO_EM_USO:
     "A unidade tem versão desta tabela em uso; desmarque a versão antes de retirar a unidade.",
 };
