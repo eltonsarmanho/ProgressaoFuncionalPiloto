@@ -1427,3 +1427,7 @@ a.btn {
 .modal .btn {
   min-height: 2.75rem;
 }
+
+.tbl-edit {
+  min-height: 2.75rem;
+}

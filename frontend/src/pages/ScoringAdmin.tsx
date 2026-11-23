@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { errorMessage, request } from "../api/client";
-import type { ScoringTableInfo, ScoringVersion, Unit } from "../api/types";
+import type { Criterion, ScoringTableInfo, ScoringVersion, Unit } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import { ReviewHighlight } from "../components/ReviewHighlight";
+import { CriterionEditDialog } from "../components/CriterionEditDialog";
 import { CreateTableDialog } from "../components/ScoringTableDialogs";
 import { ScoringTableCard } from "../components/ScoringTableCard";
 import { tableActions, versionActions, type ActionContext } from "../components/scoringActions";
-import { blockReasonText } from "../labels";
+import { blockReasonText, roman } from "../labels";
 
 type Selection = { tableId: string; versionId: string };
 
@@ -101,6 +102,23 @@ export function ScoringAdmin() {
   function dialogDone(message: string) {
     setDialog(null);
     done(message);
+  }
+
+  /** GTAB-22: the API answered with the criterion as it is now; the open list shows it without a reload. */
+  function criterionSaved(updated: Criterion) {
+    setVersion((current) =>
+      current && {
+        ...current,
+        groups: current.groups.map((g) => ({
+          ...g,
+          criteria: g.criteria.map((c) =>
+            c.group_number === updated.group_number && c.item_number === updated.item_number ? { ...c, ...updated } : c,
+          ),
+        })),
+      },
+    );
+    setDialog(null);
+    setNotice(`Critério ${roman(updated.group_number)}.${updated.item_number} atualizado.`);
   }
 
   function clearFilters() {
@@ -228,7 +246,22 @@ export function ScoringAdmin() {
               {blockReasonText(openVersion.read_only_reason, { processCount: openVersion.process_count })}
             </p>
           )}
-          <ReviewHighlight groups={version.groups} />
+          <ReviewHighlight
+            groups={version.groups}
+            onEdit={
+              isAdmin && !openVersion.read_only_reason
+                ? (criterion) =>
+                    setDialog(
+                      <CriterionEditDialog
+                        versionId={openVersion.id}
+                        criterion={criterion}
+                        onSaved={criterionSaved}
+                        onClose={() => setDialog(null)}
+                      />,
+                    )
+                : undefined
+            }
+          />
         </section>
       )}
       {isAdmin && dialog}

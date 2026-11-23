@@ -1,8 +1,17 @@
-import type { ScoringGroup } from "../api/types";
+import type { Criterion, ScoringGroup } from "../api/types";
 import { formatDecimal, roman } from "../labels";
 
-/** ADMUI-03: the criteria of a version, with those carrying a `review_note` highlighted and explained. */
-export function ReviewHighlight({ groups }: { groups: ScoringGroup[] }) {
+/**
+ * ADMUI-03: the criteria of a version, with those carrying a `review_note` highlighted and explained.
+ * GTAB-22: with `onEdit` each row gets an "Editar" button (only an ADMIN on an editable version passes it).
+ */
+export function ReviewHighlight({
+  groups,
+  onEdit,
+}: {
+  groups: ScoringGroup[];
+  onEdit?: (criterion: Criterion) => void;
+}) {
   const marked = groups.flatMap((g) => g.criteria).filter((c) => c.review_note).length;
   return (
     <>
@@ -22,12 +31,13 @@ export function ReviewHighlight({ groups }: { groups: ScoringGroup[] }) {
             <th>Pontos</th>
             <th>Carga mínima (h)</th>
             <th>Limite</th>
+            {onEdit && <th>Ações</th>}
           </tr>
         </thead>
         <tbody>
           {groups.flatMap((group) => [
             <tr className="group-head" key={`g${group.number}`}>
-              <th colSpan={6}>
+              <th colSpan={onEdit ? 7 : 6}>
                 Grupo {roman(group.number)} · {group.name}
                 {group.counts_in_total ? "" : " (não conta no total)"}
               </th>
@@ -49,6 +59,18 @@ export function ReviewHighlight({ groups }: { groups: ScoringGroup[] }) {
                 <td data-label="Pontos">{formatDecimal(c.unit_points)}</td>
                 <td data-label="Carga mínima (h)">{formatDecimal(c.min_hours)}</td>
                 <td data-label="Limite">{formatDecimal(c.max_points)}</td>
+                {onEdit && (
+                  <td data-label="Ações">
+                    <button
+                      type="button"
+                      className="btn btn-secondary tbl-edit"
+                      aria-label={`Editar critério ${roman(c.group_number)}.${c.item_number}`}
+                      onClick={() => onEdit(c)}
+                    >
+                      Editar
+                    </button>
+                  </td>
+                )}
               </tr>
             )),
           ])}

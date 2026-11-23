@@ -334,6 +334,10 @@ describe("GTAB-38: a lista de tabelas de pontuação cabe em 360 px e não quebr
     expect(minHeightPx(rule(".modal .btn")!.body)).toBeGreaterThanOrEqual(2.75 * PX_PER_REM);
   });
 
+  it("o botão 'Editar' da linha de critério também tem alvo de toque de pelo menos 2,75 rem", () => {
+    expect(minHeightPx(rule(".tbl-edit")!.body)).toBeGreaterThanOrEqual(2.75 * PX_PER_REM);
+  });
+
   it("nenhuma regra .tbl-* impõe largura mínima, fixa ou de grade acima de 360 px", () => {
     const wide = tbl.flatMap((r) => [
       ...[...r.body.matchAll(/(?:^|[\s;])(width|min-width|flex-basis)\s*:\s*([\d.]+)(px|rem|em)/g)].map((m) => ({

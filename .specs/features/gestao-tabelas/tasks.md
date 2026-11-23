@@ -1154,7 +1154,7 @@ graph LR
 
 #### T35: Edição de critério na lista de critérios
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ReviewHighlight` ganha a coluna de ação "Editar" (botão com `aria-label` do critério) quando a versão é editável e o usuário é ADMIN, abrindo o `CriterionEditDialog`; ao gravar, a linha mostra o valor novo sem recarregar a página (o `PUT` devolve só o critério, que substitui o da lista). Versão com `read_only_reason` mostra os critérios só leitura e a orientação do motivo (nova versão, versão que a substitui ou versão mais recente), sem botão de edição; quem não é ADMIN não vê a coluna. A coluna vira cartão com `data-label` na largura estreita, como as demais.
 **Where**: `frontend/src/components/ReviewHighlight.tsx` (modify)
@@ -1169,9 +1169,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ReviewHighlight.test.tsx` e `frontend/src/pages/ScoringAdmin.test.tsx` (modificam): o botão "Editar" abre o diálogo do critério certo; sucesso mostra o valor novo na linha sem recarregar a página e anuncia em texto; versão usada por processo, substituída ou não mais recente mostra só leitura com a orientação certa e nenhum botão de edição; quem não é ADMIN não vê a coluna; a linha continua legível em cartão na largura estreita (`data-label`)
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/components/ReviewHighlight.test.tsx` e `frontend/src/pages/ScoringAdmin.test.tsx` (modificam): o botão "Editar" abre o diálogo do critério certo; sucesso mostra o valor novo na linha sem recarregar a página e anuncia em texto; versão usada por processo, substituída ou não mais recente mostra só leitura com a orientação certa e nenhum botão de edição; quem não é ADMIN não vê a coluna; a linha continua legível em cartão na largura estreita (`data-label`)
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front

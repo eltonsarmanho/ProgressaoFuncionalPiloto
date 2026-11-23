@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 import type { Criterion, ScoringGroup } from "../api/types";
 import { ReviewHighlight } from "./ReviewHighlight";
 
@@ -82,5 +83,44 @@ describe("ADMUI-03: critérios marcados para revisão", () => {
     expect(minimumCell(four)).toHaveTextContent("20,00");
     const six = screen.getByRole("row", { name: /Critério 6/ });
     expect(minimumCell(six)).toHaveTextContent("—");
+  });
+});
+
+describe("GTAB-22, GTAB-19, GTAB-16: coluna de edição dos critérios", () => {
+  it("sem onEdit não há coluna de ações nem botão de edição", () => {
+    render(<ReviewHighlight groups={GROUPS} />);
+
+    expect(screen.queryByRole("columnheader", { name: "Ações" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Editar/ })).not.toBeInTheDocument();
+  });
+
+  it("com onEdit cada critério ganha o botão 'Editar' com o aria-label do critério e o clique entrega o critério certo", async () => {
+    const onEdit = vi.fn();
+    render(<ReviewHighlight groups={GROUPS} onEdit={onEdit} />);
+
+    expect(screen.getByRole("columnheader", { name: "Ações" })).toBeInTheDocument();
+    const row = screen.getByRole("row", { name: /Critério 12/ });
+    const button = within(row).getByRole("button", { name: "Editar critério II.12" });
+    expect(button).toHaveTextContent("Editar");
+    await userEvent.setup().click(button);
+
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    expect(onEdit.mock.calls[0][0]).toMatchObject({ group_number: 2, item_number: 12, description: "Critério 12" });
+    expect(screen.getAllByRole("button", { name: /^Editar critério/ })).toHaveLength(3);
+  });
+
+  it("a célula da ação leva data-label para virar cartão na largura estreita e o cabeçalho do grupo cobre as sete colunas", () => {
+    render(<ReviewHighlight groups={GROUPS} onEdit={vi.fn()} />);
+
+    const row = screen.getByRole("row", { name: /Critério 10/ });
+    expect(row.querySelector('td[data-label="Ações"]')).not.toBeNull();
+    const head = screen.getByRole("columnheader", { name: /Grupo II/ });
+    expect(head).toHaveAttribute("colspan", "7");
+  });
+
+  it("sem onEdit o cabeçalho do grupo cobre as seis colunas de sempre", () => {
+    render(<ReviewHighlight groups={GROUPS} />);
+
+    expect(screen.getByRole("columnheader", { name: /Grupo II/ })).toHaveAttribute("colspan", "6");
   });
 });

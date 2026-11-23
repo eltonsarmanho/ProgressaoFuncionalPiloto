@@ -1008,3 +1008,72 @@ describe("GTAB-16, GTAB-27, GTAB-29, GTAB-30, GTAB-36: excluir versão e tabela 
     expect(within(fasi).queryByRole("button", { name: /^Excluir/ })).not.toBeInTheDocument();
   });
 });
+
+describe("GTAB-19, GTAB-20, GTAB-22, GTAB-16: edição de critério na lista de critérios", () => {
+  const pageStatus = () => screen.getAllByRole("status").find((el) => el.tagName === "P") as HTMLElement;
+  const PUT_PATH = "PUT /api/scoring-versions/v-fasi-2/criteria/2/7";
+
+  async function openCriteria() {
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+    await user.click(within(fasi).getByRole("button", { name: "Ver critérios de FASI 2026" }));
+    const criteria = await screen.findByRole("region", { name: "Critérios de Tabela da FASI · FASI 2026" });
+    return { user, criteria };
+  }
+
+  it("'Editar' abre o diálogo do critério certo e o valor novo aparece na linha sem recarregar a página", async () => {
+    const updated = { ...VERSION.groups[0].criteria[0], unit_points: "12.00" };
+    const { calls } = renderAdmin("ADMIN", { [PUT_PATH]: { status: 200, body: updated } });
+    const { user, criteria } = await openCriteria();
+    const row = within(criteria).getByRole("row", { name: /Orientação de TCC/ });
+    expect(row).toHaveTextContent("10,00");
+
+    await user.click(within(row).getByRole("button", { name: "Editar critério II.7" }));
+    const dialog = await screen.findByRole("dialog", { name: "Editar critério II.7" });
+    const points = within(dialog).getByLabelText("Pontos por unidade");
+    await user.clear(points);
+    await user.type(points, "12");
+    await user.type(within(dialog).getByLabelText("Referência normativa da alteração"), "Res. sintética 8");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar critério" }));
+
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(within(criteria).getByRole("row", { name: /Orientação de TCC/ })).toHaveTextContent("12,00");
+    expect(pageStatus()).toHaveTextContent("Critério II.7 atualizado.");
+    const put = calls.find((c) => `${c.method} ${c.path}` === PUT_PATH);
+    expect(JSON.parse(String(put?.init?.body))).toEqual({
+      change_reference: "Res. sintética 8",
+      changes: { unit_points: 12 },
+    });
+    expect(calls.filter((c) => c.method === "GET" && c.path === "/api/scoring-tables")).toHaveLength(1);
+    expect(calls.filter((c) => c.method === "GET" && c.path === "/api/scoring-versions/v-fasi-2")).toHaveLength(1);
+  });
+
+  it.each([
+    ["VERSAO_USADA_POR_PROCESSO", "é usada por 2 processos"],
+    ["VERSAO_SUBSTITUIDA", "foi substituída por outra"],
+    ["VERSAO_NAO_MAIS_RECENTE", "Há uma versão mais recente da tabela"],
+  ])("%s: a versão fica só leitura, com a orientação e nenhum botão de edição", async (code, orientation) => {
+    renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": {
+        status: 200,
+        body: [{ ...TABLES[0], versions: [FASI_V1, { ...FASI_V2, read_only_reason: code, process_count: 2 }] }, TABLES[1]],
+      },
+    });
+    const { criteria } = await openCriteria();
+
+    expect(criteria).toHaveTextContent("Somente leitura");
+    expect(criteria).toHaveTextContent(orientation);
+    expect(within(criteria).getByText("Orientação de TCC")).toBeInTheDocument();
+    expect(within(criteria).queryByRole("button", { name: /^Editar/ })).not.toBeInTheDocument();
+    expect(within(criteria).queryByRole("columnheader", { name: "Ações" })).not.toBeInTheDocument();
+  });
+
+  it.each(["SECRETARIA", "DOCENTE"])("%s não vê a coluna de edição", async (role) => {
+    renderAdmin(role);
+    const { criteria } = await openCriteria();
+
+    expect(within(criteria).getByText("Orientação de TCC")).toBeInTheDocument();
+    expect(within(criteria).queryByRole("columnheader", { name: "Ações" })).not.toBeInTheDocument();
+    expect(within(criteria).queryByRole("button", { name: /^Editar/ })).not.toBeInTheDocument();
+  });
+});
