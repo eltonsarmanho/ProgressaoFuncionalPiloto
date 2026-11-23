@@ -86,6 +86,8 @@ class VersionSummaryOut(VersionRefOut):
     in_use: bool  # some process uses the version
     process_count: int
     default_for_unit_ids: list[UUID]
+    read_only_reason: str | None  # code of why the criteria cannot be edited (GTAB-36)
+    delete_blocked_reason: str | None  # code of why the version cannot be deleted
 
     @classmethod
     def of(cls, view: VersionView) -> "VersionSummaryOut":
@@ -94,6 +96,8 @@ class VersionSummaryOut(VersionRefOut):
             in_use=view.in_use,
             process_count=view.process_count,
             default_for_unit_ids=list(view.default_for_unit_ids),
+            read_only_reason=view.read_only_reason,
+            delete_blocked_reason=view.delete_blocked_reason,
         )
 
 
@@ -119,6 +123,8 @@ class TableOut(BaseModel):
     archived: bool
     unit_ids: list[UUID]
     versions: list[VersionSummaryOut]
+    archive_blocked_reason: str | None  # code of why the table cannot be archived
+    delete_blocked_reason: str | None  # code of why the table cannot be deleted
 
     @classmethod
     def of(cls, view: TableView) -> "TableOut":
@@ -129,6 +135,8 @@ class TableOut(BaseModel):
             archived=t.archived,
             unit_ids=list(t.unit_ids),
             versions=[VersionSummaryOut.of(v) for v in view.versions],
+            archive_blocked_reason=view.archive_blocked_reason,
+            delete_blocked_reason=view.delete_blocked_reason,
         )
 
 

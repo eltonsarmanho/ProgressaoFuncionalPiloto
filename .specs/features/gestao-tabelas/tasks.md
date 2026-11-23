@@ -693,7 +693,7 @@ graph LR
 
 #### T19: Motivos de bloqueio na lista de tabelas
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `VersionSummaryOut` ganha `read_only_reason` e `delete_blocked_reason` (código ou nulo) e `TableOut` ganha `archive_blocked_reason` e `delete_blocked_reason`, calculados pelas mesmas regras puras dos casos de uso, para a tela mostrar o botão desabilitado com o motivo (GTAB-36). `ListScoringTables` e `ListTableVersions` recebem o `ProtectedCatalog` na fiação de `dependencies.py`. "Não mais recente" usa a mesma definição da regra (existe versão da tabela com `valid_from` posterior, inclusive substituída), não `latest_version`. Campos aditivos.
 **Where**: `backend/app/application/use_cases/scoring_admin.py` (modify)
@@ -708,9 +708,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_scoring_tables_api.py` (modifica): cada motivo aparece no caso certo (versão usada por processo, em uso de unidade, substituída, não mais recente, da tabela oficial, única versão; tabela com versão em uso); uma versão livre traz `null` nos três campos; uma versão cuja sucessora está substituída e começa depois continua `VERSAO_NAO_MAIS_RECENTE`, como o 409 da edição; a lista continua sem consultas por versão (o teste de contagem da fase 1 segue verde)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_scoring_tables_api.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/api/test_scoring_tables_api.py` (modifica): cada motivo aparece no caso certo (versão usada por processo, em uso de unidade, substituída, não mais recente, da tabela oficial, única versão; tabela com versão em uso); uma versão livre traz `null` nos três campos; uma versão cuja sucessora está substituída e começa depois continua `VERSAO_NAO_MAIS_RECENTE`, como o 409 da edição; a lista continua sem consultas por versão (o teste de contagem da fase 1 segue verde)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_scoring_tables_api.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted

@@ -50,12 +50,19 @@ class VersionView:
     in_use: bool  # some process uses the version (the sense it always had)
     process_count: int = 0  # GTAB-10
     default_for_unit_ids: tuple[UUID, ...] = ()  # the units that have it as the one in use
+    # Stable codes (scoring_table_guards) of why the criteria cannot be edited and why the
+    # version cannot be deleted; None when nothing blocks. Filled by the list and the one-version
+    # read only (GTAB-36); the views the write use cases return leave them None.
+    read_only_reason: str | None = None
+    delete_blocked_reason: str | None = None
 
 
 @dataclass(frozen=True)
 class TableView:
     table: ScoringTableRecord
     versions: list[VersionView]
+    archive_blocked_reason: str | None = None
+    delete_blocked_reason: str | None = None
 
 
 @dataclass(frozen=True)
@@ -87,40 +94,146 @@ def _views(facts: _VersionFacts, versions) -> list[VersionView]:
     ]
 
 
+@dataclass(frozen=True)
+class ProtectedCatalog:
+    """The table the seed recreates at every start: it and all its versions are never deleted
+    (GTAB-42). The name comes from the wiring, so this layer reads no infrastructure data."""
+
+    official_table_name: str
+
+    def is_official(self, table_name: str) -> bool:
+        return table_name.casefold() == self.official_table_name.casefold()
+
+
+@dataclass(frozen=True)
+class _Reading:
+    """Everything the blocking rules read about all the tables, in a fixed number of queries."""
+
+    process_counts: Mapping[UUID, int]
+    default_units: Mapping[UUID, tuple[UUID, ...]]
+    acronyms: Mapping[UUID, str]
+    superseding: frozenset[UUID]
+
+
+def _reading(uow: UnitOfWork) -> _Reading:
+    facts = _facts(uow)
+    return _Reading(
+        facts.process_counts,
+        facts.default_units,
+        {unit.id: unit.acronym for unit in uow.units.list()},
+        frozenset(uow.scoring_tables.superseding_version_ids()),
+    )
+
+
+def _table_view(
+    table: ScoringTableRecord,
+    headers: Sequence[ScoringTableVersion],
+    reading: _Reading,
+    catalog: ProtectedCatalog,
+) -> TableView:
+    """The table with, per version and for the table itself, the code of what blocks it
+    (GTAB-36). The same pure rules the use cases apply; nothing is read per version."""
+    is_official = catalog.is_official(table.name)
+
+    def acronyms_of(version_ids: Collection[UUID]) -> tuple[str, ...]:
+        unit_ids = [u for v in version_ids for u in reading.default_units.get(v, ())]
+        return tuple(sorted(reading.acronyms.get(u, str(u)) for u in unit_ids))
+
+    versions = []
+    for v in headers:
+        facts = VersionFacts(
+            process_count=reading.process_counts.get(v.id, 0),
+            default_unit_acronyms=acronyms_of({v.id}),
+            replaces_other=v.id in reading.superseding,
+            is_superseded=v.is_superseded,
+            has_later_version=has_later_version(v, headers),
+            is_only_version=len(headers) == 1,
+            table_archived=table.archived,
+            is_official=is_official,
+        )
+        read_only = criteria_read_only_reason(facts)
+        delete_blockers = version_delete_blockers(facts)
+        versions.append(
+            VersionView(
+                v,
+                facts.process_count > 0,
+                facts.process_count,
+                reading.default_units.get(v.id, ()),
+                read_only.code if read_only else None,
+                delete_blockers[0].code if delete_blockers else None,
+            )
+        )
+    version_ids = {v.id for v in headers}
+    table_facts = TableFacts(
+        is_official=is_official,
+        process_count=sum(reading.process_counts.get(v, 0) for v in version_ids),
+        default_unit_acronyms=acronyms_of(version_ids),
+        table_archived=table.archived,
+    )
+    archive_blockers = [] if table.archived else table_archive_blockers(table_facts)
+    delete_blockers = table_delete_blockers(table_facts)
+    return TableView(
+        table,
+        versions,
+        archive_blockers[0].code if archive_blockers else None,
+        delete_blockers[0].code if delete_blockers else None,
+    )
+
+
 class ListScoringTables:
-    def __init__(self, uow_factory: Callable[[], UnitOfWork]):
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], catalog: ProtectedCatalog):
         self._uow_factory = uow_factory
+        self._catalog = catalog
 
     def execute(self) -> list[TableView]:
         with self._uow_factory() as uow:
-            facts = _facts(uow)
+            reading = _reading(uow)
+            repo = uow.scoring_tables
             return [
-                TableView(t, _views(facts, uow.scoring_tables.list_version_headers(t.id)))
-                for t in uow.scoring_tables.list_tables()
+                _table_view(t, repo.list_version_headers(t.id), reading, self._catalog)
+                for t in repo.list_tables()
             ]
 
 
 class ListTableVersions:
-    def __init__(self, uow_factory: Callable[[], UnitOfWork]):
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], catalog: ProtectedCatalog):
         self._uow_factory = uow_factory
+        self._catalog = catalog
 
     def execute(self, table_id: UUID) -> list[VersionView]:
         with self._uow_factory() as uow:
-            if uow.scoring_tables.get_table(table_id) is None:
+            table = uow.scoring_tables.get_table(table_id)
+            if table is None:
                 raise NotFound("Tabela de pontuação não encontrada")
-            return _views(_facts(uow), uow.scoring_tables.list_version_headers(table_id))
+            headers = uow.scoring_tables.list_version_headers(table_id)
+            return _table_view(table, headers, _reading(uow), self._catalog).versions
 
 
 class GetScoringVersion:
-    def __init__(self, uow_factory: Callable[[], UnitOfWork]):
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], catalog: ProtectedCatalog):
         self._uow_factory = uow_factory
+        self._catalog = catalog
 
     def execute(self, version_id: UUID) -> VersionView:
         with self._uow_factory() as uow:
             version = uow.scoring_tables.get_version(version_id)
-            if version is None:
+            table = uow.scoring_tables.get_table(version.table_id) if version else None
+            if version is None or table is None:
                 raise NotFound("Versão da tabela de pontuação não encontrada")
-            return _views(_facts(uow), [version])[0]
+            headers = uow.scoring_tables.list_version_headers(table.id)
+            [view] = [
+                v
+                for v in _table_view(table, headers, _reading(uow), self._catalog).versions
+                if v.version.id == version_id
+            ]
+            return VersionView(
+                version,  # the full version, with groups and criteria
+                view.in_use,
+                view.process_count,
+                view.default_for_unit_ids,
+                view.read_only_reason,
+                view.delete_blocked_reason,
+            )
 
 
 def _default_acronyms(uow: UnitOfWork, version_ids: Collection[UUID]) -> tuple[str, ...]:
@@ -131,17 +244,6 @@ def _default_acronyms(uow: UnitOfWork, version_ids: Collection[UUID]) -> tuple[s
             unit = uow.units.get(default.unit_id)
             acronyms.append(unit.acronym if unit else str(default.unit_id))
     return tuple(sorted(acronyms))
-
-
-@dataclass(frozen=True)
-class ProtectedCatalog:
-    """The table the seed recreates at every start: it and all its versions are never deleted
-    (GTAB-42). The name comes from the wiring, so this layer reads no infrastructure data."""
-
-    official_table_name: str
-
-    def is_official(self, table_name: str) -> bool:
-        return table_name.casefold() == self.official_table_name.casefold()
 
 
 def _table_facts(

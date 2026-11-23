@@ -1,11 +1,12 @@
 """TAB-08: read routes for scoring tables, versions and criteria."""
 
 import uuid
+from datetime import date
 
 import pytest
 from sqlalchemy import event
 
-from app.application.use_cases.scoring_admin import ListScoringTables
+from app.application.use_cases.scoring_admin import ListScoringTables, ProtectedCatalog
 from app.domain.entities.user import Role
 from app.domain.repositories.ports import ScoringTableRecord
 from tests.integration.api.factories import add_professor, process_payload
@@ -266,7 +267,7 @@ def test_the_number_of_queries_of_the_list_does_not_grow_with_the_versions(engin
             uow.scoring_tables.add_table(table)
             uow.scoring_tables.add_version(make_version(table.id, name="v1"))
         uow.commit()
-    use_case = ListScoringTables(uow_factory)
+    use_case = ListScoringTables(uow_factory, ProtectedCatalog(OFFICIAL_NAME))
 
     with_one_version = _count_statements(engine, use_case.execute)
     with uow_factory() as uow:
@@ -278,3 +279,157 @@ def test_the_number_of_queries_of_the_list_does_not_grow_with_the_versions(engin
 
     assert [len(v.versions) for v in use_case.execute()] == [5, 5, 5]
     assert with_five_versions == with_one_version
+
+
+# --- GTAB-36: why a version or a table cannot be edited, archived or deleted -----------------
+
+
+def synthetic_table(uow_factory, name, starts, unit_ids=()):
+    """A synthetic table with one version per start date; returns the table and its versions."""
+    table = ScoringTableRecord(uuid.uuid4(), name, unit_ids=tuple(unit_ids))
+    versions = [make_version(table.id, name=f"v{n}", valid_from=d) for n, d in enumerate(starts)]
+    with uow_factory() as uow:
+        uow.scoring_tables.add_table(table)
+        for version in versions:
+            uow.scoring_tables.add_version(version)
+        uow.commit()
+    return table, versions
+
+
+def table_json(client, table):
+    return next(t for t in client.get("/api/scoring-tables").json() if t["id"] == str(table.id))
+
+
+def reasons(version_json):
+    return version_json["read_only_reason"], version_json["delete_blocked_reason"]
+
+
+def choose_in_a_process(client, headers, uow_factory, unit, version, siape):
+    add_processes_on(client, headers, uow_factory, unit, version.id, 1, siape)
+
+
+def test_a_version_used_by_a_process_is_read_only_and_not_deletable_for_that_reason(
+    client, act_as, scoring_tables, reference, uow_factory
+):
+    _, headers = act_as("admin@ufpa.br", Role.ADMIN)
+    table, [first, second] = synthetic_table(
+        uow_factory, "Tabela Sintética Usada", [date(2020, 1, 1), date(2021, 1, 1)]
+    )
+    choose_in_a_process(client, headers, uow_factory, reference["FASI"], second, 2100001)
+
+    listed = table_json(client, table)
+    by_id = {v["id"]: v for v in listed["versions"]}
+
+    used = "VERSAO_USADA_POR_PROCESSO"
+    assert reasons(by_id[str(second.id)]) == (used, used)
+    assert listed["delete_blocked_reason"] == "VERSAO_USADA_POR_PROCESSO"
+    assert listed["archive_blocked_reason"] is None
+    assert by_id[str(first.id)]["read_only_reason"] == "VERSAO_NAO_MAIS_RECENTE"
+
+
+def test_a_version_in_use_of_a_unit_cannot_be_deleted_and_its_table_cannot_be_archived(
+    client, docente, scoring_tables, reference, uow_factory
+):
+    fasi = reference["FASI"]
+    table, [first, second] = synthetic_table(
+        uow_factory, "Tabela Sintética Em Uso", [date(2020, 1, 1), date(2021, 1, 1)], [fasi.id]
+    )
+    with uow_factory() as uow:
+        uow.scoring_tables.set_unit_default(fasi.id, second.id)
+        uow.commit()
+
+    listed = table_json(client, table)
+    by_id = {v["id"]: v for v in listed["versions"]}
+
+    assert reasons(by_id[str(second.id)]) == (None, "VERSAO_EM_USO_DE_UNIDADE")
+    assert by_id[str(first.id)]["delete_blocked_reason"] is None
+    assert listed["archive_blocked_reason"] == "TABELA_COM_VERSAO_EM_USO"
+    assert listed["delete_blocked_reason"] == "VERSAO_EM_USO_DE_UNIDADE"
+
+
+def test_a_superseded_version_is_read_only_and_the_one_that_replaces_it_is_not_deletable(
+    client, docente, scoring_tables, uow_factory
+):
+    table, [old, new] = synthetic_table(
+        uow_factory, "Tabela Sintética Substituída", [date(2020, 1, 1), date(2020, 1, 1)]
+    )
+    with uow_factory() as uow:
+        uow.scoring_tables.set_superseded(old.id, new.id)
+        uow.commit()
+
+    by_id = {v["id"]: v for v in table_json(client, table)["versions"]}
+
+    assert reasons(by_id[str(old.id)]) == ("VERSAO_SUBSTITUIDA", None)
+    assert reasons(by_id[str(new.id)]) == (None, "VERSAO_SUBSTITUI_OUTRA")
+
+
+def test_an_older_version_is_not_the_latest_but_the_latest_is_free(
+    client, docente, scoring_tables, uow_factory
+):
+    table, [older, latest] = synthetic_table(
+        uow_factory, "Tabela Sintética Em Série", [date(2020, 1, 1), date(2022, 1, 1)]
+    )
+
+    listed = table_json(client, table)
+    by_id = {v["id"]: v for v in listed["versions"]}
+
+    assert reasons(by_id[str(older.id)]) == ("VERSAO_NAO_MAIS_RECENTE", None)
+    assert reasons(by_id[str(latest.id)]) == (None, None)  # a free version: null in both
+    assert listed["archive_blocked_reason"] is None
+    assert listed["delete_blocked_reason"] is None
+
+
+def test_a_version_whose_later_version_is_superseded_is_still_not_the_latest(
+    client, docente, scoring_tables, uow_factory
+):
+    # The 409 of the edit counts every later version, superseded ones included (GTAB-19).
+    table, [elsewhere, middle, later] = synthetic_table(
+        uow_factory,
+        "Tabela Sintética Sucessora Substituída",
+        [date(2019, 6, 1), date(2020, 1, 1), date(2022, 1, 1)],
+    )
+    with uow_factory() as uow:
+        uow.scoring_tables.set_superseded(later.id, elsewhere.id)
+        uow.commit()
+
+    by_id = {v["id"]: v for v in table_json(client, table)["versions"]}
+
+    assert by_id[str(middle.id)]["read_only_reason"] == "VERSAO_NAO_MAIS_RECENTE"
+    assert by_id[str(later.id)]["read_only_reason"] == "VERSAO_SUBSTITUIDA"
+
+
+def test_every_version_and_the_table_of_the_official_table_are_protected_from_deletion(
+    client, docente, scoring_tables
+):
+    official = tables_by_name(client)[OFFICIAL_NAME]
+
+    assert official["delete_blocked_reason"] == "TABELA_OFICIAL_PROTEGIDA"
+    assert {v["delete_blocked_reason"] for v in official["versions"]} == {
+        "TABELA_OFICIAL_PROTEGIDA"
+    }
+    assert official["archive_blocked_reason"] is None  # it can be archived
+    assert [v["read_only_reason"] for v in official["versions"]] == [None]
+
+
+def test_the_only_version_of_a_table_cannot_be_deleted_alone(
+    client, docente, scoring_tables
+):
+    other = tables_by_name(client)[OTHER_NAME]
+
+    [version] = other["versions"]
+    assert version["delete_blocked_reason"] == "ULTIMA_VERSAO_DA_TABELA"
+    assert version["read_only_reason"] is None
+    assert other["delete_blocked_reason"] is None  # the way out: delete the table
+
+
+def test_the_routes_that_list_one_table_or_one_version_carry_the_same_reasons(
+    client, docente, scoring_tables
+):
+    official = tables_by_name(client)[OFFICIAL_NAME]
+    [listed] = official["versions"]
+
+    by_table = client.get(f"/api/scoring-tables/{official['id']}/versions").json()
+    one = version_detail(client, scoring_tables, "OFICIAL")
+
+    assert by_table == official["versions"]
+    assert (one["read_only_reason"], one["delete_blocked_reason"]) == reasons(listed)
