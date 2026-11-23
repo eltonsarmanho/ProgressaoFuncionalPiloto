@@ -1,9 +1,9 @@
 import { useId, useState } from "react";
 import { request } from "../api/client";
-import type { ScoringTableInfo, Unit } from "../api/types";
+import type { ScoringTableInfo, ScoringVersionSummary, Unit } from "../api/types";
 import { FieldError } from "./FieldError";
-import { blockReasonText } from "../labels";
-import { Alert, Field, conflictCode, useSubmit } from "./formKit";
+import { SET_DEFAULT_LABELS, blockReasonText } from "../labels";
+import { Alert, Field, FormProblem, conflictCode, useSubmit } from "./formKit";
 import { Modal } from "./Modal";
 
 type DialogProps = {
@@ -192,6 +192,69 @@ export function UnitsDialog({
         <div className="btn-row">
           <button type="submit" className="btn btn-primary" disabled={busy}>
             Salvar unidades
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={onClose}>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+/** GTAB-02, GTAB-16, GTAB-35: asks which unit of the table gets this version as the one in use. */
+export function SetDefaultDialog({
+  table,
+  version,
+  units,
+  onDone,
+  onClose,
+}: DialogProps & { table: ScoringTableInfo; version: ScoringVersionSummary; units: Unit[] }) {
+  const id = useId();
+  const [unitId, setUnitId] = useState("");
+  const offered = units.filter((u) => table.unit_ids.includes(u.id));
+
+  const { submit, errors, error, busy } = useSubmit(
+    async () => {
+      if (!unitId) throw new FormProblem("unit_id", SET_DEFAULT_LABELS.chooseUnit);
+      await request("PUT", `/api/scoring-units/${unitId}/default-version`, { version_id: version.id });
+    },
+    () => {
+      const acronym = offered.find((u) => u.id === unitId)?.acronym ?? "";
+      onDone(SET_DEFAULT_LABELS.done(version.name, acronym));
+    },
+  );
+
+  return (
+    <Modal title={`Definir ${version.name} como em uso`} onClose={onClose}>
+      <form onSubmit={submit} noValidate aria-label="Definir como em uso">
+        <fieldset
+          className="tbl-check-group"
+          aria-invalid={errors.unit_id ? true : undefined}
+          aria-describedby={errors.unit_id ? `${id}-unit-error` : undefined}
+        >
+          <legend>Unidade</legend>
+          {offered.map((unit) => {
+            const already = version.default_for_unit_ids.includes(unit.id);
+            return (
+              <label key={unit.id} className="tbl-check">
+                <input
+                  type="radio"
+                  name={`${id}-unit`}
+                  checked={unitId === unit.id}
+                  disabled={already}
+                  onChange={() => setUnitId(unit.id)}
+                />
+                {already ? `${unit.acronym} (${SET_DEFAULT_LABELS.alreadyInUseUnit})` : unit.acronym}
+              </label>
+            );
+          })}
+          <FieldError id={`${id}-unit-error`} message={errors.unit_id} />
+        </fieldset>
+        <Alert message={error} />
+        <div className="btn-row">
+          <button type="submit" className="btn btn-primary" disabled={busy}>
+            Definir como em uso
           </button>
           <button type="button" className="btn btn-secondary" onClick={onClose}>
             Cancelar

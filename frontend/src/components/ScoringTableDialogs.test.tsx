@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ScoringTableInfo, Unit } from "../api/types";
 import { setCsrfToken } from "../api/client";
 import { mockFetch } from "../test/fetchMock";
-import { CreateTableDialog, UnitsDialog } from "./ScoringTableDialogs";
+import { CreateTableDialog, SetDefaultDialog, UnitsDialog } from "./ScoringTableDialogs";
 
 const UNITS: Unit[] = [
   { id: "u1", name: "Faculdade de Sistemas", acronym: "FASI", kind: "FACULDADE", parent_id: null, archived: false },
@@ -281,5 +281,90 @@ describe("GTAB-14, GTAB-43, GTAB-16: unidades da tabela", () => {
     await user.click(screen.getByRole("button", { name: "Salvar unidades" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("da unidade FASI; desmarque a versão antes de retirá-la");
+  });
+});
+
+describe("GTAB-02, GTAB-16, GTAB-35: definir como em uso com várias unidades", () => {
+  const TWO_UNITS: ScoringTableInfo = {
+    ...TABLES[0],
+    unit_ids: ["u1", "u2"],
+    versions: [{ ...VERSION, default_for_unit_ids: ["u1"] }],
+  };
+
+  function setup(routes: Parameters<typeof mockFetch>[0] = {}) {
+    setCsrfToken("csrf-abc");
+    const mock = mockFetch({ ...routes });
+    const onDone = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <SetDefaultDialog table={TWO_UNITS} version={TWO_UNITS.versions[0]} units={UNITS} onDone={onDone} onClose={onClose} />,
+    );
+    return { ...mock, onDone, onClose, user: userEvent.setup() };
+  }
+
+  it("pergunta a unidade, mostra desabilitada a que já tem a versão e oferece só as unidades da tabela", () => {
+    setup();
+
+    const dialog = screen.getByRole("dialog", { name: "Definir Sintética 2026 como em uso" });
+    const group = within(dialog).getByRole("group", { name: "Unidade" });
+    expect(within(group).getAllByRole("radio").map((r) => (r as HTMLInputElement).labels?.[0]?.textContent)).toEqual([
+      "FASI (já é a versão em uso)",
+      "IFCH",
+    ]);
+    expect(within(group).getByRole("radio", { name: /FASI/ })).toBeDisabled();
+    expect(within(group).getByRole("radio", { name: "IFCH" })).toBeEnabled();
+  });
+
+  it("envia o PUT só para a unidade escolhida e anuncia a confirmação", async () => {
+    const { calls, onDone, user } = setup({
+      "PUT /api/scoring-units/u2/default-version": { status: 200, body: { unit_id: "u2", version_id: "v1" } },
+    });
+
+    await user.click(screen.getByRole("radio", { name: "IFCH" }));
+    await user.click(screen.getByRole("button", { name: "Definir como em uso" }));
+
+    await vi.waitFor(() => expect(onDone).toHaveBeenCalledWith("Sintética 2026 é agora a versão em uso de IFCH."));
+    expect(calls.map((c) => `${c.method} ${c.path}`)).toEqual(["PUT /api/scoring-units/u2/default-version"]);
+    expect(bodyOf(calls, "PUT /api/scoring-units/u2/default-version")).toEqual({ version_id: "v1" });
+  });
+
+  it("sem unidade escolhida não envia e pede a unidade junto do campo", async () => {
+    const { calls, onDone, user } = setup();
+
+    await user.click(screen.getByRole("button", { name: "Definir como em uso" }));
+
+    expect(await screen.findByText("Escolha a unidade.")).toBeInTheDocument();
+    expect(calls).toEqual([]);
+    expect(onDone).not.toHaveBeenCalled();
+  });
+
+  it("o 409 da API aparece como texto no diálogo e nada é anunciado", async () => {
+    const { onDone, user } = setup({
+      "PUT /api/scoring-units/u2/default-version": {
+        status: 409,
+        body: { detail: "A tabela está arquivada", code: "TABELA_ARQUIVADA" },
+      },
+    });
+
+    await user.click(screen.getByRole("radio", { name: "IFCH" }));
+    await user.click(screen.getByRole("button", { name: "Definir como em uso" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("A tabela está arquivada");
+    expect(onDone).not.toHaveBeenCalled();
+  });
+
+  it("o 422 de unit_id aparece junto do campo", async () => {
+    const { user } = setup({
+      "PUT /api/scoring-units/u2/default-version": {
+        status: 422,
+        body: { detail: [{ field: "unit_id", message: "A tabela não está associada à unidade" }] },
+      },
+    });
+
+    await user.click(screen.getByRole("radio", { name: "IFCH" }));
+    await user.click(screen.getByRole("button", { name: "Definir como em uso" }));
+
+    expect(await screen.findByText("A tabela não está associada à unidade")).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Unidade" })).toHaveAttribute("aria-invalid", "true");
   });
 });

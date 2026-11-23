@@ -210,6 +210,16 @@ export const BLOCK_REASON_LABELS: Record<BlockReasonCode, string> = {
     "A unidade tem versão desta tabela em uso; desmarque a versão antes de retirar a unidade.",
 };
 
+/** GTAB-02, GTAB-04, GTAB-36: the sentences of "Definir como em uso" and "Remover marcação". */
+export const SET_DEFAULT_LABELS = {
+  noUnit: "Associe uma unidade à tabela antes de definir como em uso.",
+  alreadyInUse: "A versão já é a em uso de todas as unidades da tabela.",
+  alreadyInUseUnit: "já é a versão em uso",
+  chooseUnit: "Escolha a unidade.",
+  done: (version: string, acronym: string) => `${version} é agora a versão em uso de ${acronym}.`,
+  cleared: (acronym: string) => `Marcação de ${acronym} removida; a sugestão volta a seguir a vigência.`,
+} as const;
+
 const UNKNOWN_BLOCK_REASON = "Esta ação não é permitida agora.";
 
 /**

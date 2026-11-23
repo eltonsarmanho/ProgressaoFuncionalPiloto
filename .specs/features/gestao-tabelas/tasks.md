@@ -1040,7 +1040,7 @@ graph LR
 
 #### T31: Definir como em uso e remover a marcação
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Botão "Definir como em uso" por versão: com uma só unidade associada age na hora; com várias abre um `Modal` para escolher a unidade (as unidades que já têm esta versão em uso aparecem desabilitadas); envia `PUT /api/scoring-units/{unit_id}/default-version`. O cartão mostra "Em uso (sigla)" com o botão "Remover marcação de <sigla>" (`DELETE`). Desabilitado, com o motivo, para versão substituída, tabela arquivada e tabela sem unidade associada ("Associe uma unidade à tabela antes de definir como em uso"), e quando a versão já é a em uso de todas as suas unidades.
 **Where**: `frontend/src/components/ScoringTableDialogs.tsx` (modify)
@@ -1055,9 +1055,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ScoringTableDialogs.test.tsx` e `frontend/src/pages/ScoringAdmin.test.tsx` (modificam): com uma unidade o clique envia o `PUT` na hora e a etiqueta "Em uso (FASI)" passa para a versão nova; com duas unidades o diálogo pergunta qual, mostra desabilitada a que já tem a versão e envia só a escolhida; "Remover marcação" envia o `DELETE` e a etiqueta some; o botão fica desabilitado com o motivo em versão substituída, em tabela arquivada e em tabela sem unidade; 409 aparece como texto; a confirmação é anunciada em `role=status`
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/components/ScoringTableDialogs.test.tsx` e `frontend/src/pages/ScoringAdmin.test.tsx` (modificam): com uma unidade o clique envia o `PUT` na hora e a etiqueta "Em uso (FASI)" passa para a versão nova; com duas unidades o diálogo pergunta qual, mostra desabilitada a que já tem a versão e envia só a escolhida; "Remover marcação" envia o `DELETE` e a etiqueta some; o botão fica desabilitado com o motivo em versão substituída, em tabela arquivada e em tabela sem unidade; 409 aparece como texto; a confirmação é anunciada em `role=status`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front

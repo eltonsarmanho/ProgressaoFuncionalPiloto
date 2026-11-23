@@ -42,6 +42,7 @@ import {
   blockReasonText,
   historyChangeLabel,
   inUseBadge,
+  SET_DEFAULT_LABELS,
 } from "./labels";
 
 describe("UIG-05: rótulos em português dos documentos gerados", () => {
@@ -391,5 +392,19 @@ describe("GTAB-34, GTAB-36: motivos de bloqueio, etiquetas e histórico das tabe
     expect(historyChangeLabel("criteria.8.37.max_points")).toBe("VIII.37: Limite de pontos");
     expect(historyChangeLabel("criteria.2.7.description")).toBe("II.7: Descrição");
     expect(historyChangeLabel("chave_nova")).toBe("chave_nova");
+  });
+});
+
+describe("GTAB-36, GTAB-02: textos do 'Definir como em uso'", () => {
+  it("a tabela sem unidade e a versão que já é a em uso de todas têm texto próprio, sem código cru", () => {
+    expect(SET_DEFAULT_LABELS.noUnit).toBe("Associe uma unidade à tabela antes de definir como em uso.");
+    expect(SET_DEFAULT_LABELS.alreadyInUse).toBe("A versão já é a em uso de todas as unidades da tabela.");
+  });
+
+  it("os textos dos diálogos e das confirmações citam a sigla ou a versão", () => {
+    expect(SET_DEFAULT_LABELS.done("FASI 2026", "FASI")).toBe("FASI 2026 é agora a versão em uso de FASI.");
+    expect(SET_DEFAULT_LABELS.cleared("FASI")).toBe(
+      "Marcação de FASI removida; a sugestão volta a seguir a vigência.",
+    );
   });
 });

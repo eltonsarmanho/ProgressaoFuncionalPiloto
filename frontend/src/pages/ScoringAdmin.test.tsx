@@ -665,3 +665,159 @@ describe("GTAB-12, GTAB-13, GTAB-16, GTAB-35: duplicar, nova versão e CSV em di
     expect(within(fasi).queryByRole("button", { name: /^Nova versão/ })).not.toBeInTheDocument();
   });
 });
+
+describe("GTAB-02, GTAB-04, GTAB-10, GTAB-16, GTAB-36: definir como em uso e remover a marcação", () => {
+  const pageStatus = () => screen.getAllByRole("status").find((el) => el.tagName === "P") as HTMLElement;
+  const versionOf = (card: HTMLElement, name: string) =>
+    Array.from(card.querySelectorAll(".tbl-version")).find((v) => v.textContent?.includes(name)) as HTMLElement;
+  const MOVED = [
+    {
+      ...TABLES[0],
+      versions: [
+        { ...FASI_V1, default_for_unit_ids: [] },
+        { ...FASI_V2, default_for_unit_ids: ["u1"] },
+      ],
+    },
+    TABLES[1],
+  ];
+
+  it("com uma unidade o clique envia o PUT na hora e a etiqueta 'Em uso (FASI)' passa para a versão nova", async () => {
+    let loads = 0;
+    const { calls } = renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": () => {
+        loads += 1;
+        return { status: 200, body: loads === 1 ? TABLES : MOVED };
+      },
+      "PUT /api/scoring-units/u1/default-version": { status: 200, body: { unit_id: "u1", version_id: "v-fasi-2" } },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+    expect(versionOf(fasi, "FASI 2022")).toHaveTextContent("Em uso (FASI)");
+
+    await user.click(within(fasi).getByRole("button", { name: "Definir FASI 2026 como em uso" }));
+
+    await vi.waitFor(() => expect(versionOf(fasi, "FASI 2026")).toHaveTextContent("Em uso (FASI)"));
+    expect(versionOf(fasi, "FASI 2022")).not.toHaveTextContent("Em uso (FASI)");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    const put = calls.find((c) => c.method === "PUT");
+    expect(put?.path).toBe("/api/scoring-units/u1/default-version");
+    expect(JSON.parse(String(put?.init?.body))).toEqual({ version_id: "v-fasi-2" });
+    expect(pageStatus()).toHaveTextContent("FASI 2026 é agora a versão em uso de FASI.");
+  });
+
+  it("'Remover marcação de FASI' envia o DELETE e a etiqueta some", async () => {
+    let loads = 0;
+    const cleared = [{ ...TABLES[0], versions: [{ ...FASI_V1, default_for_unit_ids: [] }, FASI_V2] }, TABLES[1]];
+    const { calls } = renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": () => {
+        loads += 1;
+        return { status: 200, body: loads === 1 ? TABLES : cleared };
+      },
+      "DELETE /api/scoring-units/u1/default-version": { status: 204 },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    await user.click(within(fasi).getByRole("button", { name: "Remover marcação de FASI em FASI 2022" }));
+
+    await vi.waitFor(() => expect(versionOf(fasi, "FASI 2022")).not.toHaveTextContent("Em uso (FASI)"));
+    expect(calls.some((c) => c.method === "DELETE" && c.path === "/api/scoring-units/u1/default-version")).toBe(true);
+    expect(pageStatus()).toHaveTextContent("Marcação de FASI removida; a sugestão volta a seguir a vigência.");
+    expect(within(fasi).queryByRole("button", { name: /^Remover marcação/ })).not.toBeInTheDocument();
+  });
+
+  it("com duas unidades o diálogo pergunta qual, mostra desabilitada a que já tem a versão e envia só a escolhida", async () => {
+    let loads = 0;
+    const two = [{ ...TABLES[0], unit_ids: ["u1", "u2"] }, TABLES[1]];
+    const { calls } = renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": () => {
+        loads += 1;
+        return { status: 200, body: two };
+      },
+      "PUT /api/scoring-units/u2/default-version": { status: 200, body: { unit_id: "u2", version_id: "v-fasi" } },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    await user.click(within(fasi).getByRole("button", { name: "Definir FASI 2022 como em uso" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Definir FASI 2022 como em uso" });
+    expect(within(dialog).getByRole("radio", { name: /FASI/ })).toBeDisabled();
+    expect(calls.some((c) => c.method === "PUT")).toBe(false);
+    await user.click(within(dialog).getByRole("radio", { name: "IFCH" }));
+    await user.click(within(dialog).getByRole("button", { name: "Definir como em uso" }));
+
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await vi.waitFor(() => expect(loads).toBe(2));
+    expect(calls.filter((c) => c.method === "PUT").map((c) => c.path)).toEqual(["/api/scoring-units/u2/default-version"]);
+    expect(pageStatus()).toHaveTextContent("FASI 2022 é agora a versão em uso de IFCH.");
+  });
+
+  it("o botão fica desabilitado, com o motivo, na versão que já é a em uso de todas as unidades", async () => {
+    const { calls } = renderAdmin("ADMIN");
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    const button = within(fasi).getByRole("button", { name: "Definir FASI 2022 como em uso" });
+
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    expect(versionOf(fasi, "FASI 2022")).toHaveTextContent("A versão já é a em uso de todas as unidades da tabela.");
+    await user.click(button);
+    expect(calls.some((c) => c.method === "PUT")).toBe(false);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("o botão fica desabilitado, com o motivo, em versão substituída, em tabela arquivada e em tabela sem unidade", async () => {
+    renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": {
+        status: 200,
+        body: [
+          {
+            ...TABLES[0],
+            versions: [{ ...FASI_V1, default_for_unit_ids: [], superseded_by_id: "v-fasi-2" }, FASI_V2],
+          },
+          { ...OLD_TABLE, id: "t-arch", name: "Tabela arquivada", unit_ids: ["u1"], versions: [{ ...OLD_TABLE.versions[0], id: "v-arch", superseded_by_id: null }] },
+          { ...TABLES[1], unit_ids: [] },
+        ],
+      },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    expect(within(fasi).getByRole("button", { name: "Definir FASI 2022 como em uso" })).toHaveAttribute("aria-disabled", "true");
+    expect(versionOf(fasi, "FASI 2022")).toHaveTextContent("A versão foi substituída por outra");
+    expect(within(fasi).getByRole("button", { name: "Definir FASI 2026 como em uso" })).not.toHaveAttribute("aria-disabled");
+
+    const ifch = screen.getByRole("region", { name: "Tabela do IFCH" });
+    expect(within(ifch).getByRole("button", { name: "Definir IFCH 2015 como em uso" })).toHaveAttribute("aria-disabled", "true");
+    expect(ifch).toHaveTextContent("Associe uma unidade à tabela antes de definir como em uso.");
+
+    await user.click(screen.getByRole("checkbox", { name: "Mostrar arquivadas" }));
+    const arch = await screen.findByRole("region", { name: "Tabela arquivada" });
+    expect(within(arch).getByRole("button", { name: "Definir Antiga 2015 como em uso" })).toHaveAttribute("aria-disabled", "true");
+    expect(arch).toHaveTextContent("A tabela está arquivada; desarquive-a");
+  });
+
+  it("o 409 da API aparece como texto no status e a etiqueta não muda", async () => {
+    renderAdmin("ADMIN", {
+      "PUT /api/scoring-units/u1/default-version": {
+        status: 409,
+        body: { detail: "A versão foi substituída por outra", code: "VERSAO_SUBSTITUIDA" },
+      },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    await user.click(within(fasi).getByRole("button", { name: "Definir FASI 2026 como em uso" }));
+
+    await vi.waitFor(() => expect(pageStatus()).toHaveTextContent("A versão foi substituída por outra"));
+    expect(versionOf(fasi, "FASI 2022")).toHaveTextContent("Em uso (FASI)");
+  });
+
+  it("quem não é ADMIN não vê 'Definir como em uso' nem 'Remover marcação'", async () => {
+    renderAdmin("DOCENTE");
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+    expect(within(fasi).queryByRole("button", { name: /como em uso/ })).not.toBeInTheDocument();
+    expect(within(fasi).queryByRole("button", { name: /Remover marcação/ })).not.toBeInTheDocument();
+  });
+});
