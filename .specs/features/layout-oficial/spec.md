@@ -242,11 +242,11 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | BRAS-03 | P1: Brasão | Tasks | In Tasks |
 | BRAS-04 | P1: Brasão | Tasks | In Tasks |
 | BRAS-05 | P1: Brasão | Tasks | In Tasks |
-| BRAS-06 | P1: Brasão | Tasks | In Tasks |
+| BRAS-06 | P1: Brasão | Execute | In Progress |
 | BRAS-07 | P1: Brasão | Tasks | In Tasks |
 | BRAS-08 | P1: Brasão | Tasks | In Tasks |
-| BRAS-09 | P1: Brasão | Tasks | In Tasks |
-| BRAS-10 | P1: Brasão | Tasks | In Tasks |
+| BRAS-09 | P1: Brasão | Execute | In Progress |
+| BRAS-10 | P1: Brasão | Execute | In Progress |
 | BRAS-11 | P1: Brasão | Tasks | In Tasks |
 
 **Substituições na spec `banca-parecer`** (a marcar na tarefa de documentação): PAR-01 (o campo "observações" sai), PAR-03, PAR-04, PAR-05, PAR-06 e PAR-13 ficam substituídos por PMOD-01 a PMOD-19, PMOD-26 a PMOD-29; PAR-02 e PAR-07 a PAR-12 e PAR-14 seguem em vigor (PMOD-20, PMOD-22 a PMOD-25).

@@ -410,7 +410,7 @@ graph LR
 
 #### T10: Arquivo do brasão e carregador
 
-**Status**: Pending
+**Status**: Done
 
 **What**: O PNG do usuário (`backend/img/ufpa.png`, só lido) é copiado, byte a byte, para `backend/app/infrastructure/documents/assets/ufpa.png`; `emblem.py` expõe `EMBLEM_FILE`, `EMBLEM_WIDTH_MM = 20.0`, `EMBLEM_GAP_MM = 3.0`, `emblem_size_mm()` (largura 20,0 e altura proporcional à imagem, lida do cabeçalho do PNG) e `emblem_path()`, que levanta `EmblemUnavailable(RuntimeError)` com o nome do arquivo quando ele não existe, está vazio ou não começa com a assinatura de PNG.
 **Where**: `backend/app/infrastructure/documents/emblem.py` (new; o arquivo `backend/app/infrastructure/documents/assets/ufpa.png`)
@@ -425,10 +425,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_emblem.py` (novo): o arquivo empacotado existe dentro de `backend/app` (o `COPY app ./app` do `Dockerfile` o leva; o teste confere que o caminho é filho da pasta `app`), é um PNG válido (assinatura e abre com Pillow) de 279 por 351 px; `emblem_size_mm()` dá 20,0 mm de largura e cerca de 25,16 mm de altura (20 × 351 ÷ 279); `emblem_path()` devolve o caminho do pacote; com `EMBLEM_FILE` apontado (por `monkeypatch`) para um caminho inexistente, para um arquivo vazio e para um arquivo de texto, levanta `EmblemUnavailable` e a mensagem traz o nome `ufpa.png` e não traz o caminho completo do servidor; o `Dockerfile` não copia `img/` e o teste confere que o brasão não depende de `backend/img/` (nenhum módulo de `backend/app` cita `img/ufpa.png`)
-- [ ] O original em `backend/img/ufpa.png` não é movido, apagado nem adicionado ao commit (`git status` do commit só mostra o arquivo novo em `assets/` e o módulo)
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_emblem.py` (novo): o arquivo empacotado existe dentro de `backend/app` (o `COPY app ./app` do `Dockerfile` o leva; o teste confere que o caminho é filho da pasta `app`), é um PNG válido (assinatura e abre com Pillow) de 279 por 351 px; `emblem_size_mm()` dá 20,0 mm de largura e cerca de 25,16 mm de altura (20 × 351 ÷ 279); `emblem_path()` devolve o caminho do pacote; com `EMBLEM_FILE` apontado (por `monkeypatch`) para um caminho inexistente, para um arquivo vazio e para um arquivo de texto, levanta `EmblemUnavailable` e a mensagem traz o nome `ufpa.png` e não traz o caminho completo do servidor; o `Dockerfile` não copia `img/` e o teste confere que o brasão não depende de `backend/img/` (nenhum módulo de `backend/app` cita `img/ufpa.png`)
+- [x] O original em `backend/img/ufpa.png` não é movido, apagado nem adicionado ao commit (`git status` do commit só mostra o arquivo novo em `assets/` e o módulo)
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
