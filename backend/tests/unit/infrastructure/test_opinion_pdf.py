@@ -200,6 +200,68 @@ def test_the_paragraph_is_indented_on_its_first_line_only(tmp_path):
     assert all(x == pytest.approx(LEFT, abs=1) for x in others)
 
 
+def text_lines(page: pymupdf.Page) -> list[tuple[pymupdf.Rect, float, str]]:
+    """(box, font size, text) of every text line of the page, top to bottom."""
+    return [
+        (
+            pymupdf.Rect(line["bbox"]),
+            max(s["size"] for s in line["spans"]),
+            "".join(s["text"] for s in line["spans"]),
+        )
+        for block in page.get_text("dict")["blocks"]
+        for line in block.get("lines", [])
+    ]
+
+
+def paragraph_lines(page: pymupdf.Page) -> list[tuple[pymupdf.Rect, float, str]]:
+    """The lines of the single paragraph: between the place and date line and the first member."""
+    lines = text_lines(page)
+    top = next(box.y1 for box, _, text in lines if text.startswith("Belém,"))
+    bottom = next(box.y0 for box, _, text in lines if text.startswith("PRESIDENTE:"))
+    return [line for line in lines if top <= line[0].y0 and line[0].y1 <= bottom]
+
+
+def test_the_header_the_title_and_the_member_lines_are_centered_on_the_text_area(tmp_path):
+    # PMOD-02, PMOD-04, PMOD-13
+    page = render(tmp_path, opinion_model())[0]
+    center = (LEFT + PAGE_WIDTH - RIGHT) / 2
+
+    wanted = [
+        "Universidade Federal do Pará",
+        "Campus Universitário Sintético",
+        "Faculdade de Testes Sintéticos – FATS",
+        "PARECER",
+        "PRESIDENTE: Ana Presidente Souza",
+        "MEMBRO 1: Bruno Membro Lima",
+    ]
+    lines = {text: box for box, _, text in text_lines(page)}
+    for text in wanted:
+        box = lines[text]
+        assert (box.x0 + box.x1) / 2 == pytest.approx(center, abs=1.5), text
+
+
+def test_the_paragraph_is_justified_up_to_its_last_line(tmp_path):
+    # PMOD-06
+    lines = paragraph_lines(render(tmp_path, opinion_model())[0])
+
+    assert len(lines) > 2
+    for box, _, text in lines[:-1]:
+        assert box.x1 == pytest.approx(PAGE_WIDTH - RIGHT, abs=1.5), text
+    assert lines[-1][0].x1 < PAGE_WIDTH - RIGHT - 20
+
+
+def test_the_paragraph_is_set_in_12_pt_with_one_and_a_half_line_spacing(tmp_path):
+    # PMOD-06, assumption "Fontes do Parecer": 12 pt body, spacing 1.5 (12 x 1.5 = 18 pt)
+    page = render(tmp_path, opinion_model())[0]
+    lines = paragraph_lines(page)
+
+    assert len(lines) > 2
+    assert {size for _, size, _ in lines} == {12.0}
+    pitches = [b[0].y0 - a[0].y0 for a, b in zip(lines, lines[1:], strict=False)]
+    assert pitches == [pytest.approx(18.0, abs=0.5)] * len(pitches)
+    assert {size for _, size, _ in text_lines(page)} == {12.0}
+
+
 def test_there_is_no_page_footer_and_no_table(tmp_path):
     pdf = render(tmp_path, opinion_model())
 
