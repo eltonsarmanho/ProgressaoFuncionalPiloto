@@ -268,6 +268,21 @@ class ScoringTableVersionModel(Base):
     norm_code: Mapped[str | None] = mapped_column(String(50))
 
 
+class ScoringUnitDefaultModel(Base):
+    """The version of scoring table in use of a unit: one row per unit (GTAB-01). The version has
+    no ON DELETE, so the database refuses to delete a version that a unit uses."""
+
+    __tablename__ = "scoring_unit_defaults"
+
+    unit_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("academic_units.id"), primary_key=True
+    )
+    version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scoring_table_versions.id")
+    )
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class ScoringGroupModel(Base):
     __tablename__ = "scoring_groups"
     __table_args__ = (

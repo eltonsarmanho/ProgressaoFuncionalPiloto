@@ -46,6 +46,7 @@ TABLES = {
     "board_opinions",
     "request_settings",
     "dossier_deliveries",
+    "scoring_unit_defaults",
 }
 
 

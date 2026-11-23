@@ -150,7 +150,7 @@ graph LR
 
 #### T1: Tabela da marcação em uso (migração 0012 e modelo)
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Cria `scoring_unit_defaults` (`unit_id` chave primária com FK para `academic_units`, `version_id` NOT NULL com FK para `scoring_table_versions` sem `ON DELETE`, `updated_at` com default `now()`), o `ScoringUnitDefaultModel` em `models.py` e o `downgrade`, que remove a tabela. Nenhum dado semeado.
 **Where**: `backend/alembic/versions/0012_unit_defaults.py` (new)
@@ -165,11 +165,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_migration_unit_defaults.py` (novo): depois de `upgrade head` a tabela existe com chave primária `unit_id` e as duas FKs; inserir duas linhas com a mesma `unit_id` falha por unicidade; apagar uma versão referenciada falha por violação de FK (sem `ON DELETE`); `downgrade` para `0011` remove a tabela e um novo `upgrade head` a recria
-- [ ] `backend/tests/integration/test_migrations.py` (modifica): `TABLES` ganha `scoring_unit_defaults` e o teste `compare_metadata` segue sem diferença entre o modelo e a migração
-- [ ] Os testes de migração que atravessam esta revisão seguem verdes: `test_scoring_schema.py`, `test_migration_min_hours.py`, `test_migration_unit_points_override.py`, `test_migration_activity_merge.py`, `test_migration_version_superseded.py`, `test_migration_norms.py` e `test_migration_board.py`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/test_migration_unit_defaults.py tests/integration/test_migrations.py tests/integration/test_scoring_schema.py tests/integration/test_migration_min_hours.py tests/integration/test_migration_unit_points_override.py tests/integration/test_migration_activity_merge.py tests/integration/test_migration_version_superseded.py tests/integration/test_migration_norms.py tests/integration/test_migration_board.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/test_migration_unit_defaults.py` (novo): depois de `upgrade head` a tabela existe com chave primária `unit_id` e as duas FKs; inserir duas linhas com a mesma `unit_id` falha por unicidade; apagar uma versão referenciada falha por violação de FK (sem `ON DELETE`); `downgrade` para `0011` remove a tabela e um novo `upgrade head` a recria
+- [x] `backend/tests/integration/test_migrations.py` (modifica): `TABLES` ganha `scoring_unit_defaults` e o teste `compare_metadata` segue sem diferença entre o modelo e a migração
+- [x] Os testes de migração que atravessam esta revisão seguem verdes: `test_scoring_schema.py`, `test_migration_min_hours.py`, `test_migration_unit_points_override.py`, `test_migration_activity_merge.py`, `test_migration_version_superseded.py`, `test_migration_norms.py` e `test_migration_board.py`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/test_migration_unit_defaults.py tests/integration/test_migrations.py tests/integration/test_scoring_schema.py tests/integration/test_migration_min_hours.py tests/integration/test_migration_unit_points_override.py tests/integration/test_migration_activity_merge.py tests/integration/test_migration_version_superseded.py tests/integration/test_migration_norms.py tests/integration/test_migration_board.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted
