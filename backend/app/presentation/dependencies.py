@@ -104,14 +104,20 @@ from app.application.use_cases.scoring import (
     UpdateActivity,
 )
 from app.application.use_cases.scoring_admin import (
+    ArchiveScoringTable,
     CreateScoringTable,
     CreateVersionFrom,
+    DeleteScoringTable,
+    DeleteScoringVersion,
     DuplicateScoringTable,
     GetScoringVersion,
     GetTableHistory,
     ImportCriteriaCsv,
     ListScoringTables,
     ListTableVersions,
+    PreviewDeleteTable,
+    PreviewDeleteVersion,
+    ProtectedCatalog,
     SetTableUnits,
     UpdateVersionCriteria,
 )
@@ -137,7 +143,7 @@ from app.infrastructure.ai.maritalk import MariTalkExtractor
 from app.infrastructure.ai.ordinance_extractor import MariTalkOrdinanceExtractor
 from app.infrastructure.ai.report_writer import MariTalkReportWriter
 from app.infrastructure.database.repositories import SqlUnitOfWork
-from app.infrastructure.database.seed import STRUCTURE_CODE
+from app.infrastructure.database.seed import STRUCTURE_CODE, _official_table_data
 from app.infrastructure.database.session import make_session_factory
 from app.infrastructure.documents.comprovante_assembler import PdfComprovanteAssembler
 from app.infrastructure.documents.config_loader import ReportConfigLoader, load_dossier_order
@@ -202,6 +208,11 @@ class Container:
     import_criteria_csv: ImportCriteriaCsv
     set_table_units: SetTableUnits
     table_history: GetTableHistory
+    archive_scoring_table: ArchiveScoringTable
+    preview_delete_version: PreviewDeleteVersion
+    delete_scoring_version: DeleteScoringVersion
+    preview_delete_table: PreviewDeleteTable
+    delete_scoring_table: DeleteScoringTable
     set_unit_default_version: SetUnitDefaultVersion
     clear_unit_default_version: ClearUnitDefaultVersion
     suggest_scoring_table: SuggestScoringTable
@@ -295,6 +306,7 @@ def build_container(
 
     hasher = Argon2PasswordHasher()
     audit = AuditService(clock)
+    protected_catalog = ProtectedCatalog(_official_table_data()["table_name"])
     policy = AccessPolicy()
     merger = MergeDuplicateActivities(audit)
     create_activity = CreateActivity(uow_factory, audit, policy, merger)
@@ -369,6 +381,11 @@ def build_container(
         import_criteria_csv=ImportCriteriaCsv(uow_factory, audit),
         set_table_units=SetTableUnits(uow_factory, audit),
         table_history=GetTableHistory(uow_factory),
+        archive_scoring_table=ArchiveScoringTable(uow_factory, audit),
+        preview_delete_version=PreviewDeleteVersion(uow_factory, protected_catalog),
+        delete_scoring_version=DeleteScoringVersion(uow_factory, audit, protected_catalog),
+        preview_delete_table=PreviewDeleteTable(uow_factory, protected_catalog),
+        delete_scoring_table=DeleteScoringTable(uow_factory, audit, protected_catalog),
         set_unit_default_version=SetUnitDefaultVersion(uow_factory, audit),
         clear_unit_default_version=ClearUnitDefaultVersion(uow_factory, audit),
         suggest_scoring_table=SuggestScoringTable(uow_factory, audit, policy),

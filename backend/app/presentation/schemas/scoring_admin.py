@@ -6,7 +6,11 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from app.application.use_cases.scoring_admin import TableHistory
+from app.application.use_cases.scoring_admin import (
+    TableDeletePreview,
+    TableHistory,
+    VersionDeletePreview,
+)
 from app.domain.entities.audit import AuditAction, AuditEvent
 from app.domain.entities.scoring import TableStatus
 from app.presentation.schemas.scoring import VersionSummaryOut
@@ -53,6 +57,58 @@ class UnitDefaultIn(BaseModel):
 class UnitDefaultOut(BaseModel):
     unit_id: UUID
     version_id: UUID
+
+
+class BlockerOut(BaseModel):
+    """Why an operation is refused: the stable code, the text ready to show, and the facts."""
+
+    code: str
+    message: str
+    count: int | None = None  # processes, when the blocker is about their use
+    acronyms: list[str] = []  # units, when the blocker is about the version in use
+
+
+class VersionDeletePreviewOut(BaseModel):
+    name: str
+    criteria: int
+    blocked: list[BlockerOut]
+
+    @classmethod
+    def of(cls, preview: VersionDeletePreview) -> "VersionDeletePreviewOut":
+        return cls(
+            name=preview.name,
+            criteria=preview.criteria,
+            blocked=[
+                BlockerOut(code=b.code, message=b.message, count=b.count, acronyms=list(b.acronyms))
+                for b in preview.blocked
+            ],
+        )
+
+
+class PreviewUnitOut(BaseModel):
+    id: UUID
+    acronym: str
+
+
+class TableDeletePreviewOut(BaseModel):
+    name: str
+    versions: int
+    criteria: int
+    units: list[PreviewUnitOut]
+    blocked: list[BlockerOut]
+
+    @classmethod
+    def of(cls, preview: TableDeletePreview) -> "TableDeletePreviewOut":
+        return cls(
+            name=preview.name,
+            versions=preview.versions,
+            criteria=preview.criteria,
+            units=[PreviewUnitOut(id=u.id, acronym=u.acronym) for u in preview.units],
+            blocked=[
+                BlockerOut(code=b.code, message=b.message, count=b.count, acronyms=list(b.acronyms))
+                for b in preview.blocked
+            ],
+        )
 
 
 class AuditEntryOut(BaseModel):

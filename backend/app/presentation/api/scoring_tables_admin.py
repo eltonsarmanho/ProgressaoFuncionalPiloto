@@ -17,12 +17,14 @@ from app.presentation.schemas.scoring import CriterionOut, TableOut, VersionOut
 from app.presentation.schemas.scoring_admin import (
     CriterionChangeIn,
     TableCreateIn,
+    TableDeletePreviewOut,
     TableDuplicateIn,
     TableHistoryOut,
     UnitDefaultIn,
     UnitDefaultOut,
     UnitsIn,
     VersionCreateIn,
+    VersionDeletePreviewOut,
 )
 
 router = APIRouter(prefix="/api", tags=["scoring-tables-admin"])
@@ -159,4 +161,46 @@ async def set_unit_default(
 @router.delete("/scoring-units/{unit_id}/default-version", status_code=204)
 async def clear_unit_default(unit_id: UUID, actor: UserDep, container: ContainerDep) -> Response:
     await run_in_threadpool(container.clear_unit_default_version.execute, actor, unit_id)
+    return Response(status_code=204)
+
+
+@router.post("/scoring-tables/{table_id}/archive", response_model=TableOut)
+async def archive_table(table_id: UUID, actor: UserDep, container: ContainerDep) -> TableOut:
+    view = await run_in_threadpool(container.archive_scoring_table.execute, actor, table_id, True)
+    return TableOut.of(view)
+
+
+@router.post("/scoring-tables/{table_id}/unarchive", response_model=TableOut)
+async def unarchive_table(table_id: UUID, actor: UserDep, container: ContainerDep) -> TableOut:
+    view = await run_in_threadpool(container.archive_scoring_table.execute, actor, table_id, False)
+    return TableOut.of(view)
+
+
+@router.get(
+    "/scoring-versions/{version_id}/delete-preview", response_model=VersionDeletePreviewOut
+)
+async def version_delete_preview(
+    version_id: UUID, _: UserDep, container: ContainerDep
+) -> VersionDeletePreviewOut:
+    preview = await run_in_threadpool(container.preview_delete_version.execute, version_id)
+    return VersionDeletePreviewOut.of(preview)
+
+
+@router.get("/scoring-tables/{table_id}/delete-preview", response_model=TableDeletePreviewOut)
+async def table_delete_preview(
+    table_id: UUID, _: UserDep, container: ContainerDep
+) -> TableDeletePreviewOut:
+    preview = await run_in_threadpool(container.preview_delete_table.execute, table_id)
+    return TableDeletePreviewOut.of(preview)
+
+
+@router.delete("/scoring-versions/{version_id}", status_code=204)
+async def delete_version(version_id: UUID, actor: UserDep, container: ContainerDep) -> Response:
+    await run_in_threadpool(container.delete_scoring_version.execute, actor, version_id)
+    return Response(status_code=204)
+
+
+@router.delete("/scoring-tables/{table_id}", status_code=204)
+async def delete_table(table_id: UUID, actor: UserDep, container: ContainerDep) -> Response:
+    await run_in_threadpool(container.delete_scoring_table.execute, actor, table_id)
     return Response(status_code=204)

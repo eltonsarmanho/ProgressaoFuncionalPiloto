@@ -575,7 +575,7 @@ graph LR
 
 #### T15: Rotas de arquivar, excluir e prévias
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `POST /api/scoring-tables/{id}/archive` e `/unarchive` (resposta `TableOut`), `GET /api/scoring-versions/{id}/delete-preview` e `GET /api/scoring-tables/{id}/delete-preview` (qualquer usuário autenticado), `DELETE /api/scoring-versions/{id}` e `DELETE /api/scoring-tables/{id}` (204, ADMIN), com os esquemas das prévias e a fiação em `dependencies.py` (incluindo o `ProtectedCatalog`).
 **Where**: `backend/app/presentation/api/scoring_tables_admin.py` (modify)
@@ -590,11 +590,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/api/test_scoring_admin_api.py` (modifica): cada rota no caminho feliz com o corpo ou o 204; 403 para quem não é ADMIN nas quatro escritas (arquivar, desarquivar e os dois `DELETE`); as duas prévias abertas a SECRETARIA e DOCENTE; 401 sem sessão nas seis rotas; 404; 409 com `code` e `detail` em texto pronto (siglas e quantidade dentro do texto)
-- [ ] `DELETE` da tabela oficial semeada e de uma versão dela responde 409 `TABELA_OFICIAL_PROTEGIDA` pela API (o catálogo vem da fiação real)
-- [ ] As quatro escritas entram na lista de rotas de escrita do teste de 403 e as seis rotas na lista do teste de 401 do mesmo arquivo
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_scoring_admin_api.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/api/test_scoring_admin_api.py` (modifica): cada rota no caminho feliz com o corpo ou o 204; 403 para quem não é ADMIN nas quatro escritas (arquivar, desarquivar e os dois `DELETE`); as duas prévias abertas a SECRETARIA e DOCENTE; 401 sem sessão nas seis rotas; 404; 409 com `code` e `detail` em texto pronto (siglas e quantidade dentro do texto)
+- [x] `DELETE` da tabela oficial semeada e de uma versão dela responde 409 `TABELA_OFICIAL_PROTEGIDA` pela API (o catálogo vem da fiação real)
+- [x] As quatro escritas entram na lista de rotas de escrita do teste de 403 e as seis rotas na lista do teste de 401 do mesmo arquivo
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/api/test_scoring_admin_api.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted

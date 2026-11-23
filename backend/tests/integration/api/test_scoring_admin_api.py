@@ -85,6 +85,10 @@ def write_requests(client, headers, table, reference):
         "clear_in_use": client.delete(
             f"/api/scoring-units/{reference['FASI'].id}/default-version", headers=headers
         ),
+        "archive": client.post(f"/api/scoring-tables/{table['id']}/archive", headers=headers),
+        "unarchive": client.post(f"/api/scoring-tables/{table['id']}/unarchive", headers=headers),
+        "delete_version": client.delete(f"/api/scoring-versions/{version_id}", headers=headers),
+        "delete_table": client.delete(f"/api/scoring-tables/{table['id']}", headers=headers),
     }
 
 
@@ -168,6 +172,12 @@ def test_every_route_is_401_without_a_session(client, scoring_tables):
         ("get", f"/api/scoring-tables/{table_id}/history"),
         ("put", f"/api/scoring-units/{table_id}/default-version"),
         ("delete", f"/api/scoring-units/{table_id}/default-version"),
+        ("post", f"/api/scoring-tables/{table_id}/archive"),
+        ("post", f"/api/scoring-tables/{table_id}/unarchive"),
+        ("get", f"/api/scoring-versions/{table_id}/delete-preview"),
+        ("get", f"/api/scoring-tables/{table_id}/delete-preview"),
+        ("delete", f"/api/scoring-versions/{table_id}"),
+        ("delete", f"/api/scoring-tables/{table_id}"),
     ]:
         assert getattr(client, method)(url).status_code == 401, url
 
@@ -627,3 +637,223 @@ def test_marking_and_clearing_are_403_for_non_admin_and_change_nothing(
 
     assert (put.status_code, delete.status_code) == (403, 403)
     assert stored_mark(uow_factory, fasi.id) is None
+
+
+# --- GTAB-23, GTAB-26, GTAB-28, GTAB-30, GTAB-31, GTAB-42: archive, preview and delete ---------
+
+
+def synthetic_table_with_two_versions(client, headers, reference, official_version_id):
+    """A synthetic table of FASI with two versions, made through the API."""
+    created = client.post(
+        "/api/scoring-tables",
+        json={
+            "name": "Tabela Sintética Z",
+            "unit_ids": [str(reference["FASI"].id)],
+            "valid_from": "2020-01-01",
+            "norm_reference": REFERENCE,
+            "base_version_id": str(official_version_id),
+        },
+        headers=headers,
+    ).json()
+    second = client.post(
+        f"/api/scoring-tables/{created['id']}/versions",
+        json={
+            "source_version_id": created["versions"][0]["id"],
+            "valid_from": "2024-01-01",
+            "norm_reference": REFERENCE,
+        },
+        headers=headers,
+    )
+    assert second.status_code == 201, second.text
+    return created, second.json()
+
+
+def test_archive_and_unarchive_answer_with_the_table_and_audit_it(
+    client, admin, scoring_tables, uow_factory
+):
+    actor, headers = admin
+    table = official(client)
+
+    archived = client.post(f"/api/scoring-tables/{table['id']}/archive", headers=headers)
+    unarchived = client.post(f"/api/scoring-tables/{table['id']}/unarchive", headers=headers)
+
+    assert archived.status_code == 200
+    assert (archived.json()["id"], archived.json()["archived"]) == (table["id"], True)
+    assert unarchived.status_code == 200
+    assert unarchived.json()["archived"] is False
+    with uow_factory() as uow:
+        events = uow.audit.list_for("scoring_table", table["id"])
+    assert [(e.action, e.user_id) for e in events] == [
+        (AuditAction.ARCHIVE, actor.id),
+        (AuditAction.UPDATE, actor.id),
+    ]
+
+
+def test_archiving_a_table_with_a_version_in_use_is_409_with_the_code_and_the_acronyms(
+    client, admin, reference, scoring_tables
+):
+    _, headers = admin
+    mark(client, headers, reference["FASI"].id, scoring_tables["OFICIAL"].id)
+
+    response = client.post(f"/api/scoring-tables/{official(client)['id']}/archive", headers=headers)
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "TABELA_COM_VERSAO_EM_USO"
+    assert "FASI" in response.json()["detail"]
+    assert official(client)["archived"] is False
+
+
+@pytest.mark.parametrize("action", ["archive", "unarchive"])
+def test_archiving_an_unknown_table_is_404(client, admin, action):
+    _, headers = admin
+
+    response = client.post(f"/api/scoring-tables/{uuid.uuid4()}/{action}", headers=headers)
+
+    assert response.status_code == 404
+
+
+def test_delete_version_answers_204_and_removes_it(
+    client, admin, reference, scoring_tables
+):
+    _, headers = admin
+    _, second = synthetic_table_with_two_versions(
+        client, headers, reference, scoring_tables["OFICIAL"].id
+    )
+
+    response = client.delete(f"/api/scoring-versions/{second['id']}", headers=headers)
+
+    assert response.status_code == 204
+    assert response.content == b""
+    assert client.get(f"/api/scoring-versions/{second['id']}").status_code == 404
+
+
+def test_delete_table_answers_204_and_removes_it_with_its_versions(
+    client, admin, reference, scoring_tables
+):
+    _, headers = admin
+    created, second = synthetic_table_with_two_versions(
+        client, headers, reference, scoring_tables["OFICIAL"].id
+    )
+
+    response = client.delete(f"/api/scoring-tables/{created['id']}", headers=headers)
+
+    assert response.status_code == 204
+    assert created["id"] not in [t["id"] for t in client.get("/api/scoring-tables").json()]
+    assert client.get(f"/api/scoring-versions/{second['id']}").status_code == 404
+
+
+def test_deleting_the_official_table_and_one_of_its_versions_is_409_tabela_oficial_protegida(
+    client, admin
+):
+    _, headers = admin
+    table = official(client)
+
+    table_response = client.delete(f"/api/scoring-tables/{table['id']}", headers=headers)
+    version_response = client.delete(
+        f"/api/scoring-versions/{table['versions'][0]['id']}", headers=headers
+    )
+
+    for response in (table_response, version_response):
+        assert response.status_code == 409
+        assert response.json()["code"] == "TABELA_OFICIAL_PROTEGIDA"
+        assert "oficial da UFPA" in response.json()["detail"]
+    assert len(official(client)["versions"]) == 1
+
+
+def test_deleting_a_version_used_by_a_process_is_409_with_the_count_in_the_text(
+    client, admin, reference, scoring_tables, uow_factory
+):
+    _, headers = admin
+    _, second = synthetic_table_with_two_versions(
+        client, headers, reference, scoring_tables["OFICIAL"].id
+    )
+    professor = add_professor(uow_factory, reference["FASI"])
+    process = client.post("/api/processes", json=process_payload(professor), headers=headers).json()
+    chosen = client.put(
+        f"/api/processes/{process['id']}/scoring/table",
+        json={"version_id": second["id"]},
+        headers=headers,
+    )
+    assert chosen.status_code == 200
+
+    response = client.delete(f"/api/scoring-versions/{second['id']}", headers=headers)
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "VERSAO_USADA_POR_PROCESSO"
+    assert response.json()["detail"] == "A versão é usada por 1 processo e não pode ser excluída"
+    assert client.get(f"/api/scoring-versions/{second['id']}").status_code == 200
+
+
+def test_deleting_a_table_with_a_version_in_use_is_409_with_the_acronyms_in_the_text(
+    client, admin, reference, scoring_tables
+):
+    _, headers = admin
+    created, second = synthetic_table_with_two_versions(
+        client, headers, reference, scoring_tables["OFICIAL"].id
+    )
+    assert mark(client, headers, reference["FASI"].id, second["id"]).status_code == 200
+
+    response = client.delete(f"/api/scoring-tables/{created['id']}", headers=headers)
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "VERSAO_EM_USO_DE_UNIDADE"
+    assert "FASI" in response.json()["detail"]
+
+
+@pytest.mark.parametrize("kind", ["versions", "tables"])
+def test_deleting_an_unknown_version_or_table_is_404(client, admin, kind):
+    _, headers = admin
+    prefix = "scoring-versions" if kind == "versions" else "scoring-tables"
+
+    assert client.delete(f"/api/{prefix}/{uuid.uuid4()}", headers=headers).status_code == 404
+    assert client.get(f"/api/{prefix}/{uuid.uuid4()}/delete-preview").status_code == 404
+
+
+@pytest.mark.parametrize("role", [Role.ADMIN, Role.SECRETARIA, Role.DOCENTE])
+def test_the_previews_are_open_to_every_authenticated_profile(
+    client, act_as, reference, scoring_tables, role
+):
+    _, headers = act_as("quem@ufpa.br", role)
+    table = official(client)
+
+    version_id = table["versions"][0]["id"]
+    version_preview = client.get(f"/api/scoring-versions/{version_id}/delete-preview")
+    table_preview = client.get(f"/api/scoring-tables/{table['id']}/delete-preview")
+
+    assert version_preview.status_code == 200
+    assert version_preview.json()["name"] == table["versions"][0]["name"]
+    assert version_preview.json()["criteria"] == 100
+    assert [b["code"] for b in version_preview.json()["blocked"]][0] == "TABELA_OFICIAL_PROTEGIDA"
+    assert table_preview.status_code == 200
+    body = table_preview.json()
+    assert (body["name"], body["versions"], body["criteria"]) == (OFFICIAL_NAME, 1, 100)
+    assert sorted(u["acronym"] for u in body["units"]) == ["FASI", "IFCH"]
+    assert body["blocked"][0]["code"] == "TABELA_OFICIAL_PROTEGIDA"
+    assert set(body["blocked"][0]) == {"code", "message", "count", "acronyms"}
+
+
+def test_the_preview_of_a_free_table_has_no_blocker_and_the_blockers_carry_count_and_acronyms(
+    client, admin, reference, scoring_tables
+):
+    _, headers = admin
+    created, second = synthetic_table_with_two_versions(
+        client, headers, reference, scoring_tables["OFICIAL"].id
+    )
+    free = client.get(f"/api/scoring-tables/{created['id']}/delete-preview").json()
+    assert free["blocked"] == []
+    assert (free["versions"], free["criteria"]) == (2, 200)
+    mark(client, headers, reference["FASI"].id, second["id"])
+
+    marked = client.get(f"/api/scoring-versions/{second['id']}/delete-preview").json()
+
+    assert marked["blocked"] == [
+        {
+            "code": "VERSAO_EM_USO_DE_UNIDADE",
+            "message": (
+                "A versão está em uso das unidades FASI; marque outra versão ou desmarque-a "
+                "antes de excluir"
+            ),
+            "count": None,
+            "acronyms": ["FASI"],
+        }
+    ]
