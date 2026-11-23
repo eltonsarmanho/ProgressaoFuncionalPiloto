@@ -640,7 +640,7 @@ graph LR
 
 #### T18: Brasão no Requerimento em DOCX
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `write_request_docx` chama `add_emblem(document)` antes de "MINISTÉRIO DA EDUCAÇÃO".
 **Where**: `backend/app/infrastructure/documents/request_docx.py` (modify)
@@ -655,10 +655,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_request_docx.py`: o primeiro elemento do corpo é o parágrafo do brasão, centralizado, com 720 000 EMU de largura, e o segundo é "MINISTÉRIO DA EDUCAÇÃO"; só há uma imagem no pacote; a ordem e o texto dos demais parágrafos (saudação, opção, pedido, avaliação, local e data, fecho, assinatura, matrícula, LGPD) são os de antes; sem o arquivo levanta `EmblemUnavailable`
-- [ ] Testes existentes que leem os primeiros parágrafos do corpo passam a pular o do brasão, sem enfraquecer o que conferem
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_request_docx.py`: o primeiro elemento do corpo é o parágrafo do brasão, centralizado, com 720 000 EMU de largura, e o segundo é "MINISTÉRIO DA EDUCAÇÃO"; só há uma imagem no pacote; a ordem e o texto dos demais parágrafos (saudação, opção, pedido, avaliação, local e data, fecho, assinatura, matrícula, LGPD) são os de antes; sem o arquivo levanta `EmblemUnavailable`
+- [x] Testes existentes que leem os primeiros parágrafos do corpo passam a pular o do brasão, sem enfraquecer o que conferem
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

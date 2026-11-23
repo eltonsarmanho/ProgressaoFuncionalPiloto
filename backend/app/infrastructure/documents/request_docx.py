@@ -14,7 +14,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Mm, Pt
 
 from app.domain.rules.request_document import RequestDocument
-from app.infrastructure.documents.docx_support import set_default_font
+from app.infrastructure.documents.docx_support import add_emblem, set_default_font
 from app.infrastructure.documents.text_safety import xml_safe
 
 _SPACE_AFTER_PT = 8
@@ -42,6 +42,7 @@ def write_request_docx(model: RequestDocument, target: Path) -> None:
     section.page_width, section.page_height = Mm(210), Mm(297)
     section.left_margin, section.right_margin = Mm(page.margin_left_mm), Mm(page.margin_right_mm)
     section.top_margin, section.bottom_margin = Mm(page.margin_top_mm), Mm(page.margin_bottom_mm)
+    add_emblem(document)
     center, justify = WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.JUSTIFY
     for line in model.header_lines:
         _paragraph(document, line, center, bold=True).paragraph_format.space_after = Pt(0)
