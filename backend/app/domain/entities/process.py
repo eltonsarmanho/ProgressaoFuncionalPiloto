@@ -54,11 +54,6 @@ class FunctionalProcess:
     opening_date: date
     created_by: UUID
     status: ProcessStatus = ProcessStatus.RASCUNHO
-    notes: str | None = None
-    resp_name: str | None = None
-    resp_position: str | None = None
-    resp_appointment: str | None = None
-    resp_admin_unit: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
     version: int = 1

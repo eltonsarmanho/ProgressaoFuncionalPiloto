@@ -109,8 +109,7 @@ def make_process(base) -> FunctionalProcess:
         modality=Modality.PROMOCAO, current_class="C", current_denomination="Adjunto",
         current_level=4, target_class="D", target_denomination="Associado", target_level=1,
         start_date=date(2022, 11, 23), end_date=date(2024, 11, 23),
-        opening_date=date(2025, 3, 10), created_by=base["admin"].id, notes=None,
-        resp_name=None, resp_position=None, resp_appointment=None, resp_admin_unit=None,
+        opening_date=date(2025, 3, 10), created_by=base["admin"].id,
         status=ProcessStatus.RASCUNHO,
     )  # fmt: skip
 

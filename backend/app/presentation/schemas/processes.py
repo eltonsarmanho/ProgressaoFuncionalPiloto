@@ -26,11 +26,6 @@ class ProcessFields(BaseModel):
     start_date: date
     end_date: date
     opening_date: date
-    notes: str | None = None
-    resp_name: str | None = None
-    resp_position: str | None = None
-    resp_appointment: str | None = None
-    resp_admin_unit: str | None = None
 
 
 class ProcessCreate(ProcessFields):

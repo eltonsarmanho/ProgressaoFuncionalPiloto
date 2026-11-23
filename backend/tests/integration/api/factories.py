@@ -6,14 +6,6 @@ from dataclasses import replace
 from app.domain.entities.professor import Professor, Titration, WorkRegime
 from app.domain.entities.scoring import TableStatus
 
-INSTITUTIONAL = {
-    "notes": "Observação de teste",
-    "resp_name": "Responsável de Teste",
-    "resp_position": "Diretor",
-    "resp_appointment": "Portaria 1/2025",
-    "resp_admin_unit": "Faculdade de Teste",
-}
-
 # PROC-10: FASI 2022-2024
 FASI_2022_2024 = {
     "modality": "PROMOCAO",
@@ -26,7 +18,6 @@ FASI_2022_2024 = {
     "start_date": "2022-11-23",
     "end_date": "2024-11-23",
     "opening_date": "2025-03-10",
-    **INSTITUTIONAL,
 }
 
 # PROC-11: Requerimento 2024-2026 as written, all optional fields filled
@@ -41,7 +32,6 @@ REQUERIMENTO_2024_2026 = {
     "start_date": "2024-11-23",
     "end_date": "2026-11-23",
     "opening_date": "2026-11-16",
-    **INSTITUTIONAL,
 }
 
 

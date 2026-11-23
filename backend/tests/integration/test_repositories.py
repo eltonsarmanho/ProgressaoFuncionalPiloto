@@ -77,11 +77,6 @@ def _process(base, professor_id) -> FunctionalProcess:
         end_date=date(2024, 11, 23),
         opening_date=date(2025, 3, 10),
         created_by=base["admin"].id,
-        notes="obs",
-        resp_name="Resp",
-        resp_position="Diretor",
-        resp_appointment="Portaria 1/2025",
-        resp_admin_unit="FX",
     )
 
 

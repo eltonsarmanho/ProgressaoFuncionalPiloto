@@ -34,11 +34,6 @@ CLEAN = ProcessSnapshot(
     start_date=date(2025, 2, 1),
     end_date=date(2027, 2, 1),
     opening_date=date(2027, 3, 1),
-    notes="Observação de teste",
-    resp_name="Responsável de Teste",
-    resp_position="Diretor",
-    resp_appointment="Portaria 1/2025",
-    resp_admin_unit="Faculdade de Teste",
 )
 
 PROMOTION_JUMP = dict(
@@ -56,7 +51,6 @@ SCENARIOS = {
     AlertCode.DENOMINACAO_DIVERGENTE: dict(target_denomination="Associado"),
     AlertCode.INTERSTICIO_INSUFICIENTE: dict(end_date=date(2027, 1, 31)),
     AlertCode.INTERSTICIO_NAO_CONCLUIDO: dict(opening_date=date(2027, 1, 31)),
-    AlertCode.DADOS_INCOMPLETOS: dict(notes=""),
     AlertCode.ESTRUTURA_NAO_CADASTRADA: dict(
         start_date=date(2030, 1, 1), end_date=date(2032, 1, 1), opening_date=date(2032, 2, 1)
     ),
@@ -69,7 +63,6 @@ EXPECTED_CODE = {
     AlertCode.DENOMINACAO_DIVERGENTE: SYNTHETIC_CODE,
     AlertCode.INTERSTICIO_INSUFICIENTE: SYNTHETIC_CODE,
     AlertCode.INTERSTICIO_NAO_CONCLUIDO: "RES-4644-2015-CONSEPE",
-    AlertCode.DADOS_INCOMPLETOS: "RES-4644-2015-CONSEPE",
     AlertCode.ESTRUTURA_NAO_CADASTRADA: "RES-4644-2015-CONSEPE",
     AlertCode.INTERSTICIO_CRUZA_REESTRUTURACAO: "LEI-12772-2012",
     # not in the design table; cites the first norm of its reference (Res. 4.644, art. 5º)

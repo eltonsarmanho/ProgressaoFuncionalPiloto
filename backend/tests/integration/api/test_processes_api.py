@@ -1,12 +1,12 @@
 """PROC-01..PROC-04, PROC-10, PROC-11, PROC-14, AUTH-08, AUTH-09, UNIT-02 through the API."""
 
 import pytest
+from sqlalchemy import text
 
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.user import Role
 from tests.integration.api.factories import (
     FASI_2022_2024,
-    INSTITUTIONAL,
     REQUERIMENTO_2024_2026,
     add_professor,
     process_payload,
@@ -113,16 +113,89 @@ def test_proc11_requerimento_case_returns_exact_codes_and_keeps_values(
     assert codes(stored) == codes(body)  # PROC-04: also verified on retrieval
 
 
-def test_empty_optional_fields_save_and_raise_dados_incompletos(client, secretaria, fasi_professor):
+REMOVED_FIELDS = ("notes", "resp_name", "resp_position", "resp_appointment", "resp_admin_unit")
+LEGACY_VALUES = {
+    "notes": "obs antiga",
+    "resp_name": "Resp antigo",
+    "resp_position": "Cargo antigo",
+    "resp_appointment": "Portaria antiga",
+    "resp_admin_unit": "Unidade antiga",
+}
+
+
+def legacy_row(engine, process_id):
+    with engine.connect() as conn:
+        row = conn.execute(
+            text(f"SELECT {', '.join(REMOVED_FIELDS)} FROM functional_processes WHERE id = :id"),
+            {"id": process_id},
+        ).mappings().one()
+    return dict(row)
+
+
+# ENX-02, ENX-03, ENX-06
+def test_a_process_without_the_removed_fields_saves_with_no_alert_and_no_such_keys(
+    client, secretaria, fasi_professor
+):
     _, headers = secretaria
-    payload = process_payload(fasi_professor, {**FASI_2022_2024, **dict.fromkeys(INSTITUTIONAL)})
+
+    response = client.post(
+        "/api/processes", json=process_payload(fasi_professor, FASI_2022_2024), headers=headers
+    )
+
+    assert response.status_code == 201
+    assert response.json()["alerts"] == []
+    read = client.get(f"/api/processes/{response.json()['id']}").json()
+    for body in (response.json(), read):
+        assert set(REMOVED_FIELDS).isdisjoint(body)
+
+
+# ENX-04, ENX-05
+def test_the_removed_fields_sent_by_an_old_client_are_ignored_and_not_stored(
+    client, secretaria, fasi_professor, engine
+):
+    _, headers = secretaria
+    payload = {**process_payload(fasi_professor, FASI_2022_2024), **LEGACY_VALUES}
 
     response = client.post("/api/processes", json=payload, headers=headers)
 
     assert response.status_code == 201
-    assert [(a["code"], a["severity"]) for a in response.json()["alerts"]] == [
-        ("DADOS_INCOMPLETOS", "ALERTA")
-    ]
+    assert set(REMOVED_FIELDS).isdisjoint(response.json())
+    assert legacy_row(engine, response.json()["id"]) == dict.fromkeys(REMOVED_FIELDS)
+
+
+# ENX-05, ENX-07: old values stay in the table, untouched by a new save and absent from the audit
+def test_old_values_stay_in_the_columns_when_the_process_is_saved_again(
+    client, secretaria, fasi_professor, engine, uow_factory
+):
+    _, headers = secretaria
+    created = client.post(
+        "/api/processes", json=process_payload(fasi_professor, FASI_2022_2024), headers=headers
+    ).json()
+    assignments = ", ".join(f"{f} = :{f}" for f in REMOVED_FIELDS)
+    with engine.begin() as conn:
+        conn.execute(
+            text(f"UPDATE functional_processes SET {assignments} WHERE id = :id"),
+            {**LEGACY_VALUES, "id": created["id"]},
+        )
+
+    edited = client.put(
+        f"/api/processes/{created['id']}",
+        json={
+            **process_payload(fasi_professor, FASI_2022_2024),
+            "target_level": 2,
+            "expected_version": created["version"],
+        },
+        headers=headers,
+    )
+
+    assert edited.status_code == 200, edited.text
+    assert set(REMOVED_FIELDS).isdisjoint(edited.json())
+    assert legacy_row(engine, created["id"]) == LEGACY_VALUES
+    with uow_factory() as uow:
+        events = uow.audit.list_for("process", created["id"])
+    assert events
+    for event in events:  # the creation and the edition
+        assert set(REMOVED_FIELDS).isdisjoint(event.changes)
 
 
 def test_archived_unit_cannot_be_selected_for_new_process(

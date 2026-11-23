@@ -128,12 +128,12 @@ def test_read_only_process_rejects_changes_with_409(
 def test_second_save_with_stale_version_returns_409(client, secretaria, process):
     _, headers = secretaria
 
-    first = put(client, headers, process["id"], 1, notes="Primeira gravação")
-    second = put(client, headers, process["id"], 1, notes="Segunda gravação")
+    first = put(client, headers, process["id"], 1, target_level=2)
+    second = put(client, headers, process["id"], 1, target_level=3)
 
     assert first.status_code == 200
     assert second.status_code == 409
-    assert client.get(f"/api/processes/{process['id']}").json()["notes"] == "Primeira gravação"
+    assert client.get(f"/api/processes/{process['id']}").json()["target_level"] == 2
 
 
 # NMOV-04: a career jump never refuses creation, edition nor the start of the process
@@ -323,7 +323,7 @@ def test_history_and_updates_of_unreadable_process_return_404(client, act_as, re
     )
 
     assert client.get(f"/api/processes/{process['id']}/history").status_code == 404
-    assert put(client, headers, process["id"], 1, notes="x").status_code == 404
+    assert put(client, headers, process["id"], 1, target_level=2).status_code == 404
     assert set_status(client, headers, process["id"], "EM_ANDAMENTO", 1).status_code == 404
 
 

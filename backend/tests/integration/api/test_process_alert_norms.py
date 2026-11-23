@@ -11,8 +11,7 @@ from tests.integration.api.documents_support import pdf
 from tests.integration.api.factories import add_professor, process_payload
 
 # Promotion B4 -> C1 under the Lei 15.141 structure, with 14 months: the interstice is short
-# (INTERSTICIO_INSUFICIENTE, from the structure), C asks for a doctorate (NTIT-01) and the
-# empty note leaves DADOS_INCOMPLETOS (Res. 4.644).
+# (INTERSTICIO_INSUFICIENTE, from the structure) and C asks for a doctorate (NTIT-01).
 PROMOTION_B_C = {
     "modality": "PROMOCAO",
     "current_class": "B",
@@ -24,11 +23,6 @@ PROMOTION_B_C = {
     "start_date": "2025-02-01",
     "end_date": "2026-04-01",
     "opening_date": "2026-05-01",
-    "notes": None,
-    "resp_name": "Responsável de Teste",
-    "resp_position": "Diretor",
-    "resp_appointment": "Portaria 1/2025",
-    "resp_admin_unit": "Faculdade de Teste",
 }
 NORM_KEYS = ("norm_code", "norm_title", "norm_url", "norm_file_url", "norm_archived")
 NO_NORM = {
@@ -120,14 +114,14 @@ def test_an_alert_from_the_structure_carries_the_code_title_and_source_of_the_le
 
 
 def test_an_alert_of_another_rule_carries_its_own_norm(client, process, uow_factory):
-    res = registered(uow_factory, "RES-4644-2015-CONSEPE")
+    manual = registered(uow_factory, "MANUAL-PROGEP-PROGRESSAO")
 
-    alert = alert_of(read(client, process), "DADOS_INCOMPLETOS")
+    alert = alert_of(read(client, process), "TITULACAO_INSUFICIENTE")
 
     assert norm_fields(alert) == {
-        "norm_code": "RES-4644-2015-CONSEPE",
-        "norm_title": res.title,
-        "norm_url": res.source_url,
+        "norm_code": "MANUAL-PROGEP-PROGRESSAO",
+        "norm_title": manual.title,
+        "norm_url": manual.source_url,
         "norm_file_url": None,
         "norm_archived": False,
     }
@@ -226,11 +220,11 @@ def test_the_titration_alert_does_not_block_editing_or_starting_the_process(clie
 
     edited = client.put(
         f"/api/processes/{process['id']}",
-        json={**PROMOTION_B_C, "notes": "Observação sintética", "expected_version": 1},
+        json={**PROMOTION_B_C, "opening_date": "2026-05-02", "expected_version": 1},
         headers=headers,
     )
     assert edited.status_code == 200, edited.text
-    assert edited.json()["notes"] == "Observação sintética"
+    assert edited.json()["opening_date"] == "2026-05-02"
     assert alert_of(edited.json(), "TITULACAO_INSUFICIENTE")["severity"] == "ALERTA"
 
     started = client.post(
@@ -247,9 +241,9 @@ def test_the_titration_alert_does_not_block_editing_or_starting_the_process(clie
         f"/api/processes/{process['id']}",
         json={
             **PROMOTION_B_C,
-            "notes": "Observação sintética 2",
+            "opening_date": "2026-05-03",
             "expected_version": stored["version"],
-            "justificativa": "Ajuste sintético da observação",
+            "justificativa": "Ajuste sintético da data de abertura",
         },
         headers=headers,
     )

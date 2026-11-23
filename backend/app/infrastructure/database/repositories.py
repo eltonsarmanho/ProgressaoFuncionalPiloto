@@ -328,11 +328,6 @@ _PROCESS_FIELDS = (
     "opening_date",
     "created_by",
     "status",
-    "notes",
-    "resp_name",
-    "resp_position",
-    "resp_appointment",
-    "resp_admin_unit",
 )
 
 

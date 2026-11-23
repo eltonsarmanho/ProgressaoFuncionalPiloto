@@ -20,7 +20,6 @@ REF_COMPLETION = "Res. 4.644/2015-CONSEPE, art. 29"
 REF_MODALITY = "Res. 4.644/2015-CONSEPE, art. 1º, parágrafo único; Lei 12.772/2012, art. 12"
 REF_RESTRUCTURING = "Lei 15.141/2025 (Lei 12.772/2012, art. 12, §7º, e Anexo II)"
 REF_NO_STRUCTURE = "Res. 4.644/2015-CONSEPE, art. 29; Lei 12.772/2012, art. 12"
-REF_INCOMPLETE = "Res. 4.644/2015-CONSEPE"
 REF_TITRATION = "Manual do Servidor da PROGEP, progressão e promoção"
 
 TITRATION_NAMES = {
@@ -50,7 +49,6 @@ class AlertCode(StrEnum):
     DENOMINACAO_DIVERGENTE = "DENOMINACAO_DIVERGENTE"
     MODALIDADE_INCOMPATIVEL = "MODALIDADE_INCOMPATIVEL"
     INTERSTICIO_INSUFICIENTE = "INTERSTICIO_INSUFICIENTE"
-    DADOS_INCOMPLETOS = "DADOS_INCOMPLETOS"
     TITULACAO_INSUFICIENTE = "TITULACAO_INSUFICIENTE"
 
 
@@ -75,20 +73,6 @@ class ProcessSnapshot:
     start_date: date
     end_date: date
     opening_date: date
-    notes: str | None = None
-    resp_name: str | None = None
-    resp_position: str | None = None
-    resp_appointment: str | None = None
-    resp_admin_unit: str | None = None
-
-
-OPTIONAL_FIELDS = (
-    ("notes", "observações"),
-    ("resp_name", "nome do responsável"),
-    ("resp_position", "cargo do responsável"),
-    ("resp_appointment", "portaria de designação do responsável"),
-    ("resp_admin_unit", "unidade administrativa responsável"),
-)
 
 
 def _sides(p: ProcessSnapshot):
@@ -270,18 +254,6 @@ def verify_process(
                 "classe); confira a norma que fundamenta o salto.",
                 REF_MODALITY,
                 NORM_LEI_12772,
-            )
-        )
-
-    empty = [label for field, label in OPTIONAL_FIELDS if not (getattr(p, field) or "").strip()]
-    if empty:
-        alerts.append(
-            Alert(
-                AlertCode.DADOS_INCOMPLETOS,
-                Severity.ALERTA,
-                f"Campos não preenchidos: {', '.join(empty)}.",
-                REF_INCOMPLETE,
-                NORM_RES_4644,
             )
         )
     return alerts

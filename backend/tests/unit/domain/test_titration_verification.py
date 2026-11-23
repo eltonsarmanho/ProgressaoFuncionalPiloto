@@ -55,11 +55,6 @@ PROMOTION_B_C = ProcessSnapshot(
     start_date=date(2025, 2, 1),
     end_date=date(2027, 2, 1),
     opening_date=date(2027, 3, 1),
-    notes="Observação de teste",
-    resp_name="Responsável de Teste",
-    resp_position="Diretor",
-    resp_appointment="Portaria 1/2025",
-    resp_admin_unit="Faculdade de Teste",
 )
 
 EXPECTED_MESSAGE = (

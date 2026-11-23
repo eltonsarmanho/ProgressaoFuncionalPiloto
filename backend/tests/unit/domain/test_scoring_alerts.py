@@ -40,9 +40,9 @@ def test_alert_accepts_a_scoring_alert_code():
 
 
 def test_alert_still_accepts_a_fundacao_code():
-    alert = Alert(AlertCode.DADOS_INCOMPLETOS, Severity.ALERTA, "m", "ref")
+    alert = Alert(AlertCode.INTERSTICIO_INSUFICIENTE, Severity.ALERTA, "m", "ref")
 
-    assert alert.code is AlertCode.DADOS_INCOMPLETOS
+    assert alert.code is AlertCode.INTERSTICIO_INSUFICIENTE
 
 
 def test_not_scored_reasons_are_separate_from_alert_codes():
