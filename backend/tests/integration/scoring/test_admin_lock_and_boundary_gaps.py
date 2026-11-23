@@ -7,7 +7,7 @@ unpinned (verification of gestao-tabelas). Tables are synthetic.
   ClearUnitDefaultVersion);
 - deleting a version that is not the latest does not reopen the previous one (A11);
 - deleting the latest version reopens the previous one only if the deleted one closed it
-  (ADM-05); the last test is a strict xfail until fix task F1 of validation.md lands.
+  (ADM-05), which the CREATE event of the deleted version records (fix F1 of validation.md).
 """
 
 from datetime import date
@@ -125,10 +125,6 @@ def test_deleting_a_middle_version_does_not_reopen_the_first_one(world, uc):
         assert uow.scoring_tables.get_version(first.id).valid_to == date(2023, 12, 31)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="GTAB-26: the reopening is inferred from the dates, not from the closing (fix F1)",
-)
 def test_deleting_the_latest_does_not_reopen_a_previous_version_the_admin_ended_himself(
     world, uc
 ):
@@ -144,4 +140,28 @@ def test_deleting_the_latest_does_not_reopen_a_previous_version_the_admin_ended_
     uc.delete.execute(world.admin, second.id)
 
     with world.uow_factory() as uow:
+        assert uow.scoring_tables.get_version(first.id).valid_to == date(2023, 12, 31)
+
+
+def test_deleting_the_latest_does_not_reopen_an_adjacent_version_it_never_closed(world, uc):
+    table = uc.create_table.execute(
+        world.admin, "Tabela Sintética Vizinha", [], date(2020, 1, 1), None, REFERENCE,
+        base_version_id=world.official_version.id,
+    )
+    first = table.versions[0].version
+    middle = uc.create_version.execute(
+        world.admin, table.table.id, first.id, date(2024, 1, 1), None, REFERENCE
+    ).version  # closes the first on 2023-12-31
+    latest = uc.create_version.execute(
+        world.admin, table.table.id, first.id, date(2026, 1, 1), None, REFERENCE
+    ).version  # closes the middle one on 2025-12-31
+    uc.delete.execute(world.admin, middle.id)  # not the latest: the first stays closed
+    inserted = uc.create_version.execute(
+        world.admin, table.table.id, first.id, date(2024, 1, 1), date(2025, 12, 31), REFERENCE
+    ).version  # ends the day before the latest starts, but the latest did not close it
+
+    uc.delete.execute(world.admin, latest.id)
+
+    with world.uow_factory() as uow:
+        assert uow.scoring_tables.get_version(inserted.id).valid_to == date(2025, 12, 31)
         assert uow.scoring_tables.get_version(first.id).valid_to == date(2023, 12, 31)

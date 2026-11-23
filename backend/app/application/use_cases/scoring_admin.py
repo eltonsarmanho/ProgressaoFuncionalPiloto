@@ -608,7 +608,14 @@ def add_version_closing_open(
     existing = [
         v for v in uow.scoring_tables.list_versions(version.table_id) if not v.is_superseded
     ]
+    open_before = next((v.id for v in existing if v.valid_to is None), None)
     existing = close_open_version(uow, audit, actor, existing, version.valid_from)
+    # The CREATE event names the version this one closed: deleting it reopens only that one
+    # (GTAB-26), never a version whose end of validity merely falls on the day before.
+    closed_id = next(
+        (v.id for v in existing if v.id == open_before and v.valid_to is not None), None
+    )
+    extra = {**extra, "closed_version_id": closed_id}
     for other in existing:
         if _overlaps(version, other):
             raise Conflict(f'Vigência sobrepõe a versão "{other.name}"')
@@ -952,19 +959,26 @@ class DeleteScoringVersion:
     ) -> None:
         """The latest version closed the previous one the day before it started (ADM-05):
         deleting it gives the previous one the end of validity of the deleted one back, so the
-        table is not left without a current version (A11)."""
+        table is not left without a current version (A11).
+
+        "Closed" is read from the CREATE event of the deleted version, which names the version
+        it closed (`closed_version_id`); a coincidence of dates is not enough (GTAB-26).
+        """
         siblings = uow.scoring_tables.list_version_headers(deleted.table_id)
         if has_later_version(deleted, siblings):
             return
+        closed_id = self._closed_by(uow, deleted)
         day_before = deleted.valid_from - timedelta(days=1)
-        closed_by_it = [
-            v
-            for v in siblings
-            if v.id != deleted.id and not v.is_superseded and v.valid_to == day_before
-        ]
-        if not closed_by_it:
+        previous = next(
+            (
+                v
+                for v in siblings
+                if v.id == closed_id and not v.is_superseded and v.valid_to == day_before
+            ),
+            None,
+        )
+        if previous is None:
             return
-        previous = max(closed_by_it, key=lambda v: v.valid_from)
         reopened = replace(previous, valid_to=deleted.valid_to)
         uow.scoring_tables.update_version(reopened)
         self._audit.record(
@@ -976,6 +990,15 @@ class DeleteScoringVersion:
             _audit_version(previous),
             _audit_version(reopened),
         )
+
+    @staticmethod
+    def _closed_by(uow: UnitOfWork, deleted: ScoringTableVersion) -> UUID | None:
+        """The version the CREATE event of `deleted` says it closed; None if it closed none."""
+        for event in uow.audit.list_for(VERSION_ENTITY, str(deleted.id)):
+            if event.action is AuditAction.CREATE:
+                raw = event.changes.get("closed_version_id", {}).get("after")
+                return UUID(raw) if raw else None
+        return None
 
 
 @dataclass(frozen=True)
