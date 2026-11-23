@@ -1,5 +1,52 @@
+import { useId } from "react";
 import type { ScoringVersionSummary } from "../api/types";
 import { TABLE_BADGE_LABELS, TABLE_STATUS_LABELS, formatDate, inUseBadge } from "../labels";
+
+/**
+ * GTAB-35, GTAB-36: one action of the bar of a version or of a table. `disabledReason` is the sentence that says
+ * why it is not allowed; the button then stays focusable (`aria-disabled`) and the click does nothing.
+ */
+export type TableAction = {
+  key: string;
+  label: string;
+  ariaLabel: string;
+  run: () => void;
+  disabledReason?: string;
+};
+
+/** The write actions of a version or of a table, ADMIN only: a text label on each, the reason under a blocked one. */
+export function ActionBar({ actions }: { actions: TableAction[] }) {
+  const base = useId();
+  if (actions.length === 0) return null;
+  return (
+    <>
+      {actions.map((action) => {
+        const reasonId = `${base}-${action.key}`;
+        return (
+          <div className="tbl-action" key={action.key}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              aria-label={action.ariaLabel}
+              aria-disabled={action.disabledReason ? true : undefined}
+              aria-describedby={action.disabledReason ? reasonId : undefined}
+              onClick={() => {
+                if (!action.disabledReason) action.run();
+              }}
+            >
+              {action.label}
+            </button>
+            {action.disabledReason && (
+              <p id={reasonId} className="tbl-reason">
+                {action.disabledReason}
+              </p>
+            )}
+          </div>
+        );
+      })}
+    </>
+  );
+}
 
 /** GTAB-33, GTAB-34: one version of a table as a card: name, validity, status, reference and the tags. */
 export function VersionRow({
@@ -7,6 +54,8 @@ export function VersionRow({
   tableArchived,
   acronymsOf,
   today,
+  isAdmin,
+  actions = [],
   onShowCriteria,
 }: {
   version: ScoringVersionSummary;
@@ -15,6 +64,9 @@ export function VersionRow({
   acronymsOf: (unitIds: string[]) => string[];
   /** ISO date of today, to tell a version whose validity already ended. */
   today: string;
+  /** The write actions show only to the ADMIN (GTAB-15). */
+  isAdmin: boolean;
+  actions?: TableAction[];
   onShowCriteria: () => void;
 }) {
   const marked = acronymsOf(version.default_for_unit_ids);
@@ -67,6 +119,7 @@ export function VersionRow({
         >
           Ver critérios
         </button>
+        {isAdmin && <ActionBar actions={actions} />}
       </div>
     </li>
   );

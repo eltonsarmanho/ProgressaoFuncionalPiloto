@@ -925,7 +925,7 @@ graph LR
 
 #### T27: Barra de ações por perfil, com botão desabilitado e motivo
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Barra de ações por versão e por tabela, montada só para o ADMIN, alimentada por uma lista tipada de ações (`{key, label, ariaLabel, run, disabledReason?}`) que `VersionRow` e `ScoringTableCard` recebem por propriedade; cada tarefa seguinte acrescenta as suas ao registro. Cada botão tem rótulo de texto e `aria-label` com o nome da versão ou da tabela, `min-height` de 2,75 rem; o botão não permitido usa `aria-disabled="true"` (continua focável, o clique é ignorado) com o motivo em texto visível logo abaixo, ligado por `aria-describedby`, escrito por `blockReasonText` a partir de `read_only_reason`, `delete_blocked_reason` e `archive_blocked_reason`. Entrega o ponto de encaixe dos diálogos (`Modal`) e o anúncio em `p[role=status]`.
 **Where**: `frontend/src/components/VersionRow.tsx` (modify)
@@ -940,10 +940,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/VersionRow.test.tsx` (novo), com ações sintéticas no registro: o ADMIN vê a barra e quem não é ADMIN não vê nenhum botão de escrita; ação com `disabledReason` fica `aria-disabled`, com o motivo visível e ligado por `aria-describedby`, e o clique não chama `run`; ação livre chama `run`; os botões têm rótulo de texto e `aria-label` com o nome da versão; a classe de altura mínima está aplicada
-- [ ] Os testes da lista (tarefa anterior) seguem verdes
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/components/VersionRow.test.tsx` (novo), com ações sintéticas no registro: o ADMIN vê a barra e quem não é ADMIN não vê nenhum botão de escrita; ação com `disabledReason` fica `aria-disabled`, com o motivo visível e ligado por `aria-describedby`, e o clique não chama `run`; ação livre chama `run`; os botões têm rótulo de texto e `aria-label` com o nome da versão; a classe de altura mínima está aplicada
+- [x] Os testes da lista (tarefa anterior) seguem verdes
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front

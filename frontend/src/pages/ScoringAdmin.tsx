@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { errorMessage, request } from "../api/client";
 import type { ScoringTableInfo, ScoringVersion, Unit } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import { ReviewHighlight } from "../components/ReviewHighlight";
 import { ScoringAdminForms } from "../components/ScoringAdminForms";
 import { ScoringTableCard } from "../components/ScoringTableCard";
+import { tableActions, versionActions, type ActionContext } from "../components/scoringActions";
 import { blockReasonText } from "../labels";
 
 type Selection = { tableId: string; versionId: string };
@@ -27,6 +28,7 @@ export function ScoringAdmin() {
   const [notice, setNotice] = useState("");
   const [unitFilter, setUnitFilter] = useState(ALL_UNITS);
   const [showArchived, setShowArchived] = useState(false);
+  const [dialog, setDialog] = useState<ReactNode>(null);
   const [focusTick, setFocusTick] = useState(0);
   const heading = useRef<HTMLHeadingElement>(null);
   const criteriaTitle = useRef<HTMLHeadingElement>(null);
@@ -80,6 +82,13 @@ export function ScoringAdmin() {
       setError(errorMessage(err));
     }
   }
+
+  const actionContext: ActionContext = {
+    announce: setNotice,
+    reload,
+    open: setDialog,
+    close: () => setDialog(null),
+  };
 
   function done(message: string) {
     setNotice(message);
@@ -175,6 +184,9 @@ export function ScoringAdmin() {
             table={table}
             acronymsOf={acronymsOf}
             today={today}
+            isAdmin={isAdmin}
+            tableActions={() => tableActions(actionContext, table)}
+            versionActions={(v) => versionActions(actionContext, table, v)}
             onShowCriteria={(versionId) => void showCriteria(table.id, versionId)}
           />
         ))
@@ -200,6 +212,7 @@ export function ScoringAdmin() {
           )}
         </section>
       )}
+      {isAdmin && dialog}
     </>
   );
 }
