@@ -7,7 +7,9 @@ unpinned (verification of gestao-tabelas). Tables are synthetic.
   ClearUnitDefaultVersion);
 - deleting a version that is not the latest does not reopen the previous one (A11);
 - deleting the latest version reopens the previous one only if the deleted one closed it
-  (ADM-05), which the CREATE event of the deleted version records (fix F1 of validation.md).
+  (ADM-05), which the CREATE event of the deleted version records (fix F1 of validation.md);
+- the table lock of ImportCriteriaCsv and the version lock of the mark (round 2 of the
+  verification: each had no test that failed without it).
 """
 
 from datetime import date
@@ -17,6 +19,7 @@ import pytest
 
 from app.application.use_cases import scoring_admin
 from app.application.use_cases.scoring_admin import DeleteScoringVersion, ProtectedCatalog
+from app.application.use_cases.scoring_adoption import AdoptSupersedingVersion
 from app.application.use_cases.scoring_defaults import (
     UNIT_DEFAULT_ENTITY,
     ClearUnitDefaultVersion,
@@ -25,8 +28,18 @@ from app.application.use_cases.scoring_defaults import (
 from app.domain.errors import Conflict
 from tests.integration.scoring.conftest import OFFICIAL_TABLE
 from tests.support.races import Gate, Worker, hooked_factory, wait_until_blocked
+from tests.support.scoring_variants import add_legacy_ufpa_version
 
 REFERENCE = "Res. 7.000/2026-CONSEPE"
+CSV = "\n".join(
+    [
+        "grupo,item,descricao,unidade,modo,pontos,horas_por_bloco,limite",
+        "2,7,Orientação sintética,por aluno,POR_UNIDADE,12.5,,30",
+        "4,4,Curso sintético,a cada 3 horas,POR_BLOCO_DE_HORAS,2,3,",
+        "1,1,Aulas,horas,CARGA_SEMANAL,,,",
+        "8,70,Outra,ponto,VALOR_INFORMADO,,,5",
+    ]
+)
 
 
 @pytest.fixture
@@ -232,3 +245,74 @@ def test_deleting_a_table_waits_for_a_version_being_created_and_removes_it_too(w
     with world.uow_factory() as uow:
         assert uow.scoring_tables.get_table(table.table.id) is None
         assert uow.scoring_tables.get_version(first.id) is None
+
+
+def test_importing_a_version_while_the_latest_one_is_being_deleted_is_not_a_deadlock(
+    world, uc, engine
+):
+    table = uc.create_table.execute(
+        world.admin, "Tabela Sintética Importada", [], date(2020, 1, 1), None, REFERENCE,
+        base_version_id=world.official_version.id,
+    )
+    first = table.versions[0].version
+    latest = uc.create_version.execute(
+        world.admin, table.table.id, first.id, date(2024, 1, 1), None, REFERENCE
+    ).version
+    gate = Gate()
+    holding = hooked_factory(engine, ("update_version",), lambda _n: gate.hold())
+    slow_import = scoring_admin.ImportCriteriaCsv(holding, world.audit)
+    importing = Worker(
+        lambda: slow_import.execute(
+            world.admin, table.table.id, date(2026, 1, 1), None, REFERENCE, CSV
+        )
+    ).start()
+    gate.wait_reached()  # the open version is closed and its row is locked, not committed
+    deleting = Worker(lambda: uc.delete.execute(world.admin, latest.id)).start()
+    wait_until_blocked(engine)  # the deletion has to wait for the import
+
+    gate.release()
+    importing.join()
+    deleting.join()
+
+    assert importing.error is None  # a deadlock would abort one of the two with 40P01
+    assert deleting.error is None or isinstance(deleting.error, Conflict)
+    with world.uow_factory() as uow:
+        headers = uow.scoring_tables.list_version_headers(table.table.id)
+    assert date(2026, 1, 1) in {v.valid_from for v in headers}
+
+
+def test_marking_waits_for_a_concurrent_supersession_of_the_version_and_loses_to_it(
+    world, engine
+):
+    # AdoptSupersedingVersion (the seed) supersedes a version and clears its marks without the
+    # table lock, so the version lock of the mark is what makes the two wait for each other.
+    with world.uow_factory() as uow:
+        legacy = add_legacy_ufpa_version(uow, world.official_version)
+        uow.commit()
+    gate = Gate()
+    holding = hooked_factory(engine, ("set_unit_default",), lambda _n: gate.hold())
+    marking = Worker(
+        lambda: SetUnitDefaultVersion(holding, world.audit).execute(
+            world.admin, world.fasi.id, legacy.id
+        )
+    ).start()
+    gate.wait_reached()  # the mark is written and the locks are held, not committed
+
+    def adopt():
+        with world.uow_factory() as uow:
+            AdoptSupersedingVersion(world.audit).execute(
+                uow, world.official_version.table_id, legacy.name, world.official_version.name
+            )
+            uow.commit()
+
+    adopting = Worker(adopt).start()
+    wait_until_blocked(engine)  # the supersession has to wait for the version lock
+
+    gate.release()
+    marking.join()
+    adopting.join()
+
+    assert marking.error is None and adopting.error is None
+    with world.uow_factory() as uow:
+        assert uow.scoring_tables.get_unit_default(world.fasi.id) is None
+        assert uow.scoring_tables.get_version(legacy.id).superseded_by_id is not None

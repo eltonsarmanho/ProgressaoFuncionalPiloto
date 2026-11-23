@@ -227,6 +227,29 @@ describe("ADMUI-01: lista de tabelas e versões", () => {
       expect(first).not.toHaveTextContent("Encerrada");
     });
 
+    it("no meio do ano, às 22h de 05/08 em Belém (já é 06/08 em UTC), o dia e o mês locais decidem o selo", async () => {
+      vi.stubEnv("TZ", "America/Belem");
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-08-06T01:00:00Z")); // 22:00 of 2026-08-05 in Belém
+
+      renderAdmin("ADMIN", { "GET /api/scoring-tables": markedUntil("2026-08-05") });
+      const today = await screen.findByRole("region", { name: "Tabela da FASI" });
+      const [endsToday] = Array.from(today.querySelectorAll(".tbl-version"));
+      expect(endsToday).toHaveTextContent("Em uso (FASI)");
+      expect(endsToday).not.toHaveTextContent("Encerrada");
+    });
+
+    it("no meio do ano, a versão marcada que terminou ontem (04/08) está encerrada", async () => {
+      vi.stubEnv("TZ", "America/Belem");
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-08-06T01:00:00Z")); // 22:00 of 2026-08-05 in Belém
+
+      renderAdmin("ADMIN", { "GET /api/scoring-tables": markedUntil("2026-08-04") });
+      const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+      const [endedYesterday] = Array.from(fasi.querySelectorAll(".tbl-version"));
+      expect(endedYesterday).toHaveTextContent("Encerrada");
+    });
+
     it("depois da meia-noite local de 01/01, a mesma versão está encerrada", async () => {
       vi.stubEnv("TZ", "America/Belem");
       vi.useFakeTimers({ toFake: ["Date"] });
@@ -449,11 +472,27 @@ describe("GTAB-39, GTAB-40, GTAB-37: filtros, contagem e estados da lista", () =
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Falha no servidor");
     expect(screen.queryByRole("region", { name: "Tabela da FASI" })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Tentar de novo" }));
+    const retry = screen.getByRole("button", { name: "Tentar de novo" });
+    expect(retry).toHaveClass("tbl-retry"); // GTAB-38: the class is what gives it the 44 px
+    await user.click(retry);
 
     expect(await screen.findByRole("region", { name: "Tabela da FASI" })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(loads).toBe(2);
+  });
+
+  it("GTAB-39, GTAB-38: o erro com a lista já carregada também traz 'Tentar de novo' com a classe de 44 px", async () => {
+    renderAdmin("ADMIN", {
+      "GET /api/scoring-versions/v-fasi-2": { status: 500, body: { detail: "Falha ao abrir a versão" } },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    await user.click(within(fasi).getByRole("button", { name: "Ver critérios de FASI 2026" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Falha ao abrir a versão");
+    expect(within(alert).getByRole("button", { name: "Tentar de novo" })).toHaveClass("tbl-retry");
   });
 });
 
