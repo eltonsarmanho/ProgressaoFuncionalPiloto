@@ -1270,6 +1270,7 @@ a.btn {
   gap: 0.5rem 1rem;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 1rem;
 }
 
 .tbl-page-head h1 {
@@ -1398,7 +1399,7 @@ a.btn {
   flex-direction: column;
   gap: 0.2rem;
   min-width: 0;
-  max-width: 100%;
+  max-width: min(100%, 16rem);
 }
 
 .tbl-actions .btn {

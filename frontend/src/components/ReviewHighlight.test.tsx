@@ -38,6 +38,14 @@ const GROUPS: ScoringGroup[] = [
 ];
 
 describe("ADMUI-03: critérios marcados para revisão", () => {
+  it("a coluna Modo mostra o rótulo em português, não o código do modo", () => {
+    render(<ReviewHighlight groups={GROUPS} />);
+
+    const row = screen.getByRole("row", { name: /Critério 10/ });
+    expect(within(row).getByText("Por unidade")).toBeInTheDocument();
+    expect(row).not.toHaveTextContent("POR_UNIDADE");
+  });
+
   it("destaca os critérios com anotação e mostra o texto da diferença", () => {
     render(<ReviewHighlight groups={GROUPS} />);
 

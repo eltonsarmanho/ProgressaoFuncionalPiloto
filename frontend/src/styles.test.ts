@@ -342,6 +342,14 @@ describe("GTAB-38: a lista de tabelas de pontuação cabe em 360 px e não quebr
     }
   });
 
+  it("a coluna do botão bloqueado tem largura máxima (as linhas não se alargam até o motivo) e o título tem folga", () => {
+    const maxWidth = rule(".tbl-action")!.body.match(/max-width\s*:\s*(?:min\(\s*100%\s*,\s*)?([\d.]+)(rem|px)/);
+    expect(maxWidth).not.toBeNull();
+    expect(toPx(maxWidth![1], maxWidth![2])).toBeLessThanOrEqual(20 * PX_PER_REM);
+    const head = rules.find((r) => r.selector.endsWith(".tbl-page-head")); // the block comment precedes it
+    expect(head!.body).toMatch(/margin-bottom\s*:\s*[\d.]+rem/);
+  });
+
   it("o botão 'Editar' da linha de critério também tem alvo de toque de pelo menos 2,75 rem", () => {
     expect(minHeightPx(rule(".tbl-edit")!.body)).toBeGreaterThanOrEqual(2.75 * PX_PER_REM);
   });

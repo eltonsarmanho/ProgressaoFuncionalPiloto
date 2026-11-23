@@ -1,5 +1,5 @@
 import type { Criterion, ScoringGroup } from "../api/types";
-import { formatDecimal, roman } from "../labels";
+import { SCORING_MODE_LABELS, formatDecimal, roman } from "../labels";
 
 /**
  * ADMUI-03: the criteria of a version, with those carrying a `review_note` highlighted and explained.
@@ -55,7 +55,7 @@ export function ReviewHighlight({
                     </p>
                   )}
                 </td>
-                <td data-label="Modo">{c.mode}</td>
+                <td data-label="Modo">{SCORING_MODE_LABELS[c.mode]}</td>
                 <td data-label="Pontos">{formatDecimal(c.unit_points)}</td>
                 <td data-label="Carga mínima (h)">{formatDecimal(c.min_hours)}</td>
                 <td data-label="Limite">{formatDecimal(c.max_points)}</td>
