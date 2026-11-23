@@ -58,6 +58,17 @@ def test_the_emblem_is_above_the_first_line_with_at_least_3_mm_of_space(tmp_path
     assert rect.y0 < first_word[1]
 
 
+def test_the_space_below_the_emblem_is_exactly_3_mm(tmp_path):
+    # BRAS-06: the Spacer after the image is 3 mm, and in the page the first line starts no more
+    # than the 3 mm plus the leading of its own paragraph below the image (a 12 mm gap fails)
+    image, spacer = emblem_flowables()
+    assert spacer.height == pytest.approx(3 * mm)
+
+    page = build(tmp_path / "a.pdf")[0]
+    gap = min(page.get_text("words"), key=lambda word: word[1])[1] - emblem_rect(page).y1
+    assert 3 * mm <= gap <= 3 * mm + build_styles(11).body.leading
+
+
 def test_on_a_landscape_page_it_is_centered_on_the_landscape_text_area(tmp_path):
     page = build(tmp_path / "paisagem.pdf", size=landscape(A4))[0]
     rect = emblem_rect(page)
