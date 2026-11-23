@@ -821,3 +821,94 @@ describe("GTAB-02, GTAB-04, GTAB-10, GTAB-16, GTAB-36: definir como em uso e rem
     expect(within(fasi).queryByRole("button", { name: /Remover marcação/ })).not.toBeInTheDocument();
   });
 });
+
+describe("GTAB-23, GTAB-24, GTAB-25, GTAB-16, GTAB-36: arquivar e desarquivar pela página", () => {
+  const pageStatus = () => screen.getAllByRole("status").find((el) => el.tagName === "P") as HTMLElement;
+  const archivedFasi = { ...TABLES[0], archived: true };
+
+  it("arquivar envia o POST, a tabela some do filtro padrão e aparece com 'Mostrar arquivadas'", async () => {
+    let loads = 0;
+    const { calls } = renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": () => {
+        loads += 1;
+        return { status: 200, body: loads === 1 ? TABLES : [archivedFasi, TABLES[1]] };
+      },
+      "POST /api/scoring-tables/t-fasi/archive": { status: 200, body: archivedFasi },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    await user.click(within(fasi).getByRole("button", { name: "Arquivar a tabela Tabela da FASI" }));
+
+    await vi.waitFor(() => expect(screen.queryByRole("region", { name: "Tabela da FASI" })).not.toBeInTheDocument());
+    expect(calls.some((c) => c.method === "POST" && c.path === "/api/scoring-tables/t-fasi/archive")).toBe(true);
+    expect(pageStatus()).toHaveTextContent('Tabela "Tabela da FASI" arquivada.');
+    expect(screen.getByText("1 tabela")).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: "Mostrar arquivadas" }));
+    const shown = await screen.findByRole("region", { name: "Tabela da FASI" });
+    expect(shown).toHaveTextContent("Arquivada");
+  });
+
+  it("desarquivar a devolve à lista", async () => {
+    let loads = 0;
+    const { calls } = renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": () => {
+        loads += 1;
+        return { status: 200, body: loads === 1 ? [archivedFasi, TABLES[1]] : TABLES };
+      },
+      "POST /api/scoring-tables/t-fasi/unarchive": { status: 200, body: TABLES[0] },
+    });
+    const user = userEvent.setup();
+    await screen.findByRole("region", { name: "Tabela do IFCH" });
+    await user.click(screen.getByRole("checkbox", { name: "Mostrar arquivadas" }));
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+    expect(within(fasi).queryByRole("button", { name: /^Arquivar a tabela/ })).not.toBeInTheDocument();
+
+    await user.click(within(fasi).getByRole("button", { name: "Desarquivar a tabela Tabela da FASI" }));
+
+    await vi.waitFor(() => expect(pageStatus()).toHaveTextContent('Tabela "Tabela da FASI" desarquivada.'));
+    expect(calls.some((c) => c.method === "POST" && c.path === "/api/scoring-tables/t-fasi/unarchive")).toBe(true);
+    await vi.waitFor(() => expect(screen.getByRole("region", { name: "Tabela da FASI" })).not.toHaveTextContent("Arquivada"));
+  });
+
+  it("a tabela com versão em uso tem o botão desabilitado, com o motivo e as siglas", async () => {
+    const { calls } = renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": {
+        status: 200,
+        body: [{ ...TABLES[0], archive_blocked_reason: "TABELA_COM_VERSAO_EM_USO" }, TABLES[1]],
+      },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    const button = within(fasi).getByRole("button", { name: "Arquivar a tabela Tabela da FASI" });
+
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    const reason = document.getElementById(button.getAttribute("aria-describedby") as string) as HTMLElement;
+    expect(reason).toHaveTextContent("A tabela tem versão em uso da unidade FASI; marque outra tabela ou desmarque a versão antes de arquivar ou excluir.");
+    await user.click(button);
+    expect(calls.some((c) => c.method === "POST")).toBe(false);
+  });
+
+  it("o 409 do servidor aparece como texto no status e a lista não muda", async () => {
+    renderAdmin("ADMIN", {
+      "POST /api/scoring-tables/t-fasi/archive": {
+        status: 409,
+        body: { detail: "A tabela tem versão em uso da unidade FASI", code: "TABELA_COM_VERSAO_EM_USO" },
+      },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    await user.click(within(fasi).getByRole("button", { name: "Arquivar a tabela Tabela da FASI" }));
+
+    await vi.waitFor(() => expect(pageStatus()).toHaveTextContent("A tabela tem versão em uso da unidade FASI"));
+    expect(screen.getByRole("region", { name: "Tabela da FASI" })).toBeInTheDocument();
+  });
+
+  it("quem não é ADMIN não vê 'Arquivar' nem 'Desarquivar'", async () => {
+    renderAdmin("SECRETARIA");
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+    expect(within(fasi).queryByRole("button", { name: /arquivar/i })).not.toBeInTheDocument();
+  });
+});

@@ -145,9 +145,32 @@ const defaultActions: VersionActionBuilder = (ctx, table, version) => {
   return [set, ...clears];
 };
 
+/** GTAB-23, GTAB-25, GTAB-35: "Arquivar" or "Desarquivar" of a table, at once, blocked with the reason and the acronyms. */
+const archiveAction: TableActionBuilder = (ctx, table) => {
+  const archiving = !table.archived;
+  const markedIds = new Set(table.versions.flatMap((v) => v.default_for_unit_ids));
+  const acronyms = ctx.units.filter((u) => markedIds.has(u.id)).map((u) => u.acronym);
+  return [
+    {
+      key: "archive",
+      label: archiving ? "Arquivar" : "Desarquivar",
+      ariaLabel: `${archiving ? "Arquivar" : "Desarquivar"} a tabela ${table.name}`,
+      disabledReason: table.archive_blocked_reason
+        ? blockReasonText(table.archive_blocked_reason, { acronyms })
+        : undefined,
+      run: () =>
+        void actNow(
+          ctx,
+          () => request("POST", `/api/scoring-tables/${table.id}/${archiving ? "archive" : "unarchive"}`),
+          `Tabela "${table.name}" ${archiving ? "arquivada" : "desarquivada"}.`,
+        ),
+    },
+  ];
+};
+
 /** The registry of the actions of a version and of a table; each operation adds its builder here (GTAB-35). */
 const VERSION_ACTIONS: VersionActionBuilder[] = [defaultActions, newVersionAction];
-const TABLE_ACTIONS: TableActionBuilder[] = [formActions, unitsAction];
+const TABLE_ACTIONS: TableActionBuilder[] = [formActions, unitsAction, archiveAction];
 
 export function versionActions(ctx: ActionContext, table: ScoringTableInfo, version: ScoringVersionSummary): TableAction[] {
   return VERSION_ACTIONS.flatMap((build) => build(ctx, table, version));

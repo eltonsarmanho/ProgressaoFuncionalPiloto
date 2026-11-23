@@ -1068,7 +1068,7 @@ graph LR
 
 #### T32: Arquivar e desarquivar
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Botão "Arquivar" ou "Desarquivar" por tabela, agindo na hora (`POST .../archive` ou `.../unarchive`), desabilitado com o motivo quando `archive_blocked_reason` vem preenchido; a tabela arquivada leva a etiqueta "Arquivada" e some da lista quando "Mostrar arquivadas" está desligado. A Etapa 4 segue sem oferecer tabela arquivada.
 **Where**: `frontend/src/components/ScoringTableDialogs.tsx` (modify)
@@ -1083,10 +1083,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/pages/ScoringAdmin.test.tsx` (modifica): arquivar envia o `POST`, a tabela some do filtro padrão e aparece com "Mostrar arquivadas"; desarquivar a devolve; o botão de uma tabela com versão em uso vem desabilitado com o motivo e as siglas; o 409 do servidor aparece como texto; a confirmação é anunciada em `role=status`
-- [ ] `frontend/src/pages/ProcessScoring.test.tsx` ou `frontend/src/components/TablePicker.test.tsx` (modifica): uma tabela arquivada não é oferecida na escolha da Etapa 4
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/pages/ScoringAdmin.test.tsx` (modifica): arquivar envia o `POST`, a tabela some do filtro padrão e aparece com "Mostrar arquivadas"; desarquivar a devolve; o botão de uma tabela com versão em uso vem desabilitado com o motivo e as siglas; o 409 do servidor aparece como texto; a confirmação é anunciada em `role=status`
+- [x] `frontend/src/pages/ProcessScoring.test.tsx` ou `frontend/src/components/TablePicker.test.tsx` (modifica): uma tabela arquivada não é oferecida na escolha da Etapa 4
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front

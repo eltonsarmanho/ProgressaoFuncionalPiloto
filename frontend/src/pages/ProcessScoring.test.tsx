@@ -565,3 +565,33 @@ describe("ProcessScoring", () => {
     });
   });
 });
+
+describe("GTAB-24: a escolha da tabela na Etapa 4 não oferece tabela arquivada", () => {
+  it("a lista de 'Escolher outra tabela' traz só as tabelas não arquivadas", async () => {
+    const summary = { in_use: false, process_count: 0, default_for_unit_ids: [], read_only_reason: null, delete_blocked_reason: null };
+    const table = (id: string, name: string, archived: boolean) => ({
+      id,
+      name,
+      archived,
+      unit_ids: [],
+      archive_blocked_reason: null,
+      delete_blocked_reason: null,
+      versions: [{ ...VERSION_INFO, ...summary, id: `v-${id}`, table_id: id, name: `${name} 2026` }],
+    });
+    mockFetch({
+      ...baseRoutes(() => result("40.00", [ROW])),
+      "GET /api/scoring-tables": {
+        status: 200,
+        body: [table("t-viva", "Tabela viva", false), table("t-arq", "Tabela arquivada", true)],
+      },
+    });
+    renderPage();
+
+    const select = await screen.findByLabelText("Escolher outra tabela");
+
+    expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual([
+      "Selecione…",
+      "Tabela viva · Tabela viva 2026",
+    ]);
+  });
+});
