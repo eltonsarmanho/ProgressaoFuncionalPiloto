@@ -134,13 +134,35 @@ describe("ADMUI-01: lista de tabelas e versões", () => {
     );
   });
 
-  it.each(["SECRETARIA", "DOCENTE"])("%s é redirecionado e não vê o link", async (role) => {
+  it.each(["SECRETARIA", "DOCENTE"])("GTAB-15: %s vê o link e a lista, sem nenhum botão de escrita", async (role) => {
     renderAdmin(role);
+    const user = userEvent.setup();
 
-    expect(await screen.findByRole("heading", { name: "Painel" })).toBeInTheDocument();
-    expect(screen.getByTestId("location")).toHaveTextContent(/^\/$/);
-    expect(screen.queryByRole("link", { name: "Tabelas de pontuação" })).not.toBeInTheDocument();
-    expect(screen.queryByText("Tabela da FASI")).not.toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Tabelas de pontuação" })).toHaveAttribute(
+      "href",
+      "/administracao/tabelas",
+    );
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/administracao\/tabelas$/);
+    expect(within(fasi).getByRole("button", { name: "Ver critérios de FASI 2026" })).toBeInTheDocument();
+    await user.click(within(fasi).getByRole("button", { name: "Ver critérios de FASI 2026" }));
+    const criteria = await screen.findByRole("region", { name: "Critérios de Tabela da FASI · FASI 2026" });
+    expect(within(criteria).getByText("Orientação de TCC")).toBeInTheDocument();
+    for (const name of ["Duplicar tabela", "Criar nova versão", "Importar CSV"]) {
+      expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
+    }
+    expect(screen.queryByLabelText("Nome da nova tabela")).not.toBeInTheDocument();
+  });
+
+  it("GTAB-15: o ADMIN vê os formulários de escrita ao abrir os critérios", async () => {
+    renderAdmin("ADMIN");
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    await user.click(within(fasi).getByRole("button", { name: "Ver critérios de FASI 2026" }));
+
+    expect(await screen.findByRole("button", { name: "Duplicar tabela" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Criar nova versão" })).toBeInTheDocument();
   });
 });
 

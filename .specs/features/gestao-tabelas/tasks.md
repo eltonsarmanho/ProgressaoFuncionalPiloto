@@ -839,7 +839,7 @@ graph LR
 
 #### T24: Tela de tabelas aberta a todos os perfis, só leitura para os outros
 
-**Status**: Pending
+**Status**: Done
 
 **What**: A rota `administracao/tabelas` deixa de ser `AdminOnly` (`App.tsx:22-26` define o guarda e `App.tsx:47-54` a rota), o item "Tabelas de pontuação" do menu (`Layout.tsx:13`) aparece para todos os autenticados e a página (`ScoringAdmin.tsx`) recebe `isAdmin` de `useAuth`; para quem não é ADMIN nenhum botão de escrita é montado (a lista e "Ver critérios" ficam).
 **Where**: `frontend/src/App.tsx` (modify)
@@ -854,9 +854,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/pages/ScoringAdmin.test.tsx` (modifica): SECRETARIA e DOCENTE veem o item de menu, abrem a tela e veem a lista e "Ver critérios", sem nenhum botão de escrita; o ADMIN vê a mesma tela; o `it.each` que afirmava o redirecionamento deles para `/` (linhas 120-128) passa a afirmar a leitura; sem sessão a rota redireciona para o login como as outras (teste que já existe)
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/pages/ScoringAdmin.test.tsx` (modifica): SECRETARIA e DOCENTE veem o item de menu, abrem a tela e veem a lista e "Ver critérios", sem nenhum botão de escrita; o ADMIN vê a mesma tela; o `it.each` que afirmava o redirecionamento deles para `/` (linhas 120-128) passa a afirmar a leitura; sem sessão a rota redireciona para o login como as outras (teste que já existe)
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { errorMessage, request } from "../api/client";
 import type { ScoringTableInfo, ScoringVersion } from "../api/types";
+import { useAuth } from "../auth/AuthContext";
 import { ReviewHighlight } from "../components/ReviewHighlight";
 import { ScoringAdminForms } from "../components/ScoringAdminForms";
 import { TABLE_STATUS_LABELS, formatDate } from "../labels";
@@ -9,6 +10,7 @@ type Selection = { table: ScoringTableInfo; versionId: string; versionName: stri
 
 /** ADMUI-01: tables, their versions (validity, status, norm reference) and the criteria of one. */
 export function ScoringAdmin() {
+  const isAdmin = useAuth().user?.role === "ADMIN";
   const [tables, setTables] = useState<ScoringTableInfo[] | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [version, setVersion] = useState<ScoringVersion | null>(null);
@@ -106,11 +108,13 @@ export function ScoringAdmin() {
             Critérios · {selection.table.name} · {selection.versionName}
           </h2>
           <ReviewHighlight groups={version.groups} />
-          <ScoringAdminForms
-            table={selection.table}
-            version={{ id: selection.versionId, name: selection.versionName }}
-            onChanged={reload}
-          />
+          {isAdmin && (
+            <ScoringAdminForms
+              table={selection.table}
+              version={{ id: selection.versionId, name: selection.versionName }}
+              onChanged={reload}
+            />
+          )}
         </section>
       )}
     </>
