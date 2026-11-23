@@ -21,17 +21,11 @@ const FIELDS = [
   "start_date",
   "end_date",
   "opening_date",
-  "notes",
-  "resp_name",
-  "resp_position",
-  "resp_appointment",
-  "resp_admin_unit",
 ] as const;
 type Field = (typeof FIELDS)[number];
 type Form = Record<Field, string>;
 
 const NUMERIC: Field[] = ["current_level", "target_level"];
-const OPTIONAL: Field[] = ["notes", "resp_name", "resp_position", "resp_appointment", "resp_admin_unit"];
 const EMPTY = Object.fromEntries(FIELDS.map((f) => [f, ""])) as Form;
 
 function toForm(p: Process): Form {
@@ -43,7 +37,6 @@ function toPayload(form: Form): Record<string, unknown> {
     FIELDS.map((f) => {
       const value = form[f].trim();
       if (NUMERIC.includes(f)) return [f, value === "" ? null : Number(value)];
-      if (OPTIONAL.includes(f)) return [f, value === "" ? null : value];
       return [f, value];
     }),
   );
@@ -231,25 +224,6 @@ export function ProcessStep1() {
           {input("start_date", "Data inicial do interstício", "date")}
           {input("end_date", "Data final do interstício", "date")}
           {input("opening_date", "Data de abertura", "date")}
-        </fieldset>
-
-        <fieldset>
-          <legend>Dados institucionais e observações</legend>
-          {input("resp_name", "Nome do responsável")}
-          {input("resp_position", "Cargo do responsável")}
-          {input("resp_appointment", "Portaria de designação do responsável")}
-          {input("resp_admin_unit", "Unidade administrativa responsável")}
-          <div className="field">
-            <label htmlFor="notes">Observações</label>
-            <textarea
-              id="notes"
-              rows={3}
-              value={form.notes}
-              onChange={(e) => set("notes", e.target.value)}
-              {...errorProps("notes", errors)}
-            />
-            <FieldError id="notes-error" message={errors.notes} />
-          </div>
         </fieldset>
 
         {process && (

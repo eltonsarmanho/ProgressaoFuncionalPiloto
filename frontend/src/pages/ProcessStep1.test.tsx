@@ -33,11 +33,6 @@ const SAVED = {
   start_date: "2024-11-23",
   end_date: "2026-11-23",
   opening_date: "2026-11-16",
-  notes: null,
-  resp_name: null,
-  resp_position: null,
-  resp_appointment: null,
-  resp_admin_unit: null,
   status: "RASCUNHO",
   version: 1,
   created_at: "2026-11-16T10:00:00Z",
@@ -120,11 +115,6 @@ describe("ProcessStep1", () => {
       start_date: "2024-11-23",
       end_date: "2026-11-23",
       opening_date: "2026-11-16",
-      notes: null,
-      resp_name: null,
-      resp_position: null,
-      resp_appointment: null,
-      resp_admin_unit: null,
     });
   });
 
@@ -225,6 +215,24 @@ describe("CAINI-01, CAINI-02, CAINI-05, CAINI-06: iniciar o processo na Etapa 1"
     expect(screen.queryByRole("button", OPEN)).not.toBeInTheDocument();
   });
 
+  it("ENX-01: a Etapa 1 não pede os dados institucionais nem as observações do processo", async () => {
+    mockFetch({ ...base, "GET /api/processes/proc-1": { status: 200, body: SAVED } });
+    renderAt("/processos/proc-1");
+    await screen.findByLabelText("Denominação atual");
+
+    for (const label of [
+      "Nome do responsável",
+      "Cargo do responsável",
+      "Portaria de designação do responsável",
+      "Unidade administrativa responsável",
+      "Observações",
+    ]) {
+      expect(screen.queryByLabelText(label)).not.toBeInTheDocument();
+    }
+    expect(screen.queryByText("Dados institucionais e observações")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Data de abertura")).toBeInTheDocument();
+  });
+
   it("CAINI-02: na criação de um processo novo não mostra o botão", async () => {
     mockFetch(base);
     renderAt("/processos/novo");
@@ -237,19 +245,20 @@ describe("CAINI-01, CAINI-02, CAINI-05, CAINI-06: iniciar o processo na Etapa 1"
       ...base,
       "GET /api/processes/proc-1": { status: 200, body: SAVED },
       "POST /api/processes/proc-1/status": { status: 200, body: { ...SAVED, status: "EM_ANDAMENTO", version: 2 } },
-      "PUT /api/processes/proc-1": { status: 200, body: { ...SAVED, status: "EM_ANDAMENTO", version: 3, notes: "Anotação digitada" } },
+      "PUT /api/processes/proc-1": { status: 200, body: { ...SAVED, status: "EM_ANDAMENTO", version: 3, current_denomination: "Titular" } },
     });
     renderAt("/processos/proc-1");
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", OPEN));
-    await user.type(screen.getByLabelText("Observações"), "Anotação digitada");
+    await user.clear(screen.getByLabelText("Denominação atual"));
+    await user.type(screen.getByLabelText("Denominação atual"), "Titular");
     await user.click(within(screen.getByRole("dialog", OPEN)).getByRole("button", { name: "Iniciar" }));
 
     expect(await screen.findByText("Em andamento")).toBeInTheDocument();
     expect(screen.queryByText("Rascunho")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", OPEN)).not.toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Observações")).toHaveValue("Anotação digitada");
+    expect(screen.getByLabelText("Denominação atual")).toHaveValue("Titular");
     const post = calls.find((c) => c.method === "POST")!;
     expect(JSON.parse(post.init!.body as string)).toEqual({ status: "EM_ANDAMENTO", expected_version: 1 });
 
@@ -257,7 +266,7 @@ describe("CAINI-01, CAINI-02, CAINI-05, CAINI-06: iniciar o processo na Etapa 1"
     await user.click(screen.getByRole("button", { name: "Salvar" }));
     await vi.waitFor(() => expect(calls.some((c) => c.method === "PUT")).toBe(true));
     const put = calls.find((c) => c.method === "PUT")!;
-    expect(JSON.parse(put.init!.body as string)).toMatchObject({ expected_version: 2, notes: "Anotação digitada" });
+    expect(JSON.parse(put.init!.body as string)).toMatchObject({ expected_version: 2, current_denomination: "Titular" });
   });
 
   it("CAINI-06: 409 mostra a mensagem no modal e recarrega o processo com GET, e a etiqueta mostra o status devolvido", async () => {

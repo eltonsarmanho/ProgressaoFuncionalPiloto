@@ -149,11 +149,6 @@ export type ProcessFields = {
   start_date: string;
   end_date: string;
   opening_date: string;
-  notes: string | null;
-  resp_name: string | null;
-  resp_position: string | null;
-  resp_appointment: string | null;
-  resp_admin_unit: string | null;
 };
 
 export type Process = ProcessFields & {
