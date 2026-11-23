@@ -322,6 +322,7 @@ class DuplicateScoringTable:
                 id=uuid.uuid4(),
                 table_id=table.id,
                 minimums=copy.deepcopy(source.minimums),
+                norm_code=None,  # the norm behind the source is not the one of the copy (GTAB-45)
             )
             uow.scoring_tables.add_table(table)
             uow.scoring_tables.add_version(version)
@@ -570,6 +571,8 @@ class CreateVersionFrom:
                 norm_reference=reference,
                 status=status,
                 minimums=copy.deepcopy(source.minimums),
+                # The code stays only inside the same table; elsewhere the norm is not its own.
+                norm_code=source.norm_code if source.table_id == table_id else None,
             )
             add_version_closing_open(
                 uow, self._audit, actor, version, {"copied_from_version_id": source.id}

@@ -633,7 +633,7 @@ graph LR
 
 #### T17: Cópia para outra tabela não leva o código da norma
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `DuplicateScoringTable` grava a versão copiada com `norm_code=None`, e `CreateVersionFrom` só mantém o `norm_code` quando a origem é da mesma tabela de destino. Hoje `dataclasses.replace(source)` carrega o código da tabela oficial para tabelas criadas pelo ADMIN.
 **Where**: `backend/app/application/use_cases/scoring_admin.py` (modify)
@@ -648,11 +648,11 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_admin_versions.py` e `backend/tests/integration/scoring/test_admin_create.py` (modificam): duplicar a tabela oficial dá versão com `norm_code` nulo; nova versão na mesma tabela mantém o código; nova versão em outra tabela a partir de versão da oficial fica sem código; a citação de norma dos alertas dessas tabelas novas não aponta para `TABELA-OFICIAL-UFPA`
-- [ ] `backend/tests/integration/test_scoring_version_norm_code.py` segue verde
-- [ ] Gate completo do backend (fim da fase): o `full` passa; os dois testes instáveis conhecidos rodam de novo sozinhos antes de qualquer conclusão
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_admin_versions.py` e `backend/tests/integration/scoring/test_admin_create.py` (modificam): duplicar a tabela oficial dá versão com `norm_code` nulo; nova versão na mesma tabela mantém o código; nova versão em outra tabela a partir de versão da oficial fica sem código; a citação de norma dos alertas dessas tabelas novas não aponta para `TABELA-OFICIAL-UFPA`
+- [x] `backend/tests/integration/test_scoring_version_norm_code.py` segue verde
+- [x] Gate completo do backend (fim da fase): o `full` passa; os dois testes instáveis conhecidos rodam de novo sozinhos antes de qualquer conclusão
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: full

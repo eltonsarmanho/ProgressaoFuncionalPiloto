@@ -213,3 +213,33 @@ def test_duplicate_of_a_table_with_two_versions_copies_the_latest(world, admin_u
     assert copy_version.valid_from == date(2023, 6, 1)
     assert copy_version.norm_reference == "Nova norma da FASI, 2023"
     assert copy_version.id != newer.version.id
+
+
+# --- GTAB-45: a copy for another table does not carry the code of the official norm -------------
+
+
+OFFICIAL_NORM = "TABELA-OFICIAL-UFPA"
+
+
+def test_duplicating_the_official_table_gives_a_version_without_the_norm_code(world, admin_uc):
+    assert world.official_version.norm_code == OFFICIAL_NORM  # what the copy must not inherit
+
+    view = admin_uc.duplicate.execute(world.admin, world.official_version.table_id, "Cópia da FASI")
+
+    _, [copy_version] = stored(world, view.table.id)
+    assert copy_version.norm_code is None
+    _, [source] = stored(world, world.official_version.table_id)
+    assert source.norm_code == OFFICIAL_NORM
+
+
+def test_the_alerts_of_a_duplicated_table_do_not_cite_the_official_norm(world, admin_uc):
+    view = admin_uc.duplicate.execute(
+        world.admin, world.official_version.table_id, "Cópia da FASI", unit_ids=[world.ifch.id]
+    )
+    copy_version = view.versions[0].version
+
+    result = world.choose.execute(world.admin, world.process.id, copy_version.id, None, None)
+
+    assert [a.code.value for a in result.alerts] == ["TABELA_DE_OUTRA_UNIDADE"]
+    assert [a.norm_code for a in result.alerts] == [None]
+    assert result.norms == {}

@@ -212,3 +212,39 @@ def test_the_csv_import_takes_its_base_from_the_version_that_is_not_superseded(w
     )
 
     assert view.version.notes == note
+
+
+# --- GTAB-45: the norm code stays in the same table and does not travel to another one ----------
+
+
+def test_a_new_version_in_the_same_table_keeps_the_norm_code(world, admin_uc):
+    view = new_version(world, admin_uc)
+
+    assert world.official_version.norm_code == "TABELA-OFICIAL-UFPA"
+    assert stored_version(world, view.version.id).norm_code == "TABELA-OFICIAL-UFPA"
+
+
+def test_a_new_version_in_another_table_from_an_official_version_has_no_norm_code(
+    world, admin_uc
+):
+    table = admin_uc.create_table.execute(
+        world.admin, "Tabela Sintética Destino", [], date(2026, 1, 1), None, REFERENCE
+    )
+
+    view = admin_uc.create_version.execute(
+        world.admin,
+        table.table.id,
+        world.official_version.id,
+        date(2027, 1, 1),
+        None,
+        REFERENCE,
+    )
+
+    assert stored_version(world, view.version.id).norm_code is None
+    assert stored_version(world, view.version.id).table_id == table.table.id
+    assert stored_version(world, world.official_version.id).norm_code == "TABELA-OFICIAL-UFPA"
+
+
+def stored_version(world, version_id):
+    with world.uow_factory() as uow:
+        return uow.scoring_tables.get_version(version_id)
