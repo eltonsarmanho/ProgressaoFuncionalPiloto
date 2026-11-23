@@ -236,6 +236,11 @@ def _official_table_data() -> dict[str, Any]:
     return json.loads((SEED_DATA / OFFICIAL_TABLE_SEED).read_text(encoding="utf-8"))
 
 
+def official_table_name() -> str:
+    """The name of the official scoring table in `ufpa.json`, which the deletion guards protect."""
+    return _official_table_data()["table_name"]
+
+
 def link_table_norms(uow: SqlUnitOfWork) -> None:
     """Give the versions of the official table the norm code of `ufpa.json`, only where null.
 

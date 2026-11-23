@@ -679,3 +679,11 @@ def test_a_system_event_on_a_legacy_table_does_not_count_as_a_person_changing_it
 
     table, _, acronyms = _by_table(uow_factory)[LEGACY[0]]
     assert (table.archived, acronyms) == (True, set())
+
+
+def test_the_public_official_table_name_is_the_name_in_the_seed_file():
+    seed_file = seed.SEED_DATA / seed.OFFICIAL_TABLE_SEED
+    expected = json.loads(seed_file.read_text(encoding="utf-8"))["table_name"]
+
+    assert seed.official_table_name() == expected
+    assert expected.strip() != ""

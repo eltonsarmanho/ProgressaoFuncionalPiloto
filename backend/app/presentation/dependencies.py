@@ -143,7 +143,7 @@ from app.infrastructure.ai.maritalk import MariTalkExtractor
 from app.infrastructure.ai.ordinance_extractor import MariTalkOrdinanceExtractor
 from app.infrastructure.ai.report_writer import MariTalkReportWriter
 from app.infrastructure.database.repositories import SqlUnitOfWork
-from app.infrastructure.database.seed import STRUCTURE_CODE, _official_table_data
+from app.infrastructure.database.seed import STRUCTURE_CODE, official_table_name
 from app.infrastructure.database.session import make_session_factory
 from app.infrastructure.documents.comprovante_assembler import PdfComprovanteAssembler
 from app.infrastructure.documents.config_loader import ReportConfigLoader, load_dossier_order
@@ -306,7 +306,7 @@ def build_container(
 
     hasher = Argon2PasswordHasher()
     audit = AuditService(clock)
-    protected_catalog = ProtectedCatalog(_official_table_data()["table_name"])
+    protected_catalog = ProtectedCatalog(official_table_name())
     policy = AccessPolicy()
     merger = MergeDuplicateActivities(audit)
     create_activity = CreateActivity(uow_factory, audit, policy, merger)
