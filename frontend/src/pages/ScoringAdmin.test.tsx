@@ -462,3 +462,41 @@ describe("GTAB-16, GTAB-37: critérios abertos, foco e anúncio", () => {
     await vi.waitFor(() => expect(pageStatus()).toHaveTextContent("Tabela duplicada."));
   });
 });
+
+describe("GTAB-11, GTAB-16, GTAB-35: nova tabela pela página", () => {
+  it("só o ADMIN vê o botão 'Nova tabela' no cabeçalho", async () => {
+    renderAdmin("SECRETARIA");
+    await screen.findByRole("region", { name: "Tabela da FASI" });
+    expect(screen.queryByRole("button", { name: "Nova tabela" })).not.toBeInTheDocument();
+  });
+
+  it("o ADMIN cria a tabela: o diálogo fecha, a lista recarrega, o status anuncia e o foco volta ao botão", async () => {
+    let loads = 0;
+    const created = { id: "t-new", name: "Tabela nova", archived: false, unit_ids: [], archive_blocked_reason: null, delete_blocked_reason: null, versions: [] };
+    const { calls } = renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": () => {
+        loads += 1;
+        return { status: 200, body: loads === 1 ? TABLES : [...TABLES, created] };
+      },
+      "POST /api/scoring-tables": { status: 201, body: created },
+    });
+    const user = userEvent.setup();
+    await screen.findByRole("region", { name: "Tabela da FASI" });
+    const opener = screen.getByRole("button", { name: "Nova tabela" });
+
+    await user.click(opener);
+    const dialog = await screen.findByRole("dialog", { name: "Nova tabela" });
+    await user.type(within(dialog).getByLabelText("Nome da tabela"), "Tabela nova");
+    await user.type(within(dialog).getByLabelText("Início da vigência"), "2026-03-01");
+    await user.type(within(dialog).getByLabelText("Referência normativa"), "Res. sintética 1");
+    await user.click(within(dialog).getByRole("button", { name: "Criar tabela" }));
+
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await vi.waitFor(() => expect(loads).toBe(2));
+    expect(await screen.findByRole("region", { name: "Tabela nova" })).toBeInTheDocument();
+    const pageStatus = screen.getAllByRole("status").find((el) => el.tagName === "P") as HTMLElement;
+    expect(pageStatus).toHaveTextContent('Tabela "Tabela nova" criada.');
+    expect(opener).toHaveFocus();
+    expect(calls.filter((c) => c.method === "POST").map((c) => c.path)).toEqual(["/api/scoring-tables"]);
+  });
+});

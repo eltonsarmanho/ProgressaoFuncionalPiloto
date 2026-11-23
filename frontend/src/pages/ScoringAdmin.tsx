@@ -3,6 +3,7 @@ import { errorMessage, request } from "../api/client";
 import type { ScoringTableInfo, ScoringVersion, Unit } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import { ReviewHighlight } from "../components/ReviewHighlight";
+import { CreateTableDialog } from "../components/ScoringTableDialogs";
 import { ScoringAdminForms } from "../components/ScoringAdminForms";
 import { ScoringTableCard } from "../components/ScoringTableCard";
 import { tableActions, versionActions, type ActionContext } from "../components/scoringActions";
@@ -95,6 +96,12 @@ export function ScoringAdmin() {
     void reload();
   }
 
+  /** A dialog finished its write: close it, announce the result and reload the list (GTAB-16). */
+  function dialogDone(message: string) {
+    setDialog(null);
+    done(message);
+  }
+
   function clearFilters() {
     setUnitFilter(ALL_UNITS);
     setShowArchived(false);
@@ -132,6 +139,24 @@ export function ScoringAdmin() {
         <h1 ref={heading} tabIndex={-1}>
           Tabelas de pontuação
         </h1>
+        {isAdmin && (
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() =>
+              setDialog(
+                <CreateTableDialog
+                  units={units}
+                  tables={tables}
+                  onDone={dialogDone}
+                  onClose={() => setDialog(null)}
+                />,
+              )
+            }
+          >
+            Nova tabela
+          </button>
+        )}
       </div>
       <p role="status" className="tbl-status">
         {notice}

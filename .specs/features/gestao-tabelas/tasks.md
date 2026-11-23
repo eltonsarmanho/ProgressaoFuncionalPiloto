@@ -956,7 +956,7 @@ graph LR
 
 #### T28: Nova tabela
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Botão "Nova tabela" no cabeçalho da página e `Modal` com nome, unidades (caixas de seleção das unidades não arquivadas), situação (`Oficial` ou `Pendente de validação`), início e fim de vigência, referência normativa, nome da versão e "Copiar critérios de" (versão opcional, opções no formato "Tabela · Versão" tiradas da lista carregada, sem as substituídas, como o `TablePicker`). Envia `POST /api/scoring-tables` com o corpo de `TableCreateIn`, mostra os 422 junto do campo (inclusive o de `unit_ids`) e, ao concluir, fecha, recarrega a lista e anuncia o resultado em `p[role=status]`.
 **Where**: `frontend/src/components/ScoringTableDialogs.tsx` (new)
@@ -971,9 +971,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ScoringTableDialogs.test.tsx` (novo): o corpo do `POST` traz os campos esperados; nome repetido (422 em `name`) aparece junto do campo e mantém o que foi digitado; as opções de "Copiar critérios de" não incluem versão substituída; sucesso fecha o diálogo, recarrega e anuncia a confirmação em texto; foco volta ao botão que abriu; só o ADMIN vê o botão
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/components/ScoringTableDialogs.test.tsx` (novo): o corpo do `POST` traz os campos esperados; nome repetido (422 em `name`) aparece junto do campo e mantém o que foi digitado; as opções de "Copiar critérios de" não incluem versão substituída; sucesso fecha o diálogo, recarrega e anuncia a confirmação em texto; foco volta ao botão que abriu; só o ADMIN vê o botão
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front
