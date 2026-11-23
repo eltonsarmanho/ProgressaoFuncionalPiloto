@@ -1,4 +1,5 @@
-"""PAR-01, PAR-12, PAR-13, REQ-05, BNAV-02, BNAV-03: SaveOpinion and SaveRequestSettings."""
+"""PAR-01, PAR-12, PMOD-26, PMOD-29, REQ-05, BNAV-02, BNAV-03: SaveOpinion and
+SaveRequestSettings."""
 
 import json
 from datetime import date
@@ -15,9 +16,9 @@ from tests.integration.doc_usecases.draft_support import set_status
 DAY = date(2025, 4, 1)
 
 
-def opinion(world, conclusion=None, when=None, place=None, notes=None, version=0, actor=None):
+def opinion(world, conclusion=None, when=None, place=None, version=0, actor=None):
     return save_opinion_uc(world).execute(
-        actor or world.docente, world.process.id, conclusion, when, place, notes, version
+        actor or world.docente, world.process.id, conclusion, when, place, version
     )
 
 
@@ -45,11 +46,11 @@ def events(world, entity):
 # --- SaveOpinion: the conclusion is never filled for the person -------------------------------
 
 
-def test_saving_the_date_the_place_and_the_notes_keeps_the_conclusion_empty(world):
-    saved = opinion(world, None, DAY, "Belém", "Nada a declarar.")
+def test_saving_the_date_and_the_place_keeps_the_conclusion_empty(world):
+    saved = opinion(world, None, DAY, "Belém")
 
     assert saved.conclusion is None
-    assert (saved.opinion_date, saved.place, saved.notes) == (DAY, "Belém", "Nada a declarar.")
+    assert (saved.opinion_date, saved.place) == (DAY, "Belém")
     assert saved.version == 1
     assert stored_opinion(world) == saved
 
@@ -58,7 +59,7 @@ def test_saving_with_nothing_at_all_creates_the_row_with_no_conclusion(world):
     saved = opinion(world)
 
     assert saved.conclusion is None
-    assert (saved.opinion_date, saved.place, saved.notes) == (None, None, None)
+    assert (saved.opinion_date, saved.place) == (None, None)
     assert stored_opinion(world) == saved
 
 
@@ -90,24 +91,16 @@ def test_clearing_the_conclusion_takes_it_back_to_none(world):
     }
 
 
-def test_the_audit_has_counts_and_codes_but_not_the_text_of_the_notes(world):
-    opinion(world, OpinionConclusion.FAVORAVEL, DAY, "Belém", "Observação reservada da banca.")
+def test_the_audit_has_the_code_the_date_and_the_size_of_the_place_but_not_its_text(world):
+    opinion(world, OpinionConclusion.FAVORAVEL, DAY, "Local reservado da banca")
 
     [event] = events(world, "board_opinion")
-    assert event.changes["notes_length"]["after"] == len("Observação reservada da banca.")
-    assert "reservada" not in json.dumps(event.changes, ensure_ascii=False)
+    assert set(event.changes) == {"conclusion", "opinion_date", "place_length"}
+    assert event.changes["place_length"]["after"] == len("Local reservado da banca")
+    assert "reservado" not in json.dumps(event.changes, ensure_ascii=False)
 
 
-# --- PAR-13: limits ---------------------------------------------------------------------------
-
-
-def test_notes_of_5000_characters_are_saved_and_5001_are_a_422_on_notes(world):
-    with pytest.raises(ValidationFailed) as raised:
-        opinion(world, notes="n" * 5001)
-    assert raised.value.field == "notes"
-    assert stored_opinion(world) is None
-
-    assert len(opinion(world, notes="n" * 5000).notes) == 5000
+# --- PMOD-29: the limit of the place ----------------------------------------------------------
 
 
 def test_a_place_of_100_characters_is_saved_and_101_are_a_422_on_place(world):

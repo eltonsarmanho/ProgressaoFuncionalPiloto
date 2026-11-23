@@ -119,7 +119,6 @@ async def save_opinion(
         body.conclusion,
         body.opinion_date,
         body.place,
-        body.notes,
         body.expected_version,
     )
     return OpinionOut.of(opinion)

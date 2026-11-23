@@ -1,4 +1,4 @@
-"""Board ordinance, opinion fields and request settings (PORT-02, PORT-05, PAR-01, PAR-12).
+"""Board ordinance, opinion fields and request settings (PORT-02, PORT-05, PAR-01, PAR-12, PMOD-28).
 
 The ordinance is its own entity, not a `Document`: it never enters the activities, the score or
 the Comprovante (PORT-09). Each value read from it keeps the page it came from and whether it
@@ -106,7 +106,6 @@ class BoardOpinion:
     conclusion: OpinionConclusion | None = None
     opinion_date: date | None = None
     place: str | None = None
-    notes: str | None = None
     version: int = 1
 
 

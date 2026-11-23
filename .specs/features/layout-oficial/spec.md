@@ -233,10 +233,10 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | PMOD-23 | P1: Gerar o Parecer | Implemented | Implemented |
 | PMOD-24 | P1: Gerar o Parecer | Execute | In Progress |
 | PMOD-25 | P1: Gerar o Parecer | Implemented | Implemented |
-| PMOD-26 | P1: Etapa 6 sem Observações | Tasks | In Tasks |
-| PMOD-27 | P1: Etapa 6 sem Observações | Tasks | In Tasks |
-| PMOD-28 | P1: Etapa 6 sem Observações | Tasks | In Tasks |
-| PMOD-29 | P1: Etapa 6 sem Observações | Tasks | In Tasks |
+| PMOD-26 | P1: Etapa 6 sem Observações | Execute | In Progress |
+| PMOD-27 | P1: Etapa 6 sem Observações | Implemented | Implemented |
+| PMOD-28 | P1: Etapa 6 sem Observações | Execute | In Progress |
+| PMOD-29 | P1: Etapa 6 sem Observações | Execute | In Progress |
 | BRAS-01 | P1: Brasão | Tasks | In Tasks |
 | BRAS-02 | P1: Brasão | Tasks | In Tasks |
 | BRAS-03 | P1: Brasão | Tasks | In Tasks |

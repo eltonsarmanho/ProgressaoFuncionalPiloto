@@ -1,5 +1,5 @@
-"""PORT-02, PORT-05, PORT-06, PORT-11, PORT-12, PAR-01, PAR-12, PAR-13, BNAV-02, BNAV-03: the
-routes of the board, of the opinion and of the city (synthetic data only)."""
+"""PORT-02, PORT-05, PORT-06, PORT-11, PORT-12, PAR-01, PAR-12, PMOD-27, PMOD-29, BNAV-02,
+BNAV-03: the routes of the board, of the opinion and of the city (synthetic data only)."""
 
 import uuid
 
@@ -28,7 +28,6 @@ OPINION = {
     "conclusion": "FAVORAVEL",
     "opinion_date": "2025-04-01",
     "place": "Belém",
-    "notes": "Sem ressalvas.",
     "expected_version": 0,
 }
 
@@ -75,7 +74,6 @@ def test_a_new_process_has_an_empty_board_with_every_version_zero(client, proces
         "conclusion": None,
         "opinion_date": None,
         "place": None,
-        "notes": None,
         "version": 0,
     }
     assert body["request_settings"] == {"city": None, "version": 0}
@@ -203,12 +201,12 @@ def test_the_opinion_is_saved_without_a_conclusion_and_the_conclusion_stays_empt
     assert response.status_code == 200
     body = response.json()
     assert body["conclusion"] is None
-    assert (body["opinion_date"], body["place"], body["notes"], body["version"]) == (
-        "2025-04-01",
-        "Belém",
-        "Sem ressalvas.",
-        1,
-    )
+    assert body == {
+        "conclusion": None,
+        "opinion_date": "2025-04-01",
+        "place": "Belém",
+        "version": 1,
+    }
     assert client.get(board_url(process)).json()["opinion"]["conclusion"] is None
 
 
@@ -226,12 +224,20 @@ def test_a_conclusion_out_of_the_two_values_is_a_422_on_conclusion(client, proce
     assert response.status_code == 422 and field_of(response) == "conclusion"
 
 
-def test_notes_of_5001_characters_are_a_422_on_notes_and_5000_are_saved(client, process, headers):
-    refused = put_opinion(client, process, headers, notes="n" * 5001)
-    saved = put_opinion(client, process, headers, notes="n" * 5000)
+def test_a_body_with_notes_is_a_422_on_notes_and_stores_nothing(
+    client, process, headers, uow_factory
+):
+    response = put_opinion(client, process, headers, notes="Sem ressalvas.")
 
-    assert refused.status_code == 422 and field_of(refused) == "notes"
-    assert saved.status_code == 200 and len(saved.json()["notes"]) == 5000
+    assert response.status_code == 422 and field_of(response) == "notes"
+    with uow_factory() as uow:
+        assert uow.opinions.get(uuid.UUID(process["id"])) is None
+
+
+def test_a_place_of_100_characters_is_saved(client, process, headers):
+    response = put_opinion(client, process, headers, place="p" * 100)
+
+    assert response.status_code == 200 and len(response.json()["place"]) == 100
 
 
 def test_a_place_of_101_characters_is_a_422_on_place(client, process, headers):

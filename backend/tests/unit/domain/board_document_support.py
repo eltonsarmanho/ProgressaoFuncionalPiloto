@@ -82,7 +82,6 @@ def opinion(conclusion=OpinionConclusion.FAVORAVEL, **changes) -> BoardOpinion:
         "conclusion": conclusion,
         "opinion_date": date(2025, 4, 2),
         "place": "Belém",
-        "notes": "Sem observações adicionais.",
     }
     fields.update(changes)
     return BoardOpinion(**fields)

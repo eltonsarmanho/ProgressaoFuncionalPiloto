@@ -54,7 +54,6 @@ class OpinionIn(_Body):
     conclusion: OpinionConclusion | None = None
     opinion_date: date | None = None
     place: str | None = None
-    notes: str | None = None
     expected_version: int
 
 
@@ -139,7 +138,6 @@ class OpinionOut(BaseModel):
     conclusion: OpinionConclusion | None
     opinion_date: date | None
     place: str | None
-    notes: str | None
     version: int
 
     @classmethod
@@ -148,7 +146,6 @@ class OpinionOut(BaseModel):
             conclusion=opinion.conclusion,
             opinion_date=opinion.opinion_date,
             place=opinion.place,
-            notes=opinion.notes,
             version=opinion.version,
         )
 

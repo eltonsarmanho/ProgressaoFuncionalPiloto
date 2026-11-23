@@ -462,20 +462,19 @@ class SaveOpinion(_BoardUseCase):
         conclusion: OpinionConclusion | None,
         opinion_date: date | None,
         place: str | None,
-        notes: str | None,
         expected_version: int,
     ) -> BoardOpinion:
         """Saves the fields the person fills for the Parecer (PAR-01). The conclusion is exactly
         what was sent, `None` included: the system never chooses or suggests one (PAR-12). The
-        first save needs `expected_version` 0; the limits are a 422 on the field (PAR-13)."""
+        first save needs `expected_version` 0; the limit of the place is a 422 on the field
+        (PMOD-29)."""
         place = (place or "").strip() or None
-        notes = (notes or "").strip() or None
         with self._uow_factory() as uow:
             self._editable(uow, actor, process_id)
-            if errors := validate_opinion_fields(place, notes):
+            if errors := validate_opinion_fields(place):
                 raise ValidationFailed(errors[0].field, errors[0].message)
             current = uow.opinions.get(process_id)
-            draft = BoardOpinion(process_id, conclusion, opinion_date, place, notes)
+            draft = BoardOpinion(process_id, conclusion, opinion_date, place)
             with self._versioned():
                 if current is None:
                     result = uow.opinions.create(draft, actor.id, expected_version)
@@ -495,14 +494,13 @@ class SaveOpinion(_BoardUseCase):
 
     @staticmethod
     def _view(opinion: BoardOpinion | None) -> dict:
-        """The code and the date of the choice and the sizes of the texts, never the texts."""
+        """The code and the date of the choice and the size of the place, never the text."""
         if opinion is None:
             return {}
         return {
             "conclusion": opinion.conclusion,
             "opinion_date": opinion.opinion_date,
             "place_length": _length(opinion.place),
-            "notes_length": _length(opinion.notes),
         }
 
 

@@ -2524,7 +2524,8 @@ class SqlBoardRepository:
 
 
 class SqlOpinionRepository:
-    """The fields of the Parecer: one row per process."""
+    """The fields of the Parecer: one row per process. The column `notes` stays in the table,
+    unused: it is neither read nor written, so an old text survives every update (PMOD-28)."""
 
     def __init__(self, session: Session):
         self._s = session
@@ -2536,7 +2537,6 @@ class SqlOpinionRepository:
             conclusion=m.conclusion,
             opinion_date=m.opinion_date,
             place=m.place,
-            notes=m.notes,
             version=m.version,
         )
 
@@ -2560,7 +2560,6 @@ class SqlOpinionRepository:
                         conclusion=opinion.conclusion,
                         opinion_date=opinion.opinion_date,
                         place=opinion.place,
-                        notes=opinion.notes,
                         version=1,
                         updated_by=user_id,
                     )
@@ -2585,7 +2584,6 @@ class SqlOpinionRepository:
         m.conclusion = opinion.conclusion
         m.opinion_date = opinion.opinion_date
         m.place = opinion.place
-        m.notes = opinion.notes
         m.version += 1
         m.updated_by = user_id
         m.updated_at = func.now()

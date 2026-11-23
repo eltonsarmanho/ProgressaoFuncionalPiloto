@@ -1,5 +1,6 @@
 """PORT-02, PORT-05, PORT-07, PAR-01, PAR-12, DOS-03: the board, ordinance and opinion entities."""
 
+import dataclasses
 from itertools import product
 from uuid import uuid4
 
@@ -60,13 +61,19 @@ def test_the_ordinance_warning_codes_are_the_two_of_the_spec():
     ]
 
 
-def test_a_new_opinion_has_no_conclusion_date_place_or_notes():
+def test_a_new_opinion_has_no_conclusion_date_or_place_and_no_notes_field():
     opinion = BoardOpinion(process_id=uuid4())
 
     assert opinion.conclusion is None
     assert opinion.opinion_date is None
     assert not opinion.place
-    assert not opinion.notes
+    assert [f.name for f in dataclasses.fields(opinion)] == [
+        "process_id",
+        "conclusion",
+        "opinion_date",
+        "place",
+        "version",
+    ]
 
 
 def test_a_new_ordinance_is_without_file_and_without_members():

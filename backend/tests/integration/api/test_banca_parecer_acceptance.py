@@ -112,7 +112,6 @@ class Flow:
                 "conclusion": conclusion,
                 "opinion_date": OPINION_DATE,
                 "place": "Belém",
-                "notes": None,
                 "expected_version": opinion["version"],
             },
             headers=self.headers,

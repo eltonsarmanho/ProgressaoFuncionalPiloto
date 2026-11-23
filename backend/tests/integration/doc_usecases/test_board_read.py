@@ -63,7 +63,7 @@ def test_a_process_with_nothing_saved_reads_empty_entities_of_version_0(world):
     assert (view.ordinance.members, view.ordinance.file, view.ordinance.version) == ((), None, 0)
     assert view.ordinance.number is None and view.ordinance.ordinance_date is None
     assert view.opinion.conclusion is None
-    assert (view.opinion.opinion_date, view.opinion.place, view.opinion.notes) == (None, None, None)
+    assert (view.opinion.opinion_date, view.opinion.place) == (None, None)
     assert view.opinion.version == 0
     assert (view.request_settings.city, view.request_settings.version) == (None, 0)
 
@@ -88,7 +88,6 @@ def test_after_saving_the_three_the_read_returns_each_with_its_own_version(world
         conclusion=OpinionConclusion.FAVORAVEL,
         opinion_date=date(2025, 4, 1),
         place="Belém",
-        notes="Sem ressalvas.",
     )
     city = save_city(world, "Belém")
 
@@ -97,11 +96,7 @@ def test_after_saving_the_three_the_read_returns_each_with_its_own_version(world
     assert view.ordinance == stored_board(world)
     assert view.ordinance.members == MEMBERS and view.ordinance.version == 1
     assert view.opinion == opinion
-    assert (view.opinion.conclusion, view.opinion.place, view.opinion.notes) == (
-        OpinionConclusion.FAVORAVEL,
-        "Belém",
-        "Sem ressalvas.",
-    )
+    assert (view.opinion.conclusion, view.opinion.place) == (OpinionConclusion.FAVORAVEL, "Belém")
     assert view.request_settings == city
     assert (view.request_settings.city, view.request_settings.version) == ("Belém", 1)
 

@@ -617,7 +617,7 @@ class OpinionRepository(Protocol):
         ...
 
     def update(self, opinion: BoardOpinion, user_id: UUID, expected_version: int) -> BoardOpinion:
-        """Replaces the conclusion, the date, the place and the notes when the stored version is
+        """Replaces the conclusion, the date and the place when the stored version is
         `expected_version`; the version goes up by one. `StaleVersion` changes nothing and
         `NotFound` means there is none to update."""
         ...

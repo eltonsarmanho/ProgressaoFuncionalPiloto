@@ -1,4 +1,4 @@
-"""Limits of the board data, of the opinion fields and of the city (PORT-11, PAR-13, REQ-05).
+"""Limits of the board data, of the opinion fields and of the city (PORT-11, PMOD-29, REQ-05).
 
 Pure: empty values are valid here, because the person may save before filling everything.
 """
@@ -14,7 +14,6 @@ MAX_MEMBERS = 15
 MAX_MEMBER_NAME = 200
 MAX_NUMBER = 50
 MAX_PLACE = 100
-MAX_NOTES = 5000
 MAX_CITY = 100
 
 REPEATED_MEMBER = "MEMBRO_REPETIDO"
@@ -48,13 +47,10 @@ def validate_board_data(
     return errors
 
 
-def validate_opinion_fields(place: str | None, notes: str | None) -> list[BoardFieldError]:
-    errors: list[BoardFieldError] = []
+def validate_opinion_fields(place: str | None) -> list[BoardFieldError]:
     if place is not None and len(place.strip()) > MAX_PLACE:
-        errors.append(BoardFieldError("place", f"Local deve ter até {MAX_PLACE} caracteres"))
-    if notes is not None and len(notes.strip()) > MAX_NOTES:
-        errors.append(BoardFieldError("notes", f"Observações devem ter até {MAX_NOTES} caracteres"))
-    return errors
+        return [BoardFieldError("place", f"Local deve ter até {MAX_PLACE} caracteres")]
+    return []
 
 
 def validate_city(city: str | None) -> list[BoardFieldError]:

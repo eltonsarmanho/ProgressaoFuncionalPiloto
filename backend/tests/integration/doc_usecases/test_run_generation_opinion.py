@@ -277,7 +277,7 @@ def test_a_conclusion_cleared_between_the_request_and_the_run_fails_the_row_with
     with gen.world.uow_factory() as uow:
         saved = uow.opinions.get(gen.world.process.id)
         uow.opinions.update(
-            BoardOpinion(saved.process_id, None, saved.opinion_date, saved.place, saved.notes),
+            BoardOpinion(saved.process_id, None, saved.opinion_date, saved.place),
             gen.world.admin.id,
             saved.version,
         )

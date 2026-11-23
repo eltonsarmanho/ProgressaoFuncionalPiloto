@@ -22,11 +22,10 @@ def add_opinion(
     conclusion=OpinionConclusion.FAVORAVEL,
     when=date(2025, 4, 2),
     place="Belém",
-    notes="Sem observações adicionais.",
 ) -> BoardOpinion:
     with world.uow_factory() as uow:
         saved = uow.opinions.create(
-            BoardOpinion(world.process.id, conclusion, when, place, notes), world.admin.id, 0
+            BoardOpinion(world.process.id, conclusion, when, place), world.admin.id, 0
         )
         uow.commit()
     return saved

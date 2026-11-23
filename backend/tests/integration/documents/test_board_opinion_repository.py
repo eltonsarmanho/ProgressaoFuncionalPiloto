@@ -1,10 +1,11 @@
-"""PAR-01, PAR-12, PAR-13, REQ-05, PORT-12: the opinion and request settings repositories on real
+"""PAR-01, PAR-12, PMOD-28, REQ-05, PORT-12: the opinion and request settings repositories on real
 PostgreSQL."""
 
 import dataclasses
 from datetime import date
 
 import pytest
+from sqlalchemy import text
 
 from app.domain.entities.board import BoardOpinion, OpinionConclusion, RequestSettings
 from app.domain.errors import Conflict, StaleVersion
@@ -34,7 +35,6 @@ def make_opinion(process, **changes) -> BoardOpinion:
         "conclusion": OpinionConclusion.FAVORAVEL,
         "opinion_date": date(2025, 4, 2),
         "place": "Belém",
-        "notes": "Observação da banca.",
     }
     data.update(changes)
     return BoardOpinion(**data)
@@ -99,7 +99,6 @@ def test_update_with_the_right_version_stores_the_changes_and_goes_to_version_2(
         conclusion=OpinionConclusion.DESFAVORAVEL,
         opinion_date=date(2025, 5, 1),
         place="Santarém",
-        notes="Outra observação.",
     )
 
     updated = opinion_call(session_factory, lambda r: r.update(changed, admin, 1))
@@ -125,15 +124,39 @@ def test_update_from_an_old_version_is_stale_and_keeps_what_was_stored(
     assert (stored.place, stored.version) == ("A", 2)
 
 
-def test_notes_of_5000_characters_come_back_whole(session_factory, process, base):
-    notes = "x" * 4999 + "y"
+def stored_notes(session_factory, process):
+    with session_factory() as session:
+        return session.execute(
+            text("SELECT notes FROM board_opinions WHERE process_id = :p"), {"p": process.id}
+        ).scalar_one()
 
-    opinion_call(
-        session_factory,
-        lambda r: r.create(make_opinion(process, notes=notes), base["admin"].id, 0),
+
+def test_update_does_not_touch_the_notes_column_and_get_has_no_notes(
+    session_factory, process, base
+):
+    admin = base["admin"].id
+    opinion_call(session_factory, lambda r: r.create(make_opinion(process), admin, 0))
+    assert stored_notes(session_factory, process) is None  # create does not write the column
+    with session_factory() as session:
+        session.execute(
+            text("UPDATE board_opinions SET notes = 'Texto antigo' WHERE process_id = :p"),
+            {"p": process.id},
+        )
+        session.commit()
+
+    changed = make_opinion(
+        process,
+        conclusion=OpinionConclusion.DESFAVORAVEL,
+        opinion_date=date(2025, 6, 3),
+        place="Marabá",
     )
+    updated = opinion_call(session_factory, lambda r: r.update(changed, admin, 1))
 
-    assert opinion_call(session_factory, lambda r: r.get(process.id)).notes == notes
+    assert stored_notes(session_factory, process) == "Texto antigo"
+    assert updated == dataclasses.replace(changed, version=2)
+    read = opinion_call(session_factory, lambda r: r.get(process.id))
+    assert read == updated
+    assert not hasattr(read, "notes")
 
 
 def test_the_conclusion_can_go_back_to_none(session_factory, process, base):

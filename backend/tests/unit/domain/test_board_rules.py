@@ -1,4 +1,4 @@
-"""PORT-11, PAR-13, REQ-05 and the MEMBRO_REPETIDO edge case: limits of the board data."""
+"""PORT-11, PAR-13, PMOD-29, REQ-05 and the MEMBRO_REPETIDO edge case: limits of the board data."""
 
 from app.domain.entities.board import BoardMember, BoardRole, ValueSource
 from app.domain.rules.board_rules import (
@@ -82,18 +82,18 @@ def test_an_error_that_is_not_a_repetition_has_no_code():
     assert errors[0].message
 
 
-def test_notes_with_5000_characters_pass_and_with_5001_are_an_error():
-    assert validate_opinion_fields(None, "n" * 5000) == []
-    assert fields(validate_opinion_fields(None, "n" * 5001)) == ["notes"]
-
-
 def test_a_place_with_100_characters_passes_and_with_101_is_an_error():
-    assert validate_opinion_fields("p" * 100, None) == []
-    assert fields(validate_opinion_fields("p" * 101, None)) == ["place"]
+    assert validate_opinion_fields("p" * 100) == []
+    assert fields(validate_opinion_fields("p" * 101)) == ["place"]
 
 
-def test_both_opinion_fields_are_checked_together():
-    assert fields(validate_opinion_fields("p" * 101, "n" * 5001)) == ["place", "notes"]
+def test_the_limit_of_the_place_is_on_the_trimmed_text():
+    assert validate_opinion_fields("  " + "p" * 100 + "  ") == []
+
+
+def test_an_empty_place_is_valid_because_the_person_may_save_before_filling():
+    assert validate_opinion_fields(None) == []
+    assert validate_opinion_fields("") == []
 
 
 def test_a_city_with_100_characters_passes_and_with_101_is_an_error():
