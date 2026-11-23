@@ -1,19 +1,33 @@
-"""PAR-03: the Parecer written as DOCX with python-docx, in the order of the spec."""
+"""PMOD-01, PMOD-02, PMOD-04 to PMOD-07, PMOD-13, PMOD-19, PMOD-20: the Parecer written as DOCX
+with python-docx, after the official model."""
 
 import zipfile
+from dataclasses import replace
 
+import pytest
 from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.table import Table
 from docx.text.paragraph import Paragraph
 from lxml import etree
 
-from app.domain.entities.board import BoardRole
+from app.domain.entities.board import BoardRole, OpinionConclusion
 from app.infrastructure.documents.opinion_docx import write_opinion_docx
 from tests.unit.domain.board_document_support import MEMBERS, member
 from tests.unit.infrastructure.board_writer_support import opinion_model
 
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 NS = {"w": W}
+PARAGRAPH = (
+    "Aos dois dias do mês de abril de dois mil e vinte e cinco, reuniram-se os membros da "
+    "Banca de Análise, nomeados pela Portaria nº 123/2025, Ana Presidente Souza (presidente), "
+    "Bruno Membro Lima, responsáveis por analisar o Relatório de Atividades do Professor "
+    "Adjunto Nível IV Maria Docente da Silva, para fins de progressão funcional do docente, "
+    "referente ao interstício "
+    "de 23/11/2022 a 23/11/2024, para Classe C (Associado) Nível I. Após a análise, os membros "
+    "APROVARAM o referido relatório."
+)
+THREE_TITULARS = (*MEMBERS[:2], member("Carla Membro Reis"))
 
 
 def write(tmp_path, model):
@@ -35,6 +49,14 @@ def body_texts(path) -> list[str]:
     return texts
 
 
+def paragraphs(path) -> list[Paragraph]:
+    return Document(str(path)).paragraphs
+
+
+def the_paragraph(path) -> Paragraph:
+    return next(p for p in paragraphs(path) if p.text.startswith("Aos "))
+
+
 def test_the_file_is_written_at_the_given_path_and_opens_as_a_docx(tmp_path):
     target = write(tmp_path, opinion_model())
 
@@ -42,95 +64,32 @@ def test_the_file_is_written_at_the_given_path_and_opens_as_a_docx(tmp_path):
     assert Document(str(target)).paragraphs
 
 
-def test_the_text_comes_in_the_order_of_par_03(tmp_path):
+def test_the_body_has_only_the_elements_of_the_model_in_order(tmp_path):
     texts = body_texts(write(tmp_path, opinion_model()))
 
-    markers = [
+    assert texts == [
         "Universidade Federal do Pará",
-        "Faculdade de Testes Sintéticos",
+        "Campus Universitário Sintético",
+        "Faculdade de Testes Sintéticos – FATS",
         "PARECER",
-        "Identificação",
-        "Docente: Maria Docente da Silva",
-        "Portaria da banca",
-        "Portaria da banca: nº 123/2025, de 10/03/2025.",
-        "Interstício",
-        "Documentos analisados",
-        "Tabela de Pontuação: versão 3",
-        "Pontuação por grupo",
-        "I - Atividades de ensino",
-        "Total geral",
-        "Mínimo de referência: 200,00 pontos",
-        "Conclusão",
-        "A banca manifesta-se FAVORÁVEL",
-        "Observações",
-        "Sem observações adicionais.",
-        "Belém, 02/04/2025",
-        "Ana Presidente Souza",
+        "Belém, 2 de Abril de 2025.",
+        PARAGRAPH,
+        "PRESIDENTE: Ana Presidente Souza",
+        "MEMBRO 1: Bruno Membro Lima",
     ]
-    positions = []
-    for marker in markers:
-        matches = [i for i, t in enumerate(texts) if t == marker or t.startswith(marker + " ")]
-        assert matches, marker
-        positions.append(matches[0])
-    assert positions == sorted(positions)
-    assert len(set(positions)) == len(positions)
 
 
-def test_the_header_is_centered_and_the_title_is_parecer(tmp_path):
-    document = Document(str(write(tmp_path, opinion_model())))
+def test_without_a_campus_the_header_has_two_lines(tmp_path):
+    texts = body_texts(write(tmp_path, opinion_model(parent_unit=None)))
 
-    first = document.paragraphs[:4]
-    assert [p.text for p in first] == [
-        "Serviço Público Federal",
+    assert texts[:3] == [
         "Universidade Federal do Pará",
-        "Faculdade de Testes Sintéticos",
+        "Faculdade de Testes Sintéticos – FATS",
         "PARECER",
     ]
-    assert all(p.alignment == 1 for p in first)  # WD_ALIGN_PARAGRAPH.CENTER
 
 
-def test_the_total_geral_of_the_document_is_the_one_of_the_model(tmp_path):
-    model = opinion_model()
-    document = Document(str(write(tmp_path, model)))
-
-    rows = [[c.text for c in row.cells] for row in document.tables[0].rows]
-    assert rows[-1] == ["Total geral", "211,00"]
-    assert rows[0] == ["I - Atividades de ensino", "100,00"]
-    assert len(rows) == 9  # the eight groups and the total
-
-
-def test_three_members_give_three_signature_lines_with_name_and_role(tmp_path):
-    texts = body_texts(write(tmp_path, opinion_model()))
-
-    tail = texts[texts.index("Ana Presidente Souza") - 1 :]
-    assert tail == [
-        "_" * 42, "Ana Presidente Souza", "Presidente",
-        "_" * 42, "Bruno Membro Lima", "Membro",
-        "_" * 42, "Carla Suplente Reis", "Suplente",
-    ]  # fmt: skip
-
-
-def test_one_more_member_is_one_more_signature_line(tmp_path):
-    members = (*MEMBERS, member("Diego Membro Costa", BoardRole.MEMBRO))
-
-    texts = body_texts(write(tmp_path, opinion_model(members=members)))
-
-    assert texts.count("_" * 42) == 4
-    assert texts[-2:] == ["Diego Membro Costa", "Membro"]
-
-
-def test_control_characters_in_a_name_or_in_the_notes_do_not_break_the_file(tmp_path):
-    members = (member("Ana\x00 Souza\x0b", BoardRole.PRESIDENTE),)
-    model = opinion_model(members=members, notes="Linha um\x00\x0b\nLinha dois ü")
-
-    texts = body_texts(write(tmp_path, model))
-
-    assert "Ana Souza" in texts
-    assert "Linha um" in texts
-    assert "Linha dois ü" in texts
-
-
-def test_the_page_is_a4_with_the_margins_and_the_font_of_the_model(tmp_path):
+def test_the_page_is_a4_portrait_with_the_margins_of_the_model(tmp_path):
     document = Document(str(write(tmp_path, opinion_model())))
 
     section = document.sections[0]
@@ -139,19 +98,117 @@ def test_the_page_is_a4_with_the_margins_and_the_font_of_the_model(tmp_path):
     assert round(section.right_margin.mm, 2) == 20.0
     assert round(section.top_margin.mm, 2) == 30.0
     assert round(section.bottom_margin.mm, 2) == 20.0
+
+
+def test_the_body_and_the_header_use_the_font_of_the_page_at_twelve_points(tmp_path):
+    small = replace(opinion_model().page, font_name="Times New Roman", font_size_pt=9)
+    document = Document(str(write(tmp_path, replace(opinion_model(), page=small))))
+
     normal = document.styles["Normal"].font
-    assert (normal.name, normal.size.pt) == ("Liberation Serif", 12)
+    assert (normal.name, normal.size.pt) == ("Times New Roman", 12)
+    header, body = document.paragraphs[0], document.paragraphs[5]
+    for paragraph in (header, body):
+        assert all(run.font.name is None and run.font.size is None for run in paragraph.runs)
 
 
-def test_the_footer_has_the_page_and_numpages_fields(tmp_path):
+def test_the_header_is_centered_and_only_its_last_line_has_the_horizontal_rule(tmp_path):
+    document = Document(str(write(tmp_path, opinion_model())))
+
+    header = document.paragraphs[:3]
+    assert all(p.alignment == WD_ALIGN_PARAGRAPH.CENTER for p in header)
+    borders = [p._p.findall("w:pPr/w:pBdr/w:bottom", NS) for p in document.paragraphs]
+    assert [len(b) > 0 for b in borders[:6]] == [False, False, True, False, False, False]
+    assert borders[2][0].get(f"{{{W}}}val") == "single"
+
+
+def test_the_title_is_arial_bold_and_centered(tmp_path):
+    title = Document(str(write(tmp_path, opinion_model()))).paragraphs[3]
+
+    assert title.text == "PARECER"
+    assert title.alignment == WD_ALIGN_PARAGRAPH.CENTER
+    assert [(r.font.name, r.bold) for r in title.runs] == [("Arial", True)]
+
+
+def test_the_place_and_date_line_is_arial_and_starts_at_half_the_text_width(tmp_path):
+    line = Document(str(write(tmp_path, opinion_model()))).paragraphs[4]
+
+    assert line.text == "Belém, 2 de Abril de 2025."
+    assert all(run.font.name == "Arial" for run in line.runs)
+    # half of the text width: (210 - 30 - 20) / 2, to the twip the file stores
+    assert line.paragraph_format.left_indent.mm == pytest.approx(80.0, abs=0.05)
+    assert line.alignment in (None, WD_ALIGN_PARAGRAPH.LEFT)
+
+
+def test_the_paragraph_is_justified_with_a_first_line_indent_and_one_and_a_half_spacing(tmp_path):
+    paragraph = the_paragraph(write(tmp_path, opinion_model()))
+
+    assert paragraph.alignment == WD_ALIGN_PARAGRAPH.JUSTIFY
+    assert round(paragraph.paragraph_format.first_line_indent.cm, 2) == 1.25
+    assert paragraph.paragraph_format.line_spacing == 1.5
+
+
+def test_only_the_date_words_and_the_current_situation_with_the_name_are_bold(tmp_path):
+    paragraph = the_paragraph(write(tmp_path, opinion_model()))
+
+    assert [r.text for r in paragraph.runs if r.bold] == [
+        "dois dias do mês de abril de dois mil e vinte e cinco",
+        "Adjunto Nível IV Maria Docente da Silva",
+    ]
+    assert next(r for r in paragraph.runs if r.text == "Aos ").bold is not True
+    assert not any(r.bold for r in paragraph.runs if r.text.endswith("do Professor "))
+
+
+def test_a_favorable_and_an_unfavorable_conclusion_end_the_paragraph_differently(tmp_path):
+    model = opinion_model(conclusion=OpinionConclusion.DESFAVORAVEL)
+
+    paragraph = the_paragraph(write(tmp_path, model))
+
+    assert paragraph.text.endswith("os membros NÃO APROVARAM o referido relatório.")
+
+
+def test_the_member_lines_are_centered_with_no_signature_rule_and_no_alternate(tmp_path):
+    path = write(tmp_path, opinion_model())
+    texts = body_texts(path)
+
+    lines = [p for p in paragraphs(path) if p.text.startswith(("PRESIDENTE:", "MEMBRO"))]
+    assert [p.text for p in lines] == texts[-2:]
+    assert all(p.alignment == WD_ALIGN_PARAGRAPH.CENTER for p in lines)
+    assert not any("___" in t for t in texts)
+    assert not any(r.underline for p in lines for r in p.runs)
+    assert "Carla Suplente Reis" not in " ".join(texts)
+
+
+def test_a_third_titular_member_is_one_more_line(tmp_path):
+    texts = body_texts(write(tmp_path, opinion_model(members=THREE_TITULARS)))
+
+    assert texts[-3:] == [
+        "PRESIDENTE: Ana Presidente Souza",
+        "MEMBRO 1: Bruno Membro Lima",
+        "MEMBRO 2: Carla Membro Reis",
+    ]
+
+
+def test_there_is_no_table_and_no_page_footer(tmp_path):
     path = write(tmp_path, opinion_model())
 
-    footers = [n for n in zipfile.ZipFile(path).namelist() if n.startswith("word/footer")]
-    footer = etree.fromstring(zipfile.ZipFile(path).read(footers[0]))
-    assert [t.text.strip() for t in footer.findall(".//w:instrText", NS)] == ["PAGE", "NUMPAGES"]
+    assert Document(str(path)).tables == []
+    package = zipfile.ZipFile(path)
+    for name in (n for n in package.namelist() if n.startswith("word/footer")):
+        footer = etree.fromstring(package.read(name))
+        assert footer.findall(".//w:instrText", NS) == []
+        assert "".join(footer.itertext()).strip() == ""
 
 
-def test_without_notes_there_is_no_observations_section(tmp_path):
-    texts = body_texts(write(tmp_path, opinion_model(notes=None)))
+def test_control_characters_in_a_name_do_not_break_the_file(tmp_path):
+    members = (member("Ana\x00 Souza\x0b", BoardRole.PRESIDENTE),)
 
-    assert "Observações" not in texts
+    texts = body_texts(write(tmp_path, opinion_model(members=members)))
+
+    assert "PRESIDENTE: Ana Souza" in texts
+    assert "Ana Souza (presidente), responsáveis por analisar" in texts[5]
+
+
+def test_the_document_title_property_is_parecer(tmp_path):
+    document = Document(str(write(tmp_path, opinion_model())))
+
+    assert document.core_properties.title == "PARECER"

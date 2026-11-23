@@ -260,7 +260,7 @@ graph LR
 
 #### T5: Parecer em DOCX pelo modelo
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `write_opinion_docx(model, target)` reescrito para o modelo: A4 retrato com as margens do `page`, cabeçalho centralizado na fonte do `page` e linha horizontal (borda inferior do último parágrafo do cabeçalho), "PARECER" em Arial negrito centralizado, a linha de local e data em Arial com recuo à esquerda de metade da largura do texto, o parágrafo único justificado, com recuo de primeira linha de 1,25 cm, espaçamento 1,5 e as runs em negrito do modelo, e as linhas dos membros centralizadas. Corpo e cabeçalho a 12 pt. Sem tabela, sem rodapé de página.
 **Where**: `backend/app/infrastructure/documents/opinion_docx.py` (modify)
@@ -275,9 +275,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_opinion_docx.py` (reescrito; os testes da ordem de PAR-03, do Total geral, da tabela, das linhas de assinatura com função, do rodapé `PAGE`/`NUMPAGES` e da seção de observações são substituídos): o DOCX abre, é A4 retrato com as margens do modelo e escrito no caminho dado; os textos do corpo, na ordem, são o cabeçalho (duas ou três linhas), "PARECER", a linha de local e data, o parágrafo e as linhas dos membros, e nada mais; o parágrafo é justificado, tem recuo de primeira linha e espaçamento 1,5, e as runs em negrito são as do modelo; o título e a linha de local e data usam Arial, o cabeçalho e o corpo usam a fonte do `page`; a linha de local e data tem recuo à esquerda de metade da largura útil; o último parágrafo do cabeçalho tem a borda inferior (a linha horizontal); as linhas dos membros são centralizadas e sem linha de sublinhado; o rodapé não tem os campos `PAGE` e `NUMPAGES`; nenhuma tabela no corpo; caractere de controle num nome não quebra o arquivo
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit/infrastructure/test_opinion_docx.py tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado sem substituto
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_opinion_docx.py` (reescrito; os testes da ordem de PAR-03, do Total geral, da tabela, das linhas de assinatura com função, do rodapé `PAGE`/`NUMPAGES` e da seção de observações são substituídos): o DOCX abre, é A4 retrato com as margens do modelo e escrito no caminho dado; os textos do corpo, na ordem, são o cabeçalho (duas ou três linhas), "PARECER", a linha de local e data, o parágrafo e as linhas dos membros, e nada mais; o parágrafo é justificado, tem recuo de primeira linha e espaçamento 1,5, e as runs em negrito são as do modelo; o título e a linha de local e data usam Arial, o cabeçalho e o corpo usam a fonte do `page`; a linha de local e data tem recuo à esquerda de metade da largura útil; o último parágrafo do cabeçalho tem a borda inferior (a linha horizontal); as linhas dos membros são centralizadas e sem linha de sublinhado; o rodapé não tem os campos `PAGE` e `NUMPAGES`; nenhuma tabela no corpo; caractere de controle num nome não quebra o arquivo
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit/infrastructure/test_opinion_docx.py tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado sem substituto
 
 **Tests**: unit
 **Gate**: quick

@@ -227,7 +227,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | PMOD-17 | P1: Texto do Parecer | Implemented | Implemented |
 | PMOD-18 | P1: Texto do Parecer | Implemented | Implemented |
 | PMOD-19 | P1: Texto do Parecer | Execute | In Progress |
-| PMOD-20 | P1: Gerar o Parecer | Tasks | In Tasks |
+| PMOD-20 | P1: Gerar o Parecer | Execute | In Progress |
 | PMOD-21 | P1: Gerar o Parecer | Tasks | In Tasks |
 | PMOD-22 | P1: Gerar o Parecer | Tasks | In Tasks |
 | PMOD-23 | P1: Gerar o Parecer | Tasks | In Tasks |
