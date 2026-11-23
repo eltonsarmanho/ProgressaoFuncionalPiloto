@@ -665,7 +665,7 @@ graph LR
 
 #### T18: Recusas de edição de critério com código
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `UpdateVersionCriteria` passa a usar `criteria_read_only_reason` e responde os três 409 existentes com `code` (`VERSAO_SUBSTITUIDA`, `VERSAO_NAO_MAIS_RECENTE`, `VERSAO_USADA_POR_PROCESSO`), mantendo a ordem e o texto atuais.
 **Where**: `backend/app/application/use_cases/scoring_admin.py` (modify)
@@ -680,9 +680,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_admin_criteria.py` (modifica): cada um dos três 409 traz o `code` esperado e a mesma mensagem de antes; a ordem é substituída, depois não mais recente, depois usada por processo; uma versão editável continua aceitando a edição e a auditoria `criteria.{grupo}.{item}.{campo}` não muda
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_admin_criteria.py tests/integration/api/test_scoring_admin_api.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_admin_criteria.py` (modifica): cada um dos três 409 traz o `code` esperado e a mesma mensagem de antes; a ordem é substituída, depois não mais recente, depois usada por processo; uma versão editável continua aceitando a edição e a auditoria `criteria.{grupo}.{item}.{campo}` não muda
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_admin_criteria.py tests/integration/api/test_scoring_admin_api.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted

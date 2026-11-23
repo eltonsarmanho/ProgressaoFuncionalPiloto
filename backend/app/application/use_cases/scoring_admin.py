@@ -30,6 +30,7 @@ from app.domain.rules.scoring_table_guards import (
     Blocker,
     TableFacts,
     VersionFacts,
+    criteria_read_only_reason,
     has_later_version,
     table_archive_blockers,
     table_delete_blockers,
@@ -435,23 +436,10 @@ class UpdateVersionCriteria:
             current = version.get_criterion(group, item)
             if current is None:
                 raise NotFound("Critério não encontrado")
-            if version.is_superseded:
-                raise Conflict(
-                    "Versão substituída é somente leitura; altere a versão que a substitui"
-                )
-            if any(
-                v.valid_from > version.valid_from
-                for v in uow.scoring_tables.list_versions(version.table_id)
-            ):
-                raise Conflict(
-                    "Versão anterior é somente leitura; altere a versão mais recente "
-                    "ou crie uma nova versão"
-                )
-            if uow.scoring_tables.version_in_use(version_id):
-                raise Conflict(
-                    "Versão já usada por processos não pode ser alterada; "
-                    "crie uma nova versão para alterar os critérios"
-                )
+            table = uow.scoring_tables.get_table(version.table_id)
+            read_only = criteria_read_only_reason(_version_facts(uow, version, table))
+            if read_only is not None:
+                raise Conflict(read_only.message, code=read_only.code)
             updated = replace(current, **values)
             uow.scoring_tables.update_criterion(version_id, updated)
             self._audit.record(

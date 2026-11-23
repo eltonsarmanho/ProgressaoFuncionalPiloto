@@ -229,7 +229,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | GTAB-16 | P1: Gestão das tabelas pela tela | Specified | Pending |
 | GTAB-17 | P1: Gestão das tabelas pela tela | Specified | Pending |
 | GTAB-18 | P1: Editar critérios na tela | Specified | Pending |
-| GTAB-19 | P1: Editar critérios na tela | Specified | Pending |
+| GTAB-19 | P1: Editar critérios na tela | Implemented | Implementing |
 | GTAB-20 | P1: Editar critérios na tela | Implemented | Implementing |
 | GTAB-21 | P1: Editar critérios na tela | Specified | Pending |
 | GTAB-22 | P1: Editar critérios na tela | Specified | Pending |
