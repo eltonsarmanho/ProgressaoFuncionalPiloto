@@ -1,14 +1,21 @@
-"""Helpers shared by the DOCX writers: the default font, shading and the footer with the page
-fields (`Página N de M`)."""
+"""Helpers shared by the DOCX writers: the default font, shading, the footer with the page
+fields (`Página N de M`) and the emblem of the UFPA on top of the first page."""
 
 from docx.document import Document as DocxDocument
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Pt
+from docx.shared import Mm, Pt
 from docx.text.paragraph import Paragraph
 
+from app.infrastructure.documents.emblem import (
+    EMBLEM_GAP_MM,
+    emblem_path,
+    emblem_size_mm,
+)
+
 _FOOTER_SIZE = 8
+EMBLEM_ALT_TEXT = "Brasão da Universidade Federal do Pará"
 
 
 def set_default_font(
@@ -68,3 +75,18 @@ def add_page_footer(document: DocxDocument) -> None:
     _field(paragraph, "PAGE")
     paragraph.add_run(" de ").font.size = Pt(_FOOTER_SIZE)
     _field(paragraph, "NUMPAGES")
+
+
+def add_emblem(document: DocxDocument) -> None:
+    """The emblem as the first paragraph of the body: centered, 20 mm wide, the height in
+    proportion, 3 mm of space below (BRAS-06). Call it before any other content. A missing or
+    invalid file raises `EmblemUnavailable` before anything is written (BRAS-10)."""
+    path = emblem_path()
+    width_mm, height_mm = emblem_size_mm()
+    paragraph = document.add_paragraph()
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    paragraph.paragraph_format.space_before = Pt(0)
+    paragraph.paragraph_format.space_after = Mm(EMBLEM_GAP_MM)
+    paragraph.paragraph_format.keep_with_next = True
+    picture = paragraph.add_run().add_picture(str(path), width=Mm(width_mm), height=Mm(height_mm))
+    picture._inline.docPr.set("descr", EMBLEM_ALT_TEXT)

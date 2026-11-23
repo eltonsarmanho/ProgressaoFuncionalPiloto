@@ -439,7 +439,7 @@ graph LR
 
 #### T11: Brasão nos DOCX
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `add_emblem(document)` em `docx_support.py` insere, como primeiro parágrafo do corpo, um parágrafo centralizado com o brasão (largura 20,0 mm, altura proporcional, texto alternativo "Brasão da Universidade Federal do Pará"), espaço abaixo de 3 mm e `keep_with_next`; chamar antes de qualquer outro conteúdo.
 **Where**: `backend/app/infrastructure/documents/docx_support.py` (modify)
@@ -454,9 +454,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_emblem_docx.py` (novo), sobre um documento vazio: o primeiro elemento do corpo é um parágrafo com um `w:drawing` inline, com `jc` igual a `center`; a extensão da imagem é 720 000 EMU de largura (20 mm) e a altura mantém a proporção 351 ÷ 279 (diferença de no máximo 1 EMU); o espaço depois do parágrafo é de 3 mm; o texto alternativo (`descr`) é "Brasão da Universidade Federal do Pará"; o pacote `word/media` tem uma imagem PNG com o mesmo conteúdo do arquivo empacotado; sem o arquivo (por `monkeypatch`) levanta `EmblemUnavailable` e nada é escrito
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_emblem_docx.py` (novo), sobre um documento vazio: o primeiro elemento do corpo é um parágrafo com um `w:drawing` inline, com `jc` igual a `center`; a extensão da imagem é 720 000 EMU de largura (20 mm) e a altura mantém a proporção 351 ÷ 279 (diferença de no máximo 1 EMU); o espaço depois do parágrafo é de 3 mm; o texto alternativo (`descr`) é "Brasão da Universidade Federal do Pará"; o pacote `word/media` tem uma imagem PNG com o mesmo conteúdo do arquivo empacotado; sem o arquivo (por `monkeypatch`) levanta `EmblemUnavailable` e nada é escrito
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

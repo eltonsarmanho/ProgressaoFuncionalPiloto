@@ -243,7 +243,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | BRAS-04 | P1: Brasão | Tasks | In Tasks |
 | BRAS-05 | P1: Brasão | Tasks | In Tasks |
 | BRAS-06 | P1: Brasão | Execute | In Progress |
-| BRAS-07 | P1: Brasão | Tasks | In Tasks |
+| BRAS-07 | P1: Brasão | Execute | In Progress |
 | BRAS-08 | P1: Brasão | Tasks | In Tasks |
 | BRAS-09 | P1: Brasão | Execute | In Progress |
 | BRAS-10 | P1: Brasão | Execute | In Progress |
