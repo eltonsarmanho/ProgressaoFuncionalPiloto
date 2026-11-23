@@ -268,7 +268,7 @@ Com `docker exec -it dashboard_db psql -U <superusuario> -d progressao`:
 
 ## Deploy do layout oficial (feature `layout-oficial`)
 
-Esta seção descreve o procedimento; nada foi executado na VM. **Push e deploy só com a autorização explícita do usuário.**
+Esta seção descreve o procedimento, executado em 2026-11-23 (registro em "Deploy executado em 2026-11-23", ao fim da seção). **Push e deploy só com a autorização explícita do usuário.**
 
 ### O que muda na VM
 
@@ -288,6 +288,14 @@ Esta seção descreve o procedimento; nada foi executado na VM. **Push e deploy 
 1. O arquivo do brasão está na imagem: `docker compose exec backend ls app/infrastructure/documents/assets/ufpa.png`. Sem ele toda geração falha com `ERRO_INTERNO` e o log traz `error_type=EmblemUnavailable`.
 2. `GET /api/health` 200 e nenhum erro nos logs do backend.
 3. Fumaça só com dados sintéticos (nunca `Documentos/` nem `Modelos/`): num processo sintético com banca e conclusão, gerar os cinco documentos e abrir cada um: o brasão aparece no topo da primeira página, centralizado (no Comprovante, só na capa), e o Parecer segue o modelo oficial, sem Total geral. Remover o processo e o docente sintéticos ao fim.
+
+### Deploy executado em 2026-11-23
+
+- Commit publicado: `c839d28` (`git archive`; imagens construídas fora da VM; brasão e as duas `LiberationSans-*.ttf` conferidos dentro da imagem; pacote do frontend limpo em `scripts/check_bundle_no_secrets.sh`). Gate antes do envio: backend `ruff` limpo e 6508 testes passados; frontend 764 testes, `lint` e `build`. Nenhuma migração; `docker-compose.yml`, `deploy/`, `nginx/`, os `Dockerfile` e os `requirements` não mudaram desde o deploy anterior.
+- Antes: nenhuma geração `GERANDO` e nenhum documento `PROCESSANDO`. Retorno: imagens `progressao-funcional-backend:layout-pre-c839d28` e `progressao-funcional-frontend:layout-pre-c839d28` (as de `dd5e21f`), dump `backups/progressao-pre-layout-oficial-2026-11-23.sql.gz` (modo 600, `gzip -t` ok) e cópias de `docker-compose.override.yml` e `.env` em `backups/`.
+- Depois: `alembic current` = `0011 (head)` (sem migração); backend saudável; `GET /api/health` 200 pelo endereço público; `ufpa.png` presente na imagem; sem erro nos logs. Documentos gerados `PRONTO` iguais antes e depois (11).
+- Fumaça sintética (docente de SIAPE fictício 9999998, processo sintético excluído ao fim, executada dentro do contêiner do backend com as credenciais do ambiente dele): Tabela, Relatório, Comprovante, Requerimento e Parecer gerados `PRONTO`; em cada PDF a primeira página tem o brasão centralizado no topo (no Comprovante, na capa) e os DOCX de Tabela, Relatório e Parecer trazem o brasão embutido. O Parecer segue o modelo oficial: cabeçalho de três linhas com campus, "PARECER", local e data, parágrafo único com a data por extenso, portaria, interstício e classe de destino, `APROVARAM` conforme a conclusão, linhas `PRESIDENTE` e `MEMBRO n`, sem suplente, Total geral, mínimo nem observações. 16 de 17 verificações automáticas passaram; a que falhou era a busca por uma frase que a diagramação quebra em duas linhas (o texto está correto, conferido na imagem do PDF). Sem erro nos logs.
+- Resíduo da fumaça (não há rota de exclusão de docente): o docente sintético 9999998, arquivado.
 
 ### Voltar à versão anterior
 
