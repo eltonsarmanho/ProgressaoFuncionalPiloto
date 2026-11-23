@@ -1,10 +1,10 @@
 """The Parecer as DOCX, written with python-docx (PMOD-01, PMOD-02, PMOD-04 to PMOD-07).
 
 A4 portrait with the margins and the font name of the page of the model, at 12 pt (the 9 pt of the
-Relatório is too small for a Parecer). In the order of the `OpinionDocument`: the institutional
-header centered with a horizontal rule under it, the title and the place and date line in Arial,
-the justified paragraph with its bold runs, and the member lines centered. No table and no page
-footer. The text is the one of the model; nothing is composed here.
+Relatório is too small for a Parecer). In the order of the `OpinionDocument`: the emblem of the
+UFPA (BRAS-04), the institutional header centered with a horizontal rule under it, the title and
+the place and date line in Arial, the justified paragraph with its bold runs, and the member lines
+centered. No table and no page footer. The text is the one of the model; nothing is composed here.
 """
 
 from pathlib import Path
@@ -17,7 +17,7 @@ from docx.shared import Cm, Mm, Pt
 from docx.text.paragraph import Paragraph
 
 from app.domain.rules.opinion_document import OpinionDocument
-from app.infrastructure.documents.docx_support import set_default_font
+from app.infrastructure.documents.docx_support import add_emblem, set_default_font
 from app.infrastructure.documents.text_safety import xml_safe
 
 _BODY_PT = 12
@@ -67,6 +67,7 @@ def write_opinion_docx(model: OpinionDocument, target: Path) -> None:
     section.left_margin, section.right_margin = Mm(page.margin_left_mm), Mm(page.margin_right_mm)
     section.top_margin, section.bottom_margin = Mm(page.margin_top_mm), Mm(page.margin_bottom_mm)
     usable_mm = 210 - page.margin_left_mm - page.margin_right_mm
+    add_emblem(document)
     _header(document, model.header_lines)
     title = document.add_paragraph()
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER

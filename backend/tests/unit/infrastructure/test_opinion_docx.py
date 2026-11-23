@@ -12,12 +12,14 @@ from docx.text.paragraph import Paragraph
 from lxml import etree
 
 from app.domain.entities.board import BoardRole, OpinionConclusion
+from app.infrastructure.documents import emblem
+from app.infrastructure.documents.emblem import EmblemUnavailable
 from app.infrastructure.documents.opinion_docx import write_opinion_docx
 from tests.unit.domain.board_document_support import MEMBERS, member
 from tests.unit.infrastructure.board_writer_support import opinion_model
 
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-NS = {"w": W}
+NS = {"w": W, "wp": "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"}
 PARAGRAPH = (
     "Aos dois dias do mês de abril de dois mil e vinte e cinco, reuniram-se os membros da "
     "Banca de Análise, nomeados pela Portaria nº 123/2025, Ana Presidente Souza (presidente), "
@@ -68,6 +70,7 @@ def test_the_body_has_only_the_elements_of_the_model_in_order(tmp_path):
     texts = body_texts(write(tmp_path, opinion_model()))
 
     assert texts == [
+        "",  # the paragraph of the emblem (BRAS-04)
         "Universidade Federal do Pará",
         "Campus Universitário Sintético",
         "Faculdade de Testes Sintéticos – FATS",
@@ -82,7 +85,7 @@ def test_the_body_has_only_the_elements_of_the_model_in_order(tmp_path):
 def test_without_a_campus_the_header_has_two_lines(tmp_path):
     texts = body_texts(write(tmp_path, opinion_model(parent_unit=None)))
 
-    assert texts[:3] == [
+    assert texts[1:4] == [  # texts[0] is the paragraph of the emblem (BRAS-04)
         "Universidade Federal do Pará",
         "Faculdade de Testes Sintéticos – FATS",
         "PARECER",
@@ -106,7 +109,7 @@ def test_the_body_and_the_header_use_the_font_of_the_page_at_twelve_points(tmp_p
 
     normal = document.styles["Normal"].font
     assert (normal.name, normal.size.pt) == ("Times New Roman", 12)
-    header, body = document.paragraphs[0], document.paragraphs[5]
+    header, body = document.paragraphs[1], document.paragraphs[6]
     for paragraph in (header, body):
         assert all(run.font.name is None and run.font.size is None for run in paragraph.runs)
 
@@ -114,15 +117,15 @@ def test_the_body_and_the_header_use_the_font_of_the_page_at_twelve_points(tmp_p
 def test_the_header_is_centered_and_only_its_last_line_has_the_horizontal_rule(tmp_path):
     document = Document(str(write(tmp_path, opinion_model())))
 
-    header = document.paragraphs[:3]
+    header = document.paragraphs[1:4]  # the paragraph of the emblem comes first (BRAS-04)
     assert all(p.alignment == WD_ALIGN_PARAGRAPH.CENTER for p in header)
     borders = [p._p.findall("w:pPr/w:pBdr/w:bottom", NS) for p in document.paragraphs]
-    assert [len(b) > 0 for b in borders[:6]] == [False, False, True, False, False, False]
-    assert borders[2][0].get(f"{{{W}}}val") == "single"
+    assert [len(b) > 0 for b in borders[:7]] == [False, False, False, True, False, False, False]
+    assert borders[3][0].get(f"{{{W}}}val") == "single"
 
 
 def test_the_title_is_arial_bold_and_centered(tmp_path):
-    title = Document(str(write(tmp_path, opinion_model()))).paragraphs[3]
+    title = Document(str(write(tmp_path, opinion_model()))).paragraphs[4]
 
     assert title.text == "PARECER"
     assert title.alignment == WD_ALIGN_PARAGRAPH.CENTER
@@ -130,7 +133,7 @@ def test_the_title_is_arial_bold_and_centered(tmp_path):
 
 
 def test_the_place_and_date_line_is_arial_and_starts_at_half_the_text_width(tmp_path):
-    line = Document(str(write(tmp_path, opinion_model()))).paragraphs[4]
+    line = Document(str(write(tmp_path, opinion_model()))).paragraphs[5]
 
     assert line.text == "Belém, 2 de Abril de 2025."
     assert all(run.font.name == "Arial" for run in line.runs)
@@ -205,10 +208,60 @@ def test_control_characters_in_a_name_do_not_break_the_file(tmp_path):
     texts = body_texts(write(tmp_path, opinion_model(members=members)))
 
     assert "PRESIDENTE: Ana Souza" in texts
-    assert "Ana Souza (presidente), responsáveis por analisar" in texts[5]
+    assert "Ana Souza (presidente), responsáveis por analisar" in texts[6]
 
 
 def test_the_document_title_property_is_parecer(tmp_path):
     document = Document(str(write(tmp_path, opinion_model())))
 
     assert document.core_properties.title == "PARECER"
+
+
+def test_the_first_element_is_the_centered_emblem_followed_by_the_header(tmp_path):
+    # BRAS-04, BRAS-06
+    path = write(tmp_path, opinion_model())
+
+    with zipfile.ZipFile(path) as archive:
+        body = etree.fromstring(archive.read("word/document.xml")).find("w:body", NS)
+    first = body[0]
+    assert first.tag == f"{{{W}}}p"
+    assert first.find("w:pPr/w:jc", NS).get(f"{{{W}}}val") == "center"
+    assert int(first.find(".//wp:inline/wp:extent", NS).get("cx")) == 720_000
+    assert [p.text for p in Document(str(path)).paragraphs[:4]] == [
+        "",
+        "Universidade Federal do Pará",
+        "Campus Universitário Sintético",
+        "Faculdade de Testes Sintéticos – FATS",
+    ]
+
+
+def test_without_a_campus_the_emblem_is_still_followed_by_the_university_and_the_unit(tmp_path):
+    # BRAS-04
+    paragraphs_ = paragraphs(write(tmp_path, opinion_model(parent_unit=None)))
+
+    assert [p.text for p in paragraphs_[:3]] == [
+        "",
+        "Universidade Federal do Pará",
+        "Faculdade de Testes Sintéticos – FATS",
+    ]
+
+
+def test_the_package_has_a_single_image(tmp_path):
+    # BRAS-07
+    path = write(tmp_path, opinion_model(members=THREE_TITULARS))
+
+    with zipfile.ZipFile(path) as archive:
+        media = [n for n in archive.namelist() if n.startswith("word/media/")]
+        body = etree.fromstring(archive.read("word/document.xml"))
+    assert len(media) == 1
+    assert len(body.findall(".//w:drawing", NS)) == 1
+
+
+def test_without_the_emblem_file_the_writer_raises_and_writes_nothing(monkeypatch, tmp_path):
+    # BRAS-10
+    monkeypatch.setattr(emblem, "EMBLEM_FILE", tmp_path / "ufpa.png")
+    target = tmp_path / "parecer.docx"
+
+    with pytest.raises(EmblemUnavailable):
+        write_opinion_docx(opinion_model(), target)
+    assert not target.exists()

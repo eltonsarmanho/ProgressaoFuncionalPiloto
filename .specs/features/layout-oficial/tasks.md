@@ -697,7 +697,7 @@ graph LR
 
 #### T20: Brasão no Parecer em DOCX
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `write_opinion_docx` chama `add_emblem(document)` antes das linhas do cabeçalho.
 **Where**: `backend/app/infrastructure/documents/opinion_docx.py` (modify)
@@ -712,9 +712,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_opinion_docx.py`: o primeiro elemento do corpo é o parágrafo do brasão, centralizado, com 720 000 EMU de largura, e depois dele vêm "Universidade Federal do Pará", a linha do campus (quando há) e a da unidade; só há uma imagem no pacote; a ordem do restante é a da T5; sem o arquivo levanta `EmblemUnavailable`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_opinion_docx.py`: o primeiro elemento do corpo é o parágrafo do brasão, centralizado, com 720 000 EMU de largura, e depois dele vêm "Universidade Federal do Pará", a linha do campus (quando há) e a da unidade; só há uma imagem no pacote; a ordem do restante é a da T5; sem o arquivo levanta `EmblemUnavailable`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
