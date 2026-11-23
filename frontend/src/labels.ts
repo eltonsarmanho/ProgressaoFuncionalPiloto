@@ -8,7 +8,7 @@ import type {
   GenerationState,
   PendingBoardItem,
 } from "./api/generated";
-import type { BlockReasonCode, DocumentStatus, InvalidReason, Level, Modality, NormKind, ProcessStatus, Severity, Validity } from "./api/types";
+import type { BlockReasonCode, DocumentStatus, InvalidReason, Level, Modality, NormKind, ProcessStatus, ScoringMode, Severity, Validity } from "./api/types";
 
 export const STATUS_LABELS: Record<ProcessStatus, string> = {
   RASCUNHO: "Rascunho",
@@ -254,6 +254,14 @@ export function blockReasonText(
       return base;
   }
 }
+
+/** GTAB-21: the scoring modes of a criterion, as the person reads them. */
+export const SCORING_MODE_LABELS: Record<ScoringMode, string> = {
+  POR_UNIDADE: "Por unidade",
+  POR_BLOCO_DE_HORAS: "Por bloco de horas",
+  CARGA_SEMANAL: "Carga semanal",
+  VALOR_INFORMADO: "Valor informado",
+};
 
 /** GTAB-17: the history of a table. */
 export const HISTORY_ACTION_LABELS: Record<string, string> = {

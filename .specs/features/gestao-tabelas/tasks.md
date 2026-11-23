@@ -1126,7 +1126,7 @@ graph LR
 
 #### T34: Diálogo de edição de critério
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `CriterionEditDialog`: `Modal` com os campos que a API aceita (`description`, `unit_label`, `mode` com rótulos em português, `unit_points`, `hours_per_block`, `weeks_per_semester` inteiro positivo, `prep_ratio`, `max_points`, `min_hours`, `accepted_evidence`, `rules`, `review_note`) e o campo obrigatório "Referência normativa da alteração"; compara com o critério aberto, barra o envio sem alteração ("Nenhuma alteração informada"), converte decimais e inteiros e envia só o que mudou em `PUT /api/scoring-versions/{id}/criteria/{grupo}/{item}` (`CriterionChangeIn`). 422 por campo aparece junto do campo e mantém o digitado.
 **Where**: `frontend/src/components/CriterionEditDialog.tsx` (new)
@@ -1141,9 +1141,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/CriterionEditDialog.test.tsx` (novo): o `PUT` leva só os campos alterados, com decimais e inteiros nos tipos certos, e a referência; sem referência o envio é barrado e o campo mostra o erro; sem alteração o envio é barrado; 422 de um valor aparece junto do campo e mantém o digitado; o campo `mode` mostra rótulos em português e envia o valor do enum; `weeks_per_semester` não aceita decimal
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/components/CriterionEditDialog.test.tsx` (novo): o `PUT` leva só os campos alterados, com decimais e inteiros nos tipos certos, e a referência; sem referência o envio é barrado e o campo mostra o erro; sem alteração o envio é barrado; 422 de um valor aparece junto do campo e mantém o digitado; o campo `mode` mostra rótulos em português e envia o valor do enum; `weeks_per_semester` não aceita decimal
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front

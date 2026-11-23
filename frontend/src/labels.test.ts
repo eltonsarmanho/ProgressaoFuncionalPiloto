@@ -43,6 +43,7 @@ import {
   historyChangeLabel,
   inUseBadge,
   SET_DEFAULT_LABELS,
+  SCORING_MODE_LABELS,
 } from "./labels";
 
 describe("UIG-05: rótulos em português dos documentos gerados", () => {
@@ -406,5 +407,16 @@ describe("GTAB-36, GTAB-02: textos do 'Definir como em uso'", () => {
     expect(SET_DEFAULT_LABELS.cleared("FASI")).toBe(
       "Marcação de FASI removida; a sugestão volta a seguir a vigência.",
     );
+  });
+});
+
+describe("GTAB-21: modos de pontuação em português", () => {
+  it("cada modo da API tem rótulo em português, sem o código cru", () => {
+    expect(SCORING_MODE_LABELS).toEqual({
+      POR_UNIDADE: "Por unidade",
+      POR_BLOCO_DE_HORAS: "Por bloco de horas",
+      CARGA_SEMANAL: "Carga semanal",
+      VALOR_INFORMADO: "Valor informado",
+    });
   });
 });
