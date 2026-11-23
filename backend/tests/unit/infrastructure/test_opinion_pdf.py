@@ -185,6 +185,19 @@ def test_a_horizontal_rule_crosses_the_text_width_under_the_header(tmp_path):
     assert last_header <= start.y <= title
 
 
+def test_the_horizontal_rule_under_the_header_is_black_as_in_the_docx(tmp_path):
+    # PMOD-02: the model has a black rule under the header (the DOCX one is black)
+    page = render(tmp_path, opinion_model())[0]
+
+    rules = [
+        drawing
+        for drawing in page.get_drawings()
+        if any(item[0] == "l" and abs(item[1].y - item[2].y) < 0.01 for item in drawing["items"])
+    ]
+    assert len(rules) == 1
+    assert tuple(rules[0]["color"]) == (0.0, 0.0, 0.0)
+
+
 def test_the_paragraph_is_indented_on_its_first_line_only(tmp_path):
     page = render(tmp_path, opinion_model())[0]
 

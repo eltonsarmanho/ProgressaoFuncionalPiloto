@@ -11,6 +11,7 @@ table and no page footer (`PdfCanvas`, not `NumberedCanvas`). The text is the on
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
@@ -100,7 +101,13 @@ def write_opinion_pdf(model: OpinionDocument, target: Path) -> None:
     story: list = [*emblem_flowables()]
     story += [Paragraph(_text(line), header) for line in model.header_lines]
     story += [
-        HRFlowable(width="100%", thickness=_RULE_PT, spaceBefore=_BODY_PT / 2, spaceAfter=0),
+        HRFlowable(
+            width="100%",
+            thickness=_RULE_PT,
+            color=colors.black,
+            spaceBefore=_BODY_PT / 2,
+            spaceAfter=0,
+        ),
         Paragraph(_text(model.title), title),
         Paragraph(_text(model.place_date_line), place_date),
         Paragraph(_markup(model.paragraph), body),
