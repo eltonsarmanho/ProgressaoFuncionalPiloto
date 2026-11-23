@@ -4,8 +4,11 @@ as PDF with reportlab, with the same text in the same order as the DOCX of the s
 
 import pymupdf
 import pytest
+from reportlab.lib.units import mm
 
 from app.domain.entities.board import BoardRole
+from app.infrastructure.documents import emblem
+from app.infrastructure.documents.emblem import EmblemUnavailable
 from app.infrastructure.documents.opinion_docx import write_opinion_docx
 from app.infrastructure.documents.opinion_pdf import write_opinion_pdf
 from tests.unit.domain.board_document_support import MEMBERS, member
@@ -220,3 +223,69 @@ def test_the_text_stays_inside_the_margins_of_the_model(tmp_path):
     blocks = page.get_text("blocks")
     assert min(b[0] for b in blocks) >= LEFT - 1
     assert max(b[2] for b in blocks) <= PAGE_WIDTH - RIGHT + 1
+
+
+def emblem_rect(page: pymupdf.Page) -> pymupdf.Rect:
+    images = page.get_images(full=True)
+    assert len(images) == 1
+    (rect,) = page.get_image_rects(images[0][0])
+    return rect
+
+
+def test_the_first_page_has_the_emblem_centered_on_the_text_above_the_university(tmp_path):
+    # BRAS-04, BRAS-06
+    page = render(tmp_path, opinion_model())[0]
+
+    rect = emblem_rect(page)
+    assert rect.width == pytest.approx(20 * mm, abs=0.5)
+    assert rect.height == pytest.approx(20 * mm * 351 / 279, abs=0.5)
+    assert (rect.x0 + rect.x1) / 2 == pytest.approx((LEFT + PAGE_WIDTH - RIGHT) / 2, abs=0.5)
+    university = page.search_for("Universidade Federal do Pará")[0]
+    assert rect.y1 + 3 * mm <= university.y0
+
+
+def test_with_three_titulars_and_a_campus_the_parecer_with_the_emblem_is_one_page(tmp_path):
+    # PMOD-21
+    pdf = render(tmp_path, opinion_model(members=THREE_TITULARS))
+
+    assert len(pdf) == 1
+    assert len(pdf[0].get_images()) == 1
+    assert "MEMBRO 2: Carla Membro Reis" in pdf_text(pdf)
+
+
+def test_with_fifteen_members_only_the_first_page_has_the_emblem(tmp_path):
+    # BRAS-07
+    names = [(f"Membro {n:02d} " + "Sobrenome " * 20)[:199] + "z" for n in range(15)]
+    members = tuple(member(name, BoardRole.MEMBRO) for name in names)
+
+    pdf = render(tmp_path, opinion_model(members=members))
+
+    assert len(pdf) > 1
+    assert len(pdf[0].get_images()) == 1
+    assert all(page.get_images() == [] for page in list(pdf)[1:])
+
+
+def test_the_text_with_the_emblem_is_the_one_of_the_docx_and_adds_no_font(tmp_path):
+    # BRAS-08
+    model = opinion_model(members=THREE_TITULARS)
+
+    pdf = render(tmp_path, model)
+
+    assert pdf_text(pdf) == docx_text(tmp_path, model)
+    names = {font[3].split("+")[-1] for page in pdf for font in page.get_fonts()}
+    assert names == {
+        "LiberationSerif",
+        "LiberationSerif-Bold",
+        "LiberationSans",
+        "LiberationSans-Bold",
+    }
+
+
+def test_without_the_emblem_file_the_writer_raises_and_writes_nothing(monkeypatch, tmp_path):
+    # BRAS-10
+    monkeypatch.setattr(emblem, "EMBLEM_FILE", tmp_path / "ufpa.png")
+    target = tmp_path / "parecer.pdf"
+
+    with pytest.raises(EmblemUnavailable):
+        write_opinion_pdf(opinion_model(), target)
+    assert not target.exists()

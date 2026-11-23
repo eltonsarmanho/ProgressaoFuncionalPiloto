@@ -1,10 +1,11 @@
 """The Parecer as PDF, drawn with reportlab (PMOD-01, PMOD-02, PMOD-04 to PMOD-07, PMOD-21).
 
 Same model and same order as the DOCX: A4 portrait with the margins of the page of the model and
-12 pt text, the header centered in Liberation Serif with a rule across the text width, the title
-and the place and date line in Liberation Sans, the justified paragraph with its bold runs, and
-the centered member lines. No table and no page footer (`PdfCanvas`, not `NumberedCanvas`). The
-text is the one of the `OpinionDocument`; nothing is composed here.
+12 pt text, the emblem of the UFPA on top of the first page (BRAS-04), the header centered in
+Liberation Serif with a rule across the text width, the title and the place and date line in
+Liberation Sans, the justified paragraph with its bold runs, and the centered member lines. No
+table and no page footer (`PdfCanvas`, not `NumberedCanvas`). The text is the one of the
+`OpinionDocument`; nothing is composed here.
 """
 
 from pathlib import Path
@@ -22,6 +23,7 @@ from app.infrastructure.documents.pdf_styles import (
     FONT_SANS,
     FONT_SANS_BOLD,
     PdfCanvas,
+    emblem_flowables,
     margins_from_page,
     register_fonts,
 )
@@ -95,7 +97,8 @@ def write_opinion_pdf(model: OpinionDocument, target: Path) -> None:
         bottomPadding=0,
     )
     template.addPageTemplates([PageTemplate(id="opinion", frames=[frame])])
-    story: list = [Paragraph(_text(line), header) for line in model.header_lines]
+    story: list = [*emblem_flowables()]
+    story += [Paragraph(_text(line), header) for line in model.header_lines]
     story += [
         HRFlowable(width="100%", thickness=_RULE_PT, spaceBefore=_BODY_PT / 2, spaceAfter=0),
         Paragraph(_text(model.title), title),

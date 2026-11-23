@@ -725,7 +725,7 @@ graph LR
 
 #### T21: Brasão no Parecer em PDF
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `write_opinion_pdf` começa a história com `emblem_flowables()` antes das linhas do cabeçalho, e o Parecer com três titulares continua em uma página.
 **Where**: `backend/app/infrastructure/documents/opinion_pdf.py` (modify)
@@ -740,9 +740,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_opinion_pdf.py`: a primeira página tem uma imagem de 56,7 pt de largura, centrada na largura do texto, acima de "Universidade Federal do Pará"; com três titulares, com campus e com o texto da T6 o PDF continua com **uma** página (PMOD-21); com 15 membros as páginas seguintes não têm imagem; o texto lido segue igual ao do DOCX; sem o arquivo levanta `EmblemUnavailable`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_opinion_pdf.py`: a primeira página tem uma imagem de 56,7 pt de largura, centrada na largura do texto, acima de "Universidade Federal do Pará"; com três titulares, com campus e com o texto da T6 o PDF continua com **uma** página (PMOD-21); com 15 membros as páginas seguintes não têm imagem; o texto lido segue igual ao do DOCX; sem o arquivo levanta `EmblemUnavailable`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick
