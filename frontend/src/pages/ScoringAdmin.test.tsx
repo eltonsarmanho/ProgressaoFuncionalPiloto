@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, useLocation } from "react-router";
 import { AppRoutes } from "../App";
 import { AuthProvider } from "../auth/AuthContext";
@@ -199,6 +199,47 @@ describe("ADMUI-01: lista de tabelas e versões", () => {
     expect(first).toHaveTextContent("31/12/2024");
     expect(first).not.toHaveTextContent("Em uso (");
     expect(first).not.toHaveTextContent("Encerrada");
+  });
+
+  describe("GTAB-34: o selo 'Encerrada' usa a data local, não a data em UTC", () => {
+    const zone = process.env.TZ;
+    afterEach(() => {
+      vi.useRealTimers();
+      if (zone === undefined) delete process.env.TZ;
+      else process.env.TZ = zone;
+    });
+
+    function markedUntil(validTo: string) {
+      return {
+        status: 200,
+        body: [{ ...TABLES[0], versions: [{ ...FASI_V1, valid_to: validTo }, FASI_V2] }],
+      };
+    }
+
+    it("às 23h de 31/12 em Belém (já é 01/01 em UTC), a versão marcada que termina em 31/12 ainda não acabou", async () => {
+      process.env.TZ = "America/Belem";
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2027-01-01T02:00:00Z")); // 23:00 of 2026-12-31 in Belém
+
+      renderAdmin("ADMIN", { "GET /api/scoring-tables": markedUntil("2026-12-31") });
+
+      const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+      const [first] = Array.from(fasi.querySelectorAll(".tbl-version"));
+      expect(first).toHaveTextContent("Em uso (FASI)");
+      expect(first).not.toHaveTextContent("Encerrada");
+    });
+
+    it("depois da meia-noite local de 01/01, a mesma versão está encerrada", async () => {
+      process.env.TZ = "America/Belem";
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2027-01-01T03:30:00Z")); // 00:30 of 2027-01-01 in Belém
+
+      renderAdmin("ADMIN", { "GET /api/scoring-tables": markedUntil("2026-12-31") });
+
+      const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+      const [first] = Array.from(fasi.querySelectorAll(".tbl-version"));
+      expect(first).toHaveTextContent("Encerrada");
+    });
   });
 
   it("GTAB-34: 'Substituída' e 'Arquivada' aparecem nos casos certos", async () => {
