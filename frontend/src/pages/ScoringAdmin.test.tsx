@@ -912,3 +912,99 @@ describe("GTAB-23, GTAB-24, GTAB-25, GTAB-16, GTAB-36: arquivar e desarquivar pe
     expect(within(fasi).queryByRole("button", { name: /arquivar/i })).not.toBeInTheDocument();
   });
 });
+
+describe("GTAB-16, GTAB-27, GTAB-29, GTAB-30, GTAB-36: excluir versão e tabela pela página", () => {
+  const pageStatus = () => screen.getAllByRole("status").find((el) => el.tagName === "P") as HTMLElement;
+  const reasonOf = (button: HTMLElement) =>
+    document.getElementById(button.getAttribute("aria-describedby") as string) as HTMLElement;
+
+  it("os botões bloqueados ficam desabilitados, com o motivo em texto e aria-describedby", async () => {
+    renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": {
+        status: 200,
+        body: [
+          {
+            ...TABLES[0],
+            delete_blocked_reason: "TABELA_COM_VERSAO_EM_USO",
+            versions: [{ ...FASI_V1, delete_blocked_reason: "VERSAO_USADA_POR_PROCESSO" }, FASI_V2],
+          },
+          TABLES[1],
+        ],
+      },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    const version = within(fasi).getByRole("button", { name: "Excluir versão FASI 2022" });
+    const table = within(fasi).getByRole("button", { name: "Excluir tabela Tabela da FASI" });
+
+    expect(version).toHaveAttribute("aria-disabled", "true");
+    expect(reasonOf(version)).toHaveTextContent("A versão é usada por 1 processo e não pode ser alterada nem excluída");
+    expect(table).toHaveAttribute("aria-disabled", "true");
+    expect(reasonOf(table)).toHaveTextContent("A tabela tem versão em uso da unidade FASI");
+    await user.click(version);
+    await user.click(table);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(within(fasi).getByRole("button", { name: "Excluir versão FASI 2026" })).not.toHaveAttribute("aria-disabled");
+  });
+
+  it("excluir a versão: prévia, DELETE, lista recarregada, anúncio em texto e foco no título da página", async () => {
+    let loads = 0;
+    const { calls } = renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": () => {
+        loads += 1;
+        return { status: 200, body: loads === 1 ? TABLES : [{ ...TABLES[0], versions: [FASI_V1] }, TABLES[1]] };
+      },
+      "GET /api/scoring-versions/v-fasi-2/delete-preview": { status: 200, body: { name: "FASI 2026", criteria: 5, blocked: [] } },
+      "DELETE /api/scoring-versions/v-fasi-2": { status: 204 },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    await user.click(within(fasi).getByRole("button", { name: "Excluir versão FASI 2026" }));
+    const dialog = await screen.findByRole("dialog", { name: "Excluir versão" });
+    await within(dialog).findByRole("list", { name: "O que será apagado" });
+    await user.click(within(dialog).getByRole("button", { name: "Excluir definitivamente" }));
+
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await vi.waitFor(() => expect(loads).toBe(2));
+    await vi.waitFor(() =>
+      expect(screen.getByRole("heading", { level: 1, name: "Tabelas de pontuação" })).toHaveFocus(),
+    );
+    expect(within(screen.getByRole("region", { name: "Tabela da FASI" })).queryByText("FASI 2026")).not.toBeInTheDocument();
+    expect(pageStatus()).toHaveTextContent('Versão "FASI 2026" excluída.');
+    expect(calls.filter((c) => c.method === "DELETE").map((c) => c.path)).toEqual(["/api/scoring-versions/v-fasi-2"]);
+  });
+
+  it("excluir a tabela: a prévia lista as unidades e, depois da confirmação, a tabela sai da lista", async () => {
+    let loads = 0;
+    renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": () => {
+        loads += 1;
+        return { status: 200, body: loads === 1 ? TABLES : [TABLES[0]] };
+      },
+      "GET /api/scoring-tables/t-ifch/delete-preview": {
+        status: 200,
+        body: { name: "Tabela do IFCH", versions: 1, criteria: 8, units: [{ id: "u2", acronym: "IFCH" }], blocked: [] },
+      },
+      "DELETE /api/scoring-tables/t-ifch": { status: 204 },
+    });
+    const user = userEvent.setup();
+    const ifch = await screen.findByRole("region", { name: "Tabela do IFCH" });
+
+    await user.click(within(ifch).getByRole("button", { name: "Excluir tabela Tabela do IFCH" }));
+    const dialog = await screen.findByRole("dialog", { name: "Excluir tabela" });
+    expect(await within(dialog).findByRole("list", { name: "O que será apagado" })).toHaveTextContent("Unidades associadas: IFCH");
+    await user.click(within(dialog).getByRole("button", { name: "Excluir definitivamente" }));
+
+    await vi.waitFor(() => expect(screen.queryByRole("region", { name: "Tabela do IFCH" })).not.toBeInTheDocument());
+    expect(pageStatus()).toHaveTextContent('Tabela "Tabela do IFCH" excluída.');
+    expect(screen.getByRole("heading", { level: 1, name: "Tabelas de pontuação" })).toHaveFocus();
+  });
+
+  it("quem não é ADMIN não vê os botões de exclusão", async () => {
+    renderAdmin("DOCENTE");
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+    expect(within(fasi).queryByRole("button", { name: /^Excluir/ })).not.toBeInTheDocument();
+  });
+});

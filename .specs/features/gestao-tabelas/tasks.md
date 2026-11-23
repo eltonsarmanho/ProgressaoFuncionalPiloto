@@ -1097,7 +1097,7 @@ graph LR
 
 #### T33: Excluir versão e tabela com prévia
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Os botões "Excluir versão" (por versão) e "Excluir tabela" (por tabela) entram no registro de ações, desabilitados com o motivo de `delete_blocked_reason`. `DeleteScoringDialog` (um componente para versão e para tabela): `Modal` que carrega `GET .../delete-preview`, mostra "Carregando…", a lista `aria-label="O que será apagado"` (nome, quantidade de versões e de critérios, siglas das unidades) e, havendo `blocked`, o motivo em texto e o botão "Excluir definitivamente" desabilitado; depois da confirmação envia o `DELETE`, trata 404 como já excluído, mostra o texto de um 409 do próprio `DELETE`, recarrega a lista (aguardando a promessa) e leva o foco ao título da página.
 **Where**: `frontend/src/components/DeleteScoringDialog.tsx` (new)
@@ -1112,10 +1112,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/DeleteScoringDialog.test.tsx` (novo): a prévia aparece com as contagens e as siglas e o botão só habilita depois dela; com bloqueio mostra o motivo e mantém o botão desabilitado; confirmar envia o `DELETE`, anuncia a exclusão em `role=status`, recarrega a lista e leva o foco ao título; 404 é tratado como já excluído; um 409 do `DELETE` mostra o texto; Esc e "Fechar" não excluem; o texto diz que a exclusão é definitiva; versão e tabela usam o mesmo componente com os textos certos
-- [ ] `frontend/src/pages/ScoringAdmin.test.tsx` (modifica): "Excluir versão" numa versão com `delete_blocked_reason` e "Excluir tabela" numa tabela com `delete_blocked_reason` ficam desabilitados com o motivo em texto e `aria-describedby`
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/components/DeleteScoringDialog.test.tsx` (novo): a prévia aparece com as contagens e as siglas e o botão só habilita depois dela; com bloqueio mostra o motivo e mantém o botão desabilitado; confirmar envia o `DELETE`, anuncia a exclusão em `role=status`, recarrega a lista e leva o foco ao título; 404 é tratado como já excluído; um 409 do `DELETE` mostra o texto; Esc e "Fechar" não excluem; o texto diz que a exclusão é definitiva; versão e tabela usam o mesmo componente com os textos certos
+- [x] `frontend/src/pages/ScoringAdmin.test.tsx` (modifica): "Excluir versão" numa versão com `delete_blocked_reason` e "Excluir tabela" numa tabela com `delete_blocked_reason` ficam desabilitados com o motivo em texto e `aria-describedby`
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front

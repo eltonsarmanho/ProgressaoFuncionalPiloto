@@ -89,6 +89,7 @@ export function ScoringAdmin() {
     open: setDialog,
     close: () => setDialog(null),
     units,
+    focusTitle: () => heading.current?.focus(),
   };
 
   function done(message: string) {

@@ -3,6 +3,7 @@ import { errorMessage, request } from "../api/client";
 import type { ScoringTableInfo, ScoringVersionSummary, Unit } from "../api/types";
 import { CsvDialog, DuplicateDialog, VersionDialog } from "./ScoringAdminForms";
 import { SET_DEFAULT_LABELS, blockReasonText } from "../labels";
+import { DeleteScoringDialog, type DeleteTarget } from "./DeleteScoringDialog";
 import { SetDefaultDialog, UnitsDialog } from "./ScoringTableDialogs";
 import type { TableAction } from "./VersionRow";
 
@@ -14,6 +15,8 @@ export type ActionContext = {
   close: () => void;
   /** The units of the system, for the dialogs that ask for one or several. */
   units: Unit[];
+  /** Moves the focus to the title of the page: where it goes when the opener of a dialog no longer exists. */
+  focusTitle: () => void;
 };
 
 type VersionActionBuilder = (ctx: ActionContext, table: ScoringTableInfo, version: ScoringVersionSummary) => TableAction[];
@@ -89,6 +92,58 @@ function setDefaultBlock(table: ScoringTableInfo, version: ScoringVersionSummary
   }
   return undefined;
 }
+
+/** The dialog of a deletion is over: close it, announce, wait for the new list, then focus the title (GTAB-30). */
+async function finishDeletion(ctx: ActionContext, message: string): Promise<void> {
+  ctx.close();
+  ctx.announce(message);
+  await ctx.reload();
+  ctx.focusTitle();
+}
+
+function openDeletion(ctx: ActionContext, target: DeleteTarget): void {
+  ctx.open(
+    <DeleteScoringDialog
+      target={target}
+      onDeleted={(message) => void finishDeletion(ctx, message)}
+      onClose={ctx.close}
+    />,
+  );
+}
+
+/** GTAB-27, GTAB-35, GTAB-36: "Excluir versão", blocked with the reason the list carries. */
+const deleteVersionAction: VersionActionBuilder = (ctx, _table, version) => {
+  const acronyms = ctx.units.filter((u) => version.default_for_unit_ids.includes(u.id)).map((u) => u.acronym);
+  return [
+    {
+      key: "delete-version",
+      label: "Excluir versão",
+      ariaLabel: `Excluir versão ${version.name}`,
+      disabledReason: version.delete_blocked_reason
+        ? blockReasonText(version.delete_blocked_reason, { processCount: version.process_count, acronyms })
+        : undefined,
+      run: () => openDeletion(ctx, { kind: "version", id: version.id, name: version.name }),
+    },
+  ];
+};
+
+/** GTAB-29, GTAB-35, GTAB-36: "Excluir tabela". */
+const deleteTableAction: TableActionBuilder = (ctx, table) => {
+  const markedIds = new Set(table.versions.flatMap((v) => v.default_for_unit_ids));
+  const acronyms = ctx.units.filter((u) => markedIds.has(u.id)).map((u) => u.acronym);
+  const processCount = table.versions.reduce((total, v) => total + v.process_count, 0);
+  return [
+    {
+      key: "delete-table",
+      label: "Excluir tabela",
+      ariaLabel: `Excluir tabela ${table.name}`,
+      disabledReason: table.delete_blocked_reason
+        ? blockReasonText(table.delete_blocked_reason, { processCount, acronyms })
+        : undefined,
+      run: () => openDeletion(ctx, { kind: "table", id: table.id, name: table.name }),
+    },
+  ];
+};
 
 /** Runs a write that acts at once: the result (or the API's text on a refusal) goes to the page status. */
 async function actNow(ctx: ActionContext, write: () => Promise<void>, success: string): Promise<void> {
@@ -169,8 +224,8 @@ const archiveAction: TableActionBuilder = (ctx, table) => {
 };
 
 /** The registry of the actions of a version and of a table; each operation adds its builder here (GTAB-35). */
-const VERSION_ACTIONS: VersionActionBuilder[] = [defaultActions, newVersionAction];
-const TABLE_ACTIONS: TableActionBuilder[] = [formActions, unitsAction, archiveAction];
+const VERSION_ACTIONS: VersionActionBuilder[] = [defaultActions, newVersionAction, deleteVersionAction];
+const TABLE_ACTIONS: TableActionBuilder[] = [formActions, unitsAction, archiveAction, deleteTableAction];
 
 export function versionActions(ctx: ActionContext, table: ScoringTableInfo, version: ScoringVersionSummary): TableAction[] {
   return VERSION_ACTIONS.flatMap((build) => build(ctx, table, version));
