@@ -226,7 +226,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | GTAB-13 | P1: Gestão das tabelas pela tela | Implemented | Implementing |
 | GTAB-14 | P1: Gestão das tabelas pela tela | Specified | Pending |
 | GTAB-15 | P1: Gestão das tabelas pela tela | Implemented | Implementing |
-| GTAB-16 | P1: Gestão das tabelas pela tela | Specified | Pending |
+| GTAB-16 | P1: Gestão das tabelas pela tela | Implemented | Implementing |
 | GTAB-17 | P1: Gestão das tabelas pela tela | Specified | Pending |
 | GTAB-18 | P1: Editar critérios na tela | Specified | Pending |
 | GTAB-19 | P1: Editar critérios na tela | Implemented | Implementing |
@@ -243,14 +243,14 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | GTAB-30 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-31 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-32 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-33 | P1: Lista legível e com ações visíveis | Specified | Pending |
+| GTAB-33 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
 | GTAB-34 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
 | GTAB-35 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
 | GTAB-36 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
-| GTAB-37 | P1: Lista legível e com ações visíveis | Specified | Pending |
+| GTAB-37 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
 | GTAB-38 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
-| GTAB-39 | P1: Lista legível e com ações visíveis | Specified | Pending |
-| GTAB-40 | P1: Lista legível e com ações visíveis | Specified | Pending |
+| GTAB-39 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
+| GTAB-40 | P1: Lista legível e com ações visíveis | Implemented | Implementing |
 | GTAB-41 | P1: Coerência com a semente e com as outras regras | Implemented | Implementing |
 | GTAB-42 | P1: Coerência com a semente e com as outras regras | Implemented | Implementing |
 | GTAB-43 | P1: Coerência com a semente e com as outras regras | Implemented | Implementing |

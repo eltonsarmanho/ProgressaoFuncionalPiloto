@@ -3,12 +3,12 @@ import { request } from "../api/client";
 import type { ScoringTableInfo } from "../api/types";
 import { Alert, Field, FormProblem, useSubmit } from "./formKit";
 
-function DuplicateForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: () => void }) {
+function DuplicateForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: (message: string) => void }) {
   const [name, setName] = useState("");
   const { submit, errors, error, busy } = useSubmit(async () => {
     await request("POST", `/api/scoring-tables/${table.id}/duplicate`, { new_name: name.trim() });
     setName("");
-  }, onChanged);
+  }, () => onChanged("Tabela duplicada."));
 
   return (
     <form className="card" onSubmit={submit} noValidate aria-label="Duplicar tabela">
@@ -32,7 +32,7 @@ function VersionForm({
 }: {
   table: ScoringTableInfo;
   version: { id: string; name: string };
-  onChanged: () => void;
+  onChanged: (message: string) => void;
 }) {
   const [validFrom, setValidFrom] = useState("");
   const [validTo, setValidTo] = useState("");
@@ -47,7 +47,7 @@ function VersionForm({
     setValidFrom("");
     setValidTo("");
     setReference("");
-  }, onChanged);
+  }, () => onChanged("Nova versão criada."));
 
   return (
     <form className="card" onSubmit={submit} noValidate aria-label="Nova versão">
@@ -72,7 +72,7 @@ function VersionForm({
   );
 }
 
-function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: () => void }) {
+function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: (message: string) => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [validFrom, setValidFrom] = useState("");
   const [validTo, setValidTo] = useState("");
@@ -88,7 +88,7 @@ function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: () 
     if (validTo) form.set("valid_to", validTo);
     await request("POST", `/api/scoring-tables/${table.id}/versions/import`, form);
     setFile(null);
-  }, onChanged);
+  }, () => onChanged("Versão criada a partir do CSV."));
 
   return (
     <form className="card" onSubmit={submit} noValidate aria-label="Importar CSV">
@@ -146,7 +146,8 @@ export function ScoringAdminForms({
 }: {
   table: ScoringTableInfo;
   version: { id: string; name: string };
-  onChanged: () => void;
+  /** Called after a write, with the sentence the page announces. */
+  onChanged: (message: string) => void;
 }) {
   return (
     <>

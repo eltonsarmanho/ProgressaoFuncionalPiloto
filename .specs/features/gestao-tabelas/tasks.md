@@ -896,7 +896,7 @@ graph LR
 
 #### T26: Lista de tabelas em cartões, com filtros e estados
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ScoringAdmin.tsx` passa a mostrar um cartão por tabela (`ScoringTableCard.tsx` e `VersionRow.tsx`, novos) com o nome, as siglas das unidades associadas (de `GET /api/units`) e as versões empilhadas; por versão: nome, vigência, situação, referência normativa e as etiquetas "Oficial" ou "Pendente de validação", "Em uso (sigla)" (mais "Encerrada" quando a vigência já acabou), "Usada por processo", "Substituída" e "Arquivada". Cada versão mantém o botão `Ver critérios de <versão>`, e o cartão de critérios com `ReviewHighlight` e os formulários de `ScoringAdminForms` continuam abaixo da lista até a tarefa dos diálogos; a seleção guarda só ids e deriva tabela, versão e `read_only_reason` da lista recarregada, e o cartão de critérios fecha se a versão some; ao abrir os critérios o foco vai ao título deles (`tabIndex={-1}`). `reload` passa a devolver uma promessa (o `useEffect` a embrulha), o `h1` ganha `tabIndex={-1}` e um `p[role=status]` sempre montado no topo anuncia as confirmações (GTAB-16). Filtro por unidade, "Mostrar arquivadas" (desligado por padrão), contagem de tabelas, estado de carregamento, erro com "Tentar de novo" e lista vazia com "Limpar filtros". Sem `<table>` na lista.
 **Where**: `frontend/src/pages/ScoringAdmin.tsx` (modify)
@@ -911,10 +911,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/pages/ScoringAdmin.test.tsx` (reescreve os que liam linhas de `<table>`; ADMUI-01, ADMUI-02 e ADMUI-03 são migrados por nome e continuam passando): um cartão por tabela (`region` nomeada, classe `tbl-card`, versões com `tbl-version`); por versão aparecem vigência, "Oficial" ou "Pendente de validação" e a referência normativa; a versão em uso mostra "Em uso (FASI)" e, com `valid_to` no passado, também "Encerrada"; "Usada por processo", "Substituída" e "Arquivada" aparecem nos casos certos; filtro por unidade e "Mostrar arquivadas" mudam a lista e a contagem; carregamento, falha com "Tentar de novo" que recarrega, e lista vazia com "Limpar filtros" que restaura; as unidades vêm como siglas, nunca como id
-- [ ] Nenhum elemento `table` dentro dos cartões da lista; abrir os critérios move o foco ao título dos critérios; recarregar a lista com a versão aberta que ficou só leitura mostra a orientação nova, e com a versão que sumiu fecha o cartão de critérios; o `p[role=status]` existe e anuncia a mensagem que a página recebe
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/pages/ScoringAdmin.test.tsx` (reescreve os que liam linhas de `<table>`; ADMUI-01, ADMUI-02 e ADMUI-03 são migrados por nome e continuam passando): um cartão por tabela (`region` nomeada, classe `tbl-card`, versões com `tbl-version`); por versão aparecem vigência, "Oficial" ou "Pendente de validação" e a referência normativa; a versão em uso mostra "Em uso (FASI)" e, com `valid_to` no passado, também "Encerrada"; "Usada por processo", "Substituída" e "Arquivada" aparecem nos casos certos; filtro por unidade e "Mostrar arquivadas" mudam a lista e a contagem; carregamento, falha com "Tentar de novo" que recarrega, e lista vazia com "Limpar filtros" que restaura; as unidades vêm como siglas, nunca como id
+- [x] Nenhum elemento `table` dentro dos cartões da lista; abrir os critérios move o foco ao título dos critérios; recarregar a lista com a versão aberta que ficou só leitura mostra a orientação nova, e com a versão que sumiu fecha o cartão de critérios; o `p[role=status]` existe e anuncia a mensagem que a página recebe
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front
