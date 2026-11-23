@@ -495,7 +495,7 @@ graph LR
 
 #### T13: Brasão na Tabela de Pontuação em DOCX
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `write_table_docx` chama `add_emblem(document)` antes do título, depois de definir a orientação paisagem e as margens, e o brasão fica centralizado na largura do texto paisagem.
 **Where**: `backend/app/infrastructure/documents/table_docx.py` (modify)
@@ -510,10 +510,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_table_docx.py`: o primeiro elemento do corpo é o parágrafo do brasão (centralizado, 720 000 EMU de largura), antes de "TABELA DE PONTUAÇÃO"; só há uma imagem no pacote; o texto do corpo e das tabelas do documento sem o brasão é igual ao de antes (o teste existente que compara parágrafos e células segue passando, com o parágrafo vazio do brasão pulado); a orientação é paisagem; sem o arquivo do brasão o escritor levanta `EmblemUnavailable`
-- [ ] Testes existentes que leem o primeiro parágrafo do corpo passam a pular o do brasão, sem enfraquecer o que conferem
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_table_docx.py`: o primeiro elemento do corpo é o parágrafo do brasão (centralizado, 720 000 EMU de largura), antes de "TABELA DE PONTUAÇÃO"; só há uma imagem no pacote; o texto do corpo e das tabelas do documento sem o brasão é igual ao de antes (o teste existente que compara parágrafos e células segue passando, com o parágrafo vazio do brasão pulado); a orientação é paisagem; sem o arquivo do brasão o escritor levanta `EmblemUnavailable`
+- [x] Testes existentes que leem o primeiro parágrafo do corpo passam a pular o do brasão, sem enfraquecer o que conferem
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: quick

@@ -3,7 +3,8 @@
 A4 landscape. The column widths are written in `tblGrid` and in every cell with `tblLayout fixed`
 (with autofit, python-docx ignores the widths and LibreOffice splits the columns evenly); the
 first row is a header row that repeats on every page; each group is a band of merged cells;
-the footer carries the `PAGE` and `NUMPAGES` fields. The content is the one of the PDF.
+the footer carries the `PAGE` and `NUMPAGES` fields. The emblem of the UFPA is the first
+paragraph (BRAS-01). The content is the one of the PDF.
 """
 
 from pathlib import Path
@@ -16,7 +17,12 @@ from docx.oxml import OxmlElement
 from docx.shared import Mm, Pt
 
 from app.domain.rules.table_document import TableDocument
-from app.infrastructure.documents.docx_support import add_page_footer, set_default_font, shade
+from app.infrastructure.documents.docx_support import (
+    add_emblem,
+    add_page_footer,
+    set_default_font,
+    shade,
+)
 from app.infrastructure.documents.table_text import (
     ALERTS_HEADING,
     COLUMNS,
@@ -136,6 +142,7 @@ def write_table_docx(model: TableDocument, target: Path) -> None:
     section.page_width, section.page_height = Mm(PAGE_MM[0]), Mm(PAGE_MM[1])
     section.left_margin = section.right_margin = Mm(MARGIN_MM)
     section.top_margin, section.bottom_margin = Mm(MARGIN_MM), Mm(20)
+    add_emblem(document)
     title = document.add_paragraph()
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = title.add_run(TITLE)

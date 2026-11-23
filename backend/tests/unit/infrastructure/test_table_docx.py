@@ -4,11 +4,14 @@ import re
 import zipfile
 from dataclasses import replace
 
+import pytest
 from docx import Document
 from docx.table import Table
 from lxml import etree
 
 from app.domain.rules.table_document import TableAlert
+from app.infrastructure.documents import emblem
+from app.infrastructure.documents.emblem import EmblemUnavailable
 from app.infrastructure.documents.table_docx import write_table_docx
 from tests.unit.domain.test_table_document_totals import HEADER
 from tests.unit.infrastructure.table_support import (
@@ -28,7 +31,7 @@ from tests.unit.infrastructure.table_support import (
 )
 
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-NS = {"w": W}
+NS = {"w": W, "wp": "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"}
 COLUMNS = ["Item", "Atividade", "Quantidade", "Pontuação unitária", "Total"]
 REMOVED_WORDS = (
     "Pontuada", "Potencial", "Não pontuada", "sem comprovante", "Comprovante", "Status",
@@ -294,3 +297,46 @@ def test_the_old_version_keeps_the_title_that_says_outside_the_total_of_points(t
     text = text_of(write(tmp_path, scenario_table()))
 
     assert OLD_PIT_HEADING in text
+
+
+def test_the_first_element_is_the_centered_emblem_paragraph_before_the_title(tmp_path):
+    # BRAS-01, BRAS-06
+    path = write(tmp_path, scenario_table())
+
+    body = xml_of(path).find("w:body", NS)
+    first = body[0]
+    assert first.tag == f"{{{W}}}p"
+    assert first.find("w:pPr/w:jc", NS).get(f"{{{W}}}val") == "center"
+    assert int(first.find(".//wp:inline/wp:extent", NS).get("cx")) == 720_000
+    assert "".join(first.itertext()) == ""
+    second = "".join(body[1].itertext())
+    assert second == "TABELA DE PONTUAÇÃO"
+    assert [p.text for p in Document(str(path)).paragraphs][:2] == ["", "TABELA DE PONTUAÇÃO"]
+
+
+def test_the_package_has_a_single_image(tmp_path):
+    # BRAS-07
+    path = write(tmp_path, long_table(50))
+
+    media = [n for n in zipfile.ZipFile(path).namelist() if n.startswith("word/media/")]
+    assert len(media) == 1
+    assert len(xml_of(path).findall(".//w:drawing", NS)) == 1
+
+
+def test_the_text_of_the_table_starts_with_the_title_and_the_page_stays_landscape(tmp_path):
+    # BRAS-08
+    path = write(tmp_path, scenario_table())
+
+    assert text_of(path).startswith("TABELA DE PONTUAÇÃO Docente: Maria Docente da Silva")
+    section = Document(str(path)).sections[0]
+    assert section.page_width > section.page_height
+
+
+def test_without_the_emblem_file_the_writer_raises_and_writes_nothing(monkeypatch, tmp_path):
+    # BRAS-10
+    monkeypatch.setattr(emblem, "EMBLEM_FILE", tmp_path / "ufpa.png")
+    target = tmp_path / "tabela.docx"
+
+    with pytest.raises(EmblemUnavailable):
+        write_table_docx(scenario_table(), target)
+    assert not target.exists()
