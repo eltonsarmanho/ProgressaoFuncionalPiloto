@@ -258,15 +258,20 @@ describe("ADMUI-01: lista de tabelas e versões", () => {
     expect(screen.queryByLabelText("Nome da nova tabela")).not.toBeInTheDocument();
   });
 
-  it("GTAB-15: o ADMIN vê os formulários de escrita ao abrir os critérios", async () => {
+  it("GTAB-15, GTAB-35: o ADMIN vê os botões de escrita no cartão; o cartão de critérios não traz mais os formulários", async () => {
     renderAdmin("ADMIN");
     const user = userEvent.setup();
     const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+    expect(within(fasi).getByRole("button", { name: "Duplicar a tabela Tabela da FASI" })).toBeInTheDocument();
+    expect(within(fasi).getByRole("button", { name: "Importar CSV para a tabela Tabela da FASI" })).toBeInTheDocument();
+    expect(within(fasi).getByRole("button", { name: "Nova versão a partir de FASI 2026" })).toBeInTheDocument();
 
     await user.click(within(fasi).getByRole("button", { name: "Ver critérios de FASI 2026" }));
 
-    expect(await screen.findByRole("button", { name: "Duplicar tabela" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Criar nova versão" })).toBeInTheDocument();
+    const criteria = await screen.findByRole("region", { name: "Critérios de Tabela da FASI · FASI 2026" });
+    expect(within(criteria).queryByRole("form")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Nome da nova tabela")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Criar nova versão" })).not.toBeInTheDocument();
   });
 });
 
@@ -297,10 +302,10 @@ describe("ADMUI-02: formulários na página", () => {
     });
     const user = userEvent.setup();
     const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
-    await user.click(within(fasi).getByRole("button", { name: "Ver critérios de FASI 2026" }));
     const listLoads = () => calls.filter((c) => c.method === "GET" && c.path === "/api/scoring-tables").length;
     expect(listLoads()).toBe(1);
 
+    await user.click(within(fasi).getByRole("button", { name: "Duplicar a tabela Tabela da FASI" }));
     await user.type(await screen.findByLabelText("Nome da nova tabela"), "Cópia da FASI");
     await user.click(screen.getByRole("button", { name: "Duplicar tabela" }));
 
@@ -415,6 +420,7 @@ describe("GTAB-16, GTAB-37: critérios abertos, foco e anúncio", () => {
     const criteria = await screen.findByRole("region", { name: "Critérios de Tabela da FASI · FASI 2026" });
     expect(criteria).not.toHaveTextContent("Somente leitura");
 
+    await user.click(within(fasi).getByRole("button", { name: "Duplicar a tabela Tabela da FASI" }));
     await user.type(await screen.findByLabelText("Nome da nova tabela"), "Cópia da FASI");
     await user.click(screen.getByRole("button", { name: "Duplicar tabela" }));
 
@@ -437,6 +443,7 @@ describe("GTAB-16, GTAB-37: critérios abertos, foco e anúncio", () => {
     await user.click(within(fasi).getByRole("button", { name: "Ver critérios de FASI 2026" }));
     await screen.findByRole("region", { name: "Critérios de Tabela da FASI · FASI 2026" });
 
+    await user.click(within(fasi).getByRole("button", { name: "Duplicar a tabela Tabela da FASI" }));
     await user.type(await screen.findByLabelText("Nome da nova tabela"), "Cópia da FASI");
     await user.click(screen.getByRole("button", { name: "Duplicar tabela" }));
 
@@ -456,6 +463,7 @@ describe("GTAB-16, GTAB-37: critérios abertos, foco e anúncio", () => {
     expect(pageStatus()).toBeEmptyDOMElement();
     await user.click(within(fasi).getByRole("button", { name: "Ver critérios de FASI 2026" }));
 
+    await user.click(within(fasi).getByRole("button", { name: "Duplicar a tabela Tabela da FASI" }));
     await user.type(await screen.findByLabelText("Nome da nova tabela"), "Cópia da FASI");
     await user.click(screen.getByRole("button", { name: "Duplicar tabela" }));
 
@@ -533,5 +541,127 @@ describe("GTAB-14, GTAB-16, GTAB-35: unidades da tabela pela página", () => {
     const pageStatus = screen.getAllByRole("status").find((el) => el.tagName === "P") as HTMLElement;
     expect(pageStatus).toHaveTextContent('Unidades da tabela "Tabela da FASI" atualizadas.');
     expect(opener).toHaveFocus();
+  });
+});
+
+describe("GTAB-12, GTAB-13, GTAB-16, GTAB-35: duplicar, nova versão e CSV em diálogos", () => {
+  const pageStatus = () => screen.getAllByRole("status").find((el) => el.tagName === "P") as HTMLElement;
+
+  it("cada botão abre o diálogo certo", async () => {
+    renderAdmin("ADMIN");
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    await user.click(within(fasi).getByRole("button", { name: "Duplicar a tabela Tabela da FASI" }));
+    expect(await screen.findByRole("dialog", { name: "Duplicar tabela" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Fechar" }));
+
+    await user.click(within(fasi).getByRole("button", { name: "Importar CSV para a tabela Tabela da FASI" }));
+    expect(await screen.findByRole("dialog", { name: "Importar CSV como nova versão" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Fechar" }));
+
+    await user.click(within(fasi).getByRole("button", { name: "Nova versão a partir de FASI 2022" }));
+    expect(await screen.findByRole("dialog", { name: "Nova versão a partir de FASI 2022" })).toBeInTheDocument();
+  });
+
+  it("a nova versão leva o source_version_id da versão clicada, recarrega a lista sem recarregar a página e anuncia em texto", async () => {
+    let loads = 0;
+    const { calls } = renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": () => {
+        loads += 1;
+        return { status: 200, body: TABLES };
+      },
+      "POST /api/scoring-tables/t-fasi/versions": { status: 201, body: { id: "v-new" } },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    await user.click(within(fasi).getByRole("button", { name: "Nova versão a partir de FASI 2022" }));
+    const dialog = await screen.findByRole("dialog", { name: "Nova versão a partir de FASI 2022" });
+    await user.type(within(dialog).getByLabelText("Início da vigência da nova versão"), "2027-01-01");
+    await user.type(within(dialog).getByLabelText("Referência normativa da nova versão"), "Res. sintética 5");
+    await user.click(within(dialog).getByRole("button", { name: "Criar nova versão" }));
+
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await vi.waitFor(() => expect(loads).toBe(2));
+    const post = calls.find((c) => c.method === "POST" && c.path === "/api/scoring-tables/t-fasi/versions");
+    expect(JSON.parse(String(post?.init?.body))).toEqual({
+      source_version_id: "v-fasi",
+      valid_from: "2027-01-01",
+      norm_reference: "Res. sintética 5",
+    });
+    expect(pageStatus()).toHaveTextContent("Nova versão criada.");
+  });
+
+  it("o 409 de sobreposição de vigência aparece como mensagem no diálogo e nada recarrega", async () => {
+    let loads = 0;
+    renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": () => {
+        loads += 1;
+        return { status: 200, body: TABLES };
+      },
+      "POST /api/scoring-tables/t-fasi/versions": {
+        status: 409,
+        body: { detail: "A vigência se sobrepõe à da versão FASI 2026" },
+      },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    await user.click(within(fasi).getByRole("button", { name: "Nova versão a partir de FASI 2026" }));
+    const dialog = await screen.findByRole("dialog", { name: "Nova versão a partir de FASI 2026" });
+    await user.type(within(dialog).getByLabelText("Início da vigência da nova versão"), "2026-06-01");
+    await user.type(within(dialog).getByLabelText("Referência normativa da nova versão"), "Res. 1");
+    await user.click(within(dialog).getByRole("button", { name: "Criar nova versão" }));
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("A vigência se sobrepõe à da versão FASI 2026");
+    expect(screen.getByRole("dialog", { name: "Nova versão a partir de FASI 2026" })).toBeInTheDocument();
+    expect(loads).toBe(1);
+  });
+
+  it("CSV com linhas inválidas lista todas as linhas e campos, não cria nada e não recarrega a lista", async () => {
+    let loads = 0;
+    const { calls } = renderAdmin("ADMIN", {
+      "GET /api/scoring-tables": () => {
+        loads += 1;
+        return { status: 200, body: TABLES };
+      },
+      "POST /api/scoring-tables/t-fasi/versions/import": {
+        status: 422,
+        body: {
+          detail: [
+            { field: "file", message: "linha 2, campo grupo: deve estar entre 1 e 8" },
+            { field: "file", message: "linha 4, campo pontos: número decimal inválido" },
+          ],
+        },
+      },
+    });
+    const user = userEvent.setup();
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+
+    await user.click(within(fasi).getByRole("button", { name: "Importar CSV para a tabela Tabela da FASI" }));
+    const dialog = await screen.findByRole("dialog", { name: "Importar CSV como nova versão" });
+    await user.upload(within(dialog).getByLabelText("Arquivo CSV"), new File(["grupo,item\n"], "c.csv", { type: "text/csv" }));
+    await user.type(within(dialog).getByLabelText("Início da vigência do CSV"), "2027-01-01");
+    await user.type(within(dialog).getByLabelText("Referência normativa do CSV"), "Res. 2");
+    await user.click(within(dialog).getByRole("button", { name: "Importar CSV" }));
+
+    const alert = await within(dialog).findByRole("alert");
+    expect(within(alert).getAllByRole("listitem").map((i) => i.textContent)).toEqual([
+      "linha 2, campo grupo: deve estar entre 1 e 8",
+      "linha 4, campo pontos: número decimal inválido",
+    ]);
+    expect(loads).toBe(1);
+    expect(calls.filter((c) => c.method === "POST").map((c) => c.path)).toEqual([
+      "/api/scoring-tables/t-fasi/versions/import",
+    ]);
+  });
+
+  it("quem não é ADMIN não vê nenhum dos três botões", async () => {
+    renderAdmin("SECRETARIA");
+    const fasi = await screen.findByRole("region", { name: "Tabela da FASI" });
+    expect(within(fasi).queryByRole("button", { name: /^Duplicar/ })).not.toBeInTheDocument();
+    expect(within(fasi).queryByRole("button", { name: /^Importar CSV/ })).not.toBeInTheDocument();
+    expect(within(fasi).queryByRole("button", { name: /^Nova versão/ })).not.toBeInTheDocument();
   });
 });

@@ -2,23 +2,23 @@ import { useState } from "react";
 import { request } from "../api/client";
 import type { ScoringTableInfo } from "../api/types";
 import { Alert, Field, FormProblem, useSubmit } from "./formKit";
+import { Modal } from "./Modal";
 
-function DuplicateForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: (message: string) => void }) {
+function DuplicateForm({ table, onDone }: { table: ScoringTableInfo; onDone: (message: string) => void }) {
   const [name, setName] = useState("");
   const { submit, errors, error, busy } = useSubmit(async () => {
     await request("POST", `/api/scoring-tables/${table.id}/duplicate`, { new_name: name.trim() });
     setName("");
-  }, () => onChanged("Tabela duplicada."));
+  }, () => onDone("Tabela duplicada."));
 
   return (
-    <form className="card" onSubmit={submit} noValidate aria-label="Duplicar tabela">
-      <h3>Duplicar tabela</h3>
+    <form onSubmit={submit} noValidate aria-label="Duplicar tabela">
       <p className="muted">Copia a última versão de {table.name} para uma tabela nova e independente.</p>
       <Field id="dup-name" label="Nome da nova tabela" error={errors.name}>
         {(p) => <input {...p} value={name} onChange={(e) => setName(e.target.value)} />}
       </Field>
       <Alert message={error} />
-      <button type="submit" disabled={busy}>
+      <button type="submit" className="btn btn-primary" disabled={busy}>
         Duplicar tabela
       </button>
     </form>
@@ -28,11 +28,11 @@ function DuplicateForm({ table, onChanged }: { table: ScoringTableInfo; onChange
 function VersionForm({
   table,
   version,
-  onChanged,
+  onDone,
 }: {
   table: ScoringTableInfo;
   version: { id: string; name: string };
-  onChanged: (message: string) => void;
+  onDone: (message: string) => void;
 }) {
   const [validFrom, setValidFrom] = useState("");
   const [validTo, setValidTo] = useState("");
@@ -47,11 +47,10 @@ function VersionForm({
     setValidFrom("");
     setValidTo("");
     setReference("");
-  }, () => onChanged("Nova versão criada."));
+  }, () => onDone("Nova versão criada."));
 
   return (
-    <form className="card" onSubmit={submit} noValidate aria-label="Nova versão">
-      <h3>Nova versão</h3>
+    <form onSubmit={submit} noValidate aria-label="Nova versão">
       <p className="muted">
         Copia grupos e critérios de {version.name}. A versão sem data final termina no dia anterior ao início.
       </p>
@@ -65,14 +64,14 @@ function VersionForm({
         {(p) => <input {...p} value={reference} onChange={(e) => setReference(e.target.value)} />}
       </Field>
       <Alert message={error} />
-      <button type="submit" disabled={busy}>
+      <button type="submit" className="btn btn-primary" disabled={busy}>
         Criar nova versão
       </button>
     </form>
   );
 }
 
-function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: (message: string) => void }) {
+function CsvForm({ table, onDone }: { table: ScoringTableInfo; onDone: (message: string) => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [validFrom, setValidFrom] = useState("");
   const [validTo, setValidTo] = useState("");
@@ -88,11 +87,10 @@ function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: (me
     if (validTo) form.set("valid_to", validTo);
     await request("POST", `/api/scoring-tables/${table.id}/versions/import`, form);
     setFile(null);
-  }, () => onChanged("Versão criada a partir do CSV."));
+  }, () => onDone("Versão criada a partir do CSV."));
 
   return (
-    <form className="card" onSubmit={submit} noValidate aria-label="Importar CSV">
-      <h3>Importar CSV como nova versão</h3>
+    <form onSubmit={submit} noValidate aria-label="Importar CSV">
       <p className="muted">
         Colunas: grupo, item, descricao, unidade, modo, pontos, horas_por_bloco, limite e min_hours (opcional,
         carga horária mínima em horas; vazio ou ausente = sem mínimo). UTF-8, separado por
@@ -131,29 +129,47 @@ function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: (me
         </div>
       )}
       <Alert message={error} />
-      <button type="submit" disabled={busy}>
+      <button type="submit" className="btn btn-primary" disabled={busy}>
         Importar CSV
       </button>
     </form>
   );
 }
 
-/** ADMUI-02: duplicate the table, create a version from the selected one, upload a criteria CSV. */
-export function ScoringAdminForms({
+type DialogProps = {
+  /** Called after a write, with the sentence the page announces. */
+  onDone: (message: string) => void;
+  onClose: () => void;
+};
+
+/** GTAB-12, GTAB-35: "Duplicar" of a table, in a dialog. */
+export function DuplicateDialog({ table, onDone, onClose }: DialogProps & { table: ScoringTableInfo }) {
+  return (
+    <Modal title="Duplicar tabela" onClose={onClose}>
+      <DuplicateForm table={table} onDone={onDone} />
+    </Modal>
+  );
+}
+
+/** GTAB-12, GTAB-35: "Nova versão a partir desta", with the clicked version as the source. */
+export function VersionDialog({
   table,
   version,
-  onChanged,
-}: {
-  table: ScoringTableInfo;
-  version: { id: string; name: string };
-  /** Called after a write, with the sentence the page announces. */
-  onChanged: (message: string) => void;
-}) {
+  onDone,
+  onClose,
+}: DialogProps & { table: ScoringTableInfo; version: { id: string; name: string } }) {
   return (
-    <>
-      <DuplicateForm table={table} onChanged={onChanged} />
-      <VersionForm table={table} version={version} onChanged={onChanged} />
-      <CsvForm table={table} onChanged={onChanged} />
-    </>
+    <Modal title={`Nova versão a partir de ${version.name}`} onClose={onClose}>
+      <VersionForm table={table} version={version} onDone={onDone} />
+    </Modal>
+  );
+}
+
+/** GTAB-13, GTAB-35: "Importar CSV" of a table, in a dialog. */
+export function CsvDialog({ table, onDone, onClose }: DialogProps & { table: ScoringTableInfo }) {
+  return (
+    <Modal title="Importar CSV como nova versão" onClose={onClose}>
+      <CsvForm table={table} onDone={onDone} />
+    </Modal>
   );
 }

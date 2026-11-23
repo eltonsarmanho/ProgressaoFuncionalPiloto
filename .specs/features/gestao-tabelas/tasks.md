@@ -1012,7 +1012,7 @@ graph LR
 
 #### T30: Duplicar, nova versão e importar CSV em diálogos
 
-**Status**: Pending
+**Status**: Done
 
 **What**: Os três formulários que já existem (`DuplicateForm`, `VersionForm`, `CsvForm`) saem do cartão de critérios e passam a abrir em `Modal` pelos botões "Duplicar" e "Importar CSV" (por tabela) e "Nova versão a partir desta" (por versão, com a versão como origem). Os erros 409 de ADM-05 a ADM-07 aparecem com a mensagem da API e a lista de erros por linha do CSV (422 em `file`) continua. Sucesso recarrega a lista e anuncia em `p[role=status]`.
 **Where**: `frontend/src/components/ScoringAdminForms.tsx` (modify)
@@ -1027,9 +1027,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/components/ScoringAdminForms.test.tsx` e `frontend/src/pages/ScoringAdmin.test.tsx` (modificam): cada botão abre o diálogo certo e a nova versão leva `source_version_id` da versão clicada; sucesso recarrega a lista sem recarregar a página e anuncia em texto; 409 de sobreposição de vigência aparece como mensagem; CSV com linhas inválidas lista todas as linhas e campos e não cria nada; o teste de duplicar que já existe (ADMUI-02) segue verde; o cartão de critérios deixa de trazer os formulários
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/components/ScoringAdminForms.test.tsx` e `frontend/src/pages/ScoringAdmin.test.tsx` (modificam): cada botão abre o diálogo certo e a nova versão leva `source_version_id` da versão clicada; sucesso recarrega a lista sem recarregar a página e anuncia em texto; 409 de sobreposição de vigência aparece como mensagem; CSV com linhas inválidas lista todas as linhas e campos e não cria nada; o teste de duplicar que já existe (ADMUI-02) segue verde; o cartão de critérios deixa de trazer os formulários
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front

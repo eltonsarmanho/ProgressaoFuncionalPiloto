@@ -4,7 +4,6 @@ import type { ScoringTableInfo, ScoringVersion, Unit } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import { ReviewHighlight } from "../components/ReviewHighlight";
 import { CreateTableDialog } from "../components/ScoringTableDialogs";
-import { ScoringAdminForms } from "../components/ScoringAdminForms";
 import { ScoringTableCard } from "../components/ScoringTableCard";
 import { tableActions, versionActions, type ActionContext } from "../components/scoringActions";
 import { blockReasonText } from "../labels";
@@ -229,13 +228,6 @@ export function ScoringAdmin() {
             </p>
           )}
           <ReviewHighlight groups={version.groups} />
-          {isAdmin && (
-            <ScoringAdminForms
-              table={openTable}
-              version={{ id: openVersion.id, name: openVersion.name }}
-              onChanged={done}
-            />
-          )}
         </section>
       )}
       {isAdmin && dialog}
