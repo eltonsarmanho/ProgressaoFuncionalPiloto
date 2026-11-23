@@ -2956,7 +2956,17 @@ class SqlProcessPurgeRepository:
             delete(ReportDraftModel).where(ReportDraftModel.process_id == process_id),
             delete(GeneratedFileModel).where(GeneratedFileModel.generated_document_id.in_(generated)),
             delete(GeneratedDocumentModel).where(GeneratedDocumentModel.process_id == process_id),
-            # Candidates and evidences go by cascade.
+            # The evidences go first, by hand. `origin_activity_id` is NO ACTION and PostgreSQL
+            # checks it as each activity row is deleted, while the cascade of `activity_id` only
+            # removes the evidence when the row of the KEPT activity is reached: with the merged
+            # activity physically before the kept one the check still sees the evidence and the
+            # DELETE fails (production, 2026-11-23).
+            delete(ActivityEvidenceModel).where(
+                ActivityEvidenceModel.activity_id.in_(
+                    select(ActivityModel.id).where(ActivityModel.process_id == process_id)
+                )
+            ),
+            # Candidates go by cascade.
             delete(ActivityModel).where(ActivityModel.process_id == process_id),
             # Runs, pages and jobs go by cascade.
             delete(DocumentModel).where(DocumentModel.process_id == process_id),

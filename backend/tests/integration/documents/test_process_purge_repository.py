@@ -218,17 +218,31 @@ def test_delete_all_leaves_no_row_of_the_process_in_any_dependent_table(
     assert left == 0
 
 
+@pytest.mark.parametrize(
+    "merged_row_first", [False, True], ids=["merged-row-last", "merged-row-first"]
+)
 def test_a_process_with_a_merged_activity_is_purged_without_breaking_the_merge_keys(
-    engine, uow_factory, session_factory, process, base
+    engine, uow_factory, session_factory, process, base, merged_row_first
 ):
-    """DUP-02: merged_into_id and origin_activity_id are NO ACTION and do not block the DELETE."""
+    """DUP-02: merged_into_id and origin_activity_id are NO ACTION and do not block the DELETE.
+
+    PostgreSQL checks the origin FK row by row, as each activity row is deleted, and the evidences
+    that point at the merged activity only disappear when the cascade of the kept activity runs.
+    When the merged row is physically BEFORE the kept one the check sees them still alive and
+    fails; production hit it (a freed page made the merged row come first). CLUSTER fixes the
+    physical order here.
+    """
     populate(uow_factory, process, base, session_factory)
+    # The merged activity is the one whose title sorts first when merged_row_first.
+    kept_title, merged_title = (
+        ("Atividade 2", "Atividade 1") if merged_row_first else ("Atividade 1", "Atividade 2")
+    )
     with engine.begin() as conn:
         kept, merged = (
             conn.execute(
                 text("SELECT id FROM activities WHERE title = :t"), {"t": title}
             ).scalar_one()
-            for title in ("Atividade 1", "Atividade 2")
+            for title in (kept_title, merged_title)
         )
         conn.execute(
             text("UPDATE activities SET merged_into_id = :k WHERE id = :m"),
@@ -239,6 +253,20 @@ def test_a_process_with_a_merged_activity_is_purged_without_breaking_the_merge_k
                  "WHERE activity_id = :m"),
             {"k": kept, "m": merged},
         )  # fmt: skip
+        assert conn.execute(
+            text("SELECT count(*) FROM activity_evidences WHERE origin_activity_id = :m"),
+            {"m": merged},
+        ).scalar_one() == 1  # the setup really leaves an evidence that points at the merged row
+    with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+        conn.execute(text("CREATE INDEX tmp_purge_order ON activities (title)"))
+        conn.execute(text("CLUSTER activities USING tmp_purge_order"))
+        conn.execute(text("DROP INDEX tmp_purge_order"))
+        first = conn.execute(
+            text("SELECT title FROM activities WHERE process_id = :p ORDER BY ctid LIMIT 1"),
+            {"p": process.id},
+        ).scalar_one()
+    assert first == "Atividade 1"  # CLUSTER put the lowest title first
+    assert (first == merged_title) is merged_row_first
 
     purge(session_factory, process.id)
 
