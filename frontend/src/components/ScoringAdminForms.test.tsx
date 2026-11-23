@@ -11,6 +11,8 @@ const TABLE: ScoringTableInfo = {
   name: "Tabela da FASI",
   archived: false,
   unit_ids: [],
+  archive_blocked_reason: null,
+  delete_blocked_reason: null,
   versions: [],
 };
 const VERSION = { id: "v-fasi", name: "FASI 2022" };

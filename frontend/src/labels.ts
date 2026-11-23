@@ -8,7 +8,7 @@ import type {
   GenerationState,
   PendingBoardItem,
 } from "./api/generated";
-import type { DocumentStatus, InvalidReason, Level, Modality, NormKind, ProcessStatus, Severity, Validity } from "./api/types";
+import type { BlockReasonCode, DocumentStatus, InvalidReason, Level, Modality, NormKind, ProcessStatus, Severity, Validity } from "./api/types";
 
 export const STATUS_LABELS: Record<ProcessStatus, string> = {
   RASCUNHO: "Rascunho",
@@ -176,6 +176,131 @@ export const TABLE_STATUS_LABELS: Record<string, string> = {
   OFICIAL: "Oficial",
   PENDENTE_VALIDACAO: "Pendente de validação",
 };
+
+/** GTAB-34: the tags of a version in the table list. "Em uso" always comes with the unit acronym. */
+export const TABLE_BADGE_LABELS = {
+  inUse: "Em uso",
+  usedByProcess: "Usada por processo",
+  superseded: "Substituída",
+  archived: "Arquivada",
+  ended: "Encerrada",
+} as const;
+
+export function inUseBadge(acronym: string): string {
+  return `${TABLE_BADGE_LABELS.inUse} (${acronym})`;
+}
+
+/** GTAB-36: the text of each block code; the server sends the code, the screen writes the words (L-037). */
+export const BLOCK_REASON_LABELS: Record<BlockReasonCode, string> = {
+  VERSAO_SUBSTITUIDA: "A versão foi substituída por outra e é somente leitura; altere a versão que a substitui.",
+  VERSAO_NAO_MAIS_RECENTE:
+    "Há uma versão mais recente da tabela; só a mais recente tem os critérios editados. Crie uma nova versão para mudar estes.",
+  VERSAO_USADA_POR_PROCESSO:
+    "A versão é usada por processos e não pode ser alterada nem excluída; crie uma nova versão para mudar os critérios.",
+  VERSAO_EM_USO_DE_UNIDADE:
+    "A versão está em uso de unidades; marque outra versão ou desmarque esta antes de excluí-la.",
+  VERSAO_SUBSTITUI_OUTRA: "A versão substitui outra versão da tabela e não pode ser excluída.",
+  ULTIMA_VERSAO_DA_TABELA: 'É a única versão da tabela; para removê-la use "Excluir tabela".',
+  TABELA_ARQUIVADA: "A tabela está arquivada; desarquive-a para escolher ou marcar as suas versões.",
+  TABELA_COM_VERSAO_EM_USO:
+    "A tabela tem versão em uso de unidades; marque outra tabela ou desmarque a versão antes de arquivar ou excluir.",
+  TABELA_OFICIAL_PROTEGIDA:
+    "A tabela oficial da UFPA e as suas versões não podem ser excluídas; arquive-a se não for mais usada.",
+  UNIDADE_COM_VERSAO_EM_USO:
+    "A unidade tem versão desta tabela em uso; desmarque a versão antes de retirar a unidade.",
+};
+
+const UNKNOWN_BLOCK_REASON = "Esta ação não é permitida agora.";
+
+/**
+ * GTAB-36: the sentence that explains a block, with the number of processes and the acronyms the server
+ * counted. An unknown code gets the generic sentence, never the raw code.
+ */
+export function blockReasonText(
+  code: string,
+  { processCount, acronyms }: { processCount?: number; acronyms?: readonly string[] } = {},
+): string {
+  const base = (BLOCK_REASON_LABELS as Record<string, string>)[code];
+  if (base === undefined) return UNKNOWN_BLOCK_REASON;
+  const list = acronyms && acronyms.length > 0 ? [...acronyms].sort().join(", ") : null;
+  switch (code) {
+    case "VERSAO_USADA_POR_PROCESSO":
+      return processCount === undefined
+        ? base
+        : `A versão é usada por ${processCount} ${processCount === 1 ? "processo" : "processos"} e não pode ser alterada nem excluída; crie uma nova versão para mudar os critérios.`;
+    case "VERSAO_EM_USO_DE_UNIDADE":
+      return list
+        ? `A versão está em uso ${acronyms!.length === 1 ? "da unidade" : "das unidades"} ${list}; marque outra versão ou desmarque esta antes de excluí-la.`
+        : base;
+    case "TABELA_COM_VERSAO_EM_USO":
+      return list
+        ? `A tabela tem versão em uso ${acronyms!.length === 1 ? "da unidade" : "das unidades"} ${list}; marque outra tabela ou desmarque a versão antes de arquivar ou excluir.`
+        : base;
+    case "UNIDADE_COM_VERSAO_EM_USO":
+      return list
+        ? `${acronyms!.length === 1 ? "A unidade" : "As unidades"} ${list} ${acronyms!.length === 1 ? "tem" : "têm"} versão desta tabela em uso; desmarque a versão antes de retirar ${acronyms!.length === 1 ? "a unidade" : "as unidades"}.`
+        : base;
+    default:
+      return base;
+  }
+}
+
+/** GTAB-17: the history of a table. */
+export const HISTORY_ACTION_LABELS: Record<string, string> = {
+  CREATE: "Criação",
+  UPDATE: "Alteração",
+  ARCHIVE: "Arquivamento",
+  DELETE: "Exclusão",
+};
+
+export const HISTORY_ENTITY_LABELS: Record<string, string> = {
+  scoring_table: "Tabela",
+  scoring_version: "Versão",
+  unit_scoring_default: "Versão em uso da unidade",
+};
+
+const HISTORY_CHANGE_LABELS: Record<string, string> = {
+  archived: "Arquivada",
+  unit_ids: "Unidades",
+  version_id: "Versão em uso",
+  name: "Nome",
+  table_id: "Tabela",
+  valid_from: "Início da vigência",
+  valid_to: "Fim da vigência",
+  norm_reference: "Referência normativa",
+  norm_code: "Código da norma",
+  status: "Situação",
+  criteria: "Critérios",
+  versions: "Versões",
+  duplicated_from: "Duplicada de",
+  copied_from_version_id: "Copiada da versão",
+  imported_criteria: "Critérios importados",
+};
+
+const CRITERION_FIELD_LABELS: Record<string, string> = {
+  description: "Descrição",
+  unit_label: "Unidade de medida",
+  accepted_evidence: "Evidência aceita",
+  rules: "Regras",
+  review_note: "Nota de revisão",
+  unit_points: "Pontos por unidade",
+  hours_per_block: "Horas por bloco",
+  prep_ratio: "Preparação",
+  min_hours: "Carga horária mínima",
+  max_points: "Limite de pontos",
+  mode: "Modo de pontuação",
+  weeks_per_semester: "Semanas por semestre",
+};
+
+/** The change key of an audit event as text: `criteria.2.7.unit_points` -> "II.7: Pontos por unidade". */
+export function historyChangeLabel(key: string): string {
+  const criterion = /^criteria\.(\d+)\.(\d+)\.(\w+)$/.exec(key);
+  if (criterion) {
+    const field = CRITERION_FIELD_LABELS[criterion[3]] ?? criterion[3];
+    return `${roman(Number(criterion[1]))}.${criterion[2]}: ${field}`;
+  }
+  return HISTORY_CHANGE_LABELS[key] ?? key;
+}
 
 /** "414.00" -> "414,00" (pt-BR); null/undefined -> "—". */
 export function formatDecimal(value: string | null | undefined): string {

@@ -14,7 +14,12 @@ const FASI_V1 = {
   valid_to: "2026-02-28",
   norm_reference: "Res. FASI 2022, Anexo I",
   status: "PENDENTE_VALIDACAO",
+  superseded_by_id: null,
   in_use: true,
+  process_count: 1,
+  default_for_unit_ids: [],
+  read_only_reason: null,
+  delete_blocked_reason: null,
 };
 const FASI_V2 = {
   ...FASI_V1,
@@ -27,12 +32,22 @@ const FASI_V2 = {
   in_use: false,
 };
 const TABLES = [
-  { id: "t-fasi", name: "Tabela da FASI", archived: false, unit_ids: ["u1"], versions: [FASI_V1, FASI_V2] },
+  {
+    id: "t-fasi",
+    name: "Tabela da FASI",
+    archived: false,
+    unit_ids: ["u1"],
+    archive_blocked_reason: null,
+    delete_blocked_reason: null,
+    versions: [FASI_V1, FASI_V2],
+  },
   {
     id: "t-ifch",
     name: "Tabela do IFCH",
     archived: false,
     unit_ids: ["u2"],
+    archive_blocked_reason: null,
+    delete_blocked_reason: null,
     versions: [
       { ...FASI_V1, id: "v-ifch", table_id: "t-ifch", name: "IFCH 2015", valid_to: null, status: "OFICIAL", norm_reference: "Res. 4.644/2015" },
     ],

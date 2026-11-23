@@ -781,7 +781,7 @@ graph LR
 
 #### T22: Tipos, rótulos e fixtures da API de tabelas
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ScoringTableInfo` passa a ter, em cada versão, `VersionInfo & {process_count, default_for_unit_ids, read_only_reason, delete_blocked_reason}` e, na tabela, `archive_blocked_reason` e `delete_blocked_reason` (os campos novos só no tipo da lista, porque `VersionInfo` também é o tipo da versão escolhida do processo, que a API serve sem eles). `labels.ts` ganha: o texto de cada código de motivo e a função `blockReasonText(code, {processCount, acronyms})` (o texto com a quantidade e as siglas, fonte única na tela; o `detail` do 409 só aparece quando o código é desconhecido); as etiquetas "Em uso", "Usada por processo", "Substituída", "Arquivada" e "Encerrada"; e os rótulos do histórico (entidade, ação CREATE, UPDATE, ARCHIVE e DELETE, e as chaves de mudança `archived`, `unit_ids`, `criteria.*`, `version_id`). As fixtures de `ScoringAdmin.test.tsx` e `TablePicker.test.tsx` passam a trazer `superseded_by_id` e os campos novos.
 **Where**: `frontend/src/api/types.ts` (modify)
@@ -796,10 +796,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `frontend/src/labels.test.ts` (modifica): todo código de motivo tem texto em português sem o código cru; `blockReasonText` escreve a quantidade de processos e as siglas ordenadas e cai no texto genérico para código desconhecido; as cinco etiquetas existem; cada ação e entidade do histórico tem rótulo e `criteria.2.7.unit_points` vira texto legível
-- [ ] `frontend/src/pages/ScoringAdmin.test.tsx` e `frontend/src/components/TablePicker.test.tsx` seguem verdes com as fixtures novas; o `tsc` e o `lint` passam
-- [ ] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `frontend/src/labels.test.ts` (modifica): todo código de motivo tem texto em português sem o código cru; `blockReasonText` escreve a quantidade de processos e as siglas ordenadas e cai no texto genérico para código desconhecido; as cinco etiquetas existem; cada ação e entidade do histórico tem rótulo e `criteria.2.7.unit_points` vira texto legível
+- [x] `frontend/src/pages/ScoringAdmin.test.tsx` e `frontend/src/components/TablePicker.test.tsx` seguem verdes com as fixtures novas; o `tsc` e o `lint` passam
+- [x] Gate check passes: `cd frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: unit
 **Gate**: front

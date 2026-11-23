@@ -8,7 +8,7 @@ import {
   VALUE_SOURCES,
 } from "./api/board";
 import { ARTIFACT_KINDS, DOCUMENT_KINDS, GENERATION_ALERT_CODES, GENERATION_CODES, PENDING_BOARD_ITEMS } from "./api/generated";
-import { SCORING_ALERT_CODES, type InvalidReason, type Validity } from "./api/types";
+import { BLOCK_REASON_CODES, SCORING_ALERT_CODES, type InvalidReason, type Validity } from "./api/types";
 import {
   ALERT_CODE_LABELS,
   BADGE_AWAITING_VALIDATION,
@@ -35,6 +35,13 @@ import {
   OUTSIDE_INTERSTICE_CODE,
   alertDetail,
   alertText,
+  BLOCK_REASON_LABELS,
+  HISTORY_ACTION_LABELS,
+  HISTORY_ENTITY_LABELS,
+  TABLE_BADGE_LABELS,
+  blockReasonText,
+  historyChangeLabel,
+  inUseBadge,
 } from "./labels";
 
 describe("UIG-05: rótulos em português dos documentos gerados", () => {
@@ -304,5 +311,85 @@ describe("PORT-02, PORT-03, PORT-07, DOS-02, DOS-03, DOS-05: rótulos da banca e
       ENTREGUE: "Entregue",
       PENDENTE: "Pendente",
     });
+  });
+});
+
+describe("GTAB-34, GTAB-36: motivos de bloqueio, etiquetas e histórico das tabelas", () => {
+  it("todo código de motivo tem texto em português sem o código cru, e só eles", () => {
+    expect(Object.keys(BLOCK_REASON_LABELS).sort()).toEqual([...BLOCK_REASON_CODES].sort());
+    expect([...BLOCK_REASON_CODES].sort()).toEqual(
+      [
+        "TABELA_ARQUIVADA",
+        "TABELA_COM_VERSAO_EM_USO",
+        "TABELA_OFICIAL_PROTEGIDA",
+        "UNIDADE_COM_VERSAO_EM_USO",
+        "ULTIMA_VERSAO_DA_TABELA",
+        "VERSAO_EM_USO_DE_UNIDADE",
+        "VERSAO_NAO_MAIS_RECENTE",
+        "VERSAO_SUBSTITUI_OUTRA",
+        "VERSAO_SUBSTITUIDA",
+        "VERSAO_USADA_POR_PROCESSO",
+      ].sort(),
+    );
+    for (const code of BLOCK_REASON_CODES) {
+      const text = blockReasonText(code, { processCount: 2, acronyms: ["FASI"] });
+      expect(text, code).toMatch(/\s/);
+      expect(text, code).not.toContain(code);
+      expect(text, code).not.toMatch(/[A-Z]{3,}_[A-Z]/);
+    }
+  });
+
+  it("blockReasonText escreve a quantidade de processos, no singular e no plural", () => {
+    expect(blockReasonText("VERSAO_USADA_POR_PROCESSO", { processCount: 1 })).toContain("1 processo");
+    expect(blockReasonText("VERSAO_USADA_POR_PROCESSO", { processCount: 1 })).not.toContain("1 processos");
+    expect(blockReasonText("VERSAO_USADA_POR_PROCESSO", { processCount: 3 })).toContain("3 processos");
+  });
+
+  it("blockReasonText escreve as siglas ordenadas e separadas por vírgula", () => {
+    const text = blockReasonText("VERSAO_EM_USO_DE_UNIDADE", { acronyms: ["IFCH", "FASI"] });
+    expect(text).toContain("FASI, IFCH");
+    expect(blockReasonText("TABELA_COM_VERSAO_EM_USO", { acronyms: ["IFCH", "FASI"] })).toContain("FASI, IFCH");
+    expect(blockReasonText("UNIDADE_COM_VERSAO_EM_USO", { acronyms: ["FASI"] })).toContain("FASI");
+  });
+
+  it("código desconhecido cai no texto genérico, sem mostrar o código", () => {
+    const text = blockReasonText("CODIGO_NOVO_DO_SERVIDOR", {});
+    expect(text).toBe("Esta ação não é permitida agora.");
+    expect(text).not.toContain("CODIGO_NOVO");
+  });
+
+  it("as cinco etiquetas da versão existem", () => {
+    expect(TABLE_BADGE_LABELS).toEqual({
+      inUse: "Em uso",
+      usedByProcess: "Usada por processo",
+      superseded: "Substituída",
+      archived: "Arquivada",
+      ended: "Encerrada",
+    });
+    expect(inUseBadge("FASI")).toBe("Em uso (FASI)");
+  });
+
+  it("cada ação e cada entidade do histórico têm rótulo", () => {
+    expect(HISTORY_ACTION_LABELS).toEqual({
+      CREATE: "Criação",
+      UPDATE: "Alteração",
+      ARCHIVE: "Arquivamento",
+      DELETE: "Exclusão",
+    });
+    expect(HISTORY_ENTITY_LABELS).toEqual({
+      scoring_table: "Tabela",
+      scoring_version: "Versão",
+      unit_scoring_default: "Versão em uso da unidade",
+    });
+  });
+
+  it("as chaves de mudança do histórico viram texto legível", () => {
+    expect(historyChangeLabel("archived")).toBe("Arquivada");
+    expect(historyChangeLabel("unit_ids")).toBe("Unidades");
+    expect(historyChangeLabel("version_id")).toBe("Versão em uso");
+    expect(historyChangeLabel("criteria.2.7.unit_points")).toBe("II.7: Pontos por unidade");
+    expect(historyChangeLabel("criteria.8.37.max_points")).toBe("VIII.37: Limite de pontos");
+    expect(historyChangeLabel("criteria.2.7.description")).toBe("II.7: Descrição");
+    expect(historyChangeLabel("chave_nova")).toBe("chave_nova");
   });
 });

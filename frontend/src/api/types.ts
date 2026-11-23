@@ -355,12 +355,44 @@ export type SkippedActivity = { id: string; reason: "SEM_CATEGORIA" | InvalidRea
 /** The answer of `POST /api/processes/{id}/activities/validate-batch` (VAL-04). */
 export type BulkValidateResult = { activities: Activity[]; skipped: SkippedActivity[] };
 
+/** Codes of why a version or a table cannot be edited, archived, deleted, marked or reduced (GTAB-36). */
+export const BLOCK_REASON_CODES = [
+  "VERSAO_SUBSTITUIDA",
+  "VERSAO_NAO_MAIS_RECENTE",
+  "VERSAO_USADA_POR_PROCESSO",
+  "VERSAO_EM_USO_DE_UNIDADE",
+  "VERSAO_SUBSTITUI_OUTRA",
+  "ULTIMA_VERSAO_DA_TABELA",
+  "TABELA_ARQUIVADA",
+  "TABELA_COM_VERSAO_EM_USO",
+  "TABELA_OFICIAL_PROTEGIDA",
+  "UNIDADE_COM_VERSAO_EM_USO",
+] as const;
+export type BlockReasonCode = (typeof BLOCK_REASON_CODES)[number];
+
+/** A version of `GET /api/scoring-tables`: `VersionInfo` plus the use of the version and why it is blocked. */
+export type ScoringVersionSummary = VersionInfo & {
+  /** Some process uses the version (what the tag "Usada por processo" says). */
+  in_use: boolean;
+  process_count: number;
+  /** The units that have this version as the one in use (GTAB-10). */
+  default_for_unit_ids: string[];
+  /** Code of why the criteria are read only; null when they can be edited. */
+  read_only_reason: string | null;
+  /** Code of why the version cannot be deleted; null when it can. */
+  delete_blocked_reason: string | null;
+};
+
 export type ScoringTableInfo = {
   id: string;
   name: string;
   archived: boolean;
   unit_ids: string[];
-  versions: (VersionInfo & { in_use: boolean })[];
+  /** Code of why the table cannot be archived; null when it can. */
+  archive_blocked_reason: string | null;
+  /** Code of why the table cannot be deleted; null when it can. */
+  delete_blocked_reason: string | null;
+  versions: ScoringVersionSummary[];
 };
 
 /* ---- Documentos (Etapa 2) ---- */

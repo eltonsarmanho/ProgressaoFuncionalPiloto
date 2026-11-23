@@ -31,9 +31,26 @@ const IFCH: ChosenTable = {
     superseded_by_id: null,
   },
 };
+const SUMMARY = { process_count: 0, default_for_unit_ids: [], read_only_reason: null, delete_blocked_reason: null };
 const TABLES: ScoringTableInfo[] = [
-  { id: "t-fasi", name: "Tabela FASI", archived: false, unit_ids: ["u1"], versions: [{ ...FASI.version, in_use: false }] },
-  { id: "t-ifch", name: "Tabela IFCH", archived: false, unit_ids: ["u2"], versions: [{ ...IFCH.version, in_use: true }] },
+  {
+    id: "t-fasi",
+    name: "Tabela FASI",
+    archived: false,
+    unit_ids: ["u1"],
+    archive_blocked_reason: null,
+    delete_blocked_reason: null,
+    versions: [{ ...FASI.version, ...SUMMARY, in_use: false }],
+  },
+  {
+    id: "t-ifch",
+    name: "Tabela IFCH",
+    archived: false,
+    unit_ids: ["u2"],
+    archive_blocked_reason: null,
+    delete_blocked_reason: null,
+    versions: [{ ...IFCH.version, ...SUMMARY, process_count: 1, in_use: true }],
+  },
 ];
 
 describe("TablePicker", () => {
@@ -122,9 +139,11 @@ describe("TablePicker", () => {
         name: "Tabela IFCH",
         archived: false,
         unit_ids: ["u2"],
+        archive_blocked_reason: null,
+        delete_blocked_reason: null,
         versions: [
-          { ...OLD_VERSION, in_use: true },
-          { ...NEW_VERSION, in_use: false },
+          { ...OLD_VERSION, ...SUMMARY, process_count: 1, in_use: true },
+          { ...NEW_VERSION, ...SUMMARY, in_use: false },
         ],
       },
     ];
