@@ -63,7 +63,10 @@ def test_the_space_after_the_paragraph_is_3_mm_and_it_stays_with_the_next(tmp_pa
     add_emblem(document)
     properties = body_of(saved(tmp_path, document))[0].find("w:pPr", NS)
     assert abs(int(properties.find("w:spacing", NS).get(f"{{{W}}}after")) - SPACE_TWIPS) <= 1
-    assert properties.find("w:keepNext", NS) is not None
+    keep_next = properties.find("w:keepNext", NS)
+    assert keep_next is not None
+    # a bare <w:keepNext/> is on; an explicit val of 0 or false would turn it off
+    assert keep_next.get(f"{{{W}}}val") in (None, "1", "true", "on")
 
 
 def test_the_alternative_text_is_the_name_of_the_emblem(tmp_path):
