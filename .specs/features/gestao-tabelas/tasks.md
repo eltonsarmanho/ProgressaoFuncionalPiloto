@@ -209,7 +209,7 @@ graph LR
 
 #### T3: Repositório: marcações, travas, exclusões e consultas agrupadas
 
-**Status**: Pending
+**Status**: Done
 
 **What**: A porta `ScoringTableRepository` (`domain/repositories/ports.py`) e o `SqlScoringTableRepository` ganham: `get_unit_default(unit_id)`, `list_unit_defaults()`, `set_unit_default(unit_id, version_id)` (upsert `pg_insert(...).on_conflict_do_update(index_elements=[unit_id], set_=...)`, atualiza `updated_at`), `clear_unit_default(unit_id)`, `unit_ids_defaulting_to(version_id)`; travas `lock_unit(unit_id)`, `lock_table(table_id)` e `lock_version(version_id)` (`SELECT ... FOR UPDATE`, devolvem se a linha existe); `version_process_counts()` (um `GROUP BY` sobre `functional_processes.scoring_table_version_id`, todos os status), `superseding_version_ids()` (versões apontadas por `superseded_by_id`), `list_version_headers(table_id)` (versões sem grupos nem critérios) e `count_criteria(version_id)`; `delete_version(version_id)` e `delete_table(table_id)` (as versões da tabela saem num único `DELETE`, depois a tabela; uma violação de FK 23503 vira `Conflict`, nunca `IntegrityError` solto). `list_versions_for_unit` passa a excluir tabela arquivada. `ScoringTableRecord` não muda.
 **Where**: `backend/app/infrastructure/database/repositories.py` (modify)
@@ -224,13 +224,13 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/test_scoring_repositories.py` (modifica): marcar, ler, listar e limpar; marcar de novo a mesma unidade com outra versão troca a versão (uma linha só); `unit_ids_defaulting_to`; contagem de processos agrupada (0, 1 e 3 processos em status diferentes na mesma versão, e em outra); `superseding_version_ids`; `list_version_headers` sem grupos; `count_criteria`; `list_versions_for_unit` não devolve versão de tabela arquivada e devolve o mesmo que antes quando a tabela não está arquivada
-- [ ] Exclusões: `delete_table` apaga, num só `DELETE`, uma tabela cujas duas versões se encadeiam por `superseded_by_id`, e some tudo (versões, grupos, critérios, associações); `delete_version` de versão marcada em `scoring_unit_defaults` ou usada por processo levanta `Conflict`, e nada é apagado
-- [ ] Travas: com uma unidade de trabalho segurando `lock_unit` (ou `lock_table`, `lock_version`) sem confirmar, uma segunda espera; ao confirmar a primeira, a segunda prossegue (teste com duas conexões e `threading`, com tempo limite)
-- [ ] `test_table_and_version_round_trip_with_groups_and_criteria` segue verde (o `ScoringTableRecord` não ganhou campo)
-- [ ] Os testes que usam `list_versions_for_unit` seguem verdes: `backend/tests/integration/scoring/test_table_choice.py`, `backend/tests/integration/test_seed_scoring.py`, `backend/tests/integration/scoring/test_min_hours_persistence.py` e `backend/tests/integration/test_scoring_version_norm_code.py`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/test_scoring_repositories.py tests/integration/scoring/test_table_choice.py tests/integration/test_seed_scoring.py tests/integration/scoring/test_min_hours_persistence.py tests/integration/test_scoring_version_norm_code.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/test_scoring_repositories.py` (modifica): marcar, ler, listar e limpar; marcar de novo a mesma unidade com outra versão troca a versão (uma linha só); `unit_ids_defaulting_to`; contagem de processos agrupada (0, 1 e 3 processos em status diferentes na mesma versão, e em outra); `superseding_version_ids`; `list_version_headers` sem grupos; `count_criteria`; `list_versions_for_unit` não devolve versão de tabela arquivada e devolve o mesmo que antes quando a tabela não está arquivada
+- [x] Exclusões: `delete_table` apaga, num só `DELETE`, uma tabela cujas duas versões se encadeiam por `superseded_by_id`, e some tudo (versões, grupos, critérios, associações); `delete_version` de versão marcada em `scoring_unit_defaults` ou usada por processo levanta `Conflict`, e nada é apagado
+- [x] Travas: com uma unidade de trabalho segurando `lock_unit` (ou `lock_table`, `lock_version`) sem confirmar, uma segunda espera; ao confirmar a primeira, a segunda prossegue (teste com duas conexões e `threading`, com tempo limite)
+- [x] `test_table_and_version_round_trip_with_groups_and_criteria` segue verde (o `ScoringTableRecord` não ganhou campo)
+- [x] Os testes que usam `list_versions_for_unit` seguem verdes: `backend/tests/integration/scoring/test_table_choice.py`, `backend/tests/integration/test_seed_scoring.py`, `backend/tests/integration/scoring/test_min_hours_persistence.py` e `backend/tests/integration/test_scoring_version_norm_code.py`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/test_scoring_repositories.py tests/integration/scoring/test_table_choice.py tests/integration/test_seed_scoring.py tests/integration/scoring/test_min_hours_persistence.py tests/integration/test_scoring_version_norm_code.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted

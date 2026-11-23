@@ -47,7 +47,7 @@ from app.domain.entities.norm import Norm, NormFile
 from app.domain.entities.process import FunctionalProcess, ProcessStatus
 from app.domain.entities.professor import Professor, Titration
 from app.domain.entities.report import DraftEntry, DraftSection, ReportDocument, ReportDraft
-from app.domain.entities.scoring import ScoringCriterion, ScoringTableVersion
+from app.domain.entities.scoring import ScoringCriterion, ScoringTableVersion, UnitScoringDefault
 from app.domain.entities.user import Session, User
 from app.domain.rules.opinion_document import OpinionDocument
 from app.domain.rules.ordinance_grounding import OrdinanceAi
@@ -214,6 +214,54 @@ class ScoringTableRepository(Protocol):
 
     def version_in_use_ending_from(self, version_id: UUID, moment: date) -> bool:
         """A process that chose the version has an interstice end date on or after `moment`."""
+        ...
+
+    def list_version_headers(self, table_id: UUID) -> Sequence[ScoringTableVersion]:
+        """The versions of the table without groups and criteria."""
+        ...
+
+    def count_criteria(self, version_id: UUID) -> int: ...
+
+    def get_unit_default(self, unit_id: UUID) -> UnitScoringDefault | None:
+        """The version in use of the unit, read fresh from the database (GTAB-01)."""
+        ...
+
+    def list_unit_defaults(self) -> Sequence[UnitScoringDefault]: ...
+
+    def set_unit_default(self, unit_id: UUID, version_id: UUID) -> None:
+        """Marks the version as in use of the unit, replacing the one it had (one row per unit)."""
+        ...
+
+    def clear_unit_default(self, unit_id: UUID) -> None:
+        """Removes the mark of the unit; a unit without mark is left as it is."""
+        ...
+
+    def unit_ids_defaulting_to(self, version_id: UUID) -> Sequence[UUID]: ...
+
+    def lock_unit(self, unit_id: UUID) -> bool:
+        """Locks the row (SELECT FOR UPDATE) until the transaction ends; False if it is absent.
+        The order of the locks is always unit, table, version."""
+        ...
+
+    def lock_table(self, table_id: UUID) -> bool: ...
+
+    def lock_version(self, version_id: UUID) -> bool: ...
+
+    def version_process_counts(self) -> Mapping[UUID, int]:
+        """The processes of any status that chose each version, in one grouped read."""
+        ...
+
+    def superseding_version_ids(self) -> Collection[UUID]:
+        """The versions that replace another one."""
+        ...
+
+    def delete_version(self, version_id: UUID) -> None:
+        """Deletes a version with its groups and criteria; Conflict when still referenced."""
+        ...
+
+    def delete_table(self, table_id: UUID) -> None:
+        """Deletes the table, its versions (one DELETE) and unit associations; Conflict when a
+        version is still referenced."""
         ...
 
 

@@ -1,11 +1,14 @@
 """SEL-08, ATV-13: scoring table and activity repositories on real PostgreSQL."""
 
+import threading
+import time
 import uuid
 from dataclasses import replace
 from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
+from sqlalchemy import text
 
 from app.domain.entities.academic_unit import AcademicUnit, UnitKind
 from app.domain.entities.activity import (
@@ -24,6 +27,7 @@ from app.domain.entities.scoring import (
     ScoringMode,
     ScoringTableVersion,
     TableStatus,
+    UnitScoringDefault,
 )
 from app.domain.entities.user import Role, User
 from app.domain.errors import Conflict, NotFound, StaleVersion
@@ -389,3 +393,346 @@ def test_version_in_use_ending_from_compares_chosen_process_end_date(uow_factory
         assert repo.version_in_use_ending_from(version.id, date(2024, 11, 24)) is False
         assert repo.version_in_use_ending_from(version.id, date(2020, 1, 1)) is True
         assert repo.version_in_use_ending_from(other_version.id, date(2020, 1, 1)) is False
+
+
+# --- GTAB-01, GTAB-10, GTAB-24, GTAB-44: the version in use, locks, deletes, grouped reads ---
+
+
+def _mark(uow_factory, unit_id, version_id):
+    with uow_factory() as uow:
+        uow.scoring_tables.set_unit_default(unit_id, version_id)
+        uow.commit()
+
+
+def _count(engine, sql, **params) -> int:
+    with engine.connect() as conn:
+        return conn.execute(text(sql), params).scalar_one()
+
+
+def test_set_get_list_and_clear_the_version_in_use_of_a_unit(uow_factory, base):
+    _, version = add_table(uow_factory, base)
+    unit_id = base["unit"].id
+    with uow_factory() as uow:
+        assert uow.scoring_tables.get_unit_default(unit_id) is None
+        assert list(uow.scoring_tables.list_unit_defaults()) == []
+
+    _mark(uow_factory, unit_id, version.id)
+
+    expected = UnitScoringDefault(unit_id, version.id)
+    with uow_factory() as uow:
+        assert uow.scoring_tables.get_unit_default(unit_id) == expected
+        assert list(uow.scoring_tables.list_unit_defaults()) == [expected]
+        assert uow.scoring_tables.get_unit_default(base["other"].id) is None
+        uow.scoring_tables.clear_unit_default(unit_id)
+        uow.scoring_tables.clear_unit_default(unit_id)  # clearing what is not marked is a no-op
+        uow.commit()
+    with uow_factory() as uow:
+        assert uow.scoring_tables.get_unit_default(unit_id) is None
+        assert list(uow.scoring_tables.list_unit_defaults()) == []
+
+
+def test_marking_the_same_unit_again_swaps_the_version_and_keeps_one_row(
+    uow_factory, base, engine
+):
+    _, first = add_table(uow_factory, base, "Tabela A")
+    _, second = add_table(uow_factory, base, "Tabela B")
+    unit_id = base["unit"].id
+    _mark(uow_factory, unit_id, first.id)
+    with engine.connect() as conn:
+        stamp = conn.execute(text("SELECT updated_at FROM scoring_unit_defaults")).scalar_one()
+
+    _mark(uow_factory, unit_id, second.id)
+
+    with uow_factory() as uow:
+        assert uow.scoring_tables.get_unit_default(unit_id).version_id == second.id
+        assert len(uow.scoring_tables.list_unit_defaults()) == 1
+    assert _count(engine, "SELECT count(*) FROM scoring_unit_defaults") == 1
+    with engine.connect() as conn:
+        new_stamp = conn.execute(text("SELECT updated_at FROM scoring_unit_defaults")).scalar_one()
+    assert new_stamp > stamp
+
+
+def test_unit_ids_defaulting_to_lists_the_units_that_have_the_version_in_use(uow_factory, base):
+    _, version = add_table(uow_factory, base, unit_ids=[base["unit"].id, base["other"].id])
+    _, elsewhere = add_table(uow_factory, base, "Outra", unit_ids=[base["other"].id])
+    _mark(uow_factory, base["unit"].id, version.id)
+    _mark(uow_factory, base["other"].id, version.id)
+
+    with uow_factory() as uow:
+        assert sorted(uow.scoring_tables.unit_ids_defaulting_to(version.id)) == sorted(
+            [base["unit"].id, base["other"].id]
+        )
+        assert list(uow.scoring_tables.unit_ids_defaulting_to(elsewhere.id)) == []
+        uow.scoring_tables.clear_unit_default(base["other"].id)
+        assert list(uow.scoring_tables.unit_ids_defaulting_to(version.id)) == [base["unit"].id]
+
+
+def _add_processes(uow_factory, base, version_id, statuses):
+    process = base.get("test_process") or add_process(uow_factory, base)
+    base["test_process"] = process
+    with uow_factory() as uow:
+        for status in statuses:
+            copy = replace(process, id=uuid.uuid4(), status=status)
+            uow.processes.add(copy)
+            uow.processes.set_scoring_table_version(copy.id, version_id)
+        uow.commit()
+
+
+def test_version_process_counts_groups_all_statuses_in_one_read(uow_factory, base):
+    _, none_used = add_table(uow_factory, base, "Nenhum")
+    _, one = add_table(uow_factory, base, "Um")
+    _, three = add_table(uow_factory, base, "Três")
+    _add_processes(uow_factory, base, one.id, [ProcessStatus.RASCUNHO])
+    _add_processes(
+        uow_factory,
+        base,
+        three.id,
+        [ProcessStatus.EM_ANDAMENTO, ProcessStatus.CONCLUIDO, ProcessStatus.ARQUIVADO],
+    )
+
+    with uow_factory() as uow:
+        counts = uow.scoring_tables.version_process_counts()
+
+    assert counts.get(one.id) == 1
+    assert counts.get(three.id) == 3
+    assert counts.get(none_used.id, 0) == 0
+
+
+def test_superseding_version_ids_are_the_versions_that_replace_another(uow_factory, base):
+    _, old, newer = _two_versions(uow_factory, base)
+    _, lone = add_table(uow_factory, base, "Sozinha")
+    with uow_factory() as uow:
+        assert set(uow.scoring_tables.superseding_version_ids()) == set()
+        uow.scoring_tables.set_superseded(old.id, newer.id)
+        uow.commit()
+
+    with uow_factory() as uow:
+        assert set(uow.scoring_tables.superseding_version_ids()) == {newer.id}
+        assert lone.id not in uow.scoring_tables.superseding_version_ids()
+
+
+def test_list_version_headers_returns_the_versions_without_groups(uow_factory, base):
+    table, old, newer = _two_versions(uow_factory, base)
+    with uow_factory() as uow:
+        uow.scoring_tables.set_superseded(old.id, newer.id)
+        uow.commit()
+
+    with uow_factory() as uow:
+        headers = {h.id: h for h in uow.scoring_tables.list_version_headers(table.id)}
+        full = {v.id: v for v in uow.scoring_tables.list_versions(table.id)}
+
+    assert set(headers) == set(full) == {old.id, newer.id}
+    assert all(h.groups == () for h in headers.values())
+    assert full[old.id].groups != ()
+    assert headers[old.id].name == old.name and headers[old.id].valid_from == old.valid_from
+    assert headers[old.id].status == old.status
+    assert headers[old.id].norm_reference == old.norm_reference
+    assert headers[old.id].superseded_by_id == newer.id
+    assert headers[newer.id].superseded_by_id is None
+    assert headers[old.id].table_id == table.id
+
+
+def test_count_criteria_counts_the_criteria_of_all_groups(uow_factory, base):
+    _, version = add_table(uow_factory, base)  # three groups of one criterion each
+    with uow_factory() as uow:
+        assert uow.scoring_tables.count_criteria(version.id) == 3
+        assert uow.scoring_tables.count_criteria(uuid.uuid4()) == 0
+
+
+def test_list_versions_for_unit_leaves_out_the_versions_of_an_archived_table(uow_factory, base):
+    table, version = add_table(uow_factory, base, "Ativa")
+    archived, hidden = add_table(uow_factory, base, "Arquivada")
+    with uow_factory() as uow:
+        assert {v.id for v in uow.scoring_tables.list_versions_for_unit(base["unit"].id)} == {
+            version.id,
+            hidden.id,
+        }
+        uow.scoring_tables.set_table_archived(archived.id, True)
+        uow.commit()
+
+    with uow_factory() as uow:
+        listed = uow.scoring_tables.list_versions_for_unit(base["unit"].id)
+        assert [v.id for v in listed] == [version.id]
+        uow.scoring_tables.set_table_archived(archived.id, False)
+        uow.commit()
+    with uow_factory() as uow:
+        assert {v.id for v in uow.scoring_tables.list_versions_for_unit(base["unit"].id)} == {
+            version.id,
+            hidden.id,
+        }
+    assert table.id != archived.id
+
+
+def test_delete_table_removes_in_one_delete_a_table_whose_versions_chain_to_each_other(
+    uow_factory, base, engine
+):
+    table, old, newer = _two_versions(uow_factory, base)
+    keep_table, keep_version = add_table(uow_factory, base, "Fica")
+    with uow_factory() as uow:
+        uow.scoring_tables.set_superseded(old.id, newer.id)
+        uow.commit()
+
+    with uow_factory() as uow:
+        uow.scoring_tables.delete_table(table.id)
+        uow.commit()
+
+    with uow_factory() as uow:
+        assert uow.scoring_tables.get_table(table.id) is None
+        assert uow.scoring_tables.get_version(old.id) is None
+        assert uow.scoring_tables.get_version(newer.id) is None
+        assert uow.scoring_tables.get_table(keep_table.id) is not None
+        assert uow.scoring_tables.get_version(keep_version.id) == keep_version
+    assert _count(engine, "SELECT count(*) FROM scoring_table_versions") == 1
+    assert _count(engine, "SELECT count(*) FROM scoring_table_units") == 1
+    assert _count(engine, "SELECT count(*) FROM scoring_groups") == 3
+    assert _count(engine, "SELECT count(*) FROM scoring_criteria") == 3
+
+
+def test_delete_version_removes_the_version_its_groups_and_criteria_only(
+    uow_factory, base, engine
+):
+    table, old, newer = _two_versions(uow_factory, base)
+
+    with uow_factory() as uow:
+        uow.scoring_tables.delete_version(newer.id)
+        uow.commit()
+
+    with uow_factory() as uow:
+        assert uow.scoring_tables.get_version(newer.id) is None
+        assert uow.scoring_tables.get_version(old.id) == old
+        assert uow.scoring_tables.get_table(table.id) is not None
+    assert _count(engine, "SELECT count(*) FROM scoring_groups") == 3
+    assert _count(engine, "SELECT count(*) FROM scoring_criteria") == 3
+
+
+def test_delete_of_an_unknown_version_or_table_is_not_found(uow_factory, base):
+    with uow_factory() as uow:
+        with pytest.raises(NotFound):
+            uow.scoring_tables.delete_version(uuid.uuid4())
+        with pytest.raises(NotFound):
+            uow.scoring_tables.delete_table(uuid.uuid4())
+
+
+def test_delete_version_of_a_marked_version_raises_conflict_and_deletes_nothing(
+    uow_factory, base, engine
+):
+    _, version = add_table(uow_factory, base)
+    _mark(uow_factory, base["unit"].id, version.id)
+
+    with uow_factory() as uow:
+        with pytest.raises(Conflict):
+            uow.scoring_tables.delete_version(version.id)
+        assert uow.scoring_tables.get_version(version.id) == version  # the session is still usable
+
+    assert _count(engine, "SELECT count(*) FROM scoring_table_versions") == 1
+    assert _count(engine, "SELECT count(*) FROM scoring_criteria") == 3
+
+
+def test_delete_version_of_a_version_used_by_a_process_raises_conflict(uow_factory, base, engine):
+    _, version = add_table(uow_factory, base)
+    _add_processes(uow_factory, base, version.id, [ProcessStatus.CONCLUIDO])
+
+    with uow_factory() as uow:
+        with pytest.raises(Conflict):
+            uow.scoring_tables.delete_version(version.id)
+
+    assert _count(engine, "SELECT count(*) FROM scoring_table_versions") == 1
+
+
+def test_delete_version_of_a_version_that_replaces_another_raises_conflict(
+    uow_factory, base, engine
+):
+    _, old, newer = _two_versions(uow_factory, base)
+    with uow_factory() as uow:
+        uow.scoring_tables.set_superseded(old.id, newer.id)
+        uow.commit()
+
+    with uow_factory() as uow:
+        with pytest.raises(Conflict):
+            uow.scoring_tables.delete_version(newer.id)
+
+    assert _count(engine, "SELECT count(*) FROM scoring_table_versions") == 2
+
+
+def test_delete_table_with_a_version_in_use_raises_conflict_and_deletes_nothing(
+    uow_factory, base, engine
+):
+    table, old, newer = _two_versions(uow_factory, base)
+    _mark(uow_factory, base["unit"].id, newer.id)
+
+    with uow_factory() as uow:
+        with pytest.raises(Conflict):
+            uow.scoring_tables.delete_table(table.id)
+        assert uow.scoring_tables.get_table(table.id) is not None
+
+    assert _count(engine, "SELECT count(*) FROM scoring_table_versions") == 2
+    assert _count(engine, "SELECT count(*) FROM scoring_tables") == 1
+    assert _count(engine, "SELECT count(*) FROM scoring_table_units") == 1
+
+
+def test_delete_table_with_a_version_used_by_a_process_raises_conflict(uow_factory, base, engine):
+    table, old, _newer = _two_versions(uow_factory, base)
+    _add_processes(uow_factory, base, old.id, [ProcessStatus.RASCUNHO])
+
+    with uow_factory() as uow:
+        with pytest.raises(Conflict):
+            uow.scoring_tables.delete_table(table.id)
+
+    assert _count(engine, "SELECT count(*) FROM scoring_table_versions") == 2
+
+
+def _blocked_backends(engine) -> int:
+    with engine.connect() as conn:
+        return conn.execute(
+            text(
+                "SELECT count(*) FROM pg_stat_activity "
+                "WHERE wait_event_type = 'Lock' AND datname = current_database()"
+            )
+        ).scalar_one()
+
+
+@pytest.mark.parametrize("lock", ["lock_unit", "lock_table", "lock_version"])
+def test_a_second_unit_of_work_waits_for_the_lock_until_the_first_finishes(
+    uow_factory, base, engine, lock
+):
+    table, version = add_table(uow_factory, base)
+    target = {"lock_unit": base["unit"].id, "lock_table": table.id, "lock_version": version.id}[
+        lock
+    ]
+    holding, release, second_in = threading.Event(), threading.Event(), threading.Event()
+    results: dict[str, bool] = {}
+
+    def first():
+        with uow_factory() as uow:
+            results["first"] = getattr(uow.scoring_tables, lock)(target)
+            holding.set()
+            release.wait(timeout=30)
+
+    def second():
+        with uow_factory() as uow:
+            results["second"] = getattr(uow.scoring_tables, lock)(target)
+            second_in.set()
+
+    t1 = threading.Thread(target=first)
+    t1.start()
+    assert holding.wait(timeout=30)
+    t2 = threading.Thread(target=second)
+    t2.start()
+    deadline = time.monotonic() + 30
+    while _blocked_backends(engine) == 0 and time.monotonic() < deadline:
+        time.sleep(0.05)
+
+    assert _blocked_backends(engine) == 1  # the second waits on the lock of the first
+    assert not second_in.is_set()
+    release.set()
+    t1.join(timeout=30)
+    t2.join(timeout=30)
+
+    assert second_in.is_set()
+    assert results == {"first": True, "second": True}
+
+
+@pytest.mark.parametrize("lock", ["lock_unit", "lock_table", "lock_version"])
+def test_the_lock_of_a_missing_row_returns_false(uow_factory, base, lock):
+    with uow_factory() as uow:
+        assert getattr(uow.scoring_tables, lock)(uuid.uuid4()) is False

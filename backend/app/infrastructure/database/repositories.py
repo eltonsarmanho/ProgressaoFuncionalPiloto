@@ -63,6 +63,7 @@ from app.domain.entities.scoring import (
     ScoringCriterion,
     ScoringGroup,
     ScoringTableVersion,
+    UnitScoringDefault,
 )
 from app.domain.entities.user import Session as UserSession
 from app.domain.entities.user import User
@@ -110,16 +111,22 @@ from app.infrastructure.database.models import (
     ScoringTableModel,
     ScoringTableUnitModel,
     ScoringTableVersionModel,
+    ScoringUnitDefaultModel,
     SessionModel,
     UserModel,
     UserUnitModel,
 )
 
 UNIQUE_VIOLATION = "23505"
+FOREIGN_KEY_VIOLATION = "23503"
 
 
 def _is_unique_violation(exc: IntegrityError) -> bool:
     return getattr(exc.orig, "sqlstate", None) == UNIQUE_VIOLATION
+
+
+def _is_foreign_key_violation(exc: IntegrityError) -> bool:
+    return getattr(exc.orig, "sqlstate", None) == FOREIGN_KEY_VIOLATION
 
 
 def _insert(session: Session, table: Table, values: dict[str, Any], what: str) -> None:
@@ -763,23 +770,27 @@ class SqlScoringTableRepository:
                         criteria=tuple(_criterion_entity(g.number, c) for c in criteria),
                     )
                 )
-            result.append(
-                ScoringTableVersion(
-                    id=m.id,
-                    table_id=m.table_id,
-                    name=m.name,
-                    valid_from=m.valid_from,
-                    valid_to=m.valid_to,
-                    norm_reference=m.norm_reference,
-                    status=m.status,
-                    minimums=m.minimums,
-                    notes=m.notes,
-                    groups=tuple(entities),
-                    superseded_by_id=m.superseded_by_id,
-                    norm_code=m.norm_code,
-                )
-            )
+            result.append(self._version_entity(m, tuple(entities)))
         return result
+
+    @staticmethod
+    def _version_entity(
+        m: ScoringTableVersionModel, groups: tuple[ScoringGroup, ...]
+    ) -> ScoringTableVersion:
+        return ScoringTableVersion(
+            id=m.id,
+            table_id=m.table_id,
+            name=m.name,
+            valid_from=m.valid_from,
+            valid_to=m.valid_to,
+            norm_reference=m.norm_reference,
+            status=m.status,
+            minimums=m.minimums,
+            notes=m.notes,
+            groups=groups,
+            superseded_by_id=m.superseded_by_id,
+            norm_code=m.norm_code,
+        )
 
     def list_versions(self, table_id: UUID) -> Sequence[ScoringTableVersion]:
         models = self._s.scalars(
@@ -789,6 +800,25 @@ class SqlScoringTableRepository:
         ).all()
         return self._versions(models)
 
+    def list_version_headers(self, table_id: UUID) -> Sequence[ScoringTableVersion]:
+        """The versions of the table without groups and criteria (the list does not need them)."""
+        models = self._s.scalars(
+            select(ScoringTableVersionModel)
+            .where(ScoringTableVersionModel.table_id == table_id)
+            .order_by(ScoringTableVersionModel.valid_from)
+        ).all()
+        return [self._version_entity(m, ()) for m in models]
+
+    def count_criteria(self, version_id: UUID) -> int:
+        return (
+            self._s.scalar(
+                select(func.count(ScoringCriterionModel.id))
+                .join(ScoringGroupModel, ScoringGroupModel.id == ScoringCriterionModel.group_id)
+                .where(ScoringGroupModel.version_id == version_id)
+            )
+            or 0
+        )
+
     def list_versions_for_unit(self, unit_id: UUID) -> Sequence[ScoringTableVersion]:
         models = self._s.scalars(
             select(ScoringTableVersionModel)
@@ -796,7 +826,8 @@ class SqlScoringTableRepository:
                 ScoringTableUnitModel,
                 ScoringTableUnitModel.table_id == ScoringTableVersionModel.table_id,
             )
-            .where(ScoringTableUnitModel.unit_id == unit_id)
+            .join(ScoringTableModel, ScoringTableModel.id == ScoringTableVersionModel.table_id)
+            .where(ScoringTableUnitModel.unit_id == unit_id, ScoringTableModel.archived.is_(False))
             .order_by(ScoringTableVersionModel.valid_from)
         ).all()
         return self._versions(models)
@@ -893,6 +924,133 @@ class SqlScoringTableRepository:
             ).rowcount
         if rowcount == 0:
             raise NotFound("Critério não encontrado")
+
+    def get_unit_default(self, unit_id: UUID) -> UnitScoringDefault | None:
+        m = self._s.get(ScoringUnitDefaultModel, unit_id, populate_existing=True)
+        return UnitScoringDefault(m.unit_id, m.version_id) if m else None
+
+    def list_unit_defaults(self) -> Sequence[UnitScoringDefault]:
+        models = self._s.scalars(
+            select(ScoringUnitDefaultModel)
+            .order_by(ScoringUnitDefaultModel.unit_id)
+            .execution_options(populate_existing=True)
+        ).all()
+        return [UnitScoringDefault(m.unit_id, m.version_id) for m in models]
+
+    def set_unit_default(self, unit_id: UUID, version_id: UUID) -> None:
+        """One row per unit: marks the version, replacing the one the unit had (GTAB-01)."""
+        insert_stmt = pg_insert(ScoringUnitDefaultModel).values(
+            unit_id=unit_id, version_id=version_id
+        )
+        self._s.execute(
+            insert_stmt.on_conflict_do_update(
+                index_elements=[ScoringUnitDefaultModel.unit_id],
+                set_={"version_id": version_id, "updated_at": func.now()},
+            )
+        )
+
+    def clear_unit_default(self, unit_id: UUID) -> None:
+        self._s.execute(
+            delete(ScoringUnitDefaultModel).where(ScoringUnitDefaultModel.unit_id == unit_id)
+        )
+
+    def unit_ids_defaulting_to(self, version_id: UUID) -> Sequence[UUID]:
+        return list(
+            self._s.scalars(
+                select(ScoringUnitDefaultModel.unit_id)
+                .where(ScoringUnitDefaultModel.version_id == version_id)
+                .order_by(ScoringUnitDefaultModel.unit_id)
+            ).all()
+        )
+
+    def lock_unit(self, unit_id: UUID) -> bool:
+        """Locks the unit row until the end of the transaction (the first of the lock order)."""
+        return (
+            self._s.scalars(
+                select(AcademicUnitModel.id)
+                .where(AcademicUnitModel.id == unit_id)
+                .with_for_update()
+            ).first()
+            is not None
+        )
+
+    def lock_table(self, table_id: UUID) -> bool:
+        return (
+            self._s.scalars(
+                select(ScoringTableModel.id)
+                .where(ScoringTableModel.id == table_id)
+                .with_for_update()
+            ).first()
+            is not None
+        )
+
+    def lock_version(self, version_id: UUID) -> bool:
+        return (
+            self._s.scalars(
+                select(ScoringTableVersionModel.id)
+                .where(ScoringTableVersionModel.id == version_id)
+                .with_for_update()
+            ).first()
+            is not None
+        )
+
+    def version_process_counts(self) -> dict[UUID, int]:
+        """The number of processes of any status that chose each version, in one read."""
+        rows = self._s.execute(
+            select(FunctionalProcessModel.scoring_table_version_id, func.count())
+            .where(FunctionalProcessModel.scoring_table_version_id.is_not(None))
+            .group_by(FunctionalProcessModel.scoring_table_version_id)
+        ).all()
+        return {version_id: count for version_id, count in rows}
+
+    def superseding_version_ids(self) -> Collection[UUID]:
+        """The versions that replace another one (`superseded_by_id` points to them)."""
+        return set(
+            self._s.scalars(
+                select(ScoringTableVersionModel.superseded_by_id)
+                .where(ScoringTableVersionModel.superseded_by_id.is_not(None))
+                .distinct()
+            ).all()
+        )
+
+    def delete_version(self, version_id: UUID) -> None:
+        """Deletes the version; groups and criteria go by cascade. A row that still references
+        the version (a process, a unit in use, the version it replaces) makes it a Conflict."""
+        try:
+            with self._s.begin_nested():
+                rowcount = self._s.execute(
+                    delete(ScoringTableVersionModel).where(
+                        ScoringTableVersionModel.id == version_id
+                    )
+                ).rowcount
+        except IntegrityError as exc:
+            if _is_foreign_key_violation(exc):
+                raise Conflict(
+                    "A versão da tabela ainda é referenciada e não pode ser excluída"
+                ) from None
+            raise
+        if rowcount == 0:
+            raise NotFound("Versão da tabela não encontrada")
+
+    def delete_table(self, table_id: UUID) -> None:
+        """Deletes the versions of the table in a single DELETE, then the table (its unit
+        associations go by cascade). A version still referenced makes it a Conflict."""
+        try:
+            with self._s.begin_nested():
+                self._s.execute(
+                    delete(ScoringTableVersionModel).where(
+                        ScoringTableVersionModel.table_id == table_id
+                    )
+                )
+                rowcount = self._s.execute(
+                    delete(ScoringTableModel).where(ScoringTableModel.id == table_id)
+                ).rowcount
+        except IntegrityError as exc:
+            if _is_foreign_key_violation(exc):
+                raise Conflict("A tabela tem versão referenciada e não pode ser excluída") from None
+            raise
+        if rowcount == 0:
+            raise NotFound("Tabela de pontuação não encontrada")
 
     def version_in_use(self, version_id: UUID) -> bool:
         return bool(

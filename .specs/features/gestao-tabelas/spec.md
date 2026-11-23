@@ -220,7 +220,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | GTAB-07 | P1: Tabela em uso por unidade | Implemented | Implementing |
 | GTAB-08 | P1: Tabela em uso por unidade | Specified | Pending |
 | GTAB-09 | P1: Tabela em uso por unidade | Specified | Pending |
-| GTAB-10 | P1: Tabela em uso por unidade | Specified | Pending |
+| GTAB-10 | P1: Tabela em uso por unidade | Implemented | Implementing |
 | GTAB-11 | P1: Gestão das tabelas pela tela | Specified | Pending |
 | GTAB-12 | P1: Gestão das tabelas pela tela | Specified | Pending |
 | GTAB-13 | P1: Gestão das tabelas pela tela | Specified | Pending |
@@ -234,7 +234,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | GTAB-21 | P1: Editar critérios na tela | Specified | Pending |
 | GTAB-22 | P1: Editar critérios na tela | Specified | Pending |
 | GTAB-23 | P1: Arquivar e excluir | Specified | Pending |
-| GTAB-24 | P1: Arquivar e excluir | Specified | Pending |
+| GTAB-24 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-25 | P1: Arquivar e excluir | Specified | Pending |
 | GTAB-26 | P1: Arquivar e excluir | Specified | Pending |
 | GTAB-27 | P1: Arquivar e excluir | Specified | Pending |
@@ -254,7 +254,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | GTAB-41 | P1: Coerência com a semente e com as outras regras | Specified | Pending |
 | GTAB-42 | P1: Coerência com a semente e com as outras regras | Specified | Pending |
 | GTAB-43 | P1: Coerência com a semente e com as outras regras | Specified | Pending |
-| GTAB-44 | P1: Coerência com a semente e com as outras regras | Specified | Pending |
+| GTAB-44 | P1: Coerência com a semente e com as outras regras | Implemented | Implementing |
 | GTAB-45 | P1: Coerência com a semente e com as outras regras | Specified | Pending |
 
 ## Success Criteria
