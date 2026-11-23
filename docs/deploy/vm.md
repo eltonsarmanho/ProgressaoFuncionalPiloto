@@ -301,6 +301,70 @@ Esta seção descreve o procedimento, executado em 2026-11-23 (registro em "Depl
 
 Trocar as etiquetas das imagens para as do ponto de retorno; não há nada no banco a desfazer. As versões geradas com a imagem nova continuam abrindo.
 
+## Deploy da gestão de tabelas (feature `gestao-tabelas`)
+
+Esta seção descreve o procedimento; **nada foi executado na VM**. **Push e deploy só com a autorização explícita do usuário**, como nos outros deploys. A versão traz a migração `0012_unit_defaults`, a marcação da versão em uso por unidade (FASI e IFCH partem da versão oficial), arquivar e excluir tabelas e versões, a edição de critérios e a tela "Tabelas de pontuação" em cartões, aberta a todos os perfis para leitura. Ver a AD-028 em `.specs/STATE.md`.
+
+### O que muda na VM
+
+| Ordem | O que | Como entra |
+| --- | --- | --- |
+| 1 | Migração `0012_unit_defaults` (`down_revision = "0011"`, só esquema): tabela `scoring_unit_defaults` com `unit_id` (chave primária e chave estrangeira para `academic_units`), `version_id` (chave estrangeira para `scoring_table_versions`, sem `ON DELETE`, então o banco barra a exclusão da versão em uso) e `updated_at` | `alembic upgrade head` do `docker-entrypoint.sh`; `alembic current` deve terminar em `0012 (head)` |
+| 2 | Semente da marcação (`seed_unit_defaults`, chamada só por `main()`, depois de `seed_scoring_tables`) | Marca a versão "Tabela oficial de pontuação UFPA, Grupo I no total" como em uso de FASI e IFCH, com um evento de auditoria `CREATE` sem usuário por unidade (entidade `unit_scoring_default`). Só age na unidade que tem a tabela oficial associada, nenhuma marcação e nenhum evento de marcação anterior; nunca refaz a marcação que o ADMIN desfez |
+| 3 | `seed_scoring_tables` | Deixa de arquivar de novo e de desassociar a tabela antiga (IFCH e FASI) que alguma pessoa já alterou; a que ninguém tocou segue como estava (GTAB-41) |
+| 4 | Imagens novas do backend e do frontend | `docker-compose.yml`, `deploy/`, nginx, `Dockerfile` e `requirements.txt` não mudam. Vai junto o que está entre o commit da VM e o publicado, inclusive `processo-enxuto` (AD-027, sem migração) |
+
+Processos que já escolheram tabela, documentos já gerados e a pontuação de qualquer processo não mudam (GTAB-08, AD-012): nenhuma operação desta feature reavalia nem recalcula processo. O seed é idempotente: numa segunda partida a unidade já marcada é pulada.
+
+### Antes do deploy
+
+1. Nada em processamento: nenhuma geração `GERANDO` e nenhum documento `PROCESSANDO`, pois reiniciar o backend interrompe o que estiver rodando.
+2. Ponto de retorno, como em "Atualizar para uma versão nova": etiquetar as imagens em uso (`progressao-funcional-backend:tabelas-pre-<commit>` e o mesmo para o `frontend`), copiar `docker-compose.override.yml` e `.env` para `backups/` e **fazer o dump do banco antes de subir a imagem nova**: `docker exec dashboard_db pg_dump -U <superusuario> -d progressao | gzip > backups/progressao-pre-gestao-tabelas-<data>.sql.gz`, conferindo `gzip -t` e `ls -l`.
+3. Conferir na VM que `alembic current` mostra `0011 (head)`; a `0012` parte da `0011`.
+4. Construir as imagens do commit aprovado fora da VM, conferir o pacote do frontend com `scripts/check_bundle_no_secrets.sh` (a chave da MariTalk nunca entra no pacote) e conferir na imagem que `0012_unit_defaults.py` está em `alembic/versions`.
+5. Guardar o "antes" para comparar no fim da fumaça: a lista das tabelas reais, `SELECT t.name, t.archived, count(v.id) AS versoes FROM scoring_tables t LEFT JOIN scoring_table_versions v ON v.table_id = t.id GROUP BY 1, 2 ORDER BY 1;`, e `SELECT count(*), max(id) FROM audit_logs;`.
+6. Avisar o usuário: a tela "Tabelas de pontuação" fica aberta a todos os perfis, só para leitura, e só o ADMIN escreve; a etiqueta "Em uso" passa a ser a marcação da unidade e o sentido antigo (algum processo usa a versão) vira "Usada por processo"; FASI e IFCH aparecem com a versão oficial em uso; nenhum processo existente muda.
+
+### Depois da partida: conferência
+
+Com `docker exec -it dashboard_db psql -U <superusuario> -d progressao`:
+
+1. `alembic current` no backend termina em `0012 (head)` e `docker logs progressao-funcional-backend-1` não mostra erro de migração nem de semente, nem os avisos "Versão oficial indisponível" e "sem a tabela oficial associada".
+2. Duas marcações: `SELECT u.acronym, v.name FROM scoring_unit_defaults d JOIN academic_units u ON u.id = d.unit_id JOIN scoring_table_versions v ON v.id = d.version_id ORDER BY 1;` traz exatamente FASI e IFCH com "Tabela oficial de pontuação UFPA, Grupo I no total".
+3. Dois eventos de auditoria sem usuário: `SELECT entity_id, action, user_id, changes FROM audit_logs WHERE entity = 'unit_scoring_default' ORDER BY id;` traz duas linhas, `action = 'CREATE'`, `user_id` nulo e `changes->'version_id'` com `before` nulo e `after` igual ao id da versão oficial.
+4. **Reiniciar o backend e conferir de novo** (`docker compose restart backend`): repetir os itens 2 e 3 e `SELECT count(*), max(id) FROM audit_logs WHERE entity = 'unit_scoring_default';`. As duas marcações e os dois eventos têm de ser **iguais antes e depois do reinício** (mesma contagem e mesmo `max(id)`, nenhum evento novo): a semente é idempotente.
+5. `GET /api/health` 200 depois de `docker compose up -d --no-build` e `docker compose restart nginx`; `GET /api/scoring-tables` (autenticado) devolve, na versão oficial, `default_for_unit_ids` com as duas unidades e `process_count`.
+6. O `max(id)` e a contagem de `audit_logs` do item 5 de "Antes do deploy" só crescem pelos dois eventos da semente.
+
+### Fumaça sintética
+
+Só com dados sintéticos (nunca `Documentos/` nem `Modelos/`), pelo endereço público ou dentro do contêiner do backend, autenticado como ADMIN. A fumaça **exige uma unidade sintética e uma tabela sintética associadas só a ela** e **nunca marca, arquiva nem exclui FASI, IFCH nem a tabela oficial**; toda escrita abaixo tem como alvo a unidade e a tabela sintéticas.
+
+1. Criar a unidade sintética (`POST /api/units`, sigla `SMKTAB`, tipo `INSTITUTO`) e a tabela sintética (`POST /api/scoring-tables`, nome "Tabela sintética de fumaça", `unit_ids` só com a unidade sintética, vigência e referência sintéticas). A lista (`GET /api/scoring-tables`) mostra a tabela com a sigla `SMKTAB` e nenhuma marcação.
+2. Marcar a versão como em uso da unidade sintética (`PUT /api/scoring-units/<unidade>/default-version`, 200); criar uma versão nova a partir dela (`POST /api/scoring-tables/<tabela>/versions`) e marcar a nova: a lista mostra `default_for_unit_ids` só na nova.
+3. Recusas com 409: arquivar a tabela sintética enquanto há marcação (`TABELA_COM_VERSAO_EM_USO`); excluir a versão marcada (`VERSAO_EM_USO_DE_UNIDADE`); tirar a unidade sintética da tabela (`UNIDADE_COM_VERSAO_EM_USO`); excluir a tabela (`VERSAO_EM_USO_DE_UNIDADE`). Em todas, `GET .../delete-preview` mostra o bloqueio e nada é apagado.
+4. Desmarcar (`DELETE /api/scoring-units/<unidade>/default-version`, 204); arquivar e desarquivar a tabela sintética; com a tabela arquivada, marcar uma versão dela dá 409 `TABELA_ARQUIVADA`.
+5. Editar um critério da versão sem processo (`PUT /api/scoring-versions/<versão>/criteria/<grupo>/<item>`, com a referência normativa) e ver `GET /api/scoring-tables/<tabela>/history` com o evento.
+6. Excluir a versão sem processo e sem marcação (prévia e `DELETE`, 204) e, por fim, excluir a tabela sintética pela prévia (204; o histórico dela passa a dar 404). Arquivar a unidade sintética (`POST /api/units/<unidade>/archive`).
+7. Pela tela, como ADMIN, ver os cartões da tabela sintética antes do passo 6 (etiquetas "Em uso (SMKTAB)", botões com rótulo e botão desabilitado com o motivo) e, como outro perfil, só a leitura.
+8. **Terminar com a conferência de que nada real mudou**: as duas marcações de FASI e IFCH (item 2 da conferência), a lista de tabelas reais (consulta do item 5 de "Antes do deploy", sem a tabela sintética) e a contagem de `audit_logs` das entidades reais (`scoring_table`, `scoring_version` e `unit_scoring_default` de FASI e IFCH) iguais ao que eram antes da fumaça.
+
+**Resíduos da fumaça.** Cada marcação, arquivamento e exclusão de teste deixa linhas de auditoria, e elas são imutáveis (gatilho do banco). Não há rota para excluir docente nem unidade sintética: a unidade `SMKTAB` fica arquivada no banco.
+
+### Na próxima versão oficial da tabela
+
+Quando uma versão nova da tabela oficial substituir a atual (AD-023, `AdoptSupersedingVersion`), a versão antiga passa a substituída e **FASI e IFCH perdem a marcação** (um evento `DELETE` sem usuário por unidade), voltando à sugestão por vigência até o ADMIN marcar a versão nova. A semente não remarca (a unidade já tem evento de marcação). Incluir esse passo no roteiro daquele deploy: marcar a versão nova de FASI e IFCH pela tela logo depois da partida.
+
+### Voltar à versão anterior
+
+- **Caminho seguro: restaurar o dump** `progressao-pre-gestao-tabelas-<data>.sql.gz` e trocar as etiquetas das imagens para as do ponto de retorno (`docker tag progressao-funcional-backend:tabelas-pre-<commit> progressao-funcional-backend:latest`, o mesmo para o `frontend`, e `docker compose up -d --no-build`).
+- O `downgrade` da `0012` só remove a tabela `scoring_unit_defaults`: **perde as marcações em uso** e deixa as tabelas, as versões e a auditoria como estão. Tabelas excluídas e arquivadas por pessoas depois do deploy não voltam sem o dump; as linhas de auditoria que o dump não tem somem com ele.
+- A imagem anterior ignora a tabela nova e volta a sugerir por vigência; não há dado novo em outra tabela, então voltar só a imagem funciona se nenhuma versão ou tabela foi excluída (a imagem anterior também lê o campo `archived`, que já existia).
+
+### Commits a publicar
+
+O `origin/feat/inteligencia-documental` está em `7bb7b84` (registro do deploy do `layout-oficial`) e a VM, em `c839d28`. Para o deploy desta feature, publicar a branch com o que veio depois: `processo-enxuto` (`22fffaf` a `ca3d21d`, sem migração), a especificação, o desenho e as tarefas da `gestao-tabelas` (`c7921dc` a `fa052e0`) e as 37 tarefas da execução: fase 1 (banco, regra e API da marcação, `0b63e33` a `ded9966`), fase 2 (arquivar, excluir e regras vizinhas, `bd5dc0d` a `3f14282`), fase 3 (motivos, semente e aceitação, `6112bad` a `3364c1f`), fases 4 e 5 (a tela, `689f1d6` a `98992b0`) e o commit desta documentação. A lista completa sai de `git log --oneline 7bb7b84..HEAD`.
+
 ## Memória do OCR (limite de 384 MB do `backend`)
 
 Medida em 2026-11-17 dentro de `docker run -m 384m --memory-swap 384m`, com a imagem do backend (Tesseract `por`) e PDFs sintéticos só de imagem (cada página é um PNG A4 a 300 dpi). O pico é o `memory.peak` do cgroup do contêiner, que inclui a geração do PDF de teste.

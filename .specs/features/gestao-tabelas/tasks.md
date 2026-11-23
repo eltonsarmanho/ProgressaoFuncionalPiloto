@@ -1212,7 +1212,7 @@ graph LR
 
 #### T37: Deploy, spec da pontuação e estado do projeto
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `docs/deploy/vm.md` ganha a seção "Deploy da gestão de tabelas": migração `0012` e a semente da marcação de FASI e IFCH; imagens novas do backend e do frontend; etiquetas de retorno `tabelas-pre-<commit>`; dump antes da subida; conferência (`alembic current` em `0012 (head)`, duas marcações em `scoring_unit_defaults`, dois eventos de auditoria de marcação sem usuário **iguais depois de reiniciar o backend**, sem erro nos logs); fumaça sintética que exige uma unidade e uma tabela sintéticas associadas só a ela e **nunca marca, arquiva nem exclui FASI, IFCH ou a tabela oficial**, terminando com a conferência de que as duas marcações reais e a lista de tabelas reais não mudaram; aviso de que cada marcação, arquivamento e exclusão de teste deixa linhas de auditoria imutáveis e de que não há rota para excluir docente ou unidade sintética; nota de que, na próxima versão oficial da tabela que substituir a atual (AD-023), as unidades perdem a marcação e voltam à sugestão por vigência até o ADMIN marcar a nova; como voltar à versão anterior (imagens e dump; o `downgrade` da `0012` remove a tabela e perde as marcações). `pontuacao/spec.md` recebe a nota de que SEL-02 foi alterada e a interface de administração (P3) foi feita por `gestao-tabelas`; `.specs/STATE.md` recebe o Handoff da feature. A seção descreve o procedimento: nada é executado na VM.
 **Where**: `docs/deploy/vm.md` (modify)
@@ -1227,10 +1227,10 @@ graph LR
 
 **Done when**:
 
-- [ ] A seção traz o procedimento completo e diz que push e deploy só saem com a autorização do usuário; `pontuacao/spec.md` e `.specs/STATE.md` atualizados; os validadores `validate_spec.py` das duas specs passam
-- [ ] Gate completo `build`: backend (`ruff` e `pytest -q`) e frontend (`lint`, `build` e `npm test -- --run`) passam
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] A seção traz o procedimento completo e diz que push e deploy só saem com a autorização do usuário; `pontuacao/spec.md` e `.specs/STATE.md` atualizados; os validadores `validate_spec.py` das duas specs passam
+- [x] Gate completo `build`: backend (`ruff` e `pytest -q`) e frontend (`lint`, `build` e `npm test -- --run`) passam
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && REQUIRE_DIST=1 npm test -- --run`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: none
 **Gate**: build
