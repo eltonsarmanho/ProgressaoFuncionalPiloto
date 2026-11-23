@@ -133,7 +133,7 @@ export function ScoringAdmin() {
         <p role="alert" className="error">
           {error}
         </p>
-        <button type="button" className="btn btn-secondary" onClick={() => void reload()}>
+        <button type="button" className="btn btn-secondary tbl-retry" onClick={() => void reload()}>
           Tentar de novo
         </button>
       </>
@@ -183,7 +183,7 @@ export function ScoringAdmin() {
       {error && (
         <div role="alert" className="error">
           <p>{error}</p>
-          <button type="button" className="btn btn-secondary" onClick={() => void reload()}>
+          <button type="button" className="btn btn-secondary tbl-retry" onClick={() => void reload()}>
             Tentar de novo
           </button>
         </div>
