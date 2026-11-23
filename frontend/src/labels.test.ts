@@ -391,6 +391,7 @@ describe("GTAB-34, GTAB-36: motivos de bloqueio, etiquetas e histórico das tabe
     expect(historyChangeLabel("archived")).toBe("Arquivada");
     expect(historyChangeLabel("unit_ids")).toBe("Unidades");
     expect(historyChangeLabel("version_id")).toBe("Versão em uso");
+    expect(historyChangeLabel("closed_version_id")).toBe("Versão que fechou");
     expect(historyChangeLabel("criteria.2.7.unit_points")).toBe("II.7: Pontos por unidade");
     expect(historyChangeLabel("criteria.8.37.max_points")).toBe("VIII.37: Limite de pontos");
     expect(historyChangeLabel("criteria.2.7.description")).toBe("II.7: Descrição");
@@ -448,6 +449,7 @@ describe("GTAB-17: valores e datas do histórico em texto", () => {
   it("um id vira o nome que a tela conhece e, sem nome, 'item removido'; nunca o UUID", () => {
     expect(historyValueText("version_id", UUID, names)).toBe("FASI");
     expect(historyValueText("version_id", "22222222-2222-4222-8222-222222222222", names)).toBe("item removido");
+    expect(historyValueText("closed_version_id", UUID, names)).toBe("FASI");
   });
 
   it("uma lista vira os itens separados por vírgula e a lista vazia vira 'nenhuma'", () => {

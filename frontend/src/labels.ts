@@ -281,6 +281,7 @@ const HISTORY_CHANGE_LABELS: Record<string, string> = {
   archived: "Arquivada",
   unit_ids: "Unidades",
   version_id: "Versão em uso",
+  closed_version_id: "Versão que fechou",
   name: "Nome",
   table_id: "Tabela",
   valid_from: "Início da vigência",
@@ -327,6 +328,7 @@ const HISTORY_ID_KEYS = new Set([
   "table_id",
   "duplicated_from",
   "copied_from_version_id",
+  "closed_version_id",
 ]);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
