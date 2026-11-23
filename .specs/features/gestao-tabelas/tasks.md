@@ -510,7 +510,7 @@ graph LR
 
 #### T13: Excluir versão de tabela, com prévia
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `PreviewDeleteVersion(version_id)` devolve `{name, criteria, blocked}` e `DeleteScoringVersion(actor, version_id)` apaga a versão (grupos e critérios saem por cascata). A tabela oficial e todas as versões dela são protegidas por um `ProtectedCatalog(official_table_name)` definido em `scoring_admin.py` e montado em `dependencies.py` a partir de `seed._official_table_data()["table_name"]` (o caso de uso não lê dado de infraestrutura). Ordem: `require_admin`, 404, trava a tabela e depois a versão, relê os fatos, `version_delete_blockers` (409 com código, texto e quantidade ou siglas), apaga com `delete_version` e audita (entidade `scoring_version`, ação `DELETE`, `before = {name, table_id, valid_from, valid_to, norm_reference, status, norm_code, criteria}`). Se a versão apagada é a mais recente da tabela e a anterior foi fechada por ela (`valid_to` igual ao dia anterior ao `valid_from` da apagada), a anterior volta a ter o `valid_to` da apagada, na mesma transação e com evento `UPDATE`, para a tabela não ficar sem versão vigente.
 **Where**: `backend/app/application/use_cases/scoring_admin.py` (modify)
@@ -525,14 +525,14 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_admin_delete_version.py` (novo): exclui uma versão sem processo e sem marcação e some a versão, os grupos e os critérios; auditoria `DELETE` com o usuário e os dados no `before`; depois da exclusão os eventos anteriores da versão (`CREATE`, edições de critério) continuam em `uow.audit.list_for`, mais o `DELETE`
-- [ ] Recusas 409 com o código certo e nada apagado: usada por processo (com a quantidade), em uso de unidade (com as siglas), substitui outra versão, única versão da tabela (`ULTIMA_VERSAO_DA_TABELA`), qualquer versão da tabela oficial, inclusive uma que não é a atual (`TABELA_OFICIAL_PROTEGIDA`); a prévia lista os mesmos bloqueios e a contagem de critérios; não ADMIN 403; versão inexistente 404
-- [ ] Excluir a versão mais recente, que tinha fechado a anterior, devolve à anterior o `valid_to` (nulo se a apagada era aberta) com um evento `UPDATE`; excluir uma versão que não fechou a anterior não mexe nas outras
-- [ ] Corrida: a versão escolhida por um processo, ou marcada por uma unidade, entre a primeira checagem e a trava é recusada com 409 e nada é apagado (a escolha ou a marcação confirma enquanto a exclusão espera a trava; duas unidades de trabalho); uma violação de FK forçada vira 409, nunca 500
-- [ ] Atomicidade: com `AuditService.record` forçado a levantar no evento `DELETE`, a versão continua no banco
-- [ ] Os documentos gerados de um processo que usou uma versão de outra tabela não mudam de conteúdo
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_admin_delete_version.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_admin_delete_version.py` (novo): exclui uma versão sem processo e sem marcação e some a versão, os grupos e os critérios; auditoria `DELETE` com o usuário e os dados no `before`; depois da exclusão os eventos anteriores da versão (`CREATE`, edições de critério) continuam em `uow.audit.list_for`, mais o `DELETE`
+- [x] Recusas 409 com o código certo e nada apagado: usada por processo (com a quantidade), em uso de unidade (com as siglas), substitui outra versão, única versão da tabela (`ULTIMA_VERSAO_DA_TABELA`), qualquer versão da tabela oficial, inclusive uma que não é a atual (`TABELA_OFICIAL_PROTEGIDA`); a prévia lista os mesmos bloqueios e a contagem de critérios; não ADMIN 403; versão inexistente 404
+- [x] Excluir a versão mais recente, que tinha fechado a anterior, devolve à anterior o `valid_to` (nulo se a apagada era aberta) com um evento `UPDATE`; excluir uma versão que não fechou a anterior não mexe nas outras
+- [x] Corrida: a versão escolhida por um processo, ou marcada por uma unidade, entre a primeira checagem e a trava é recusada com 409 e nada é apagado (a escolha ou a marcação confirma enquanto a exclusão espera a trava; duas unidades de trabalho); uma violação de FK forçada vira 409, nunca 500
+- [x] Atomicidade: com `AuditService.record` forçado a levantar no evento `DELETE`, a versão continua no banco
+- [x] Os documentos gerados de um processo que usou uma versão de outra tabela não mudam de conteúdo
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_admin_delete_version.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted

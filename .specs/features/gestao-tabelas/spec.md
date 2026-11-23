@@ -236,13 +236,13 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | GTAB-23 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-24 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-25 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-26 | P1: Arquivar e excluir | Specified | Pending |
+| GTAB-26 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-27 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-28 | P1: Arquivar e excluir | Specified | Pending |
 | GTAB-29 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-30 | P1: Arquivar e excluir | Specified | Pending |
+| GTAB-30 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-31 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-32 | P1: Arquivar e excluir | Specified | Pending |
+| GTAB-32 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-33 | P1: Lista legível e com ações visíveis | Specified | Pending |
 | GTAB-34 | P1: Lista legível e com ações visíveis | Specified | Pending |
 | GTAB-35 | P1: Lista legível e com ações visíveis | Specified | Pending |

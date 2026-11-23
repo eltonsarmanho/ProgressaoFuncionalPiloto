@@ -26,8 +26,16 @@ from app.domain.entities.scoring import (
 from app.domain.entities.user import User
 from app.domain.errors import Conflict, DomainError, NotFound, ValidationFailed
 from app.domain.repositories.ports import ScoringTableRecord, UnitOfWork
-from app.domain.rules.scoring_table_guards import TableFacts, table_archive_blockers
+from app.domain.rules.scoring_table_guards import (
+    Blocker,
+    TableFacts,
+    VersionFacts,
+    has_later_version,
+    table_archive_blockers,
+    version_delete_blockers,
+)
 
+VERSION_NOT_FOUND = "Versão da tabela de pontuação não encontrada"
 TABLE_ENTITY = "scoring_table"
 VERSION_ENTITY = "scoring_version"
 _ROMAN = ("I", "II", "III", "IV", "V", "VI", "VII", "VIII")
@@ -122,17 +130,49 @@ def _default_acronyms(uow: UnitOfWork, version_ids: Collection[UUID]) -> tuple[s
     return tuple(sorted(acronyms))
 
 
+@dataclass(frozen=True)
+class ProtectedCatalog:
+    """The table the seed recreates at every start: it and all its versions are never deleted
+    (GTAB-42). The name comes from the wiring, so this layer reads no infrastructure data."""
+
+    official_table_name: str
+
+    def is_official(self, table_name: str) -> bool:
+        return table_name.casefold() == self.official_table_name.casefold()
+
+
 def _table_facts(
-    uow: UnitOfWork, table: ScoringTableRecord, official_table_name: str | None = None
+    uow: UnitOfWork, table: ScoringTableRecord, catalog: ProtectedCatalog | None = None
 ) -> TableFacts:
     """What the blocking rules read about a table (GTAB-25, GTAB-29), from the current state."""
     version_ids = {v.id for v in uow.scoring_tables.list_version_headers(table.id)}
     counts = uow.scoring_tables.version_process_counts()
     return TableFacts(
-        is_official=official_table_name is not None and table.name == official_table_name,
+        is_official=catalog is not None and catalog.is_official(table.name),
         process_count=sum(counts.get(version_id, 0) for version_id in version_ids),
         default_unit_acronyms=_default_acronyms(uow, version_ids),
         table_archived=table.archived,
+    )
+
+
+def _version_facts(
+    uow: UnitOfWork,
+    version: ScoringTableVersion,
+    table: ScoringTableRecord,
+    catalog: ProtectedCatalog | None = None,
+) -> VersionFacts:
+    """What the blocking rules read about a version, from the current state."""
+    repo = uow.scoring_tables
+    siblings = repo.list_version_headers(table.id)
+    return VersionFacts(
+        process_count=repo.version_process_counts().get(version.id, 0),
+        default_unit_acronyms=_default_acronyms(uow, {version.id}),
+        replaces_other=version.id in repo.superseding_version_ids(),
+        is_superseded=version.is_superseded,
+        has_later_version=has_later_version(version, siblings),
+        is_only_version=len(siblings) == 1,
+        table_archived=table.archived,
+        is_official=catalog is not None and catalog.is_official(table.name),
     )
 
 
@@ -704,6 +744,112 @@ class ArchiveScoringTable:
             )
             uow.commit()
         return view
+
+
+@dataclass(frozen=True)
+class VersionDeletePreview:
+    name: str
+    criteria: int
+    blocked: list[Blocker]
+
+
+class PreviewDeleteVersion:
+    """GTAB-30: what a deletion would remove and what blocks it, before the click."""
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], catalog: ProtectedCatalog):
+        self._uow_factory = uow_factory
+        self._catalog = catalog
+
+    def execute(self, version_id: UUID) -> VersionDeletePreview:
+        with self._uow_factory() as uow:
+            repo = uow.scoring_tables
+            version = repo.get_version(version_id)
+            table = repo.get_table(version.table_id) if version else None
+            if version is None or table is None:
+                raise NotFound("Versão da tabela de pontuação não encontrada")
+            return VersionDeletePreview(
+                version.name,
+                repo.count_criteria(version_id),
+                version_delete_blockers(_version_facts(uow, version, table, self._catalog)),
+            )
+
+
+class DeleteScoringVersion:
+    """GTAB-26, GTAB-27, GTAB-31, GTAB-32: delete a version nothing depends on, at once.
+
+    The table and the version are locked (in this order) and every fact is read again under
+    the locks, so a process that chooses the version, or a unit that marks it, either commits
+    first (the deletion is refused) or waits and finds it deleted. A foreign key violation that
+    still escapes is a 409. The audit events are never deleted.
+    """
+
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        catalog: ProtectedCatalog,
+    ):
+        self._uow_factory = uow_factory
+        self._audit = audit
+        self._catalog = catalog
+
+    def execute(self, actor: User, version_id: UUID) -> None:
+        require_admin(actor)
+        with self._uow_factory() as uow:
+            repo = uow.scoring_tables
+            version = repo.get_version(version_id)
+            if version is None or version.table_id is None:
+                raise NotFound(VERSION_NOT_FOUND)
+            if not repo.lock_table(version.table_id) or not repo.lock_version(version_id):
+                raise NotFound(VERSION_NOT_FOUND)
+            version = repo.get_version(version_id)
+            table = repo.get_table(version.table_id) if version else None
+            if version is None or table is None:
+                raise NotFound(VERSION_NOT_FOUND)
+            blockers = version_delete_blockers(_version_facts(uow, version, table, self._catalog))
+            if blockers:
+                raise Conflict(blockers[0].message, code=blockers[0].code)
+            before = {
+                **_audit_version(version),
+                "norm_code": version.norm_code,
+                "criteria": repo.count_criteria(version_id),
+            }
+            self._reopen_previous(uow, actor, version)
+            repo.delete_version(version_id)
+            self._audit.record(
+                uow, actor.id, VERSION_ENTITY, version_id, AuditAction.DELETE, before, {}
+            )
+            uow.commit()
+
+    def _reopen_previous(
+        self, uow: UnitOfWork, actor: User, deleted: ScoringTableVersion
+    ) -> None:
+        """The latest version closed the previous one the day before it started (ADM-05):
+        deleting it gives the previous one the end of validity of the deleted one back, so the
+        table is not left without a current version (A11)."""
+        siblings = uow.scoring_tables.list_version_headers(deleted.table_id)
+        if has_later_version(deleted, siblings):
+            return
+        day_before = deleted.valid_from - timedelta(days=1)
+        closed_by_it = [
+            v
+            for v in siblings
+            if v.id != deleted.id and not v.is_superseded and v.valid_to == day_before
+        ]
+        if not closed_by_it:
+            return
+        previous = max(closed_by_it, key=lambda v: v.valid_from)
+        reopened = replace(previous, valid_to=deleted.valid_to)
+        uow.scoring_tables.update_version(reopened)
+        self._audit.record(
+            uow,
+            actor.id,
+            VERSION_ENTITY,
+            previous.id,
+            AuditAction.UPDATE,
+            _audit_version(previous),
+            _audit_version(reopened),
+        )
 
 
 @dataclass(frozen=True)
