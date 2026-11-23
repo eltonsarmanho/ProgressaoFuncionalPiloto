@@ -19,6 +19,7 @@ from app.domain.entities.report import PageSetup
 
 PAGE = PageSetup(30.0, 20.0, 30.0, 20.0, "Liberation Serif", 12.0)
 UNIT = AcademicUnit(uuid4(), "Faculdade de Testes Sintéticos", "FATS", UnitKind.FACULDADE)
+CAMPUS = AcademicUnit(uuid4(), "Campus Universitário Sintético", "CUS", UnitKind.CAMPUS)
 PROFESSOR = Professor(
     id=uuid4(),
     full_name="Maria Docente da Silva",

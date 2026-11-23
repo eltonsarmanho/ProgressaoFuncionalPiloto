@@ -1,18 +1,18 @@
-"""PAR-03 to PAR-06, PAR-11, PAR-12: the text of the Parecer built from the Tabela snapshot."""
+"""PMOD-01 to PMOD-19: the text of the Parecer, built after the official model."""
 
 import inspect
 from datetime import date
-from decimal import Decimal
+from uuid import uuid4
 
 import pytest
 
-from app.domain.entities.board import OpinionConclusion
+from app.domain.entities.academic_unit import AcademicUnit, UnitKind
+from app.domain.entities.board import BoardRole, OpinionConclusion
 from app.domain.entities.career import Modality
-from app.domain.entities.generated import DocumentKind
 from app.domain.rules import opinion_document
 from app.domain.rules.opinion_document import build_opinion
-from app.domain.rules.scoring_verification import MinimumComparison, MinimumStatus
 from tests.unit.domain.board_document_support import (
+    CAMPUS,
     PAGE,
     PROFESSOR,
     UNIT,
@@ -22,229 +22,178 @@ from tests.unit.domain.board_document_support import (
     process,
 )
 
-GROUP_NAMES = {
-    1: "Atividades de ensino",
-    2: "Orientações",
-    3: "Bancas",
-    4: "Extensão",
-    5: "Pesquisa",
-    6: "Administração",
-    7: "Capacitação",
-    8: "Outras atividades",
-}
-# The subtotals do not add up to the total on purpose: the Parecer copies, never sums (PAR-04).
-SNAPSHOT = {
-    "total": "211.00",
-    "subtotals": {"1": "100.00", "2": "50.50", "3": "0.00", "4": "7.00", "5": "30.00"},
-    "table_version": {"id": "x", "name": "Tabela sintética", "norm_reference": "n"},
-}
-VERSIONS = {DocumentKind.TABELA: 3, DocumentKind.RELATORIO: 2, DocumentKind.COMPROVANTE: None}
-MINIMUM = MinimumComparison(MinimumStatus.ATINGE, Decimal("200.00"), Decimal("211.00"))
-UNDEFINED = MinimumComparison(MinimumStatus.NAO_DEFINIDO, None, Decimal("211.00"))
+MEMBERS = (
+    member("Ana Presidente Souza", BoardRole.PRESIDENTE),
+    member("Bruno Membro Lima"),
+    member("Carla Membro Reis"),
+    member("Davi Suplente Rocha", BoardRole.SUPLENTE),
+)
+INSTITUTE = AcademicUnit(uuid4(), "Instituto Sintético", "INS", UnitKind.INSTITUTO)
+DAY = date(2025, 5, 27)
 
 
-def build(
-    *,
-    proc=None,
-    ordinance_=None,
-    opinion_=None,
-    snapshot=SNAPSHOT,
-    versions=VERSIONS,
-    minimum=MINIMUM,
-):
+def build(*, proc=None, members=MEMBERS, number="123/2025", opinion_=None, parent=CAMPUS):
     return build_opinion(
         proc or process(),
         PROFESSOR,
         UNIT,
-        ordinance_ or ordinance(),
-        opinion_ or opinion(),
-        snapshot,
-        versions,
-        minimum,
-        GROUP_NAMES,
+        parent,
+        ordinance(members=members, number=number),
+        opinion_ or opinion(opinion_date=DAY, place="Belém"),
         PAGE,
     )
 
 
-def section(document, key):
-    return next(s for s in document.sections if s.key == key)
+def paragraph(document) -> str:
+    return "".join(run.text for run in document.paragraph)
+
+
+def bold_runs(document) -> list[str]:
+    return [run.text for run in document.paragraph if run.bold]
+
+
+def on(day: date, **changes):
+    return build(opinion_=opinion(opinion_date=day, place="Belém", **changes))
 
 
 def all_text(document) -> str:
-    lines = list(document.header_lines) + [document.title]
-    for s in document.sections:
-        lines += [s.heading or "", *s.lines]
-        lines += [f"{r.label} {r.value}" for r in s.rows]
-        if s.total is not None:
-            lines.append(f"{s.total.label} {s.total.value}")
-    lines += [f"{sig.name} {sig.role}" for sig in document.signatures]
-    return "\n".join(lines)
-
-
-# --- order and header (PAR-03) --------------------------------------------------------------
-
-
-def test_the_sections_come_in_the_order_of_par_03():
-    document = build()
-
-    assert [s.key for s in document.sections] == [
-        "identificacao",
-        "portaria",
-        "intersticio",
-        "documentos",
-        "pontos",
-        "minimo",
-        "conclusao",
-        "observacoes",
-        "local_data",
-    ]
-
-
-def test_the_header_names_the_university_and_the_unit_and_the_title_is_parecer():
-    document = build()
-
-    assert "Universidade Federal do Pará" in document.header_lines
-    assert document.header_lines[-1] == UNIT.name
-    assert document.title == "PARECER"
-
-
-def test_the_page_is_the_one_given_so_it_looks_like_the_relatorio():
-    assert build().page is PAGE
-
-
-def test_the_ordinance_section_has_the_number_and_the_date():
-    lines = section(build(), "portaria").lines
-
-    assert any("123/2025" in line and "10/03/2025" in line for line in lines)
-
-
-def test_an_ordinance_without_number_or_date_leaves_the_blanks():
-    document = build(ordinance_=ordinance(number=None, when=None))
-
-    line = " ".join(section(document, "portaria").lines)
-    assert "__________" in line
-    assert "___/___/___" in line
-
-
-def test_the_interstice_section_has_the_period_of_the_process():
-    assert any("23/11/2022 a 23/11/2024" in line for line in section(build(), "intersticio").lines)
-
-
-# --- identification as typed (NMOV-01) ------------------------------------------------------
-
-
-def test_the_identification_has_the_six_fields_exactly_as_the_process_has_them():
-    text = "\n".join(section(build(), "identificacao").lines)
-
-    for expected in (
-        "Maria Docente da Silva",
-        "1234567",
-        UNIT.name,
-        "Promoção",
-        "nível 4",
-        "classe B",
-        "Adjunto",
-        "nível 1",
-        "classe C",
-        "Associado",
-    ):
-        assert expected in text
-
-
-def test_a_progression_says_progressao_in_the_identification():
-    text = "\n".join(section(build(proc=process(Modality.PROGRESSAO)), "identificacao").lines)
-
-    assert "Progressão" in text
-    assert "Promoção" not in text
-
-
-def test_denominations_out_of_the_usual_pattern_are_copied_as_typed():
-    proc = process(current_denomination="Titular-Livre", target_denomination="Denominação Nova")
-
-    text = "\n".join(section(build(proc=proc), "identificacao").lines)
-
-    assert "Titular-Livre" in text
-    assert "Denominação Nova" in text
-
-
-# --- documents analyzed ---------------------------------------------------------------------
-
-
-def test_the_analyzed_documents_name_the_version_used_of_each_one():
-    lines = section(build(), "documentos").lines
-
-    assert any("Tabela" in line and "versão 3" in line for line in lines)
-    assert any("Relatório" in line and "versão 2" in line for line in lines)
-
-
-def test_a_document_never_generated_reads_nao_gerado():
-    lines = section(build(), "documentos").lines
-
-    assert any("Comprovante" in line and "não gerado" in line for line in lines)
-
-
-# --- points copied from the snapshot (PAR-04) -----------------------------------------------
-
-
-def test_the_points_are_the_snapshot_ones_formatted_in_portuguese_for_groups_i_to_viii():
-    rows = section(build(), "pontos").rows
-
-    assert [(r.label, r.value) for r in rows] == [
-        ("I - Atividades de ensino", "100,00"),
-        ("II - Orientações", "50,50"),
-        ("III - Bancas", "0,00"),
-        ("IV - Extensão", "7,00"),
-        ("V - Pesquisa", "30,00"),
-        ("VI - Administração", "0,00"),
-        ("VII - Capacitação", "0,00"),
-        ("VIII - Outras atividades", "0,00"),
-    ]
-
-
-def test_the_total_is_the_snapshot_total_even_when_the_subtotals_do_not_add_up():
-    total = section(build(), "pontos").total
-
-    assert (total.label, total.value) == ("Total geral", "211,00")
-
-
-# --- minimum (PAR-06) -----------------------------------------------------------------------
-
-
-def test_an_undefined_minimum_is_written_without_a_number():
-    lines = section(build(minimum=UNDEFINED), "minimo").lines
-
-    assert lines == ("Mínimo de referência: não definido pela norma aplicável",)
-
-
-def test_a_numeric_minimum_is_written_with_its_value():
-    lines = section(build(), "minimo").lines
-
-    assert lines == ("Mínimo de referência: 200,00 pontos",)
-
-
-# --- conclusion (PAR-05, PAR-12) ------------------------------------------------------------
-
-
-def test_a_favorable_promotion_reads_the_sentence_of_the_spec():
-    lines = section(build(), "conclusao").lines
-
-    assert lines == (
-        "A banca manifesta-se FAVORÁVEL à promoção de Maria Docente da Silva, do nível 4 da "
-        "classe B (Adjunto) para o nível 1 da classe C (Associado), referente ao interstício "
-        "de 23/11/2022 a 23/11/2024.",
+    return "\n".join(
+        [
+            *document.header_lines,
+            document.title,
+            document.place_date_line,
+            paragraph(document),
+            *document.member_lines,
+        ]
     )
 
 
-def test_an_unfavorable_progression_reads_the_same_sentence_with_desfavoravel():
-    document = build(
-        proc=process(Modality.PROGRESSAO),
-        opinion_=opinion(OpinionConclusion.DESFAVORAVEL),
+# --- the paragraph of the model (PMOD-06, PMOD-10, PMOD-12) ----------------------------------
+
+
+def test_the_paragraph_is_the_text_of_the_model_filled_with_the_synthetic_process():
+    assert paragraph(build()) == (
+        "Aos vinte e sete dias do mês de maio de dois mil e vinte e cinco, reuniram-se os "
+        "membros da Banca de Análise, nomeados pela Portaria nº 123/2025, Ana Presidente Souza "
+        "(presidente), Bruno Membro Lima, Carla Membro Reis, responsáveis por analisar o "
+        "Relatório de Atividades do Professor Adjunto Nível IV Maria Docente da Silva, para "
+        "fins de progressão funcional do docente, referente ao interstício de 23/11/2022 a "
+        "23/11/2024, para Classe C (Associado) Nível I. Após a análise, os membros APROVARAM "
+        "o referido relatório."
     )
 
-    assert section(document, "conclusao").lines == (
-        "A banca manifesta-se DESFAVORÁVEL à progressão de Maria Docente da Silva, do nível 4 "
-        "da classe B (Adjunto) para o nível 1 da classe C (Associado), referente ao interstício "
-        "de 23/11/2022 a 23/11/2024.",
+
+def test_only_the_date_words_and_the_current_situation_with_the_name_are_in_bold():
+    document = build()
+
+    assert bold_runs(document) == [
+        "vinte e sete dias do mês de maio de dois mil e vinte e cinco",
+        "Adjunto Nível IV Maria Docente da Silva",
+    ]
+    first, *_, last = [run for run in document.paragraph if not run.bold]
+    assert first.text == "Aos "
+    assert any(not run.bold and run.text.endswith("do Professor ") for run in document.paragraph)
+    assert last.text.startswith(", para fins de progressão funcional do docente")
+
+
+def test_progression_and_promotion_write_the_same_purpose():
+    promotion = paragraph(build())
+    progression = paragraph(build(proc=process(Modality.PROGRESSAO)))
+
+    assert "para fins de progressão funcional do docente" in promotion
+    assert "para fins de progressão funcional do docente" in progression
+    assert "promoção" not in promotion.lower()
+
+
+# --- the date by extension (PMOD-08, PMOD-09) ------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("day", "words"),
+    [
+        (date(2026, 1, 2), "Aos dois dias do mês de janeiro de dois mil e vinte e seis"),
+        (date(2026, 1, 21), "Aos vinte e um dias do mês de janeiro de dois mil e vinte e seis"),
+        (date(2026, 1, 31), "Aos trinta e um dias do mês de janeiro de dois mil e vinte e seis"),
+    ],
+)
+def test_the_days_two_to_thirty_one_use_the_cardinal_and_the_plural(day, words):
+    assert paragraph(on(day)).startswith(f"{words}, reuniram-se")
+
+
+def test_the_first_day_uses_the_singular_and_the_ordinal():
+    document = on(date(2026, 1, 1))
+
+    assert paragraph(document).startswith(
+        "Ao primeiro dia do mês de janeiro de dois mil e vinte e seis, reuniram-se"
+    )
+    assert bold_runs(document)[0] == "primeiro dia do mês de janeiro de dois mil e vinte e seis"
+
+
+@pytest.mark.parametrize(
+    ("year", "words"),
+    [
+        (2000, "dois mil"),
+        (2025, "dois mil e vinte e cinco"),
+        (2100, "dois mil e cem"),
+        (2101, "dois mil cento e um"),
+    ],
+)
+def test_the_year_is_written_in_words(year, words):
+    assert paragraph(on(date(year, 6, 10))).startswith(
+        f"Aos dez dias do mês de junho de {words}, reuniram-se"
+    )
+
+
+@pytest.mark.parametrize("year", [999, 3000])
+def test_a_year_out_of_one_thousand_to_2999_is_written_in_digits(year):
+    document = on(date(year, 6, 10))
+
+    assert paragraph(document).startswith(f"Aos dez dias do mês de junho de {year}, reuniram-se")
+    assert document.place_date_line == f"Belém, 10 de Junho de {year}."
+
+
+@pytest.mark.parametrize(
+    ("month", "lower", "capital"),
+    [
+        (1, "janeiro", "Janeiro"),
+        (2, "fevereiro", "Fevereiro"),
+        (3, "março", "Março"),
+        (4, "abril", "Abril"),
+        (5, "maio", "Maio"),
+        (6, "junho", "Junho"),
+        (7, "julho", "Julho"),
+        (8, "agosto", "Agosto"),
+        (9, "setembro", "Setembro"),
+        (10, "outubro", "Outubro"),
+        (11, "novembro", "Novembro"),
+        (12, "dezembro", "Dezembro"),
+    ],
+)
+def test_the_month_is_lowercase_in_the_paragraph_and_capitalized_in_the_place_and_date_line(
+    month, lower, capital
+):
+    document = on(date(2025, month, 27))
+
+    assert f"dias do mês de {lower} de dois mil e vinte e cinco" in paragraph(document)
+    assert document.place_date_line == f"Belém, 27 de {capital} de 2025."
+
+
+def test_the_place_and_date_line_has_the_day_without_a_leading_zero():
+    assert on(date(2025, 5, 7)).place_date_line == "Belém, 7 de Maio de 2025."
+
+
+# --- the decision (PMOD-10, PMOD-11) ---------------------------------------------------------
+
+
+def test_a_favorable_conclusion_ends_with_aprovaram():
+    assert paragraph(build()).endswith("Após a análise, os membros APROVARAM o referido relatório.")
+
+
+def test_an_unfavorable_conclusion_ends_with_nao_aprovaram():
+    document = build(opinion_=opinion(OpinionConclusion.DESFAVORAVEL, opinion_date=DAY))
+
+    assert paragraph(document).endswith(
+        "Após a análise, os membros NÃO APROVARAM o referido relatório."
     )
 
 
@@ -253,61 +202,239 @@ def test_without_a_conclusion_the_document_is_never_written():
         build(opinion_=opinion(conclusion=None))
 
 
-# --- notes, place and date ------------------------------------------------------------------
+# --- roman levels and the six fields as typed (PMOD-12, NMOV-01) ------------------------------
 
 
-def test_the_notes_are_a_section_of_their_own():
-    document = build(opinion_=opinion(notes="A banca registra elogios ao relatório."))
+def test_the_levels_are_written_in_roman_numerals():
+    text = paragraph(build(proc=process(current_level=1, target_level=4)))
 
-    assert section(document, "observacoes").lines == ("A banca registra elogios ao relatório.",)
-
-
-@pytest.mark.parametrize("notes", [None, "", "   \n "])
-def test_empty_notes_do_not_create_a_section(notes):
-    document = build(opinion_=opinion(notes=notes))
-
-    assert "observacoes" not in [s.key for s in document.sections]
+    assert "Adjunto Nível I Maria Docente da Silva" in text
+    assert "Classe C (Associado) Nível IV." in text
 
 
-def test_place_and_date_are_written_with_the_blanks_when_empty():
-    filled = build(opinion_=opinion(place="Belém", opinion_date=date(2025, 4, 2)))
-    empty = build(opinion_=opinion(place=None, opinion_date=None))
+@pytest.mark.parametrize("level", [0, 4000])
+def test_a_level_out_of_one_to_3999_is_written_as_typed(level):
+    text = paragraph(build(proc=process(current_level=level, target_level=level)))
 
-    assert section(filled, "local_data").lines == ("Belém, 02/04/2025",)
-    assert section(empty, "local_data").lines == ("__________, ___/___/___",)
-
-
-# --- signatures -----------------------------------------------------------------------------
+    assert f"Adjunto Nível {level} Maria" in text
+    assert f"Classe C (Associado) Nível {level}." in text
 
 
-def test_each_member_gets_a_signature_line_in_the_order_of_the_ordinance():
+def test_class_and_denominations_out_of_the_usual_pattern_are_copied_as_typed():
+    proc = process(
+        current_class="A",
+        current_denomination="Titular-Livre",
+        target_class="C",
+        target_denomination="Denominação Nova",
+    )
+
+    text = paragraph(build(proc=proc))
+
+    assert "Professor Titular-Livre Nível IV Maria" in text
+    assert "para Classe C (Denominação Nova) Nível I." in text
+
+
+# --- the members (PMOD-13, PMOD-14, PMOD-15) -------------------------------------------------
+
+
+def test_the_member_lines_have_the_president_and_the_numbered_members_without_the_alternate():
     document = build()
 
-    assert [(s.name, s.role) for s in document.signatures] == [
-        ("Ana Presidente Souza", "Presidente"),
-        ("Bruno Membro Lima", "Membro"),
-        ("Carla Suplente Reis", "Suplente"),
+    assert document.member_lines == (
+        "PRESIDENTE: Ana Presidente Souza",
+        "MEMBRO 1: Bruno Membro Lima",
+        "MEMBRO 2: Carla Membro Reis",
+    )
+    assert "Davi Suplente Rocha" not in all_text(document)
+
+
+def test_a_president_that_is_not_the_first_of_the_ordinance_comes_first():
+    members = (
+        member("Bruno Membro Lima"),
+        member("Ana Presidente Souza", BoardRole.PRESIDENTE),
+        member("Carla Membro Reis"),
+    )
+
+    document = build(members=members)
+
+    assert document.member_lines == (
+        "PRESIDENTE: Ana Presidente Souza",
+        "MEMBRO 1: Bruno Membro Lima",
+        "MEMBRO 2: Carla Membro Reis",
+    )
+    assert (
+        "Ana Presidente Souza (presidente), Bruno Membro Lima, Carla Membro Reis, responsáveis"
+        in (paragraph(document))
+    )
+
+
+def test_without_a_president_nobody_is_marked_and_the_lines_are_only_members():
+    members = (member("Bruno Membro Lima"), member("Carla Membro Reis"))
+
+    document = build(members=members)
+
+    assert "(presidente)" not in paragraph(document)
+    assert (
+        "nomeados pela Portaria nº 123/2025, Bruno Membro Lima, Carla Membro Reis, responsáveis"
+        in (paragraph(document))
+    )
+    assert document.member_lines == ("MEMBRO 1: Bruno Membro Lima", "MEMBRO 2: Carla Membro Reis")
+
+
+def test_a_president_alone_gives_one_line_and_the_paragraph_names_only_him():
+    document = build(members=(member("Ana Presidente Souza", BoardRole.PRESIDENTE),))
+
+    assert "Ana Presidente Souza (presidente), responsáveis por analisar" in paragraph(document)
+    assert document.member_lines == ("PRESIDENTE: Ana Presidente Souza",)
+
+
+def test_two_presidents_are_both_marked_and_come_before_the_members_that_start_at_one():
+    members = (
+        member("Bruno Membro Lima"),
+        member("Ana Presidente Souza", BoardRole.PRESIDENTE),
+        member("Eva Presidente Dias", BoardRole.PRESIDENTE),
+    )
+
+    document = build(members=members)
+
+    assert (
+        "Ana Presidente Souza (presidente), Eva Presidente Dias (presidente), Bruno Membro Lima, "
+        "responsáveis" in paragraph(document)
+    )
+    assert document.member_lines == (
+        "PRESIDENTE: Ana Presidente Souza",
+        "PRESIDENTE: Eva Presidente Dias",
+        "MEMBRO 1: Bruno Membro Lima",
+    )
+
+
+def test_fifteen_members_and_names_of_two_hundred_characters_are_written_whole():
+    long_name = "N" * 200
+    members = (member(long_name, BoardRole.PRESIDENTE), *(member(f"Membro {n}") for n in range(14)))
+
+    document = build(members=members)
+
+    assert len(document.member_lines) == 15
+    assert document.member_lines[0] == f"PRESIDENTE: {long_name}"
+    assert document.member_lines[-1] == "MEMBRO 14: Membro 13"
+    assert f"{long_name} (presidente)" in paragraph(document)
+    assert "Membro 13, responsáveis" in paragraph(document)
+
+
+def test_names_and_the_ordinance_number_are_written_as_registered_with_no_title_added():
+    members = (member("Prof. Dr. Ana Presidente Souza", BoardRole.PRESIDENTE), member("Bruno"))
+
+    document = build(members=members, number="89/2025 - CCAME")
+
+    assert "Portaria nº 89/2025 - CCAME, Prof. Dr. Ana Presidente Souza (presidente), Bruno," in (
+        paragraph(document)
+    )
+    assert document.member_lines[1] == "MEMBRO 1: Bruno"
+    assert "Prof. Prof." not in all_text(document)
+    assert "Dr. Bruno" not in all_text(document)
+
+
+# --- the header and the title (PMOD-02, PMOD-03, PMOD-04) ------------------------------------
+
+
+def test_with_a_campus_as_parent_the_header_has_three_lines_with_an_en_dash():
+    document = build()
+
+    assert document.header_lines == (
+        "Universidade Federal do Pará",
+        "Campus Universitário Sintético",
+        "Faculdade de Testes Sintéticos – FATS",
+    )
+
+
+@pytest.mark.parametrize("parent", [None, INSTITUTE])
+def test_without_a_campus_as_parent_the_header_has_two_lines(parent):
+    document = build(parent=parent)
+
+    assert document.header_lines == (
+        "Universidade Federal do Pará",
+        "Faculdade de Testes Sintéticos – FATS",
+    )
+
+
+def test_the_title_is_parecer_and_the_page_is_the_one_given():
+    document = build()
+
+    assert document.title == "PARECER"
+    assert document.page is PAGE
+
+
+# --- blanks (PMOD-16, PMOD-17, PMOD-18) -------------------------------------------------------
+
+
+def test_without_a_date_the_paragraph_and_the_line_keep_the_blanks_and_nothing_is_refused():
+    document = build(opinion_=opinion(opinion_date=None, place="Belém"))
+
+    assert paragraph(document).startswith(
+        "Aos ______ dias do mês de ________ de ________, reuniram-se"
+    )
+    assert document.place_date_line == "Belém, ____ de ________ de ________."
+
+
+def test_without_a_place_the_line_has_the_blank_in_the_place_of_the_city():
+    document = build(opinion_=opinion(opinion_date=DAY, place=None))
+
+    assert document.place_date_line == "__________, 27 de Maio de 2025."
+
+
+def test_a_place_of_only_spaces_is_a_blank_place():
+    document = build(opinion_=opinion(opinion_date=DAY, place="   "))
+
+    assert document.place_date_line == "__________, 27 de Maio de 2025."
+
+
+def test_without_an_ordinance_number_the_paragraph_has_the_blank():
+    document = build(number=None)
+
+    assert "nomeados pela Portaria nº __________, Ana Presidente Souza" in paragraph(document)
+
+
+# --- nothing of the old structure (PMOD-01, PMOD-19) -----------------------------------------
+
+
+def test_the_document_has_none_of_the_texts_of_the_old_structure():
+    text = all_text(build())
+
+    for forbidden in (
+        "Total geral",
+        "Mínimo de referência",
+        "Documentos analisados",
+        "Pontuação por grupo",
+        "Observações",
+        "Identificação",
+        "Portaria da banca:",
+        "Conclusão",
+    ):
+        assert forbidden not in text
+
+
+def test_the_document_has_only_the_elements_of_the_model():
+    document = build()
+
+    assert [field for field in vars(document)] == [
+        "page",
+        "header_lines",
+        "title",
+        "place_date_line",
+        "paragraph",
+        "member_lines",
     ]
 
 
-def test_the_signatures_come_after_the_conclusion_and_the_place_and_date():
-    text = all_text(build())
-
-    assert text.index("A banca manifesta-se") < text.index("Belém, 02/04/2025")
-    assert text.index("Belém, 02/04/2025") < text.index("Ana Presidente Souza Presidente")
-
-
-def test_one_member_gives_one_signature():
-    document = build(ordinance_=ordinance(members=[member("Só Um Membro")]))
-
-    assert [s.name for s in document.signatures] == ["Só Um Membro"]
-
-
-# --- no clock, no AI (PAR-11) ---------------------------------------------------------------
+# --- no clock, no AI (PMOD-25) ---------------------------------------------------------------
 
 
 def test_the_same_input_gives_the_same_document():
-    assert build() == build()
+    ordinance_ = ordinance(members=MEMBERS)
+    opinion_ = opinion(opinion_date=DAY, place="Belém")
+    args = (process(), PROFESSOR, UNIT, CAMPUS, ordinance_, opinion_, PAGE)
+
+    assert build_opinion(*args) == build_opinion(*args)
 
 
 def test_the_module_reads_no_clock_and_calls_no_ai():

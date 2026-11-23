@@ -208,25 +208,25 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| PMOD-01 | P1: Texto do Parecer | Tasks | In Tasks |
-| PMOD-02 | P1: Texto do Parecer | Tasks | In Tasks |
-| PMOD-03 | P1: Texto do Parecer | Tasks | In Tasks |
-| PMOD-04 | P1: Texto do Parecer | Tasks | In Tasks |
+| PMOD-01 | P1: Texto do Parecer | Execute | In Progress |
+| PMOD-02 | P1: Texto do Parecer | Execute | In Progress |
+| PMOD-03 | P1: Texto do Parecer | Execute | In Progress |
+| PMOD-04 | P1: Texto do Parecer | Execute | In Progress |
 | PMOD-05 | P1: Texto do Parecer | Execute | In Progress |
-| PMOD-06 | P1: Texto do Parecer | Tasks | In Tasks |
-| PMOD-07 | P1: Texto do Parecer | Tasks | In Tasks |
-| PMOD-08 | P1: Texto do Parecer | Execute | In Progress |
-| PMOD-09 | P1: Texto do Parecer | Execute | In Progress |
-| PMOD-10 | P1: Texto do Parecer | Tasks | In Tasks |
-| PMOD-11 | P1: Texto do Parecer | Tasks | In Tasks |
-| PMOD-12 | P1: Texto do Parecer | Execute | In Progress |
-| PMOD-13 | P1: Texto do Parecer | Tasks | In Tasks |
-| PMOD-14 | P1: Texto do Parecer | Tasks | In Tasks |
-| PMOD-15 | P1: Texto do Parecer | Tasks | In Tasks |
-| PMOD-16 | P1: Texto do Parecer | Tasks | In Tasks |
-| PMOD-17 | P1: Texto do Parecer | Tasks | In Tasks |
-| PMOD-18 | P1: Texto do Parecer | Tasks | In Tasks |
-| PMOD-19 | P1: Texto do Parecer | Tasks | In Tasks |
+| PMOD-06 | P1: Texto do Parecer | Execute | In Progress |
+| PMOD-07 | P1: Texto do Parecer | Execute | In Progress |
+| PMOD-08 | P1: Texto do Parecer | Implemented | Implemented |
+| PMOD-09 | P1: Texto do Parecer | Implemented | Implemented |
+| PMOD-10 | P1: Texto do Parecer | Implemented | Implemented |
+| PMOD-11 | P1: Texto do Parecer | Implemented | Implemented |
+| PMOD-12 | P1: Texto do Parecer | Implemented | Implemented |
+| PMOD-13 | P1: Texto do Parecer | Execute | In Progress |
+| PMOD-14 | P1: Texto do Parecer | Implemented | Implemented |
+| PMOD-15 | P1: Texto do Parecer | Implemented | Implemented |
+| PMOD-16 | P1: Texto do Parecer | Implemented | Implemented |
+| PMOD-17 | P1: Texto do Parecer | Implemented | Implemented |
+| PMOD-18 | P1: Texto do Parecer | Implemented | Implemented |
+| PMOD-19 | P1: Texto do Parecer | Execute | In Progress |
 | PMOD-20 | P1: Gerar o Parecer | Tasks | In Tasks |
 | PMOD-21 | P1: Gerar o Parecer | Tasks | In Tasks |
 | PMOD-22 | P1: Gerar o Parecer | Tasks | In Tasks |
