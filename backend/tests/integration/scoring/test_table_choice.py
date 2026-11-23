@@ -13,6 +13,7 @@ from app.domain.repositories.ports import ScoringTableRecord
 from app.domain.rules.process_verification import Severity
 from app.domain.rules.scoring_alerts import ScoringAlertCode
 from tests.integration.scoring.conftest import make_official_pending
+from tests.support.races import Gate, Worker, wait_until_blocked
 
 
 def stored_version_id(world, process):
@@ -419,3 +420,84 @@ def test_a_new_version_over_the_marked_one_keeps_the_mark_and_the_closed_version
     assert suggested.version.id == world.official_version.id
     assert suggested.version.id != new.version.id
     assert ScoringAlertCode.TABELA_FORA_DE_VIGENCIA in codes(confirmed)
+
+
+# --- GTAB-24, GTAB-44: an archived table is not chosen again; a vanished version is a 404 ------
+
+
+def archive_table(world, version):
+    with world.uow_factory() as uow:
+        uow.scoring_tables.set_table_archived(version.table_id, True)
+        uow.commit()
+
+
+def test_choosing_a_version_of_an_archived_table_is_409_and_saves_nothing(world):
+    archive_table(world, world.official_version)
+    audited = len(audit_events(world, world.process))
+
+    with pytest.raises(Conflict) as refused:
+        world.choose.execute(world.admin, world.process.id, world.official_version.id, None, None)
+
+    assert refused.value.code == "TABELA_ARQUIVADA"
+    assert stored_version_id(world, world.process) is None
+    assert len(audit_events(world, world.process)) == audited
+
+
+def test_resending_the_version_the_process_already_has_is_accepted_even_if_archived(world):
+    world.choose.execute(world.admin, world.process.id, world.official_version.id, None, None)
+    archive_table(world, world.official_version)
+
+    result = world.choose.execute(
+        world.admin, world.process.id, world.official_version.id, None, None
+    )
+
+    assert result.chosen.version.id == world.official_version.id
+    assert stored_version_id(world, world.process) == world.official_version.id
+
+
+def test_a_process_with_another_version_cannot_switch_to_an_archived_table(world):
+    world.choose.execute(world.admin, world.process.id, world.other_version.id, None, None)
+    archive_table(world, world.official_version)
+
+    with pytest.raises(Conflict) as refused:
+        world.choose.execute(world.admin, world.process.id, world.official_version.id, None, None)
+
+    assert refused.value.code == "TABELA_ARQUIVADA"
+    assert stored_version_id(world, world.process) == world.other_version.id
+
+
+def test_the_score_of_a_process_that_uses_an_archived_table_still_calculates(world):
+    world.choose.execute(world.admin, world.process.id, world.official_version.id, None, None)
+    archive_table(world, world.official_version)
+
+    score = world.calc.execute(world.admin, world.process.id)
+
+    assert score.chosen.version.id == world.official_version.id
+    assert score.result.total == 0  # no activity yet: the calculation ran without an error
+
+
+def test_choosing_a_version_deleted_while_the_choice_waits_for_its_lock_is_404(world, engine):
+    _, doomed = add_fasi_table(world, "Tabela Sintética Excluída", date(2024, 1, 1))
+    gate = Gate()
+
+    def deleting():
+        with world.uow_factory() as uow:
+            uow.scoring_tables.lock_version(doomed.id)
+            uow.scoring_tables.delete_version(doomed.id)
+            gate.hold()
+            uow.commit()
+
+    deletion = Worker(deleting).start()
+    gate.wait_reached()  # the version is deleted and locked, not committed
+    choice = Worker(
+        lambda: world.choose.execute(world.admin, world.process.id, doomed.id, None, None)
+    ).start()
+    wait_until_blocked(engine)
+
+    gate.release()
+    deletion.join()
+    choice.join()
+
+    assert deletion.error is None
+    assert isinstance(choice.error, NotFound)
+    assert stored_version_id(world, world.process) is None

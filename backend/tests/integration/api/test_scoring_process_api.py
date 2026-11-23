@@ -165,6 +165,23 @@ def test_choosing_a_superseded_version_is_422_with_the_code_versao_substituida(
     assert client.get(table_url(process)).json()["chosen"] is None
 
 
+def test_choosing_a_version_of_an_archived_table_is_409_with_the_code_tabela_arquivada(
+    client, admin, process, scoring_tables, uow_factory
+):
+    """GTAB-44: `PUT /scoring/table` refuses a version of an archived table."""
+    _, headers = admin
+    official = scoring_tables["OFICIAL"]
+    with uow_factory() as uow:
+        uow.scoring_tables.set_table_archived(official.table_id, True)
+        uow.commit()
+
+    response = choose(client, headers, process, official)
+
+    assert response.status_code == 409, response.text
+    assert response.json()["code"] == "TABELA_ARQUIVADA"
+    assert client.get(table_url(process)).json()["chosen"] is None
+
+
 def test_choice_is_audited_in_the_process_history(client, admin, process, scoring_tables):
     _, headers = admin
     choose(client, headers, process, scoring_tables["OFICIAL"], justificativa="Confirmada")

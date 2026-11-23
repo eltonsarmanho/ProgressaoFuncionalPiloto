@@ -481,7 +481,7 @@ graph LR
 
 #### T12: Escolha de tabela arquivada recusada no processo
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `ChooseProcessTable` trava a versão (`lock_version`) e a relê antes de gravar (versão que sumiu responde 404, não 500) e recusa, com 409 `TABELA_ARQUIVADA`, a escolha de uma versão de tabela arquivada, exceto quando é a versão que o processo já tem. A leitura e o cálculo de quem já usa a tabela não filtram arquivada.
 **Where**: `backend/app/application/use_cases/scoring.py` (modify)
@@ -496,10 +496,10 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_table_choice.py` (modifica): escolher versão de tabela arquivada para um processo sem tabela devolve 409 `TABELA_ARQUIVADA`; reenviar a versão que o processo já tem, mesmo arquivada, é aceito; a pontuação do processo com tabela arquivada continua calculando; escolher uma versão apagada entre a leitura e a gravação (a exclusão confirma enquanto a escolha espera a trava) responde 404, não 500
-- [ ] `backend/tests/integration/api/test_scoring_process_api.py` (modifica): `PUT /api/processes/{id}/scoring/table` com versão arquivada responde 409 com o código no corpo
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_table_choice.py tests/integration/api/test_scoring_process_api.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_table_choice.py` (modifica): escolher versão de tabela arquivada para um processo sem tabela devolve 409 `TABELA_ARQUIVADA`; reenviar a versão que o processo já tem, mesmo arquivada, é aceito; a pontuação do processo com tabela arquivada continua calculando; escolher uma versão apagada entre a leitura e a gravação (a exclusão confirma enquanto a escolha espera a trava) responde 404, não 500
+- [x] `backend/tests/integration/api/test_scoring_process_api.py` (modifica): `PUT /api/processes/{id}/scoring/table` com versão arquivada responde 409 com o código no corpo
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_table_choice.py tests/integration/api/test_scoring_process_api.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted

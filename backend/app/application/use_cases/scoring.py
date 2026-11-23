@@ -216,6 +216,25 @@ class ChooseProcessTable(_ScoringUseCase):
                     "Esta versão da tabela foi substituída; use a versão atual",
                     code="VERSAO_SUBSTITUIDA",
                 )
+            # The version is locked, so it cannot be deleted or marked between here and the
+            # write; it is read again under the lock (GTAB-44).
+            if not uow.scoring_tables.lock_version(version.id):
+                raise NotFound("Versão da tabela de pontuação não encontrada")
+            version = uow.scoring_tables.get_version(version_id)
+            table = uow.scoring_tables.get_table(version.table_id) if version else None
+            if version is None or table is None:
+                raise NotFound("Versão da tabela de pontuação não encontrada")
+            if version.is_superseded:
+                raise ValidationFailed(
+                    "version_id",
+                    "Esta versão da tabela foi substituída; use a versão atual",
+                    code="VERSAO_SUBSTITUIDA",
+                )
+            if table.archived and process.scoring_table_version_id != version.id:
+                raise Conflict(
+                    "A tabela desta versão está arquivada; escolha uma versão de outra tabela",
+                    code="TABELA_ARQUIVADA",
+                )
             # A table of another unit needs no justification (UIM-18); the alert stays.
             justification = (justification or "").strip() or None
             if expected_version is not None and process.version != expected_version:
