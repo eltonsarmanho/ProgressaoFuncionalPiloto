@@ -58,7 +58,7 @@ from app.domain.rules.scoring_periods import (
     evaluate_period,
     is_yearly_unit,
 )
-from app.domain.rules.scoring_table_choice import verify_table_choice
+from app.domain.rules.scoring_table_choice import pick_unit_default, verify_table_choice
 from app.domain.rules.scoring_verification import (
     NORM_RES_4644,
     MinimumComparison,
@@ -126,16 +126,36 @@ def _table_ref(uow: UnitOfWork, version: ScoringTableVersion | None) -> TableRef
 def suggest_version(
     uow: UnitOfWork, professor: Professor, process: FunctionalProcess
 ) -> ScoringTableVersion | None:
-    """Latest version of a table of the professor's unit valid on the interstice end (SEL-02).
+    """The version in use of the professor's unit, else the latest valid on the interstice end.
 
-    A superseded version is never suggested, even with the same start as its replacement (GI-07).
+    The version in use of the unit is suggested even outside its validity (GTAB-05, GTAB-07),
+    while it is not superseded, its table is not archived and still has the unit (GTAB-06).
+    Without it, the latest version of a table of the unit valid on the interstice end (SEL-02);
+    a superseded version is never suggested, even with the same start as its replacement
+    (GI-07), nor is one of an archived table (GTAB-44).
     """
+    in_use = _unit_default_version(uow, professor.unit_id)
+    if in_use is not None:
+        return in_use
     candidates = [
         v
         for v in uow.scoring_tables.list_versions_for_unit(professor.unit_id)
         if v.covers(process.end_date) and not v.is_superseded
     ]
     return max(candidates, key=lambda v: v.valid_from, default=None)
+
+
+def _unit_default_version(uow: UnitOfWork, unit_id: UUID) -> ScoringTableVersion | None:
+    default = uow.scoring_tables.get_unit_default(unit_id)
+    if default is None:
+        return None
+    version = uow.scoring_tables.get_version(default.version_id)
+    table = uow.scoring_tables.get_table(version.table_id) if version else None
+    if version is None or table is None:
+        return None
+    return pick_unit_default(
+        version, table_archived=table.archived, table_unit_ids=table.unit_ids, unit_id=unit_id
+    )
 
 
 def table_alerts(

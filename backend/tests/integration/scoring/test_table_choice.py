@@ -9,6 +9,7 @@ import pytest
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.process import ProcessStatus
 from app.domain.errors import Conflict, NotFound, StaleVersion, ValidationFailed
+from app.domain.repositories.ports import ScoringTableRecord
 from app.domain.rules.process_verification import Severity
 from app.domain.rules.scoring_alerts import ScoringAlertCode
 from tests.integration.scoring.conftest import make_official_pending
@@ -247,3 +248,174 @@ def test_choosing_a_superseded_version_is_422_with_its_code_and_saves_nothing(wo
     assert error.value.message == "Esta versão da tabela foi substituída; use a versão atual"
     assert stored_version_id(world, world.process) == twin.id
     assert len(audit_events(world, world.process)) == audited
+
+
+# --- GTAB-05..GTAB-08: the version in use of the unit comes before the vigência rule -----------
+
+
+def mark_in_use(world, unit, version):
+    with world.uow_factory() as uow:
+        uow.scoring_tables.set_unit_default(unit.id, version.id)
+        uow.commit()
+
+
+def add_fasi_table(world, name, valid_from, valid_to=None, unit_ids=None):
+    """A synthetic table with a version copied from the official one (its own table)."""
+    table = ScoringTableRecord(
+        uuid.uuid4(), name, unit_ids=tuple(unit_ids if unit_ids is not None else [world.fasi.id])
+    )
+    version = replace(
+        world.official_version,
+        id=uuid.uuid4(),
+        table_id=table.id,
+        name=f"{name} v1",
+        valid_from=valid_from,
+        valid_to=valid_to,
+        superseded_by_id=None,
+    )
+    with world.uow_factory() as uow:
+        uow.scoring_tables.add_table(table)
+        uow.scoring_tables.add_version(version)
+        uow.commit()
+    return table, version
+
+
+def test_the_version_in_use_is_suggested_even_when_a_newer_valid_version_exists(world):
+    _, newer = add_fasi_table(world, "Tabela Sintética Mais Nova", date(2024, 1, 1))
+    mark_in_use(world, world.fasi, world.official_version)
+
+    result = world.suggest.execute(world.admin, world.process.id)
+
+    assert result.suggested.version.id == world.official_version.id
+    assert result.suggested.version.id != newer.id
+    assert result.suggested.table_name == "Tabela de Pontuação da UFPA"
+    assert result.alerts == []
+
+
+def test_the_suggestion_is_not_applied_and_writes_no_audit_event(world):
+    mark_in_use(world, world.fasi, world.official_version)
+
+    result = world.suggest.execute(world.admin, world.process.id)
+
+    assert result.chosen is None
+    assert stored_version_id(world, world.process) is None
+    assert audit_events(world, world.process) == []
+
+
+def test_a_version_in_use_outside_its_validity_is_suggested_and_alerts_when_confirmed(world):
+    _, expired = add_fasi_table(
+        world, "Tabela Sintética Encerrada", date(2015, 1, 1), date(2020, 12, 31)
+    )
+    mark_in_use(world, world.fasi, expired)  # the interstice ends on 2024-11-23
+
+    suggested = world.suggest.execute(world.admin, world.process.id)
+    confirmed = world.choose.execute(world.admin, world.process.id, expired.id, None, None)
+
+    assert suggested.suggested.version.id == expired.id
+    assert suggested.alerts == []
+    assert ScoringAlertCode.TABELA_FORA_DE_VIGENCIA in codes(confirmed)
+
+
+def test_a_unit_without_a_mark_keeps_the_vigencia_suggestion_when_another_unit_has_one(world):
+    mark_in_use(world, world.ifch, world.other_version)
+
+    result = world.suggest.execute(world.admin, world.process.id)  # the FASI professor
+
+    assert result.suggested.version.id == world.official_version.id
+
+
+@pytest.mark.parametrize("case", ["superseded", "archived", "unit_removed"])
+def test_a_mark_that_fails_a_guard_falls_back_to_the_vigencia_suggestion(world, case):
+    table, marked = add_fasi_table(world, "Tabela Sintética Marcada", date(2015, 1, 1))
+    mark_in_use(world, world.fasi, marked)
+    with world.uow_factory() as uow:
+        if case == "superseded":
+            uow.scoring_tables.set_superseded(marked.id, world.official_version.id)
+        elif case == "archived":
+            uow.scoring_tables.set_table_archived(table.id, True)
+        else:
+            uow.scoring_tables.set_table_units(table.id, [world.ifch.id])
+        uow.commit()
+    # the marked table is the newest by vigência; without the guard it would win either way
+    with world.uow_factory() as uow:
+        uow.scoring_tables.update_version(
+            replace(uow.scoring_tables.get_version(marked.id), valid_from=date(2024, 6, 1))
+        )
+        uow.commit()
+
+    result = world.suggest.execute(world.admin, world.process.id)
+
+    assert result.suggested.version.id == world.official_version.id
+
+
+def test_a_mark_that_fails_a_guard_with_no_valid_version_keeps_tabela_nao_encontrada(
+    world, add_process
+):
+    old = add_process(start_date=date(2010, 1, 1), end_date=date(2012, 1, 1))
+    table, marked = add_fasi_table(world, "Tabela Sintética Arquivada", date(2005, 1, 1))
+    mark_in_use(world, world.fasi, marked)
+    with world.uow_factory() as uow:
+        uow.scoring_tables.set_table_archived(table.id, True)
+        uow.commit()
+
+    result = world.suggest.execute(world.admin, old.id)
+
+    assert result.suggested is None
+    assert codes(result) == {
+        ScoringAlertCode.TABELA_NAO_ENCONTRADA: Severity.REQUER_ANALISE_NORMATIVA
+    }
+
+
+def test_the_vigencia_suggestion_ignores_an_archived_table(world):
+    table, newer = add_fasi_table(world, "Tabela Sintética Arquivada", date(2024, 1, 1))
+    assert (
+        world.suggest.execute(world.admin, world.process.id).suggested.version.id == newer.id
+    )
+    with world.uow_factory() as uow:
+        uow.scoring_tables.set_table_archived(table.id, True)
+        uow.commit()
+
+    result = world.suggest.execute(world.admin, world.process.id)
+
+    assert result.suggested.version.id == world.official_version.id
+
+
+def test_a_process_with_a_chosen_table_keeps_it_when_the_mark_changes(world):
+    world.choose.execute(world.admin, world.process.id, world.official_version.id, None, None)
+    events = len(audit_events(world, world.process))
+    _, other = add_fasi_table(world, "Tabela Sintética Nova Marca", date(2024, 1, 1))
+
+    mark_in_use(world, world.fasi, other)
+    result = world.suggest.execute(world.admin, world.process.id)
+
+    assert result.chosen.version.id == world.official_version.id
+    assert result.suggested.version.id == other.id
+    assert stored_version_id(world, world.process) == world.official_version.id
+    assert len(audit_events(world, world.process)) == events
+
+
+def test_a_new_version_over_the_marked_one_keeps_the_mark_and_the_closed_version_is_suggested(
+    world, admin_uc
+):
+    mark_in_use(world, world.fasi, world.official_version)
+    new = admin_uc.create_version.execute(
+        world.admin,
+        world.official_version.table_id,
+        world.official_version.id,
+        date(2023, 6, 1),
+        None,
+        "Nova norma da FASI, 2023",
+    )
+
+    suggested = world.suggest.execute(world.admin, world.process.id).suggested
+    confirmed = world.choose.execute(
+        world.admin, world.process.id, world.official_version.id, None, None
+    )
+
+    with world.uow_factory() as uow:
+        assert uow.scoring_tables.get_unit_default(world.fasi.id).version_id == (
+            world.official_version.id
+        )
+    assert suggested.version.id == world.official_version.id
+    assert suggested.version.id != new.version.id
+    assert ScoringAlertCode.TABELA_FORA_DE_VIGENCIA in codes(confirmed)

@@ -271,7 +271,7 @@ graph LR
 
 #### T5: Sugestão do processo parte da versão em uso
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `suggest_version` consulta primeiro a versão em uso da unidade do docente (`get_unit_default`, a versão, a tabela e `pick_unit_default`); se passa, é a sugestão, mesmo fora de vigência; senão cai na sugestão por vigência de SEL-02, agora sem tabela arquivada (`list_versions_for_unit`). A sugestão continua sem ser aplicada antes da confirmação, e o processo que já tem tabela escolhida não muda quando a marcação muda.
 **Where**: `backend/app/application/use_cases/scoring.py` (modify)
@@ -286,12 +286,12 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_table_choice.py` (modifica): a unidade com versão em uso recebe essa versão como sugestão mesmo havendo outra versão mais recente e vigente, e depois da sugestão o processo continua sem versão gravada e sem evento de auditoria (a sugestão não é aplicada); versão em uso fora de vigência na data final do interstício é sugerida e, ao ser confirmada no processo, produz `TABELA_FORA_DE_VIGENCIA`; unidade sem versão em uso mantém a sugestão por vigência de antes
-- [ ] Versão em uso substituída, de tabela arquivada ou de tabela que já não tem a unidade cai na vigência; quando só existe essa marcação e nenhuma versão vigente, o resultado continua `TABELA_NAO_ENCONTRADA`; a sugestão por vigência ignora tabela arquivada; um processo que já escolheu uma tabela continua com ela depois de a marcação mudar
-- [ ] Versão em uso encerrada (Edge Case): criar uma versão nova sobre a marcada (`CreateVersionFrom`, que fecha a anterior em `valid_to`) não muda a marcação, a sugestão continua sendo a versão antiga e a confirmação dela no processo produz `TABELA_FORA_DE_VIGENCIA` se o interstício termina depois do fim
-- [ ] Os testes que afirmam a sugestão por vigência seguem verdes sem edição, porque as fixtures não semeiam marcações: `test_table_choice.py:42, 157, 174`, `backend/tests/integration/scoring/test_process_score.py`, `backend/tests/integration/api/test_scoring_process_api.py`, `backend/tests/integration/api/test_scoring_alert_norms.py`
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_table_choice.py tests/integration/scoring/test_process_score.py tests/integration/api/test_scoring_process_api.py tests/integration/api/test_scoring_alert_norms.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_table_choice.py` (modifica): a unidade com versão em uso recebe essa versão como sugestão mesmo havendo outra versão mais recente e vigente, e depois da sugestão o processo continua sem versão gravada e sem evento de auditoria (a sugestão não é aplicada); versão em uso fora de vigência na data final do interstício é sugerida e, ao ser confirmada no processo, produz `TABELA_FORA_DE_VIGENCIA`; unidade sem versão em uso mantém a sugestão por vigência de antes
+- [x] Versão em uso substituída, de tabela arquivada ou de tabela que já não tem a unidade cai na vigência; quando só existe essa marcação e nenhuma versão vigente, o resultado continua `TABELA_NAO_ENCONTRADA`; a sugestão por vigência ignora tabela arquivada; um processo que já escolheu uma tabela continua com ela depois de a marcação mudar
+- [x] Versão em uso encerrada (Edge Case): criar uma versão nova sobre a marcada (`CreateVersionFrom`, que fecha a anterior em `valid_to`) não muda a marcação, a sugestão continua sendo a versão antiga e a confirmação dela no processo produz `TABELA_FORA_DE_VIGENCIA` se o interstício termina depois do fim
+- [x] Os testes que afirmam a sugestão por vigência seguem verdes sem edição, porque as fixtures não semeiam marcações: `test_table_choice.py:42, 157, 174`, `backend/tests/integration/scoring/test_process_score.py`, `backend/tests/integration/api/test_scoring_process_api.py`, `backend/tests/integration/api/test_scoring_alert_norms.py`
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_table_choice.py tests/integration/scoring/test_process_score.py tests/integration/api/test_scoring_process_api.py tests/integration/api/test_scoring_alert_norms.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted
