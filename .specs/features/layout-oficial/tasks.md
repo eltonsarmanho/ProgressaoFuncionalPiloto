@@ -581,7 +581,7 @@ graph LR
 
 #### T16: Brasão no Relatório de Atividades em PDF
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `write_report_pdf` começa a história com `emblem_flowables()` antes das linhas do cabeçalho institucional.
 **Where**: `backend/app/infrastructure/documents/report_pdf.py` (modify)
@@ -596,9 +596,9 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/infrastructure/test_report_pdf.py`: a primeira página tem uma imagem de 56,7 pt de largura, centrada na largura do texto, acima da primeira linha do cabeçalho; num relatório longo (o teste de 120 entradas) as outras páginas não têm imagem; o texto do PDF segue igual ao do DOCX do mesmo modelo (`test_the_pdf_has_the_same_text_in_the_same_order_as_the_docx_of_the_model` e o do relatório longo passam sem mudança); sem o arquivo levanta `EmblemUnavailable`
-- [ ] Gate check passes (último de backend da fase, gate completo): `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
+- [x] Testes primeiro em `backend/tests/unit/infrastructure/test_report_pdf.py`: a primeira página tem uma imagem de 56,7 pt de largura, centrada na largura do texto, acima da primeira linha do cabeçalho; num relatório longo (o teste de 120 entradas) as outras páginas não têm imagem; o texto do PDF segue igual ao do DOCX do mesmo modelo (`test_the_pdf_has_the_same_text_in_the_same_order_as_the_docx_of_the_model` e o do relatório longo passam sem mudança); sem o arquivo levanta `EmblemUnavailable`
+- [x] Gate check passes (último de backend da fase, gate completo): `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado
 
 **Tests**: unit
 **Gate**: full

@@ -2,7 +2,8 @@
 
 Same model and same order as the DOCX: A4 portrait with the margins of the template, the
 institutional header centered, the identification, the sections that have activity, justified
-bullet entries and `Página N de M` at the foot. The text of every entry is the text of the draft.
+bullet entries and `Página N de M` at the foot. The emblem of the UFPA opens the first page
+(BRAS-02). The text of every entry is the text of the draft.
 """
 
 from pathlib import Path
@@ -16,6 +17,7 @@ from app.infrastructure.documents.pdf_styles import (
     NumberedCanvas,
     PdfStyles,
     build_styles,
+    emblem_flowables,
     margins_from_page,
 )
 from app.infrastructure.documents.text_safety import xml_safe
@@ -63,7 +65,8 @@ def write_report_pdf(model: ReportDocument, target: Path) -> None:
         bottomMargin=margins.bottom,
         title=model.title,
     )
-    story: list = [_p(line, styles.header_line) for line in model.header_lines]
+    story: list = [*emblem_flowables()]
+    story += [_p(line, styles.header_line) for line in model.header_lines]
     story += [Spacer(1, 6), _p(model.title, styles.title)]
     story += [_p(line, styles.body_left) for line in model.identification]
     story += [Spacer(1, 6), _p(model.body_heading, styles.header_line)]

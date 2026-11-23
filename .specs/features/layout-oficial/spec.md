@@ -238,7 +238,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | PMOD-28 | P1: Etapa 6 sem Observações | Execute | In Progress |
 | PMOD-29 | P1: Etapa 6 sem Observações | Implemented | Implemented |
 | BRAS-01 | P1: Brasão | Implemented | Implemented |
-| BRAS-02 | P1: Brasão | Execute | In Progress |
+| BRAS-02 | P1: Brasão | Implemented | Implemented |
 | BRAS-03 | P1: Brasão | Tasks | In Tasks |
 | BRAS-04 | P1: Brasão | Tasks | In Tasks |
 | BRAS-05 | P1: Brasão | Tasks | In Tasks |

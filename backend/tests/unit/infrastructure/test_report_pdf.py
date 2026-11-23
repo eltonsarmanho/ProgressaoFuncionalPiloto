@@ -5,9 +5,13 @@ import re
 from dataclasses import replace
 
 import pymupdf
+import pytest
 from docx import Document
+from reportlab.lib.units import mm
 
 from app.domain.entities.report import DocumentGroup, DocumentSection
+from app.infrastructure.documents import emblem
+from app.infrastructure.documents.emblem import EmblemUnavailable
 from app.infrastructure.documents.report_docx import write_report_docx
 from app.infrastructure.documents.report_pdf import write_report_pdf
 from tests.unit.domain.test_table_document_totals import HEADER
@@ -158,3 +162,49 @@ def test_a_report_with_no_section_still_has_the_header_and_the_identification(tm
 
     assert "RELATÓRIO DE ATIVIDADES" in text
     assert "ATIVIDADES DESENVOLVIDAS" in text
+
+
+def emblem_rect(page: pymupdf.Page) -> pymupdf.Rect:
+    images = page.get_images(full=True)
+    assert len(images) == 1
+    (rect,) = page.get_image_rects(images[0][0])
+    return rect
+
+
+def test_the_first_page_has_the_emblem_centered_on_the_text_above_the_header(tmp_path):
+    # BRAS-02, BRAS-06
+    model = report_document()
+    page = render(tmp_path, model)[0]
+
+    rect = emblem_rect(page)
+    layout = model.layout.page
+    text_center = (
+        layout.margin_left_mm * mm + (page.rect.width - layout.margin_right_mm * mm)
+    ) / 2
+    assert rect.width == pytest.approx(20 * mm, abs=0.5)
+    assert rect.height == pytest.approx(20 * mm * 351 / 279, abs=0.5)
+    assert (rect.x0 + rect.x1) / 2 == pytest.approx(text_center, abs=0.5)
+    first_line = page.search_for("Serviço Público Federal")[0]
+    assert rect.y1 + 3 * mm <= first_line.y0
+
+
+def test_only_the_first_page_of_a_long_report_has_the_emblem(tmp_path):
+    # BRAS-07
+    activities = synthetic_activities(
+        extra=[a for _ in range(120) for a in synthetic_activities()[3:5]]
+    )
+    pdf = render(tmp_path, report_document(activities))
+
+    assert len(pdf) > 2
+    assert len(pdf[0].get_images()) == 1
+    assert all(page.get_images() == [] for page in list(pdf)[1:])
+
+
+def test_without_the_emblem_file_the_writer_raises_and_writes_nothing(monkeypatch, tmp_path):
+    # BRAS-10
+    monkeypatch.setattr(emblem, "EMBLEM_FILE", tmp_path / "ufpa.png")
+    target = tmp_path / "relatorio.pdf"
+
+    with pytest.raises(EmblemUnavailable):
+        write_report_pdf(report_document(), target)
+    assert not target.exists()
