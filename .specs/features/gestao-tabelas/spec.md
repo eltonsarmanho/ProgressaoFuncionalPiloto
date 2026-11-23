@@ -1,6 +1,6 @@
 # Gestão das tabelas de pontuação: tabela em uso por unidade, CRUD na tela e interface melhor (gestao-tabelas) Specification
 
-**Status**: Approved (usuário, 2026-11-23: "sim", incluindo os padrões do agente marcados com "n" e a reescrita da regra 11 do `CLAUDE.md`)
+**Status**: Approved (usuário, 2026-11-23: "sim"; emendas A1 a A10 aprovadas com o desenho em 2026-11-23), incluindo os padrões do agente marcados com "n" e a reescrita da regra 11 do `CLAUDE.md`)
 **Origem**: pedido do usuário em 2026-11-23 sobre a tela "Tabelas de pontuação": criar um mecanismo de CRUD onde o ADMIN gerencia e seleciona a tabela em uso, e melhorar a UX da tela. Respostas do usuário na mesma data: a "tabela em uso" é um padrão por unidade; qualquer tabela pode ser usada, com avisos; o CRUD inclui arquivar, excluir e editar critérios na tela; a UX cobre layout e legibilidade e ações visíveis.
 
 ## Problem Statement
@@ -43,7 +43,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | Reescrever a regra 11 do `CLAUDE.md` | Feito em 2026-11-23, com a aprovação desta spec | `CLAUDE.md` é instrução do projeto; a mudança nasce da decisão acima | y |
 | O que a marcação aceita | Versão de uma tabela não arquivada, associada à unidade e não substituída; vigência não é exigida (fora de vigência vale, com o alerta de SEL-07 ao confirmar no processo) | Padrão do agente; evita bloquear o ADMIN e reaproveita os alertas | y |
 | Unidade sem versão em uso | Mantém a sugestão por vigência de SEL-02 (versão associada à unidade, vigente na data final do interstício, a de início mais recente) | Padrão do agente; nenhuma unidade perde a sugestão que tem hoje | y |
-| Semente da marcação | No deploy, cada unidade que tem a tabela oficial da UFPA associada e nenhuma versão em uso passa a ter a versão "Tabela oficial de pontuação UFPA, Grupo I no total" em uso, com auditoria sem usuário; é idempotente | Padrão do agente; é a versão que a sugestão já escolhe hoje (AD-023) | y |
+| Semente da marcação | Cada unidade que tem a tabela oficial da UFPA associada, nenhuma versão em uso e nenhum evento de marcação anterior passa a ter a versão "Tabela oficial de pontuação UFPA, Grupo I no total" em uso, com auditoria sem usuário; é idempotente e nunca desfaz a decisão do ADMIN (emenda A1 do desenho) | Padrão do agente; é a versão que a sugestão já escolhe hoje (AD-023) | y |
 | Justificativa nas operações | A marcação em uso, o arquivamento e a exclusão agem na hora, sem campo de justificativa (como as Etapas 2 a 4); a edição de critério continua exigindo a referência normativa da alteração (ADM-03) e a versão nova continua exigindo vigência e referência (ADM-05) | Padrão do agente; a regra 5 vale para as Etapas 2 a 4, e ADM-03 e ADM-05 já existem | y |
 | Arquivar | Arquivar a tabela a tira de toda lista de escolha (sugestão, escolha na Etapa 4 e marcação em uso); processos que a usam continuam lendo e calculando com ela; desarquivar a devolve. Não se arquiva a tabela que tem versão em uso de alguma unidade | Padrão do agente; evita unidade sem tabela em uso por engano | y |
 | Excluir versão | Só a versão que nenhum processo usa, que não está em uso de nenhuma unidade e que não substitui outra versão; apaga a versão, os grupos e os critérios; a auditoria fica | Padrão do agente; protege processos e a cadeia de substituição | y |
@@ -75,8 +75,8 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 6. IF a unidade do docente não tem versão em uso THEN the system SHALL sugerir a versão pela vigência, como em SEL-02, e SHALL manter o alerta `TABELA_NAO_ENCONTRADA` quando não houver nenhuma.  <!-- unwanted-behavior -->
 7. IF a versão em uso não estava vigente na data final do interstício THEN the system SHALL sugeri-la e SHALL emitir o alerta `TABELA_FORA_DE_VIGENCIA` quando o usuário a confirmar, como em SEL-07.  <!-- unwanted-behavior -->
 8. WHILE um processo tem tabela escolhida the system SHALL manter essa tabela, qualquer que seja a marcação em uso da unidade, sem recalcular nem reavaliar o processo.  <!-- state-driven -->
-9. WHEN o sistema inicia depois do deploy THEN the system SHALL marcar a versão "Tabela oficial de pontuação UFPA, Grupo I no total" como em uso de cada unidade que tem a tabela oficial associada e nenhuma versão em uso, com um evento de auditoria sem usuário por unidade, e SHALL não repetir nem regravar numa segunda partida.  <!-- event-driven -->
-10. WHEN um usuário autenticado consulta as tabelas THEN the system SHALL devolver, por versão, as unidades para as quais ela está em uso e se algum processo a usa.  <!-- event-driven -->
+9. WHEN o sistema inicia THEN the system SHALL marcar a versão "Tabela oficial de pontuação UFPA, Grupo I no total" como em uso de cada unidade que tem a tabela oficial associada, nenhuma versão em uso e nenhum evento de marcação anterior na auditoria, com um evento de auditoria sem usuário por unidade, e SHALL não remarcar a unidade que o ADMIN desmarcou nem a que perdeu a marcação por substituição, nem regravar numa segunda partida.  <!-- event-driven -->
+10. WHEN um usuário autenticado consulta as tabelas THEN the system SHALL devolver, por versão, as unidades para as quais ela está em uso (`default_for_unit_ids`), a quantidade de processos que a usam (`process_count`) e o campo `in_use` com o sentido de hoje (algum processo a usa).  <!-- event-driven -->
 
 **Independent Test**: Num ambiente sintético com duas versões associadas à FASI, marcar a segunda como em uso, abrir a pontuação de um processo novo da FASI e ver a segunda sugerida; trocar a marcação e ver a sugestão mudar; abrir um processo que já tinha tabela escolhida e ver a mesma tabela.
 
@@ -112,7 +112,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 
 1. WHERE o usuário é ADMIN the frontend SHALL permitir editar, por critério de uma versão que nenhum processo usa, os campos que a API aceita em ADM-03, exigindo a referência normativa da alteração.  <!-- optional-feature -->
 2. IF a versão é usada por algum processo THEN the frontend SHALL mostrar os critérios somente leitura e SHALL orientar a criar uma nova versão (ADM-04), sem oferecer a edição.  <!-- unwanted-behavior -->
-3. IF a versão está substituída THEN the frontend SHALL mostrar os critérios somente leitura e SHALL indicar a versão que a substitui.  <!-- unwanted-behavior -->
+3. IF a versão está substituída ou não é a mais recente da tabela THEN the frontend SHALL mostrar os critérios somente leitura e SHALL indicar o motivo (a versão que a substitui, ou que existe versão mais recente), como a API já recusa com 409.  <!-- unwanted-behavior -->
 4. IF a API recusa um valor com 422 THEN the frontend SHALL mostrar a mensagem junto do campo do critério e SHALL manter o que a pessoa digitou.  <!-- unwanted-behavior -->
 5. WHEN a edição é gravada THEN the frontend SHALL mostrar o valor novo na lista de critérios sem recarregar a página, e a auditoria SHALL registrar valores anterior e novo (ADM-03).  <!-- event-driven -->
 
@@ -153,7 +153,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 
 1. The frontend SHALL mostrar cada tabela como um cartão com o nome, as unidades associadas e as versões, e SHALL destacar, em cada cartão, a versão em uso com a sigla da unidade.  <!-- ubiquitous -->
 2. The frontend SHALL mostrar por versão: nome, vigência, situação, referência normativa e as etiquetas "Oficial" ou "Pendente de validação", "Em uso (sigla)", "Usada por processo", "Substituída" e "Arquivada", sem quebrar uma palavra em letras isoladas em nenhuma largura de tela.  <!-- ubiquitous -->
-3. WHERE o usuário é ADMIN the frontend SHALL mostrar por versão os botões "Ver critérios", "Definir como em uso", "Nova versão", "Duplicar tabela", "Importar CSV", "Excluir versão" e, por tabela, "Associar unidades", "Arquivar" ou "Desarquivar", "Excluir tabela" e "Histórico", com rótulo de texto em cada um.  <!-- optional-feature -->
+3. WHERE o usuário é ADMIN the frontend SHALL mostrar por versão os botões "Ver critérios", "Definir como em uso", "Nova versão a partir desta" e "Excluir versão" e, por tabela, "Importar CSV", "Duplicar", "Unidades", "Histórico", "Arquivar" ou "Desarquivar" e "Excluir tabela", além de "Nova tabela" no cabeçalho da página, com rótulo de texto em cada um.  <!-- optional-feature -->
 4. IF uma ação não é permitida pela regra da versão (por exemplo, "Definir como em uso" numa versão substituída, "Excluir versão" numa versão usada) THEN the frontend SHALL mostrar o botão desabilitado com o motivo em texto visível ou como descrição acessível.  <!-- unwanted-behavior -->
 5. The frontend SHALL oferecer um filtro por unidade e a opção "Mostrar arquivadas", desligada por padrão, e SHALL mostrar a quantidade de tabelas listadas.  <!-- ubiquitous -->
 6. The frontend SHALL funcionar em 360 px de largura sem rolagem horizontal da página, com as versões empilhadas em cartões e com os botões alcançáveis por teclado, com alvo de toque de pelo menos 44 px.  <!-- ubiquitous -->
@@ -164,12 +164,30 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 
 ---
 
+### P1: Coerência com a semente e com as outras regras ⭐ MVP
+
+**User Story**: Como ADMIN, quero que o que eu decido nas tabelas não seja desfeito na próxima partida do sistema nem fique incoerente com as regras já existentes.
+
+**Why P1**: A semente roda a cada partida do backend e, sem estas regras, desfaria arquivar, excluir e marcar.
+
+**Acceptance Criteria** (IDs `GTAB-41` a `GTAB-45`):
+
+1. WHEN o sistema inicia THEN the semente que arquiva as tabelas antigas e desassocia as unidades delas (OFI-09) SHALL não agir sobre a tabela que alguma pessoa já alterou, e SHALL continuar a agir sobre a que nenhuma pessoa tocou.  <!-- event-driven -->
+2. IF o ADMIN tenta excluir a tabela oficial da UFPA ou uma de suas versões THEN the system SHALL recusar com 409 e o código `TABELA_OFICIAL_PROTEGIDA`, sem apagar nada; a tabela oficial pode ser arquivada e marcada em uso.  <!-- unwanted-behavior -->
+3. IF o ADMIN tira de uma tabela uma unidade que tem a versão dela em uso THEN the system SHALL recusar com 409 e o código `UNIDADE_COM_VERSAO_EM_USO`, listando as siglas, sem alterar as associações.  <!-- unwanted-behavior -->
+4. IF a versão escolhida para um processo é de tabela arquivada e não é a versão que o processo já tem THEN the system SHALL recusar com 409 e o código `TABELA_ARQUIVADA`; the sugestão por vigência SHALL ignorar tabela arquivada.  <!-- unwanted-behavior -->
+5. WHEN o ADMIN duplica uma tabela, ou cria uma versão numa tabela a partir de versão de outra tabela THEN the system SHALL não copiar o código da norma (`norm_code`) da origem; a nova versão da mesma tabela mantém o código.  <!-- event-driven -->
+
+**Independent Test**: Num ambiente sintético, desmarcar a versão em uso de uma unidade, reiniciar a semente e ver que a unidade continua sem marcação; desarquivar uma tabela antiga, reiniciar a semente e ver que ela continua desarquivada; tentar excluir a tabela oficial e ver o 409.
+
+---
+
 ## Edge Cases
 
 - WHEN a unidade tem a versão em uso e o ADMIN cria uma nova versão da mesma tabela que encerra a anterior (ADM-05) THEN the system SHALL manter a marcação na versão antiga até o ADMIN marcar a nova, e SHALL mostrar, no cartão, que a versão em uso está encerrada.
 - WHEN a versão em uso é a que foi substituída por uma versão nova (AD-023) THEN the system SHALL desfazer a marcação dessa unidade com auditoria sem usuário e SHALL voltar à sugestão por vigência até o ADMIN marcar outra.
 - WHEN duas pessoas marcam a versão em uso da mesma unidade ao mesmo tempo THEN the system SHALL aceitar uma e deixar a outra como a marcação final sem registro duplicado, com um só registro por unidade.
-- IF o nome de uma tabela duplicada já existe THEN the system SHALL responder 409 com o campo `name` (ADM-01 e ADM-02 já exigem nome único).
+- IF o nome de uma tabela criada ou duplicada já existe (sem diferenciar maiúsculas) THEN the system SHALL responder 422 no campo `name`, como ADM-01 e ADM-02 já fazem.
 - WHEN a exclusão de uma tabela falha no meio THEN the system SHALL não apagar nada (uma transação só).
 - WHEN a tabela é desarquivada THEN the system SHALL não remarcar nenhuma versão em uso.
 
@@ -233,6 +251,11 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | GTAB-38 | P1: Lista legível e com ações visíveis | Specified | Pending |
 | GTAB-39 | P1: Lista legível e com ações visíveis | Specified | Pending |
 | GTAB-40 | P1: Lista legível e com ações visíveis | Specified | Pending |
+| GTAB-41 | P1: Coerência com a semente e com as outras regras | Specified | Pending |
+| GTAB-42 | P1: Coerência com a semente e com as outras regras | Specified | Pending |
+| GTAB-43 | P1: Coerência com a semente e com as outras regras | Specified | Pending |
+| GTAB-44 | P1: Coerência com a semente e com as outras regras | Specified | Pending |
+| GTAB-45 | P1: Coerência com a semente e com as outras regras | Specified | Pending |
 
 ## Success Criteria
 

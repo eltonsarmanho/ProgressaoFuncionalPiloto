@@ -1,7 +1,7 @@
 # Gestão das tabelas de pontuação Design
 
 **Spec**: `.specs/features/gestao-tabelas/spec.md`
-**Status**: Draft (aguarda a aprovação do usuário)
+**Status**: Approved (usuário, 2026-11-23: "Aprovado", com as emendas A1 a A10, já aplicadas à spec)
 
 Base: leitura do código por seis leitores independentes em 2026-11-23 (casos de uso de administração, sugestão e semente, persistência e API, tela, testes, consumidores). Toda afirmação abaixo sobre o código atual vem dessa leitura, com o arquivo citado.
 
@@ -193,7 +193,7 @@ Nome de tabela repetido continua **422 no campo `name`** (pré-checagem em `scor
 
 ## Emendas à spec (a aprovar junto com este desenho)
 
-A spec foi aprovada antes da leitura do código. Estas emendas decorrem dela; só entram na spec depois da sua aprovação.
+A spec foi aprovada antes da leitura do código. Estas emendas decorrem dela e foram aplicadas à spec depois da aprovação do usuário (2026-11-23). A emenda A8 ficou no GTAB-20, onde está a regra de somente leitura por versão substituída.
 
 | Emenda | Mudança |
 | ------ | ------- |
