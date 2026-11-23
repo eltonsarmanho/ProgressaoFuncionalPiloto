@@ -94,13 +94,13 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| ENX-01 | P1: Etapa 1 sem campos que nenhum documento usa | Implemented | Implementing |
-| ENX-02 | P1: Etapa 1 sem campos que nenhum documento usa | Implemented | Implementing |
-| ENX-03 | P1: Etapa 1 sem campos que nenhum documento usa | Implemented | Implementing |
-| ENX-04 | P1: Etapa 1 sem campos que nenhum documento usa | Implemented | Implementing |
-| ENX-05 | P1: Etapa 1 sem campos que nenhum documento usa | Implemented | Implementing |
-| ENX-06 | P1: Etapa 1 sem campos que nenhum documento usa | Implemented | Implementing |
-| ENX-07 | P1: Etapa 1 sem campos que nenhum documento usa | Implemented | Implementing |
+| ENX-01 | P1: Etapa 1 sem campos que nenhum documento usa | Implemented | Verified |
+| ENX-02 | P1: Etapa 1 sem campos que nenhum documento usa | Implemented | Verified |
+| ENX-03 | P1: Etapa 1 sem campos que nenhum documento usa | Implemented | Verified |
+| ENX-04 | P1: Etapa 1 sem campos que nenhum documento usa | Implemented | Verified |
+| ENX-05 | P1: Etapa 1 sem campos que nenhum documento usa | Implemented | Verified |
+| ENX-06 | P1: Etapa 1 sem campos que nenhum documento usa | Implemented | Verified |
+| ENX-07 | P1: Etapa 1 sem campos que nenhum documento usa | Implemented | Verified |
 
 ## Success Criteria
 
