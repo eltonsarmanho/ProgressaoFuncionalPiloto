@@ -814,7 +814,7 @@ graph LR
 
 #### T24: Decisão AD-026 e nota de deploy
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `STATE.md` ganha a AD-026 (Parecer pelo modelo oficial e brasão nos cinco documentos; o que mudou e o que ficou); `docs/deploy/vm.md` ganha uma seção curta "Deploy do layout oficial" (nenhuma migração, imagem do backend refeita porque o brasão está dentro de `app`, conferência do arquivo e fumaça sintética) e a fumaça da banca da seção anterior deixa de dizer "com o mesmo Total geral da Tabela".
 **Where**: `.specs/STATE.md` (modify; uma seção em `docs/deploy/vm.md`)
@@ -829,10 +829,10 @@ graph LR
 
 **Done when**:
 
-- [ ] AD-026 registrada com decisão (Parecer segue o modelo oficial e não imprime totais, mínimo, documentos nem observações; as recusas e o instantâneo ficam; `notes` fica no banco sem uso; brasão de 2,0 cm no topo da primeira página dos cinco documentos, lido do pacote, e geração que falha sem ele com `ERRO_INTERNO`), motivo (pedidos do usuário de 2026-11-23), custo (a coluna `notes` morta; `BANCA_SEM_MEMBROS` agora também sem titulares; fontes Liberation Sans versionadas; versões já geradas ficam sem brasão e com o texto antigo), escopo e data
-- [ ] A seção de deploy diz: nada de migração nem de semeadura; só imagem do backend nova (o brasão está em `app/infrastructure/documents/assets/ufpa.png`) e frontend novo; antes do deploy, nada em geração; conferência com `docker compose exec backend ls app/infrastructure/documents/assets/ufpa.png`; fumaça só com dados sintéticos (os cinco documentos com o brasão e o Parecer sem Total geral); retorno pelas imagens anteriores (nada no banco a desfazer); nada executado
-- [ ] O passo 6 da fumaça da banca (`docs/deploy/vm.md:253`) passa a dizer que o Parecer segue o modelo oficial (sem Total geral); o registro histórico do deploy de 2026-11-23 (`:260`) não é alterado
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
+- [x] AD-026 registrada com decisão (Parecer segue o modelo oficial e não imprime totais, mínimo, documentos nem observações; as recusas e o instantâneo ficam; `notes` fica no banco sem uso; brasão de 2,0 cm no topo da primeira página dos cinco documentos, lido do pacote, e geração que falha sem ele com `ERRO_INTERNO`), motivo (pedidos do usuário de 2026-11-23), custo (a coluna `notes` morta; `BANCA_SEM_MEMBROS` agora também sem titulares; fontes Liberation Sans versionadas; versões já geradas ficam sem brasão e com o texto antigo), escopo e data
+- [x] A seção de deploy diz: nada de migração nem de semeadura; só imagem do backend nova (o brasão está em `app/infrastructure/documents/assets/ufpa.png`) e frontend novo; antes do deploy, nada em geração; conferência com `docker compose exec backend ls app/infrastructure/documents/assets/ufpa.png`; fumaça só com dados sintéticos (os cinco documentos com o brasão e o Parecer sem Total geral); retorno pelas imagens anteriores (nada no banco a desfazer); nada executado
+- [x] O passo 6 da fumaça da banca (`docs/deploy/vm.md:253`) passa a dizer que o Parecer segue o modelo oficial (sem Total geral); o registro histórico do deploy de 2026-11-23 (`:260`) não é alterado
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q && cd ../frontend && npm run lint && npm run build && npm test -- --run`
 
 **Tests**: none
 **Gate**: build

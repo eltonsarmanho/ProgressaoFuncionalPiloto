@@ -250,7 +250,7 @@ Com `docker exec -it dashboard_db psql -U <superusuario> -d progressao`:
 3. As quatro tabelas: `SELECT table_name FROM information_schema.tables WHERE table_name IN ('board_ordinances', 'board_opinions', 'request_settings', 'dossier_deliveries') ORDER BY 1;` devolve as quatro, e `SELECT count(*) FROM board_ordinances;` é 0 logo depois do deploy.
 4. Executor: o backend sobe sem erro nos logs (`app.documents.worker` não registra `recover error_type` nem `runner error_type`); a ordem do executor é geração, redação, leitura da portaria e OCR, e a leitura interrompida por um reinício volta a `FALHOU` com `INTERROMPIDA` (AD-008, PORT-07).
 5. `GET /api/health` 200 depois de `docker compose up -d --no-build` e `docker compose restart nginx`; `GET /api/dossier-order` segue com o formato de antes e `GET /api/processes/<id>/dossier` (autenticado) devolve os nove itens.
-6. Fumaça só com dados sintéticos (nunca `Documentos/` nem `Modelos/`): num processo sintético em andamento com Tabela `PRONTO`, enviar uma portaria sintética (lida pela IA ou, se a IA falhar, digitada), conferir número, data e membros com a página de origem; escolher a conclusão e gerar o Parecer (DOCX e PDF com o mesmo Total geral da Tabela); digitar a cidade e gerar o Requerimento; abrir a Etapa 7 e ver Requerimento, Tabela, Relatório, Comprovante, Portaria da banca e Parecer como gerados ou registrados, marcar "Currículo Lattes" como entregue e recarregar; mudar uma atividade validada e ver `TABELA_DESATUALIZADA`; abrir a confirmação de concluir e ver o aviso dos pendentes. Remover o processo e o docente sintéticos ao fim.
+6. Fumaça só com dados sintéticos (nunca `Documentos/` nem `Modelos/`): num processo sintético em andamento com Tabela `PRONTO`, enviar uma portaria sintética (lida pela IA ou, se a IA falhar, digitada), conferir número, data e membros com a página de origem; escolher a conclusão e gerar o Parecer (DOCX e PDF pelo modelo oficial, sem Total geral; o resumo da versão guarda o total da Tabela); digitar a cidade e gerar o Requerimento; abrir a Etapa 7 e ver Requerimento, Tabela, Relatório, Comprovante, Portaria da banca e Parecer como gerados ou registrados, marcar "Currículo Lattes" como entregue e recarregar; mudar uma atividade validada e ver `TABELA_DESATUALIZADA`; abrir a confirmação de concluir e ver o aviso dos pendentes. Remover o processo e o docente sintéticos ao fim.
 
 ### Deploy executado em 2026-11-23
 
@@ -265,6 +265,33 @@ Com `docker exec -it dashboard_db psql -U <superusuario> -d progressao`:
 - **Caminho seguro: restaurar o dump** `progressao-pre-banca-parecer-<data>.sql.gz` e trocar as etiquetas das imagens para as do ponto de retorno. Restaurar o dump deixa órfãos os arquivos em `storage/generated/` (Pareceres e Requerimentos) e em `storage/uploads/` (portarias); são inofensivos e podem ser removidos à mão depois.
 - O `downgrade` da `0011` remove as tabelas `board_ordinances`, `board_opinions`, `request_settings` e `dossier_deliveries` e os quatro enums, e **perde** as portarias, os Pareceres, as cidades e as marcas "Entregue" já gravados, além dos registros de versões `REQUERIMENTO` e `PARECER`; os valores de `generated_kind` ficam. Se houve uso real, copiar antes o que importar (`SELECT * FROM board_ordinances`, `board_opinions`, `request_settings`, `dossier_deliveries`).
 - A imagem anterior ignora os dois valores novos de `generated_kind` desde que nenhuma linha os use; com linhas `REQUERIMENTO` ou `PARECER` no banco, voltar só a imagem pode quebrar a leitura dos documentos gerados. Nesse caso restaurar o dump.
+
+## Deploy do layout oficial (feature `layout-oficial`)
+
+Esta seção descreve o procedimento; nada foi executado na VM. **Push e deploy só com a autorização explícita do usuário.**
+
+### O que muda na VM
+
+- Nenhuma migração e nenhuma semeadura: o banco não muda (a coluna `board_opinions.notes` fica, sem uso). Nada a desfazer no banco.
+- Imagem do backend nova: o brasão está em `app/infrastructure/documents/assets/ufpa.png`, dentro de `app`, e o `COPY app ./app` do `Dockerfile` o leva; o `Dockerfile` não muda. Também vão as duas fontes `LiberationSans-*.ttf` em `app/infrastructure/documents/fonts/`.
+- Imagem do frontend nova: a Etapa 6 perde o campo "Observações da banca".
+- Os documentos já gerados não mudam (AD-012): só as versões novas levam o brasão e, no Parecer, o texto do modelo.
+
+### Antes do deploy
+
+1. Nada em geração: nenhuma geração `GERANDO`, pois reiniciar o backend interrompe o que estiver rodando.
+2. Ponto de retorno: etiquetar as imagens em uso (`progressao-funcional-backend:layout-pre-<commit>` e o mesmo para o `frontend`).
+3. Construir as imagens do commit aprovado fora da VM e conferir o pacote do frontend com `scripts/check_bundle_no_secrets.sh`.
+
+### Depois da partida: conferência
+
+1. O arquivo do brasão está na imagem: `docker compose exec backend ls app/infrastructure/documents/assets/ufpa.png`. Sem ele toda geração falha com `ERRO_INTERNO` e o log traz `error_type=EmblemUnavailable`.
+2. `GET /api/health` 200 e nenhum erro nos logs do backend.
+3. Fumaça só com dados sintéticos (nunca `Documentos/` nem `Modelos/`): num processo sintético com banca e conclusão, gerar os cinco documentos e abrir cada um: o brasão aparece no topo da primeira página, centralizado (no Comprovante, só na capa), e o Parecer segue o modelo oficial, sem Total geral. Remover o processo e o docente sintéticos ao fim.
+
+### Voltar à versão anterior
+
+Trocar as etiquetas das imagens para as do ponto de retorno; não há nada no banco a desfazer. As versões geradas com a imagem nova continuam abrindo.
 
 ## Memória do OCR (limite de 384 MB do `backend`)
 
