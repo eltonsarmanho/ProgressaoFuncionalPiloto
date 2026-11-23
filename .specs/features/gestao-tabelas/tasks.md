@@ -543,7 +543,7 @@ graph LR
 
 #### T14: Excluir tabela, com prévia
 
-**Status**: Pending
+**Status**: Done
 
 **What**: `PreviewDeleteTable(table_id)` devolve `{name, versions, criteria, units, blocked}` (as unidades com id e sigla) e `DeleteScoringTable(actor, table_id)` trava a tabela e todas as suas versões, relê os fatos, apaga com `delete_table` (as versões num único `DELETE`, depois a tabela; as associações de unidade saem por cascata), numa transação só. Bloqueios de `table_delete_blockers` (tabela oficial, versão usada por processo, versão em uso de unidade). Auditoria na entidade `scoring_table`: ação `DELETE`, `before = {name, unit_ids, versions: [{id, name, valid_from, valid_to, norm_reference, status}], criteria}`, calculado antes de apagar. Uma violação de FK que escape vira 409.
 **Where**: `backend/app/application/use_cases/scoring_admin.py` (modify)
@@ -558,13 +558,13 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/integration/scoring/test_admin_delete_table.py` (novo): exclui uma tabela com duas versões encadeadas por `superseded_by_id` e some tudo (tabela, versões, grupos, critérios e associações), com um evento `DELETE` cujo `before` traz nome, as versões com id, nome, vigência, referência e situação, a quantidade de critérios e as unidades; os eventos anteriores da tabela e das versões continuam em `uow.audit.list_for`
-- [ ] Recusas 409 sem apagar nada: tabela oficial, versão usada por processo, versão em uso de unidade; a prévia traz as contagens, as siglas e os bloqueios; não ADMIN 403; 404; uma tabela sem nenhuma versão pode ser excluída
-- [ ] Atomicidade: com `AuditService.record` forçado a levantar no evento `DELETE`, a tabela, as versões e as associações continuam no banco
-- [ ] Corrida: processo que escolhe uma versão da tabela, ou unidade que a marca, entre a checagem e a trava termina com 409 e nada apagado (duas unidades de trabalho)
-- [ ] O nome da tabela excluída pode ser usado de novo por uma tabela nova
-- [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_admin_delete_table.py -q`
-- [ ] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
+- [x] Testes primeiro em `backend/tests/integration/scoring/test_admin_delete_table.py` (novo): exclui uma tabela com duas versões encadeadas por `superseded_by_id` e some tudo (tabela, versões, grupos, critérios e associações), com um evento `DELETE` cujo `before` traz nome, as versões com id, nome, vigência, referência e situação, a quantidade de critérios e as unidades; os eventos anteriores da tabela e das versões continuam em `uow.audit.list_for`
+- [x] Recusas 409 sem apagar nada: tabela oficial, versão usada por processo, versão em uso de unidade; a prévia traz as contagens, as siglas e os bloqueios; não ADMIN 403; 404; uma tabela sem nenhuma versão pode ser excluída
+- [x] Atomicidade: com `AuditService.record` forçado a levantar no evento `DELETE`, a tabela, as versões e as associações continuam no banco
+- [x] Corrida: processo que escolhe uma versão da tabela, ou unidade que a marca, entre a checagem e a trava termina com 409 e nada apagado (duas unidades de trabalho)
+- [x] O nome da tabela excluída pode ser usado de novo por uma tabela nova
+- [x] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/integration/scoring/test_admin_delete_table.py -q`
+- [x] Test count: os testes novos passam e nenhum teste existente foi apagado ou enfraquecido
 
 **Tests**: integration
 **Gate**: targeted

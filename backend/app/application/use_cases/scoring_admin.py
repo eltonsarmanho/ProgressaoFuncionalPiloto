@@ -32,10 +32,12 @@ from app.domain.rules.scoring_table_guards import (
     VersionFacts,
     has_later_version,
     table_archive_blockers,
+    table_delete_blockers,
     version_delete_blockers,
 )
 
 VERSION_NOT_FOUND = "Versão da tabela de pontuação não encontrada"
+TABLE_NOT_FOUND = "Tabela de pontuação não encontrada"
 TABLE_ENTITY = "scoring_table"
 VERSION_ENTITY = "scoring_version"
 _ROMAN = ("I", "II", "III", "IV", "V", "VI", "VII", "VIII")
@@ -850,6 +852,101 @@ class DeleteScoringVersion:
             _audit_version(previous),
             _audit_version(reopened),
         )
+
+
+@dataclass(frozen=True)
+class PreviewUnit:
+    id: UUID
+    acronym: str
+
+
+@dataclass(frozen=True)
+class TableDeletePreview:
+    name: str
+    versions: int
+    criteria: int
+    units: list[PreviewUnit]
+    blocked: list[Blocker]
+
+
+class PreviewDeleteTable:
+    """GTAB-30: what deleting the table removes and what blocks it, before the click."""
+
+    def __init__(self, uow_factory: Callable[[], UnitOfWork], catalog: ProtectedCatalog):
+        self._uow_factory = uow_factory
+        self._catalog = catalog
+
+    def execute(self, table_id: UUID) -> TableDeletePreview:
+        with self._uow_factory() as uow:
+            repo = uow.scoring_tables
+            table = repo.get_table(table_id)
+            if table is None:
+                raise NotFound(TABLE_NOT_FOUND)
+            versions = repo.list_version_headers(table_id)
+            units = [uow.units.get(unit_id) for unit_id in table.unit_ids]
+            return TableDeletePreview(
+                table.name,
+                len(versions),
+                sum(repo.count_criteria(v.id) for v in versions),
+                [PreviewUnit(u.id, u.acronym) for u in units if u is not None],
+                table_delete_blockers(_table_facts(uow, table, self._catalog)),
+            )
+
+
+class DeleteScoringTable:
+    """GTAB-28, GTAB-29, GTAB-31, GTAB-32: delete a table and its versions in one transaction.
+
+    The table and then all its versions (by id) are locked and every fact is read again under
+    the locks, so a process that chooses a version, or a unit that marks one, either commits
+    first (the deletion is refused) or waits and finds it deleted. The audit events stay.
+    """
+
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        audit: AuditService,
+        catalog: ProtectedCatalog,
+    ):
+        self._uow_factory = uow_factory
+        self._audit = audit
+        self._catalog = catalog
+
+    def execute(self, actor: User, table_id: UUID) -> None:
+        require_admin(actor)
+        with self._uow_factory() as uow:
+            repo = uow.scoring_tables
+            if not repo.lock_table(table_id):
+                raise NotFound(TABLE_NOT_FOUND)
+            for version in sorted(repo.list_version_headers(table_id), key=lambda v: str(v.id)):
+                repo.lock_version(version.id)
+            table = repo.get_table(table_id)
+            if table is None:
+                raise NotFound(TABLE_NOT_FOUND)
+            blockers = table_delete_blockers(_table_facts(uow, table, self._catalog))
+            if blockers:
+                raise Conflict(blockers[0].message, code=blockers[0].code)
+            versions = repo.list_version_headers(table_id)
+            before = {
+                "name": table.name,
+                "unit_ids": list(table.unit_ids),
+                "versions": [
+                    {
+                        "id": v.id,
+                        "name": v.name,
+                        "valid_from": v.valid_from,
+                        "valid_to": v.valid_to,
+                        "norm_reference": v.norm_reference,
+                        "status": v.status,
+                    }
+                    for v in versions
+                ],
+                "criteria": sum(repo.count_criteria(v.id) for v in versions),
+            }
+            repo.delete_table(table_id)
+            self._audit.record(
+                uow, actor.id, TABLE_ENTITY, table_id, AuditAction.DELETE, before, {}
+            )
+            uow.commit()
 
 
 @dataclass(frozen=True)

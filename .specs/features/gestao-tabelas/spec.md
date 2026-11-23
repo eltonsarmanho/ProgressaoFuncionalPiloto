@@ -238,7 +238,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | GTAB-25 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-26 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-27 | P1: Arquivar e excluir | Implemented | Implementing |
-| GTAB-28 | P1: Arquivar e excluir | Specified | Pending |
+| GTAB-28 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-29 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-30 | P1: Arquivar e excluir | Implemented | Implementing |
 | GTAB-31 | P1: Arquivar e excluir | Implemented | Implementing |
