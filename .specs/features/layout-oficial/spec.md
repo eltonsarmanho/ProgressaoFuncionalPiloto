@@ -1,6 +1,6 @@
 # Layout oficial: Parecer pelo modelo e brasão da UFPA nos documentos gerados (layout-oficial) Specification
 
-**Status**: Draft
+**Status**: Approved (usuário, 2026-11-23)
 **Origem**: pedidos do usuário em 2026-11-23, depois de testar o Parecer gerado pela feature `banca-parecer`.
 
 ## Problem Statement
@@ -58,7 +58,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 | Quais documentos | Tabela de Pontuação (DOCX e PDF; o PDF é paisagem), Relatório de Atividades (DOCX e PDF), Comprovante (PDF, só a capa), Parecer (DOCX e PDF) e Requerimento (DOCX e PDF) | Pedido do usuário em 2026-11-23 | y |
 | Brasão ausente | A geração falha com erro claro; o documento nunca sai sem o brasão | Pedido do usuário em 2026-11-23 | y |
 | Versões já geradas | Não mudam (AD-012); só as versões novas levam o brasão e o novo texto do Parecer | Pedido do usuário em 2026-11-23 | y |
-| Dia na linha de local e data | Com dois dígitos ("02 de Abril de 2025"), como o `<dd>` do modelo; o Requerimento continua com "10 de março de 2025" (sem zero) | O modelo escreve `<dd>`, que no resto do sistema tem dois dígitos; o usuário confirma ao aprovar | n |
+| Dia na linha de local e data | Sem zero à esquerda ("7 de Maio de 2025"), como no Requerimento ("10 de março de 2025", mês em minúscula) | Decisão do usuário em 2026-11-23: o modelo não deixa claro; sem zero é o português corrente | y |
 | Espaço abaixo do brasão | 3 mm | O pedido diz "um espaço pequeno"; valor do agente | n |
 | Fontes do Parecer | Corpo e cabeçalho em Times New Roman (Liberation Serif no PDF) a 12 pt, com as margens do modelo do Relatório; título e linha de local e data em Arial (Liberation Sans no PDF, versionada com a licença OFL, como a Serif). O tamanho do Relatório (9 pt) é pequeno demais para um parecer de uma página | O modelo pede fonte com serifa no cabeçalho e sem serifa no título; o corpo e o tamanho não foram descritos | n |
 | Rodapé "Página N de M" no Parecer | Sai: o modelo é uma página e não tem rodapé | "Não use outra estrutura textual" | n |
@@ -89,7 +89,7 @@ Toda ambiguidade é resolvida ou registrada aqui. "Confirmed? y" é decisão do 
 2. The system SHALL escrever o cabeçalho em três linhas centralizadas e em fonte com serifa, "Universidade Federal do Pará", o nome da unidade-mãe do tipo `CAMPUS` da unidade do processo e "<nome da unidade> – <sigla>", seguidas de uma linha horizontal na largura do texto.  <!-- ubiquitous -->
 3. WHERE a unidade do processo não tem unidade-mãe do tipo `CAMPUS` the system SHALL escrever o cabeçalho só com as linhas "Universidade Federal do Pará" e "<nome da unidade> – <sigla>".  <!-- optional-feature -->
 4. The system SHALL escrever o título "PARECER" centralizado, em negrito e em fonte sem serifa.  <!-- ubiquitous -->
-5. The system SHALL escrever, em fonte sem serifa e a partir da metade da largura do texto, a linha "<Cidade>, <dd> de <Mês> de <aaaa>." com o local e a data do Parecer, o dia com dois dígitos e o mês com inicial maiúscula.  <!-- ubiquitous -->
+5. The system SHALL escrever, em fonte sem serifa e a partir da metade da largura do texto, a linha "<Cidade>, <dd> de <Mês> de <aaaa>." com o local e a data do Parecer, o dia sem zero à esquerda e o mês com inicial maiúscula.  <!-- ubiquitous -->
 6. The system SHALL escrever o parágrafo único, justificado, com recuo na primeira linha e espaçamento entre linhas de cerca de 1,5, com o texto "<data>, reuniram-se os membros da Banca de Análise, nomeados pela Portaria nº <número da portaria>, <presidente> (presidente), <membro>, <membro>, responsáveis por analisar o Relatório de Atividades do Professor <denominação atual> Nível <nível atual> <nome do docente>, para fins de progressão funcional do docente, referente ao interstício de <dd/mm/aaaa> a <dd/mm/aaaa>, para Classe <letra pretendida> (<denominação pretendida>) Nível <nível pretendido>. Após a análise, os membros <decisão> o referido relatório."  <!-- ubiquitous -->
 7. The system SHALL escrever em negrito, no parágrafo, só as palavras da data ("<dia> dias do mês de <mês> de <ano>", sem "Aos") e o trecho "<denominação atual> Nível <nível atual> <nome do docente>".  <!-- ubiquitous -->
 8. WHEN o dia da data do Parecer é de 2 a 31 THEN the system SHALL escrever a data do parágrafo como "Aos <dia em cardinal> dias do mês de <mês em minúsculas> de <ano por extenso>", por exemplo "Aos vinte e sete dias do mês de maio de dois mil e vinte e cinco".  <!-- event-driven -->

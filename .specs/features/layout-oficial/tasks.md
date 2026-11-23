@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Design**: nenhum `design.md` (feature pequena); as decisões de desenho estão na seção Notas, no fim deste arquivo.
 **Spec**: `.specs/features/layout-oficial/spec.md`
-**Status**: Draft
+**Status**: Approved (usuário, 2026-11-23: "Aprovar tudo e executar"; 3 lotes por sub-agente + Verifier; dia sem zero na linha de local e data)
 
 Regras de execução desta feature:
 
@@ -164,10 +164,10 @@ graph LR
 
 **Status**: Pending
 
-**What**: `to_roman(n: int) -> str` (1 a 3999, `ValueError` fora) e `format_place_date(value: date) -> str` ("02 de Abril de 2025": dia com dois dígitos, mês em português com inicial maiúscula, ano com quatro dígitos, sem depender do idioma do sistema), as duas em `pt_format.py`.
+**What**: `to_roman(n: int) -> str` (1 a 3999, `ValueError` fora) e `format_place_date(value: date) -> str` ("2 de Abril de 2025": dia sem zero à esquerda, mês em português com inicial maiúscula, ano com quatro dígitos, sem depender do idioma do sistema), as duas em `pt_format.py`.
 **Where**: `backend/app/domain/rules/pt_format.py` (modify)
 **Depends on**: None
-**Reuses**: `_MONTH_NAMES` e `format_long_date` do mesmo arquivo (o Requerimento continua com `format_long_date`, sem zero e em minúsculas)
+**Reuses**: `_MONTH_NAMES` e `format_long_date` do mesmo arquivo (o Requerimento continua com `format_long_date`, em minúsculas)
 **Requirement**: PMOD-05, PMOD-12
 
 **Tools**:
@@ -177,7 +177,7 @@ graph LR
 
 **Done when**:
 
-- [ ] Testes primeiro em `backend/tests/unit/domain/test_pt_format.py`: `to_roman` dá I, II, III, IV, V, IX, X, XIV, XL, XC, CD, MCMXCIV (1994) e MMMCMXCIX (3999); 0, -1 e 4000 dão `ValueError`; `format_place_date(date(2025, 4, 2))` é "02 de Abril de 2025"; os doze meses saem com a inicial maiúscula e a grafia certa, incluindo "Março"; dia 27 sem zero a mais ("27 de Maio de 2025"); 29 de fevereiro de 2024; o resultado não muda com `LC_TIME` diferente; `format_long_date` segue devolvendo "10 de março de 2025" (testes existentes intactos)
+- [ ] Testes primeiro em `backend/tests/unit/domain/test_pt_format.py`: `to_roman` dá I, II, III, IV, V, IX, X, XIV, XL, XC, CD, MCMXCIV (1994) e MMMCMXCIX (3999); 0, -1 e 4000 dão `ValueError`; `format_place_date(date(2025, 4, 2))` é "2 de Abril de 2025"; os doze meses saem com a inicial maiúscula e a grafia certa, incluindo "Março"; dia 27 ("27 de Maio de 2025") e dia 7 sem zero ("7 de Maio de 2025"); 29 de fevereiro de 2024; o resultado não muda com `LC_TIME` diferente; `format_long_date` segue devolvendo "10 de março de 2025" (testes existentes intactos)
 - [ ] Gate check passes: `cd backend && .venv/bin/ruff check . && .venv/bin/pytest tests/unit tests/architecture -q`
 - [ ] Test count: os testes novos passam e nenhum teste existente foi apagado
 
@@ -965,7 +965,7 @@ Conferência de cobertura: os 40 requisitos da spec têm ao menos uma tarefa. A 
 2. **A unidade-mãe vem da unidade.** `AcademicUnit` já tem `parent_id`, `name`, `acronym` e `kind`, e `uow.units.get` lê a mãe; nenhum método novo no repositório. A regra "só se for `CAMPUS`" fica no domínio, que recebe a unidade-mãe inteira (`parent_unit`) e decide.
 3. **Parágrafo em runs.** O DOCX precisa de negrito em trechos e o PDF aceita `<b>`; por isso o modelo carrega `TextRun` em vez de uma string. Os nomes continuam passando por `xml_safe` no escritor.
 4. **Dia 1.** O modelo diz "Aos <cardinal> dias"; para o dia 1 a frase usa o singular "Ao primeiro dia do mês de ..." (decisão do usuário em 2026-11-23). Os demais dias, de 2 a 31, usam o cardinal e o plural. `spell_number` escreve "um" (a T3 troca por "primeiro" só no dia 1).
-5. **Dois dígitos na linha de local e data.** O `<dd>` do modelo foi lido como dois dígitos ("02 de Abril de 2025"), diferente do Requerimento ("10 de março de 2025", que não tem zero); é a decisão `n` da spec mais fácil de reverter (um argumento de `format_place_date`).
+5. **Dia sem zero na linha de local e data** (decisão do usuário em 2026-11-23): "7 de Maio de 2025", como o Requerimento, mas com o mês em maiúscula, como o modelo.
 6. **Fontes do Parecer.** Corpo e cabeçalho em Times New Roman (Liberation Serif no PDF) a 12 pt; título e linha de local e data em Arial (Liberation Sans, versionada na T4 com a licença OFL, como a Serif). O `page` do modelo do Relatório só empresta margens e nome da fonte; o tamanho de 9 pt do Relatório não serve a uma página de parecer.
 7. **Sem rodapé no Parecer.** O modelo é uma página sem "Página N de M"; o PDF usa `PdfCanvas` em vez de `NumberedCanvas` e o DOCX não chama `add_page_footer`.
 8. **Instantâneo intacto.** A versão do Parecer segue gravando o total, os subtotais, o mínimo e as versões usadas, embora o documento não os imprima: o resumo da versão na API e a conferência `TABELA_DESATUALIZADA` leem o instantâneo (AD-012), e o teste existente que compara o total do Parecer com o da Tabela continua valendo pelo instantâneo. Por isso a conta do mínimo (`_opinion_minimum`) continua em `_opinion`.
