@@ -11,6 +11,7 @@ import type {
   TableChoice,
 } from "../api/types";
 import { activityBody } from "../activityBody";
+import { countUnscored } from "../unscored";
 import { ActivityForm } from "../components/ActivityForm";
 import { AlertList } from "../components/AlertList";
 import { Modal } from "../components/Modal";
@@ -158,7 +159,7 @@ export function ProcessScoring() {
   const group1OutsideTotal = groupOne ? !groupOne.counts_in_total && group1Load === true : undefined;
 
   const scored = result?.rows ?? [];
-  const unscored = scored.filter((r) => r.status !== "PONTUADA").length;
+  const unscored = countUnscored(scored);
   const blocked = unscored > 0 ? { step: 4, message: unscoredMessage(unscored) } : undefined;
   const tableRows = [...scored, ...rejected.map(rejectedRow)];
 

@@ -238,7 +238,7 @@
 ### AD-029
 - **Decision**: Na Etapa 4 a tabela de atividades não tem a coluna "Comprovante" e usa nomes curtos de coluna ("Qtde.", "Pts. unit.") para o cabeçalho não quebrar. A atividade válida e não pontuada (status `POTENCIAL` ou `NAO_PONTUADA`) fica em destaque, com aviso fixo, e fecha o caminho para a Etapa 5 (navegação e link) até ser validada ou rejeitada; a validada (pontuada) não oferece "Validar". A atividade rejeitada continua excluída da pontuação, dos totais e dos documentos (regra 10), mas permanece na tabela sombreada, com "Reabrir" (volta a `AGUARDANDO_REVISAO`).
 - **Reason**: Pedido do usuário em 2026-11-24: ao rejeitar, a linha sumia da Etapa 4; preferiu ficar marcada ou sombreada, mantendo a exclusão da pontuação.
-- **Trade-off**: O bloqueio é de interface, como o SEC-05: a rota direta da Etapa 5 não é recusada pelo servidor. A linha sombreada vem da lista de atividades (o motor só devolve as válidas); se essa leitura falha, a tabela abre sem elas.
+- **Trade-off**: O bloqueio é de interface (o servidor não recusa): as Etapas 5, 6 e 7 também ficam fechadas pelo endereço direto, com o aviso e o caminho de volta à Etapa 4, enquanto houver atividade não pontuada (decisão do usuário em 2026-11-24); processo concluído ou arquivado não fecha, e falha na conferência abre a etapa. A linha sombreada vem da lista de atividades (o motor só devolve as válidas); se essa leitura falha, a tabela abre sem elas.
 - **Scope**: `revisao-simplificada` e `pontuacao` (tela da Etapa 4); sem backend nem migração
 - **Date**: 2026-11-24
 - **Status**: active

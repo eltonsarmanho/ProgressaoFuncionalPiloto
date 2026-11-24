@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router";
 import { RequireAuth } from "./auth/RequireAuth";
 import { Layout } from "./components/Layout";
+import { UnscoredGate } from "./components/UnscoredGate";
 import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
 import { Norms } from "./pages/Norms";
@@ -33,9 +34,30 @@ export function AppRoutes() {
         <Route path="processos/:id/documentos" element={<ProcessDocuments />} />
         <Route path="processos/:id/atividades" element={<ProcessActivities />} />
         <Route path="processos/:id/pontuacao" element={<ProcessScoring />} />
-        <Route path="processos/:id/gerados" element={<ProcessGenerated />} />
-        <Route path="processos/:id/banca" element={<ProcessBoard />} />
-        <Route path="processos/:id/dossie" element={<ProcessDossier />} />
+        <Route
+          path="processos/:id/gerados"
+          element={
+            <UnscoredGate step={5} title="Documentos gerados">
+              <ProcessGenerated />
+            </UnscoredGate>
+          }
+        />
+        <Route
+          path="processos/:id/banca"
+          element={
+            <UnscoredGate step={6} title="Banca e Parecer">
+              <ProcessBoard />
+            </UnscoredGate>
+          }
+        />
+        <Route
+          path="processos/:id/dossie"
+          element={
+            <UnscoredGate step={7} title="Requerimento e dossiê">
+              <ProcessDossier />
+            </UnscoredGate>
+          }
+        />
         <Route path="normas" element={<Norms />} />
         <Route path="administracao/tabelas" element={<ScoringAdmin />} />
         <Route path="*" element={<Navigate to="/" replace />} />
