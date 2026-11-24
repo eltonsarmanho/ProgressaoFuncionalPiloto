@@ -419,7 +419,7 @@ T40 → T41
 
 ### T13: Semente da tabela do IFCH
 
-**What**: Transcrição do PDF oficial para JSON: 8 grupos, critérios 3, 16, 12, 7, 6, 14, 11 e 66, pontuações, modos, `counts_in_total` falso no Grupo I e limite 10 em I.3.
+**What**: Transcrição do PDF oficial para JSON: 8 grupos, critérios 3, 16, 12, 7, 6, 14, 11 e 66, pontuações, modos, `counts_in_total` falso no Grupo I e limite 10 no item de valor informado de tabelas antigas, inexistente na tabela oficial.
 **Where**: `backend/app/infrastructure/database/seed_data/ifch.json`
 **Depends on**: T12
 **Reuses**: `Modelos/TABELA-DE-PONTUACAO-DO-IFCH.pdf` (somente leitura local)
@@ -446,7 +446,7 @@ T40 → T41
 
 ### T14: Semente da tabela da FASI
 
-**What**: Transcrição da tabela preenchida para JSON pela numeração do Anexo I, situação `PENDENTE_VALIDACAO`, `counts_in_total` verdadeiro, I.1 e I.2 em `CARGA_SEMANAL` (17 semanas; preparação 1 e 2), I.3 com limite 10, `review_note` nas divergências.
+**What**: Transcrição da tabela preenchida para JSON pela numeração do Anexo I, situação `PENDENTE_VALIDACAO`, `counts_in_total` verdadeiro, I.1 e I.2 em `CARGA_SEMANAL` (17 semanas; preparação 1 e 2), o item de valor informado de tabelas antigas, inexistente na tabela oficial, com limite 10, `review_note` nas divergências.
 **Where**: `backend/app/infrastructure/database/seed_data/fasi.json`
 **Depends on**: T13
 **Reuses**: `seed_data/ifch.json` como base; `Modelos/Tabela de Pontuação.pdf`

@@ -8,6 +8,7 @@ import pytest
 from app.domain.entities.career import CareerVersion
 from app.domain.entities.professor import WorkRegime
 from app.domain.entities.scoring import ScoringTableVersion, TableStatus
+from app.domain.rules.career_catalog import LEI_15141_2025
 from app.domain.rules.process_verification import Severity
 from app.domain.rules.scoring_alerts import ScoringAlertCode
 from app.domain.rules.scoring_engine import Counters, ScoringResult
@@ -131,3 +132,30 @@ def test_verificacao_nao_altera_o_resultado():
     before = (dict(r.group_subtotals), r.total)
     verify_scoring(ctx(), r)
     assert (dict(r.group_subtotals), r.total) == before
+
+
+# NLINK-03: the extension and research alert cites RES-4644-2015-CONSEPE, same reference text
+def test_alerta_de_extensao_cita_res_4644():
+    [alert] = [
+        a
+        for a in verify_scoring(ctx(WorkRegime.DE), result({4: 0, 5: 0}))
+        if a.code is ScoringAlertCode.SEM_EXTENSAO_OU_PESQUISA
+    ]
+    assert alert.norm_code == "RES-4644-2015-CONSEPE"
+    assert alert.norm_reference == "Res. 4.644/2015-CONSEPE, art. 13, II"
+
+
+# NLINK-03, NMIN-01: the undefined minimum cites RES-4644-2015-CONSEPE and has no number
+def test_minimo_nao_definido_cita_res_4644_na_lei_15141():
+    assert reference_minimum(table(), "C", LEI_15141_2025, D(414)).minimum is None
+    assert (
+        reference_minimum(table(), "C", LEI_15141_2025, D(414)).status
+        is MinimumStatus.NAO_DEFINIDO
+    )
+    [alert] = [
+        a
+        for a in verify_scoring(ctx(career_version=LEI_15141_2025), result())
+        if a.code is ScoringAlertCode.MINIMO_NAO_DEFINIDO
+    ]
+    assert alert.norm_code == "RES-4644-2015-CONSEPE"
+    assert alert.norm_reference == "Res. 4.644/2015-CONSEPE, art. 12"

@@ -10,7 +10,7 @@ from pydantic import BaseModel, PlainSerializer
 
 from app.application.use_cases.scoring import ProcessScore, TableRef, TableSuggestion
 from app.application.use_cases.scoring_admin import TableView, VersionView
-from app.domain.entities.activity import ActivityStatus
+from app.domain.entities.activity import ActivityStatus, Level
 from app.domain.entities.scoring import (
     ScoringCriterion,
     ScoringGroup,
@@ -20,7 +20,8 @@ from app.domain.entities.scoring import (
 )
 from app.domain.rules.scoring_alerts import NotScoredReason
 from app.domain.rules.scoring_engine import RowStatus
-from app.domain.rules.scoring_verification import MinimumStatus
+from app.domain.rules.scoring_verification import NORM_RES_4644, MinimumStatus
+from app.presentation.schemas.norms import NormRefOut
 from app.presentation.schemas.processes import AlertOut
 
 Money = Annotated[Decimal, PlainSerializer(lambda v: f"{v:.2f}", return_type=str)]
@@ -36,6 +37,7 @@ class CriterionOut(BaseModel):
     hours_per_block: Money | None
     weeks_per_semester: int | None
     prep_ratio: Money | None
+    min_hours: Money | None
     max_points: Money | None
     accepted_evidence: str
     rules: str
@@ -71,7 +73,9 @@ class VersionRefOut(BaseModel):
     valid_from: date
     valid_to: date | None
     norm_reference: str
+    norm_code: str | None
     status: TableStatus
+    superseded_by_id: UUID | None
 
     @classmethod
     def of_version(cls, v: ScoringTableVersion) -> "VersionRefOut":
@@ -79,11 +83,22 @@ class VersionRefOut(BaseModel):
 
 
 class VersionSummaryOut(VersionRefOut):
-    in_use: bool
+    in_use: bool  # some process uses the version
+    process_count: int
+    default_for_unit_ids: list[UUID]
+    read_only_reason: str | None  # code of why the criteria cannot be edited (GTAB-36)
+    delete_blocked_reason: str | None  # code of why the version cannot be deleted
 
     @classmethod
     def of(cls, view: VersionView) -> "VersionSummaryOut":
-        return cls(**VersionRefOut.of_version(view.version).model_dump(), in_use=view.in_use)
+        return cls(
+            **VersionRefOut.of_version(view.version).model_dump(),
+            in_use=view.in_use,
+            process_count=view.process_count,
+            default_for_unit_ids=list(view.default_for_unit_ids),
+            read_only_reason=view.read_only_reason,
+            delete_blocked_reason=view.delete_blocked_reason,
+        )
 
 
 class VersionOut(VersionSummaryOut):
@@ -108,6 +123,8 @@ class TableOut(BaseModel):
     archived: bool
     unit_ids: list[UUID]
     versions: list[VersionSummaryOut]
+    archive_blocked_reason: str | None  # code of why the table cannot be archived
+    delete_blocked_reason: str | None  # code of why the table cannot be deleted
 
     @classmethod
     def of(cls, view: TableView) -> "TableOut":
@@ -118,6 +135,8 @@ class TableOut(BaseModel):
             archived=t.archived,
             unit_ids=list(t.unit_ids),
             versions=[VersionSummaryOut.of(v) for v in view.versions],
+            archive_blocked_reason=view.archive_blocked_reason,
+            delete_blocked_reason=view.delete_blocked_reason,
         )
 
 
@@ -144,7 +163,7 @@ class TableStateOut(BaseModel):
         return cls(
             chosen=TableRefOut.of(state.chosen),
             suggested=TableRefOut.of(state.suggested),
-            alerts=[AlertOut.of(a) for a in state.alerts],
+            alerts=[AlertOut.of(a, state.norms) for a in state.alerts],
         )
 
 
@@ -178,9 +197,14 @@ class ScoreRowOut(BaseModel):
     effective_quantity: Money | None
     formula_text: str
     points: Money
+    pit_hours: Money | None
+    outside_total: bool
+    academic_period: str | None
+    level: Level | None
     status: RowStatus
     reasons: list[NotScoredReason]
     alerts: list[AlertOut]
+    evidence_count: int
 
 
 class LimitAdjustmentOut(BaseModel):
@@ -197,6 +221,7 @@ class MinimumOut(BaseModel):
     status: MinimumStatus
     minimum: Money | None
     total: Money
+    norm: NormRefOut | None  # only when the minimum is not defined: the resolution (NMIN-02)
 
 
 class ProcessScoreOut(BaseModel):
@@ -206,7 +231,11 @@ class ProcessScoreOut(BaseModel):
     subtotals: list[GroupSubtotalOut]
     total: Money
     potential_total: Money
+    potential_dated: Money
+    potential_undated: Money
     group1_percent: Money | None
+    group1_hours_by_period: dict[str, Money]
+    group1_total_hours: Money
     counters: CountersOut
     rows: list[ScoreRowOut]
     limit_adjustments: list[LimitAdjustmentOut]
@@ -227,7 +256,11 @@ class ProcessScoreOut(BaseModel):
             ],
             total=result.total,
             potential_total=result.potential_total,
+            potential_dated=result.potential_dated,
+            potential_undated=result.potential_undated,
             group1_percent=result.group1_percent,
+            group1_hours_by_period=result.group1_hours_by_period,
+            group1_total_hours=result.group1_total_hours,
             counters=CountersOut(**asdict(result.counters)),
             rows=[
                 ScoreRowOut(
@@ -241,9 +274,14 @@ class ProcessScoreOut(BaseModel):
                     effective_quantity=r.effective_quantity,
                     formula_text=r.formula_text,
                     points=r.points,
+                    pit_hours=r.pit_hours,
+                    outside_total=r.outside_total,
+                    academic_period=activities[r.activity_id].academic_period,
+                    level=activities[r.activity_id].level,
                     status=r.status,
                     reasons=list(r.reasons),
-                    alerts=[AlertOut.of(a) for a in r.alerts],
+                    alerts=[AlertOut.of(a, score.norms) for a in r.alerts],
+                    evidence_count=r.evidence_count,
                 )
                 for r in result.rows
             ],
@@ -255,14 +293,17 @@ class ProcessScoreOut(BaseModel):
                     before=a.before,
                     after=a.after,
                     activity_id=a.activity_id,
-                    alert=AlertOut.of(a.alert),
+                    alert=AlertOut.of(a.alert, score.norms),
                 )
                 for a in result.limit_adjustments
             ],
-            alerts=[AlertOut.of(a) for a in score.alerts],
+            alerts=[AlertOut.of(a, score.norms) for a in score.alerts],
             minimum=MinimumOut(
                 status=score.minimum.status,
                 minimum=score.minimum.minimum,
                 total=score.minimum.total,
+                norm=NormRefOut.of(score.norms.get(NORM_RES_4644))
+                if score.minimum.status is MinimumStatus.NAO_DEFINIDO
+                else None,
             ),
         )

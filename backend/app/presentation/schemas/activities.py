@@ -6,6 +6,7 @@ Dates may be `YYYY-MM-DD` or `YYYY-MM` (month precision). The field names `quant
 """
 
 import re
+from collections.abc import Sequence
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
@@ -21,6 +22,8 @@ from app.domain.entities.activity import (
     Level,
     PeriodPrecision,
 )
+from app.domain.rules.activity_validity import InvalidReason, Validity, ValidityState
+from app.presentation.schemas.documents import EvidenceOut
 from app.presentation.schemas.scoring import Money
 
 MONTH = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
@@ -46,7 +49,7 @@ class CandidateIn(BaseModel):
 
     group_number: int
     item_number: int
-    justification: str
+    justification: str = ""
 
 
 class ActivityFields(BaseModel):
@@ -66,6 +69,7 @@ class ActivityFields(BaseModel):
     course_hours: Decimal | None = None
     informed_points: Decimal | None = None
     points_override: Decimal | None = None
+    unit_points_override: Decimal | None = None
     evidence_note: str | None = None
     candidates: list[CandidateIn] = []
     justificativa: str | None = None
@@ -99,6 +103,7 @@ class ActivityFields(BaseModel):
             course_hours=self.course_hours,
             informed_points=self.informed_points,
             points_override=self.points_override,
+            unit_points_override=self.unit_points_override,
             evidence_note=self.evidence_note,
             candidates=tuple(
                 Candidate(c.group_number, c.item_number, c.justification) for c in self.candidates
@@ -129,10 +134,69 @@ class ActivityDistinct(BaseModel):
     justificativa: str | None = None
 
 
+class ActivitySeparate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    expected_version: int | None = None
+
+
+class MergeOut(BaseModel):
+    merged: int
+
+
+class ActivityBulkValidate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    activity_ids: list[UUID]
+    justificativa: str | None = None
+
+
 class CandidateOut(BaseModel):
     group_number: int
     item_number: int
     justification: str
+
+
+class SkippedOut(BaseModel):
+    """An activity the batch validation left as it was: `reason` is `SEM_CATEGORIA` or the reason
+    of its validity (`REJEITADA`, `FORA_DO_INTERSTICIO`, `CARGA_HORARIA_INSUFICIENTE`, ...)."""
+
+    id: UUID
+    reason: str
+
+
+def _param_text(value: date | Decimal) -> str:
+    """Dates as ISO text, hours without trailing zeros (`19`, not `19.00`)."""
+    if isinstance(value, date):
+        return value.isoformat()
+    return format(value.normalize(), "f")
+
+
+class ValidityOut(BaseModel):
+    """Whether the activity is valid and why not; `params` holds what the reason is written
+    from: the date or the period and the interstice (FORA_DO_INTERSTICIO), the hours and the
+    minimum (CARGA_HORARIA_INSUFICIENTE), all as text."""
+
+    state: ValidityState
+    reason: InvalidReason | None
+    needs_category: bool
+    params: dict[str, str]
+
+    @classmethod
+    def of(cls, validity: Validity) -> "ValidityOut":
+        return cls(
+            state=validity.state,
+            reason=validity.reason,
+            needs_category=validity.needs_category,
+            params={k: _param_text(v) for k, v in validity.params.items() if v is not None},
+        )
+
+
+class MergedOut(BaseModel):
+    """A duplicate merged into the activity that carries it."""
+
+    id: UUID
+    title: str
 
 
 class ActivityOut(BaseModel):
@@ -153,18 +217,31 @@ class ActivityOut(BaseModel):
     course_hours: Money | None
     informed_points: Money | None
     points_override: Money | None
+    unit_points_override: Money | None
     evidence_note: str | None
     source: ActivitySource
     status: ActivityStatus
     distinct_justification: str | None
     candidates: list[CandidateOut]
+    evidences: list[EvidenceOut]
     created_by: UUID
     created_at: datetime | None
     updated_at: datetime | None
     version: int
+    # Filled by the list and by the read of one activity; the answer of a write leaves them empty.
+    validity: ValidityOut | None = None
+    merged: list[MergedOut] = []
+    predicted_points: Money | None = None
 
     @classmethod
-    def of(cls, a: Activity) -> "ActivityOut":
+    def of(
+        cls,
+        a: Activity,
+        evidences: Sequence[EvidenceOut] = (),
+        validity: Validity | None = None,
+        merged: Sequence[MergedOut] = (),
+        predicted_points: Decimal | None = None,
+    ) -> "ActivityOut":
         precision = a.period_precision
         return cls(
             id=a.id,
@@ -184,6 +261,7 @@ class ActivityOut(BaseModel):
             course_hours=a.course_hours,
             informed_points=a.informed_points,
             points_override=a.points_override,
+            unit_points_override=a.unit_points_override,
             evidence_note=a.evidence_note,
             source=a.source,
             status=a.status,
@@ -196,8 +274,19 @@ class ActivityOut(BaseModel):
                 )
                 for c in a.candidates
             ],
+            evidences=list(evidences),
             created_by=a.created_by,
             created_at=a.created_at,
             updated_at=a.updated_at,
             version=a.version,
+            validity=ValidityOut.of(validity) if validity is not None else None,
+            merged=list(merged),
+            predicted_points=predicted_points,
         )
+
+
+class BulkValidateOut(BaseModel):
+    """The answer of the batch validation (VAL-04): what was validated and what was skipped."""
+
+    activities: list[ActivityOut]
+    skipped: list[SkippedOut]

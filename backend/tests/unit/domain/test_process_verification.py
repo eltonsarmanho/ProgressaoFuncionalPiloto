@@ -1,7 +1,7 @@
-"""PROC-03..PROC-11, CARR-04..CARR-07 and the DADOS_INCOMPLETOS edge case."""
+"""PROC-03..PROC-11, CARR-04..CARR-07 and the removal of DADOS_INCOMPLETOS (ENX-06)."""
 
 import copy
-from dataclasses import replace
+from dataclasses import fields, replace
 from datetime import date
 
 import pytest
@@ -22,12 +22,13 @@ from app.domain.rules.process_verification import (
 
 VERSIONS = MAGISTERIO_SUPERIOR_VERSIONS
 
-INSTITUTIONAL = dict(
-    notes="Observação de teste",
-    resp_name="Responsável de Teste",
-    resp_position="Diretor",
-    resp_appointment="Portaria 1/2025",
-    resp_admin_unit="Faculdade de Teste",
+PROMOTION_JUMP = (
+    "A promoção informada não segue a sequência usual (último nível da classe atual "
+    "para o primeiro nível da classe seguinte); confira a norma que fundamenta o salto."
+)
+PROGRESSION_JUMP = (
+    "A progressão informada não segue a sequência usual (um nível acima, na mesma classe); "
+    "confira a norma que fundamenta o salto."
 )
 
 # PROC-10: FASI 2022-2024
@@ -42,7 +43,6 @@ FASI_2022_2024 = ProcessSnapshot(
     start_date=date(2022, 11, 23),
     end_date=date(2024, 11, 23),
     opening_date=date(2025, 3, 10),
-    **INSTITUTIONAL,
 )
 
 # PROC-11: Requerimento 2024-2026, as written, all optional fields filled
@@ -57,7 +57,6 @@ REQUERIMENTO_2024_2026 = ProcessSnapshot(
     start_date=date(2024, 11, 23),
     end_date=date(2026, 11, 23),
     opening_date=date(2026, 11, 16),
-    **INSTITUTIONAL,
 )
 
 # A clean case under the new structure: progression B1 -> B2, 2025-2027
@@ -72,7 +71,6 @@ CLEAN_NEW = ProcessSnapshot(
     start_date=date(2025, 2, 1),
     end_date=date(2027, 2, 1),
     opening_date=date(2027, 3, 1),
-    **INSTITUTIONAL,
 )
 
 
@@ -129,7 +127,9 @@ def test_end_equal_to_opening_is_not_alert():
 def test_progression_must_keep_class_and_advance_one_level(changes):
     alerts = verify_process(replace(CLEAN_NEW, **changes), VERSIONS)
     alert = find(alerts, AlertCode.MODALIDADE_INCOMPATIVEL)
-    assert alert.severity is Severity.ERRO
+    # NMOV-03: a progression out of the usual sequence is an alert, not an error
+    assert alert.severity is Severity.ALERTA
+    assert alert.message == PROGRESSION_JUMP
 
 
 # PROC-08
@@ -166,7 +166,82 @@ def test_valid_promotion_has_no_alerts():
 def test_promotion_rules(changes):
     alerts = verify_process(replace(PROMO_NEW, **changes), VERSIONS)
     alert = find(alerts, AlertCode.MODALIDADE_INCOMPATIVEL)
-    assert alert.severity is Severity.ERRO
+    # NMOV-02: a promotion out of the usual sequence is an alert, not an error
+    assert alert.severity is Severity.ALERTA
+    assert alert.message == PROMOTION_JUMP
+
+
+# NMOV-02: promotion A1 -> C1 under Lei 15.141 skips class B
+def test_promotion_jump_a1_to_c1_is_alert_with_usual_sequence_text():
+    snapshot = replace(
+        PROMO_NEW,
+        current_class="A",
+        current_denomination="Assistente",
+        current_level=1,
+        target_class="C",
+        target_denomination="Associado",
+        target_level=1,
+    )
+    alert = find(verify_process(snapshot, VERSIONS), AlertCode.MODALIDADE_INCOMPATIVEL)
+    assert alert.severity is Severity.ALERTA
+    assert alert.message == PROMOTION_JUMP
+
+
+# NMOV-03: progression C1 -> C3 and B4 -> C1
+@pytest.mark.parametrize(
+    "changes",
+    [
+        dict(current_class="C", current_denomination="Associado", current_level=1,
+             target_class="C", target_denomination="Associado", target_level=3),
+        dict(current_class="B", current_denomination="Adjunto", current_level=4,
+             target_class="C", target_denomination="Associado", target_level=1),
+    ],
+    ids=["C1-C3", "B4-C1"],
+)
+def test_progression_jump_is_alert_with_usual_sequence_text(changes):
+    alert = find(
+        verify_process(replace(CLEAN_NEW, **changes), VERSIONS),
+        AlertCode.MODALIDADE_INCOMPATIVEL,
+    )
+    assert alert.severity is Severity.ALERTA
+    assert alert.message == PROGRESSION_JUMP
+
+
+# NMOV-02/03: the usual sequence gives no modality alert
+@pytest.mark.parametrize(
+    ("modality", "changes"),
+    [
+        (Modality.PROMOCAO, dict(current_class="B", current_denomination="Adjunto",
+                                 current_level=4, target_class="C",
+                                 target_denomination="Associado", target_level=1)),
+        (Modality.PROGRESSAO, dict(current_class="C", current_denomination="Associado",
+                                   current_level=1, target_class="C",
+                                   target_denomination="Associado", target_level=2)),
+    ],
+    ids=["promotion-B4-C1", "progression-C1-C2"],
+)
+def test_usual_sequence_has_no_modality_alert(modality, changes):
+    snapshot = replace(CLEAN_NEW, modality=modality, **changes)
+    assert AlertCode.MODALIDADE_INCOMPATIVEL not in codes(verify_process(snapshot, VERSIONS))
+
+
+# NMOV-04: no alert of a jump has severity ERRO because of the modality
+@pytest.mark.parametrize(
+    ("modality", "changes"),
+    [
+        (Modality.PROMOCAO, dict(current_class="A", current_denomination="Assistente",
+                                 current_level=1, target_class="C",
+                                 target_denomination="Associado", target_level=1)),
+        (Modality.PROGRESSAO, dict(current_class="B", current_denomination="Adjunto",
+                                   current_level=4, target_class="C",
+                                   target_denomination="Associado", target_level=1)),
+    ],
+    ids=["promotion", "progression"],
+)
+def test_jump_never_yields_a_modality_error(modality, changes):
+    alerts = verify_process(replace(CLEAN_NEW, modality=modality, **changes), VERSIONS)
+    assert AlertCode.MODALIDADE_INCOMPATIVEL in codes(alerts)
+    assert [a for a in alerts if a.severity is Severity.ERRO] == []
 
 
 # PROC-09
@@ -252,35 +327,18 @@ def test_missing_structure_skips_structure_checks():
     assert alerts[0].severity is Severity.REQUER_ANALISE_NORMATIVA
 
 
-# Edge case: DADOS_INCOMPLETOS
-def test_empty_optional_fields_are_listed():
-    snapshot = replace(CLEAN_NEW, notes="", resp_name=None, resp_appointment="  ")
-    alerts = verify_process(snapshot, VERSIONS)
-    alert = find(alerts, AlertCode.DADOS_INCOMPLETOS)
-    assert alert.severity is Severity.ALERTA
-    assert "observações" in alert.message
-    assert "nome do responsável" in alert.message
-    assert "portaria de designação do responsável" in alert.message
-    assert "cargo do responsável" not in alert.message
-    assert codes(alerts) == [AlertCode.DADOS_INCOMPLETOS]
+# ENX-06: the alert of empty optional fields no longer exists
+def test_a_clean_process_has_no_alerts_and_the_old_code_is_gone():
+    assert verify_process(CLEAN_NEW, VERSIONS) == []
+    assert "DADOS_INCOMPLETOS" not in {code.name for code in AlertCode}
+    assert "DADOS_INCOMPLETOS" not in {code.value for code in AlertCode}
 
 
-# Edge case: DADOS_INCOMPLETOS lists each optional field on its own
-@pytest.mark.parametrize(
-    ("field", "label"),
-    [
-        ("notes", "observações"),
-        ("resp_name", "nome do responsável"),
-        ("resp_position", "cargo do responsável"),
-        ("resp_appointment", "portaria de designação do responsável"),
-        ("resp_admin_unit", "unidade administrativa responsável"),
-    ],
-)
-def test_each_empty_optional_field_is_reported(field, label):
-    alerts = verify_process(replace(CLEAN_NEW, **{field: ""}), VERSIONS)
-    alert = find(alerts, AlertCode.DADOS_INCOMPLETOS)
-    assert alert.severity is Severity.ALERTA
-    assert alert.message == f"Campos não preenchidos: {label}."
+def test_the_snapshot_no_longer_carries_the_removed_fields():
+    names = {f.name for f in fields(ProcessSnapshot)}
+
+    removed = {"notes", "resp_name", "resp_position", "resp_appointment", "resp_admin_unit"}
+    assert names.isdisjoint(removed)
 
 
 # PROC-10
@@ -302,7 +360,7 @@ def test_requerimento_2024_2026_case():
 
     assert len(alerts) == 5
     assert {a.code: a.severity for a in alerts} == {
-        AlertCode.MODALIDADE_INCOMPATIVEL: Severity.ERRO,
+        AlertCode.MODALIDADE_INCOMPATIVEL: Severity.ALERTA,  # NMOV-02
         AlertCode.CLASSE_INEXISTENTE_NA_ESTRUTURA: Severity.ERRO,
         AlertCode.DENOMINACAO_DIVERGENTE: Severity.ALERTA,
         AlertCode.INTERSTICIO_NAO_CONCLUIDO: Severity.ALERTA,

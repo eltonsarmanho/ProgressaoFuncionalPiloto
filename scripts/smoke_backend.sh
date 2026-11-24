@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Smoke test for the backend image (INFRA-02): build, run against a throwaway
-# postgres, expect healthy /api/health with migrations at head. Cleans up on exit.
+# postgres, expect healthy /api/health with migrations at head, a non-root user and
+# Tesseract with Portuguese data (PIPE-06). Cleans up on exit.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -60,5 +61,9 @@ echo "    alembic at head ($db_rev)"
 uid="$(docker exec "$API" id -u)"
 [ "$uid" != "0" ] || fail "backend runs as root"
 echo "    runs as uid $uid"
+
+langs="$(docker exec "$API" tesseract --list-langs 2>&1)"
+echo "$langs" | grep -qx 'por' || fail "tesseract does not list the por language (got: $langs)"
+echo "    tesseract lists por"
 
 echo "PASS: smoke_backend"

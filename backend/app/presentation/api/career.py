@@ -37,6 +37,11 @@ async def update_version(
     code: str, version_id: UUID, body: CareerVersionIn, actor: UserDep, container: ContainerDep
 ) -> CareerVersionOut:
     view = await run_in_threadpool(
-        container.update_career_version.execute, actor, code, version_id, body.to_entity()
+        container.update_career_version.execute,
+        actor,
+        code,
+        version_id,
+        body.to_entity(),
+        body.unset_links(),
     )
     return CareerVersionOut.of(view)

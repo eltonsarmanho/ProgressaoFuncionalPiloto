@@ -5,11 +5,14 @@ export type FieldIssue = { field: string; message: string };
 export class ApiError extends Error {
   readonly status: number;
   readonly detail: unknown;
+  /** The whole response body, for the few errors that carry more than `detail` (409 duplicate). */
+  readonly body: unknown;
 
-  constructor(status: number, detail: unknown) {
+  constructor(status: number, detail: unknown, body?: unknown) {
     super(typeof detail === "string" ? detail : `Erro ${status}`);
     this.status = status;
     this.detail = detail;
+    this.body = body;
   }
 }
 
@@ -19,20 +22,31 @@ export function setCsrfToken(token: string | null): void {
   csrfToken = token;
 }
 
+/**
+ * A `FormData` body is sent as is (multipart): the browser sets `Content-Type` with the boundary,
+ * so it must never be forced here. Any other body is sent as JSON.
+ */
 export async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers = new Headers();
-  if (body !== undefined) headers.set("Content-Type", "application/json");
+  const isForm = body instanceof FormData;
+  if (body !== undefined && !isForm) headers.set("Content-Type", "application/json");
   if (method !== "GET" && csrfToken) headers.set("X-CSRF-Token", csrfToken);
 
   const response = await fetch(path, {
     method,
     headers,
     credentials: "include",
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
   });
   const text = await response.text();
-  const data = text ? JSON.parse(text) : undefined;
-  if (!response.ok) throw new ApiError(response.status, data?.detail);
+  let data: { detail?: unknown } | undefined;
+  try {
+    data = text ? JSON.parse(text) : undefined;
+  } catch (error) {
+    // an error page of nginx (413, 502) is HTML: the status alone tells what happened
+    if (response.ok) throw error;
+  }
+  if (!response.ok) throw new ApiError(response.status, data?.detail, data);
   return data as T;
 }
 
@@ -45,10 +59,27 @@ export function fieldErrors(error: unknown): Record<string, string> {
 }
 
 /** Human message for any error (non-field). */
+export const TOO_LARGE_MESSAGE = "O arquivo ou o conjunto excede o limite de envio.";
+const FILE_DELETED_MESSAGE = "O arquivo deste documento foi excluído na conclusão do processo";
+
+/** The message of the first item of a 422 `detail` that carries a `code` (a refusal with a reason). */
+function codedMessage(detail: unknown): string | null {
+  if (!Array.isArray(detail)) return null;
+  for (const item of detail as { code?: unknown; message?: unknown }[]) {
+    if (item && typeof item.code === "string" && typeof item.message === "string" && item.message) {
+      return item.message;
+    }
+  }
+  return null;
+}
+
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (typeof error.detail === "string") return error.detail;
-    if (error.status === 422) return "Verifique os campos destacados.";
+    if (error.status === 413) return TOO_LARGE_MESSAGE;
+    if (error.status === 422) return codedMessage(error.detail) ?? "Verifique os campos destacados.";
+    // DEL-12: a 410 is the file of a document the conclusion deleted; the screen shows the reason
+    if (error.status === 410) return codedMessage(error.detail) ?? `${FILE_DELETED_MESSAGE}.`;
     return `Erro ${error.status}`;
   }
   return "Não foi possível contactar o servidor.";

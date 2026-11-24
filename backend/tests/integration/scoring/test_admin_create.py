@@ -55,12 +55,12 @@ def test_creates_table_with_unique_name_units_and_first_version(world, admin_uc)
 
 
 def test_first_version_can_copy_groups_and_criteria_from_a_base_version(world, admin_uc):
-    view = create(world, admin_uc, base_version_id=world.fasi_version.id)
+    view = create(world, admin_uc, base_version_id=world.official_version.id)
 
     [version] = stored(world, view.table.id)[1]
-    assert [len(g.criteria) for g in version.groups] == [3, 16, 12, 7, 6, 14, 11, 66]
-    assert version.get_criterion(2, 7) == world.fasi_version.get_criterion(2, 7)
-    assert version.minimums == world.fasi_version.minimums
+    assert [len(g.criteria) for g in version.groups] == [2, 16, 9, 6, 5, 14, 11, 37]
+    assert version.get_criterion(2, 7) == world.official_version.get_criterion(2, 7)
+    assert version.minimums == world.official_version.minimums
 
 
 def test_creation_is_audited_for_table_and_version_with_the_norm_reference(world, admin_uc):
@@ -78,7 +78,7 @@ def test_creation_is_audited_for_table_and_version_with_the_norm_reference(world
     assert version_event.changes["status"]["after"] == "PENDENTE_VALIDACAO"
 
 
-@pytest.mark.parametrize("name", ["Tabela de Pontuação da FASI", "  tabela de pontuação da fasi "])
+@pytest.mark.parametrize("name", ["Tabela de Pontuação da UFPA", "  tabela de pontuação da ufpa "])
 def test_repeated_name_is_422_on_name_and_nothing_is_created(world, admin_uc, name):
     with pytest.raises(ValidationFailed) as error:
         create(world, admin_uc, name=name)
@@ -123,31 +123,31 @@ def test_non_admin_gets_403_on_create_and_duplicate(world, admin_uc, actor):
     with pytest.raises(Forbidden):
         create(world, admin_uc, actor=user)
     with pytest.raises(Forbidden):
-        admin_uc.duplicate.execute(user, world.fasi_version.table_id, "Cópia")
+        admin_uc.duplicate.execute(user, world.official_version.table_id, "Cópia")
     with world.uow_factory() as uow:
         assert len(uow.scoring_tables.list_tables()) == 2
 
 
 def test_duplicate_copies_latest_version_into_an_independent_table(world, admin_uc):
-    view = admin_uc.duplicate.execute(world.admin, world.fasi_version.table_id, "Cópia da FASI")
+    view = admin_uc.duplicate.execute(world.admin, world.official_version.table_id, "Cópia da FASI")
 
     table, versions = stored(world, view.table.id)
     assert table.name == "Cópia da FASI"
     [copy_version] = versions
-    assert copy_version.id != world.fasi_version.id
+    assert copy_version.id != world.official_version.id
     assert copy_version.table_id == table.id
-    assert copy_version.valid_from == world.fasi_version.valid_from
-    assert copy_version.norm_reference == world.fasi_version.norm_reference
-    assert copy_version.status is TableStatus.PENDENTE_VALIDACAO
-    assert copy_version.minimums == world.fasi_version.minimums
-    assert [len(g.criteria) for g in copy_version.groups] == [3, 16, 12, 7, 6, 14, 11, 66]
-    assert copy_version.groups == world.fasi_version.groups  # same content, new rows
+    assert copy_version.valid_from == world.official_version.valid_from
+    assert copy_version.norm_reference == world.official_version.norm_reference
+    assert copy_version.status is TableStatus.OFICIAL
+    assert copy_version.minimums == world.official_version.minimums
+    assert [len(g.criteria) for g in copy_version.groups] == [2, 16, 9, 6, 5, 14, 11, 37]
+    assert copy_version.groups == world.official_version.groups  # same content, new rows
 
 
 def test_duplicate_does_not_copy_unit_association_unless_given(world, admin_uc):
-    view = admin_uc.duplicate.execute(world.admin, world.fasi_version.table_id, "Sem unidade")
+    view = admin_uc.duplicate.execute(world.admin, world.official_version.table_id, "Sem unidade")
     other = admin_uc.duplicate.execute(
-        world.admin, world.fasi_version.table_id, "Com unidade", unit_ids=[world.ifch.id]
+        world.admin, world.official_version.table_id, "Com unidade", unit_ids=[world.ifch.id]
     )
 
     assert stored(world, view.table.id)[0].unit_ids == ()
@@ -155,7 +155,7 @@ def test_duplicate_does_not_copy_unit_association_unless_given(world, admin_uc):
 
 
 def test_source_and_duplicate_stay_independent(world, admin_uc):
-    view = admin_uc.duplicate.execute(world.admin, world.fasi_version.table_id, "Cópia da FASI")
+    view = admin_uc.duplicate.execute(world.admin, world.official_version.table_id, "Cópia da FASI")
     copy_version = view.versions[0].version
 
     with world.uow_factory() as uow:
@@ -165,27 +165,28 @@ def test_source_and_duplicate_stay_independent(world, admin_uc):
         )
         uow.commit()
 
-    original = stored(world, world.fasi_version.table_id)[1][0]
-    expected = world.fasi_version.get_criterion(2, 7).unit_points
+    original = stored(world, world.official_version.table_id)[1][0]
+    expected = world.official_version.get_criterion(2, 7).unit_points
     assert original.get_criterion(2, 7).unit_points == expected
     assert expected != Decimal("99")
 
 
 def test_duplicate_is_audited_with_source_reference(world, admin_uc):
-    view = admin_uc.duplicate.execute(world.admin, world.fasi_version.table_id, "Cópia da FASI")
+    view = admin_uc.duplicate.execute(world.admin, world.official_version.table_id, "Cópia da FASI")
 
     [event] = events(world, "scoring_table", view.table.id)
     assert event.action is AuditAction.CREATE
     assert event.changes["name"]["after"] == "Cópia da FASI"
-    assert event.changes["duplicated_from"]["after"] == str(world.fasi_version.table_id)
+    assert event.changes["duplicated_from"]["after"] == str(world.official_version.table_id)
     [version_event] = events(world, "scoring_version", view.versions[0].version.id)
-    assert version_event.changes["copied_from_version_id"]["after"] == str(world.fasi_version.id)
+    copied = version_event.changes["copied_from_version_id"]["after"]
+    assert copied == str(world.official_version.id)
 
 
 def test_duplicate_name_clash_is_422_and_unknown_source_is_404(world, admin_uc):
     with pytest.raises(ValidationFailed) as error:
         admin_uc.duplicate.execute(
-            world.admin, world.fasi_version.table_id, "Tabela de Pontuação do IFCH"
+            world.admin, world.official_version.table_id, "Tabela de Pontuação da UFPA"
         )
     assert error.value.field == "name"
     with pytest.raises(NotFound):
@@ -196,17 +197,49 @@ def test_duplicate_name_clash_is_422_and_unknown_source_is_404(world, admin_uc):
 def test_duplicate_of_a_table_with_two_versions_copies_the_latest(world, admin_uc):
     newer = admin_uc.create_version.execute(
         world.admin,
-        world.fasi_version.table_id,
-        world.fasi_version.id,
+        world.official_version.table_id,
+        world.official_version.id,
         date(2023, 6, 1),
         None,
         "Nova norma da FASI, 2023",
     )
 
-    view = admin_uc.duplicate.execute(world.admin, world.fasi_version.table_id, "Cópia da última")
+    view = admin_uc.duplicate.execute(
+        world.admin, world.official_version.table_id, "Cópia da última"
+    )
 
     _, versions = stored(world, view.table.id)
     [copy_version] = versions
     assert copy_version.valid_from == date(2023, 6, 1)
     assert copy_version.norm_reference == "Nova norma da FASI, 2023"
     assert copy_version.id != newer.version.id
+
+
+# --- GTAB-45: a copy for another table does not carry the code of the official norm -------------
+
+
+OFFICIAL_NORM = "TABELA-OFICIAL-UFPA"
+
+
+def test_duplicating_the_official_table_gives_a_version_without_the_norm_code(world, admin_uc):
+    assert world.official_version.norm_code == OFFICIAL_NORM  # what the copy must not inherit
+
+    view = admin_uc.duplicate.execute(world.admin, world.official_version.table_id, "Cópia da FASI")
+
+    _, [copy_version] = stored(world, view.table.id)
+    assert copy_version.norm_code is None
+    _, [source] = stored(world, world.official_version.table_id)
+    assert source.norm_code == OFFICIAL_NORM
+
+
+def test_the_alerts_of_a_duplicated_table_do_not_cite_the_official_norm(world, admin_uc):
+    view = admin_uc.duplicate.execute(
+        world.admin, world.official_version.table_id, "Cópia da FASI", unit_ids=[world.ifch.id]
+    )
+    copy_version = view.versions[0].version
+
+    result = world.choose.execute(world.admin, world.process.id, copy_version.id, None, None)
+
+    assert [a.code.value for a in result.alerts] == ["TABELA_DE_OUTRA_UNIDADE"]
+    assert [a.norm_code for a in result.alerts] == [None]
+    assert result.norms == {}

@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 14,
+  "next_id": 55,
   "lessons": [
     {
       "id": "L-001",
@@ -156,17 +156,19 @@
       "text": "For each date guard test the last allowed day as well as the first rejected day",
       "signal": "surviving_mutant",
       "scope": "career-versions",
-      "status": "candidate",
+      "status": "confirmed",
       "features": [
-        "fundacao"
+        "fundacao",
+        "grupo-i-no-total"
       ],
-      "recurrence": 1,
+      "recurrence": 2,
       "harmful": 0,
       "evidence": [
-        "K3 backend/app/application/use_cases/career.py:125 (CARR-09/CARR-10) (career-versions)"
+        "K3 backend/app/application/use_cases/career.py:125 (CARR-09/CARR-10) (career-versions)",
+        "M03/M04 backend/app/domain/rules/scoring_periods.py:103 (GI-09) (domain-rules)"
       ],
       "created": "2026-11-17T02:32:56Z",
-      "last_seen": "2026-11-17T02:32:56Z"
+      "last_seen": "2026-11-20T08:03:57Z"
     },
     {
       "id": "L-010",
@@ -239,6 +241,744 @@
       ],
       "created": "2026-11-17T14:54:33Z",
       "last_seen": "2026-11-17T14:54:33Z"
+    },
+    {
+      "id": "L-014",
+      "key": "ac_gap::bound the rendered pixel size of user supplied vector files at upload not only the megapixels of raster images",
+      "text": "Bound the rendered pixel size of user-supplied vector files at upload, not only the megapixels of raster images",
+      "signal": "ac_gap",
+      "scope": "upload-validation",
+      "status": "candidate",
+      "features": [
+        "inteligencia-documental"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DOC-04; validation.md G1; backend/app/infrastructure/files/inspector.py:45 (upload-validation)"
+      ],
+      "created": "2026-11-18T00:46:05Z",
+      "last_seen": "2026-11-18T00:46:05Z"
+    },
+    {
+      "id": "L-015",
+      "key": "ac_gap::a retry counter that is stored but never read is not a retry limit test that a job past the limit ends failed and is never requeued",
+      "text": "A retry counter that is stored but never read is not a retry limit: test that a job past the limit ends failed and is never requeued",
+      "signal": "ac_gap",
+      "scope": "worker",
+      "status": "candidate",
+      "features": [
+        "inteligencia-documental"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PIPE-03; validation.md G2; backend/app/infrastructure/database/repositories.py:1093 (worker)"
+      ],
+      "created": "2026-11-18T00:46:05Z",
+      "last_seen": "2026-11-18T00:46:05Z"
+    },
+    {
+      "id": "L-016",
+      "key": "surviving_mutant::test settings wiring from the environment to the limits in use not only the limits object with its defaults",
+      "text": "Test settings wiring from the environment to the limits in use, not only the limits object with its defaults",
+      "signal": "surviving_mutant",
+      "scope": "config-wiring",
+      "status": "candidate",
+      "features": [
+        "inteligencia-documental"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M111, M112; backend/app/presentation/dependencies.py:184 (config-wiring)"
+      ],
+      "created": "2026-11-18T00:46:05Z",
+      "last_seen": "2026-11-18T00:46:05Z"
+    },
+    {
+      "id": "L-017",
+      "key": "surviving_mutant::test a function that counts what a document leaves out with a not valid item in every status it can have not only the rejected one",
+      "text": "Test a function that counts what a document leaves out with a not valid item in every status it can have, not only the rejected one.",
+      "signal": "surviving_mutant",
+      "scope": "generation",
+      "status": "candidate",
+      "features": [
+        "revisao-simplificada"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "B27 backend/app/application/services/generation_inputs.py:89 (generation)"
+      ],
+      "created": "2026-11-20T00:35:51Z",
+      "last_seen": "2026-11-20T00:35:51Z"
+    },
+    {
+      "id": "L-018",
+      "key": "surviving_mutant::exercise each flag a rule hands to a shared predicate on every call path that sets it such as an open ended period on the manual edit and not only on the classification",
+      "text": "Exercise each flag a rule hands to a shared predicate on every call path that sets it, such as an open-ended period on the manual edit and not only on the classification.",
+      "signal": "surviving_mutant",
+      "scope": "scoring",
+      "status": "candidate",
+      "features": [
+        "revisao-simplificada"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "B43 backend/app/application/use_cases/scoring.py:422 (scoring)"
+      ],
+      "created": "2026-11-20T00:35:51Z",
+      "last_seen": "2026-11-20T00:35:51Z"
+    },
+    {
+      "id": "L-019",
+      "key": "surviving_mutant::assert a count shown in a filtered list while a filter is active not only with the default filters",
+      "text": "Assert a count shown in a filtered list while a filter is active, not only with the default filters.",
+      "signal": "surviving_mutant",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "revisao-simplificada"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "F3b frontend/src/components/ValidActivitiesSection.tsx:73 (frontend)"
+      ],
+      "created": "2026-11-20T00:35:51Z",
+      "last_seen": "2026-11-20T00:35:51Z"
+    },
+    {
+      "id": "L-020",
+      "key": "ac_gap::test an exclusion flag at every output layer list score generated documents not only where the flag is set",
+      "text": "Test an exclusion flag at every output layer (list, score, generated documents), not only where the flag is set.",
+      "signal": "ac_gap",
+      "scope": "generation",
+      "status": "candidate",
+      "features": [
+        "revisao-simplificada"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DUP-03 SEG-02 backend/tests/integration/api/test_generated_validity_acceptance.py:58-95 (generation)"
+      ],
+      "created": "2026-11-20T00:35:51Z",
+      "last_seen": "2026-11-20T00:35:51Z"
+    },
+    {
+      "id": "L-021",
+      "key": "ac_gap::a no horizontal scroll requirement at a given width needs a rendered browser check because a jsdom regex over the css does not prove it",
+      "text": "A no-horizontal-scroll requirement at a given width needs a rendered browser check, because a jsdom regex over the CSS does not prove it.",
+      "signal": "ac_gap",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "revisao-simplificada"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SEC-12 frontend/src/components/ActivityWorkspace.test.tsx:173-179 (frontend)"
+      ],
+      "created": "2026-11-20T00:35:51Z",
+      "last_seen": "2026-11-20T00:35:51Z"
+    },
+    {
+      "id": "L-022",
+      "key": "ac_gap::map a refusal code in the failure table of the background worker too when a use case shared with the request path can raise it",
+      "text": "Map a refusal code in the failure table of the background worker too when a use case shared with the request path can raise it.",
+      "signal": "ac_gap",
+      "scope": "generation",
+      "status": "candidate",
+      "features": [
+        "revisao-simplificada"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SEG-05 backend/app/application/use_cases/generated_documents.py:307-318 (generation)"
+      ],
+      "created": "2026-11-20T00:35:51Z",
+      "last_seen": "2026-11-20T00:35:51Z"
+    },
+    {
+      "id": "L-023",
+      "key": "spec_precision_gap::state the precedence order in the spec when several rejection reasons can apply to the same item",
+      "text": "State the precedence order in the spec when several rejection reasons can apply to the same item.",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "revisao-simplificada"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SP1 backend/tests/unit/domain/test_activity_validity.py:290-312 (spec)"
+      ],
+      "created": "2026-11-20T00:35:51Z",
+      "last_seen": "2026-11-20T00:35:51Z"
+    },
+    {
+      "id": "L-024",
+      "key": "spec_precision_gap::list every value of a user facing reason enum in the spec with its text including the values the implementation adds",
+      "text": "List every value of a user-facing reason enum in the spec with its text, including the values the implementation adds.",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "revisao-simplificada"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SP2 frontend/src/labels.test.ts:129-130 (spec)"
+      ],
+      "created": "2026-11-20T00:35:51Z",
+      "last_seen": "2026-11-20T00:35:51Z"
+    },
+    {
+      "id": "L-025",
+      "key": "spec_precision_gap::say in the spec whether a field the user did not change is validated again on edit",
+      "text": "Say in the spec whether a field the user did not change is validated again on edit.",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "revisao-simplificada"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SP5 backend/tests/integration/api/test_activity_edit_rules_api.py:179-198 (spec)"
+      ],
+      "created": "2026-11-20T00:35:51Z",
+      "last_seen": "2026-11-20T00:35:51Z"
+    },
+    {
+      "id": "L-026",
+      "key": "spec_precision_gap::write the placement of a new ui control as a testable condition container landmark or sibling element because a vague position phrase leaves no assertion that can fail",
+      "text": "Write the placement of a new UI control as a testable condition (container, landmark or sibling element), because a vague position phrase leaves no assertion that can fail.",
+      "signal": "spec_precision_gap",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "correcoes-auditoria"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "CAINI-01 ProcessStep1.tsx:189-196 (frontend)"
+      ],
+      "created": "2026-11-20T04:37:32Z",
+      "last_seen": "2026-11-20T04:37:32Z"
+    },
+    {
+      "id": "L-027",
+      "key": "spec_precision_gap::when a requirement fixes the exact names of constants or fixtures pin them with an assertion or a recorded grep because renaming a constant breaks no behavior test",
+      "text": "When a requirement fixes the exact names of constants or fixtures, pin them with an assertion or a recorded grep, because renaming a constant breaks no behavior test.",
+      "signal": "spec_precision_gap",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "correcoes-auditoria"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "CAREF-04 scoring_variants.py:15-18 (tests)"
+      ],
+      "created": "2026-11-20T04:37:32Z",
+      "last_seen": "2026-11-20T04:37:32Z"
+    },
+    {
+      "id": "L-028",
+      "key": "surviving_mutant::test the fallback a component takes when an optional prop is omitted or remove the fallback when no caller omits it",
+      "text": "Test the fallback a component takes when an optional prop is omitted, or remove the fallback when no caller omits it.",
+      "signal": "surviving_mutant",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "grupo-i-no-total"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "F24 frontend/src/components/ScoringPanel.tsx:40 (GRES-09) (frontend)"
+      ],
+      "created": "2026-11-20T08:39:56Z",
+      "last_seen": "2026-11-20T08:39:56Z"
+    },
+    {
+      "id": "L-029",
+      "key": "spec_precision_gap::name the column headers of every generated document section in the spec or pin them with an assertion because a renamed header breaks no behavior test",
+      "text": "Name the column headers of every generated document section in the spec, or pin them with an assertion, because a renamed header breaks no behavior test.",
+      "signal": "spec_precision_gap",
+      "scope": "generation",
+      "status": "candidate",
+      "features": [
+        "grupo-i-no-total"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N8 backend/app/infrastructure/documents/table_text.py:10 (GTAB-06) (generation)"
+      ],
+      "created": "2026-11-20T08:39:56Z",
+      "last_seen": "2026-11-20T08:39:56Z"
+    },
+    {
+      "id": "L-030",
+      "key": "surviving_mutant::when code adds a sort rule the spec does not state such as accent folding state it in the spec or pin it with a pair of titles that differ only by the accent",
+      "text": "When code adds a sort rule the spec does not state, such as accent folding, state it in the spec or pin it with a pair of titles that differ only by the accent.",
+      "signal": "surviving_mutant",
+      "scope": "generation",
+      "status": "candidate",
+      "features": [
+        "grupo-i-no-total"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N6 backend/app/domain/rules/table_document.py:157 (GTAB-02) (generation)"
+      ],
+      "created": "2026-11-20T08:39:56Z",
+      "last_seen": "2026-11-20T08:39:56Z"
+    },
+    {
+      "id": "L-031",
+      "key": "surviving_mutant::when several branches of one function pass the same new field to an alert assert that field for every branch not for a sample branch",
+      "text": "When several branches of one function pass the same new field to an alert, assert that field for every branch, not for a sample branch",
+      "signal": "surviving_mutant",
+      "scope": "domain-rules",
+      "status": "candidate",
+      "features": [
+        "normativo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutant T03 scoring_table_choice.py:61 (TABELA_FORA_DE_VIGENCIA) (domain-rules)"
+      ],
+      "created": "2026-11-22T19:28:34Z",
+      "last_seen": "2026-11-22T19:28:34Z"
+    },
+    {
+      "id": "L-032",
+      "key": "surviving_mutant::build the old client request body without the new fields at every nesting level not from a get response that already carries them",
+      "text": "Build the old-client request body without the new fields at every nesting level, not from a GET response that already carries them",
+      "signal": "surviving_mutant",
+      "scope": "api-layer",
+      "status": "candidate",
+      "features": [
+        "normativo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutant P12 use_cases/career.py _keep_stored_links (per-class required_titration) (api-layer)"
+      ],
+      "created": "2026-11-22T19:28:34Z",
+      "last_seen": "2026-11-22T19:28:34Z"
+    },
+    {
+      "id": "L-033",
+      "key": "ac_gap::test a never block requirement on every operation it names create edit start with the alert actually present",
+      "text": "Test a never-block requirement on every operation it names (create, edit, start), with the alert actually present",
+      "signal": "ac_gap",
+      "scope": "api-layer",
+      "status": "candidate",
+      "features": [
+        "normativo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "NTIT-07 test_process_alert_norms.py:59-64 (api-layer)"
+      ],
+      "created": "2026-11-22T19:28:34Z",
+      "last_seen": "2026-11-22T19:28:34Z"
+    },
+    {
+      "id": "L-034",
+      "key": "surviving_mutant::a defensive check that no test can fail is either untested or redundant add a case that only that check rejects or remove it",
+      "text": "A defensive check that no test can fail is either untested or redundant; add a case that only that check rejects, or remove it",
+      "signal": "surviving_mutant",
+      "scope": "use-cases",
+      "status": "candidate",
+      "features": [
+        "normativo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutant U10 use_cases/norms.py _check_pdf (extension check) (use-cases)"
+      ],
+      "created": "2026-11-22T19:28:34Z",
+      "last_seen": "2026-11-22T19:28:34Z"
+    },
+    {
+      "id": "L-035",
+      "key": "spec_precision_gap::write the exact user visible message into the spec with every interpolated part so the design and the tests do not add or drop parts",
+      "text": "Write the exact user-visible message into the spec with every interpolated part, so the design and the tests do not add or drop parts",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "normativo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "NTIT-02 test_titration_verification.py:79 vs spec NTIT-02 (spec)"
+      ],
+      "created": "2026-11-22T19:28:34Z",
+      "last_seen": "2026-11-22T19:28:34Z"
+    },
+    {
+      "id": "L-036",
+      "key": "spec_precision_gap::when code enforces a rule the spec text does not state for example a file extension on top of the content check write the rule into the spec or drop it so no test is left to guess",
+      "text": "When code enforces a rule the spec text does not state (for example a file extension on top of the content check), write the rule into the spec or drop it, so no test is left to guess",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "normativo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "NBASE-06 mutant U10 norms.py _check_pdf (extension check) (spec)"
+      ],
+      "created": "2026-11-22T20:05:49Z",
+      "last_seen": "2026-11-22T20:05:49Z"
+    },
+    {
+      "id": "L-037",
+      "key": "spec_precision_gap::when a spec says a refusal carries the limit message state the error code and the literal text or number the message must contain",
+      "text": "When a spec says a refusal carries the limit message, state the error code and the literal text or number the message must contain",
+      "signal": "spec_precision_gap",
+      "scope": "spec-wording",
+      "status": "candidate",
+      "features": [
+        "banca-parecer"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PORT-10 backend/app/domain/rules/upload_validation.py:130 (spec-wording)"
+      ],
+      "created": "2026-11-23T00:26:01Z",
+      "last_seen": "2026-11-23T00:26:01Z"
+    },
+    {
+      "id": "L-038",
+      "key": "spec_precision_gap::when a spec lists the sections of a generated document fix the literal text of every line a test must assert not only the key sentence",
+      "text": "When a spec lists the sections of a generated document, fix the literal text of every line a test must assert, not only the key sentence",
+      "signal": "spec_precision_gap",
+      "scope": "spec-wording",
+      "status": "candidate",
+      "features": [
+        "banca-parecer"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PAR-03 backend/tests/unit/domain/test_opinion_document.py:136 (spec-wording)"
+      ],
+      "created": "2026-11-23T00:26:01Z",
+      "last_seen": "2026-11-23T00:26:01Z"
+    },
+    {
+      "id": "L-039",
+      "key": "spec_precision_gap::name configured checklist items by the key or literal title stored in the config file never by a shortened name the file does not contain",
+      "text": "Name configured checklist items by the key or literal title stored in the config file, never by a shortened name the file does not contain",
+      "signal": "spec_precision_gap",
+      "scope": "spec-wording",
+      "status": "candidate",
+      "features": [
+        "banca-parecer"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DOS-01 backend/tests/unit/infrastructure/test_dossier_order_file.py:8 (spec-wording)"
+      ],
+      "created": "2026-11-23T00:26:01Z",
+      "last_seen": "2026-11-23T00:26:01Z"
+    },
+    {
+      "id": "L-040",
+      "key": "surviving_mutant::assert the same layout properties alignment justification line spacing font size in every output format of a document not only in the first one tested",
+      "text": "Assert the same layout properties (alignment, justification, line spacing, font size) in every output format of a document, not only in the first one tested.",
+      "signal": "surviving_mutant",
+      "scope": "documents",
+      "status": "candidate",
+      "features": [
+        "layout-oficial"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M84,M85,M88,M89,M82,M90 (backend/tests/unit/infrastructure/test_opinion_pdf.py) (documents)"
+      ],
+      "created": "2026-11-23T04:24:51Z",
+      "last_seen": "2026-11-23T04:24:51Z"
+    },
+    {
+      "id": "L-041",
+      "key": "surviving_mutant::bound a measured spacing from both sides a lower bound only assertion lets any larger gap pass",
+      "text": "Bound a measured spacing from both sides; a lower-bound-only assertion lets any larger gap pass.",
+      "signal": "surviving_mutant",
+      "scope": "documents",
+      "status": "candidate",
+      "features": [
+        "layout-oficial"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M76 (backend/tests/unit/infrastructure/test_emblem_pdf.py:57) (documents)"
+      ],
+      "created": "2026-11-23T04:24:51Z",
+      "last_seen": "2026-11-23T04:24:51Z"
+    },
+    {
+      "id": "L-042",
+      "key": "surviving_mutant::assert the value of a boolean formatting flag not only that its element exists",
+      "text": "Assert the value of a boolean formatting flag, not only that its element exists.",
+      "signal": "surviving_mutant",
+      "scope": "documents",
+      "status": "candidate",
+      "features": [
+        "layout-oficial"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M43 (backend/tests/unit/infrastructure/test_emblem_docx.py:66) (documents)"
+      ],
+      "created": "2026-11-23T04:24:51Z",
+      "last_seen": "2026-11-23T04:24:51Z"
+    },
+    {
+      "id": "L-043",
+      "key": "spec_precision_gap::state in the spec the color of a drawn rule and what a line does when it does not fit its width",
+      "text": "State in the spec the color of a drawn rule and what a line does when it does not fit its width.",
+      "signal": "spec_precision_gap",
+      "scope": "documents",
+      "status": "candidate",
+      "features": [
+        "layout-oficial"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PMOD-02, PMOD-05 (validation.md V1, V2) (documents)"
+      ],
+      "created": "2026-11-23T04:24:51Z",
+      "last_seen": "2026-11-23T04:24:51Z"
+    },
+    {
+      "id": "L-044",
+      "key": "surviving_mutant::give every lock taken by a concurrent use case a race test that fails when only that lock is removed",
+      "text": "Give every lock taken by a concurrent use case a race test that fails when only that lock is removed.",
+      "signal": "surviving_mutant",
+      "scope": "use-cases",
+      "status": "candidate",
+      "features": [
+        "gestao-tabelas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Mb47 validation.md (use-cases)"
+      ],
+      "created": "2026-11-23T17:12:01Z",
+      "last_seen": "2026-11-23T17:12:01Z"
+    },
+    {
+      "id": "L-045",
+      "key": "surviving_mutant::test a rule that applies only to the latest element on a middle element too not only on the first and last",
+      "text": "Test a rule that applies only to the latest element on a middle element too, not only on the first and last.",
+      "signal": "surviving_mutant",
+      "scope": "use-cases",
+      "status": "candidate",
+      "features": [
+        "gestao-tabelas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Mb71 validation.md (use-cases)"
+      ],
+      "created": "2026-11-23T17:12:01Z",
+      "last_seen": "2026-11-23T17:12:01Z"
+    },
+    {
+      "id": "L-046",
+      "key": "ac_gap::undo a change from the recorded event that made it not from a date or value pattern that another action can also produce",
+      "text": "Undo a change from the recorded event that made it, not from a date or value pattern that another action can also produce.",
+      "signal": "ac_gap",
+      "scope": "use-cases",
+      "status": "candidate",
+      "features": [
+        "gestao-tabelas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "GTAB-26 scoring_admin.py:950 (use-cases)"
+      ],
+      "created": "2026-11-23T17:12:02Z",
+      "last_seen": "2026-11-23T17:12:02Z"
+    },
+    {
+      "id": "L-047",
+      "key": "ac_gap::measure the rendered size of every control in every state of a screen against a stated minimum because a css test covers only the selectors it names",
+      "text": "Measure the rendered size of every control in every state of a screen against a stated minimum, because a CSS test covers only the selectors it names.",
+      "signal": "ac_gap",
+      "scope": "frontend-layout",
+      "status": "candidate",
+      "features": [
+        "gestao-tabelas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "GTAB-38 styles.css:526 (frontend-layout)"
+      ],
+      "created": "2026-11-23T17:12:02Z",
+      "last_seen": "2026-11-23T17:12:02Z"
+    },
+    {
+      "id": "L-048",
+      "key": "surviving_mutant::when a badge needs two conditions test the case where only one of them holds",
+      "text": "When a badge needs two conditions, test the case where only one of them holds.",
+      "signal": "surviving_mutant",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "gestao-tabelas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Mf37 validation.md (frontend)"
+      ],
+      "created": "2026-11-23T17:12:02Z",
+      "last_seen": "2026-11-23T17:12:02Z"
+    },
+    {
+      "id": "L-049",
+      "key": "surviving_mutant::when a spec lists two conditions and one implies the other state which one decides or test each alone",
+      "text": "When a spec lists two conditions and one implies the other, state which one decides or test each alone.",
+      "signal": "surviving_mutant",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "gestao-tabelas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Mb66 validation.md (spec)"
+      ],
+      "created": "2026-11-23T17:12:02Z",
+      "last_seen": "2026-11-23T17:12:02Z"
+    },
+    {
+      "id": "L-050",
+      "key": "ac_gap::rehearse the rollback path of a migration with the previous image before documenting it as safe",
+      "text": "Rehearse the rollback path of a migration with the previous image before documenting it as safe.",
+      "signal": "ac_gap",
+      "scope": "deploy-docs",
+      "status": "candidate",
+      "features": [
+        "gestao-tabelas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "docs/deploy/vm.md:362 (deploy-docs)"
+      ],
+      "created": "2026-11-23T17:12:02Z",
+      "last_seen": "2026-11-23T17:12:02Z"
+    },
+    {
+      "id": "L-051",
+      "key": "spec_precision_gap::when several refusals can apply at once state their order in the spec",
+      "text": "When several refusals can apply at once, state their order in the spec.",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "gestao-tabelas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "GTAB-03 validation.md (spec)"
+      ],
+      "created": "2026-11-23T17:12:02Z",
+      "last_seen": "2026-11-23T17:12:02Z"
+    },
+    {
+      "id": "L-052",
+      "key": "surviving_mutant::write one lock race test per entry point that takes a lock and re check a claimed equivalent lock against every writer of the locked row including seed time ones",
+      "text": "Write one lock-race test per entry point that takes a lock, and re-check a claimed equivalent lock against every writer of the locked row, including seed-time ones.",
+      "signal": "surviving_mutant",
+      "scope": "backend-locks",
+      "status": "candidate",
+      "features": [
+        "gestao-tabelas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Mb10, N4 (backend-locks)"
+      ],
+      "created": "2026-11-23T18:35:12Z",
+      "last_seen": "2026-11-23T18:35:12Z"
+    },
+    {
+      "id": "L-053",
+      "key": "surviving_mutant::test a date built from local components in a mid year case where the month and the day both differ from the utc date not only at the year boundary",
+      "text": "Test a date built from local components in a mid-year case where the month and the day both differ from the UTC date, not only at the year boundary.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-dates",
+      "status": "candidate",
+      "features": [
+        "gestao-tabelas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Mn02, Mn03 (frontend-dates)"
+      ],
+      "created": "2026-11-23T18:35:12Z",
+      "last_seen": "2026-11-23T18:35:12Z"
+    },
+    {
+      "id": "L-054",
+      "key": "surviving_mutant::when a css rule gives a layout guarantee through a class assert in a behavior test that each element carries that class because a static test of the rule alone cannot see the class dropped",
+      "text": "When a CSS rule gives a layout guarantee through a class, assert in a behavior test that each element carries that class, because a static test of the rule alone cannot see the class dropped.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-css",
+      "status": "candidate",
+      "features": [
+        "gestao-tabelas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Mn09, Mn10 (frontend-css)"
+      ],
+      "created": "2026-11-23T18:35:12Z",
+      "last_seen": "2026-11-23T18:35:12Z"
     }
   ]
 }

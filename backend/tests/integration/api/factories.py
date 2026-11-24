@@ -1,16 +1,10 @@
 """Test data for process API tests: the two real cases (PROC-10, PROC-11)."""
 
 import uuid
+from dataclasses import replace
 
 from app.domain.entities.professor import Professor, Titration, WorkRegime
-
-INSTITUTIONAL = {
-    "notes": "Observação de teste",
-    "resp_name": "Responsável de Teste",
-    "resp_position": "Diretor",
-    "resp_appointment": "Portaria 1/2025",
-    "resp_admin_unit": "Faculdade de Teste",
-}
+from app.domain.entities.scoring import TableStatus
 
 # PROC-10: FASI 2022-2024
 FASI_2022_2024 = {
@@ -24,7 +18,6 @@ FASI_2022_2024 = {
     "start_date": "2022-11-23",
     "end_date": "2024-11-23",
     "opening_date": "2025-03-10",
-    **INSTITUTIONAL,
 }
 
 # PROC-11: Requerimento 2024-2026 as written, all optional fields filled
@@ -39,7 +32,6 @@ REQUERIMENTO_2024_2026 = {
     "start_date": "2024-11-23",
     "end_date": "2026-11-23",
     "opening_date": "2026-11-16",
-    **INSTITUTIONAL,
 }
 
 
@@ -72,3 +64,10 @@ def process_payload(professor, case=FASI_2022_2024, **overrides):
         **case,
         **overrides,
     }
+
+
+def mark_pending(uow_factory, version) -> None:
+    """The official table is OFICIAL; mark a version pending, as the old FASI table was."""
+    with uow_factory() as uow:
+        uow.scoring_tables.update_version(replace(version, status=TableStatus.PENDENTE_VALIDACAO))
+        uow.commit()

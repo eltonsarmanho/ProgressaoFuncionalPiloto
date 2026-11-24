@@ -8,7 +8,11 @@
 
 Corroborated across multiple features. Safe to apply as guidance.
 
-_none_
+### L-009 - For each date guard test the last allowed day as well as the first rejected day
+- signal: `surviving_mutant` · recurrence: 2 feature(s) · scope: `career-versions` · harmful: 0
+- features: fundacao, grupo-i-no-total
+- evidence: K3 backend/app/application/use_cases/career.py:125 (CARR-09/CARR-10) (career-versions) (+1 more)
+- last seen: 2026-11-20T08:03:57Z
 
 ## Candidates (under observation - do NOT load as guidance yet)
 
@@ -62,12 +66,6 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: K1/K2 backend/app/application/use_cases/career.py:77,80 (CARR-08 overlap) (career-versions)
 - last seen: 2026-11-17T02:32:56Z
 
-### L-009 - For each date guard test the last allowed day as well as the first rejected day
-- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `career-versions` · harmful: 0
-- features: fundacao
-- evidence: K3 backend/app/application/use_cases/career.py:125 (CARR-09/CARR-10) (career-versions)
-- last seen: 2026-11-17T02:32:56Z
-
 ### L-010 - When a derived flag requires two conditions together, assert a case where only one holds and the flag stays false
 - signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `career-versions` · harmful: 0
 - features: fundacao
@@ -91,6 +89,252 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: pontuacao
 - evidence: SEL-02 M32 backend/app/application/use_cases/scoring.py:114 (scoring)
 - last seen: 2026-11-17T14:54:33Z
+
+### L-014 - Bound the rendered pixel size of user-supplied vector files at upload, not only the megapixels of raster images
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `upload-validation` · harmful: 0
+- features: inteligencia-documental
+- evidence: DOC-04; validation.md G1; backend/app/infrastructure/files/inspector.py:45 (upload-validation)
+- last seen: 2026-11-18T00:46:05Z
+
+### L-015 - A retry counter that is stored but never read is not a retry limit: test that a job past the limit ends failed and is never requeued
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `worker` · harmful: 0
+- features: inteligencia-documental
+- evidence: PIPE-03; validation.md G2; backend/app/infrastructure/database/repositories.py:1093 (worker)
+- last seen: 2026-11-18T00:46:05Z
+
+### L-016 - Test settings wiring from the environment to the limits in use, not only the limits object with its defaults
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `config-wiring` · harmful: 0
+- features: inteligencia-documental
+- evidence: M111, M112; backend/app/presentation/dependencies.py:184 (config-wiring)
+- last seen: 2026-11-18T00:46:05Z
+
+### L-017 - Test a function that counts what a document leaves out with a not valid item in every status it can have, not only the rejected one.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `generation` · harmful: 0
+- features: revisao-simplificada
+- evidence: B27 backend/app/application/services/generation_inputs.py:89 (generation)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-018 - Exercise each flag a rule hands to a shared predicate on every call path that sets it, such as an open-ended period on the manual edit and not only on the classification.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `scoring` · harmful: 0
+- features: revisao-simplificada
+- evidence: B43 backend/app/application/use_cases/scoring.py:422 (scoring)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-019 - Assert a count shown in a filtered list while a filter is active, not only with the default filters.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: revisao-simplificada
+- evidence: F3b frontend/src/components/ValidActivitiesSection.tsx:73 (frontend)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-020 - Test an exclusion flag at every output layer (list, score, generated documents), not only where the flag is set.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `generation` · harmful: 0
+- features: revisao-simplificada
+- evidence: DUP-03 SEG-02 backend/tests/integration/api/test_generated_validity_acceptance.py:58-95 (generation)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-021 - A no-horizontal-scroll requirement at a given width needs a rendered browser check, because a jsdom regex over the CSS does not prove it.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: revisao-simplificada
+- evidence: SEC-12 frontend/src/components/ActivityWorkspace.test.tsx:173-179 (frontend)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-022 - Map a refusal code in the failure table of the background worker too when a use case shared with the request path can raise it.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `generation` · harmful: 0
+- features: revisao-simplificada
+- evidence: SEG-05 backend/app/application/use_cases/generated_documents.py:307-318 (generation)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-023 - State the precedence order in the spec when several rejection reasons can apply to the same item.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: revisao-simplificada
+- evidence: SP1 backend/tests/unit/domain/test_activity_validity.py:290-312 (spec)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-024 - List every value of a user-facing reason enum in the spec with its text, including the values the implementation adds.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: revisao-simplificada
+- evidence: SP2 frontend/src/labels.test.ts:129-130 (spec)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-025 - Say in the spec whether a field the user did not change is validated again on edit.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: revisao-simplificada
+- evidence: SP5 backend/tests/integration/api/test_activity_edit_rules_api.py:179-198 (spec)
+- last seen: 2026-11-20T00:35:51Z
+
+### L-026 - Write the placement of a new UI control as a testable condition (container, landmark or sibling element), because a vague position phrase leaves no assertion that can fail.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: correcoes-auditoria
+- evidence: CAINI-01 ProcessStep1.tsx:189-196 (frontend)
+- last seen: 2026-11-20T04:37:32Z
+
+### L-027 - When a requirement fixes the exact names of constants or fixtures, pin them with an assertion or a recorded grep, because renaming a constant breaks no behavior test.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: correcoes-auditoria
+- evidence: CAREF-04 scoring_variants.py:15-18 (tests)
+- last seen: 2026-11-20T04:37:32Z
+
+### L-028 - Test the fallback a component takes when an optional prop is omitted, or remove the fallback when no caller omits it.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: grupo-i-no-total
+- evidence: F24 frontend/src/components/ScoringPanel.tsx:40 (GRES-09) (frontend)
+- last seen: 2026-11-20T08:39:56Z
+
+### L-029 - Name the column headers of every generated document section in the spec, or pin them with an assertion, because a renamed header breaks no behavior test.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `generation` · harmful: 0
+- features: grupo-i-no-total
+- evidence: N8 backend/app/infrastructure/documents/table_text.py:10 (GTAB-06) (generation)
+- last seen: 2026-11-20T08:39:56Z
+
+### L-030 - When code adds a sort rule the spec does not state, such as accent folding, state it in the spec or pin it with a pair of titles that differ only by the accent.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `generation` · harmful: 0
+- features: grupo-i-no-total
+- evidence: N6 backend/app/domain/rules/table_document.py:157 (GTAB-02) (generation)
+- last seen: 2026-11-20T08:39:56Z
+
+### L-031 - When several branches of one function pass the same new field to an alert, assert that field for every branch, not for a sample branch
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `domain-rules` · harmful: 0
+- features: normativo
+- evidence: mutant T03 scoring_table_choice.py:61 (TABELA_FORA_DE_VIGENCIA) (domain-rules)
+- last seen: 2026-11-22T19:28:34Z
+
+### L-032 - Build the old-client request body without the new fields at every nesting level, not from a GET response that already carries them
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `api-layer` · harmful: 0
+- features: normativo
+- evidence: mutant P12 use_cases/career.py _keep_stored_links (per-class required_titration) (api-layer)
+- last seen: 2026-11-22T19:28:34Z
+
+### L-033 - Test a never-block requirement on every operation it names (create, edit, start), with the alert actually present
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `api-layer` · harmful: 0
+- features: normativo
+- evidence: NTIT-07 test_process_alert_norms.py:59-64 (api-layer)
+- last seen: 2026-11-22T19:28:34Z
+
+### L-034 - A defensive check that no test can fail is either untested or redundant; add a case that only that check rejects, or remove it
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `use-cases` · harmful: 0
+- features: normativo
+- evidence: mutant U10 use_cases/norms.py _check_pdf (extension check) (use-cases)
+- last seen: 2026-11-22T19:28:34Z
+
+### L-035 - Write the exact user-visible message into the spec with every interpolated part, so the design and the tests do not add or drop parts
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: normativo
+- evidence: NTIT-02 test_titration_verification.py:79 vs spec NTIT-02 (spec)
+- last seen: 2026-11-22T19:28:34Z
+
+### L-036 - When code enforces a rule the spec text does not state (for example a file extension on top of the content check), write the rule into the spec or drop it, so no test is left to guess
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: normativo
+- evidence: NBASE-06 mutant U10 norms.py _check_pdf (extension check) (spec)
+- last seen: 2026-11-22T20:05:49Z
+
+### L-037 - When a spec says a refusal carries the limit message, state the error code and the literal text or number the message must contain
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec-wording` · harmful: 0
+- features: banca-parecer
+- evidence: PORT-10 backend/app/domain/rules/upload_validation.py:130 (spec-wording)
+- last seen: 2026-11-23T00:26:01Z
+
+### L-038 - When a spec lists the sections of a generated document, fix the literal text of every line a test must assert, not only the key sentence
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec-wording` · harmful: 0
+- features: banca-parecer
+- evidence: PAR-03 backend/tests/unit/domain/test_opinion_document.py:136 (spec-wording)
+- last seen: 2026-11-23T00:26:01Z
+
+### L-039 - Name configured checklist items by the key or literal title stored in the config file, never by a shortened name the file does not contain
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec-wording` · harmful: 0
+- features: banca-parecer
+- evidence: DOS-01 backend/tests/unit/infrastructure/test_dossier_order_file.py:8 (spec-wording)
+- last seen: 2026-11-23T00:26:01Z
+
+### L-040 - Assert the same layout properties (alignment, justification, line spacing, font size) in every output format of a document, not only in the first one tested.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `documents` · harmful: 0
+- features: layout-oficial
+- evidence: M84,M85,M88,M89,M82,M90 (backend/tests/unit/infrastructure/test_opinion_pdf.py) (documents)
+- last seen: 2026-11-23T04:24:51Z
+
+### L-041 - Bound a measured spacing from both sides; a lower-bound-only assertion lets any larger gap pass.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `documents` · harmful: 0
+- features: layout-oficial
+- evidence: M76 (backend/tests/unit/infrastructure/test_emblem_pdf.py:57) (documents)
+- last seen: 2026-11-23T04:24:51Z
+
+### L-042 - Assert the value of a boolean formatting flag, not only that its element exists.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `documents` · harmful: 0
+- features: layout-oficial
+- evidence: M43 (backend/tests/unit/infrastructure/test_emblem_docx.py:66) (documents)
+- last seen: 2026-11-23T04:24:51Z
+
+### L-043 - State in the spec the color of a drawn rule and what a line does when it does not fit its width.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `documents` · harmful: 0
+- features: layout-oficial
+- evidence: PMOD-02, PMOD-05 (validation.md V1, V2) (documents)
+- last seen: 2026-11-23T04:24:51Z
+
+### L-044 - Give every lock taken by a concurrent use case a race test that fails when only that lock is removed.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `use-cases` · harmful: 0
+- features: gestao-tabelas
+- evidence: Mb47 validation.md (use-cases)
+- last seen: 2026-11-23T17:12:01Z
+
+### L-045 - Test a rule that applies only to the latest element on a middle element too, not only on the first and last.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `use-cases` · harmful: 0
+- features: gestao-tabelas
+- evidence: Mb71 validation.md (use-cases)
+- last seen: 2026-11-23T17:12:01Z
+
+### L-046 - Undo a change from the recorded event that made it, not from a date or value pattern that another action can also produce.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `use-cases` · harmful: 0
+- features: gestao-tabelas
+- evidence: GTAB-26 scoring_admin.py:950 (use-cases)
+- last seen: 2026-11-23T17:12:02Z
+
+### L-047 - Measure the rendered size of every control in every state of a screen against a stated minimum, because a CSS test covers only the selectors it names.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend-layout` · harmful: 0
+- features: gestao-tabelas
+- evidence: GTAB-38 styles.css:526 (frontend-layout)
+- last seen: 2026-11-23T17:12:02Z
+
+### L-048 - When a badge needs two conditions, test the case where only one of them holds.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: gestao-tabelas
+- evidence: Mf37 validation.md (frontend)
+- last seen: 2026-11-23T17:12:02Z
+
+### L-049 - When a spec lists two conditions and one implies the other, state which one decides or test each alone.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: gestao-tabelas
+- evidence: Mb66 validation.md (spec)
+- last seen: 2026-11-23T17:12:02Z
+
+### L-050 - Rehearse the rollback path of a migration with the previous image before documenting it as safe.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `deploy-docs` · harmful: 0
+- features: gestao-tabelas
+- evidence: docs/deploy/vm.md:362 (deploy-docs)
+- last seen: 2026-11-23T17:12:02Z
+
+### L-051 - When several refusals can apply at once, state their order in the spec.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: gestao-tabelas
+- evidence: GTAB-03 validation.md (spec)
+- last seen: 2026-11-23T17:12:02Z
+
+### L-052 - Write one lock-race test per entry point that takes a lock, and re-check a claimed equivalent lock against every writer of the locked row, including seed-time ones.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `backend-locks` · harmful: 0
+- features: gestao-tabelas
+- evidence: Mb10, N4 (backend-locks)
+- last seen: 2026-11-23T18:35:12Z
+
+### L-053 - Test a date built from local components in a mid-year case where the month and the day both differ from the UTC date, not only at the year boundary.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-dates` · harmful: 0
+- features: gestao-tabelas
+- evidence: Mn02, Mn03 (frontend-dates)
+- last seen: 2026-11-23T18:35:12Z
+
+### L-054 - When a CSS rule gives a layout guarantee through a class, assert in a behavior test that each element carries that class, because a static test of the rule alone cannot see the class dropped.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-css` · harmful: 0
+- features: gestao-tabelas
+- evidence: Mn09, Mn10 (frontend-css)
+- last seen: 2026-11-23T18:35:12Z
 
 ## Quarantined (failed when applied - ignore)
 

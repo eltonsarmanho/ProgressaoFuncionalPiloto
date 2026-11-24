@@ -4,7 +4,7 @@ from datetime import date
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Response, UploadFile
 from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
@@ -17,10 +17,14 @@ from app.presentation.schemas.scoring import CriterionOut, TableOut, VersionOut
 from app.presentation.schemas.scoring_admin import (
     CriterionChangeIn,
     TableCreateIn,
+    TableDeletePreviewOut,
     TableDuplicateIn,
     TableHistoryOut,
+    UnitDefaultIn,
+    UnitDefaultOut,
     UnitsIn,
     VersionCreateIn,
+    VersionDeletePreviewOut,
 )
 
 router = APIRouter(prefix="/api", tags=["scoring-tables-admin"])
@@ -29,12 +33,18 @@ ContainerDep = Annotated[Container, Depends(get_container)]
 UserDep = Annotated[User, Depends(current_user)]
 
 
+async def table_out(container: Container, table_id: UUID) -> TableOut:
+    """The table as the list shows it, with the reasons that block its actions (GTAB-36)."""
+    view = await run_in_threadpool(container.get_scoring_table.execute, table_id)
+    return TableOut.of(view)
+
+
 @router.post("/scoring-tables", response_model=TableOut, status_code=201)
 async def create_table(body: TableCreateIn, actor: UserDep, container: ContainerDep) -> TableOut:
     view = await run_in_threadpool(
         container.create_scoring_table.execute, actor, **body.model_dump()
     )
-    return TableOut.of(view)
+    return await table_out(container, view.table.id)
 
 
 @router.post("/scoring-tables/{table_id}/duplicate", response_model=TableOut, status_code=201)
@@ -44,7 +54,7 @@ async def duplicate_table(
     view = await run_in_threadpool(
         container.duplicate_scoring_table.execute, actor, table_id, body.new_name, body.unit_ids
     )
-    return TableOut.of(view)
+    return await table_out(container, view.table.id)
 
 
 @router.post("/scoring-tables/{table_id}/versions", response_model=VersionOut, status_code=201)
@@ -135,10 +145,68 @@ async def set_units(
     view = await run_in_threadpool(
         container.set_table_units.execute, actor, table_id, body.unit_ids
     )
-    return TableOut.of(view)
+    return await table_out(container, view.table.id)
 
 
 @router.get("/scoring-tables/{table_id}/history", response_model=TableHistoryOut)
 async def table_history(table_id: UUID, _: UserDep, container: ContainerDep) -> TableHistoryOut:
     history = await run_in_threadpool(container.table_history.execute, table_id)
     return TableHistoryOut.of(history)
+
+
+@router.put("/scoring-units/{unit_id}/default-version", response_model=UnitDefaultOut)
+async def set_unit_default(
+    unit_id: UUID, body: UnitDefaultIn, actor: UserDep, container: ContainerDep
+) -> UnitDefaultOut:
+    await run_in_threadpool(
+        container.set_unit_default_version.execute, actor, unit_id, body.version_id
+    )
+    return UnitDefaultOut(unit_id=unit_id, version_id=body.version_id)
+
+
+@router.delete("/scoring-units/{unit_id}/default-version", status_code=204)
+async def clear_unit_default(unit_id: UUID, actor: UserDep, container: ContainerDep) -> Response:
+    await run_in_threadpool(container.clear_unit_default_version.execute, actor, unit_id)
+    return Response(status_code=204)
+
+
+@router.post("/scoring-tables/{table_id}/archive", response_model=TableOut)
+async def archive_table(table_id: UUID, actor: UserDep, container: ContainerDep) -> TableOut:
+    view = await run_in_threadpool(container.archive_scoring_table.execute, actor, table_id, True)
+    return await table_out(container, view.table.id)
+
+
+@router.post("/scoring-tables/{table_id}/unarchive", response_model=TableOut)
+async def unarchive_table(table_id: UUID, actor: UserDep, container: ContainerDep) -> TableOut:
+    view = await run_in_threadpool(container.archive_scoring_table.execute, actor, table_id, False)
+    return await table_out(container, view.table.id)
+
+
+@router.get(
+    "/scoring-versions/{version_id}/delete-preview", response_model=VersionDeletePreviewOut
+)
+async def version_delete_preview(
+    version_id: UUID, _: UserDep, container: ContainerDep
+) -> VersionDeletePreviewOut:
+    preview = await run_in_threadpool(container.preview_delete_version.execute, version_id)
+    return VersionDeletePreviewOut.of(preview)
+
+
+@router.get("/scoring-tables/{table_id}/delete-preview", response_model=TableDeletePreviewOut)
+async def table_delete_preview(
+    table_id: UUID, _: UserDep, container: ContainerDep
+) -> TableDeletePreviewOut:
+    preview = await run_in_threadpool(container.preview_delete_table.execute, table_id)
+    return TableDeletePreviewOut.of(preview)
+
+
+@router.delete("/scoring-versions/{version_id}", status_code=204)
+async def delete_version(version_id: UUID, actor: UserDep, container: ContainerDep) -> Response:
+    await run_in_threadpool(container.delete_scoring_version.execute, actor, version_id)
+    return Response(status_code=204)
+
+
+@router.delete("/scoring-tables/{table_id}", status_code=204)
+async def delete_table(table_id: UUID, actor: UserDep, container: ContainerDep) -> Response:
+    await run_in_threadpool(container.delete_scoring_table.execute, actor, table_id)
+    return Response(status_code=204)

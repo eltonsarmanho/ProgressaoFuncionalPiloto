@@ -3,13 +3,14 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from starlette.concurrency import run_in_threadpool
 
 from app.application.use_cases.processes import ProcessData
 from app.domain.entities.user import User
 from app.presentation.dependencies import Container, current_user, get_container
 from app.presentation.schemas.processes import (
+    DeletePreviewOut,
     HistoryEventOut,
     ProcessCreate,
     ProcessOut,
@@ -75,6 +76,26 @@ async def change_status(
         body.justificativa,
     )
     return ProcessOut.of(result)
+
+
+@router.delete("/{process_id}", status_code=204)
+async def delete_process(process_id: UUID, actor: UserDep, container: ContainerDep) -> Response:
+    await run_in_threadpool(container.delete_process.execute, actor, process_id)
+    return Response(status_code=204)
+
+
+@router.get("/{process_id}/delete-preview", response_model=DeletePreviewOut)
+async def delete_preview(
+    process_id: UUID, actor: UserDep, container: ContainerDep
+) -> DeletePreviewOut:
+    counts = await run_in_threadpool(
+        container.process_delete_preview.execute, actor, process_id
+    )
+    return DeletePreviewOut(
+        documents=counts.documents,
+        activities=counts.activities,
+        generated_documents=counts.generated_documents,
+    )
 
 
 @router.get("/{process_id}/history", response_model=list[HistoryEventOut])

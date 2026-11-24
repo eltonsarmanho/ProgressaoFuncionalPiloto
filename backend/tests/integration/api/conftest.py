@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import UTC, datetime
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,6 +11,13 @@ from app.core.config import Settings
 from app.domain.entities.user import Role, User
 from app.infrastructure.security.argon2_hasher import Argon2PasswordHasher
 from app.main import create_app
+from tests.integration.api.factories import add_professor, process_payload
+from tests.integration.api.generated_support import scenario  # noqa: F401  (fixture)
+from tests.support.scoring_variants import (
+    add_legacy_ufpa_version,
+    add_other_table,
+    add_points_table,
+)
 
 PASSWORD = "senha-correta-1"
 
@@ -28,19 +36,37 @@ def clock():
 
 
 @pytest.fixture
-def make_client(migrated_url, engine, clock):
-    """Factory for TestClients; https base URL so Secure cookies are sent back."""
+def make_client(migrated_url, engine, clock, tmp_path):
+    """Factory for TestClients; https base URL so Secure cookies are sent back.
+
+    The background worker is off and the storage is a temporary directory unless a test says
+    otherwise through `settings`; `ai_extractor`, `text_extractor` and `ordinance_extractor`
+    replace the real adapters.
+    """
     clients = []
 
-    def make(cookie_secure: bool = True) -> TestClient:
-        settings = Settings(
+    def make(
+        cookie_secure: bool = True,
+        ai_extractor=None,
+        text_extractor=None,
+        ordinance_extractor=None,
+        **settings,
+    ) -> TestClient:
+        options = {
+            "worker_enabled": False,
+            "storage_dir": str(tmp_path / "storage"),
+            **settings,
+        }
+        app_settings = Settings(
             database_url=migrated_url,
             admin_email="admin@ufpa.br",
             admin_password="admin-password-1",
             cookie_secure=cookie_secure,
+            **options,
         )
         scheme = "https" if cookie_secure else "http"
-        client = TestClient(create_app(settings, clock), base_url=f"{scheme}://testserver")
+        app = create_app(app_settings, clock, ai_extractor, text_extractor, ordinance_extractor)
+        client = TestClient(app, base_url=f"{scheme}://testserver")
         client.__enter__()
         clients.append(client)
         return client
@@ -110,13 +136,82 @@ def reference(uow_factory):
 
 @pytest.fixture
 def scoring_tables(uow_factory, reference):
-    """Seeded IFCH and FASI scoring tables (T15); returns their latest versions by unit."""
+    """Seeded official table and a copy of it in a table of no unit (II.12 = 10).
+
+    Returns the latest versions by key: "OFICIAL" (table of FASI and IFCH) and "OUTRA" (the
+    copy, a table that is not the unit's one).
+    """
     from app.infrastructure.database.seed import seed_scoring_tables
 
     seed_scoring_tables(uow_factory())
     with uow_factory() as uow:
-        units = {u.id: u.acronym for u in uow.units.list()}
-        return {
-            units[t.unit_ids[0]]: uow.scoring_tables.list_versions(t.id)[-1]
-            for t in uow.scoring_tables.list_tables()
-        }
+        [official_table] = uow.scoring_tables.list_tables()
+        official = uow.scoring_tables.list_versions(official_table.id)[-1]
+        other = add_other_table(uow, official)
+        uow.commit()
+        return {"OFICIAL": official, "OUTRA": other}
+
+
+@pytest.fixture
+def legacy_table(uow_factory, scoring_tables):
+    """The version the seeded one replaced (GI-06): group I outside the total, VI.14 = 6.
+
+    It lives in the same table as the seeded version, which is marked as superseded by it, so in
+    a test that uses this fixture the previous rules are also the only suggested version. A test
+    that wants them chooses this version by id.
+    """
+    with uow_factory() as uow:
+        legacy = add_legacy_ufpa_version(uow, scoring_tables["OFICIAL"])
+        uow.scoring_tables.set_superseded(scoring_tables["OFICIAL"].id, legacy.id)
+        uow.commit()
+    return legacy
+
+
+@pytest.fixture
+def points_table(uow_factory, scoring_tables):
+    """A copy of the official version whose group I counts in points (synthetic informed item)."""
+    with uow_factory() as uow:
+        version = add_points_table(uow, scoring_tables["OFICIAL"])
+        uow.commit()
+    return version
+
+
+@pytest.fixture
+def admin(act_as, scoring_tables):
+    """(admin user, CSRF headers), logged in; used by the document API tests."""
+    return act_as("admin@ufpa.br", Role.ADMIN)
+
+
+@pytest.fixture
+def headers(admin):
+    return admin[1]
+
+
+@pytest.fixture
+def professor(reference, uow_factory):
+    return add_professor(uow_factory, reference["FASI"])
+
+
+@pytest.fixture
+def process(client, admin, professor):
+    """A FASI process of `professor`, created through the API by the admin."""
+    response = client.post("/api/processes", json=process_payload(professor), headers=admin[1])
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+@pytest.fixture
+def actors(make_user, uow_factory, reference, professor, process):
+    """The users around `process` (a FASI process of `professor`): the owner, a docente of another
+    unit and the secretaries of the unit and of another unit. Each has `.email`."""
+    other = add_professor(uow_factory, reference["IFCH"], siape="7654321", name="Outra Docente")
+    return SimpleNamespace(
+        owner=make_user("dono@ufpa.br", Role.DOCENTE, professor_id=professor.id),
+        other_docente=make_user("outra@ufpa.br", Role.DOCENTE, professor_id=other.id),
+        secretaria=make_user(
+            "sec@ufpa.br", Role.SECRETARIA, unit_ids=frozenset({reference["FASI"].id})
+        ),
+        other_secretaria=make_user(
+            "sec2@ufpa.br", Role.SECRETARIA, unit_ids=frozenset({reference["IFCH"].id})
+        ),
+    )

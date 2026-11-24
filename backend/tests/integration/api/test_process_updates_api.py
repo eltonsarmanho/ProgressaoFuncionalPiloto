@@ -7,6 +7,7 @@ import pytest
 from app.domain.entities.audit import AuditAction
 from app.domain.entities.user import Role
 from tests.integration.api.factories import FASI_2022_2024, add_professor, process_payload
+from tests.support.process_status import conclude_for_test
 
 EDITABLE = dict(FASI_2022_2024)
 
@@ -56,6 +57,14 @@ def test_rascunho_update_without_justification_is_saved_and_audited(
     assert (body["target_level"], body["version"]) == (2, 2)
     # Promotion to D2 (not the first level of D): alerts are recomputed on save
     assert {a["code"] for a in body["alerts"]} == {"MODALIDADE_INCOMPATIVEL"}
+    # NMOV-02: the promotion out of the usual sequence is an alert with the jump text
+    assert [(a["severity"], a["message"]) for a in body["alerts"]] == [
+        (
+            "ALERTA",
+            "A promoção informada não segue a sequência usual (último nível da classe atual "
+            "para o primeiro nível da classe seguinte); confira a norma que fundamenta o salto.",
+        )
+    ]
     with uow_factory() as uow:
         event = uow.audit.list_for("process", process["id"])[-1]
     assert event.action is AuditAction.UPDATE
@@ -96,12 +105,17 @@ def test_em_andamento_update_with_justification_records_before_after(
 
 
 @pytest.mark.parametrize("final_status", ["CONCLUIDO", "ARQUIVADO"])
-def test_read_only_process_rejects_changes_with_409(client, secretaria, process, final_status):
+def test_read_only_process_rejects_changes_with_409(
+    client, secretaria, process, uow_factory, final_status
+):
     _, headers = secretaria
     version = 1
-    path = ["EM_ANDAMENTO", "CONCLUIDO"] if final_status == "CONCLUIDO" else ["ARQUIVADO"]
+    path = ["EM_ANDAMENTO"] if final_status == "CONCLUIDO" else ["ARQUIVADO"]
     for status in path:
         assert set_status(client, headers, process["id"], status, version).status_code == 200
+        version += 1
+    if final_status == "CONCLUIDO":
+        conclude_for_test(uow_factory, process["id"])
         version += 1
 
     response = put(client, headers, process["id"], version, "Tentativa", target_level=2)
@@ -114,19 +128,57 @@ def test_read_only_process_rejects_changes_with_409(client, secretaria, process,
 def test_second_save_with_stale_version_returns_409(client, secretaria, process):
     _, headers = secretaria
 
-    first = put(client, headers, process["id"], 1, notes="Primeira gravação")
-    second = put(client, headers, process["id"], 1, notes="Segunda gravação")
+    first = put(client, headers, process["id"], 1, target_level=2)
+    second = put(client, headers, process["id"], 1, target_level=3)
 
     assert first.status_code == 200
     assert second.status_code == 409
-    assert client.get(f"/api/processes/{process['id']}").json()["notes"] == "Primeira gravação"
+    assert client.get(f"/api/processes/{process['id']}").json()["target_level"] == 2
+
+
+# NMOV-04: a career jump never refuses creation, edition nor the start of the process
+def test_process_with_career_jump_is_created_edited_and_started(client, secretaria, professor):
+    _, headers = secretaria
+    jump = {
+        **EDITABLE,
+        "current_class": "A",
+        "current_denomination": "Assistente",
+        "current_level": 1,
+        "target_class": "C",
+        "target_denomination": "Associado",
+        "target_level": 1,
+        "start_date": "2025-02-01",
+        "end_date": "2027-02-01",
+        "opening_date": "2027-03-01",
+    }
+
+    created = client.post("/api/processes", json=process_payload(professor, jump), headers=headers)
+    assert created.status_code == 201
+    process_id = created.json()["id"]
+    modality = [a for a in created.json()["alerts"] if a["code"] == "MODALIDADE_INCOMPATIVEL"]
+    assert [a["severity"] for a in modality] == ["ALERTA"]
+
+    edited = client.put(
+        f"/api/processes/{process_id}",
+        json={**jump, "notes": "Salto informado", "expected_version": 1},
+        headers=headers,
+    )
+    assert edited.status_code == 200
+    assert (edited.json()["current_class"], edited.json()["target_class"]) == ("A", "C")
+
+    started = set_status(client, headers, process_id, "EM_ANDAMENTO", 2)
+    assert (started.status_code, started.json()["status"]) == (200, "EM_ANDAMENTO")
+    stored = client.get(f"/api/processes/{process_id}").json()
+    assert (stored["current_class"], stored["current_level"]) == ("A", 1)
+    assert (stored["target_class"], stored["target_level"]) == ("C", 1)
 
 
 def test_status_follows_rascunho_em_andamento_concluido(client, secretaria, process, uow_factory):
     actor, headers = secretaria
 
     started = set_status(client, headers, process["id"], "EM_ANDAMENTO", 1)
-    finished = set_status(client, headers, process["id"], "CONCLUIDO", 2)
+    conclude_for_test(uow_factory, process["id"])
+    finished = client.get(f"/api/processes/{process['id']}")
 
     assert (started.status_code, started.json()["status"]) == (200, "EM_ANDAMENTO")
     assert (finished.status_code, finished.json()["status"]) == (200, "CONCLUIDO")
@@ -134,9 +186,52 @@ def test_status_follows_rascunho_em_andamento_concluido(client, secretaria, proc
         events = uow.audit.list_for("process", process["id"])
     assert [(e.action, e.changes) for e in events[1:]] == [
         (AuditAction.STATUS, {"status": {"before": "RASCUNHO", "after": "EM_ANDAMENTO"}}),
-        (AuditAction.STATUS, {"status": {"before": "EM_ANDAMENTO", "after": "CONCLUIDO"}}),
     ]
     assert all(e.user_id == actor.id for e in events)
+
+
+@pytest.mark.parametrize("who", ["docente", "admin"])
+def test_start_without_justification_by_linked_docente_or_admin_is_audited(  # CAINI-08
+    client, act_as, process, professor, uow_factory, who
+):
+    if who == "docente":
+        actor, headers = act_as("docente@ufpa.br", Role.DOCENTE, professor_id=professor.id)
+    else:
+        actor, headers = act_as("admin@ufpa.br", Role.ADMIN)
+
+    response = set_status(client, headers, process["id"], "EM_ANDAMENTO", 1)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert (body["status"], body["version"]) == ("EM_ANDAMENTO", 2)
+    with uow_factory() as uow:
+        last = uow.audit.list_for("process", process["id"])[-1]
+    assert last.action == AuditAction.STATUS
+    assert last.changes == {"status": {"before": "RASCUNHO", "after": "EM_ANDAMENTO"}}
+    assert last.justification is None
+    assert last.user_id == actor.id
+
+
+@pytest.mark.parametrize("who", ["other-unit-secretaria", "other-docente"])
+def test_start_by_a_user_who_cannot_read_the_process_is_404_and_changes_nothing(  # CAINI-09
+    client, act_as, reference, process, uow_factory, who
+):
+    if who == "other-unit-secretaria":
+        _, headers = act_as(
+            "sec.ifch@ufpa.br", Role.SECRETARIA, unit_ids=frozenset({reference["IFCH"].id})
+        )
+    else:
+        stranger = add_professor(
+            uow_factory, reference["FASI"], siape="7654321", name="Outro Docente"
+        )
+        _, headers = act_as("outro@ufpa.br", Role.DOCENTE, professor_id=stranger.id)
+
+    response = set_status(client, headers, process["id"], "EM_ANDAMENTO", 1)
+
+    assert response.status_code == 404
+    _, owner = act_as("admin@ufpa.br", Role.ADMIN)
+    unchanged = client.get(f"/api/processes/{process['id']}", headers=owner).json()
+    assert (unchanged["status"], unchanged["version"]) == ("RASCUNHO", 1)
 
 
 @pytest.mark.parametrize(
@@ -144,14 +239,33 @@ def test_status_follows_rascunho_em_andamento_concluido(client, secretaria, proc
     [([], "CONCLUIDO"), (["EM_ANDAMENTO", "CONCLUIDO"], "EM_ANDAMENTO"), ([], "RASCUNHO")],
     ids=["skip-em-andamento", "reopen-concluido", "same-status"],
 )
-def test_transition_outside_table_returns_409(client, secretaria, process, path, target):
+def test_transition_outside_table_returns_409(
+    client, secretaria, process, uow_factory, path, target
+):
     _, headers = secretaria
     for version, status in enumerate(path, start=1):
-        set_status(client, headers, process["id"], status, version)
+        if status == "CONCLUIDO":
+            conclude_for_test(uow_factory, process["id"])
+        else:
+            set_status(client, headers, process["id"], status, version)
 
     response = set_status(client, headers, process["id"], target, len(path) + 1)
 
     assert response.status_code == 409
+
+
+def test_concluido_through_the_status_route_is_409_with_the_conclusion_code(
+    client, secretaria, process
+):
+    _, headers = secretaria
+    set_status(client, headers, process["id"], "EM_ANDAMENTO", 1)
+
+    response = set_status(client, headers, process["id"], "CONCLUIDO", 2)
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "CONCLUSAO_EXIGE_EXCLUSAO"
+    stored = client.get(f"/api/processes/{process['id']}").json()
+    assert (stored["status"], stored["version"]) == ("EM_ANDAMENTO", 2)
 
 
 def test_status_change_with_stale_version_returns_409(client, secretaria, process):
@@ -209,7 +323,7 @@ def test_history_and_updates_of_unreadable_process_return_404(client, act_as, re
     )
 
     assert client.get(f"/api/processes/{process['id']}/history").status_code == 404
-    assert put(client, headers, process["id"], 1, notes="x").status_code == 404
+    assert put(client, headers, process["id"], 1, target_level=2).status_code == 404
     assert set_status(client, headers, process["id"], "EM_ANDAMENTO", 1).status_code == 404
 
 

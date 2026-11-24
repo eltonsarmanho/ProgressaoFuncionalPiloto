@@ -4,6 +4,7 @@ import { errorMessage, fieldErrors, request } from "../api/client";
 import type { Process, Professor, Unit } from "../api/types";
 import { AlertList } from "../components/AlertList";
 import { FieldError, errorProps } from "../components/FieldError";
+import { StartProcessDialog } from "../components/ProcessDialogs";
 import { StepNav } from "../components/StepNav";
 import { STATUS_LABELS } from "../labels";
 
@@ -20,17 +21,11 @@ const FIELDS = [
   "start_date",
   "end_date",
   "opening_date",
-  "notes",
-  "resp_name",
-  "resp_position",
-  "resp_appointment",
-  "resp_admin_unit",
 ] as const;
 type Field = (typeof FIELDS)[number];
 type Form = Record<Field, string>;
 
 const NUMERIC: Field[] = ["current_level", "target_level"];
-const OPTIONAL: Field[] = ["notes", "resp_name", "resp_position", "resp_appointment", "resp_admin_unit"];
 const EMPTY = Object.fromEntries(FIELDS.map((f) => [f, ""])) as Form;
 
 function toForm(p: Process): Form {
@@ -42,7 +37,6 @@ function toPayload(form: Form): Record<string, unknown> {
     FIELDS.map((f) => {
       const value = form[f].trim();
       if (NUMERIC.includes(f)) return [f, value === "" ? null : Number(value)];
-      if (OPTIONAL.includes(f)) return [f, value === "" ? null : value];
       return [f, value];
     }),
   );
@@ -62,6 +56,7 @@ export function ProcessStep1() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     const fail = (err: unknown) => setError(errorMessage(err));
@@ -82,6 +77,24 @@ export function ProcessStep1() {
     if (passed?.id === id) show(passed);
     else request<Process>("GET", `/api/processes/${id}`).then(show).catch((err) => setError(errorMessage(err)));
   }, [id, passed]);
+
+  /** CAINI-06: the process moved on (409): show the status the server has now. */
+  async function reload() {
+    if (!process) return;
+    try {
+      const current = await request<Process>("GET", `/api/processes/${process.id}`);
+      setProcess(current);
+      setForm(toForm(current));
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  }
+
+  /** CAINI-05: only the status and the version change; what was typed stays. */
+  function started(status: Process["status"], version: number) {
+    setProcess((p) => (p ? { ...p, status, version } : p));
+    setStarting(false);
+  }
 
   function set(field: Field, value: string) {
     setForm((f) => {
@@ -162,10 +175,19 @@ export function ProcessStep1() {
 
   return (
     <>
-      <StepNav enabled={[1, 4]} current={1} processId={process?.id} />
+      <StepNav current={1} processId={process?.id} />
       <form className="card" onSubmit={onSubmit} noValidate>
         <h1>Etapa 1 · Processo e interstício</h1>
-        {process && <p className="badge">{STATUS_LABELS[process.status]}</p>}
+        {process && (
+          <div className="status-row">
+            <p className="badge">{STATUS_LABELS[process.status]}</p>
+            {process.status === "RASCUNHO" && (
+              <button type="button" className="btn btn-secondary" onClick={() => setStarting(true)}>
+                Iniciar processo
+              </button>
+            )}
+          </div>
+        )}
 
         <fieldset>
           <legend>Docente</legend>
@@ -204,25 +226,6 @@ export function ProcessStep1() {
           {input("opening_date", "Data de abertura", "date")}
         </fieldset>
 
-        <fieldset>
-          <legend>Dados institucionais e observações</legend>
-          {input("resp_name", "Nome do responsável")}
-          {input("resp_position", "Cargo do responsável")}
-          {input("resp_appointment", "Portaria de designação do responsável")}
-          {input("resp_admin_unit", "Unidade administrativa responsável")}
-          <div className="field">
-            <label htmlFor="notes">Observações</label>
-            <textarea
-              id="notes"
-              rows={3}
-              value={form.notes}
-              onChange={(e) => set("notes", e.target.value)}
-              {...errorProps("notes", errors)}
-            />
-            <FieldError id="notes-error" message={errors.notes} />
-          </div>
-        </fieldset>
-
         {process && (
           <div className="field">
             <label htmlFor="justificativa">Justificativa da alteração</label>
@@ -246,6 +249,16 @@ export function ProcessStep1() {
           Salvar
         </button>
       </form>
+
+      {process && starting && (
+        <StartProcessDialog
+          processId={process.id}
+          version={process.version}
+          onStarted={started}
+          onStale={() => void reload()}
+          onClose={() => setStarting(false)}
+        />
+      )}
 
       {process && (
         <section className="card" aria-labelledby="result-title">

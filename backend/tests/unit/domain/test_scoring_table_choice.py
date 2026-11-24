@@ -1,12 +1,13 @@
 """SEL-03, SEL-05, SEL-06, SEL-07: verification of the table chosen for a process."""
 
+from dataclasses import replace
 from datetime import date
 from uuid import uuid4
 
 from app.domain.entities.scoring import ScoringTableVersion, TableStatus
 from app.domain.rules.process_verification import Severity
 from app.domain.rules.scoring_alerts import ScoringAlertCode
-from app.domain.rules.scoring_table_choice import verify_table_choice
+from app.domain.rules.scoring_table_choice import pick_unit_default, verify_table_choice
 
 UNIT = uuid4()
 OTHER_UNIT = uuid4()
@@ -82,3 +83,37 @@ def test_varios_problemas_geram_todos_os_alertas():
         ScoringAlertCode.TABELA_PENDENTE_VALIDACAO,
         ScoringAlertCode.TABELA_FORA_DE_VIGENCIA,
     }
+
+
+def pick(default, *, archived=False, table_units=(UNIT,), unit=UNIT):
+    return pick_unit_default(
+        default, table_archived=archived, table_unit_ids=table_units, unit_id=unit
+    )
+
+
+def test_versao_em_uso_que_passa_nas_tres_guardas_e_devolvida():
+    default = version()
+    assert pick(default) is default
+
+
+def test_versao_em_uso_fora_de_vigencia_ainda_e_devolvida():
+    expired = version(valid_from=date(2010, 1, 1), valid_to=date(2012, 12, 31))
+    assert pick(expired) is expired
+
+
+def test_sem_versao_em_uso_devolve_none():
+    assert pick(None) is None
+
+
+def test_versao_substituida_devolve_none():
+    superseded = replace(version(), superseded_by_id=uuid4())
+    assert pick(superseded) is None
+
+
+def test_tabela_arquivada_devolve_none():
+    assert pick(version(), archived=True) is None
+
+
+def test_unidade_fora_da_tabela_devolve_none():
+    assert pick(version(), table_units=(OTHER_UNIT,)) is None
+    assert pick(version(), table_units=()) is None

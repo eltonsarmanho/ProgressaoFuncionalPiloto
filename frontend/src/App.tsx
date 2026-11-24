@@ -1,20 +1,19 @@
 import { Navigate, Route, Routes } from "react-router";
-import type { ReactNode } from "react";
-import { useAuth } from "./auth/AuthContext";
 import { RequireAuth } from "./auth/RequireAuth";
 import { Layout } from "./components/Layout";
+import { UnscoredGate } from "./components/UnscoredGate";
 import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
+import { Norms } from "./pages/Norms";
+import { ProcessActivities } from "./pages/ProcessActivities";
+import { ProcessBoard } from "./pages/ProcessBoard";
+import { ProcessDocuments } from "./pages/ProcessDocuments";
+import { ProcessDossier } from "./pages/ProcessDossier";
+import { ProcessGenerated } from "./pages/ProcessGenerated";
 import { ProcessScoring } from "./pages/ProcessScoring";
 import { ProcessStep1 } from "./pages/ProcessStep1";
 import { ProfessorForm } from "./pages/ProfessorForm";
 import { ScoringAdmin } from "./pages/ScoringAdmin";
-
-/** ADMUI-01: only ADMIN reaches the administration screens; everyone else goes home. */
-function AdminOnly({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  return user?.role === "ADMIN" ? children : <Navigate to="/" replace />;
-}
 
 export function AppRoutes() {
   return (
@@ -32,15 +31,35 @@ export function AppRoutes() {
         <Route path="professores/:id" element={<ProfessorForm />} />
         <Route path="processos/novo" element={<ProcessStep1 />} />
         <Route path="processos/:id" element={<ProcessStep1 />} />
+        <Route path="processos/:id/documentos" element={<ProcessDocuments />} />
+        <Route path="processos/:id/atividades" element={<ProcessActivities />} />
         <Route path="processos/:id/pontuacao" element={<ProcessScoring />} />
         <Route
-          path="administracao/tabelas"
+          path="processos/:id/gerados"
           element={
-            <AdminOnly>
-              <ScoringAdmin />
-            </AdminOnly>
+            <UnscoredGate step={5} title="Documentos gerados">
+              <ProcessGenerated />
+            </UnscoredGate>
           }
         />
+        <Route
+          path="processos/:id/banca"
+          element={
+            <UnscoredGate step={6} title="Banca e Parecer">
+              <ProcessBoard />
+            </UnscoredGate>
+          }
+        />
+        <Route
+          path="processos/:id/dossie"
+          element={
+            <UnscoredGate step={7} title="Requerimento e dossiê">
+              <ProcessDossier />
+            </UnscoredGate>
+          }
+        />
+        <Route path="normas" element={<Norms />} />
+        <Route path="administracao/tabelas" element={<ScoringAdmin />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

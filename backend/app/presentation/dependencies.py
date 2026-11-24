@@ -7,17 +7,70 @@ from fastapi import Request
 from sqlalchemy import Engine
 
 from app.application.services.access_policy import AccessPolicy
+from app.application.services.activity_merge import MergeDuplicateActivities
 from app.application.services.audit_service import AuditService
+from app.application.services.document_analyzer import DocumentAnalyzer
+from app.application.services.purge_inputs import PurgeInputDocuments
+from app.application.use_cases.activity_merging import MergeProcessDuplicates, SeparateActivity
 from app.application.use_cases.auth import GetCurrentSession, Login, Logout
+from app.application.use_cases.board import (
+    DownloadOrdinanceFile,
+    GetBoard,
+    RereadOrdinance,
+    SaveOpinion,
+    SaveOrdinanceData,
+    SaveRequestSettings,
+    UploadOrdinance,
+)
 from app.application.use_cases.career import (
     CreateCareerVersion,
     ListCareerVersions,
     UpdateCareerVersion,
 )
+from app.application.use_cases.comprovante_layout import (
+    GetComprovanteLayout,
+    SaveComprovanteLayout,
+)
+from app.application.use_cases.conclusion import ConcludeProcess, GetConclusionPreview
+from app.application.use_cases.document_processing import ProcessDocument, RecoverStuckJobs
+from app.application.use_cases.documents import (
+    ClassifyDocumentManually,
+    DeleteDocument,
+    DocumentLimits,
+    DownloadDocument,
+    GetDocument,
+    ListDocuments,
+    ReplaceDocument,
+    ReprocessDocument,
+    UploadDocuments,
+)
+from app.application.use_cases.dossier import GetDossier, SetDossierDelivery
+from app.application.use_cases.evidences import LinkEvidence, ListEvidences, UnlinkEvidence
+from app.application.use_cases.generated_documents import (
+    DownloadGeneratedFile,
+    GenerationLimits,
+    GetGeneratedDocument,
+    ListGeneratedDocuments,
+    RecoverInterruptedGenerations,
+    RequestGeneration,
+    RunGeneration,
+)
+from app.application.use_cases.norms import (
+    ArchiveNorm,
+    AttachNormFile,
+    CreateNorm,
+    DownloadNormFile,
+    GetNorm,
+    ListNorms,
+    UpdateNorm,
+)
+from app.application.use_cases.ordinance_reading import RunOrdinanceReading
 from app.application.use_cases.processes import (
     ChangeProcessStatus,
     CreateProcess,
+    DeleteProcess,
     GetProcess,
+    GetProcessDeletePreview,
     GetProcessHistory,
     ListProcesses,
     UpdateProcess,
@@ -29,7 +82,17 @@ from app.application.use_cases.professors import (
     ListProfessors,
     UpdateProfessor,
 )
+from app.application.use_cases.report_draft import (
+    GetReportDraft,
+    ListWordingJobs,
+    MoveReportEntry,
+    RequestSectionWording,
+    RunWording,
+    SaveReportEntry,
+    SaveReportSection,
+)
 from app.application.use_cases.scoring import (
+    BulkValidateActivities,
     CalculateProcessScore,
     ChangeActivityStatus,
     ChooseProcessTable,
@@ -41,26 +104,61 @@ from app.application.use_cases.scoring import (
     UpdateActivity,
 )
 from app.application.use_cases.scoring_admin import (
+    ArchiveScoringTable,
     CreateScoringTable,
     CreateVersionFrom,
+    DeleteScoringTable,
+    DeleteScoringVersion,
     DuplicateScoringTable,
+    GetScoringTable,
     GetScoringVersion,
     GetTableHistory,
     ImportCriteriaCsv,
     ListScoringTables,
     ListTableVersions,
+    PreviewDeleteTable,
+    PreviewDeleteVersion,
+    ProtectedCatalog,
     SetTableUnits,
     UpdateVersionCriteria,
+)
+from app.application.use_cases.scoring_defaults import (
+    ClearUnitDefaultVersion,
+    SetUnitDefaultVersion,
 )
 from app.application.use_cases.units import ArchiveUnit, CreateUnit, ListUnits, UpdateUnit
 from app.application.use_cases.users import CreateUser, ListUsers
 from app.core.config import Settings
+from app.domain.entities.report import DossierItem
 from app.domain.entities.user import Session, User
-from app.domain.repositories.ports import Clock, UnitOfWork
+from app.domain.repositories.ports import (
+    AiExtractor,
+    Clock,
+    FileInspector,
+    FileStorage,
+    OrdinanceExtractor,
+    TextExtractor,
+    UnitOfWork,
+)
+from app.infrastructure.ai.maritalk import MariTalkExtractor
+from app.infrastructure.ai.ordinance_extractor import MariTalkOrdinanceExtractor
+from app.infrastructure.ai.report_writer import MariTalkReportWriter
 from app.infrastructure.database.repositories import SqlUnitOfWork
+from app.infrastructure.database.seed import STRUCTURE_CODE, official_table_name
 from app.infrastructure.database.session import make_session_factory
+from app.infrastructure.documents.comprovante_assembler import PdfComprovanteAssembler
+from app.infrastructure.documents.config_loader import ReportConfigLoader, load_dossier_order
+from app.infrastructure.documents.document_writer import FileDocumentWriter
+from app.infrastructure.documents.front_matter import TOC_CAPACITY
+from app.infrastructure.files.inspector import PillowFileInspector
+from app.infrastructure.ocr.extractor import DocumentTextExtractor
 from app.infrastructure.security import tokens
 from app.infrastructure.security.argon2_hasher import Argon2PasswordHasher
+from app.infrastructure.storage.generated_storage import LocalGeneratedStorage
+from app.infrastructure.storage.local_storage import LocalFileStorage
+from app.infrastructure.storage.norm_storage import LocalNormStorage
+
+MB = 1024 * 1024
 
 
 @dataclass
@@ -78,6 +176,13 @@ class Container:
     create_unit: CreateUnit
     update_unit: UpdateUnit
     archive_unit: ArchiveUnit
+    list_norms: ListNorms
+    get_norm: GetNorm
+    create_norm: CreateNorm
+    update_norm: UpdateNorm
+    archive_norm: ArchiveNorm
+    attach_norm_file: AttachNormFile
+    download_norm_file: DownloadNormFile
     create_professor: CreateProfessor
     update_professor: UpdateProfessor
     archive_professor: ArchiveProfessor
@@ -88,12 +193,15 @@ class Container:
     list_processes: ListProcesses
     update_process: UpdateProcess
     change_process_status: ChangeProcessStatus
+    delete_process: DeleteProcess
+    process_delete_preview: GetProcessDeletePreview
     process_history: GetProcessHistory
     list_career_versions: ListCareerVersions
     create_career_version: CreateCareerVersion
     update_career_version: UpdateCareerVersion
     list_scoring_tables: ListScoringTables
     list_table_versions: ListTableVersions
+    get_scoring_table: GetScoringTable
     get_scoring_version: GetScoringVersion
     create_scoring_table: CreateScoringTable
     duplicate_scoring_table: DuplicateScoringTable
@@ -102,6 +210,13 @@ class Container:
     import_criteria_csv: ImportCriteriaCsv
     set_table_units: SetTableUnits
     table_history: GetTableHistory
+    archive_scoring_table: ArchiveScoringTable
+    preview_delete_version: PreviewDeleteVersion
+    delete_scoring_version: DeleteScoringVersion
+    preview_delete_table: PreviewDeleteTable
+    delete_scoring_table: DeleteScoringTable
+    set_unit_default_version: SetUnitDefaultVersion
+    clear_unit_default_version: ClearUnitDefaultVersion
     suggest_scoring_table: SuggestScoringTable
     choose_process_table: ChooseProcessTable
     calculate_process_score: CalculateProcessScore
@@ -111,9 +226,81 @@ class Container:
     update_activity: UpdateActivity
     change_activity_status: ChangeActivityStatus
     mark_activities_distinct: MarkActivitiesDistinct
+    bulk_validate_activities: BulkValidateActivities
+    merge_process_duplicates: MergeProcessDuplicates
+    separate_activity: SeparateActivity
+    storage: FileStorage
+    inspector: FileInspector
+    process_document: ProcessDocument
+    recover_stuck_jobs: RecoverStuckJobs
+    upload_documents: UploadDocuments
+    list_documents: ListDocuments
+    get_document: GetDocument
+    download_document: DownloadDocument
+    replace_document: ReplaceDocument
+    delete_document: DeleteDocument
+    reprocess_document: ReprocessDocument
+    classify_document: ClassifyDocumentManually
+    link_evidence: LinkEvidence
+    unlink_evidence: UnlinkEvidence
+    list_evidences: ListEvidences
+    request_generation: RequestGeneration
+    run_generation: RunGeneration
+    recover_generations: RecoverInterruptedGenerations
+    list_generated_documents: ListGeneratedDocuments
+    get_generated_document: GetGeneratedDocument
+    download_generated_file: DownloadGeneratedFile
+    get_report_draft: GetReportDraft
+    save_report_entry: SaveReportEntry
+    save_report_section: SaveReportSection
+    move_report_entry: MoveReportEntry
+    request_wording: RequestSectionWording
+    list_wording_jobs: ListWordingJobs
+    run_wording: RunWording
+    get_comprovante_layout: GetComprovanteLayout
+    save_comprovante_layout: SaveComprovanteLayout
+    conclusion_preview: GetConclusionPreview
+    conclude_process: ConcludeProcess
+    dossier_order: Callable[[], tuple[DossierItem, ...]]
+    get_board: GetBoard
+    upload_ordinance: UploadOrdinance
+    reread_ordinance: RereadOrdinance
+    save_ordinance_data: SaveOrdinanceData
+    download_ordinance_file: DownloadOrdinanceFile
+    save_opinion: SaveOpinion
+    save_request_settings: SaveRequestSettings
+    run_ordinance_reading: RunOrdinanceReading
+    get_dossier: GetDossier
+    set_dossier_delivery: SetDossierDelivery
+
+    def worker_runners(self) -> list[Callable[[], bool]]:
+        """What the executor runs before the OCR, in the order the user waits for them: the
+        generation, the wording of a section, then the reading of the board ordinance (AD-008)."""
+        return [
+            self.run_generation.run_next,
+            self.run_wording.run_next,
+            self.run_ordinance_reading.run_next,
+        ]
+
+    def worker_recoverers(self) -> list[Callable[[], object]]:
+        """Run at the start, before the executor: the generations and the ordinance readings a
+        restart left running (VER-08, PORT-07)."""
+        return [self.recover_generations.execute, self.run_ordinance_reading.recover_interrupted]
 
 
-def build_container(settings: Settings, engine: Engine, clock: Clock) -> Container:
+def build_container(
+    settings: Settings,
+    engine: Engine,
+    clock: Clock,
+    ai_extractor: AiExtractor | None = None,
+    text_extractor: TextExtractor | None = None,
+    ordinance_extractor: OrdinanceExtractor | None = None,
+) -> Container:
+    """Wires every service; the document services are shared by the routes and the worker.
+
+    Tests pass a fake `ai_extractor`, `text_extractor` or `ordinance_extractor`; production builds
+    the MariTalk adapters and the PyMuPDF plus Tesseract reader (AD-005, AD-009).
+    """
     session_factory = make_session_factory(engine)
 
     def uow_factory() -> UnitOfWork:
@@ -121,7 +308,34 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
 
     hasher = Argon2PasswordHasher()
     audit = AuditService(clock)
+    protected_catalog = ProtectedCatalog(official_table_name())
     policy = AccessPolicy()
+    merger = MergeDuplicateActivities(audit)
+    create_activity = CreateActivity(uow_factory, audit, policy, merger)
+    change_status = ChangeActivityStatus(uow_factory, audit, policy)
+    storage = LocalFileStorage(settings.storage_dir)
+    norm_storage = LocalNormStorage(settings.storage_dir)
+    generated_storage = LocalGeneratedStorage(settings.storage_dir)
+    inspector = PillowFileInspector(settings.max_megapixels, settings.max_pages)
+    limits = DocumentLimits(
+        max_file_bytes=settings.max_upload_mb * 1024 * 1024,
+        max_pages=settings.max_pages,
+        max_megapixels=settings.max_megapixels,
+        max_documents_per_process=settings.max_documents_per_process,
+        max_uploads_per_minute=settings.max_uploads_per_minute,
+    )
+    text_extractor = text_extractor or DocumentTextExtractor(clock)
+    analyzer = DocumentAnalyzer(
+        text_extractor,
+        ai_extractor or MariTalkExtractor(settings),
+        clock,
+    )
+    generation_limits = GenerationLimits(
+        max_pages=settings.generation_max_pages,
+        png_max_megapixels=settings.generation_png_max_megapixels,
+        min_free_bytes=settings.generation_min_free_mb * MB,
+    )
+    report_config = ReportConfigLoader(template_id=settings.report_template_id)
     return Container(
         settings=settings,
         engine=engine,
@@ -136,6 +350,13 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
         create_unit=CreateUnit(uow_factory, audit),
         update_unit=UpdateUnit(uow_factory, audit),
         archive_unit=ArchiveUnit(uow_factory, audit),
+        list_norms=ListNorms(uow_factory, (STRUCTURE_CODE,)),
+        get_norm=GetNorm(uow_factory, (STRUCTURE_CODE,)),
+        create_norm=CreateNorm(uow_factory, audit),
+        update_norm=UpdateNorm(uow_factory, audit),
+        archive_norm=ArchiveNorm(uow_factory, audit),
+        attach_norm_file=AttachNormFile(uow_factory, audit, norm_storage, inspector),
+        download_norm_file=DownloadNormFile(uow_factory, norm_storage),
         create_professor=CreateProfessor(uow_factory, audit, policy),
         update_professor=UpdateProfessor(uow_factory, audit, policy),
         archive_professor=ArchiveProfessor(uow_factory, audit, policy),
@@ -146,13 +367,16 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
         list_processes=ListProcesses(uow_factory, audit, policy),
         update_process=UpdateProcess(uow_factory, audit, policy),
         change_process_status=ChangeProcessStatus(uow_factory, audit, policy),
+        delete_process=DeleteProcess(uow_factory, audit, policy, storage, generated_storage),
+        process_delete_preview=GetProcessDeletePreview(uow_factory, audit, policy),
         process_history=GetProcessHistory(uow_factory, audit, policy),
         list_career_versions=ListCareerVersions(uow_factory),
         create_career_version=CreateCareerVersion(uow_factory, audit),
         update_career_version=UpdateCareerVersion(uow_factory, audit),
-        list_scoring_tables=ListScoringTables(uow_factory),
-        list_table_versions=ListTableVersions(uow_factory),
-        get_scoring_version=GetScoringVersion(uow_factory),
+        list_scoring_tables=ListScoringTables(uow_factory, protected_catalog),
+        list_table_versions=ListTableVersions(uow_factory, protected_catalog),
+        get_scoring_table=GetScoringTable(uow_factory, protected_catalog),
+        get_scoring_version=GetScoringVersion(uow_factory, protected_catalog),
         create_scoring_table=CreateScoringTable(uow_factory, audit),
         duplicate_scoring_table=DuplicateScoringTable(uow_factory, audit),
         create_scoring_version=CreateVersionFrom(uow_factory, audit),
@@ -160,15 +384,115 @@ def build_container(settings: Settings, engine: Engine, clock: Clock) -> Contain
         import_criteria_csv=ImportCriteriaCsv(uow_factory, audit),
         set_table_units=SetTableUnits(uow_factory, audit),
         table_history=GetTableHistory(uow_factory),
+        archive_scoring_table=ArchiveScoringTable(uow_factory, audit),
+        preview_delete_version=PreviewDeleteVersion(uow_factory, protected_catalog),
+        delete_scoring_version=DeleteScoringVersion(uow_factory, audit, protected_catalog),
+        preview_delete_table=PreviewDeleteTable(uow_factory, protected_catalog),
+        delete_scoring_table=DeleteScoringTable(uow_factory, audit, protected_catalog),
+        set_unit_default_version=SetUnitDefaultVersion(uow_factory, audit),
+        clear_unit_default_version=ClearUnitDefaultVersion(uow_factory, audit),
         suggest_scoring_table=SuggestScoringTable(uow_factory, audit, policy),
         choose_process_table=ChooseProcessTable(uow_factory, audit, policy),
         calculate_process_score=CalculateProcessScore(uow_factory, audit, policy),
-        create_activity=CreateActivity(uow_factory, audit, policy),
+        create_activity=create_activity,
         get_activity=GetActivity(uow_factory, audit, policy),
         list_activities=ListActivities(uow_factory, audit, policy),
-        update_activity=UpdateActivity(uow_factory, audit, policy),
-        change_activity_status=ChangeActivityStatus(uow_factory, audit, policy),
+        update_activity=UpdateActivity(uow_factory, audit, policy, merger),
+        change_activity_status=change_status,
         mark_activities_distinct=MarkActivitiesDistinct(uow_factory, audit, policy),
+        bulk_validate_activities=BulkValidateActivities(uow_factory, audit, policy),
+        merge_process_duplicates=MergeProcessDuplicates(uow_factory, audit, policy, merger),
+        separate_activity=SeparateActivity(uow_factory, audit, policy, merger),
+        storage=storage,
+        inspector=inspector,
+        process_document=ProcessDocument(
+            uow_factory, audit, storage, analyzer, create_activity, merger
+        ),
+        recover_stuck_jobs=RecoverStuckJobs(uow_factory, audit, clock, settings.max_job_attempts),
+        upload_documents=UploadDocuments(
+            uow_factory, audit, policy, storage, inspector, clock, limits
+        ),
+        list_documents=ListDocuments(uow_factory, audit, policy),
+        get_document=GetDocument(uow_factory, audit, policy),
+        download_document=DownloadDocument(uow_factory, audit, policy, storage),
+        replace_document=ReplaceDocument(
+            uow_factory, audit, policy, storage, inspector, clock, change_status, limits
+        ),
+        delete_document=DeleteDocument(uow_factory, audit, policy, storage),
+        reprocess_document=ReprocessDocument(uow_factory, audit, policy, change_status),
+        classify_document=ClassifyDocumentManually(uow_factory, audit, policy),
+        link_evidence=LinkEvidence(uow_factory, audit, policy),
+        unlink_evidence=UnlinkEvidence(uow_factory, audit, policy),
+        list_evidences=ListEvidences(uow_factory),
+        request_generation=RequestGeneration(
+            uow_factory,
+            audit,
+            policy,
+            clock,
+            generated_storage,
+            storage,
+            inspector,
+            generation_limits,
+            TOC_CAPACITY,
+        ),
+        run_generation=RunGeneration(
+            uow_factory,
+            audit,
+            clock,
+            generated_storage,
+            FileDocumentWriter(),
+            PdfComprovanteAssembler(max_output_bytes=settings.generation_max_output_mb * MB),
+            report_config,
+            storage,
+            inspector,
+            generation_limits,
+            TOC_CAPACITY,
+        ),
+        recover_generations=RecoverInterruptedGenerations(
+            uow_factory, audit, clock, generated_storage
+        ),
+        list_generated_documents=ListGeneratedDocuments(uow_factory, audit, policy),
+        get_generated_document=GetGeneratedDocument(uow_factory, audit, policy),
+        download_generated_file=DownloadGeneratedFile(
+            uow_factory, audit, policy, generated_storage
+        ),
+        get_report_draft=GetReportDraft(uow_factory, audit, policy, report_config),
+        save_report_entry=SaveReportEntry(uow_factory, audit, policy, report_config),
+        save_report_section=SaveReportSection(uow_factory, audit, policy, report_config),
+        move_report_entry=MoveReportEntry(uow_factory, audit, policy, report_config),
+        request_wording=RequestSectionWording(uow_factory, audit, policy, clock, report_config),
+        list_wording_jobs=ListWordingJobs(uow_factory, audit, policy),
+        run_wording=RunWording(
+            uow_factory, audit, clock, report_config, MariTalkReportWriter(settings)
+        ),
+        get_comprovante_layout=GetComprovanteLayout(uow_factory, audit, policy, TOC_CAPACITY),
+        save_comprovante_layout=SaveComprovanteLayout(uow_factory, audit, policy),
+        conclusion_preview=GetConclusionPreview(uow_factory, audit, policy),
+        conclude_process=ConcludeProcess(
+            uow_factory, audit, policy, PurgeInputDocuments(uow_factory, storage, clock)
+        ),
+        dossier_order=load_dossier_order,
+        get_board=GetBoard(uow_factory, audit, policy),
+        upload_ordinance=UploadOrdinance(
+            uow_factory, audit, policy, storage, inspector, clock, limits
+        ),
+        reread_ordinance=RereadOrdinance(uow_factory, audit, policy, clock),
+        save_ordinance_data=SaveOrdinanceData(uow_factory, audit, policy),
+        download_ordinance_file=DownloadOrdinanceFile(uow_factory, audit, policy, storage),
+        save_opinion=SaveOpinion(uow_factory, audit, policy),
+        save_request_settings=SaveRequestSettings(uow_factory, audit, policy),
+        run_ordinance_reading=RunOrdinanceReading(
+            uow_factory,
+            audit,
+            clock,
+            storage,
+            text_extractor,
+            ordinance_extractor or MariTalkOrdinanceExtractor(settings),
+        ),
+        get_dossier=GetDossier(uow_factory, audit, policy, load_dossier_order),
+        set_dossier_delivery=SetDossierDelivery(
+            uow_factory, audit, policy, load_dossier_order, clock
+        ),
     )
 
 

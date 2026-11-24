@@ -3,6 +3,7 @@
 from sqlalchemy import text
 
 from app.domain.entities.academic_unit import UnitKind
+from app.domain.entities.professor import Titration
 from app.domain.entities.user import Role
 from app.domain.rules.career_catalog import MAGISTERIO_SUPERIOR_VERSIONS
 from app.infrastructure.database import seed
@@ -51,6 +52,15 @@ def test_seeded_versions_are_identical_to_catalog(uow_factory):
         "Lei 12.772/2012 com redação da Lei 15.141/2025",
     ]
     assert all(v.norm_reference for v in versions)
+    # NLINK-02, NTIT-06: the norm links and the titration rules of the catalog survive the database
+    assert [v.norm_code for v in versions] == ["RES-4644-2015-CONSEPE", "LEI-12772-2012"]
+    assert [v.required_titration_norm_code for v in versions] == [None, "MANUAL-PROGEP-PROGRESSAO"]
+    assert [
+        [c.required_titration for c in v.classes] for v in versions
+    ] == [
+        [None] * 5,
+        [None, None, Titration.DOUTORADO, Titration.DOUTORADO],
+    ]
 
 
 def test_seeded_units(uow_factory):

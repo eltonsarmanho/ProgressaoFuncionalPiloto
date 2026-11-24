@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { ProcessStep1 } from "./ProcessStep1";
 import { mockFetch } from "../test/fetchMock";
@@ -13,7 +13,7 @@ const PROFESSORS = [
 ];
 
 const ALERTS = [
-  { code: "MODALIDADE_INCOMPATIVEL", severity: "ERRO", message: "Modalidade incompatível com as classes informadas", norm_reference: "Res. 4.644/2015-CONSEPE, art. 1º, parágrafo único; Lei 12.772/2012, art. 12" },
+  { code: "INTERSTICIO_INSUFICIENTE", severity: "ERRO", message: "Interstício de 14 meses; o mínimo exigido é de 24 meses.", norm_reference: "Res. 4.644/2015-CONSEPE, arts. 2º, 4º e 5º" },
   { code: "INTERSTICIO_NAO_CONCLUIDO", severity: "ALERTA", message: "A data final é posterior à data de abertura", norm_reference: "Res. 4.644/2015-CONSEPE, art. 29" },
   { code: "CLASSE_INEXISTENTE_NA_ESTRUTURA", severity: "ERRO", message: "Nível 4 não existe na Classe D", norm_reference: "Lei 12.772/2012, Anexo I" },
   { code: "INTERSTICIO_CRUZA_REESTRUTURACAO", severity: "REQUER_ANALISE_NORMATIVA", message: "O interstício cruza 01/01/2025", norm_reference: "Lei 15.141/2025 (Lei 12.772/2012, art. 12, §7º, e Anexo II)" },
@@ -33,11 +33,6 @@ const SAVED = {
   start_date: "2024-11-23",
   end_date: "2026-11-23",
   opening_date: "2026-11-16",
-  notes: null,
-  resp_name: null,
-  resp_position: null,
-  resp_appointment: null,
-  resp_admin_unit: null,
   status: "RASCUNHO",
   version: 1,
   created_at: "2026-11-16T10:00:00Z",
@@ -86,10 +81,10 @@ describe("ProcessStep1", () => {
     const erro = within(result).getByRole("region", { name: "Erro (2)" });
     const erroItems = within(erro).getAllByRole("listitem");
     expect(erroItems).toHaveLength(2);
-    expect(erroItems[0]).toHaveTextContent("MODALIDADE_INCOMPATIVEL");
-    expect(erroItems[0]).toHaveTextContent("Modalidade incompatível com as classes informadas");
+    expect(erroItems[0]).toHaveTextContent("INTERSTICIO_INSUFICIENTE");
+    expect(erroItems[0]).toHaveTextContent("Interstício de 14 meses; o mínimo exigido é de 24 meses.");
     expect(erroItems[0]).toHaveTextContent(
-      "Referência normativa: Res. 4.644/2015-CONSEPE, art. 1º, parágrafo único; Lei 12.772/2012, art. 12",
+      "Referência normativa: Res. 4.644/2015-CONSEPE, arts. 2º, 4º e 5º",
     );
     expect(erroItems[1]).toHaveTextContent("CLASSE_INEXISTENTE_NA_ESTRUTURA");
     expect(erroItems[1]).toHaveTextContent("Referência normativa: Lei 12.772/2012, Anexo I");
@@ -120,15 +115,10 @@ describe("ProcessStep1", () => {
       start_date: "2024-11-23",
       end_date: "2026-11-23",
       opening_date: "2026-11-16",
-      notes: null,
-      resp_name: null,
-      resp_position: null,
-      resp_appointment: null,
-      resp_admin_unit: null,
     });
   });
 
-  it("UI-04 / TELA-01: exibe as 9 etapas com a Etapa 1 ativa, a Etapa 4 habilitada e as etapas 2, 3 e 5–9 desabilitadas e rotuladas 'em breve'", async () => {
+  it("UI-04 / TELA-01 / BNAV-01: exibe as 7 etapas com a Etapa 1 ativa e todas habilitadas, nenhuma 'em breve'", async () => {
     mockFetch({
       "GET /api/units": { status: 200, body: UNITS },
       "GET /api/professors": { status: 200, body: PROFESSORS },
@@ -136,23 +126,25 @@ describe("ProcessStep1", () => {
     renderAt("/processos/novo");
     const nav = await screen.findByRole("navigation", { name: "Etapas do processo" });
     const steps = within(nav).getAllByRole("listitem");
-    expect(steps).toHaveLength(9);
+    expect(steps).toHaveLength(7);
     expect(steps[0]).toHaveAttribute("aria-current", "step");
-    expect(steps[0]).not.toHaveTextContent("em breve");
-    expect(steps[0]).not.toHaveAttribute("aria-disabled");
+    steps.forEach((step, i) => {
+      expect(step).not.toHaveTextContent("em breve");
+      expect(step).not.toHaveAttribute("aria-disabled");
+      if (i > 0) expect(step).not.toHaveAttribute("aria-current");
+    });
+    expect(steps[1]).toHaveTextContent("Etapa 2");
+    expect(steps[1]).toHaveTextContent("Documentos");
+    expect(steps[2]).toHaveTextContent("Etapa 3");
+    expect(steps[2]).toHaveTextContent("Atividades");
     expect(steps[3]).toHaveTextContent("Etapa 4");
     expect(steps[3]).toHaveTextContent("Pontuação");
-    expect(steps[3]).not.toHaveTextContent("em breve");
-    expect(steps[3]).not.toHaveAttribute("aria-disabled");
-    expect(steps[3]).not.toHaveAttribute("aria-current");
-    steps.forEach((step, i) => {
-      if (i === 0 || i === 3) return;
-      expect(step).toHaveTextContent(`Etapa ${i + 1}`);
-      expect(step).toHaveTextContent("em breve");
-      expect(step).toHaveAttribute("aria-disabled", "true");
-      expect(step).not.toHaveAttribute("aria-current");
-      expect(within(step).queryByRole("link")).not.toBeInTheDocument();
-    });
+    expect(steps[4]).toHaveTextContent("Etapa 5");
+    expect(steps[4]).toHaveTextContent("Documentos gerados");
+    expect(steps[5]).toHaveTextContent("Etapa 6");
+    expect(steps[5]).toHaveTextContent("Banca e Parecer");
+    expect(steps[6]).toHaveTextContent("Etapa 7");
+    expect(steps[6]).toHaveTextContent("Requerimento e dossiê");
   });
 
   it("TELA-01: com um processo aberto, Etapa 1 e Etapa 4 são links para o processo e para a pontuação", async () => {
@@ -199,5 +191,101 @@ describe("ProcessStep1", () => {
       expected_version: 5,
       justificativa: null,
     });
+  });
+});
+
+describe("CAINI-01, CAINI-02, CAINI-05, CAINI-06: iniciar o processo na Etapa 1", () => {
+  const OPEN = { name: "Iniciar processo" } as const;
+  const base = {
+    "GET /api/units": { status: 200, body: UNITS },
+    "GET /api/professors": { status: 200, body: PROFESSORS },
+  };
+
+  it("CAINI-01: com processo em rascunho mostra o botão Iniciar processo", async () => {
+    mockFetch({ ...base, "GET /api/processes/proc-1": { status: 200, body: SAVED } });
+    renderAt("/processos/proc-1");
+    expect(await screen.findByRole("button", OPEN)).toBeInTheDocument();
+    expect(screen.getByText("Rascunho")).toBeInTheDocument();
+  });
+
+  it.each(["EM_ANDAMENTO", "CONCLUIDO", "ARQUIVADO"])("CAINI-02: com o processo %s não mostra o botão", async (status) => {
+    mockFetch({ ...base, "GET /api/processes/proc-1": { status: 200, body: { ...SAVED, status } } });
+    renderAt("/processos/proc-1");
+    await screen.findByText("Duração do interstício: 24 meses e 730 dias");
+    expect(screen.queryByRole("button", OPEN)).not.toBeInTheDocument();
+  });
+
+  it("ENX-01: a Etapa 1 não pede os dados institucionais nem as observações do processo", async () => {
+    mockFetch({ ...base, "GET /api/processes/proc-1": { status: 200, body: SAVED } });
+    renderAt("/processos/proc-1");
+    await screen.findByLabelText("Denominação atual");
+
+    for (const label of [
+      "Nome do responsável",
+      "Cargo do responsável",
+      "Portaria de designação do responsável",
+      "Unidade administrativa responsável",
+      "Observações",
+    ]) {
+      expect(screen.queryByLabelText(label)).not.toBeInTheDocument();
+    }
+    expect(screen.queryByText("Dados institucionais e observações")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Data de abertura")).toBeInTheDocument();
+  });
+
+  it("CAINI-02: na criação de um processo novo não mostra o botão", async () => {
+    mockFetch(base);
+    renderAt("/processos/novo");
+    await screen.findByRole("option", { name: "Maria Souza (SIAPE 1234567)" });
+    expect(screen.queryByRole("button", OPEN)).not.toBeInTheDocument();
+  });
+
+  it("CAINI-05: confirmar com 200 mostra Em andamento, esconde o botão e o Salvar seguinte usa a versão devolvida, sem tocar nos campos digitados", async () => {
+    const { calls } = mockFetch({
+      ...base,
+      "GET /api/processes/proc-1": { status: 200, body: SAVED },
+      "POST /api/processes/proc-1/status": { status: 200, body: { ...SAVED, status: "EM_ANDAMENTO", version: 2 } },
+      "PUT /api/processes/proc-1": { status: 200, body: { ...SAVED, status: "EM_ANDAMENTO", version: 3, current_denomination: "Titular" } },
+    });
+    renderAt("/processos/proc-1");
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", OPEN));
+    await user.clear(screen.getByLabelText("Denominação atual"));
+    await user.type(screen.getByLabelText("Denominação atual"), "Titular");
+    await user.click(within(screen.getByRole("dialog", OPEN)).getByRole("button", { name: "Iniciar" }));
+
+    expect(await screen.findByText("Em andamento")).toBeInTheDocument();
+    expect(screen.queryByText("Rascunho")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", OPEN)).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Denominação atual")).toHaveValue("Titular");
+    const post = calls.find((c) => c.method === "POST")!;
+    expect(JSON.parse(post.init!.body as string)).toEqual({ status: "EM_ANDAMENTO", expected_version: 1 });
+
+    await user.type(screen.getByLabelText("Justificativa da alteração"), "Ajuste");
+    await user.click(screen.getByRole("button", { name: "Salvar" }));
+    await vi.waitFor(() => expect(calls.some((c) => c.method === "PUT")).toBe(true));
+    const put = calls.find((c) => c.method === "PUT")!;
+    expect(JSON.parse(put.init!.body as string)).toMatchObject({ expected_version: 2, current_denomination: "Titular" });
+  });
+
+  it("CAINI-06: 409 mostra a mensagem no modal e recarrega o processo com GET, e a etiqueta mostra o status devolvido", async () => {
+    let reads = 0;
+    const { calls } = mockFetch({
+      ...base,
+      "GET /api/processes/proc-1": () => {
+        reads += 1;
+        return { status: 200, body: reads === 1 ? SAVED : { ...SAVED, status: "EM_ANDAMENTO", version: 3 } };
+      },
+      "POST /api/processes/proc-1/status": { status: 409, body: { detail: "Versão desatualizada do processo." } },
+    });
+    renderAt("/processos/proc-1");
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", OPEN));
+    await user.click(within(screen.getByRole("dialog", OPEN)).getByRole("button", { name: "Iniciar" }));
+
+    expect(await within(screen.getByRole("dialog", OPEN)).findByRole("alert")).toHaveTextContent("Versão desatualizada do processo.");
+    expect(await screen.findByText("Em andamento")).toBeInTheDocument();
+    expect(calls.filter((c) => c.method === "GET" && c.path === "/api/processes/proc-1")).toHaveLength(2);
   });
 });

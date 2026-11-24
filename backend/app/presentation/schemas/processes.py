@@ -1,5 +1,6 @@
 """Process schemas (PROC-01, PROC-02, PROC-04, PROC-14)."""
 
+from collections.abc import Mapping
 from datetime import date, datetime
 from uuid import UUID
 
@@ -8,8 +9,10 @@ from pydantic import BaseModel
 from app.application.use_cases.processes import ProcessResult
 from app.domain.entities.audit import AuditAction, AuditEvent
 from app.domain.entities.career import Modality
+from app.domain.entities.norm import NormCitation
 from app.domain.entities.process import ProcessStatus
 from app.domain.rules.process_verification import Alert, Severity
+from app.presentation.schemas.norms import file_url
 
 
 class ProcessFields(BaseModel):
@@ -23,11 +26,6 @@ class ProcessFields(BaseModel):
     start_date: date
     end_date: date
     opening_date: date
-    notes: str | None = None
-    resp_name: str | None = None
-    resp_position: str | None = None
-    resp_appointment: str | None = None
-    resp_admin_unit: str | None = None
 
 
 class ProcessCreate(ProcessFields):
@@ -76,14 +74,26 @@ class AlertOut(BaseModel):
     severity: Severity
     message: str
     norm_reference: str
+    # NLINK-06: all null (norm_archived false) when the rule cites no registered norm (NLINK-05)
+    norm_code: str | None = None
+    norm_title: str | None = None
+    norm_url: str | None = None
+    norm_file_url: str | None = None
+    norm_archived: bool = False
 
     @classmethod
-    def of(cls, alert: Alert) -> "AlertOut":
+    def of(cls, alert: Alert, norms: Mapping[str, NormCitation]) -> "AlertOut":
+        cited = norms.get(alert.norm_code) if alert.norm_code else None
         return cls(
             code=alert.code,
             severity=alert.severity,
             message=alert.message,
             norm_reference=alert.norm_reference,
+            norm_code=cited.code if cited else None,
+            norm_title=cited.title if cited else None,
+            norm_url=cited.source_url if cited else None,
+            norm_file_url=file_url(cited.id) if cited and cited.has_file else None,
+            norm_archived=cited.archived if cited else False,
         )
 
 
@@ -107,21 +117,22 @@ class ProcessOut(ProcessCreate):
             created_at=p.created_at,
             updated_at=p.updated_at,
             interstice=IntersticeOut(months=r.interstice_months, days=r.interstice_days),
-            alerts=[
-                AlertOut(
-                    code=a.code,
-                    severity=a.severity,
-                    message=a.message,
-                    norm_reference=a.norm_reference,
-                )
-                for a in r.alerts
-            ],
+            alerts=[AlertOut.of(a, r.norms) for a in r.alerts],
         )
+
+
+class DeletePreviewOut(BaseModel):
+    """What a deletion removes: numbers only, no personal data."""
+
+    documents: int
+    activities: int
+    generated_documents: int
 
 
 class ProcessSummary(BaseModel):
     id: UUID
     status: ProcessStatus
+    version: int
     professor_id: UUID
     professor_name: str
     unit_id: UUID
@@ -140,6 +151,7 @@ class ProcessSummary(BaseModel):
         return cls(
             id=p.id,
             status=p.status,
+            version=p.version,
             professor_id=p.professor_id,
             professor_name=r.professor_name,
             unit_id=p.unit_id,

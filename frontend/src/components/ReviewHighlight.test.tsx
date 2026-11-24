@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 import type { Criterion, ScoringGroup } from "../api/types";
 import { ReviewHighlight } from "./ReviewHighlight";
 
@@ -14,6 +15,7 @@ function criterion(item: number, review_note: string | null): Criterion {
     hours_per_block: null,
     weeks_per_semester: null,
     prep_ratio: null,
+    min_hours: null,
     max_points: null,
     accepted_evidence: null,
     rules: null,
@@ -36,6 +38,14 @@ const GROUPS: ScoringGroup[] = [
 ];
 
 describe("ADMUI-03: critérios marcados para revisão", () => {
+  it("a coluna Modo mostra o rótulo em português, não o código do modo", () => {
+    render(<ReviewHighlight groups={GROUPS} />);
+
+    const row = screen.getByRole("row", { name: /Critério 10/ });
+    expect(within(row).getByText("Por unidade")).toBeInTheDocument();
+    expect(row).not.toHaveTextContent("POR_UNIDADE");
+  });
+
   it("destaca os critérios com anotação e mostra o texto da diferença", () => {
     render(<ReviewHighlight groups={GROUPS} />);
 
@@ -67,5 +77,58 @@ describe("ADMUI-03: critérios marcados para revisão", () => {
 
     expect(screen.queryByText(/marcados? para revisão/)).not.toBeInTheDocument();
     expect(screen.getByText("Critério 10")).toBeInTheDocument();
+  });
+
+  it("OFI-06: mostra a carga horária mínima do critério, ou '—' quando não há", () => {
+    const withMinimum: ScoringGroup[] = [
+      { ...GROUPS[0], criteria: [{ ...criterion(4, null), min_hours: "20.00" }, criterion(6, null)] },
+    ];
+    render(<ReviewHighlight groups={withMinimum} />);
+
+    expect(screen.getByRole("columnheader", { name: "Carga mínima (h)" })).toBeInTheDocument();
+    const four = screen.getByRole("row", { name: /Critério 4/ });
+    const minimumCell = (row: HTMLElement) => row.querySelector('td[data-label="Carga mínima (h)"]');
+    expect(minimumCell(four)).toHaveTextContent("20,00");
+    const six = screen.getByRole("row", { name: /Critério 6/ });
+    expect(minimumCell(six)).toHaveTextContent("—");
+  });
+});
+
+describe("GTAB-22, GTAB-19, GTAB-16: coluna de edição dos critérios", () => {
+  it("sem onEdit não há coluna de ações nem botão de edição", () => {
+    render(<ReviewHighlight groups={GROUPS} />);
+
+    expect(screen.queryByRole("columnheader", { name: "Ações" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Editar/ })).not.toBeInTheDocument();
+  });
+
+  it("com onEdit cada critério ganha o botão 'Editar' com o aria-label do critério e o clique entrega o critério certo", async () => {
+    const onEdit = vi.fn();
+    render(<ReviewHighlight groups={GROUPS} onEdit={onEdit} />);
+
+    expect(screen.getByRole("columnheader", { name: "Ações" })).toBeInTheDocument();
+    const row = screen.getByRole("row", { name: /Critério 12/ });
+    const button = within(row).getByRole("button", { name: "Editar critério II.12" });
+    expect(button).toHaveTextContent("Editar");
+    await userEvent.setup().click(button);
+
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    expect(onEdit.mock.calls[0][0]).toMatchObject({ group_number: 2, item_number: 12, description: "Critério 12" });
+    expect(screen.getAllByRole("button", { name: /^Editar critério/ })).toHaveLength(3);
+  });
+
+  it("a célula da ação leva data-label para virar cartão na largura estreita e o cabeçalho do grupo cobre as sete colunas", () => {
+    render(<ReviewHighlight groups={GROUPS} onEdit={vi.fn()} />);
+
+    const row = screen.getByRole("row", { name: /Critério 10/ });
+    expect(row.querySelector('td[data-label="Ações"]')).not.toBeNull();
+    const head = screen.getByRole("columnheader", { name: /Grupo II/ });
+    expect(head).toHaveAttribute("colspan", "7");
+  });
+
+  it("sem onEdit o cabeçalho do grupo cobre as seis colunas de sempre", () => {
+    render(<ReviewHighlight groups={GROUPS} />);
+
+    expect(screen.getByRole("columnheader", { name: /Grupo II/ })).toHaveAttribute("colspan", "6");
   });
 });

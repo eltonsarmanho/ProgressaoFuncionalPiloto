@@ -1,99 +1,24 @@
-import { useState, type FormEvent, type ReactNode } from "react";
-import { ApiError, errorMessage, fieldErrors, request } from "../api/client";
-import type { FieldIssue } from "../api/client";
+import { useState } from "react";
+import { request } from "../api/client";
 import type { ScoringTableInfo } from "../api/types";
-import { FieldError } from "./FieldError";
+import { Alert, Field, FormProblem, useSubmit } from "./formKit";
+import { Modal } from "./Modal";
 
-type Errors = Record<string, string>;
-
-function Field({
-  id,
-  label,
-  error,
-  children,
-}: {
-  id: string;
-  label: string;
-  error?: string;
-  children: (props: { id: string; "aria-invalid"?: true; "aria-describedby"?: string }) => ReactNode;
-}) {
-  return (
-    <div className="field">
-      <label htmlFor={id}>{label}</label>
-      {children({
-        id,
-        ...(error ? { "aria-invalid": true as const, "aria-describedby": `${id}-error` } : {}),
-      })}
-      <FieldError id={`${id}-error`} message={error} />
-    </div>
-  );
-}
-
-/** Shared submit flow: busy flag, 422 per field, any other error as an alert. */
-function useSubmit(action: () => Promise<void>, onChanged: () => void) {
-  const [errors, setErrors] = useState<Errors>({});
-  const [fileIssues, setFileIssues] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    setErrors({});
-    setFileIssues([]);
-    setError(null);
-    setBusy(true);
-    try {
-      await action();
-      onChanged();
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 422 && Array.isArray(err.detail)) {
-        const issues = err.detail as FieldIssue[];
-        setFileIssues(issues.filter((i) => i.field === "file").map((i) => i.message));
-        setErrors(fieldErrors(new ApiError(422, issues.filter((i) => i.field !== "file"))));
-      } else if (err instanceof FormProblem) {
-        setErrors({ [err.field]: err.message });
-      } else {
-        setError(errorMessage(err));
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
-  return { submit, errors, fileIssues, error, busy };
-}
-
-class FormProblem extends Error {
-  readonly field: string;
-  constructor(field: string, message: string) {
-    super(message);
-    this.field = field;
-  }
-}
-
-function Alert({ message }: { message: string | null }) {
-  return message ? (
-    <p role="alert" className="error">
-      {message}
-    </p>
-  ) : null;
-}
-
-function DuplicateForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: () => void }) {
+function DuplicateForm({ table, onDone }: { table: ScoringTableInfo; onDone: (message: string) => void }) {
   const [name, setName] = useState("");
   const { submit, errors, error, busy } = useSubmit(async () => {
     await request("POST", `/api/scoring-tables/${table.id}/duplicate`, { new_name: name.trim() });
     setName("");
-  }, onChanged);
+  }, () => onDone("Tabela duplicada."));
 
   return (
-    <form className="card" onSubmit={submit} noValidate aria-label="Duplicar tabela">
-      <h3>Duplicar tabela</h3>
+    <form onSubmit={submit} noValidate aria-label="Duplicar tabela">
       <p className="muted">Copia a última versão de {table.name} para uma tabela nova e independente.</p>
       <Field id="dup-name" label="Nome da nova tabela" error={errors.name}>
         {(p) => <input {...p} value={name} onChange={(e) => setName(e.target.value)} />}
       </Field>
       <Alert message={error} />
-      <button type="submit" disabled={busy}>
+      <button type="submit" className="btn btn-primary" disabled={busy}>
         Duplicar tabela
       </button>
     </form>
@@ -103,11 +28,11 @@ function DuplicateForm({ table, onChanged }: { table: ScoringTableInfo; onChange
 function VersionForm({
   table,
   version,
-  onChanged,
+  onDone,
 }: {
   table: ScoringTableInfo;
   version: { id: string; name: string };
-  onChanged: () => void;
+  onDone: (message: string) => void;
 }) {
   const [validFrom, setValidFrom] = useState("");
   const [validTo, setValidTo] = useState("");
@@ -122,11 +47,10 @@ function VersionForm({
     setValidFrom("");
     setValidTo("");
     setReference("");
-  }, onChanged);
+  }, () => onDone("Nova versão criada."));
 
   return (
-    <form className="card" onSubmit={submit} noValidate aria-label="Nova versão">
-      <h3>Nova versão</h3>
+    <form onSubmit={submit} noValidate aria-label="Nova versão">
       <p className="muted">
         Copia grupos e critérios de {version.name}. A versão sem data final termina no dia anterior ao início.
       </p>
@@ -140,28 +64,14 @@ function VersionForm({
         {(p) => <input {...p} value={reference} onChange={(e) => setReference(e.target.value)} />}
       </Field>
       <Alert message={error} />
-      <button type="submit" disabled={busy}>
+      <button type="submit" className="btn btn-primary" disabled={busy}>
         Criar nova versão
       </button>
     </form>
   );
 }
 
-/** The shared `request` helper only sends JSON, so the multipart upload sends the CSRF token itself. */
-async function postCsv(path: string, form: FormData): Promise<void> {
-  const me = await request<{ csrf_token: string }>("GET", "/api/auth/me");
-  const response = await fetch(path, {
-    method: "POST",
-    headers: { "X-CSRF-Token": me.csrf_token },
-    credentials: "include",
-    body: form,
-  });
-  if (response.ok) return;
-  const text = await response.text();
-  throw new ApiError(response.status, text ? JSON.parse(text)?.detail : undefined);
-}
-
-function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: () => void }) {
+function CsvForm({ table, onDone }: { table: ScoringTableInfo; onDone: (message: string) => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [validFrom, setValidFrom] = useState("");
   const [validTo, setValidTo] = useState("");
@@ -175,15 +85,15 @@ function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: () 
     form.set("norm_reference", reference.trim());
     form.set("status", status);
     if (validTo) form.set("valid_to", validTo);
-    await postCsv(`/api/scoring-tables/${table.id}/versions/import`, form);
+    await request("POST", `/api/scoring-tables/${table.id}/versions/import`, form);
     setFile(null);
-  }, onChanged);
+  }, () => onDone("Versão criada a partir do CSV."));
 
   return (
-    <form className="card" onSubmit={submit} noValidate aria-label="Importar CSV">
-      <h3>Importar CSV como nova versão</h3>
+    <form onSubmit={submit} noValidate aria-label="Importar CSV">
       <p className="muted">
-        Colunas: grupo, item, descricao, unidade, modo, pontos, horas_por_bloco, limite. UTF-8, separado por
+        Colunas: grupo, item, descricao, unidade, modo, pontos, horas_por_bloco, limite e min_hours (opcional,
+        carga horária mínima em horas; vazio ou ausente = sem mínimo). UTF-8, separado por
         vírgulas, ponto decimal. Tudo ou nada.
       </p>
       <Field id="csv-file" label="Arquivo CSV" error={errors.file}>
@@ -219,28 +129,47 @@ function CsvForm({ table, onChanged }: { table: ScoringTableInfo; onChanged: () 
         </div>
       )}
       <Alert message={error} />
-      <button type="submit" disabled={busy}>
+      <button type="submit" className="btn btn-primary" disabled={busy}>
         Importar CSV
       </button>
     </form>
   );
 }
 
-/** ADMUI-02: duplicate the table, create a version from the selected one, upload a criteria CSV. */
-export function ScoringAdminForms({
+type DialogProps = {
+  /** Called after a write, with the sentence the page announces. */
+  onDone: (message: string) => void;
+  onClose: () => void;
+};
+
+/** GTAB-12, GTAB-35: "Duplicar" of a table, in a dialog. */
+export function DuplicateDialog({ table, onDone, onClose }: DialogProps & { table: ScoringTableInfo }) {
+  return (
+    <Modal title="Duplicar tabela" onClose={onClose}>
+      <DuplicateForm table={table} onDone={onDone} />
+    </Modal>
+  );
+}
+
+/** GTAB-12, GTAB-35: "Nova versão a partir desta", with the clicked version as the source. */
+export function VersionDialog({
   table,
   version,
-  onChanged,
-}: {
-  table: ScoringTableInfo;
-  version: { id: string; name: string };
-  onChanged: () => void;
-}) {
+  onDone,
+  onClose,
+}: DialogProps & { table: ScoringTableInfo; version: { id: string; name: string } }) {
   return (
-    <>
-      <DuplicateForm table={table} onChanged={onChanged} />
-      <VersionForm table={table} version={version} onChanged={onChanged} />
-      <CsvForm table={table} onChanged={onChanged} />
-    </>
+    <Modal title={`Nova versão a partir de ${version.name}`} onClose={onClose}>
+      <VersionForm table={table} version={version} onDone={onDone} />
+    </Modal>
+  );
+}
+
+/** GTAB-13, GTAB-35: "Importar CSV" of a table, in a dialog. */
+export function CsvDialog({ table, onDone, onClose }: DialogProps & { table: ScoringTableInfo }) {
+  return (
+    <Modal title="Importar CSV como nova versão" onClose={onClose}>
+      <CsvForm table={table} onDone={onDone} />
+    </Modal>
   );
 }

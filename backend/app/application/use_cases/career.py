@@ -35,16 +35,42 @@ def _audit_view(v: CareerVersion) -> dict:
         "valid_to": v.valid_to,
         "norm_reference": v.norm_reference,
         "progression_min_months": v.progression_min_months,
+        "norm_code": v.norm_code,
+        "required_titration_norm_code": v.required_titration_norm_code,
         "classes": [
             {
                 "code": c.code,
                 "denominations": list(c.denominations),
                 "levels": list(c.levels),
                 "promotion_min_months": c.promotion_min_months,
+                "required_titration": c.required_titration,
             }
             for c in v.classes
         ],
     }
+
+
+def _keep_stored_links(
+    version: CareerVersion, current: CareerVersion, unset: frozenset[str]
+) -> CareerVersion:
+    """A link the request did not send (`unset`) keeps its stored value, so a body written
+    before the norm codes existed does not erase them (NLINK-01)."""
+    stored = {c.code: c for c in current.classes}
+    return replace(
+        version,
+        norm_code=current.norm_code if "norm_code" in unset else version.norm_code,
+        required_titration_norm_code=(
+            current.required_titration_norm_code
+            if "required_titration_norm_code" in unset
+            else version.required_titration_norm_code
+        ),
+        classes=tuple(
+            replace(c, required_titration=stored[c.code].required_titration)
+            if f"required_titration:{c.code}" in unset and c.code in stored
+            else c
+            for c in version.classes
+        ),
+    )
 
 
 def _validate(v: CareerVersion) -> CareerVersion:
@@ -184,7 +210,12 @@ class UpdateCareerVersion:
         self._audit = audit
 
     def execute(
-        self, actor: User, code: str, version_id: UUID, version: CareerVersion
+        self,
+        actor: User,
+        code: str,
+        version_id: UUID,
+        version: CareerVersion,
+        unset_links: frozenset[str] = frozenset(),
     ) -> VersionView:
         require_admin(actor)
         version = replace(_validate(version), id=version_id)
@@ -194,6 +225,7 @@ class UpdateCareerVersion:
             current = next((v for v in existing if v.id == version_id), None)
             if current is None:
                 raise NotFound("Versão de carreira não encontrada")
+            version = _keep_stored_links(version, current, unset_links)
             if _in_use(uow, structure_id, current):
                 raise Conflict("Versão já usada por processos não pode ser alterada")
             _reject_overlap(existing, version)

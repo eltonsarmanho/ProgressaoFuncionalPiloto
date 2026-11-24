@@ -12,6 +12,7 @@ class AuditAction(StrEnum):
     UPDATE = "UPDATE"
     ARCHIVE = "ARCHIVE"
     STATUS = "STATUS"
+    DELETE = "DELETE"
 
 
 @dataclass(frozen=True)

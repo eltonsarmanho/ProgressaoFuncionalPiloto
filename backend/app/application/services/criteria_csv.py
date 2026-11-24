@@ -1,7 +1,8 @@
 """Parser of the scoring criteria CSV (ADM-08, ADM-09): pure, stdlib `csv`, all-errors.
 
 Comma separated, UTF-8 with or without BOM, dot as the decimal separator. Header
-columns: grupo,item,descricao,unidade,modo,pontos,horas_por_bloco,limite.
+columns: grupo,item,descricao,unidade,modo,pontos,horas_por_bloco,limite. The optional column
+`min_hours` carries the minimum course load of a criterion; empty or absent means none.
 """
 
 import csv
@@ -21,6 +22,7 @@ COLUMNS = (
     "horas_por_bloco",
     "limite",
 )
+OPTIONAL_COLUMNS = ("min_hours",)
 
 
 @dataclass(frozen=True)
@@ -84,6 +86,7 @@ def _row_criterion(
     points = optional_decimal("pontos")
     hours = optional_decimal("horas_por_bloco")
     limit = optional_decimal("limite")
+    min_hours = optional_decimal("min_hours") if "min_hours" in row else None
     if mode is ScoringMode.POR_UNIDADE and not row["pontos"]:
         fail("pontos", "obrigatório no modo POR_UNIDADE")
     if mode is ScoringMode.POR_BLOCO_DE_HORAS:
@@ -103,6 +106,7 @@ def _row_criterion(
         mode=mode,
         unit_points=points,
         hours_per_block=hours,
+        min_hours=min_hours,
         max_points=limit,
     )
 
@@ -119,7 +123,9 @@ def parse_criteria_csv(text: str) -> CsvParseResult:
         for name in COLUMNS
         if name not in header
     ] + [
-        CsvError(header_line, name, "coluna desconhecida") for name in header if name not in COLUMNS
+        CsvError(header_line, name, "coluna desconhecida")
+        for name in header
+        if name not in COLUMNS + OPTIONAL_COLUMNS
     ]
     if errors:
         return CsvParseResult(errors=tuple(errors))

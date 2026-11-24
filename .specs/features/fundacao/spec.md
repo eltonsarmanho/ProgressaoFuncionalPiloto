@@ -3,6 +3,8 @@
 **Escopo:** Complex (domínio novo, regras normativas conflitantes, autenticação, persistência).
 **Fontes:** `docs/referencias/normas/FONTES.md`. Toda regra abaixo cita sua origem.
 
+> **2026-11-23, processo enxuto (`processo-enxuto`).** O critério 1 de PROC-01 deixa de incluir as observações e os dados institucionais (nome e cargo do responsável, portaria de designação, unidade administrativa), a linha do Edge Case que emite `DADOS_INCOMPLETOS` e a linha 52 das suposições ficam substituídas por ENX-01 a ENX-07: a Etapa 1 e a API não têm mais esses cinco campos e o alerta não existe. As colunas ficam no banco, sem uso.
+
 ## Problem Statement
 
 O docente prepara o processo de progressão/promoção sem nenhuma verificação: identificação funcional, interstício e modalidade são preenchidos à mão e chegam à banca com erros. O Requerimento real de 16/11/2026 pede "PROMOÇÃO do Nível 4 da Classe D (...) para o Nível 2 da Classe D" e se identifica como "Associado D, Nível I", três afirmações mutuamente incompatíveis. A fundação entrega a base executável do sistema (stack, banco, autenticação) e o cadastro de docentes e processos, com verificação determinística, auditada e sem correção automática da identificação funcional e do interstício, conforme a estrutura de carreira vigente na data aplicável.
@@ -238,7 +240,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | Idempotency / retry / duplicate handling | DOC-03 (SIAPE único); criação de processo não é idempotente por desenho (Res. 4.644, art. 6º permite processos simultâneos) |
 | Auth boundaries & rate limits | AUTH-03, AUTH-04, AUTH-06, AUTH-08, AUTH-09 |
 | Concurrency / ordering | Edge case de gravação simultânea (409) |
-| Data lifecycle / expiry | AUTH-05 (sessão); arquivamento em vez de exclusão para docente/processo/unidade; retenção de auditoria sem expiração nesta feature |
+| Data lifecycle / expiry | AUTH-05 (sessão); arquivamento em vez de exclusão para docente/unidade; o processo também pode ser excluído definitivamente (AD-018, `gestao-processos`); retenção de auditoria sem expiração nesta feature |
 | Observability | AUD-04 (logs sem dados pessoais); INFRA-01 (health check) |
 | External-dependency failure | N/A because a fundação não chama serviços externos (MariTalk entra em `inteligencia-documental`); postgres coberto por INFRA-03 |
 | State-transition integrity | PROC-12, PROC-13; transições de status listadas em Assumptions |
@@ -272,7 +274,7 @@ O docente prepara o processo de progressão/promoção sem nenhuma verificação
 | DOC-03 | P1: Cadastro de docente | Design | Verified |
 | DOC-04 | P1: Cadastro de docente | Design | Verified |
 | DOC-05 | P1: Cadastro de docente | Design | Verified |
-| PROC-01 | P1: Processo e interstício | Design | Verified |
+| PROC-01 | P1: Processo e interstício | Amended | Amended by processo-enxuto ENX-01 to ENX-07 |
 | PROC-02 | P1: Processo e interstício | Design | Verified |
 | PROC-03 | P1: Processo e interstício | Design | Verified |
 | PROC-04 | P1: Processo e interstício | Design | Verified |

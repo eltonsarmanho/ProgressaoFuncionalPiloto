@@ -10,6 +10,7 @@ from app.domain.entities.career import (
     Modality,
     select_version,
 )
+from app.domain.entities.professor import Titration
 
 OLD = CareerVersion(
     name="Antiga",
@@ -81,3 +82,34 @@ def test_promotion_min_months_comes_from_target_class():
 @pytest.mark.parametrize("target", ["A", "Z"])
 def test_promotion_min_months_undefined_for_entry_or_unknown_class(target):
     assert NEW.min_months(Modality.PROMOCAO, target) is None
+
+
+# NLINK-01, NTIT-05: norm code and required titration default to None
+def test_version_and_class_without_the_new_fields_have_none():
+    assert NEW.norm_code is None
+    assert NEW.required_titration_norm_code is None
+    assert all(c.required_titration is None for c in NEW.classes)
+
+
+def test_version_and_class_keep_the_norm_code_and_the_required_titration():
+    linked = CareerVersion(
+        name="Sintetica ligada",
+        valid_from=date(2025, 1, 1),
+        valid_to=None,
+        norm_reference="Lei sintética, art. 1º",
+        classes=(
+            CareerClass("A", ("Assistente",), (1,), None),
+            CareerClass("B", ("Adjunto",), (1, 2), 24, required_titration=Titration.DOUTORADO),
+        ),
+        norm_code="NORMA-SINTETICA-1",
+        required_titration_norm_code="NORMA-SINTETICA-2",
+    )
+
+    assert linked.norm_code == "NORMA-SINTETICA-1"
+    assert linked.required_titration_norm_code == "NORMA-SINTETICA-2"
+    assert linked.get_class("B").required_titration is Titration.DOUTORADO
+    assert linked.get_class("A").required_titration is None
+    # get_class and next_class do not change
+    assert linked.get_class("B").levels == (1, 2)
+    assert linked.next_class("A").code == "B"
+    assert linked.next_class("B") is None

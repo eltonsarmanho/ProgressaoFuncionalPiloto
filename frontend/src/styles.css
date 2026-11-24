@@ -181,6 +181,17 @@ h2 {
   font-size: 0.85rem;
 }
 
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.status-row .badge {
+  margin: 0;
+}
+
 .sev-ERRO {
   color: var(--erro);
 }
@@ -305,6 +316,33 @@ fieldset.grid legend {
   color: var(--erro);
 }
 
+/* Etapa 4: a valid activity that is not scored yet (to validate or reject) is highlighted; a rejected one is shaded. */
+.unscored-note {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--alerta);
+  background: #fff4e0;
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.scoring-table tr.row-unscored td {
+  background: #fff4e0;
+}
+
+.scoring-table tr.row-unscored td:first-child {
+  box-shadow: inset 4px 0 0 var(--alerta);
+}
+
+.scoring-table tr.row-rejected td {
+  background: linear-gradient(90deg, #e3e6eb, #f1f3f6);
+  color: var(--muted);
+}
+
+.scoring-table tr.row-rejected td.text-block {
+  text-decoration: line-through;
+}
+
 @media (max-width: 480px) {
   .scoring-table thead {
     display: none;
@@ -365,4 +403,1071 @@ fieldset.grid legend {
 .review-summary {
   font-weight: 600;
   color: var(--alerta);
+}
+
+.dropzone {
+  padding: 1rem;
+  text-align: center;
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+}
+
+.dropzone.dragging {
+  border-color: var(--primary);
+  background: var(--bg);
+}
+
+.dropzone label {
+  display: inline-block;
+}
+
+.upload-results {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.upload-results .refused {
+  color: var(--erro);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.doc-warning {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+}
+
+.status-REQUER_REVISAO,
+.status-EXTRAIDO_SEM_IA {
+  color: var(--alerta);
+  font-weight: 700;
+}
+
+.status-FALHOU {
+  color: var(--erro);
+  font-weight: 700;
+}
+
+/* FORA-02: the warning of a document outside the interstice is a strip under its row, in the alert colour. */
+.doc-outside td {
+  background: #fff4e5;
+  border-bottom: 0;
+}
+
+.doc-outside-banner td {
+  background: #fff4e5;
+  border-left: 4px solid var(--alerta);
+  color: var(--alerta);
+  font-weight: 600;
+}
+
+.doc-summary {
+  margin: 0.5rem 0;
+}
+
+.doc-frame {
+  display: block;
+  width: 100%;
+  height: 28rem;
+  border: 1px solid var(--border);
+}
+
+.doc-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.page-text {
+  max-height: 16rem;
+  margin: 0.5rem 0 0;
+  padding: 0.5rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.page-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.evidence-list {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+  background: rgba(20, 26, 38, 0.55);
+}
+
+.modal {
+  width: 100%;
+  max-width: 44rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.modal-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-head h2 {
+  margin: 0;
+}
+
+.modal-body .card {
+  margin-bottom: 0;
+  border: 0;
+  padding: 0;
+}
+
+/* Buttons (UIM-02): short labels; the object they act on is in aria-label and title. */
+.btn {
+  margin: 0;
+  padding: 0.35rem 0.7rem;
+  min-height: 2rem;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+a.btn {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.btn-primary {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-secondary {
+  color: var(--primary);
+  background: var(--card);
+  border: 1px solid var(--primary);
+}
+
+.btn-danger {
+  color: #fff;
+  background: var(--erro);
+  border-color: var(--erro);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+/* Wide tables (UIM-01, UIM-10, UIM-19): fixed short columns on wide screens, cards below. */
+.wide-table td {
+  overflow-wrap: break-word;
+}
+
+.wide-table .row-actions {
+  gap: 0.35rem;
+}
+
+.text-block {
+  text-align: justify;
+  hyphens: auto;
+}
+
+.doc-name-cell {
+  font-weight: 600;
+}
+
+@media (min-width: 960px) {
+  .doc-table,
+  .review-table,
+  .score-table {
+    table-layout: fixed;
+  }
+
+  .doc-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .doc-table thead th:nth-child(2) {
+    width: 7rem;
+  }
+
+  .doc-table thead th:nth-child(3) {
+    width: 5rem;
+  }
+
+  .doc-table thead th:nth-child(4) {
+    width: 8rem;
+  }
+
+  .doc-table thead th:nth-child(5) {
+    width: 9rem;
+  }
+
+  .doc-table thead th:nth-child(6) {
+    width: 5.5rem;
+  }
+
+  .doc-table thead th:nth-child(7) {
+    width: 13rem;
+  }
+
+  .review-table thead th:nth-child(1) {
+    width: 5rem;
+  }
+
+  .review-table thead th:nth-child(3) {
+    width: 6rem;
+  }
+
+  .review-table thead th:nth-child(4) {
+    width: 7rem;
+  }
+
+  .review-table thead th:nth-child(6) {
+    width: 7.5rem;
+  }
+
+  .review-table thead th:nth-child(7) {
+    width: 8.5rem;
+  }
+
+  .review-table thead th:nth-child(8) {
+    width: 10rem;
+  }
+
+  .score-table thead th:nth-child(1) {
+    width: 4rem;
+  }
+
+  .score-table thead th:nth-child(2) {
+    width: 3.5rem;
+  }
+
+  .score-table thead th {
+    white-space: nowrap;
+  }
+
+  .score-table thead th:nth-child(4) {
+    width: 5rem;
+  }
+
+  .score-table thead th:nth-child(5) {
+    width: 6rem;
+  }
+
+  .score-table thead th:nth-child(6) {
+    width: 7rem;
+  }
+
+  .score-table thead th:nth-child(7) {
+    width: 13rem;
+  }
+}
+
+@media (max-width: 959px) {
+  .wide-table thead {
+    display: none;
+  }
+
+  .wide-table,
+  .wide-table tbody,
+  .wide-table tr,
+  .wide-table td,
+  .wide-table .group-head th {
+    display: block;
+    width: 100%;
+  }
+
+  .wide-table tr {
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card);
+  }
+
+  .wide-table td {
+    border-bottom: 0;
+  }
+
+  .wide-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  /* The strip stays attached to the card of its document. */
+  .wide-table tr.doc-outside {
+    margin-bottom: 0;
+    border-bottom: 0;
+    border-radius: 6px 6px 0 0;
+    background: #fff4e5;
+  }
+
+  .wide-table tr.doc-outside-banner {
+    border-top: 0;
+    border-radius: 0 0 6px 6px;
+    background: #fff4e5;
+  }
+
+  .wide-table .doc-outside-banner td::before {
+    content: none;
+  }
+}
+
+.check-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  align-items: flex-start;
+  margin: 0;
+  font-weight: 600;
+}
+
+.check-head input {
+  width: auto;
+  margin: 0;
+}
+
+/* Etapa 5 · Documentos gerados (UIG-07): cartões empilhados, listas no lugar de tabelas, nada mais largo que 360 px. */
+.generated-block h2 {
+  margin-top: 0;
+}
+
+.generation-history,
+.generation-alerts,
+.report-entries,
+.layout-activities,
+.layout-pages {
+  margin: 0.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.generation-alerts {
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
+.generation-history li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.generation-history .row-actions {
+  margin-top: 0;
+}
+
+.dossier-list {
+  margin: 0.5rem 0;
+  padding-left: 1.75rem;
+}
+
+.dossier-list li {
+  margin-bottom: 0.35rem;
+}
+
+.disclosure {
+  margin-top: 0.75rem;
+}
+
+.disclosure-body {
+  margin-top: 0.75rem;
+}
+
+.report-editor textarea,
+.layout-editor textarea {
+  width: 100%;
+  max-width: 100%;
+  resize: vertical;
+}
+
+.report-section h3,
+.layout-group h3 {
+  margin-top: 0;
+  font-size: 1.05rem;
+}
+
+.report-entries > li {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.report-entry-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: center;
+}
+
+.report-entry-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+.report-entry-foot select {
+  width: auto;
+  max-width: 100%;
+  margin-top: 0;
+}
+
+.source-IA {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.source-USUARIO {
+  font-weight: 700;
+}
+
+.layout-item h4 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 1rem;
+}
+
+.layout-activities > li {
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.layout-activity-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: center;
+}
+
+.layout-activity-head .row-actions {
+  margin: 0 0 0 auto;
+}
+
+.layout-pages > li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  align-items: center;
+  padding: 0.25rem 0;
+}
+
+.layout-pages .row-actions {
+  margin: 0 0 0 auto;
+}
+
+@media (max-width: 480px) {
+  .layout-pages > li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .layout-pages .row-actions,
+  .layout-activity-head .row-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .report-entry-foot select {
+    width: 100%;
+  }
+}
+
+/* Revisão simplificada (Etapa 3): filtros e chips de situação. */
+.activity-filters-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0 1rem;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.chip {
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+.chip[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.merged-note {
+  margin-top: 0.5rem;
+}
+
+.merged-note p {
+  margin: 0;
+}
+
+.merged-list {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.merged-list li {
+  margin-top: 0.25rem;
+}
+
+/* Revisão simplificada (Etapa 3): a linha da atividade quebra em linhas, sem largura fixa. */
+.activity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.activity-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.activity-row-main {
+  display: flex;
+  flex: 1 1 18rem;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.activity-row-main > input[type="checkbox"] {
+  flex: 0 0 auto;
+  /* Touch target (SEC-11): logical size, so the rule fixes no layout width of the row. */
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin-top: 0.25rem;
+}
+
+.activity-row-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.activity-row .row-actions {
+  flex: 0 1 auto;
+  align-self: flex-start;
+}
+
+.activity-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.activity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+.activity-reason,
+.activity-row .evidence-list {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+.reason-text {
+  color: var(--erro);
+  font-weight: 600;
+}
+
+.badge-ok {
+  background: #e7f6ec;
+  border-color: #1a7f37;
+  color: #1a7f37;
+  font-weight: 700;
+}
+
+/* Revisão simplificada (Etapa 3): seções, barra de ações e lista das puladas. */
+.activity-section {
+  margin-top: 1rem;
+}
+
+.activity-toolbar {
+  flex-wrap: wrap;
+}
+
+.skipped-list {
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+}
+
+.section-heading {
+  margin: 0;
+}
+
+.section-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  max-width: 100%;
+  padding: 0.5rem 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.section-toggle::before {
+  content: "▸";
+}
+
+.section-toggle[aria-expanded="true"]::before {
+  content: "▾";
+}
+
+.section-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.section-toggle-counts {
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.step-blocked {
+  flex-basis: 100%;
+  margin: -0.5rem 0 1rem;
+  color: var(--erro);
+  font-weight: 600;
+}
+
+/* The live region is always on the page: without a message it takes no room. */
+.step-blocked:empty {
+  margin: 0;
+}
+
+/* GRES-01..09: the scoring panel of Etapa 4. Nothing here is wider than a 360 px screen. */
+.scoring-panel {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.panel-block {
+  min-width: 0;
+}
+
+.panel-block h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.panel-headline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin: 0;
+}
+
+.panel-headline > div {
+  min-width: 0;
+}
+
+.panel-headline dt {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.panel-headline dd {
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.panel-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.panel-scope {
+  font-size: 0.9rem;
+}
+
+.panel-minimum {
+  font-weight: 700;
+}
+
+.group-bars {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.group-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.15rem 0.75rem;
+  min-width: 0;
+}
+
+.group-bar-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.group-bar-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.group-bar-track {
+  grid-column: 1 / -1;
+  height: 0.5rem;
+  border-radius: 4px;
+  background: var(--border);
+}
+
+.group-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--primary);
+}
+
+.teaching {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.teaching-period {
+  min-width: 0;
+}
+
+.teaching-period h4 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.95rem;
+}
+
+.teaching-offers {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.teaching-offers li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.75rem;
+  align-items: baseline;
+  min-width: 0;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.teaching-title {
+  flex: 1 1 10rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.teaching-level {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.teaching-hours {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.teaching-total {
+  margin: 0.25rem 0 0;
+  font-weight: 600;
+}
+
+.potential-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.potential-cards > div {
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.potential-cards dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.potential-cards dd {
+  margin: 0.15rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+@media (min-width: 640px) {
+  .potential-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/*
+ * GTAB-34, GTAB-35, GTAB-38: the list of scoring tables, as cards and lists (never a <table>).
+ * The global `overflow-wrap: anywhere` of the body breaks words letter by letter in a narrow flex
+ * item, so these rules use `break-word` with `min-width: 0` and give no fixed width. Keep this
+ * block at the end of the file, after every media query.
+ */
+.tbl-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.tbl-page-head h1 {
+  margin: 0;
+}
+
+.tbl-status:empty {
+  margin: 0;
+}
+
+.tbl-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: flex-end;
+}
+
+.tbl-filters .field {
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.tbl-filter-archived {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+}
+
+.tbl-filter-archived input {
+  display: inline-block;
+  width: auto;
+  margin: 0;
+}
+
+.tbl-check-group {
+  min-width: 0;
+}
+
+.tbl-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+}
+
+.tbl-check input {
+  display: inline-block;
+  width: auto;
+  margin: 0;
+}
+
+.tbl-count {
+  margin: 0.5rem 0;
+  color: var(--muted);
+}
+
+.tbl-card {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.tbl-card h2 {
+  margin: 0 0 0.25rem;
+  overflow-wrap: break-word;
+}
+
+.tbl-units {
+  margin: 0.25rem 0;
+  color: var(--muted);
+  overflow-wrap: break-word;
+}
+
+.tbl-versions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tbl-version {
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-wrap: break-word;
+}
+
+.tbl-version-name {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+
+.tbl-meta {
+  margin: 0.25rem 0;
+  overflow-wrap: break-word;
+}
+
+.tbl-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.4rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tbl-badges .badge {
+  margin: 0;
+}
+
+.tbl-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin-top: 0.5rem;
+}
+
+.tbl-action {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  max-width: min(100%, 16rem);
+}
+
+.tbl-actions .btn {
+  min-height: 2.75rem;
+}
+
+.tbl-actions .btn[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tbl-reason {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  overflow-wrap: break-word;
+}
+
+.tbl-empty {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+}
+
+.modal .btn {
+  min-height: 2.75rem;
+}
+
+.tbl-edit {
+  min-height: 2.75rem;
+}
+
+.tbl-page-head .btn {
+  min-height: 2.75rem;
+}
+
+.tbl-empty .btn {
+  min-height: 2.75rem;
+}
+
+.tbl-retry {
+  min-height: 2.75rem;
 }

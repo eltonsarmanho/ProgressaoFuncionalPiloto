@@ -1,26 +1,22 @@
 import { useState, type FormEvent } from "react";
+import { activityBody } from "../activityBody";
+import { isYearlyUnit } from "../activityList";
 import { errorMessage, fieldErrors, request } from "../api/client";
-import type { Activity, ScoringGroup, ScoringMode } from "../api/types";
-import { GROUP_NAMES, roman } from "../labels";
-import { FieldError, errorProps } from "./FieldError";
+import type { Activity, ScoringGroup } from "../api/types";
+import { CategoryPicker } from "./CategoryPicker";
+import { FieldError } from "./FieldError";
 
 type Form = {
   title: string;
-  description: string;
   group_number: string;
   item_number: string;
   event_date: string;
   period_start: string;
   period_end: string;
-  evidence_note: string;
   quantidade: string;
   horas: string;
   academic_period: string;
   level: string;
-  course_hours: string;
-  points_override: string;
-  informed_points: string;
-  justificativa: string;
 };
 
 const str = (v: string | number | null | undefined) => (v == null ? "" : String(v));
@@ -28,37 +24,32 @@ const str = (v: string | number | null | undefined) => (v == null ? "" : String(
 function toForm(a?: Activity): Form {
   return {
     title: str(a?.title),
-    description: str(a?.description),
     group_number: str(a?.group_number),
     item_number: str(a?.item_number),
     event_date: str(a?.event_date),
     period_start: str(a?.period_start),
     period_end: str(a?.period_end),
-    evidence_note: str(a?.evidence_note),
     quantidade: str(a?.quantidade),
     horas: str(a?.horas),
     academic_period: str(a?.academic_period),
     level: str(a?.level),
-    course_hours: str(a?.course_hours),
-    points_override: str(a?.points_override),
-    informed_points: str(a?.informed_points),
-    justificativa: "",
   };
 }
 
-const NUMERIC = ["quantidade", "horas", "course_hours", "points_override", "informed_points"] as const;
-const TEXT = [
-  "title",
-  "description",
-  "event_date",
-  "period_start",
-  "period_end",
-  "evidence_note",
-  "academic_period",
-  "level",
-] as const;
+/** The id of the category select: the 422 fields `categoria`, `group_number` and `item_number` all point to it. */
+const CATEGORY_ID = "categoria";
+const CATEGORY_FIELDS = ["categoria", "group_number", "item_number"];
 
-/** TELA-04 / TELA-05: fields follow the criterion mode; edit requires the justificativa. */
+const number = (v: string): number | string => (Number.isNaN(Number(v)) ? v : Number(v));
+
+/**
+ * EDT-01, EDT-04..EDT-07: the short form of an activity. Editing asks for Título, Data (Início and
+ * Fim in a category measured by year) and Categoria, plus Horas only when the category has a
+ * minimum workload; a Grupo I offering shows only Título and Categoria, because its period and
+ * hours come from the document. A new activity adds Quantidade. The PUT still sends the whole
+ * body (`activityBody`), so what the form does not show is kept as it was. It acts at once: no
+ * justification and no field for the proof text (the proof is linked in Etapa 3).
+ */
 export function ActivityForm({
   processId,
   groups,
@@ -79,55 +70,85 @@ export function ActivityForm({
 
   const set = (field: keyof Form, value: string) => setForm((f) => ({ ...f, [field]: value }));
 
+  const isEdit = Boolean(activity);
   const group = groups.find((g) => String(g.number) === form.group_number);
   const criterion = group?.criteria.find((c) => String(c.item_number) === form.item_number);
-  const mode: ScoringMode | null =
-    group?.number === 1 && (!criterion || criterion.mode === "CARGA_SEMANAL")
-      ? "CARGA_SEMANAL"
-      : (criterion?.mode ?? null);
-  const isEdit = Boolean(activity);
-  const needsJustification = isEdit || form.points_override.trim() !== "";
+  const groupOne = form.group_number === "1";
+  /** EDT-05: an existing Grupo I offering; any other activity put in Grupo I has no document to bring its period. */
+  const offering = groupOne && activity?.group_number === 1;
+  const newGroupOne = groupOne && !offering;
+  const yearly = isYearlyUnit(criterion?.unit_label);
+  const showDates = !offering && !newGroupOne;
+  const showHours = showDates && criterion?.min_hours != null;
+  const showQuantity = !isEdit && !newGroupOne;
+  /** The 422 field names that have an input right now; an error for any other is shown as a general alert. */
+  const shown = [
+    "title", "group_number", "item_number", "categoria",
+    ...(showDates ? (yearly ? ["period_start", "period_end"] : ["event_date"]) : []),
+    ...(showHours ? ["horas"] : []),
+    ...(showQuantity ? ["quantidade"] : []),
+    ...(newGroupOne ? ["academic_period", "level", "horas"] : []),
+  ];
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    if (needsJustification && form.justificativa.trim() === "") {
-      setErrors({ justificativa: "Informe a justificativa da alteração." });
-      return;
+    const body: Record<string, unknown> = activity ? activityBody(activity) : {};
+    const put = (field: string, value: unknown) => {
+      if (value === "" || value == null) delete body[field];
+      else body[field] = value;
+    };
+
+    put("title", form.title.trim());
+    put("group_number", form.group_number === "" ? null : Number(form.group_number));
+    // Grupo I takes its item from the level: an offering keeps the item it has, a new one sends none.
+    if (newGroupOne) delete body.item_number;
+    else put("item_number", form.item_number === "" ? null : Number(form.item_number));
+
+    if (showDates) {
+      const dateFields = yearly ? ["period_start", "period_end"] : ["event_date"];
+      const otherFields = yearly ? ["event_date"] : ["period_start", "period_end"];
+      for (const field of dateFields) put(field, form[field as keyof Form].trim());
+      // A date or a period, not both: the one that is not shown goes only when the shown one was filled.
+      if (dateFields.some((field) => form[field as keyof Form].trim() !== "")) for (const field of otherFields) delete body[field];
     }
-    const body: Record<string, unknown> = {};
-    for (const f of TEXT) {
-      const v = form[f].trim();
-      if (v !== "") body[f] = v;
+    if (showHours) put("horas", form.horas.trim() === "" ? null : number(form.horas.trim()));
+    if (showQuantity) put("quantidade", form.quantidade.trim() === "" ? null : number(form.quantidade.trim()));
+    if (newGroupOne) {
+      put("academic_period", form.academic_period.trim());
+      put("level", form.level);
+      put("horas", form.horas.trim() === "" ? null : number(form.horas.trim()));
     }
-    if (form.group_number !== "") body.group_number = Number(form.group_number);
-    if (form.item_number !== "" && mode !== "CARGA_SEMANAL") body.item_number = Number(form.item_number);
-    for (const f of NUMERIC) {
-      const v = form[f].trim();
-      if (v !== "") body[f] = Number.isNaN(Number(v)) ? v : Number(v);
-    }
-    if (form.justificativa.trim() !== "") body.justificativa = form.justificativa.trim();
 
     setBusy(true);
     setErrors({});
     try {
       const saved = activity
-        ? await request<Activity>("PUT", `/api/activities/${activity.id}`, {
-            ...body,
-            expected_version: activity.version,
-          })
+        ? await request<Activity>("PUT", `/api/activities/${activity.id}`, { ...body, expected_version: activity.version })
         : await request<Activity>("POST", `/api/processes/${processId}/activities`, body);
       onSaved(saved);
     } catch (err) {
       const byField = fieldErrors(err);
       setErrors(byField);
+      // A field has an input only if the form shows it and the input is on the page (no table, no select).
+      const inputId = (field: string) => (CATEGORY_FIELDS.includes(field) ? CATEGORY_ID : field);
+      const present = (field: string) => shown.includes(field) && document.getElementById(inputId(field)) != null;
+      const first = Object.keys(byField).find(present);
+      if (first) document.getElementById(inputId(first))?.focus();
+      const hidden = Object.entries(byField).find(([field]) => !present(field));
       if (Object.keys(byField).length === 0) setError(errorMessage(err));
+      else if (hidden) setError(hidden[1]);
     } finally {
       setBusy(false);
     }
   }
 
-  const input = (field: keyof Form, label: string, type = "text") => (
+  const describedBy = (field: string, hint?: string) => {
+    const ids = [hint, errors[field] ? `${field}-error` : undefined].filter(Boolean);
+    return ids.length > 0 ? ids.join(" ") : undefined;
+  };
+
+  const input = (field: keyof Form, label: string, type = "text", hint?: string) => (
     <div className="field">
       <label htmlFor={field}>{label}</label>
       <input
@@ -135,78 +156,55 @@ export function ActivityForm({
         type={type}
         value={form[field]}
         onChange={(e) => set(field, e.target.value)}
-        {...errorProps(field, errors)}
+        aria-invalid={errors[field] ? true : undefined}
+        aria-describedby={describedBy(field, hint ? `${field}-hint` : undefined)}
       />
+      {hint && (
+        <small id={`${field}-hint`} className="muted">
+          {hint}
+        </small>
+      )}
       <FieldError id={`${field}-error`} message={errors[field]} />
     </div>
   );
 
-  const textarea = (field: keyof Form, label: string) => (
-    <div className="field">
-      <label htmlFor={field}>{label}</label>
-      <textarea
-        id={field}
-        rows={2}
-        value={form[field]}
-        onChange={(e) => set(field, e.target.value)}
-        {...errorProps(field, errors)}
-      />
-      <FieldError id={`${field}-error`} message={errors[field]} />
-    </div>
-  );
+  const DATE_HINT = "AAAA-MM-DD ou AAAA-MM";
 
   return (
     <form className="card" onSubmit={onSubmit} noValidate aria-label={isEdit ? "Editar atividade" : "Nova atividade"}>
       <h2>{isEdit ? "Editar atividade" : "Nova atividade"}</h2>
       {input("title", "Título")}
-      {textarea("description", "Descrição")}
 
       <div className="field">
-        <label htmlFor="group_number">Grupo</label>
-        <select
-          id="group_number"
-          value={form.group_number}
-          onChange={(e) => setForm((f) => ({ ...f, group_number: e.target.value, item_number: "" }))}
-          {...errorProps("group_number", errors)}
-        >
-          <option value="">Sem enquadramento</option>
-          {groups.map((g) => (
-            <option key={g.number} value={g.number}>
-              {`${roman(g.number)} · ${g.name || GROUP_NAMES[g.number]}`}
-            </option>
-          ))}
-        </select>
-        <FieldError id="group_number-error" message={errors.group_number} />
+        <CategoryPicker
+          groups={groups}
+          value={{ group_number: form.group_number === "" ? null : Number(form.group_number), item_number: form.item_number === "" ? null : Number(form.item_number) }}
+          id={CATEGORY_ID}
+          label="Categoria"
+          hideLabel={false}
+          error={errors.categoria ?? errors.group_number ?? errors.item_number}
+          onChange={(value) => setForm((f) => ({ ...f, group_number: String(value.group_number), item_number: String(value.item_number) }))}
+        />
       </div>
 
-      {group && (
-        <div className="field">
-          <label htmlFor="item_number">Item</label>
-          <select
-            id="item_number"
-            value={form.item_number}
-            onChange={(e) => set("item_number", e.target.value)}
-            {...errorProps("item_number", errors)}
-          >
-            <option value="">{group.number === 1 ? "Pelo nível (I.1 ou I.2)" : "Selecione…"}</option>
-            {group.criteria.map((c) => (
-              <option key={c.item_number} value={c.item_number}>
-                {`${roman(c.group_number)}.${c.item_number} · ${c.description}`}
-              </option>
-            ))}
-          </select>
-          <FieldError id="item_number-error" message={errors.item_number} />
-        </div>
+      {offering && (
+        <p className="muted">Oferta do Grupo I: o período letivo, o nível e as horas vêm do documento.</p>
       )}
 
-      {input("event_date", "Data do evento ou mês (AAAA-MM-DD ou AAAA-MM)")}
-      {input("period_start", "Início do período (AAAA-MM-DD ou AAAA-MM)")}
-      {input("period_end", "Fim do período (AAAA-MM-DD ou AAAA-MM)")}
+      {showDates &&
+        (yearly ? (
+          <>
+            {input("period_start", "Início", "text", DATE_HINT)}
+            {input("period_end", "Fim", "text", DATE_HINT)}
+          </>
+        ) : (
+          input("event_date", "Data", "text", DATE_HINT)
+        ))}
 
-      {mode === "POR_UNIDADE" && input("quantidade", "Quantidade", "number")}
-      {mode === "POR_BLOCO_DE_HORAS" && input("horas", "Horas", "number")}
-      {mode === "VALOR_INFORMADO" && input("informed_points", "Pontos informados", "number")}
-      {mode === "CARGA_SEMANAL" && (
+      {showHours && input("horas", "Horas", "number")}
+      {showQuantity && input("quantidade", "Quantidade", "number")}
+
+      {newGroupOne && (
         <>
           {input("academic_period", "Período letivo (AAAA.N)")}
           <div className="field">
@@ -215,7 +213,8 @@ export function ActivityForm({
               id="level"
               value={form.level}
               onChange={(e) => set("level", e.target.value)}
-              {...errorProps("level", errors)}
+              aria-invalid={errors.level ? true : undefined}
+              aria-describedby={describedBy("level")}
             >
               <option value="">Selecione…</option>
               <option value="GRADUACAO">Graduação</option>
@@ -224,28 +223,24 @@ export function ActivityForm({
             <FieldError id="level-error" message={errors.level} />
           </div>
           {input("horas", "Horas semanais", "number")}
-          {input("course_hours", "Carga horária do curso (opcional)", "number")}
-          {input("points_override", "Pontuação manual (substitui o cálculo)", "number")}
         </>
       )}
-
-      {input("evidence_note", "Comprovante")}
-
-      {needsJustification && textarea("justificativa", "Justificativa da alteração")}
 
       {error && (
         <p role="alert" className="error">
           {error}
         </p>
       )}
-      <button type="submit" disabled={busy}>
-        Salvar atividade
-      </button>
-      {onCancel && (
-        <button type="button" className="link" onClick={onCancel}>
-          Cancelar
+      <div className="btn-row">
+        <button type="submit" className="btn btn-primary" disabled={busy}>
+          Salvar atividade
         </button>
-      )}
+        {onCancel && (
+          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            Cancelar
+          </button>
+        )}
+      </div>
     </form>
   );
 }

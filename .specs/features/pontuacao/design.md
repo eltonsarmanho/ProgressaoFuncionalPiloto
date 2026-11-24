@@ -3,6 +3,8 @@
 **Spec**: `.specs/features/pontuacao/spec.md`
 **Status**: Approved
 
+> **Nota de substituição (2026-11-17):** os dados semeados e a regra do Grupo I descritos aqui foram substituídos pela feature `tabela-oficial` (`.specs/features/tabela-oficial/design.md`): a semente passa a ser `seed_data/ufpa.json` (planilha oficial da UFPA), as tabelas do IFCH e da FASI são arquivadas, o Grupo I vira horas de PIT fora do total e o critério ganha carga horária mínima (`min_hours`). As contagens por grupo (3, 16, 12, 7, 6, 14, 11, 66), os subtotais do caso real (414) e a lista de divergências da FASI abaixo já não se aplicam à tabela semeada.
+
 ---
 
 ## Architecture Overview
