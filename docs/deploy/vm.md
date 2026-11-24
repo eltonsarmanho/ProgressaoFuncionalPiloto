@@ -368,6 +368,15 @@ Depois do deploy acima, a exclusão de um processo com atividades duplicadas mes
 - Depois: `alembic current` = `0012 (head)`; saúde 200; sem erro nos logs; a semente não remarcou FASI e IFCH (o ADMIN as havia desmarcado) e a auditoria ficou em 649 linhas, sem evento novo. Nenhum dado real mudou.
 - Prova da correção sobre os dados reais, sem alterá-los: o expurgo novo rodou contra o processo real dentro de uma unidade de trabalho que não confirma (rollback) e terminou sem erro (76 atividades e 74 evidências apagadas dentro da transação); depois, as contagens (1 processo, 76 atividades, 74 evidências, 56 documentos, 13 gerados) ficaram iguais. A lista de tabelas passou a mostrar a versão substituída "Tabela oficial de pontuação UFPA" sem bloqueio de exclusão.
 
+### Etapas 3 e 4: pontuação sem comprovante, rejeitada sombreada e Etapas 5 a 7 fechadas (2026-11-24)
+
+Só o frontend, a pedido do usuário depois de testar: a tabela da Etapa 4 perde a coluna "Comprovante" e usa cabeçalhos curtos; a atividade não pontuada fica em destaque e fecha o caminho para as Etapas 5 a 7 (navegação e endereço direto); a rejeitada continua fora da pontuação, sombreada e com "Reabrir" (AD-029).
+
+- Commits publicados: `79e1eaa` e `bd6c7c1` (enviados ao `origin/feat/inteligencia-documental` em 2026-11-24, PR #3). Imagem construída fora da VM a partir de `git archive bd6c7c1` (`e9f41280d8cb`); pacote do frontend limpo em `scripts/check_bundle_no_secrets.sh`. Gate antes do envio: frontend `eslint` limpo, `tsc` e `vite build` ok e 939 testes. Sem mudança de backend, banco ou configuração desde `c12a458`: sem migração e sem dump novo.
+- Retorno: imagem `progressao-funcional-frontend:ui-pre-bd6c7c1` (a anterior). Voltar é `docker tag progressao-funcional-frontend:ui-pre-bd6c7c1 progressao-funcional-frontend:latest && docker compose up -d --no-build frontend && docker compose restart nginx`; o esquema segue em `0012`.
+- Depois: `alembic current` = `0012 (head)`; saúde 200 pelo endereço público; o bundle novo (`index-Bp6AfMih.js`) servido e com os textos novos; `GET /api/processes` sem sessão dá 401; sem erro nos logs do nginx e do backend. Nenhum dado real foi lido ou alterado. A tela em si (destaque, sombreado e bloqueio) não foi vista num navegador pelo agente.
+- Limite conhecido (AD-029): o bloqueio das Etapas 5 a 7 é só de interface; o servidor ainda gera documentos com atividade não pontuada.
+
 ### Na próxima versão oficial da tabela
 
 Quando uma versão nova da tabela oficial substituir a atual (AD-023, `AdoptSupersedingVersion`), a versão antiga passa a substituída e **FASI e IFCH perdem a marcação** (um evento `DELETE` sem usuário por unidade), voltando à sugestão por vigência até o ADMIN marcar a versão nova. A semente não remarca (a unidade já tem evento de marcação). Incluir esse passo no roteiro daquele deploy: marcar a versão nova de FASI e IFCH pela tela logo depois da partida.
