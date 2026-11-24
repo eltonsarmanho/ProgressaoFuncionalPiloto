@@ -32,19 +32,20 @@ const SUBTOTALS = [
 ];
 
 describe("ScoringTable", () => {
-  it("TELA-02: exibe as 8 colunas pedidas, na ordem", () => {
+  it("TELA-02: exibe as 7 colunas, na ordem, sem a coluna Comprovante e com nomes curtos", () => {
     render(<ScoringTable rows={[row({})]} subtotals={SUBTOTALS} />);
     const headers = screen.getAllByRole("columnheader").map((h) => h.textContent);
     expect(headers).toEqual([
       "Grupo",
       "Item",
       "Atividade",
-      "Quantidade",
-      "Pontuação unitária",
+      "Qtde.",
+      "Pts. unit.",
       "Total",
-      "Comprovante",
       "Status",
     ]);
+    expect(screen.queryByRole("columnheader", { name: /Comprovante/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Pts. unit." })).toHaveAttribute("title", "Pontuação unitária");
   });
 
   it("TELA-02: agrupa as linhas de I a VIII com o subtotal de cada grupo", () => {
@@ -70,19 +71,42 @@ describe("ScoringTable", () => {
     expect(within(groups[2]).queryByText("Orientação TCC")).not.toBeInTheDocument();
   });
 
-  it("TELA-02: mostra grupo, item, quantidade, unitária e total em pt-BR e o comprovante", () => {
+  it("TELA-02: mostra grupo, item, quantidade, unitária e total em pt-BR, sem comprovante", () => {
     render(
       <ScoringTable rows={[row({ evidence_note: "Portaria 12/2023" })]} subtotals={SUBTOTALS} groupNames={{ 2: "Orientação" }} />,
     );
     const r = screen.getByText("Palestra").closest("tr")!;
     const cells = within(r).getAllByRole("cell").map((c) => c.textContent);
-    expect(cells).toEqual(["II", "7", "Palestra", "4,00", "10,00", "40,00", "Portaria 12/2023", "Pontuada"]);
+    expect(cells).toEqual(["II", "7", "Palestra", "4,00", "10,00", "40,00", "Pontuada"]);
   });
 
-  it("TELA-02: sem comprovante exibe 'Sem comprovante'", () => {
-    render(<ScoringTable rows={[row({})]} subtotals={SUBTOTALS} />);
+  it("TELA-02: a linha não mostra o comprovante, nem 'Sem comprovante'", () => {
+    render(<ScoringTable rows={[row({ evidence_note: "Portaria 12/2023" })]} subtotals={SUBTOTALS} />);
     const r = screen.getByText("Palestra").closest("tr")!;
-    expect(within(r).getByText("Sem comprovante")).toBeInTheDocument();
+    expect(r).not.toHaveTextContent("Portaria 12/2023");
+    expect(r).not.toHaveTextContent("Sem comprovante");
+  });
+
+  it("a linha não pontuada ganha o destaque, a rejeitada o sombreado e a pontuada nenhum", () => {
+    render(
+      <ScoringTable
+        rows={[
+          row({ activity_id: "a", title: "Validada" }),
+          row({ activity_id: "b", title: "Em revisão", status: "POTENCIAL" }),
+          row({ activity_id: "c", title: "Sem pontos", status: "NAO_PONTUADA", points: "0.00" }),
+          row({ activity_id: "d", title: "Descartada", status: "REJEITADA", points: "0.00" }),
+        ]}
+        subtotals={SUBTOTALS}
+      />,
+    );
+    const rowOf = (t: string) => screen.getByText(t).closest("tr")!;
+    expect(rowOf("Validada")).not.toHaveClass("row-unscored", "row-rejected");
+    expect(rowOf("Validada").className).toBe("");
+    expect(rowOf("Em revisão")).toHaveClass("row-unscored");
+    expect(rowOf("Sem pontos")).toHaveClass("row-unscored");
+    expect(rowOf("Descartada")).toHaveClass("row-rejected");
+    expect(rowOf("Descartada")).toHaveTextContent("Rejeitada");
+    expect(within(rowOf("Descartada")).getAllByRole("cell").map((c) => c.textContent)).toEqual(["II", "7", "Descartada", "—", "—", "—", "Rejeitada"]);
   });
 
   it("TELA-07: o status mostra PONTUADA, POTENCIAL ou NAO_PONTUADA e as razões em português", () => {
@@ -119,7 +143,6 @@ describe("ScoringTable", () => {
       "Quantidade",
       "Pontuação unitária",
       "Total",
-      "Comprovante",
       "Status",
     ]);
   });
@@ -143,7 +166,7 @@ describe("ScoringTable", () => {
       render(<ScoringTable rows={[pit()]} subtotals={G1_SUBTOTALS} />);
       const r = screen.getByText("Cálculo I").closest("tr")!;
       const cells = within(r).getAllByRole("cell").map((c) => c.textContent);
-      expect(cells).toEqual(["I", "1", "Cálculo I", "—", "—", "8,00 horas (PIT)", "Sem comprovante", "Pontuada"]);
+      expect(cells).toEqual(["I", "1", "Cálculo I", "—", "—", "8,00 horas (PIT)", "Pontuada"]);
       expect(r).not.toHaveTextContent("0,00");
     });
 
@@ -190,7 +213,7 @@ describe("ScoringTable", () => {
         render(<ScoringTable rows={[counted()]} subtotals={NEW_SUBTOTALS} group1TotalHours="8.00" />);
         const r = screen.getByText("Cálculo I").closest("tr")!;
         const cells = within(r).getAllByRole("cell").map((c) => c.textContent);
-        expect(cells).toEqual(["I", "1", "Cálculo I", "8,00", "1,00", "8,00", "Sem comprovante", "Pontuada"]);
+        expect(cells).toEqual(["I", "1", "Cálculo I", "8,00", "1,00", "8,00", "Pontuada"]);
         expect(cells[5]).not.toContain("horas");
         expect(within(r).getAllByRole("cell")[5]).toHaveAttribute("data-label", "Total");
       });

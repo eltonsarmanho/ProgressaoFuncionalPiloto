@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { errorMessage, request } from "../api/client";
 import type {
   Activity,
@@ -17,12 +17,42 @@ import { Modal } from "../components/Modal";
 import { ScoreEditor } from "../components/ScoreEditor";
 import { ScoringPanel } from "../components/ScoringPanel";
 import { ScoringTable } from "../components/ScoringTable";
-import { StepNav } from "../components/StepNav";
+import { STEP_BLOCKED_ID, StepNav } from "../components/StepNav";
 import { TablePicker } from "../components/TablePicker";
 
 type Pending = { kind: "new" } | { kind: "edit" | "points"; activity: Activity; pit?: boolean; outsideTotal?: boolean };
 
 const MANUAL_CODE = "VALOR_UNITARIO_MANUAL";
+
+/** A rejected activity has no scoring row: it stays in the table as a shaded row, to be reopened. */
+function rejectedRow(a: Activity): ScoringRow {
+  return {
+    activity_id: a.id,
+    title: a.title,
+    activity_status: "REJEITADA",
+    evidence_note: a.evidence_note,
+    group_number: a.group_number,
+    item_number: a.item_number,
+    unit_points: null,
+    effective_quantity: null,
+    formula_text: null,
+    points: "0.00",
+    pit_hours: null,
+    outside_total: false,
+    academic_period: a.academic_period,
+    level: a.level,
+    status: "REJEITADA",
+    reasons: [],
+    alerts: [],
+  };
+}
+
+/** The way to Etapa 5 stays closed while an activity of the table is not scored. */
+function unscoredMessage(count: number): string {
+  return count === 1
+    ? "Há 1 atividade não pontuada. Valide ou rejeite a atividade destacada para seguir para a Etapa 5."
+    : `Há ${count} atividades não pontuadas. Valide ou rejeite as atividades destacadas para seguir para a Etapa 5.`;
+}
 
 /** Etapa 4: loads the table choice, the result and the criteria; reloads after every change. */
 export function ProcessScoring() {
@@ -31,6 +61,7 @@ export function ProcessScoring() {
   const [result, setResult] = useState<ScoringResult | null>(null);
   const [version, setVersion] = useState<ScoringVersion | null>(null);
   const [tables, setTables] = useState<ScoringTableInfo[]>([]);
+  const [rejected, setRejected] = useState<Activity[]>([]);
   const [pending, setPending] = useState<Pending | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,13 +74,16 @@ export function ProcessScoring() {
       const scoring = await request<ScoringResult>("GET", `/api/processes/${id}/scoring`);
       const versionId = table.chosen?.version.id ?? table.suggested?.version.id;
       const criteria = versionId ? await request<ScoringVersion>("GET", `/api/scoring-versions/${versionId}`) : null;
-      return { table, scoring, criteria };
+      // The rejected ones are an extra of the page: without them the table still works.
+      const all = await request<Activity[]>("GET", `/api/processes/${id}/activities`).catch(() => [] as Activity[]);
+      return { table, scoring, criteria, all };
     })()
-      .then(({ table, scoring, criteria }) => {
+      .then(({ table, scoring, criteria, all }) => {
         if (cancelled) return;
         setChoice(table);
         setResult(scoring);
         setVersion(criteria);
+        setRejected(all.filter((a) => a.status === "REJEITADA"));
         setError(null);
       })
       .catch((err) => {
@@ -93,7 +127,7 @@ export function ProcessScoring() {
   }
 
   /** UIM-20: validate, reject and keep-as-distinct act at once; no justification, no panel. */
-  async function act(kind: "validate" | "reject" | "distinct", row: ScoringRow) {
+  async function act(kind: "validate" | "reject" | "reopen" | "distinct", row: ScoringRow) {
     setError(null);
     try {
       const activity = await request<Activity>("GET", `/api/activities/${row.activity_id}`);
@@ -101,7 +135,7 @@ export function ProcessScoring() {
         await request("POST", `/api/activities/${activity.id}/distinct`, { expected_version: activity.version });
       } else {
         await request("POST", `/api/activities/${activity.id}/status`, {
-          status: kind === "validate" ? "VALIDADA" : "REJEITADA",
+          status: kind === "validate" ? "VALIDADA" : kind === "reject" ? "REJEITADA" : "AGUARDANDO_REVISAO",
           expected_version: activity.version,
         });
       }
@@ -123,6 +157,11 @@ export function ProcessScoring() {
   const group1Load = groupOne ? groupOne.criteria.some((c) => c.mode === "CARGA_SEMANAL") : undefined;
   const group1OutsideTotal = groupOne ? !groupOne.counts_in_total && group1Load === true : undefined;
 
+  const scored = result?.rows ?? [];
+  const unscored = scored.filter((r) => r.status !== "PONTUADA").length;
+  const blocked = unscored > 0 ? { step: 4, message: unscoredMessage(unscored) } : undefined;
+  const tableRows = [...scored, ...rejected.map(rejectedRow)];
+
   const alerts: Alert[] = [];
   const seen = new Set<string>();
   const add = (a: Alert, prefix = "") => {
@@ -138,7 +177,7 @@ export function ProcessScoring() {
 
   return (
     <>
-      <StepNav current={4} processId={id} />
+      <StepNav current={4} processId={id} blocked={blocked} />
       <h1>Etapa 4 · Pontuação</h1>
       {error && (
         <p role="alert" className="error">
@@ -156,12 +195,31 @@ export function ProcessScoring() {
 
           <section className="card" aria-labelledby="activities-title">
             <h2 id="activities-title">Atividades</h2>
+            {unscored > 0 && (
+              <p className="unscored-note">
+                {unscored === 1 ? "1 atividade não pontuada, em destaque na tabela." : `${unscored} atividades não pontuadas, em destaque na tabela.`}{" "}
+                Em cada uma, edite a pontuação e clique em Validar; se ela não vale pontos, clique em Rejeitar.
+              </p>
+            )}
             <ScoringTable
-              rows={result.rows}
+              rows={tableRows}
               subtotals={result.subtotals}
               groupNames={groupNames}
               group1TotalHours={result.group1_total_hours}
-              actions={(row) => (
+              actions={(row) =>
+                row.status === "REJEITADA" ? (
+                  <div className="row-actions">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      aria-label={`Reabrir ${row.title}`}
+                      title={`Reabrir ${row.title}`}
+                      onClick={() => void act("reopen", row)}
+                    >
+                      Reabrir
+                    </button>
+                  </div>
+                ) : (
                 <div className="row-actions">
                   <button
                     type="button"
@@ -183,15 +241,17 @@ export function ProcessScoring() {
                       Editar pontuação
                     </button>
                   )}
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    aria-label={`Validar ${row.title}`}
-                    title={`Validar ${row.title}`}
-                    onClick={() => void act("validate", row)}
-                  >
-                    Validar
-                  </button>
+                  {row.activity_status !== "VALIDADA" && (
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      aria-label={`Validar ${row.title}`}
+                      title={`Validar ${row.title}`}
+                      onClick={() => void act("validate", row)}
+                    >
+                      Validar
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="btn btn-danger"
@@ -225,7 +285,8 @@ export function ProcessScoring() {
                     </>
                   )}
                 </div>
-              )}
+                )
+              }
             />
             <div className="btn-row">
               <button type="button" className="btn btn-primary" onClick={() => setPending({ kind: "new" })}>
@@ -233,6 +294,16 @@ export function ProcessScoring() {
               </button>
             </div>
           </section>
+
+          <p>
+            {unscored > 0 ? (
+              <span aria-disabled="true" aria-describedby={STEP_BLOCKED_ID} className="muted">
+                Ir para a Etapa 5 · Documentos gerados
+              </span>
+            ) : (
+              <Link to={`/processos/${id}/gerados`}>Ir para a Etapa 5 · Documentos gerados</Link>
+            )}
+          </p>
 
           <section className="card" aria-labelledby="alerts-title">
             <h2 id="alerts-title">Alertas da pontuação</h2>

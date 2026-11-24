@@ -235,6 +235,14 @@
 - **Date**: 2026-11-23
 - **Status**: active
 
+### AD-029
+- **Decision**: Na Etapa 4 a tabela de atividades não tem a coluna "Comprovante" e usa nomes curtos de coluna ("Qtde.", "Pts. unit.") para o cabeçalho não quebrar. A atividade válida e não pontuada (status `POTENCIAL` ou `NAO_PONTUADA`) fica em destaque, com aviso fixo, e fecha o caminho para a Etapa 5 (navegação e link) até ser validada ou rejeitada; a validada (pontuada) não oferece "Validar". A atividade rejeitada continua excluída da pontuação, dos totais e dos documentos (regra 10), mas permanece na tabela sombreada, com "Reabrir" (volta a `AGUARDANDO_REVISAO`).
+- **Reason**: Pedido do usuário em 2026-11-24: ao rejeitar, a linha sumia da Etapa 4; preferiu ficar marcada ou sombreada, mantendo a exclusão da pontuação.
+- **Trade-off**: O bloqueio é de interface, como o SEC-05: a rota direta da Etapa 5 não é recusada pelo servidor. A linha sombreada vem da lista de atividades (o motor só devolve as válidas); se essa leitura falha, a tabela abre sem elas.
+- **Scope**: `revisao-simplificada` e `pontuacao` (tela da Etapa 4); sem backend nem migração
+- **Date**: 2026-11-24
+- **Status**: active
+
 ## Handoff
 
 - **Medido em 2026-11-23** (antes do commit que grava este Handoff): HEAD `98992b0`, branch `feat/inteligencia-documental`, `git status --porcelain` só com `backend/img/`, `requeriment.txt` e `test/` sem versionar (o `stash@{0}` antigo não é desta feature e não foi tocado). O `origin/feat/inteligencia-documental` está em `7bb7b84`.

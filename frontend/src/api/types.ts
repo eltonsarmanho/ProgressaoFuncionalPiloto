@@ -165,7 +165,8 @@ export type Process = ProcessFields & {
 
 /* ---- Pontuação (Etapa 4) ---- */
 
-export type RowStatus = "PONTUADA" | "POTENCIAL" | "NAO_PONTUADA";
+/** `REJEITADA` never comes from the API: the page adds it for a rejected activity, kept in the table shaded. */
+export type RowStatus = "PONTUADA" | "POTENCIAL" | "NAO_PONTUADA" | "REJEITADA";
 export type ActivityStatus = "AGUARDANDO_REVISAO" | "VALIDADA" | "REJEITADA";
 export type ScoringMode = "POR_UNIDADE" | "POR_BLOCO_DE_HORAS" | "CARGA_SEMANAL" | "VALOR_INFORMADO";
 export type TableStatus = "OFICIAL" | "PENDENTE_VALIDACAO";

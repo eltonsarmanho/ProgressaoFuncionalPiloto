@@ -56,6 +56,7 @@ export const ROW_STATUS_LABELS: Record<string, string> = {
   PONTUADA: "Pontuada",
   POTENCIAL: "Potencial",
   NAO_PONTUADA: "Não pontuada",
+  REJEITADA: "Rejeitada",
 };
 
 export const REASON_LABELS: Record<string, string> = {

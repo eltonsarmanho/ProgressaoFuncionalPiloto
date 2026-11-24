@@ -2,16 +2,12 @@ import type { ReactNode } from "react";
 import type { ScoringRow } from "../api/types";
 import { GROUP_NAMES, REASON_LABELS, ROW_STATUS_LABELS, formatDecimal, roman } from "../labels";
 
-const COLUMNS = [
-  "Grupo",
-  "Item",
-  "Atividade",
-  "Quantidade",
-  "Pontuação unitária",
-  "Total",
-  "Comprovante",
-  "Status",
-] as const;
+/** Short names so no header breaks into two lines; the full name of the abbreviated ones is the `title`. */
+const COLUMNS = ["Grupo", "Item", "Atividade", "Qtde.", "Pts. unit.", "Total", "Status"] as const;
+const COLUMN_TITLES: Partial<Record<(typeof COLUMNS)[number], string>> = {
+  "Qtde.": "Quantidade",
+  "Pts. unit.": "Pontuação unitária",
+};
 
 const PIT_LABEL = "horas (PIT)";
 const POINT_PER_PIT_HOUR = "1.00";
@@ -41,21 +37,25 @@ export function ScoringTable({ rows, subtotals, groupNames = GROUP_NAMES, group1
   const renderRow = (r: ScoringRow) => {
     const inHours = r.outside_total;
     const countedPit = !inHours && r.pit_hours != null;
-    const cells = [
+    const rejected = r.status === "REJEITADA";
+    const cells = rejected
+      ? [r.group_number ? roman(r.group_number) : "—", r.item_number ?? "—", r.title, "—", "—", "—"]
+      : [
       r.group_number ? roman(r.group_number) : "—",
       r.item_number ?? "—",
       r.title,
       formatDecimal(countedPit ? r.pit_hours : r.effective_quantity),
       inHours ? "—" : formatDecimal(countedPit ? POINT_PER_PIT_HOUR : r.unit_points),
       inHours ? `${formatDecimal(r.pit_hours)} ${PIT_LABEL}` : formatDecimal(r.points),
-      r.evidence_note || "Sem comprovante",
     ];
+    // Not scored (valid, waiting for "Validar" or without points) is highlighted; rejected is shaded.
+    const rowClass = rejected ? "row-rejected" : r.status === "PONTUADA" ? undefined : "row-unscored";
     return (
-      <tr key={r.activity_id}>
+      <tr key={r.activity_id} className={rowClass}>
         {cells.map((value, i) => (
           <td
             key={COLUMNS[i]}
-            data-label={inHours && i === VALUE_COLUMN ? PIT_LABEL : COLUMNS[i]}
+            data-label={inHours && i === VALUE_COLUMN ? PIT_LABEL : (COLUMN_TITLES[COLUMNS[i]] ?? COLUMNS[i])}
             className={i === TITLE_COLUMN ? "text-block" : undefined}
           >
             {value}
@@ -94,7 +94,7 @@ export function ScoringTable({ rows, subtotals, groupNames = GROUP_NAMES, group1
       <thead>
         <tr>
           {COLUMNS.map((c) => (
-            <th key={c} scope="col">
+            <th key={c} scope="col" title={COLUMN_TITLES[c]}>
               {c}
             </th>
           ))}

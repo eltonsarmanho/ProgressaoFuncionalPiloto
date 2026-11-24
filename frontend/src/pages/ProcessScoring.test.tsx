@@ -92,6 +92,9 @@ const ROW: ScoringResult["rows"][number] = {
   ],
 };
 
+/** A valid activity not validated yet: it shows potential points and waits for "Validar". */
+const WAITING: ScoringResult["rows"][number] = { ...ROW, status: "POTENCIAL", activity_status: "AGUARDANDO_REVISAO" };
+
 const ACTIVITY: Activity = {
   id: "a1",
   process_id: "proc-1",
@@ -149,7 +152,7 @@ describe("ProcessScoring", () => {
     renderPage();
     const row = (await screen.findByText("Orientação de TCC", { selector: "td" })).closest("tr")!;
     expect(row).toHaveTextContent("40,00");
-    expect(screen.getByRole("columnheader", { name: "Pontuação unitária" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Pts. unit." })).toBeInTheDocument();
     expect(groupLine("II · Orientação")).toHaveTextContent("40,00");
     expect(screen.getByText("Total geral", { selector: "dt" }).nextElementSibling).toHaveTextContent("40,00");
     const nav = screen.getByRole("navigation", { name: "Etapas do processo" });
@@ -237,11 +240,10 @@ describe("ProcessScoring", () => {
     renderPage();
     const row = (await screen.findByText("Orientação de TCC", { selector: "td" })).closest("tr")!;
     const buttons = within(row).getAllByRole("button");
-    expect(buttons.map((b) => b.textContent)).toEqual(["Editar", "Editar pontuação", "Validar", "Rejeitar", "Manter como distinta"]);
+    expect(buttons.map((b) => b.textContent)).toEqual(["Editar", "Editar pontuação", "Rejeitar", "Manter como distinta"]);
     expect(buttons.map((b) => b.getAttribute("aria-label"))).toEqual([
       "Editar Orientação de TCC",
       "Editar pontuação de Orientação de TCC",
-      "Validar Orientação de TCC",
       "Rejeitar Orientação de TCC",
       "Marcar como distinta Orientação de TCC",
     ]);
@@ -334,7 +336,7 @@ describe("ProcessScoring", () => {
 
   it("UIM-20: validar e rejeitar agem na hora, sem justificativa nem painel, e recarregam a pontuação", async () => {
     const { calls } = mockFetch({
-      ...baseRoutes(() => result("40.00", [ROW])),
+      ...baseRoutes(() => result("0.00", [WAITING])),
       "GET /api/activities/a1": { status: 200, body: ACTIVITY },
       "POST /api/activities/a1/status": { status: 200, body: ACTIVITY },
     });
@@ -351,6 +353,87 @@ describe("ProcessScoring", () => {
     await user.click(screen.getByRole("button", { name: "Validar Orientação de TCC" }));
     await waitFor(() => expect(calls.filter((c) => c.method === "POST")).toHaveLength(2));
     expect(JSON.parse(calls.filter((c) => c.method === "POST")[1].init!.body as string)).toEqual({ status: "VALIDADA", expected_version: 3 });
+  });
+
+  it("a atividade validada não oferece Validar; a que espera a validação oferece", async () => {
+    mockFetch(baseRoutes(() => result("40.00", [ROW, { ...WAITING, activity_id: "a2", title: "Aguardando" }])));
+    renderPage();
+    await screen.findByText("Orientação de TCC", { selector: "td" });
+    expect(screen.queryByRole("button", { name: "Validar Orientação de TCC" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Validar Aguardando" })).toBeInTheDocument();
+  });
+
+  describe("atividades não pontuadas na Etapa 4", () => {
+    const next = () => screen.getByText("Ir para a Etapa 5 · Documentos gerados");
+
+    it("com atividade não pontuada alerta, destaca a linha e fecha o caminho para a Etapa 5", async () => {
+      mockFetch(baseRoutes(() => result("40.00", [ROW, { ...WAITING, activity_id: "a2", title: "Aguardando" }])));
+      renderPage();
+      const row = (await screen.findByText("Aguardando", { selector: "td" })).closest("tr")!;
+      expect(row).toHaveClass("row-unscored");
+      expect(screen.getByText("Orientação de TCC", { selector: "td" }).closest("tr")).not.toHaveClass("row-unscored");
+      const message = /Há 1 atividade não pontuada\. Valide ou rejeite a atividade destacada para seguir para a Etapa 5\./;
+      expect(document.getElementById("step-blocked-message")).toHaveTextContent(message);
+      expect(screen.getByText(/1 atividade não pontuada, em destaque na tabela\./)).toBeInTheDocument();
+      const nav = screen.getByRole("navigation", { name: "Etapas do processo" });
+      expect(within(nav).queryByRole("link", { name: /Etapa 5/ })).not.toBeInTheDocument();
+      expect(next()).toHaveAttribute("aria-disabled", "true");
+      expect(next().closest("a")).toBeNull();
+    });
+
+    it("a linha não pontuada por outro motivo (NAO_PONTUADA) também fecha o caminho", async () => {
+      mockFetch(baseRoutes(() => result("40.00", [ROW, { ...ROW, activity_id: "a3", title: "Sem pontos", status: "NAO_PONTUADA", reasons: ["SEM_ENQUADRAMENTO"] }])));
+      renderPage();
+      await screen.findByText("Sem pontos", { selector: "td" });
+      expect(document.getElementById("step-blocked-message")).toHaveTextContent("Há 1 atividade não pontuada.");
+      expect(next()).toHaveAttribute("aria-disabled", "true");
+    });
+
+    it("com todas pontuadas não há alerta e o caminho para a Etapa 5 está aberto", async () => {
+      mockFetch(baseRoutes(() => result("40.00", [ROW])));
+      renderPage();
+      await screen.findByText("Orientação de TCC", { selector: "td" });
+      expect(document.getElementById("step-blocked-message")).toBeEmptyDOMElement();
+      expect(screen.queryByText(/em destaque na tabela/)).not.toBeInTheDocument();
+      expect(next().closest("a")).toHaveAttribute("href", "/processos/proc-1/gerados");
+      const nav = screen.getByRole("navigation", { name: "Etapas do processo" });
+      expect(within(nav).getByRole("link", { name: /Etapa 5/ })).toBeInTheDocument();
+    });
+
+    it("a atividade rejeitada continua na tabela, sombreada, sem bloquear, e Reabrir a devolve à revisão", async () => {
+      const rejected: Activity = { ...ACTIVITY, id: "a9", title: "Curso descartado", status: "REJEITADA", version: 5 };
+      const { calls } = mockFetch({
+        ...baseRoutes(() => result("40.00", [ROW])),
+        "GET /api/processes/proc-1/activities": { status: 200, body: [ACTIVITY, rejected] },
+        "GET /api/activities/a9": { status: 200, body: rejected },
+        "POST /api/activities/a9/status": { status: 200, body: rejected },
+      });
+      renderPage();
+      const row = (await screen.findByText("Curso descartado", { selector: "td" })).closest("tr")!;
+      expect(row).toHaveClass("row-rejected");
+      expect(row).toHaveTextContent("Rejeitada");
+      expect(within(row).getAllByRole("button").map((b) => b.textContent)).toEqual(["Reabrir"]);
+      expect(document.getElementById("step-blocked-message")).toBeEmptyDOMElement();
+      expect(next().closest("a")).not.toBeNull();
+      // the rejected one does not enter the scoring: the activity of the result is listed once
+      expect(screen.getAllByText("Orientação de TCC", { selector: "td" })).toHaveLength(1);
+
+      await userEvent.setup().click(within(row).getByRole("button", { name: "Reabrir Curso descartado" }));
+      await waitFor(() => expect(calls.filter((c) => c.method === "POST")).toHaveLength(1));
+      const post = calls.find((c) => c.method === "POST")!;
+      expect(post.path).toBe("/api/activities/a9/status");
+      expect(JSON.parse(post.init!.body as string)).toEqual({ status: "AGUARDANDO_REVISAO", expected_version: 5 });
+    });
+
+    it("a falha ao ler as atividades não derruba a tabela", async () => {
+      mockFetch({
+        ...baseRoutes(() => result("40.00", [ROW])),
+        "GET /api/processes/proc-1/activities": { status: 500, body: { detail: "falha" } },
+      });
+      renderPage();
+      expect(await screen.findByText("Orientação de TCC", { selector: "td" })).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
   });
 
   it("UIM-20: manter como distinta chama o endpoint distinct na hora, sem justificativa", async () => {
@@ -371,7 +454,7 @@ describe("ProcessScoring", () => {
 
   it("UIM-20: o erro de uma ação aparece como alerta e a pontuação não recarrega", async () => {
     const { calls } = mockFetch({
-      ...baseRoutes(() => result("40.00", [ROW])),
+      ...baseRoutes(() => result("0.00", [WAITING])),
       "GET /api/activities/a1": { status: 200, body: ACTIVITY },
       "POST /api/activities/a1/status": { status: 409, body: { detail: "A atividade foi alterada por outro usuário; recarregue" } },
     });

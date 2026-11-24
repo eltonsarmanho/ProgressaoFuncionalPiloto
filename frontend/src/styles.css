@@ -316,6 +316,33 @@ fieldset.grid legend {
   color: var(--erro);
 }
 
+/* Etapa 4: a valid activity that is not scored yet (to validate or reject) is highlighted; a rejected one is shaded. */
+.unscored-note {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--alerta);
+  background: #fff4e0;
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.scoring-table tr.row-unscored td {
+  background: #fff4e0;
+}
+
+.scoring-table tr.row-unscored td:first-child {
+  box-shadow: inset 4px 0 0 var(--alerta);
+}
+
+.scoring-table tr.row-rejected td {
+  background: linear-gradient(90deg, #e3e6eb, #f1f3f6);
+  color: var(--muted);
+}
+
+.scoring-table tr.row-rejected td.text-block {
+  text-decoration: line-through;
+}
+
 @media (max-width: 480px) {
   .scoring-table thead {
     display: none;
@@ -660,8 +687,12 @@ a.btn {
     width: 3.5rem;
   }
 
+  .score-table thead th {
+    white-space: nowrap;
+  }
+
   .score-table thead th:nth-child(4) {
-    width: 6rem;
+    width: 5rem;
   }
 
   .score-table thead th:nth-child(5) {
@@ -669,15 +700,11 @@ a.btn {
   }
 
   .score-table thead th:nth-child(6) {
-    width: 5.5rem;
+    width: 7rem;
   }
 
   .score-table thead th:nth-child(7) {
-    width: 8rem;
-  }
-
-  .score-table thead th:nth-child(8) {
-    width: 11rem;
+    width: 13rem;
   }
 }
 
